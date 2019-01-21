@@ -8,12 +8,12 @@ namespace CodeSnippetsReflection
     {
         internal InputSnippet(string httpVerb, string urlToResource)
         {
-            this.HttpVerb = UppercaseFirstLetter(httpVerb.ToLower());
+            this.HttpMethod = UppercaseFirstLetter(httpVerb.ToLower());
             this.UrlToResource = urlToResource;            
         }
 
       
-        internal string HttpVerb { get; set; }
+        internal string HttpMethod { get; set; }
         internal string UrlToResource { get; set; }
 
         /// <summary>

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.Extensions;
+﻿//using Microsoft.AspNetCore.Http.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,37 +14,28 @@ namespace CodeSnippetsReflection
     /// </summary>
     public class SnippetsGeneratorCSharp
     {
-
-        public string TestTypes()
+        public string ListGraphTypes()
         {
             string graphTargetAssemblyLocation = typeof(Microsoft.Graph.GraphServiceClient).Assembly.Location;
 
             Assembly assembly = Assembly.LoadFrom(graphTargetAssemblyLocation);
             Type[] types = assembly.GetTypes();
 
+            StringBuilder builder = new StringBuilder();
 
-            StringBuilder sb = new StringBuilder();
-
-            foreach(Type t in types)
+            foreach (Type type in types)
             {
-                if (t.Name == "Drive")
+                builder.Append(type.Name + "\n");
+
+                PropertyInfo[] p = type.GetProperties();
+
+                foreach (PropertyInfo property in p)
                 {
-                    var p = t.GetProperties();
-
-                    sb.Append(t.Name + "\n");
-
-                    foreach (PropertyInfo i in p)
-                    {
-                        sb.Append(i.Name + "\t");
-                    }
-                    break;
+                    builder.Append("\t" + property.Name + "\n");
                 }
-
             }
-
-            return sb.ToString();
+            return builder.ToString();
         }
-
         public string GenerateCode(string args)
         {
             string Code = ""; // this will be returned as the generated code
@@ -63,7 +54,7 @@ namespace CodeSnippetsReflection
                 foreach (InputSnippet s in inputSnippetList)
                 {
                     string requestUrl = s.UrlToResource;
-                    string httpVerb = s.HttpVerb;
+                    string httpMethod = s.HttpMethod;
 
                     // Breakdown the URL payload into parts. We will use this to look up types 
                     // that are used to build up the snippet.
@@ -119,18 +110,18 @@ namespace CodeSnippetsReflection
                     // Now we need to match the input HTTP verb with the right method.
                     Type requestObject = defaultRequestMethod.ReturnType;
                     MethodInfo[] requestMethods = requestObject.GetMethods();
-
+                      
                     // Collections we add to instead of using the http verb.
-                    if (requestObject.Name.Contains("CollectionRequest") && httpVerb != "Get")
+                    if (requestObject.Name.Contains("CollectionRequest") && httpMethod != "Get")
                     {
-                        httpVerb = "ADD";
-                        httpVerb = httpVerb.ToLower();
-                        httpVerb = InputSnippet.UppercaseFirstLetter(httpVerb);
+                        httpMethod = "ADD";
+                        httpMethod = httpMethod.ToLower();
+                        httpMethod = InputSnippet.UppercaseFirstLetter(httpMethod);
                         //httpVerb = char.ToUpper(httpVerb[0]) + httpVerb.Substring(1); // TODO: refactor this out into a separate method.
                     }
 
 
-                    MethodInfo targetHttpMethod = requestMethods.Where(m => m.Name.Contains(httpVerb))
+                    MethodInfo targetHttpMethod = requestMethods.Where(m => m.Name.Contains(httpMethod))
                                                            .Select(m => m)
                                                            .First();
 
@@ -157,7 +148,7 @@ namespace CodeSnippetsReflection
                         snippetRequestBuilders = snippetRequestBuilders + sp;
                     }
 
-                    string snippet = String.Format(snippetTemplate, methodReturnType, methodReturnType.ToLower(), snippetRequestBuilders);
+                    string snippet = String.Format(snippetTemplate, methodReturnType, methodReturnType.ToLower(), snippetRequestBuilders + ";");
 
                     return Code = commonSnippet + Environment.NewLine + snippet;
 

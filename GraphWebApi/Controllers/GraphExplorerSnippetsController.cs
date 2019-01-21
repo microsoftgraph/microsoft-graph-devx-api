@@ -5,16 +5,16 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using CodeSnippetsReflection;
 using Microsoft.AspNetCore.Http;
+using System.Reflection;
+using System.Text;
 
 namespace GraphWebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController : ControllerBase
+    public class GraphExplorerSnippetsController : ControllerBase
     {
-
         // GET api/values/GET,/me/
-
         [HttpGet]
         [Produces("application/json")]
         public IActionResult Get(string arg)
@@ -24,14 +24,14 @@ namespace GraphWebApi.Controllers
                 SnippetsGeneratorCSharp code = new SnippetsGeneratorCSharp();
                 string snippet = code.GenerateCode(arg);
 
-                return new OkObjectResult(new CodeSnippetResult { Code = snippet, StatusCode = true, Message = "Success" });
+                return new OkObjectResult(new CodeSnippetResult { Code = snippet, StatusCode = true, Message = "Success" , Language="C#"});
             }
             else
             {
                 string result = "No Results! The Service expects atleast a HTTP Method and Graph Resource." + Environment.NewLine +
                         "You can also add OData parameters which are optional." + Environment.NewLine + "An example of a paramater expect would be [GET,/me/events]";
 
-                return new OkObjectResult(new CodeSnippetResult { Code = "", StatusCode = false, Message = result });
+                return new OkObjectResult(new CodeSnippetResult { Code = "", StatusCode = false, Message = result, Language="C#" });
             }
         }
 
@@ -66,5 +66,6 @@ namespace GraphWebApi.Controllers
         public string Code { get; set; }
         public bool StatusCode { get; set; }
         public string Message { get; set; }
+        public string Language { get; set; }
     }
 }
