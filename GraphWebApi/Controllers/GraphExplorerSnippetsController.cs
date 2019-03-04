@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using CodeSnippetsReflection;
 using System.Net.Http;
-using GraphWebApi.Models;
-using Microsoft.Extensions.Options;
 using System.IO;
+using CodeSnippetsReflection;
+using GraphWebApi.Models;
 
 namespace GraphWebApi.Controllers
 {
@@ -27,7 +24,7 @@ namespace GraphWebApi.Controllers
         [Produces("application/json")]
         public IActionResult Get(string arg)
         {
-            if (arg != String.Empty && arg != null)
+            if(string.IsNullOrWhiteSpace(arg))
             {
                 string result = "Graph Explorer Snippets Generator";
                 return new OkObjectResult(new CodeSnippetResult { Code = "null", StatusCode = false, Message = result, Language = "Default C#" });
