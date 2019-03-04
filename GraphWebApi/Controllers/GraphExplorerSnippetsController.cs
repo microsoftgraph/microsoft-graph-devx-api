@@ -4,9 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using CodeSnippetsReflection;
-using Microsoft.AspNetCore.Http;
-using System.Reflection;
-using System.Text;
+using System.Net.Http;
+using GraphWebApi.Models;
+using Microsoft.Extensions.Options;
+using System.IO;
 
 namespace GraphWebApi.Controllers
 {
@@ -14,58 +15,59 @@ namespace GraphWebApi.Controllers
     [ApiController]
     public class GraphExplorerSnippetsController : ControllerBase
     {
-        // GET api/values/GET,/me/
+        private readonly ISnippetsGenerator _snippetGenerator;
+
+        public GraphExplorerSnippetsController(ISnippetsGenerator snippetGenerator)
+        {
+            _snippetGenerator = snippetGenerator;
+        }
+
+        //Default Service Page GET 
         [HttpGet]
         [Produces("application/json")]
         public IActionResult Get(string arg)
         {
             if (arg != String.Empty && arg != null)
             {
-                SnippetsGeneratorCSharp code = new SnippetsGeneratorCSharp();
-                string snippet = code.GenerateCode(arg);
-
-                return new OkObjectResult(new CodeSnippetResult { Code = snippet, StatusCode = true, Message = "Success" , Language="C#"});
+                string result = "Graph Explorer Snippets Generator";
+                return new OkObjectResult(new CodeSnippetResult { Code = "null", StatusCode = false, Message = result, Language = "Default C#" });
             }
             else
             {
-                string result = "No Results! The Service expects atleast a HTTP Method and Graph Resource." + Environment.NewLine +
-                        "You can also add OData parameters which are optional." + Environment.NewLine + "An example of a paramater expect would be [GET,/me/events]";
-
-                return new OkObjectResult(new CodeSnippetResult { Code = "", StatusCode = false, Message = result, Language="C#" });
+                string result = "Graph Explorer Snippets Generator";
+                return new OkObjectResult(new CodeSnippetResult { Code = "null", StatusCode = false, Message = result, Language = "Default C#" });
             }
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/values
+        //POST api/graphexplorersnippets
         [HttpPost]
-        public void Post([FromBody] string value)
+        [Consumes("text/message")]
+        public async Task<IActionResult> PostAsync(string lang)
         {
-        }
+            var memoryStream = new MemoryStream();
+            await Request.Body.CopyToAsync(memoryStream);
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
+            var tempRequest = new HttpRequestMessage
+            {
+                Content = new ByteArrayContent(memoryStream.ToArray()),
+            };
 
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
-    }
+            // this header as 
+            tempRequest.Content.Headers.Add("Content-Type", "application/http;msgtype=request");
 
-    public class CodeSnippetResult
-    {
-        public string Code { get; set; }
-        public bool StatusCode { get; set; }
-        public string Message { get; set; }
-        public string Language { get; set; }
+            try
+            {
+                using (HttpRequestMessage requestPayload = await tempRequest.Content.ReadAsHttpRequestMessageAsync().ConfigureAwait(false))
+                {
+                    var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
+                    return new OkObjectResult(response);
+                }
+            }
+            catch (Exception e)
+            {
+                //TODO handle this more explicitly. This is most likely a parsing error caused by malformed HTTP data
+                return new BadRequestObjectResult(e);
+            }
+        }
     }
 }

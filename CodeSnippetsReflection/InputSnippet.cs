@@ -11,7 +11,6 @@ namespace CodeSnippetsReflection
             this.HttpMethod = UppercaseFirstLetter(httpVerb.ToLower());
             this.UrlToResource = urlToResource;            
         }
-
       
         internal string HttpMethod { get; set; }
         internal string UrlToResource { get; set; }
