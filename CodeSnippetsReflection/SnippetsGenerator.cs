@@ -122,6 +122,11 @@ namespace CodeSnippetsReflection
                     snippet.Append(SearchExpression(odatauri).ToString());
                 }
 
+                if (odatauri.OrderBy != null)
+                {
+                    snippet.Append(OrderbyExpression(odatauri, fullUri).ToString());
+                }
+
                 if (odatauri.Skip != null)
                 {
                     snippet.Append(SkipExpression(odatauri).ToString());
@@ -217,7 +222,7 @@ namespace CodeSnippetsReflection
             //Iterate through to find the filter option with the array
             foreach (var queryOption in querySegmentList)
             {
-                if (queryOption.Contains("filter"))
+                if (queryOption.ToLower().Contains("filter"))
                 {
                     string[] filterQueryOptionParts = queryOption.Split('=');
                     string filterQueryOption = filterQueryOptionParts.Last();
@@ -249,7 +254,7 @@ namespace CodeSnippetsReflection
             //Iterate through to find the filter option with the array
             foreach (var queryOption in querySegmentList)
             {
-                if (queryOption.Contains("orderBy"))
+                if (queryOption.ToLower().Contains("orderby"))
                 {
                     string[] orderByQueryOptionParts = queryOption.Split('=');
                     string orderByQueryOption = orderByQueryOptionParts.Last();
