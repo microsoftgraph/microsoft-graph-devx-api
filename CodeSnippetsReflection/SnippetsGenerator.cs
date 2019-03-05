@@ -18,10 +18,28 @@ namespace CodeSnippetsReflection
     /// Snippets Generator Class with all the logic for code generation
     /// </summary>
     public class SnippetsGenerator : ISnippetsGenerator
-    {       
+    {
+        private IEdmModel iedmModel;
+
         public SnippetsGenerator()
         {
-          
+            GetGraphMetadataContainer();
+        }
+
+
+        /// <summary>
+        /// Load the IEdmModel for both V1 and Beta
+        /// </summary>
+        private void GetGraphMetadataContainer()
+        {
+            Uri serviceRootV1 = new Uri("https://graph.microsoft.com/v1.0");
+            Uri serviceRootBeta = new Uri("https://graph.microsoft.com/beta");
+
+            IEdmModel iedmModelV1 = CsdlReader.Parse(XmlReader.Create(serviceRootV1 + "/$metadata"));
+            IEdmModel iedmModelBeta = CsdlReader.Parse(XmlReader.Create(serviceRootBeta + "/$metadata"));
+
+            GraphMetadataContainer.graphMetadataVersion1 = iedmModelV1;
+            GraphMetadataContainer.graphMetadataVersionBeta = iedmModelBeta;
         }
 
         /// <summary>
@@ -42,10 +60,13 @@ namespace CodeSnippetsReflection
             if (requestPayload.RequestUri.Segments[1].Equals("v1.0/"))
             {
                 serviceRootUrl = "https://graph.microsoft.com/v1.0";
+                this.iedmModel = GraphMetadataContainer.graphMetadataVersion1;
+
             }
             else if (requestPayload.RequestUri.Segments[1].Equals("beta/"))
             {
                 serviceRootUrl = "https://graph.microsoft.com/beta";
+                this.iedmModel = GraphMetadataContainer.graphMetadataVersionBeta;
             }
             else
             {
@@ -67,15 +88,14 @@ namespace CodeSnippetsReflection
         private string GenerateCsharpSnippet(HttpRequestMessage requestPayload, string serviceRootUrl)
         {
             if (requestPayload.Method == HttpMethod.Get)
-            {
-                // Uri serviceRoot = new Uri(requestPayload.RequestUri.AbsolutePath.ToString());
+            {   
                 Uri serviceRoot = new Uri(serviceRootUrl);
                 Uri fullUri = requestPayload.RequestUri;
 
-                IEdmModel iedmModel = CsdlReader.Parse(XmlReader.Create(serviceRoot + "/$metadata"));
-                /*** End of sample data for test purposes **/
+                //IEdmModel iedmModel = CsdlReader.Parse(XmlReader.Create(serviceRoot + "/$metadata"));
+                ///*** End of sample data for test purposes **/
 
-                ODataUriParser parser = new ODataUriParser(iedmModel, serviceRoot, fullUri);
+                ODataUriParser parser = new ODataUriParser(this.iedmModel, serviceRoot, fullUri);
                 ODataUri odatauri = parser.ParseUri();
 
                 StringBuilder snippet = new StringBuilder();
@@ -89,7 +109,7 @@ namespace CodeSnippetsReflection
 
                 if (odatauri.Filter != null)
                 {
-                    snippet.Append(FilterExpression(odatauri).ToString());
+                    snippet.Append(FilterExpression(odatauri, fullUri).ToString());
                 }
 
                 if (odatauri.SelectAndExpand != null)
@@ -186,13 +206,13 @@ namespace CodeSnippetsReflection
         /// </summary>
         /// <param name="odatauri"></param>
         /// <returns></returns>
-        private StringBuilder FilterExpression(ODataUri odatauri)
+        private StringBuilder FilterExpression(ODataUri odatauri, Uri fullUri)
         {
             StringBuilder filterExpression = new StringBuilder();
             string filterResult = "";
 
             //split by the $ symbol to get each OData Query Parser
-            string[] querySegmentList = GetODataQuerySegments(odatauri.RequestUri.Query);
+            string[] querySegmentList = GetODataQuerySegments(fullUri.Query);
 
             //Iterate through to find the filter option with the array
             foreach (var queryOption in querySegmentList)
@@ -217,14 +237,14 @@ namespace CodeSnippetsReflection
         /// </summary>
         /// <param name="odatauri"></param>
         /// <returns></returns>
-        private StringBuilder OrderbyExpression(ODataUri odatauri)
+        private StringBuilder OrderbyExpression(ODataUri odatauri, Uri fullUri)
         {
             StringBuilder orderbyExpression = new StringBuilder();
 
             string orderByResult = "";
 
             //split by the $ symbol to get each OData Query Parser
-            string[] querySegmentList = GetODataQuerySegments(odatauri.RequestUri.Query);
+            string[] querySegmentList = GetODataQuerySegments(fullUri.Query);
 
             //Iterate through to find the filter option with the array
             foreach (var queryOption in querySegmentList)
