@@ -92,9 +92,6 @@ namespace CodeSnippetsReflection
                 Uri serviceRoot = new Uri(serviceRootUrl);
                 Uri fullUri = requestPayload.RequestUri;
 
-                //IEdmModel iedmModel = CsdlReader.Parse(XmlReader.Create(serviceRoot + "/$metadata"));
-                ///*** End of sample data for test purposes **/
-
                 ODataUriParser parser = new ODataUriParser(this.iedmModel, serviceRoot, fullUri);
                 ODataUri odatauri = parser.ParseUri();
 
@@ -233,7 +230,7 @@ namespace CodeSnippetsReflection
                 }
             }
 
-            filterExpression.Append($".Filter(\"{filterResult}\")");
+            filterExpression.Append($"\n.Filter(\"{filterResult}\")");
             return filterExpression;
         }
 
@@ -265,7 +262,7 @@ namespace CodeSnippetsReflection
                 }
             }
 
-            orderbyExpression.Append($".OrderBy(\"{orderByResult}\")");
+            orderbyExpression.Append($"\n.OrderBy(\"{orderByResult}\")");
 
             //TODO
             return orderbyExpression;
@@ -293,7 +290,7 @@ namespace CodeSnippetsReflection
         private StringBuilder SkipExpression(ODataUri odatauri)
         {
             StringBuilder skipExpression = new StringBuilder();
-            skipExpression.Append($".Skip({odatauri.Skip})");
+            skipExpression.Append($"\n.Skip({odatauri.Skip})");
 
             return skipExpression;
         }
@@ -306,7 +303,7 @@ namespace CodeSnippetsReflection
         private StringBuilder SkipTokenExpression(ODataUri odatauri)
         {
             StringBuilder skipTokenExpression = new StringBuilder();
-            skipTokenExpression.Append($".SkipToken({odatauri.SkipToken})");
+            skipTokenExpression.Append($"\n.SkipToken({odatauri.SkipToken})");
 
             return skipTokenExpression;
         }
@@ -320,7 +317,7 @@ namespace CodeSnippetsReflection
         private StringBuilder TopExpression(ODataUri odatauri)
         {
             StringBuilder topExpression = new StringBuilder();
-            topExpression.Append($".Top({odatauri.Top})");
+            topExpression.Append($"\n.Top({odatauri.Top})");
 
             return topExpression;
         }
