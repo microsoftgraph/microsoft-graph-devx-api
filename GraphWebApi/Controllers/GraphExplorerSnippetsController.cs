@@ -38,33 +38,41 @@ namespace GraphWebApi.Controllers
 
         //POST api/graphexplorersnippets
         [HttpPost]
-        [Consumes("text/message")]
+        [Consumes("application/http")]
         public async Task<IActionResult> PostAsync(string lang = "c#")
         {
-            var memoryStream = new MemoryStream();
-            await Request.Body.CopyToAsync(memoryStream);
-
-            var tempRequest = new HttpRequestMessage
-            {
-                Content = new ByteArrayContent(memoryStream.ToArray()),
-            };
-
-            // this header as 
-            tempRequest.Content.Headers.Add("Content-Type", "application/http;msgtype=request");
+            var streamContent = new StreamContent(Request.Body);
+            streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
 
             try
             {
-                using (HttpRequestMessage requestPayload = await tempRequest.Content.ReadAsHttpRequestMessageAsync().ConfigureAwait(false))
+                using (HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false))
                 {
                     var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
-                    return new OkObjectResult(response);
+                    return new StringResult(response);
                 }
             }
             catch (Exception e)
             {
-                //TODO handle this more explicitly. This is most likely a parsing error caused by malformed HTTP data
                 return new BadRequestObjectResult(e.Message);
             }
+        }
+    }
+
+    class StringResult : IActionResult
+    {
+        private readonly string _value;
+
+        public StringResult(string value)
+        {
+            this._value = value;
+        }
+        public async Task ExecuteResultAsync(ActionContext context)
+        {
+            context.HttpContext.Response.ContentType = "text/plain";
+            var streamWriter = new StreamWriter(context.HttpContext.Response.Body);
+            streamWriter.Write(this._value);
+            await streamWriter.FlushAsync().ConfigureAwait(false);
         }
     }
 }

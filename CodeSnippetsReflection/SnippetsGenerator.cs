@@ -19,10 +19,10 @@ namespace CodeSnippetsReflection
     /// </summary>
     public class SnippetsGenerator : ISnippetsGenerator
     {
-        private Lazy<IEdmModel> iedmModelV1 { get;  set; }
-        private Lazy<IEdmModel> iedmModelBeta { get;  set; }
-        private Uri serviceRootV1 { get; set; }
-        private Uri serviceRootBeta { get; set; }
+        private Lazy<IEdmModel> IedmModelV1 { get;  set; }
+        private Lazy<IEdmModel> IedmModelBeta { get;  set; }
+        private Uri ServiceRootV1 { get; set; }
+        private Uri ServiceRootBeta { get; set; }
 
         public SnippetsGenerator()
         {
@@ -34,48 +34,25 @@ namespace CodeSnippetsReflection
         /// </summary>
         private void LoadGraphMetadata()
         {
-            serviceRootV1 = new Uri("https://graph.microsoft.com/v1.0");
-            serviceRootBeta = new Uri("https://graph.microsoft.com/beta");
+            ServiceRootV1 = new Uri("https://graph.microsoft.com/v1.0");
+            ServiceRootBeta = new Uri("https://graph.microsoft.com/beta");
 
-            iedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(serviceRootV1 + "/$metadata")));
-            iedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(serviceRootBeta + "/$metadata")));
+            IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(ServiceRootV1 + "/$metadata")));
+            IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(ServiceRootBeta + "/$metadata")));
         }
 
         /// <summary>
         /// Check the graph api veesion and the snippet language requested 
         /// </summary>
-        /// <param name="requestPayload"></param>
-        /// <param name="lang"></param>
+        /// <param name="language"></param>
+        /// <param name="httpRequestMessage"></param>
         /// <returns></returns>
         public string ProcessPayloadRequest(HttpRequestMessage httpRequestMessage, string language)
         {
-            ODataUriParser oDataUriParser = null;
-
-            if (httpRequestMessage.RequestUri.Segments[1].Equals("v1.0/"))
-            {
-                oDataUriParser = new ODataUriParser(iedmModelV1.Value, serviceRootV1, httpRequestMessage.RequestUri)
-                {
-                    Resolver = new UnqualifiedODataUriResolver { EnableCaseInsensitive = true }
-                };
-            }
-            else if (httpRequestMessage.RequestUri.Segments[1].Equals("beta/"))
-            {   
-                oDataUriParser = new ODataUriParser(iedmModelBeta.Value, serviceRootBeta, httpRequestMessage.RequestUri)
-                {
-                    Resolver = new UnqualifiedODataUriResolver { EnableCaseInsensitive = true }
-                };
-
-            }
-            else
-            {
-                throw new Exception("Unsuported Graph version in url");
-            }
-
-            ODataUri odatauri = oDataUriParser.ParseUri();
 
             if (language.ToLower() == "c#")
             {
-                return GenerateCsharpSnippet(odatauri, httpRequestMessage.RequestUri , httpRequestMessage.Method);
+                return GenerateCsharpSnippet(httpRequestMessage);
             }
 
             throw new Exception("No code snippet generated"); 
@@ -85,70 +62,87 @@ namespace CodeSnippetsReflection
         /// Formulates the requested Graph snippets and returns it as string
         /// </summary>
         /// <returns></returns>
-        public string GenerateCsharpSnippet(ODataUri oDataUri, Uri requestUri , HttpMethod httpMethod)
+        public string GenerateCsharpSnippet(HttpRequestMessage requestPayload)
         {
+            var tuple = GetModelAndServiceUriTuple(requestPayload.RequestUri);
+            SnippetModel snippetModel = new SnippetModel(requestPayload, tuple.Item2.AbsoluteUri, tuple.Item1);
+            StringBuilder snippetBuilder = new StringBuilder();
+
             try
             {
-                if (httpMethod == HttpMethod.Get)
+                if (snippetModel.Method == HttpMethod.Get)
                 {
-                    StringBuilder snippet = new StringBuilder();
+                    snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient();\n");
+                    snippetBuilder.Append($"var {snippetModel.resourceReturnType} = await graphClient");
 
                     //Fomulate all resources path
-                    snippet = GenerateResourcesPath(oDataUri);
+                    //snippet = GenerateResourcesPath(snippetModel.ODataUri);
 
+                    snippetBuilder.Append(".Request()");
+                    
                     /********************************/
                     /**Formulate the Query options**/
                     /*******************************/
 
-                    if (oDataUri.Filter != null)
+                    if (snippetModel.ODataUri.Filter != null)
                     {
-                        snippet.Append(FilterExpression(oDataUri, requestUri).ToString());
+                        snippetBuilder.Append(FilterExpression(snippetModel.ODataUri, requestPayload.RequestUri).ToString());
                     }
 
-                    if (oDataUri.SelectAndExpand != null)
+                    if (snippetModel.ODataUri.SelectAndExpand != null)
                     {
-                        snippet.Append(SelectExpression(oDataUri, requestUri).ToString());
+                        snippetBuilder.Append(SelectExpression(snippetModel.ODataUri, requestPayload.RequestUri).ToString());
                     }
 
-                    if (oDataUri.Search != null)
+                    if (snippetModel.ODataUri.Search != null)
                     {
-                        snippet.Append(SearchExpression(oDataUri).ToString());
+                        snippetBuilder.Append(SearchExpression(snippetModel.ODataUri).ToString());
                     }
 
-                    if (oDataUri.OrderBy != null)
+                    if (snippetModel.ODataUri.OrderBy != null)
                     {
-                        snippet.Append(OrderbyExpression(oDataUri, requestUri).ToString());
+                        snippetBuilder.Append(OrderbyExpression(snippetModel.ODataUri, requestPayload.RequestUri).ToString());
                     }
 
-                    if (oDataUri.Skip != null)
+                    if (snippetModel.ODataUri.Skip != null)
                     {
-                        snippet.Append(SkipExpression(oDataUri).ToString());
+                        snippetBuilder.Append(SkipExpression(snippetModel.ODataUri).ToString());
                     }
 
-                    if (oDataUri.Top != null)
+                    if (snippetModel.ODataUri.Top != null)
                     {
-                        snippet.Append(TopExpression(oDataUri).ToString());
+                        snippetBuilder.Append(TopExpression(snippetModel.ODataUri).ToString());
                     }
+                    
+                    snippetBuilder.Append(".GetAsync();");
 
-                    snippet.Append(".GetAsync();");
-
-                    return snippet.ToString();
-                }
-                else if (httpMethod == HttpMethod.Post)
-                {
-                    //TODO
-                    return "POST Result";
+                    return snippetBuilder.ToString();
                 }
                 else
                 {
-                    //TODO
-                    return "Uknown HttpMethod Result";
+                    throw new NotImplementedException("HTTP method not implemented");
                 }
             }
             catch(Exception ex)
             {
                 return ex.Message;
             }
+        }
+
+
+        private (IEdmModel, Uri) GetModelAndServiceUriTuple(Uri requestUri)
+        {
+            if (requestUri.Segments[1].Equals("v1.0/"))
+            {
+                return (IedmModelV1.Value,ServiceRootV1);
+            }
+            else if (requestUri.Segments[1].Equals("beta/"))
+            {
+                return (IedmModelBeta.Value, ServiceRootBeta);
+            }
+
+            throw new Exception("Unsupported Graph version in url");
+ 
         }
 
         /// <summary>
@@ -159,11 +153,7 @@ namespace CodeSnippetsReflection
         private StringBuilder GenerateResourcesPath(ODataUri odatauri)
         {
             StringBuilder resourcesPath = new StringBuilder();
-            resourcesPath.Append("GraphServiceClient graphClient = new GraphServiceClient();\n");
-            //resourcesPath.Append("graphClient");
-
-            string resourceReturnType = odatauri.Path.LastOrDefault().Identifier;
-            resourcesPath.Append($"var {resourceReturnType} = await graphClient");
+           
 
             // lets append all resources
             foreach (var item in odatauri.Path)
@@ -212,8 +202,7 @@ namespace CodeSnippetsReflection
                     resourcesPath.Append("." + UppercaseFirstLetter(item.Identifier));
                 }
             }
-
-            resourcesPath.Append(".Request()");           
+           
             return resourcesPath;
         }
 
