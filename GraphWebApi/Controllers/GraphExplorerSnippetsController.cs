@@ -38,23 +38,15 @@ namespace GraphWebApi.Controllers
 
         //POST api/graphexplorersnippets
         [HttpPost]
-        [Consumes("text/message")]
+        [Consumes("application/http")]
         public async Task<IActionResult> PostAsync(string lang)
         {
-            var memoryStream = new MemoryStream();
-            await Request.Body.CopyToAsync(memoryStream);
-
-            var tempRequest = new HttpRequestMessage
-            {
-                Content = new ByteArrayContent(memoryStream.ToArray()),
-            };
-
-            // this header as 
-            tempRequest.Content.Headers.Add("Content-Type", "application/http;msgtype=request");
+            var streamContent = new StreamContent(Request.Body);
+            streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
 
             try
             {
-                using (HttpRequestMessage requestPayload = await tempRequest.Content.ReadAsHttpRequestMessageAsync().ConfigureAwait(false))
+                using (HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false))
                 {
                     var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
                     return new StringResult(response);
