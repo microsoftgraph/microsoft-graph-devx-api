@@ -39,7 +39,7 @@ namespace GraphWebApi.Controllers
         //POST api/graphexplorersnippets
         [HttpPost]
         [Consumes("text/message")]
-        public async Task<IActionResult> PostAsync(string lang)
+        public async Task<IActionResult> PostAsync(string lang = "c#")
         {
             var memoryStream = new MemoryStream();
             await Request.Body.CopyToAsync(memoryStream);
@@ -63,7 +63,7 @@ namespace GraphWebApi.Controllers
             catch (Exception e)
             {
                 //TODO handle this more explicitly. This is most likely a parsing error caused by malformed HTTP data
-                return new BadRequestObjectResult(e);
+                return new BadRequestObjectResult(e.Message);
             }
         }
     }

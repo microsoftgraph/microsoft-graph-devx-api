@@ -19,27 +19,26 @@ namespace CodeSnippetsReflection
     /// </summary>
     public class SnippetsGenerator : ISnippetsGenerator
     {
-        private IEdmModel iedmModel;
+        private Lazy<IEdmModel> iedmModelV1 { get;  set; }
+        private Lazy<IEdmModel> iedmModelBeta { get;  set; }
+        private Uri serviceRootV1 { get; set; }
+        private Uri serviceRootBeta { get; set; }
 
         public SnippetsGenerator()
         {
-            GetGraphMetadataContainer();
+            LoadGraphMetadata();
         }
-
 
         /// <summary>
         /// Load the IEdmModel for both V1 and Beta
         /// </summary>
-        private void GetGraphMetadataContainer()
+        private void LoadGraphMetadata()
         {
-            Uri serviceRootV1 = new Uri("https://graph.microsoft.com/v1.0");
-            Uri serviceRootBeta = new Uri("https://graph.microsoft.com/beta");
+            serviceRootV1 = new Uri("https://graph.microsoft.com/v1.0");
+            serviceRootBeta = new Uri("https://graph.microsoft.com/beta");
 
-            IEdmModel iedmModelV1 = CsdlReader.Parse(XmlReader.Create(serviceRootV1 + "/$metadata"));
-            IEdmModel iedmModelBeta = CsdlReader.Parse(XmlReader.Create(serviceRootBeta + "/$metadata"));
-
-            GraphMetadataContainer.graphMetadataVersion1 = iedmModelV1;
-            GraphMetadataContainer.graphMetadataVersionBeta = iedmModelBeta;
+            iedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(serviceRootV1 + "/$metadata")));
+            iedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(serviceRootBeta + "/$metadata")));
         }
 
         /// <summary>
@@ -48,103 +47,94 @@ namespace CodeSnippetsReflection
         /// <param name="requestPayload"></param>
         /// <param name="lang"></param>
         /// <returns></returns>
-        public string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language)
+        public string ProcessPayloadRequest(HttpRequestMessage httpRequestMessage, string language)
         {
-            string serviceRootUrl = "";
+            ODataUriParser oDataUriParser = null;
 
-            if (language == null || language == String.Empty)
+            if (httpRequestMessage.RequestUri.Segments[1].Equals("v1.0/"))
             {
-                language = "c#";
-            }          
-
-            if (requestPayload.RequestUri.Segments[1].Equals("v1.0/"))
-            {
-                serviceRootUrl = "https://graph.microsoft.com/v1.0";
-                this.iedmModel = GraphMetadataContainer.graphMetadataVersion1;
-
+                oDataUriParser = new ODataUriParser(iedmModelV1.Value, serviceRootV1, httpRequestMessage.RequestUri)
+                {
+                    Resolver = new UnqualifiedODataUriResolver { EnableCaseInsensitive = true }
+                };
             }
-            else if (requestPayload.RequestUri.Segments[1].Equals("beta/"))
-            {
-                serviceRootUrl = "https://graph.microsoft.com/beta";
-                this.iedmModel = GraphMetadataContainer.graphMetadataVersionBeta;
+            else if (httpRequestMessage.RequestUri.Segments[1].Equals("beta/"))
+            {   
+                oDataUriParser = new ODataUriParser(iedmModelBeta.Value, serviceRootBeta, httpRequestMessage.RequestUri)
+                {
+                    Resolver = new UnqualifiedODataUriResolver { EnableCaseInsensitive = true }
+                };
+
             }
             else
             {
                 throw new Exception("Unsuported Graph version in url");
             }
 
-            if(language.ToLower() == "c#")
-            {
-                return GenerateCsharpSnippet(requestPayload, serviceRootUrl);
-            }            
+            ODataUri odatauri = oDataUriParser.ParseUri();
 
-            return "No code snippet generated";
+            if (language.ToLower() == "c#")
+            {
+                return GenerateCsharpSnippet(odatauri, httpRequestMessage.RequestUri , httpRequestMessage.Method);
+            }
+
+            throw new Exception("No code snippet generated"); 
         }
 
         /// <summary>
         /// Formulates the requested Graph snippets and returns it as string
         /// </summary>
         /// <returns></returns>
-        public string GenerateCsharpSnippet(HttpRequestMessage requestPayload, string serviceRootUrl)
+        public string GenerateCsharpSnippet(ODataUri oDataUri, Uri requestUri , HttpMethod httpMethod)
         {
             try
             {
-                if (requestPayload.Method == HttpMethod.Get)
+                if (httpMethod == HttpMethod.Get)
                 {
-                    Uri serviceRoot = new Uri(serviceRootUrl);
-                    Uri fullUri = requestPayload.RequestUri;
-
-                    //We include the UnqualifiedODataUriResolver 
-                    var parser = new ODataUriParser(this.iedmModel, serviceRoot, fullUri)
-                    {
-                        Resolver = new UnqualifiedODataUriResolver { EnableCaseInsensitive = true }
-                    };
-
-                    ODataUri odatauri = parser.ParseUri();
                     StringBuilder snippet = new StringBuilder();
 
                     //Fomulate all resources path
-                    snippet = GenerateResourcesPath(odatauri);
+                    snippet = GenerateResourcesPath(oDataUri);
 
                     /********************************/
                     /**Formulate the Query options**/
                     /*******************************/
 
-                    if (odatauri.Filter != null)
+                    if (oDataUri.Filter != null)
                     {
-                        snippet.Append(FilterExpression(odatauri, fullUri).ToString());
+                        snippet.Append(FilterExpression(oDataUri, requestUri).ToString());
                     }
 
-                    if (odatauri.SelectAndExpand != null)
+                    if (oDataUri.SelectAndExpand != null)
                     {
-                        snippet.Append(SelectExpression(odatauri, fullUri).ToString());
+                        snippet.Append(SelectExpression(oDataUri, requestUri).ToString());
                     }
 
-                    if (odatauri.Search != null)
+                    if (oDataUri.Search != null)
                     {
-                        snippet.Append(SearchExpression(odatauri).ToString());
+                        snippet.Append(SearchExpression(oDataUri).ToString());
                     }
 
-                    if (odatauri.OrderBy != null)
+                    if (oDataUri.OrderBy != null)
                     {
-                        snippet.Append(OrderbyExpression(odatauri, fullUri).ToString());
+                        snippet.Append(OrderbyExpression(oDataUri, requestUri).ToString());
                     }
 
-                    if (odatauri.Skip != null)
+                    if (oDataUri.Skip != null)
                     {
-                        snippet.Append(SkipExpression(odatauri).ToString());
+                        snippet.Append(SkipExpression(oDataUri).ToString());
                     }
 
-                    if (odatauri.Top != null)
+                    if (oDataUri.Top != null)
                     {
-                        snippet.Append(TopExpression(odatauri).ToString());
+                        snippet.Append(TopExpression(oDataUri).ToString());
                     }
 
                     snippet.Append(".GetAsync();");
 
                     return snippet.ToString();
                 }
-                else if (requestPayload.Method == HttpMethod.Post)
+                else if (httpMethod == HttpMethod.Post)
                 {
                     //TODO
                     return "POST Result";
@@ -178,9 +168,8 @@ namespace CodeSnippetsReflection
             // lets append all resources
             foreach (var item in odatauri.Path)
             {
-                if (item.GetType() == typeof(KeySegment))
+                if (item is KeySegment keySegment)
                 {
-                    KeySegment keySegment = (KeySegment)item;
                     resourcesPath.Append($@"[");
 
                     foreach (KeyValuePair<string, object> keyValuePair in keySegment.Keys)
@@ -191,6 +180,32 @@ namespace CodeSnippetsReflection
                     }
 
                     resourcesPath.Append($@"]");
+                }
+                else if (item is OperationSegment operationSegment)
+                {
+                    resourcesPath.Append("." + UppercaseFirstLetter(operationSegment.Identifier) + "(");
+                    foreach (var parameter in operationSegment.Parameters)
+                    {
+                        if (parameter.Value is ConvertNode convertNode)
+                        {
+                            if (convertNode.Source is ConstantNode constantNode)
+                            {
+                                resourcesPath.Append(constantNode.LiteralText + ", ");
+                            }
+                        }
+                        else if(parameter.Value is ConstantNode constantNode)
+                        {
+                            resourcesPath.Append(constantNode.LiteralText + ", ");
+                        }
+                    }
+
+                    if (operationSegment.Parameters.Any())
+                    {
+                        //remove any parameters
+                        resourcesPath.Remove(resourcesPath.Length - 2, 2);
+                    }
+
+                    resourcesPath.Append(")");
                 }
                 else
                 {
@@ -244,8 +259,6 @@ namespace CodeSnippetsReflection
                         selectExpandExpression.Append(si.Identifier + ",");
                     }
                 }
-                //selectExpandExpression.Remove(selectExpandExpression.Length - 1, 1);
-                //selectExpandExpression.Append("\")");
             }
 
             if(select)
