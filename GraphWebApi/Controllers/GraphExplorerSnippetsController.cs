@@ -57,7 +57,7 @@ namespace GraphWebApi.Controllers
                 using (HttpRequestMessage requestPayload = await tempRequest.Content.ReadAsHttpRequestMessageAsync().ConfigureAwait(false))
                 {
                     var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
-                    return new OkObjectResult(response);
+                    return new StringResult(response);
                 }
             }
             catch (Exception e)
@@ -65,6 +65,23 @@ namespace GraphWebApi.Controllers
                 //TODO handle this more explicitly. This is most likely a parsing error caused by malformed HTTP data
                 return new BadRequestObjectResult(e);
             }
+        }
+    }
+
+    public class StringResult : IActionResult
+    {
+        private readonly string value;
+
+        public StringResult(string value)
+        {
+            this.value = value;
+        }
+        public async Task ExecuteResultAsync(ActionContext context)
+        {
+            context.HttpContext.Response.ContentType = "text/plain";
+            var sw = new StreamWriter(context.HttpContext.Response.Body);
+            sw.Write(this.value);
+            await sw.FlushAsync();
         }
     }
 }
