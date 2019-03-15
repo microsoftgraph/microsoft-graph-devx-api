@@ -161,6 +161,32 @@ namespace CodeSnippetsReflection
             }
         }
 
+
+
+        public string GenerateJavascriptSnippet(HttpRequestMessage requestPayload, string serviceRootUrl) {
+
+            var metamodel = GetModel(serviceRootUrl);
+            var model = new SnippetModel(requestPayload, serviceRootUrl, metamodel);
+
+            var sb = new StringBuilder();
+
+            sb.Append("var client = Client.Init(...);\n");
+            sb.Append($"var {model.responseVariableName} = client.api('{model.Path}'Request({GetJavascriptOptions(model)})) ");
+
+            return sb.ToString();
+        }
+
+        public object GetJavascriptOptions(SnippetModel model)
+        {
+            throw new NotImplementedException();
+        }
+
+        private IEdmModel GetModel(string serviceRootUrl)
+        {
+            throw new NotImplementedException();
+        }
+
+
         /// <summary>
         /// Formulates the resources part of the generated snippets
         /// </summary>
