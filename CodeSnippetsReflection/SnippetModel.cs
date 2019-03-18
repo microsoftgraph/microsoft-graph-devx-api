@@ -37,7 +37,7 @@ namespace CodeSnippetsReflection
             this.ODataUri = GetODataUri(new Uri(serviceRootUrl), requestPayload.RequestUri);
             this.ResponseVariableName = ODataUri.Path.LastOrDefault()?.Identifier;
             this.Segments = ODataUri.Path.ToList();
-            this.Path = GetPath(ODataUri.Path);
+            this.Path = Uri.UnescapeDataString(requestPayload.RequestUri.AbsolutePath.Substring(5));
             this.ApiVersion = serviceRootUrl.Substring(serviceRootUrl.Length - 4);
             this.SelectFieldList = new List<string>();
             this.ExpandFieldList = new List<string>();
@@ -45,23 +45,6 @@ namespace CodeSnippetsReflection
             this.OrderByFieldList = new List<string>();
 
             PopulateQueryFieldLists(requestPayload.RequestUri.Query);
-        }
-
-        /// <summary>
-        /// Helper function to create path string from the odata path collection.
-        /// </summary>
-        /// <param name="path">The OData path that has the collection of path segments</param>
-        private string GetPath(ODataPath path)
-        {
-            StringBuilder pathString = new StringBuilder("/");
-
-            foreach (var pathItem in path)
-            {
-                pathString.Append(pathItem.Identifier);
-                pathString.Append("/");
-            }
-
-            return pathString.ToString();
         }
 
         /// <summary>
