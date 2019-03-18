@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
@@ -13,6 +14,8 @@ namespace CodeSnippetsReflection
         private readonly IEdmModel _edmModel;
         public HttpMethod Method { get; set; }
         public ODataUri ODataUri { get; set; }
+        public string Path { get; set; }
+        public string ApiVersion { get; set; }
         public string ResponseVariableName { get; set; }
         public string SearchExpression { get; set; }
         public List<ODataPathSegment> Segments { get; set; }
@@ -34,12 +37,31 @@ namespace CodeSnippetsReflection
             this.ODataUri = GetODataUri(new Uri(serviceRootUrl), requestPayload.RequestUri);
             this.ResponseVariableName = ODataUri.Path.LastOrDefault()?.Identifier;
             this.Segments = ODataUri.Path.ToList();
+            this.Path = GetPath(ODataUri.Path);
+            this.ApiVersion = serviceRootUrl.Substring(serviceRootUrl.Length - 4);
             this.SelectFieldList = new List<string>();
             this.ExpandFieldList = new List<string>();
             this .FilterFieldList = new List<string>();
             this.OrderByFieldList = new List<string>();
 
             PopulateQueryFieldLists(requestPayload.RequestUri.Query);
+        }
+
+        /// <summary>
+        /// Helper function to create path string from the odata path collection.
+        /// </summary>
+        /// <param name="path">The OData path that has the collection of path segments</param>
+        private string GetPath(ODataPath path)
+        {
+            StringBuilder pathString = new StringBuilder("/");
+
+            foreach (var pathItem in path)
+            {
+                pathString.Append(pathItem.Identifier);
+                pathString.Append("/");
+            }
+
+            return pathString.ToString();
         }
 
         /// <summary>

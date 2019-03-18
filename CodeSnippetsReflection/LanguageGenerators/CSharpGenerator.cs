@@ -37,16 +37,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
 
                         //append the filter to the snippet
-                        snippetBuilder.Append($"\n.Filter(\"{filterResult}\")");
+                        snippetBuilder.Append($"\n\t.Filter(\"{filterResult}\")");
                     }
 
                     //Append any search queries
                     if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
                     {
-                        snippetBuilder.Append($"\n.Search(\"{snippetModel.SearchExpression}\")");
+                        snippetBuilder.Append($"\n\t.Search(\"{snippetModel.SearchExpression}\")");
                     }
 
-                    //Append any select queries
+                    //Append any expand queries
                     if (snippetModel.ExpandFieldList.Any())
                     {
                         var expandResult = new StringBuilder();
@@ -56,8 +56,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
 
                         expandResult.Remove(expandResult.Length - 1, 1);
-                        //append the orderby result to the snippet
-                        snippetBuilder.Append($"\n.Expand(\"{expandResult}\")");
+                        //append the expand result to the snippet
+                        snippetBuilder.Append($"\n\t.Expand(\"{expandResult}\")");
                     }
 
                     //Append any select queries
@@ -70,8 +70,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
 
                         selectResult.Remove(selectResult.Length - 1, 1);
-                        //append the orderby result to the snippet
-                        snippetBuilder.Append($"\n.Select(\"{selectResult}\")");
+                        //append the select result to the snippet
+                        snippetBuilder.Append($"\n\t.Select(\"{selectResult}\")");
                     }
 
                     //Append any orderby queries
@@ -84,40 +84,39 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
 
                         //append the orderby result to the snippet
-                        snippetBuilder.Append($"\n.OrderBy(\"{orderByResult}\")");
+                        snippetBuilder.Append($"\n\t.OrderBy(\"{orderByResult}\")");
                     }
 
                     //Append any skip queries
                     if (snippetModel.ODataUri.Skip.HasValue)
                     {
-                        snippetBuilder.Append($"\n.Skip({snippetModel.ODataUri.Skip})");
+                        snippetBuilder.Append($"\n\t.Skip({snippetModel.ODataUri.Skip})");
                     }
 
                     //Append any skip token queries
                     if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
                     {
-                        snippetBuilder.Append($"\n.SkipToken({snippetModel.ODataUri.SkipToken})");
+                        snippetBuilder.Append($"\n\t.SkipToken({snippetModel.ODataUri.SkipToken})");
                     }
 
                     //Append any top queries
                     if (snippetModel.ODataUri.Top.HasValue)
                     {
-                        snippetBuilder.Append($"\n.Top({snippetModel.ODataUri.Top})");
+                        snippetBuilder.Append($"\n\t.Top({snippetModel.ODataUri.Top})");
                     }
 
                     //Append footers
-                    snippetBuilder.Append(".Request()");
+                    snippetBuilder.Append("\n\t.Request()");
                     snippetBuilder.Append(".GetAsync();");
 
                     return snippetBuilder.ToString();
                 }
 
-
                 throw new NotImplementedException("HTTP method not implemented");
             }
             catch (Exception ex)
             {
-                return ex.Message;
+                throw new Exception(ex.Message);
             }
         }
 
@@ -136,6 +135,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     //handle indexing into collections
                     case KeySegment keySegment:
+                        //append opening brace
                         resourcesPath.Append(@"[");
 
                         foreach (var keyValuePair in keySegment.Keys)
@@ -144,7 +144,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             resourcesPath.Append($"\"{keyValuePair.Value}\"");
                             break;
                         }
-
+                        //append closing brace
                         resourcesPath.Append(@"]");
                         break;
 
