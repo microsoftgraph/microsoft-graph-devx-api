@@ -6,7 +6,7 @@ using System.Text;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
-    class JavaScriptGenerator: ILanguageGenerator
+    public class JavaScriptGenerator
     {
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
@@ -28,67 +28,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
-                    //append the api version if we are working with beta version.
-                    if (snippetModel.ApiVersion.Equals("beta"))
-                    {
-                        snippetBuilder.Append($"\n\t.version('{snippetModel.ApiVersion}')");
-                    }
-
-                    //Append any search queries
-                    if (snippetModel.FilterFieldList.Any())
-                    {
-                        var filterResult = SnippetModel.GetListAsStringForSnippet(snippetModel.FilterFieldList, "");
-                        //append the filter to the snippet
-                        snippetBuilder.Append($"\n\t.filter(\"{filterResult}\")");
-                    }
-
-                    //Append any search queries
-                    if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
-                    {
-                        snippetBuilder.Append($"\n\t.search(\"{snippetModel.SearchExpression}\")");
-                    }
-
-                    //Append any expand queries
-                    if (snippetModel.ExpandFieldList.Any())
-                    {
-                        var expandResult = SnippetModel.GetListAsStringForSnippet(snippetModel.ExpandFieldList, ",");
-                        //append the expand result to the snippet
-                        snippetBuilder.Append($"\n\t.expand(\"{expandResult}\")");
-                    }
-
-                    //Append any select queries
-                    if (snippetModel.SelectFieldList.Any())
-                    {
-                        var selectResult = SnippetModel.GetListAsStringForSnippet(snippetModel.SelectFieldList, ",");
-                        //append the select result to the snippet
-                        snippetBuilder.Append($"\n\t.select(\"{selectResult}\")");
-                    }
-
-                    //Append any orderby queries
-                    if (snippetModel.OrderByFieldList.Any())
-                    {
-                        var orderByResult = SnippetModel.GetListAsStringForSnippet(snippetModel.OrderByFieldList, " ");
-                        //append the orderby result to the snippet
-                        snippetBuilder.Append($"\n\t.orderby(\"{orderByResult}\")");
-                    }
-
-                    //Append any skip queries
-                    if (snippetModel.ODataUri.Skip.HasValue)
-                    {
-                        snippetBuilder.Append($"\n\t.skip({snippetModel.ODataUri.Skip})");
-                    }
-
-                    //Append any skip token queries
-                    if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
-                    {
-                        snippetBuilder.Append($"\n\t.skiptoken({snippetModel.ODataUri.SkipToken})");
-                    }
-
-                    //Append any top queries
-                    if (snippetModel.ODataUri.Top.HasValue)
-                    {
-                        snippetBuilder.Append($"\n\t.top({snippetModel.ODataUri.Top})");
-                    }
+                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, new JavascriptExpressions()));
 
                     snippetBuilder.Append("\n\t.get();");
 
@@ -104,5 +44,25 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 throw new Exception(ex.Message);
             }
         }
+    }
+
+    class JavascriptExpressions : LanguageExpressions
+    {
+        public override string FilterExpression => "\n\t.filter('{0}')"; 
+        public override string SearchExpression => "\n\t.search('{0}')"; 
+        public override string ExpandExpression => "\n\t.expand('{0}')"; 
+        public override string SelectExpression => "\n\t.select('{0}')"; 
+        public override string OrderByExpression => "\n\t.orderby('{0}')"; 
+        public override string SkipExpression => "\n\t.skip('{0}')"; 
+        public override string SkipTokenExpression  => "\n\t.skiptoken('{0}')"; 
+        public override string TopExpression => "\n\t.top('{0}')"; 
+
+        public override string FilterExpressionDelimiter => ",";
+
+        public override string ExpandExpressionDelimiter => ",";
+
+        public override string SelectExpressionDelimiter => ",";
+
+        public override string OrderByExpressionDelimiter => " ";
     }
 }

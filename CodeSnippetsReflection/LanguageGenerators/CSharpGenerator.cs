@@ -6,7 +6,7 @@ using System.Text;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
-    public class CSharpGenerator : ILanguageGenerator
+    public class CSharpGenerator
     {
         /// <summary>
         /// Formulates the requested Graph snippets and returns it as string
@@ -27,62 +27,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //Generate the Resources path for Csharp
                     snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
 
-                    //Append any filter queries
-                    if (snippetModel.FilterFieldList.Any())
-                    {
-                        var filterResult = SnippetModel.GetListAsStringForSnippet(snippetModel.FilterFieldList, ",");
-                        //append the filter to the snippet
-                        snippetBuilder.Append($"\n\t.Filter(\"{filterResult}\")");
-                    }
-
-                    //Append any search queries
-                    if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
-                    {
-                        snippetBuilder.Append($"\n\t.Search(\"{snippetModel.SearchExpression}\")");
-                    }
-
-                    //Append any expand queries
-                    if (snippetModel.ExpandFieldList.Any())
-                    {
-                        var expandResult = SnippetModel.GetListAsStringForSnippet(snippetModel.ExpandFieldList, ",");
-                        //append the expand result to the snippet
-                        snippetBuilder.Append($"\n\t.Expand(\"{expandResult}\")");
-                    }
-
-                    //Append any select queries
-                    if (snippetModel.SelectFieldList.Any())
-                    {
-                        var selectResult = SnippetModel.GetListAsStringForSnippet(snippetModel.SelectFieldList, ",");
-                        //append the select result to the snippet
-                        snippetBuilder.Append($"\n\t.Select(\"{selectResult}\")");
-                    }
-
-                    //Append any orderby queries
-                    if (snippetModel.OrderByFieldList.Any())
-                    {
-                        var orderByResult = SnippetModel.GetListAsStringForSnippet(snippetModel.OrderByFieldList, " ");
-                        //append the orderby result to the snippet
-                        snippetBuilder.Append($"\n\t.OrderBy(\"{orderByResult}\")");
-                    }
-
-                    //Append any skip queries
-                    if (snippetModel.ODataUri.Skip.HasValue)
-                    {
-                        snippetBuilder.Append($"\n\t.Skip({snippetModel.ODataUri.Skip})");
-                    }
-
-                    //Append any skip token queries
-                    if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
-                    {
-                        snippetBuilder.Append($"\n\t.SkipToken({snippetModel.ODataUri.SkipToken})");
-                    }
-
-                    //Append any top queries
-                    if (snippetModel.ODataUri.Top.HasValue)
-                    {
-                        snippetBuilder.Append($"\n\t.Top({snippetModel.ODataUri.Top})");
-                    }
-
+                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel,new CSharpExpressions())); 
                     //Append footers
                     snippetBuilder.Append("\n\t.Request()");
                     snippetBuilder.Append(".GetAsync();");
@@ -183,5 +128,21 @@ namespace CodeSnippetsReflection.LanguageGenerators
             a[0] = char.ToUpper(a[0]);
             return new string(a);
         }
+    }
+
+    class CSharpExpressions : LanguageExpressions
+    {
+        public override string FilterExpression => "\n\t.Filter(\"{0}\")"; 
+        public override string SearchExpression => "\n\t.Search(\"{0}\")"; 
+        public override string ExpandExpression => "\n\t.Expand(\"{0}\")"; 
+        public override string SelectExpression => "\n\t.Select(\"{0}\")"; 
+        public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")"; 
+        public override string SkipExpression => "\n\t.Skip(\"{0}\")"; 
+        public override string SkipTokenExpression => "\n\t.SkipToken(\"{0}\")"; 
+        public override string TopExpression => "\n\t.Top(\"{0}\")";
+        public override string FilterExpressionDelimiter => ",";
+        public override string ExpandExpressionDelimiter => ",";
+        public override string SelectExpressionDelimiter => ",";
+        public override string OrderByExpressionDelimiter => " ";
     }
 }
