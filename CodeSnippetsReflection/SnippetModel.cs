@@ -47,6 +47,24 @@ namespace CodeSnippetsReflection
             PopulateQueryFieldLists(requestPayload.RequestUri.Query);
         }
 
+        public static string GetListAsStringForSnippet(List<string> fieldList , string delimiter)
+        {
+            var result = new StringBuilder();
+            foreach (var queryOption in fieldList)
+            {
+                result.Append(queryOption + delimiter);
+            }
+            if (!string.IsNullOrEmpty(delimiter))
+            {
+                result.Remove(result.Length - delimiter.Length, delimiter.Length);
+            }
+
+            return result.ToString();
+            
+        }
+
+
+
         /// <summary>
         /// This function creates a Odata Uri object from the serviceRootUri and the RequestUri
         /// </summary>

@@ -13,7 +13,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
             try
             {
                 var snippetBuilder = new StringBuilder();
-                snippetBuilder.Append("var client = Client.init(...);\n");
+                //setup the auth 
+                snippetBuilder.Append("// Some callback function\n");
+                snippetBuilder.Append("const authProvider: AuthProvider = (callback: AuthProviderCallback) => { \n");
+                snippetBuilder.Append("\t// Your logic for getting and refreshing accessToken \n");
+                snippetBuilder.Append("\t// Error should be passed in case of error while authenticating \n");
+                snippetBuilder.Append("\t// accessToken should be passed upon successful authentication \n");
+                snippetBuilder.Append("\tcallback(error, accessToken);\n};\n\n");
+                snippetBuilder.Append("let options: Options = {\n");
+                snippetBuilder.Append("\t\tauthProvider,\n};\n\n");
+                snippetBuilder.Append("const client = Client.init(options);\n\n");
+
                 snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = client.api('{snippetModel.Path}')");
 
                 if (snippetModel.Method == HttpMethod.Get)
@@ -27,12 +37,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //Append any search queries
                     if (snippetModel.FilterFieldList.Any())
                     {
-                        var filterResult = new StringBuilder();
-                        foreach (var queryOption in snippetModel.FilterFieldList)
-                        {
-                            filterResult.Append(queryOption);
-                        }
-
+                        var filterResult = SnippetModel.GetListAsStringForSnippet(snippetModel.FilterFieldList, "");
                         //append the filter to the snippet
                         snippetBuilder.Append($"\n\t.filter(\"{filterResult}\")");
                     }
@@ -46,13 +51,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //Append any expand queries
                     if (snippetModel.ExpandFieldList.Any())
                     {
-                        var expandResult = new StringBuilder();
-                        foreach (var queryOption in snippetModel.ExpandFieldList)
-                        {
-                            expandResult.Append(queryOption + ",");
-                        }
-
-                        expandResult.Remove(expandResult.Length - 1, 1);
+                        var expandResult = SnippetModel.GetListAsStringForSnippet(snippetModel.ExpandFieldList, ",");
                         //append the expand result to the snippet
                         snippetBuilder.Append($"\n\t.expand(\"{expandResult}\")");
                     }
@@ -60,13 +59,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //Append any select queries
                     if (snippetModel.SelectFieldList.Any())
                     {
-                        var selectResult = new StringBuilder();
-                        foreach (var queryOption in snippetModel.SelectFieldList)
-                        {
-                            selectResult.Append(queryOption + ",");
-                        }
-
-                        selectResult.Remove(selectResult.Length - 1, 1);
+                        var selectResult = SnippetModel.GetListAsStringForSnippet(snippetModel.SelectFieldList, ",");
                         //append the select result to the snippet
                         snippetBuilder.Append($"\n\t.select(\"{selectResult}\")");
                     }
@@ -74,12 +67,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //Append any orderby queries
                     if (snippetModel.OrderByFieldList.Any())
                     {
-                        var orderByResult = new StringBuilder();
-                        foreach (var queryOption in snippetModel.OrderByFieldList)
-                        {
-                            orderByResult.Append(queryOption + " ");
-                        }
-
+                        var orderByResult = SnippetModel.GetListAsStringForSnippet(snippetModel.OrderByFieldList, " ");
                         //append the orderby result to the snippet
                         snippetBuilder.Append($"\n\t.orderby(\"{orderByResult}\")");
                     }
@@ -102,7 +90,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         snippetBuilder.Append($"\n\t.top({snippetModel.ODataUri.Top})");
                     }
 
-                    snippetBuilder.Append("\n\t.get(...);");
+                    snippetBuilder.Append("\n\t.get();");
 
                     return snippetBuilder.ToString();
                 }
