@@ -6,18 +6,18 @@ namespace CodeSnippetsReflection
 {
     public abstract class LanguageExpressions
     {
-        abstract public string FilterExpression { get;  }
-        abstract public string FilterExpressionDelimiter { get; }
-        abstract public string ExpandExpression { get;  }
-        abstract public string ExpandExpressionDelimiter { get; }
-        abstract public string SelectExpression { get;  }
-        abstract public string SelectExpressionDelimiter { get; }
-        abstract public string OrderByExpression { get;  }
-        abstract public string OrderByExpressionDelimiter { get; }
-        abstract public string SkipExpression { get;  }
-        abstract public string SkipTokenExpression { get;  }
-        abstract public string TopExpression { get;  }
-        abstract public string SearchExpression { get; }
+        public abstract string FilterExpression { get;  }
+        public abstract string FilterExpressionDelimiter { get; }
+        public abstract string ExpandExpression { get;  }
+        public abstract string ExpandExpressionDelimiter { get; }
+        public abstract string SelectExpression { get;  }
+        public abstract string SelectExpressionDelimiter { get; }
+        public abstract string OrderByExpression { get;  }
+        public abstract string OrderByExpressionDelimiter { get; }
+        public abstract string SkipExpression { get;  }
+        public abstract string SkipTokenExpression { get;  }
+        public abstract string TopExpression { get;  }
+        public abstract string SearchExpression { get; }
 
     }
 }

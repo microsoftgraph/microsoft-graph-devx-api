@@ -7,29 +7,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
 {
     public static class CommonGenerator
     {
-        public static string GetListAsStringForSnippet(List<string> fieldList, string delimiter)
-        {
-            var result = new StringBuilder();
-            foreach (var queryOption in fieldList)
-            {
-                result.Append(queryOption + delimiter);
-            }
-            if (!string.IsNullOrEmpty(delimiter))
-            {
-                result.Remove(result.Length - delimiter.Length, delimiter.Length);
-            }
-
-            return result.ToString();
-
-        }
-
+        /// <summary>
+        /// Language agnostic function to generate Query section of code snippet 
+        /// </summary>
+        /// <param name="snippetModel">Model of the snippet</param>
+        /// <param name="languageExpressions">Instance of <see cref="LanguageExpressions"/> that holds the expressions for the specific language</param>
         public static string GenerateQuerySection(SnippetModel snippetModel, LanguageExpressions languageExpressions)
         {
             var snippetBuilder = new StringBuilder();
             //Append any filter queries
             if (snippetModel.FilterFieldList.Any())
             {
-                var filterResult = GetListAsStringForSnippet(snippetModel.FilterFieldList, ",");
+                var filterResult = GetListAsStringForSnippet(snippetModel.FilterFieldList, languageExpressions.FilterExpressionDelimiter);
                 //append the filter to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.FilterExpression, filterResult));
             }
@@ -43,7 +32,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any expand queries
             if (snippetModel.ExpandFieldList.Any())
             {
-                var expandResult = GetListAsStringForSnippet(snippetModel.ExpandFieldList, ",");
+                var expandResult = GetListAsStringForSnippet(snippetModel.ExpandFieldList, languageExpressions.FilterExpressionDelimiter);
                 //append the expand result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, expandResult));
             }
@@ -51,7 +40,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any select queries
             if (snippetModel.SelectFieldList.Any())
             {
-                var selectResult = GetListAsStringForSnippet(snippetModel.SelectFieldList, ",");
+                var selectResult = GetListAsStringForSnippet(snippetModel.SelectFieldList, languageExpressions.SelectExpressionDelimiter);
                 //append the select result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.SelectExpression, selectResult));
             }
@@ -59,7 +48,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any orderby queries
             if (snippetModel.OrderByFieldList.Any())
             {
-                var orderByResult = GetListAsStringForSnippet(snippetModel.OrderByFieldList, " ");
+                var orderByResult = GetListAsStringForSnippet(snippetModel.OrderByFieldList, languageExpressions.OrderByExpressionDelimiter);
                 //append the orderby result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.OrderByExpression, orderByResult));
             }
@@ -83,6 +72,27 @@ namespace CodeSnippetsReflection.LanguageGenerators
             }
 
             return snippetBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Helper function to join string list into one string delimited with a desired character
+        /// </summary>
+        /// <param name="fieldList">List of strings that are to be concatenated to a string </param>
+        /// <param name="delimiter">Delimiter to be used to join the string elements</param>
+        private static string GetListAsStringForSnippet(List<string> fieldList, string delimiter)
+        {
+            var result = new StringBuilder();
+            foreach (var queryOption in fieldList)
+            {
+                result.Append(queryOption + delimiter);
+            }
+            if (!string.IsNullOrEmpty(delimiter))
+            {
+                result.Remove(result.Length - delimiter.Length, delimiter.Length);
+            }
+
+            return result.ToString();
+
         }
     }
 }

@@ -6,14 +6,15 @@ using System.Text;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
-    public class CSharpGenerator
+    public static class CSharpGenerator
     {
         /// <summary>
-        /// Formulates the requested Graph snippets and returns it as string
+        /// Formulates the requested Graph snippets and returns it as string for Csharp
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
+        /// <param name="languageExpressions">The language expressions to be used for code Gen</param>
         /// <returns>String of the snippet in Csharp code</returns>
-        public string GenerateCodeSnippet(SnippetModel snippetModel)
+        public static string GenerateCodeSnippet(SnippetModel snippetModel, LanguageExpressions languageExpressions)
         {
             var snippetBuilder = new StringBuilder();
 
@@ -27,7 +28,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //Generate the Resources path for Csharp
                     snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
 
-                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel,new CSharpExpressions())); 
+                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions)); 
                     //Append footers
                     snippetBuilder.Append("\n\t.Request()");
                     snippetBuilder.Append(".GetAsync();");
@@ -48,9 +49,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
         /// <returns>String of the resources in Csharp code</returns>
-        private string CSharpGenerateResourcesPath(SnippetModel snippetModel)
+        private static string CSharpGenerateResourcesPath(SnippetModel snippetModel)
         {
-            StringBuilder resourcesPath = new StringBuilder();
+            var resourcesPath = new StringBuilder();
             // lets append all resources
             foreach (var item in snippetModel.Segments)
             {
@@ -130,7 +131,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
     }
 
-    class CSharpExpressions : LanguageExpressions
+    internal class CSharpExpressions : LanguageExpressions
     {
         public override string FilterExpression => "\n\t.Filter(\"{0}\")"; 
         public override string SearchExpression => "\n\t.Search(\"{0}\")"; 

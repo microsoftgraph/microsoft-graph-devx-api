@@ -6,9 +6,15 @@ using System.Text;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
-    public class JavaScriptGenerator
+    public static class JavaScriptGenerator
     {
-        public string GenerateCodeSnippet(SnippetModel snippetModel)
+        /// <summary>
+        /// Formulates the requested Graph snippets and returns it as string for JavaScript
+        /// </summary>
+        /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
+        /// <param name="languageExpressions">The language expressions to be used for code Gen</param>
+        /// <returns>String of the snippet in Csharp code</returns>
+        public static string GenerateCodeSnippet(SnippetModel snippetModel , LanguageExpressions languageExpressions)
         {
             try
             {
@@ -28,7 +34,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
-                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, new JavascriptExpressions()));
+                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
 
                     snippetBuilder.Append("\n\t.get();");
 
@@ -46,7 +52,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
     }
 
-    class JavascriptExpressions : LanguageExpressions
+    internal class JavascriptExpressions : LanguageExpressions
     {
         public override string FilterExpression => "\n\t.filter('{0}')"; 
         public override string SearchExpression => "\n\t.search('{0}')"; 

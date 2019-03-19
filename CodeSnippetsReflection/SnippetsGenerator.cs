@@ -16,6 +16,8 @@ namespace CodeSnippetsReflection
         private Lazy<IEdmModel> IedmModelBeta { get; set; }
         private Uri ServiceRootV1 { get; set; }
         private Uri ServiceRootBeta { get; set; }
+        private JavascriptExpressions JavascriptExpressions { get; set; }
+        private CSharpExpressions CSharpExpressions { get; set; }
 
         /// <summary>
         /// Class holding the Edm model and request processing for snippet generations
@@ -23,6 +25,8 @@ namespace CodeSnippetsReflection
         public SnippetsGenerator()
         {
             LoadGraphMetadata();
+            JavascriptExpressions = new JavascriptExpressions();
+            CSharpExpressions = new CSharpExpressions();
         }
 
         /// <summary>
@@ -51,12 +55,10 @@ namespace CodeSnippetsReflection
             switch (language.ToLower())
             {
                 case "c#":
-                    var cSharpGenerator = new CSharpGenerator();
-                    return cSharpGenerator.GenerateCodeSnippet(snippetModel);
+                    return CSharpGenerator.GenerateCodeSnippet(snippetModel, CSharpExpressions);
 
                 case "javascript":
-                    var javaScriptGenerator = new JavaScriptGenerator();
-                    return javaScriptGenerator.GenerateCodeSnippet(snippetModel);
+                    return JavaScriptGenerator.GenerateCodeSnippet(snippetModel, JavascriptExpressions);
 
                 default:
                     throw new Exception("Invalid Language selected");
