@@ -23,6 +23,7 @@ namespace CodeSnippetsReflection
         public List<string> ExpandFieldList { get; set; }
         public List<string> FilterFieldList { get; set; }
         public List<string> OrderByFieldList { get; set; }
+        public IEnumerable<KeyValuePair<string, IEnumerable<string>>> RequestHeaders { get; set; }
 
         /// <summary>
         /// Model for the information needed to create a snippet from the request message
@@ -43,6 +44,7 @@ namespace CodeSnippetsReflection
             this.ExpandFieldList = new List<string>();
             this .FilterFieldList = new List<string>();
             this.OrderByFieldList = new List<string>();
+            this.RequestHeaders = requestPayload.Headers;
 
             PopulateQueryFieldLists(requestPayload.RequestUri.Query);
         }

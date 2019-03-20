@@ -34,6 +34,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
+                    if(snippetModel.ApiVersion.Equals("beta"))
+                    {
+                        snippetBuilder.Append("\n\t.version('beta')");
+                    }
                     snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
 
                     snippetBuilder.Append("\n\t.get();");
@@ -70,5 +74,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string SelectExpressionDelimiter => ",";
 
         public override string OrderByExpressionDelimiter => " ";
+
+        public override string HeaderExpression => "\n\t.header('{0}','{1}')";
     }
 }

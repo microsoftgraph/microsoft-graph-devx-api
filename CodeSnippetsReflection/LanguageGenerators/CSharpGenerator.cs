@@ -28,10 +28,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //Generate the Resources path for Csharp
                     snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
 
+                    snippetBuilder.Append("\n\t.Request()");
                     snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions)); 
                     //Append footers
-                    snippetBuilder.Append("\n\t.Request()");
-                    snippetBuilder.Append(".GetAsync();");
+                    snippetBuilder.Append("\n\t.GetAsync();");
 
                     return snippetBuilder.ToString();
                 }
@@ -145,5 +145,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string ExpandExpressionDelimiter => ",";
         public override string SelectExpressionDelimiter => ",";
         public override string OrderByExpressionDelimiter => " ";
+        public override string HeaderExpression => "\n\t.Header(\"{0}\",\"{1}\")";
     }
 }

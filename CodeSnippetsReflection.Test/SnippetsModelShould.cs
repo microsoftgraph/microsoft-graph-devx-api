@@ -79,5 +79,21 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal("Irene McGowen", snippetModel.SearchExpression);
         }
 
+        [Fact]
+        public void PopulateHeadersCollection()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/?$search=\"Irene McGowen\"");
+            requestPayload.Headers.Add("Prefer", "kenya-timezone");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert
+            Assert.Equal("Irene McGowen", snippetModel.SearchExpression);
+            Assert.Equal("Prefer", snippetModel.RequestHeaders.First().Key);
+            Assert.Equal("kenya-timezone", snippetModel.RequestHeaders.First().Value.First());
+        }
+
     }
 }

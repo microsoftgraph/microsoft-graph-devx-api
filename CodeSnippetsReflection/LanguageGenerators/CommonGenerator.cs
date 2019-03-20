@@ -15,6 +15,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public static string GenerateQuerySection(SnippetModel snippetModel, LanguageExpressions languageExpressions)
         {
             var snippetBuilder = new StringBuilder();
+
+            //Append any headers section
+            foreach (var headers in snippetModel.RequestHeaders)
+            {
+                //no need to generate source for the host header
+                if (headers.Key.ToLower().Equals("host"))
+                    continue;
+                //append the header to the snippet
+                snippetBuilder.Append(string.Format(languageExpressions.HeaderExpression, headers.Key, headers.Value.First()));
+            }
             //Append any filter queries
             if (snippetModel.FilterFieldList.Any())
             {

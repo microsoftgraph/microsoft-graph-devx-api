@@ -18,6 +18,7 @@ namespace CodeSnippetsReflection
         public abstract string SkipTokenExpression { get;  }
         public abstract string TopExpression { get;  }
         public abstract string SearchExpression { get; }
+        public abstract string HeaderExpression { get; }
 
     }
 }
