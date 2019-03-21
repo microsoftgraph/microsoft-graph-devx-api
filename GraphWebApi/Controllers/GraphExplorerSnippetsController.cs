@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.IO;
 using CodeSnippetsReflection;
 using GraphWebApi.Models;
+using Microsoft.AspNetCore.Http.Internal;
 
 namespace GraphWebApi.Controllers
 {
@@ -41,6 +42,7 @@ namespace GraphWebApi.Controllers
         [Consumes("application/http")]
         public async Task<IActionResult> PostAsync(string lang = "c#")
         {
+            Request.EnableRewind();
             var streamContent = new StreamContent(Request.Body);
             streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
 

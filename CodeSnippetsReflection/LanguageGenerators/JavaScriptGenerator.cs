@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -28,19 +29,32 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 snippetBuilder.Append("\tcallback(error, accessToken);\n};\n\n");
                 snippetBuilder.Append("let options: Options = {\n");
                 snippetBuilder.Append("\t\tauthProvider,\n};\n\n");
+                //init the client
                 snippetBuilder.Append("const client = Client.init(options);\n\n");
-
-                snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = client.api('{snippetModel.Path}')");
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
-                    if(snippetModel.ApiVersion.Equals("beta"))
+                    snippetBuilder.Append("const client = Client.init(options);\n\n");
+                    snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = client.api('{snippetModel.Path}')");
+                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
+
+                    if (snippetModel.ApiVersion.Equals("beta"))
                     {
                         snippetBuilder.Append("\n\t.version('beta')");
                     }
-                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
 
                     snippetBuilder.Append("\n\t.get();");
+
+                    return snippetBuilder.ToString();
+                }
+                else if (snippetModel.Method == HttpMethod.Post)
+                {
+                    var name = snippetModel.ResponseVariableName.Substring(0,snippetModel.ResponseVariableName.Length - 1);
+                    snippetBuilder.Append($"const {name} = {snippetModel.RequestBody};");
+                    name = "{"+name+" : "+name+"}";
+                    snippetBuilder.Append("\r\n\r\n");
+                    //TODO check entity type and put in appropiate params
+                    snippetBuilder.Append($"client.api('{snippetModel.Path}').post({name});");
 
                     return snippetBuilder.ToString();
                 }

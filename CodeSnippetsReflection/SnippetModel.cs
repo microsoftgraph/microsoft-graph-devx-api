@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
@@ -24,6 +25,7 @@ namespace CodeSnippetsReflection
         public List<string> FilterFieldList { get; set; }
         public List<string> OrderByFieldList { get; set; }
         public IEnumerable<KeyValuePair<string, IEnumerable<string>>> RequestHeaders { get; set; }
+        public string RequestBody { get; set; }
 
         /// <summary>
         /// Model for the information needed to create a snippet from the request message
@@ -47,6 +49,7 @@ namespace CodeSnippetsReflection
             this.RequestHeaders = requestPayload.Headers;
 
             PopulateQueryFieldLists(requestPayload.RequestUri.Query);
+            GetRequestBodyAsync(requestPayload);
         }
 
         
@@ -140,6 +143,15 @@ namespace CodeSnippetsReflection
             var querySegmentList = fullUriQuerySegment.Split('$');
 
             return querySegmentList;
+        }
+
+        /// <summary>
+        /// Reads the request body from the request payload to save it as a string for later processing
+        /// </summary>
+        /// <param name="requestPayload"><see cref="HttpRequestMessage"/> to read the body from</param>
+        private async void GetRequestBodyAsync(HttpRequestMessage requestPayload)
+        {
+            this.RequestBody = await requestPayload.Content.ReadAsStringAsync();
         }
     }
 

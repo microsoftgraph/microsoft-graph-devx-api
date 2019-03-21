@@ -1,4 +1,5 @@
 ﻿using Microsoft.OData.UriParser;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -20,19 +21,31 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             try
             {
+                snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient();\n");
+
                 if (snippetModel.Method == HttpMethod.Get)
                 {
-                    snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient();\n");
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = await graphClient");
-
                     //Generate the Resources path for Csharp
                     snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
-
                     snippetBuilder.Append("\n\t.Request()");
-                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions)); 
+                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
                     //Append footers
                     snippetBuilder.Append("\n\t.GetAsync();");
 
+                    return snippetBuilder.ToString();
+                }
+                else if (snippetModel.Method == HttpMethod.Post)
+                {
+                    //init the object in the post
+                    snippetBuilder.Append(CSharpConstructorGenerator(snippetModel.RequestBody));
+
+                    snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = await graphClient");
+                    //Generate the Resources path for Csharp
+                    snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
+                    snippetBuilder.Append("\n\t.Request()");
+                    //Append footers
+                    snippetBuilder.Append("\n\t.PostAsync();");
                     return snippetBuilder.ToString();
                 }
 
@@ -113,7 +126,32 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             return resourcesPath.ToString();
         }
+        
+        /// <summary>
+        /// Language agnostic function to generate Object contructor section of a code snippet 
+        /// </summary>
+        public static string CSharpConstructorGenerator(string jsonBody)
+        {
+            dynamic testObj = JsonConvert.DeserializeObject(jsonBody);
+            StringBuilder stringBuilder = new StringBuilder();
+            //new lines :)
+            stringBuilder.Append("\r\n{\r\n");
 
+            foreach (var item in testObj)
+            {
+                string value = JsonConvert.SerializeObject(item.Value);
+                if (item.Value.Type == Newtonsoft.Json.Linq.JTokenType.Array)
+                {
+                    value = "{" + value.Replace("[", "").Replace("]", "") + "}";
+                }
+                stringBuilder.Append("\t" + item.Name + " = " + value.Replace("\n", "").Replace("\r", "") + ",\r\n");
+            }
+            //closing statement
+            stringBuilder.Append("};");
+            //new lines :)
+            stringBuilder.Append("\r\n\r\n");
+            return stringBuilder.ToString();
+        }
         /// <summary>
         /// Helper function to make the first character of a string to be capitalized
         /// </summary>
