@@ -37,16 +37,48 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
-                    //init the object in the post
-                    snippetBuilder.Append(CSharpConstructorGenerator(snippetModel.RequestBody));
+                    if (snippetModel.ODataUri.Path.LastSegment is NavigationPropertySegment navigationPropertySegment)
+                    {
+                        var name = snippetModel.ResponseVariableName.Substring(0, snippetModel.ResponseVariableName.Length - 1);
 
-                    snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = await graphClient");
-                    //Generate the Resources path for Csharp
-                    snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
-                    snippetBuilder.Append("\n\t.Request()");
-                    //Append footers
-                    snippetBuilder.Append("\n\t.PostAsync();");
-                    return snippetBuilder.ToString();
+                        snippetBuilder.Append(CSharpConstructorGenerator(snippetModel.RequestBody, name));
+                        snippetBuilder.Append("await graphClient");
+                        
+                        //Generate the Resources path for Csharp
+                        snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
+                        snippetBuilder.Append("\n\t.Request()");
+                        //Append footers
+                        snippetBuilder.Append($"\n\t.AddAsync({name});");
+                        return snippetBuilder.ToString();
+                    }
+                    else if (snippetModel.ODataUri.Path.LastSegment is OperationSegment operationSegment)
+                    {
+                        dynamic testObj = JsonConvert.DeserializeObject(snippetModel.RequestBody);
+                        foreach (var item in testObj)
+                        {
+                            string value = JsonConvert.SerializeObject(item.Value);
+                            snippetBuilder.Append(CSharpConstructorGenerator(value, item.Name));
+                        }
+                        var parameters = operationSegment.Operations.First().Parameters;
+                        var paramList = "";
+                        foreach (var parameter in parameters)
+                        {
+                            if (parameter.Name.Equals("bindingParameter"))
+                                continue;
+                            paramList = paramList + "," + LowerCaseFirstLetter(parameter.Name);
+                        }
+                        paramList = paramList.Substring(1);
+                        snippetBuilder.Append("await graphClient");
+
+                        //Generate the Resources path for Csharp
+                        snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
+                        snippetBuilder.Append("\n\t.Request()");
+                        //Append footers
+                        
+                        
+                        snippetBuilder.Append($"\n\t.{operationSegment.Identifier}({paramList});");
+                        return snippetBuilder.ToString();
+                    }
                 }
 
                 throw new NotImplementedException("HTTP method not implemented");
@@ -130,21 +162,33 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <summary>
         /// Language agnostic function to generate Object contructor section of a code snippet 
         /// </summary>
-        public static string CSharpConstructorGenerator(string jsonBody)
+        public static string CSharpConstructorGenerator(string jsonBody , string name)
         {
-            dynamic testObj = JsonConvert.DeserializeObject(jsonBody);
             StringBuilder stringBuilder = new StringBuilder();
+            dynamic testObj = JsonConvert.DeserializeObject(jsonBody);
+
+            if (testObj is string)
+            {
+                stringBuilder.Append("var " + name + " = " + testObj + ";");
+                stringBuilder.Append("\r\n\r\n");
+                return stringBuilder.ToString();
+            }
+            stringBuilder.Append("var " + name + " = new " + UppercaseFirstLetter(name));
             //new lines :)
             stringBuilder.Append("\r\n{\r\n");
 
             foreach (var item in testObj)
             {
                 string value = JsonConvert.SerializeObject(item.Value);
-                if (item.Value.Type == Newtonsoft.Json.Linq.JTokenType.Array)
+                if (item.Value.Type == Newtonsoft.Json.Linq.JTokenType.Array || item.Value.Type == null)
                 {
-                    value = "{" + value.Replace("[", "").Replace("]", "") + "}";
+                    //value = "{" + value.Replace("[", "").Replace("]", "") + "}";
+                    stringBuilder.Append("\t" + item.Name + " = " + UppercaseFirstLetter(item.Name) + ",\r\n");
                 }
-                stringBuilder.Append("\t" + item.Name + " = " + value.Replace("\n", "").Replace("\r", "") + ",\r\n");
+                else
+                {
+                    stringBuilder.Append("\t" + item.Name + " = " + value.Replace("\n", "").Replace("\r", "") + ",\r\n");
+                }
             }
             //closing statement
             stringBuilder.Append("};");
@@ -165,6 +209,22 @@ namespace CodeSnippetsReflection.LanguageGenerators
             }
             char[] a = s.ToCharArray();
             a[0] = char.ToUpper(a[0]);
+            return new string(a);
+        }
+
+        /// <summary>
+        /// Helper function to make the first character of a string to be small letter
+        /// </summary>
+        /// <param name="s">Input string to modified</param>
+        /// <returns>Modified string</returns>
+        private static string LowerCaseFirstLetter(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                return string.Empty;
+            }
+            char[] a = s.ToCharArray();
+            a[0] = char.ToLower(a[0]);
             return new string(a);
         }
     }
