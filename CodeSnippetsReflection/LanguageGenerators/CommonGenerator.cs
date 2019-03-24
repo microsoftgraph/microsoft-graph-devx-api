@@ -88,7 +88,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="fieldList">List of strings that are to be concatenated to a string </param>
         /// <param name="delimiter">Delimiter to be used to join the string elements</param>
-        private static string GetListAsStringForSnippet(List<string> fieldList, string delimiter)
+        private static string GetListAsStringForSnippet(IEnumerable<string> fieldList, string delimiter)
         {
             var result = new StringBuilder();
             foreach (var queryOption in fieldList)

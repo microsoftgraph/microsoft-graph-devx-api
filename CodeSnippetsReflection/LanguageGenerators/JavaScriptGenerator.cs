@@ -11,7 +11,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
         /// <param name="languageExpressions">The language expressions to be used for code Gen</param>
-        /// <returns>String of the snippet in Csharp code</returns>
+        /// <returns>String of the snippet in Javascript code</returns>
         public static string GenerateCodeSnippet(SnippetModel snippetModel , LanguageExpressions languageExpressions)
         {
             try
@@ -33,12 +33,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     snippetBuilder.Append("const client = Client.init(options);\n\n");
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = client.api('{snippetModel.Path}')");
+                    //append beta
+                    snippetBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
                     snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
-
-                    if (snippetModel.ApiVersion.Equals("beta"))
-                    {
-                        snippetBuilder.Append("\n\t.version('beta')");
-                    }
 
                     snippetBuilder.Append("\n\t.get();");
 
@@ -46,13 +43,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
+                    //TODO get {name} from json
                     var name = snippetModel.ResponseVariableName.Substring(0,snippetModel.ResponseVariableName.Length - 1);
                     //TODO strip out quotation marks from headers
                     snippetBuilder.Append($"const {name} = {snippetModel.RequestBody};");
                     name = "{"+name+" : "+name+"}";
                     snippetBuilder.Append("\r\n\r\n");
-                    snippetBuilder.Append($"client.api('{snippetModel.Path}').post({name});");
-                    
+                    snippetBuilder.Append($"client.api('{snippetModel.Path}')");
+                    //append beta
+                    snippetBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
+
+                    snippetBuilder.Append($".post({name});");
+
                 }
                 else
                 {
@@ -65,6 +67,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Return string to signifying the endpoint to be used in the snippet
+        /// </summary>
+        /// <param name="apiVersion">Api version of the request</param>
+        /// <returns>String of the snippet in JS code</returns>
+        private static string BetaSectionString(string apiVersion)
+        {
+            return apiVersion.Equals("beta") ? "\n\t.version('beta')" : "";
         }
     }
 

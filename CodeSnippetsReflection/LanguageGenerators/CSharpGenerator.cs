@@ -22,7 +22,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             try
             {
-                snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient();\n");
+                snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient();\r\n\r\n");
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
@@ -55,13 +55,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             break;
 
                         case OperationSegment operationSegment:
-                        
-                            dynamic testObj = JsonConvert.DeserializeObject(snippetModel.RequestBody);
-                            foreach (var item in testObj)
+                            //deserialize the object as the top level contains the list of parameter objects
+                            if (JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
                             {
-                                string value = JsonConvert.SerializeObject(item.Value);
-                                snippetBuilder.Append(CSharpConstructorGenerator(value, item.Name));
+                                foreach (var (key, jToken) in testObj)
+                                {
+                                    var value = JsonConvert.SerializeObject(jToken);
+                                    snippetBuilder.Append(CSharpConstructorGenerator(value, key));
+                                }
                             }
+
                             var parameters = operationSegment.Operations.First().Parameters;
                             var paramList = "";
                             foreach (var parameter in parameters)
@@ -177,7 +180,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 case string _:
                     stringBuilder.Append("var " + name + " = " + testObj + ";");
-                    stringBuilder.Append("\r\n\r\n");
                     break;
                 case JObject jObject:
                     stringBuilder.Append("var " + name + " = new " + UppercaseFirstLetter(name));
@@ -187,22 +189,48 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     foreach (var (key, jToken) in jObject)
                     {
                         var value = JsonConvert.SerializeObject(jToken);
-                        if (jToken.Type == JTokenType.Array)
+                        switch (jToken.Type)
                         {
-                            //value = "{" + value.Replace("[", "").Replace("]", "") + "}";
-                            stringBuilder.Append("\t" + key + " = " + UppercaseFirstLetter(key) + ",\r\n");
-                        }
-                        else
-                        {
-                            stringBuilder.Append("\t" + key + " = " + value.Replace("\n", "").Replace("\r", "") + ",\r\n");
+                            case JTokenType.Array:
+                            case JTokenType.Object:
+                                //new object needs to be constructed so call this function recursively to make it and append it before the current snippet
+                                var newObject = CSharpConstructorGenerator(value,key);
+                                stringBuilder.Append("\t" + UppercaseFirstLetter(key) + " = " + key + ",\r\n");
+                                stringBuilder.Insert(0, newObject);
+                                break;
+                            default:
+                                stringBuilder.Append("\t" + UppercaseFirstLetter(key) + " = " + value.Replace("\n", "").Replace("\r", "") + ",\r\n");
+                                break;
                         }
                     }
                     //closing statement
                     stringBuilder.Append("};");
-                    //new lines :)
-                    stringBuilder.Append("\r\n\r\n");
+                    break;
+                case JArray array:
+                    stringBuilder.Append($"var {name} = new List<{UppercaseFirstLetter(name)}>();\r\n");
+                    var objectList = array.Children<JObject>();
+                    if (objectList.Any())
+                    {
+                        foreach (var item in objectList)
+                        {
+                            foreach (var className in item.Properties())
+                            {
+                                stringBuilder.Append($"{name}.Add(new {UppercaseFirstLetter(className.Name)}());");
+                                //TODO resolve the JSON printed out here
+                                //stringBuilder.Append($"{name}.Add(new {UppercaseFirstLetter(className.Name)}({className.Value}));\r\n");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //TODO resolve the JSON printed out here
+                        stringBuilder.Append($"{name}.Add({array});");
+                    }
+
                     break;
             }
+            //new lines :)
+            stringBuilder.Append("\r\n\r\n");
             return stringBuilder.ToString();
         }
         /// <summary>
