@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
@@ -33,55 +34,60 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //Append footers
                     snippetBuilder.Append("\n\t.GetAsync();");
 
-                    return snippetBuilder.ToString();
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
-                    if (snippetModel.ODataUri.Path.LastSegment is NavigationPropertySegment navigationPropertySegment)
+                    switch (snippetModel.ODataUri.Path.LastSegment)
                     {
-                        var name = snippetModel.ResponseVariableName.Substring(0, snippetModel.ResponseVariableName.Length - 1);
+                        case NavigationPropertySegment _:
+                        case EntitySetSegment _:
+                        
+                            var name = snippetModel.ResponseVariableName.Substring(0, snippetModel.ResponseVariableName.Length - 1);
 
-                        snippetBuilder.Append(CSharpConstructorGenerator(snippetModel.RequestBody, name));
-                        snippetBuilder.Append("await graphClient");
+                            snippetBuilder.Append(CSharpConstructorGenerator(snippetModel.RequestBody, name));
+                            snippetBuilder.Append("await graphClient");
                         
-                        //Generate the Resources path for Csharp
-                        snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
-                        snippetBuilder.Append("\n\t.Request()");
-                        //Append footers
-                        snippetBuilder.Append($"\n\t.AddAsync({name});");
-                        return snippetBuilder.ToString();
-                    }
-                    else if (snippetModel.ODataUri.Path.LastSegment is OperationSegment operationSegment)
-                    {
-                        dynamic testObj = JsonConvert.DeserializeObject(snippetModel.RequestBody);
-                        foreach (var item in testObj)
-                        {
-                            string value = JsonConvert.SerializeObject(item.Value);
-                            snippetBuilder.Append(CSharpConstructorGenerator(value, item.Name));
-                        }
-                        var parameters = operationSegment.Operations.First().Parameters;
-                        var paramList = "";
-                        foreach (var parameter in parameters)
-                        {
-                            if (parameter.Name.Equals("bindingParameter"))
-                                continue;
-                            paramList = paramList + "," + LowerCaseFirstLetter(parameter.Name);
-                        }
-                        paramList = paramList.Substring(1);
-                        snippetBuilder.Append("await graphClient");
+                            //Generate the Resources path for Csharp
+                            snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
+                            snippetBuilder.Append("\n\t.Request()");
+                            //Append footers
+                            snippetBuilder.Append($"\n\t.AddAsync({name});");
+                            break;
 
-                        //Generate the Resources path for Csharp
-                        snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
-                        snippetBuilder.Append("\n\t.Request()");
-                        //Append footers
+                        case OperationSegment operationSegment:
                         
-                        
-                        snippetBuilder.Append($"\n\t.{operationSegment.Identifier}({paramList});");
-                        return snippetBuilder.ToString();
+                            dynamic testObj = JsonConvert.DeserializeObject(snippetModel.RequestBody);
+                            foreach (var item in testObj)
+                            {
+                                string value = JsonConvert.SerializeObject(item.Value);
+                                snippetBuilder.Append(CSharpConstructorGenerator(value, item.Name));
+                            }
+                            var parameters = operationSegment.Operations.First().Parameters;
+                            var paramList = "";
+                            foreach (var parameter in parameters)
+                            {
+                                if (parameter.Name.Equals("bindingParameter"))
+                                    continue;
+                                paramList = paramList + "," + LowerCaseFirstLetter(parameter.Name);
+                            }
+                            paramList = paramList.Substring(1);
+                            snippetBuilder.Append("await graphClient");
+
+                            //Generate the Resources path for Csharp
+                            snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
+                            snippetBuilder.Append("\n\t.Request()");
+                            //Append footers
+                            snippetBuilder.Append($"\n\t.{operationSegment.Identifier}({paramList});");
+                            break;
                     }
                 }
+                else
+                {
+                    throw new NotImplementedException("HTTP method not implemented for C#");
+                }
 
-                throw new NotImplementedException("HTTP method not implemented");
+                return snippetBuilder.ToString();
+                
             }
             catch (Exception ex)
             {
@@ -160,40 +166,43 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
         
         /// <summary>
-        /// Language agnostic function to generate Object contructor section of a code snippet 
+        /// Language agnostic function to generate Object constructor section of a code snippet 
         /// </summary>
         public static string CSharpConstructorGenerator(string jsonBody , string name)
         {
-            StringBuilder stringBuilder = new StringBuilder();
-            dynamic testObj = JsonConvert.DeserializeObject(jsonBody);
+            var stringBuilder = new StringBuilder();
+            var testObj = JsonConvert.DeserializeObject(jsonBody);
 
-            if (testObj is string)
+            switch (testObj)
             {
-                stringBuilder.Append("var " + name + " = " + testObj + ";");
-                stringBuilder.Append("\r\n\r\n");
-                return stringBuilder.ToString();
-            }
-            stringBuilder.Append("var " + name + " = new " + UppercaseFirstLetter(name));
-            //new lines :)
-            stringBuilder.Append("\r\n{\r\n");
+                case string _:
+                    stringBuilder.Append("var " + name + " = " + testObj + ";");
+                    stringBuilder.Append("\r\n\r\n");
+                    break;
+                case JObject jObject:
+                    stringBuilder.Append("var " + name + " = new " + UppercaseFirstLetter(name));
+                    //new lines :)
+                    stringBuilder.Append("\r\n{\r\n");
 
-            foreach (var item in testObj)
-            {
-                string value = JsonConvert.SerializeObject(item.Value);
-                if (item.Value.Type == Newtonsoft.Json.Linq.JTokenType.Array || item.Value.Type == null)
-                {
-                    //value = "{" + value.Replace("[", "").Replace("]", "") + "}";
-                    stringBuilder.Append("\t" + item.Name + " = " + UppercaseFirstLetter(item.Name) + ",\r\n");
-                }
-                else
-                {
-                    stringBuilder.Append("\t" + item.Name + " = " + value.Replace("\n", "").Replace("\r", "") + ",\r\n");
-                }
+                    foreach (var (key, jToken) in jObject)
+                    {
+                        var value = JsonConvert.SerializeObject(jToken);
+                        if (jToken.Type == JTokenType.Array)
+                        {
+                            //value = "{" + value.Replace("[", "").Replace("]", "") + "}";
+                            stringBuilder.Append("\t" + key + " = " + UppercaseFirstLetter(key) + ",\r\n");
+                        }
+                        else
+                        {
+                            stringBuilder.Append("\t" + key + " = " + value.Replace("\n", "").Replace("\r", "") + ",\r\n");
+                        }
+                    }
+                    //closing statement
+                    stringBuilder.Append("};");
+                    //new lines :)
+                    stringBuilder.Append("\r\n\r\n");
+                    break;
             }
-            //closing statement
-            stringBuilder.Append("};");
-            //new lines :)
-            stringBuilder.Append("\r\n\r\n");
             return stringBuilder.ToString();
         }
         /// <summary>
@@ -207,7 +216,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 return string.Empty;
             }
-            char[] a = s.ToCharArray();
+            var a = s.ToCharArray();
             a[0] = char.ToUpper(a[0]);
             return new string(a);
         }
@@ -223,7 +232,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 return string.Empty;
             }
-            char[] a = s.ToCharArray();
+            var a = s.ToCharArray();
             a[0] = char.ToLower(a[0]);
             return new string(a);
         }

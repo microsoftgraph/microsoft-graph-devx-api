@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CodeSnippetsReflection
+﻿namespace CodeSnippetsReflection.LanguageGenerators
 {
     public abstract class LanguageExpressions
     {

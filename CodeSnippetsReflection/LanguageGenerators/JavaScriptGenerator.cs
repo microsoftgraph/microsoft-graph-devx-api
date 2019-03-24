@@ -1,7 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using System.Net.Http;
 using System.Text;
 
@@ -45,23 +42,24 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     snippetBuilder.Append("\n\t.get();");
 
-                    return snippetBuilder.ToString();
+                    
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
                     var name = snippetModel.ResponseVariableName.Substring(0,snippetModel.ResponseVariableName.Length - 1);
+                    //TODO strip out quotation marks from headers
                     snippetBuilder.Append($"const {name} = {snippetModel.RequestBody};");
                     name = "{"+name+" : "+name+"}";
                     snippetBuilder.Append("\r\n\r\n");
-                    //TODO check entity type and put in appropiate params
                     snippetBuilder.Append($"client.api('{snippetModel.Path}').post({name});");
-
-                    return snippetBuilder.ToString();
+                    
                 }
                 else
                 {
-                    throw new NotImplementedException("HTTP method not implemented");
+                    throw new NotImplementedException("HTTP method not implemented for Javascript");
                 }
+
+                return snippetBuilder.ToString();
             }
             catch(Exception ex)
             {

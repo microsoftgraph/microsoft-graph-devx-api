@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
@@ -151,7 +149,11 @@ namespace CodeSnippetsReflection
         /// <param name="requestPayload"><see cref="HttpRequestMessage"/> to read the body from</param>
         private async void GetRequestBodyAsync(HttpRequestMessage requestPayload)
         {
-            this.RequestBody = await requestPayload.Content.ReadAsStringAsync();
+            //do not try to read in the content if there isn't any
+            if (null != requestPayload.Content)
+            {
+                this.RequestBody = await requestPayload.Content.ReadAsStringAsync();
+            }
         }
     }
 
