@@ -65,22 +65,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 }
                             }
 
-                            var parameters = operationSegment.Operations.First().Parameters;
-                            var paramList = "";
-                            foreach (var parameter in parameters)
-                            {
-                                if (parameter.Name.Equals("bindingParameter"))
-                                    continue;
-                                paramList = paramList + "," + LowerCaseFirstLetter(parameter.Name);
-                            }
-                            paramList = paramList.Substring(1);
+                            
                             snippetBuilder.Append("await graphClient");
 
                             //Generate the Resources path for Csharp
                             snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
-                            snippetBuilder.Append("\n\t.Request()");
                             //Append footers
-                            snippetBuilder.Append($"\n\t.{operationSegment.Identifier}({paramList});");
+                            snippetBuilder.Append("\n\t.Request()");
+                            snippetBuilder.Append("\n\t.PostAsync()");
                             break;
                     }
                 }
@@ -128,13 +120,30 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        //opening bracket
-                        resourcesPath.Append("." + UppercaseFirstLetter(operationSegment.Identifier) + "(");
-                        foreach (var parameter in operationSegment.Parameters)
+                        if (snippetModel.Method == HttpMethod.Post)
                         {
-                            switch (parameter.Value)
+                            //read parameters from request body
+                            var parameters = operationSegment.Operations.First().Parameters;
+                            var paramList = "";
+                            foreach (var parameter in parameters)
                             {
-                                case ConvertNode convertNode:
+                                if (parameter.Name.Equals("bindingParameter"))
+                                    continue;
+                                paramList = paramList + "," + LowerCaseFirstLetter(parameter.Name);
+                            }
+                            paramList = paramList.Substring(1);
+                            resourcesPath.Append($"\n\t.{operationSegment.Identifier}({paramList});");
+                        }
+                        else
+                        {
+                            //read parameters from url
+                            //opening bracket
+                            resourcesPath.Append("." + UppercaseFirstLetter(operationSegment.Identifier) + "(");
+                            foreach (var parameter in operationSegment.Parameters)
+                            {
+                                switch (parameter.Value)
+                                {
+                                    case ConvertNode convertNode:
                                     {
                                         if (convertNode.Source is ConstantNode constantNode)
                                         {
@@ -142,20 +151,22 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                         }
                                         break;
                                     }
-                                case ConstantNode constantNode:
-                                    resourcesPath.Append(constantNode.LiteralText + ", ");
-                                    break;
+                                    case ConstantNode constantNode:
+                                        resourcesPath.Append(constantNode.LiteralText + ", ");
+                                        break;
+                                }
                             }
-                        }
 
-                        //remove extra characters added after last parameter if we had any params
-                        if (operationSegment.Parameters.Any())
-                        {
-                            resourcesPath.Remove(resourcesPath.Length - 2, 2);
-                        }
+                            //remove extra characters added after last parameter if we had any params
+                            if (operationSegment.Parameters.Any())
+                            {
+                                resourcesPath.Remove(resourcesPath.Length - 2, 2);
+                            }
 
-                        //closing bracket
-                        resourcesPath.Append(")");
+                            //closing bracket
+                            resourcesPath.Append(")");
+                        }
+                        
                         break;
 
                     default:
