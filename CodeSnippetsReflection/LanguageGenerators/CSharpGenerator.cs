@@ -180,7 +180,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
         
         /// <summary>
-        /// Language agnostic function to generate Object constructor section of a code snippet 
+        /// Csharp function to generate Object constructor section of a code snippet 
         /// </summary>
         public static string CSharpConstructorGenerator(string jsonBody , string name)
         {
@@ -194,7 +194,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
                 case JObject jObject:
                     stringBuilder.Append("var " + name + " = new " + UppercaseFirstLetter(name));
-                    //new lines :)
+                    //new lines with opening curly brace
                     stringBuilder.Append("\r\n{\r\n");
 
                     foreach (var (key, jToken) in jObject)
@@ -244,6 +244,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             stringBuilder.Append("\r\n\r\n");
             return stringBuilder.ToString();
         }
+
         /// <summary>
         /// Helper function to make the first character of a string to be capitalized
         /// </summary>

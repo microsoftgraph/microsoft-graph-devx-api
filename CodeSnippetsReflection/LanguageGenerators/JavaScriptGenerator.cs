@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
@@ -17,7 +18,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             try
             {
                 var snippetBuilder = new StringBuilder();
-                //setup the auth 
+                //setup the auth snippet section
                 snippetBuilder.Append("// Some callback function\n");
                 snippetBuilder.Append("const authProvider: AuthProvider = (callback: AuthProviderCallback) => { \n");
                 snippetBuilder.Append("\t// Your logic for getting and refreshing accessToken \n");
@@ -36,23 +37,23 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //append beta
                     snippetBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
                     snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
-
+                    //append footer
                     snippetBuilder.Append("\n\t.get();");
-
                     
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
-                    //TODO get {name} from json
-                    var name = snippetModel.ResponseVariableName.Substring(0,snippetModel.ResponseVariableName.Length - 1);
-                    //TODO strip out quotation marks from headers
-                    snippetBuilder.Append($"const {name} = {snippetModel.RequestBody};");
-                    name = "{"+name+" : "+name+"}";
+                    var name = snippetModel.ResponseVariableName;
+                    //remove the quotation marks from the JSON keys
+                    var pattern = "\"(.*?) *\":";
+                    var javascriptObject = Regex.Replace(snippetModel.RequestBody,pattern, "$1:");
+                    snippetBuilder.Append($"const {name} = {javascriptObject};");
                     snippetBuilder.Append("\r\n\r\n");
                     snippetBuilder.Append($"client.api('{snippetModel.Path}')");
                     //append beta
                     snippetBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
-
+                    //parameter for the post.
+                    name = "{" + name + " : " + name + "}";
                     snippetBuilder.Append($".post({name});");
 
                 }
