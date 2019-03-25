@@ -32,7 +32,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
-                    snippetBuilder.Append("const client = Client.init(options);\n\n");
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = client.api('{snippetModel.Path}')");
                     //append beta
                     snippetBuilder.Append(BetaSectionString(snippetModel.ApiVersion));

@@ -127,7 +127,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             var paramList = "";
                             foreach (var parameter in parameters)
                             {
-                                if (parameter.Name.Equals("bindingParameter"))
+                                if ((parameter.Name.ToLower().Equals("bindingparameter")) || (parameter.Name.ToLower().Equals("bindparameter")))
                                     continue;
                                 paramList = paramList + "," + LowerCaseFirstLetter(parameter.Name);
                             }
@@ -190,7 +190,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             switch (testObj)
             {
                 case string _:
-                    stringBuilder.Append("var " + name + " = " + testObj + ";");
+                    stringBuilder.Append("var " + name + " = \"" + testObj + "\";");
                     break;
                 case JObject jObject:
                     stringBuilder.Append("var " + name + " = new " + UppercaseFirstLetter(name));
@@ -226,7 +226,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         {
                             foreach (var className in item.Properties())
                             {
-                                stringBuilder.Append($"{name}.Add(new {UppercaseFirstLetter(className.Name)}());");
+                                stringBuilder.Append($"{name}.Add(new {UppercaseFirstLetter(className.Name)}());\r\n");
                                 //TODO resolve the JSON printed out here
                                 //stringBuilder.Append($"{name}.Add(new {UppercaseFirstLetter(className.Name)}({className.Value}));\r\n");
                             }
@@ -239,6 +239,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     }
 
                     break;
+                default:
+                    stringBuilder.Append("var " + name + " = " + testObj + ";");
+                    break;
+
             }
             //new lines :)
             stringBuilder.Append("\r\n\r\n");
