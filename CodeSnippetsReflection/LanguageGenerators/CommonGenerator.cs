@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -17,13 +16,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
             var snippetBuilder = new StringBuilder();
 
             //Append any headers section
-            foreach (var headers in snippetModel.RequestHeaders)
+            foreach (var (key, value) in snippetModel.RequestHeaders)
             {
                 //no need to generate source for the host header
-                if (headers.Key.ToLower().Equals("host"))
+                if (key.ToLower().Equals("host"))
                     continue;
                 //append the header to the snippet
-                snippetBuilder.Append(string.Format(languageExpressions.HeaderExpression, headers.Key, headers.Value.First()));
+                snippetBuilder.Append(string.Format(languageExpressions.HeaderExpression, key, value.First()));
             }
             //Append any filter queries
             if (snippetModel.FilterFieldList.Any())
@@ -42,7 +41,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any expand queries
             if (snippetModel.ExpandFieldList.Any())
             {
-                var expandResult = GetListAsStringForSnippet(snippetModel.ExpandFieldList, languageExpressions.FilterExpressionDelimiter);
+                var expandResult = GetListAsStringForSnippet(snippetModel.ExpandFieldList, languageExpressions.ExpandExpressionDelimiter);
                 //append the expand result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, expandResult));
             }
