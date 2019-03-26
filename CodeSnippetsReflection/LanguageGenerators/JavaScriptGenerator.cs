@@ -42,17 +42,22 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
-                    var name = snippetModel.ResponseVariableName;
-                    //remove the quotation marks from the JSON keys
-                    var pattern = "\"(.*?) *\":";
-                    var javascriptObject = Regex.Replace(snippetModel.RequestBody,pattern, "$1:");
-                    snippetBuilder.Append($"const {name} = {javascriptObject};");
-                    snippetBuilder.Append("\r\n\r\n");
+                    var name = "";
+                    if (!string.IsNullOrEmpty(snippetModel.RequestBody))
+                    {
+                        name = snippetModel.ResponseVariableName;
+                        //remove the quotation marks from the JSON keys
+                        var pattern = "\"(.*?) *\":";
+                        var javascriptObject = Regex.Replace(snippetModel.RequestBody, pattern, "$1:");
+                        snippetBuilder.Append($"const {name} = {javascriptObject};");
+                        snippetBuilder.Append("\r\n\r\n");
+                        //parameter for the post.
+                        name = "{" + name + " : " + name + "}";
+                    }
+                             
                     snippetBuilder.Append($"client.api('{snippetModel.Path}')");
                     //append beta
                     snippetBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
-                    //parameter for the post.
-                    name = "{" + name + " : " + name + "}";
                     snippetBuilder.Append($".post({name});");
 
                 }

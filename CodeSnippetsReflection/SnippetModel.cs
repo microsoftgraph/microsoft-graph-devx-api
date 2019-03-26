@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -153,6 +153,10 @@ namespace CodeSnippetsReflection
             if (null != requestPayload.Content)
             {
                 this.RequestBody = await requestPayload.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                this.RequestBody = "";
             }
         }
     }

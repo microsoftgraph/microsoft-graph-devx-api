@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using Microsoft.OData.Edm;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
@@ -37,21 +38,22 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
-                    switch (snippetModel.ODataUri.Path.LastSegment)
+                    var segment = snippetModel.Segments.Last();   
+                    var identifier = segment.Identifier;
+
+                    switch (segment)
                     {
                         case NavigationPropertySegment _:
                         case EntitySetSegment _:
-                        
-                            var name = snippetModel.ResponseVariableName.Substring(0, snippetModel.ResponseVariableName.Length - 1);
-
-                            snippetBuilder.Append(CSharpConstructorGenerator(snippetModel.RequestBody, name));
+                            
+                            snippetBuilder.Append(CSharpConstructorGenerator(segment,snippetModel.RequestBody, identifier));
                             snippetBuilder.Append("await graphClient");
                         
                             //Generate the Resources path for Csharp
                             snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
                             snippetBuilder.Append("\n\t.Request()");
                             //Append footers
-                            snippetBuilder.Append($"\n\t.AddAsync({name});");
+                            snippetBuilder.Append($"\n\t.AddAsync({identifier});");
                             break;
 
                         case OperationSegment operationSegment:
@@ -61,11 +63,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 foreach (var (key, jToken) in testObj)
                                 {
                                     var value = JsonConvert.SerializeObject(jToken);
-                                    snippetBuilder.Append(CSharpConstructorGenerator(value, key));
+                                    snippetBuilder.Append(CSharpConstructorGenerator(segment,value, key));
                                 }
                             }
 
-                            
                             snippetBuilder.Append("await graphClient");
 
                             //Generate the Resources path for Csharp
@@ -131,7 +132,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     continue;
                                 paramList = paramList + "," + LowerCaseFirstLetter(parameter.Name);
                             }
-                            paramList = paramList.Substring(1);
+                            if (paramList.Length > 1)
+                            {
+                                paramList = paramList.Substring(1);
+                            }
+                            
                             resourcesPath.Append($"\n\t.{operationSegment.Identifier}({paramList});");
                         }
                         else
@@ -182,10 +187,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <summary>
         /// Csharp function to generate Object constructor section of a code snippet 
         /// </summary>
-        public static string CSharpConstructorGenerator(string jsonBody , string name)
+        public static string CSharpConstructorGenerator(ODataPathSegment pathSegment, string jsonBody , string name)
         {
             var stringBuilder = new StringBuilder();
             var testObj = JsonConvert.DeserializeObject(jsonBody);
+            var className = CommonGenerator.GetClassNameFromIdentifier(pathSegment, name);
+            className = className.Split(".").Last();
 
             switch (testObj)
             {
@@ -193,7 +200,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     stringBuilder.Append("var " + name + " = \"" + testObj + "\";");
                     break;
                 case JObject jObject:
-                    stringBuilder.Append("var " + name + " = new " + UppercaseFirstLetter(name));
+                    stringBuilder.Append("var " + name + " = new " + className);
                     //new lines with opening curly brace
                     stringBuilder.Append("\r\n{\r\n");
 
@@ -205,7 +212,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             case JTokenType.Array:
                             case JTokenType.Object:
                                 //new object needs to be constructed so call this function recursively to make it and append it before the current snippet
-                                var newObject = CSharpConstructorGenerator(value,key);
+                                var newObject = CSharpConstructorGenerator(pathSegment, value, key);
                                 stringBuilder.Append("\t" + UppercaseFirstLetter(key) + " = " + key + ",\r\n");
                                 stringBuilder.Insert(0, newObject);
                                 break;
@@ -218,18 +225,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     stringBuilder.Append("};");
                     break;
                 case JArray array:
-                    stringBuilder.Append($"var {name} = new List<{UppercaseFirstLetter(name)}>();\r\n");
+                    stringBuilder.Append($"var {name} = new List<{className}>();\r\n");
                     var objectList = array.Children<JObject>();
                     if (objectList.Any())
                     {
                         foreach (var item in objectList)
                         {
-                            foreach (var className in item.Properties())
-                            {
-                                stringBuilder.Append($"{name}.Add(new {UppercaseFirstLetter(className.Name)}());\r\n");
-                                //TODO resolve the JSON printed out here
-                                //stringBuilder.Append($"{name}.Add(new {UppercaseFirstLetter(className.Name)}({className.Value}));\r\n");
-                            }
+                            stringBuilder.Append($"{name}.Add(new {className}());\r\n");
                         }
                     }
                     else
