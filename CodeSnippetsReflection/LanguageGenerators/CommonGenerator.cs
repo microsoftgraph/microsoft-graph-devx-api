@@ -111,7 +111,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
             }
 
-            throw new Exception("No Class Found for Idenfier");
+            throw new Exception("No Class Found for Identifier");
         }
 
         private static string GetClassNameFromEdmType(IEdmType definition, ICollection<string> searchPath)
@@ -138,7 +138,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         elementDefinition = GetEdmElementType(property.Type.Definition);
                         
                         //check if we need to search deeper to search the properties of a nested item
-                        if (searchPath.Count() > 2)
+                        if (searchPath.Count > 2)
                         {
                             //get rid of the root item and do a deeper search
                             var subList = searchPath.Where(x => !x.Equals(searchPath.First())).ToList();
@@ -161,10 +161,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 return innerCollection.ElementType.Definition;
             }
-            else
-            {
-                return edmType;
-            }
+
+            //just return the same value
+            return edmType;
         }
 
 
@@ -173,14 +172,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="fieldList">List of strings that are to be concatenated to a string </param>
         /// <param name="delimiter">Delimiter to be used to join the string elements</param>
-        private static string GetListAsStringForSnippet(IEnumerable<string> fieldList, string delimiter)
+        public static string GetListAsStringForSnippet(IEnumerable<string> fieldList, string delimiter)
         {
             var result = new StringBuilder();
             foreach (var queryOption in fieldList)
             {
                 result.Append(queryOption + delimiter);
             }
-            if (!string.IsNullOrEmpty(delimiter))
+            if (!string.IsNullOrEmpty(delimiter) && !string.IsNullOrEmpty(result.ToString()))
             {
                 result.Remove(result.Length - delimiter.Length, delimiter.Length);
             }

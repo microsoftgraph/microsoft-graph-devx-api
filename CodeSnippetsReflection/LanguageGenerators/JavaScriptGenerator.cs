@@ -48,7 +48,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     {
                         name = snippetModel.ResponseVariableName;
                         //remove the quotation marks from the JSON keys
-                        var pattern = "\"(.*?) *\":";
+                        const string pattern = "\"(.*?) *\":";
                         var javascriptObject = Regex.Replace(snippetModel.RequestBody, pattern, "$1:");
                         snippetBuilder.Append($"const {name} = {javascriptObject};");
                         snippetBuilder.Append("\r\n\r\n");
