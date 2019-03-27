@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using Microsoft.OData.Edm;
+using System.Collections.Generic;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
@@ -38,22 +39,21 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
-                    var segment = snippetModel.Segments.Last();   
-                    var identifier = segment.Identifier;
+                    var segment = snippetModel.Segments.Last();
 
                     switch (segment)
                     {
                         case NavigationPropertySegment _:
                         case EntitySetSegment _:
                             
-                            snippetBuilder.Append(CSharpConstructorGenerator(segment,snippetModel.RequestBody, identifier));
+                            snippetBuilder.Append(CSharpGenerateObjectFromJson(segment,snippetModel.RequestBody, new List<string> { segment.Identifier }, 0));
                             snippetBuilder.Append("await graphClient");
                         
                             //Generate the Resources path for Csharp
                             snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
                             snippetBuilder.Append("\n\t.Request()");
                             //Append footers
-                            snippetBuilder.Append($"\n\t.AddAsync({identifier});");
+                            snippetBuilder.Append($"\n\t.AddAsync({segment.Identifier});");
                             break;
 
                         case OperationSegment operationSegment:
@@ -62,13 +62,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             {
                                 foreach (var (key, jToken) in testObj)
                                 {
-                                    var value = JsonConvert.SerializeObject(jToken);
-                                    snippetBuilder.Append(CSharpConstructorGenerator(segment,value, key));
+                                    var jsonString = JsonConvert.SerializeObject(jToken);
+                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { key }, 0));
                                 }
                             }
 
                             snippetBuilder.Append("await graphClient");
-
                             //Generate the Resources path for Csharp
                             snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
                             //Append footers
@@ -107,7 +106,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //handle indexing into collections
                     case KeySegment keySegment:
                         //append opening brace
-                        resourcesPath.Append(@"[");
+                        resourcesPath.Append("[");
 
                         foreach (var keyValuePair in keySegment.Keys)
                         {
@@ -116,7 +115,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             break;
                         }
                         //append closing brace
-                        resourcesPath.Append(@"]");
+                        resourcesPath.Append("]");
                         break;
 
                     //handle functions/actions and any parameters present into collections
@@ -124,15 +123,15 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         if (snippetModel.Method == HttpMethod.Post)
                         {
                             //read parameters from request body
-                            var parameters = operationSegment.Operations.First().Parameters;
                             var paramList = "";
-                            foreach (var parameter in parameters)
+                            foreach (var parameter in operationSegment.Operations.First().Parameters)
                             {
                                 if ((parameter.Name.ToLower().Equals("bindingparameter")) || (parameter.Name.ToLower().Equals("bindparameter")))
                                     continue;
                                 paramList = paramList + "," + LowerCaseFirstLetter(parameter.Name);
                             }
-                            if (paramList.Length > 1)
+                            //remove extra characters added if we had any params
+                            if (paramList.Any())
                             {
                                 paramList = paramList.Substring(1);
                             }
@@ -142,8 +141,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         else
                         {
                             //read parameters from url
-                            //opening bracket
-                            resourcesPath.Append("." + UppercaseFirstLetter(operationSegment.Identifier) + "(");
+                            //opening section
+                            resourcesPath.Append($".{UppercaseFirstLetter(operationSegment.Identifier)}(");
+
                             foreach (var parameter in operationSegment.Parameters)
                             {
                                 switch (parameter.Value)
@@ -161,7 +161,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                         break;
                                 }
                             }
-
                             //remove extra characters added after last parameter if we had any params
                             if (operationSegment.Parameters.Any())
                             {
@@ -176,7 +175,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     default:
                         //its most likely just a resource so append it
-                        resourcesPath.Append("." + UppercaseFirstLetter(item.Identifier));
+                        resourcesPath.Append($".{UppercaseFirstLetter(item.Identifier)}");
                         break;
                 }
             }
@@ -187,23 +186,31 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <summary>
         /// Csharp function to generate Object constructor section of a code snippet 
         /// </summary>
-        public static string CSharpConstructorGenerator(ODataPathSegment pathSegment, string jsonBody , string name)
+        public static string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path , int variableInstance)
         {
             var stringBuilder = new StringBuilder();
-            var testObj = JsonConvert.DeserializeObject(jsonBody);
-            var className = CommonGenerator.GetClassNameFromIdentifier(pathSegment, name);
-            className = className.Split(".").Last();
+            var variableName = path.Last() + variableInstance;
+            var jsonObject = JsonConvert.DeserializeObject(jsonBody);
+            var className = CommonGenerator.GetClassNameFromIdentifier(pathSegment, path);
 
-            switch (testObj)
+            if (string.IsNullOrEmpty(className))
+            {
+                className = path.Last();
+            }
+            //we need to split the string and get last item and capitalize it in accordance the first character
+            //eg microsoft.graph.data => Data
+            className = UppercaseFirstLetter( className.Split(".").Last());
+
+            switch (jsonObject)
             {
                 case string _:
-                    stringBuilder.Append("var " + name + " = \"" + testObj + "\";");
+                    stringBuilder.Append($"var {variableName} = \"{jsonObject}\";\r\n");
                     break;
                 case JObject jObject:
-                    stringBuilder.Append("var " + name + " = new " + className);
-                    //new lines with opening curly brace
-                    stringBuilder.Append("\r\n{\r\n");
-
+                    stringBuilder.Append($"var {variableName} = new {className}\r\n");
+                    //opening curly brace
+                    stringBuilder.Append("{\r\n");
+                    //initialize each member of the class
                     foreach (var (key, jToken) in jObject)
                     {
                         var value = JsonConvert.SerializeObject(jToken);
@@ -211,43 +218,59 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         {
                             case JTokenType.Array:
                             case JTokenType.Object:
-                                //new object needs to be constructed so call this function recursively to make it and append it before the current snippet
-                                var newObject = CSharpConstructorGenerator(pathSegment, value, key);
-                                stringBuilder.Append("\t" + UppercaseFirstLetter(key) + " = " + key + ",\r\n");
+                                //new nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
+                                var newPath = path.Append(key).ToList();
+                                var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath , ++variableInstance);
+                                //append this at the start since it needs to be declared before this object is constructed
+                                stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = {key}{variableInstance},\r\n");
                                 stringBuilder.Insert(0, newObject);
                                 break;
                             default:
-                                stringBuilder.Append("\t" + UppercaseFirstLetter(key) + " = " + value.Replace("\n", "").Replace("\r", "") + ",\r\n");
+                                stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
                                 break;
                         }
                     }
-                    //closing statement
-                    stringBuilder.Append("};");
+                    //closing brace
+                    stringBuilder.Append("};\r\n");
                     break;
                 case JArray array:
-                    stringBuilder.Append($"var {name} = new List<{className}>();\r\n");
+                    //Item is a list/array so declare a typed list
+                    stringBuilder.Append($"var {variableName} = new List<{className}>();\r\n");
                     var objectList = array.Children<JObject>();
                     if (objectList.Any())
                     {
                         foreach (var item in objectList)
                         {
-                            stringBuilder.Append($"{name}.Add(new {className}());\r\n");
+                            string paramList = "";
+                            //Add each object item to the list
+                            foreach (var (key, jToken) in item)
+                            {
+                                var value = JsonConvert.SerializeObject(jToken);
+                                //nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
+                                var newPath = path.Append(key).ToList();
+                                //create the new object and place it at the start
+                                var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath, ++variableInstance);
+                                stringBuilder.Insert(0, newObject);
+                                paramList = paramList + "," + key+variableInstance;
+                            }
+                            if (paramList.Any())
+                            {
+                                paramList = paramList.Substring(1);
+                            }
+                            //append nested object to the list
+                            stringBuilder.Append($"{variableName}.Add(new {className}({paramList}));\r\n");
                         }
                     }
-                    else
-                    {
-                        //TODO resolve the JSON printed out here
-                        stringBuilder.Append($"{name}.Add({array});");
-                    }
-
                     break;
                 default:
-                    stringBuilder.Append("var " + name + " = " + testObj + ";");
+                    //item is a primitive
+                    stringBuilder.Append($"var {variableName} = {jsonObject};\r\n");
                     break;
 
             }
-            //new lines :)
-            stringBuilder.Append("\r\n\r\n");
+            //add a blank line
+            stringBuilder.Append("\r\n");
+
             return stringBuilder.ToString();
         }
 

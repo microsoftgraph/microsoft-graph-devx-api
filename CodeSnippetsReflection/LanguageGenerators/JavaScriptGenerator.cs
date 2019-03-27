@@ -43,6 +43,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
                     var name = "";
+                    // create variable to send out if we have a body
                     if (!string.IsNullOrEmpty(snippetModel.RequestBody))
                     {
                         name = snippetModel.ResponseVariableName;

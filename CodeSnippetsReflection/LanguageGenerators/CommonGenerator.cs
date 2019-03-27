@@ -86,75 +86,85 @@ namespace CodeSnippetsReflection.LanguageGenerators
             return snippetBuilder.ToString();
         }
 
-        public static string GetClassNameFromIdentifier(ODataPathSegment oDataPathSegment, string identifier)
+        public static string GetClassNameFromIdentifier(ODataPathSegment oDataPathSegment, ICollection<string> path )
         {
-            IEdmType definition = null;
-            string returnValue = "";
             switch (oDataPathSegment)
             {
                 case NavigationPropertySegment navigationPropertySegment:
-                    definition = navigationPropertySegment.NavigationProperty.Type.Definition;
-                    returnValue = GetClassNameFromEdmType(definition, oDataPathSegment.Identifier, identifier);
-                    break;
+                    return GetClassNameFromEdmType(navigationPropertySegment.NavigationProperty.Type.Definition, path);
+
                 case EntitySetSegment entitySetSegment:
-                    definition = entitySetSegment.EdmType as IEdmCollectionType;
-                    returnValue = GetClassNameFromEdmType(definition, oDataPathSegment.Identifier, identifier);
-                    break;
+                    var definition = entitySetSegment.EdmType as IEdmCollectionType;
+                    return GetClassNameFromEdmType(definition, path);
+
                 case OperationSegment operationSegment:
                     foreach (var parameters in operationSegment.Operations.First().Parameters)
                     {
                         if (parameters.Name.ToLower().Equals("bindingparameter") || parameters.Name.ToLower().Equals("bindparameter"))
                             continue;
-                        definition = parameters.Type.Definition;
-                        returnValue = GetClassNameFromEdmType(definition, parameters.Name, identifier);
+
+                        var returnValue = GetClassNameFromEdmType(parameters.Type.Definition, path);
 
                         if (!string.IsNullOrEmpty(returnValue))
-                            break;
+                            return returnValue;
                     }
                     break;
-                default:
-                    break;
             }
 
-            return returnValue;
+            throw new Exception("No Class Found for Idenfier");
         }
 
-        private static string GetClassNameFromEdmType(IEdmType definition, string entityIdentifier, string searchParameter)
+        private static string GetClassNameFromEdmType(IEdmType definition, ICollection<string> searchPath)
         {
-            string returnString = "";
-            var elementDefinition = definition;
-            //if the type is a collection, use the type of the element
-            if (definition is IEdmCollectionType type)
-            {
-                elementDefinition = type.ElementType.Definition;
-            }
+            //if the type is a collection, use the type of the element of the collection
+            var elementDefinition = GetEdmElementType(definition);
 
-            //check is the entity identifier is what we want already
-            if (entityIdentifier.Equals(searchParameter, StringComparison.OrdinalIgnoreCase))
+            //we are at the root of the search so just return the definition of the root item
+            if (searchPath.Count <= 1)
             {
                 return elementDefinition.ToString();
             }
 
+            //the second element in the path is the property we are searching for
+            var searchIdentifier = searchPath.ElementAt(1);
+            
             //Loop through the properties of the entity if is structured
-            if (definition is IEdmStructuredType structuredType)
+            if (elementDefinition is IEdmStructuredType structuredType)
             {
                 foreach (var property in structuredType.DeclaredProperties)
                 {
-                    if (property.Name.Equals(searchParameter))
+                    if (property.Name.Equals(searchIdentifier))
                     {
-                        if (property.Type.Definition is IEdmCollectionType innerCollection)
+                        elementDefinition = GetEdmElementType(property.Type.Definition);
+                        
+                        //check if we need to search deeper to search the properties of a nested item
+                        if (searchPath.Count() > 2)
                         {
-                            return innerCollection.ElementType.Definition.ToString();
+                            //get rid of the root item and do a deeper search
+                            var subList = searchPath.Where(x => !x.Equals(searchPath.First())).ToList();
+                            return GetClassNameFromEdmType(property.Type.Definition, subList);
                         }
                         else
                         {
-                            return property.Type.Definition.ToString();
+                            return elementDefinition.ToString();
                         }
                     }
                 }
             }
+            
+            return "";
+        }
 
-            return returnString.Split(".").Last();
+        private static IEdmType GetEdmElementType(IEdmType edmType)
+        {
+            if (edmType is IEdmCollectionType innerCollection)
+            {
+                return innerCollection.ElementType.Definition;
+            }
+            else
+            {
+                return edmType;
+            }
         }
 
 
