@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -47,13 +49,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (!string.IsNullOrEmpty(snippetModel.RequestBody))
                     {
                         name = snippetModel.ResponseVariableName;
-                        //remove the quotation marks from the JSON keys
-                        const string pattern = "\"(.*?) *\":";
-                        var javascriptObject = Regex.Replace(snippetModel.RequestBody, pattern, "$1:");
-                        snippetBuilder.Append($"const {name} = {javascriptObject};");
-                        snippetBuilder.Append("\r\n\r\n");
+                        snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody,name));
+                        var objectType = CommonGenerator.GetClassNameFromIdentifier(snippetModel.Segments.Last() , new List<string> { snippetModel.Segments.Last().Identifier });
+                        //we need to split the string and get last item
+                        //eg microsoft.graph.data => data
+                        objectType = objectType.Split(".").Last();
                         //parameter for the post.
-                        name = "{" + name + " : " + name + "}";
+                        name = $"{{{objectType} : { name }}}";
                     }
                              
                     snippetBuilder.Append($"client.api('{snippetModel.Path}')");
@@ -83,6 +85,24 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private static string BetaSectionString(string apiVersion)
         {
             return apiVersion.Equals("beta") ? "\n\t.version('beta')" : "";
+        }
+
+        /// <summary>
+        /// Generate a valid declaration of a json object from the json string. This essentially involves stripping out the quotation marks 
+        /// out of the json keys
+        /// </summary>
+        /// <param name="jsonBody">Json body to generate object from</param>
+        /// <param name="variableName">name of variable to use</param>
+        /// <returns>String of the snippet of the json object declaration in JS code</returns>
+        private static string JavascriptGenerateObjectFromJson(string jsonBody , string variableName)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            //remove the quotation marks from the JSON keys
+            const string pattern = "\"(.*?) *\":";
+            var javascriptObject = Regex.Replace(jsonBody, pattern, "$1:");
+            stringBuilder.Append($"const {variableName} = {javascriptObject};");
+            stringBuilder.Append("\r\n\r\n");
+            return stringBuilder.ToString();
         }
     }
 

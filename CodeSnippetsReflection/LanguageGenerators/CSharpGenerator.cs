@@ -163,23 +163,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Csharp function to generate Object constructor section of a code snippet 
+        /// Csharp function to generate Object constructor section of a code snippet. In the event that another object is needed in the middle of generation,
+        /// a recursive call is made to sort out the needed object.
         /// </summary>
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="jsonBody">Json string from which the information of the object to be initialized is held</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
-        public static string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path )
+        private static string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path )
         {
             var stringBuilder = new StringBuilder();
             var variableName = path.Last();
             var jsonObject = JsonConvert.DeserializeObject(jsonBody);
             var className = CommonGenerator.GetClassNameFromIdentifier(pathSegment, path);
-
-            //lookup failed default to segment identifier
-            if (string.IsNullOrEmpty(className))
-            {
-                className = path.Last();
-            }
 
             //we need to split the string and get last item and capitalize it in accordance the first character
             //eg microsoft.graph.data => Data
@@ -191,7 +186,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     stringBuilder.Append($"var {variableName} = \"{jsonObject}\";\r\n");
                     break;
                 case JObject jObject:
-                    stringBuilder.Append($"//create new instance of {className}\r\n");
+                    stringBuilder.Append($"//create instance of {className}\r\n");
                     stringBuilder.Append($"var {variableName} = new {className}\r\n");
                     stringBuilder.Append("{\r\n");//opening curly brace
                     //initialize each member of the class
@@ -202,6 +197,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         {
                             case JTokenType.Array:
                             case JTokenType.Object:
+                                //we need to create a new object make sure variable names are unique
+                                stringBuilder = EnsureVariableNameIsUnique(stringBuilder,key);
                                 //new nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
                                 var newPath = path.Append(key).ToList();
                                 //append this at the start since it needs to be declared before this object is constructed
@@ -220,6 +217,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
                 case JArray array:
                     //Item is a list/array so declare a typed list
+                    stringBuilder.Append($"//create {className} list and populate it\r\n");
                     stringBuilder.Append($"var {variableName} = new List<{className}>();\r\n");
                     var objectList = array.Children<JObject>();
                     if (objectList.Any())
@@ -230,10 +228,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             //Add each object item to the list
                             foreach (var (key, jToken) in item)
                             {
-                                var jsonString = JsonConvert.SerializeObject(jToken);
+                                //we need to create a new object make sure variable names are unique   
+                                stringBuilder = EnsureVariableNameIsUnique(stringBuilder, key );
                                 //nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
                                 var newPath = path.Append(key).ToList();
                                 //create the new object and place it at the start
+                                var jsonString = JsonConvert.SerializeObject(jToken);
                                 var newObject = CSharpGenerateObjectFromJson(pathSegment, jsonString, newPath);
                                 stringBuilder.Insert(0, newObject);
                                 paramList.Add(key);
@@ -248,12 +248,27 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //item is a primitive print as is
                     stringBuilder.Append($"var {variableName} = {jsonObject};\r\n");
                     break;
-
             }
 
             //add a blank line
             stringBuilder.Append("\r\n");
             return stringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Helper function to make check and enusre that a variable name has not been used in declaring another instance variable.
+        /// If variable name exists, return string with modified name by appending "Var"
+        /// </summary>
+        /// <param name="stringBuilder">Stringbuilder instance to check for unique declaration</param>
+        /// <param name="variableName">varaible name to check for uniqueness</param>
+        /// <returns>Modified stringbuilder instance</returns>
+        private static StringBuilder EnsureVariableNameIsUnique(StringBuilder stringBuilder, string variableName)
+        {
+            if (stringBuilder.ToString().Contains($"var {variableName} = "))
+            {
+                stringBuilder.Replace(variableName, variableName + "Var");
+            }
+            return stringBuilder;
         }
 
         /// <summary>
