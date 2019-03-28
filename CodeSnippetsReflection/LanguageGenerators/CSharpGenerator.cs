@@ -46,16 +46,22 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     {
                         case NavigationPropertySegment _:
                         case EntitySetSegment _:
-                      
-                            snippetBuilder.Append(CSharpGenerateObjectFromJson(segment,snippetModel.RequestBody, new List<string> { segment.Identifier }));
+                            if (!string.IsNullOrEmpty(snippetModel.RequestBody))
+                            {
+                                snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { segment.Identifier }));
 
-                            snippetBuilder.Append("await graphClient");
-                            //Generate the Resources path for Csharp
-                            snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
+                                snippetBuilder.Append("await graphClient");
+                                //Generate the Resources path for Csharp
+                                snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
 
-                            snippetBuilder.Append("\n\t.Request()");
-                            //Append footers
-                            snippetBuilder.Append($"\n\t.AddAsync({segment.Identifier});");
+                                snippetBuilder.Append("\n\t.Request()");
+                                //Append footers
+                                snippetBuilder.Append($"\n\t.AddAsync({segment.Identifier});");
+                            }
+                            else
+                            {
+                                throw new Exception($"No request Body present for POST of entity {segment.Identifier}");
+                            }
                             break;
 
                         case OperationSegment _:
@@ -245,6 +251,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             stringBuilder.Append($"{variableName}.Add(new {className}({CommonGenerator.GetListAsStringForSnippet(paramList,",")}));\r\n");
                         }
                     }
+                    break;
+                case null:
+                    //do nothing
                     break;
                 default:
                     //item is a primitive print as is
