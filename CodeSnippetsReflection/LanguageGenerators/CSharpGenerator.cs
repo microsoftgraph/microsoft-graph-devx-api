@@ -6,7 +6,9 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
 {
     public static class CSharpGenerator
@@ -311,9 +313,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string ExpandExpression => "\n\t.Expand(\"{0}\")"; 
         public override string SelectExpression => "\n\t.Select(\"{0}\")"; 
         public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")"; 
-        public override string SkipExpression => "\n\t.Skip(\"{0}\")"; 
+        public override string SkipExpression => "\n\t.Skip({0})"; 
         public override string SkipTokenExpression => "\n\t.SkipToken(\"{0}\")"; 
-        public override string TopExpression => "\n\t.Top(\"{0}\")";
+        public override string TopExpression => "\n\t.Top({0})";
         public override string FilterExpressionDelimiter => ",";
         public override string ExpandExpressionDelimiter => ",";
         public override string SelectExpressionDelimiter => ",";

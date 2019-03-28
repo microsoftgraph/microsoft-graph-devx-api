@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
+[assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
 {
     public static class JavaScriptGenerator
@@ -113,9 +115,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string ExpandExpression => "\n\t.expand('{0}')"; 
         public override string SelectExpression => "\n\t.select('{0}')"; 
         public override string OrderByExpression => "\n\t.orderby('{0}')"; 
-        public override string SkipExpression => "\n\t.skip('{0}')"; 
+        public override string SkipExpression => "\n\t.skip({0})"; 
         public override string SkipTokenExpression  => "\n\t.skiptoken('{0}')"; 
-        public override string TopExpression => "\n\t.top('{0}')"; 
+        public override string TopExpression => "\n\t.top({0})"; 
 
         public override string FilterExpressionDelimiter => ",";
 
