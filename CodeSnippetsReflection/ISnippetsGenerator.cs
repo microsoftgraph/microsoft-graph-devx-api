@@ -1,5 +1,4 @@
-﻿using Microsoft.OData;
-using System.Net.Http;
+﻿using System.Net.Http;
 
 namespace CodeSnippetsReflection
 {

@@ -5,12 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using CodeSnippetsReflection;
-using System;
-using Microsoft.OData.Edm;
-using Microsoft.OData.Edm.Csdl;
-using System.Xml;
-using Microsoft.OData.UriParser;
-using System.Collections.Generic;
 
 namespace GraphWebApi
 {
@@ -28,7 +22,6 @@ namespace GraphWebApi
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<ISnippetsGenerator,SnippetsGenerator>();
-            //services.AddSingleton<ISnippetsGenerator>(s => new SnippetsGenerator(GraphMetadataVersions()));
         }
 
       
