@@ -90,7 +90,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// Function to find the name of the type/class being used by identifier that is the last item in the path collection. This function gets
         /// the right <see cref="IEdmType"/> that is is to be used for the search based on the segment type>
         /// </summary>
-        /// <param name="oDataPathSegment">Odata path segement that is the root of the search </param>
+        /// <param name="oDataPathSegment">Odata path segment that is the root of the search </param>
         /// <param name="path">List of string that show the depth of the search into the definition from the odataPath type definition</param>
         public static string GetClassNameFromIdentifier(ODataPathSegment oDataPathSegment, ICollection<string> path )
         {
@@ -125,7 +125,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// This function can make recursive calls
         /// </summary>
         /// <param name="definition"><see cref="IEdmType"/> that has properties to be searched into</param>
-        /// <param name="path">List of string that shows the depth of the search into the definition from the odataPath type definition</param>
+        /// <param name="searchPath">List of string that shows the depth of the search into the definition from the odataPath type definition</param>
         private static string GetClassNameFromEdmType(IEdmType definition, ICollection<string> searchPath)
         {
             //if the type is a collection, use the type of the element of the collection

@@ -267,12 +267,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Helper function to make check and enusre that a variable name has not been used in declaring another instance variable.
+        /// Helper function to make check and ensure that a variable name has not been used in declaring another instance variable.
         /// If variable name exists, return string with modified name by appending "Var"
         /// </summary>
-        /// <param name="stringBuilder">Stringbuilder instance to check for unique declaration</param>
-        /// <param name="variableName">varaible name to check for uniqueness</param>
-        /// <returns>Modified stringbuilder instance</returns>
+        /// <param name="stringBuilder">String builder instance to check for unique declaration</param>
+        /// <param name="variableName">variable name to check for uniqueness</param>
+        /// <returns>Modified string builder instance</returns>
         private static StringBuilder EnsureVariableNameIsUnique(StringBuilder stringBuilder, string variableName)
         {
             if (stringBuilder.ToString().Contains($"var {variableName} = "))

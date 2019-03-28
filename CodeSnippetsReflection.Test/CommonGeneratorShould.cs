@@ -32,7 +32,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropiateJavascriptSelectExpression()
+        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptSelectExpression()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -48,7 +48,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropiateJavascriptFilterExpression()
+        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptFilterExpression()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -64,7 +64,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropiateJavascriptSearchExpression()
+        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptSearchExpression()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -80,7 +80,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropiateJavascriptSkipExpression()
+        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptSkipExpression()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -96,7 +96,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropiateJavascriptTopExpression()
+        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptTopExpression()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -112,7 +112,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropiateJavascriptRequestHeaderExpression()
+        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptRequestHeaderExpression()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -136,7 +136,7 @@ namespace CodeSnippetsReflection.Test
         public void GetListAsStringForSnippet_ShouldReturnEmptyStringIfFieldListEmpty()
         {
             //Arrange
-            List<string> fieldList = new List<string>();
+            var fieldList = new List<string>();
 
             //Act
             var result = CommonGenerator.GetListAsStringForSnippet(fieldList,",");
@@ -149,7 +149,7 @@ namespace CodeSnippetsReflection.Test
         public void GetListAsStringForSnippet_ShouldReturnCommaSeparatedStringWithCommaDelimiter()
         {
             //Arrange
-            List<string> fieldList = new List<string>
+            var fieldList = new List<string>
             {
                 "Test",
                 "Test2",
@@ -164,10 +164,10 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetListAsStringForSnippet_ShouldReturnUndelimitedStringWithEmptyDelimiter()
+        public void GetListAsStringForSnippet_ShouldReturnUnDelimitedStringWithEmptyDelimiter()
         {
             //Arrange
-            List<string> fieldList = new List<string>
+            var fieldList = new List<string>
             {
                 "Test",
                 "Test2",
@@ -228,7 +228,7 @@ namespace CodeSnippetsReflection.Test
             List<string> path = new List<string>
             {
                 "messages",
-                "toRecipients"//under the message entity there is a toReceipient entity
+                "toRecipients"//under the message entity there is a toRecipient entity
             };
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages");
@@ -249,7 +249,7 @@ namespace CodeSnippetsReflection.Test
             List<string> path = new List<string>
             {
                 "messages",
-                "body"//under the message entity there is a toReceipient entity
+                "body"//under the message entity there is a toRecipient entity
             };
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages");
@@ -270,8 +270,8 @@ namespace CodeSnippetsReflection.Test
             List<string> path = new List<string>
             {
                 "messages",
-                "toRecipients",//under the message entity there is a toReceipient entity
-                "emailAddress"//under the toReceipient there is an email address property
+                "toRecipients",//under the message entity there is a toRecipient entity
+                "emailAddress"//under the toRecipient there is an email address property
             };
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages");
