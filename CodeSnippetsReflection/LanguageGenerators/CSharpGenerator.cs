@@ -25,7 +25,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             try
             {
-                snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient();\r\n\r\n");
+                snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n");
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {

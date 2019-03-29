@@ -23,12 +23,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 var snippetBuilder = new StringBuilder();
                 //setup the auth snippet section
-                snippetBuilder.Append("// Some callback function\n");
-                snippetBuilder.Append("const authProvider: AuthProvider = (callback: AuthProviderCallback) => { \n");
-                snippetBuilder.Append("\t// Your logic for getting and refreshing accessToken \n");
-                snippetBuilder.Append("\t// Error should be passed in case of error while authenticating \n");
-                snippetBuilder.Append("\t// accessToken should be passed upon successful authentication \n");
-                snippetBuilder.Append("\tcallback(error, accessToken);\n};\n\n");
                 snippetBuilder.Append("let options: Options = {\n");
                 snippetBuilder.Append("\t\tauthProvider,\n};\n\n");
                 //init the client
