@@ -132,7 +132,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 paramList.Add(LowerCaseFirstLetter(parameter.Name));
                             }
                             
-                            resourcesPath.Append($"\n\t.{operationSegment.Identifier}({CommonGenerator.GetListAsStringForSnippet(paramList,",")});");
+                            resourcesPath.Append($"\n\t.{UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
                         }
                         else
                         {

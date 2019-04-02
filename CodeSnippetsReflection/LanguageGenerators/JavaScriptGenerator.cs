@@ -110,7 +110,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             StringBuilder stringBuilder = new StringBuilder();
             //remove the quotation marks from the JSON keys
             const string pattern = "\"(.*?) *\":";
-            var javascriptObject = Regex.Replace(jsonBody, pattern, "$1:");
+            var javascriptObject = Regex.Replace(jsonBody.Trim(), pattern, "$1:");
             stringBuilder.Append($"const {variableName} = {javascriptObject};");
             stringBuilder.Append("\r\n\r\n");
             return stringBuilder.ToString();
