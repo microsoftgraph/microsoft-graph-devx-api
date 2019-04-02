@@ -23,20 +23,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 var snippetBuilder = new StringBuilder();
                 //setup the auth snippet section
-                snippetBuilder.Append("let options: Options = {\n");
-                snippetBuilder.Append("\t\tauthProvider,\n};\n\n");
+                snippetBuilder.Append("const options = {\n");
+                snippetBuilder.Append("\tauthProvider,\n};\n\n");
                 //init the client
+                snippetBuilder.Append("//initialise the client\n");
                 snippetBuilder.Append("const client = Client.init(options);\n\n");
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
-                    snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = client.api('{snippetModel.Path}')");
-                    //append beta
-                    snippetBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
-                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
-                    //append footer
-                    snippetBuilder.Append("\n\t.get();");
-                    
+                    //append any queries with the actions
+                    var getActions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions) + "\n\t\t.get();";
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, getActions));
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
@@ -53,11 +50,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         //parameter for the post.
                         name = $"{{{objectType} : { name }}}";
                     }
-                             
-                    snippetBuilder.Append($"client.api('{snippetModel.Path}')");
-                    //append beta
-                    snippetBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
-                    snippetBuilder.Append($".post({name});");
+
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel,$"\n\t\t.post({name});"));
 
                 }
                 else
@@ -80,7 +74,28 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String of the snippet in JS code</returns>
         private static string BetaSectionString(string apiVersion)
         {
-            return apiVersion.Equals("beta") ? "\n\t.version('beta')" : "";
+            return apiVersion.Equals("beta") ? "\n\t\t.version('beta')" : "";
+        }
+
+        /// <summary>
+        /// Generate the snippet section that makes the call to the api with the surrounding try catch block
+        /// </summary>
+        /// <param name="snippetModel">Snippet model built from the request</param>
+        /// <param name="actions">String of actions to be done inside the code block</param>
+        private static string GenerateRequestSection(SnippetModel snippetModel, string actions)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.Append("//make the request to Graph\n");
+            stringBuilder.Append("try{\n");
+            stringBuilder.Append($"\tlet res = await client.api('{snippetModel.Path}')");
+            //append beta
+            stringBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
+            stringBuilder.Append(actions);
+            stringBuilder.Append($"\n\tconsole.log(res);\n");
+            stringBuilder.Append("} catch (error) {\n");
+            stringBuilder.Append("\tthrow error;\n}");
+
+            return stringBuilder.ToString();
         }
 
         /// <summary>
@@ -104,14 +119,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
     internal class JavascriptExpressions : LanguageExpressions
     {
-        public override string FilterExpression => "\n\t.filter('{0}')"; 
-        public override string SearchExpression => "\n\t.search('{0}')"; 
-        public override string ExpandExpression => "\n\t.expand('{0}')"; 
-        public override string SelectExpression => "\n\t.select('{0}')"; 
-        public override string OrderByExpression => "\n\t.orderby('{0}')"; 
-        public override string SkipExpression => "\n\t.skip({0})"; 
-        public override string SkipTokenExpression  => "\n\t.skiptoken('{0}')"; 
-        public override string TopExpression => "\n\t.top({0})"; 
+        public override string FilterExpression => "\n\t\t.filter('{0}')"; 
+        public override string SearchExpression => "\n\t\t.search('{0}')"; 
+        public override string ExpandExpression => "\n\t\t.expand('{0}')"; 
+        public override string SelectExpression => "\n\t\t.select('{0}')"; 
+        public override string OrderByExpression => "\n\t\t.orderby('{0}')"; 
+        public override string SkipExpression => "\n\t\t.skip({0})"; 
+        public override string SkipTokenExpression  => "\n\t\t.skiptoken('{0}')"; 
+        public override string TopExpression => "\n\t\t.top({0})"; 
 
         public override string FilterExpressionDelimiter => ",";
 
@@ -121,6 +136,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
         public override string OrderByExpressionDelimiter => " ";
 
-        public override string HeaderExpression => "\n\t.header('{0}','{1}')";
+        public override string HeaderExpression => "\n\t\t.header('{0}','{1}')";
     }
 }

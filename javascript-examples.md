@@ -23,16 +23,23 @@ Prefer: outlook.timezone="Pacific Standard Time"
 #### Snippet generated
 
 ```javascript
-let options: Options = {
-   authProvider,
+const options{
+  authProvider,
 };
 
+//initialise the client
 const client = Client.init(options);
 
-var events = client.api('/me/events/AAMkAGIAAAoZDOFAAA=')
+//make the request to Graph
+try{
+  let res = await client.api('/me/events')
     .header('Prefer','outlook.timezone="Pacific Standard Time"')
     .select('subject,body,bodyPreview,organizer,attendees,start,end,location')
     .get();
+  console.log(res);
+} catch (error) {
+  throw error;
+}
 ```
 
 ### POST Request
@@ -59,10 +66,11 @@ Content-type: application/json
 #### Example POST Request snippet generated
 
 ```javascript
-let options: Options = {
-    authProvider,
+const options{
+  authProvider,
 };
 
+//initialise the client
 const client = Client.init(options);
 
 const users = {
@@ -77,5 +85,12 @@ const users = {
 }
 ;
 
-client.api('/users').post({user : users});
+//make the request to Graph
+try{
+  let res = await client.api('/users')
+    .post({user : users});
+  console.log(res);
+} catch (error) {
+  throw error;
+}
 ```
