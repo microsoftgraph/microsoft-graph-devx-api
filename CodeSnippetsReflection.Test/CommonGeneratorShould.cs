@@ -1,4 +1,4 @@
-﻿using CodeSnippetsReflection.LanguageGenerators;
+using CodeSnippetsReflection.LanguageGenerators;
 using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
 using System.Collections.Generic;
@@ -284,6 +284,26 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal("microsoft.graph.emailAddress", result);
         }
 
+        [Fact]
+        public void GetClassNameFromIdentifier_ShouldSearchForTwoLevelNestedType_2()
+        {
+            //Arrange
+            List<string> path = new List<string>
+            {
+                "events",
+                "attendees",//under the message entity there is a toRecipient entity
+                "emailAddress"//under the toRecipient there is an email address property
+            };
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/events");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act
+            var result = CommonGenerator.GetClassNameFromIdentifier(snippetModel.Segments.Last(), path);
+
+            //Assert
+            Assert.Equal("microsoft.graph.emailAddress", result);
+        }
         #endregion
     }
 }

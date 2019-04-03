@@ -48,7 +48,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         case EntitySetSegment _:
                             if (!string.IsNullOrEmpty(snippetModel.RequestBody))
                             {
-                                snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { segment.Identifier }));
+                                snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
 
                                 snippetBuilder.Append("await graphClient");
                                 //Generate the Resources path for Csharp
@@ -56,11 +56,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                                 snippetBuilder.Append("\n\t.Request()");
                                 //Append footers
-                                snippetBuilder.Append($"\n\t.AddAsync({segment.Identifier});");
+                                snippetBuilder.Append($"\n\t.AddAsync({snippetModel.ResponseVariableName});");
                             }
                             else
                             {
-                                throw new Exception($"No request Body present for POST of entity {segment.Identifier}");
+                                throw new Exception($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
                             }
                             break;
 
@@ -194,7 +194,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     stringBuilder.Append($"var {variableName} = \"{jsonObject}\";\r\n");
                     break;
                 case JObject jObject:
-                    stringBuilder.Append($"//create instance of {className}\r\n");
                     stringBuilder.Append($"var {variableName} = new {className}\r\n");
                     stringBuilder.Append("{\r\n");//opening curly brace
                     //initialize each member of the class
@@ -225,7 +224,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
                 case JArray array:
                     //Item is a list/array so declare a typed list
-                    stringBuilder.Append($"//create {className} list and populate it\r\n");
                     stringBuilder.Append($"var {variableName} = new List<{className}>();\r\n");
                     var objectList = array.Children<JObject>();
                     if (objectList.Any())

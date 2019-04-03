@@ -26,10 +26,10 @@ Prefer: outlook.timezone="Pacific Standard Time"
 GraphServiceClient graphClient = new GraphServiceClient( authProvider );
 
 var events = await graphClient.Me.Events["AAMkAGIAAAoZDOFAAA="]
-    .Request()
-    .Header("Prefer","outlook.timezone="Pacific Standard Time"")
-    .Select("subject,body,bodyPreview,organizer,attendees,start,end,location")
-    .GetAsync();
+  .Request()
+  .Header("Prefer","outlook.timezone="Pacific Standard Time"")
+  .Select("subject,body,bodyPreview,organizer,attendees,start,end,location")
+  .GetAsync();
 ```
 
 ### POST Request
@@ -58,24 +58,22 @@ Content-type: application/json
 ```cs
 GraphServiceClient graphClient = new GraphServiceClient( authProvider );
 
-//create instance of PasswordProfile
 var passwordProfile = new PasswordProfile
 {
-    ForceChangePasswordNextSignIn = true,
-    Password = "password-value",
+  ForceChangePasswordNextSignIn = true,
+  Password = "password-value",
 };
 
-//create instance of User
-var users = new User
+var user = new User
 {
-    AccountEnabled = true,
-    DisplayName = "displayName-value",
-    MailNickname = "mailNickname-value",
-    UserPrincipalName = "upn-value@tenant-value.onmicrosoft.com",
-    PasswordProfile = passwordProfile,
+  AccountEnabled = true,
+  DisplayName = "displayName-value",
+  MailNickname = "mailNickname-value",
+  UserPrincipalName = "upn-value@tenant-value.onmicrosoft.com",
+  PasswordProfile = passwordProfile,
 };
 
 await graphClient.Users
-    .Request()
-    .AddAsync(users);
+  .Request()
+  .AddAsync(user);
 ```

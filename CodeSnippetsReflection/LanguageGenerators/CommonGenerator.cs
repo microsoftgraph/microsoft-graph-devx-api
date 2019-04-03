@@ -1,4 +1,4 @@
-﻿using Microsoft.OData.Edm;
+using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
@@ -94,22 +94,31 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="path">List of string that show the depth of the search into the definition from the odataPath type definition</param>
         public static string GetClassNameFromIdentifier(ODataPathSegment oDataPathSegment, ICollection<string> path )
         {
+
+            var returnValue = "";
+
             switch (oDataPathSegment)
             {
-                case NavigationPropertySegment navigationPropertySegment:
-                    return GetClassNameFromEdmType(navigationPropertySegment.NavigationProperty.Type.Definition, path);
+                case KeySegment _:
+                case EntitySetSegment _:
+                case NavigationPropertySegment _:
+                case SingletonSegment _:
+                case PropertySegment _:
 
-                case EntitySetSegment entitySetSegment:
-                    var definition = entitySetSegment.EdmType as IEdmCollectionType;
-                    return GetClassNameFromEdmType(definition, path);
+                    returnValue = GetClassNameFromEdmType(oDataPathSegment.EdmType, path);
 
+                    if (!string.IsNullOrEmpty(returnValue))
+                        return returnValue;
+
+                    break;
+                    
                 case OperationSegment operationSegment:
                     foreach (var parameters in operationSegment.Operations.First().Parameters)
                     {
                         if (parameters.Name.ToLower().Equals("bindingparameter") || parameters.Name.ToLower().Equals("bindparameter"))
                             continue;
 
-                        var returnValue = GetClassNameFromEdmType(parameters.Type.Definition, path);
+                        returnValue = GetClassNameFromEdmType(parameters.Type.Definition, path);
 
                         if (!string.IsNullOrEmpty(returnValue))
                             return returnValue;
@@ -162,9 +171,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                     }
                 }
+
+                //check properties of the base type as it may be inherited
+                return GetClassNameFromEdmType(structuredType.BaseType, searchPath);
             }
-            
-            return elementDefinition.ToString();
+
+            //search failed so return empty string
+            return "";
         }
 
         /// <summary>

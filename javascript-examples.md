@@ -23,23 +23,16 @@ Prefer: outlook.timezone="Pacific Standard Time"
 #### Snippet generated
 
 ```javascript
-const options{
+const options = {
   authProvider,
 };
 
-//initialise the client
 const client = Client.init(options);
 
-//make the request to Graph
-try{
-  let res = await client.api('/me/events')
-    .header('Prefer','outlook.timezone="Pacific Standard Time"')
-    .select('subject,body,bodyPreview,organizer,attendees,start,end,location')
-    .get();
-  console.log(res);
-} catch (error) {
-  throw error;
-}
+let res = await client.api('/me/events/AAMkAGIAAAoZDOFAAA=')
+  .header('Prefer','outlook.timezone="Pacific Standard Time"')
+  .select('subject,body,bodyPreview,organizer,attendees,start,end,location')
+  .get();
 ```
 
 ### POST Request
@@ -71,9 +64,13 @@ const options{
 };
 
 //initialise the client
+const options = {
+  authProvider,
+};
+
 const client = Client.init(options);
 
-const users = {
+const user = {
   accountEnabled: true,
   displayName: "displayName-value",
   mailNickname: "mailNickname-value",
@@ -82,15 +79,8 @@ const users = {
     forceChangePasswordNextSignIn: true,
     password: "password-value"
   }
-}
-;
+};
 
-//make the request to Graph
-try{
-  let res = await client.api('/users')
-    .post({user : users});
-  console.log(res);
-} catch (error) {
-  throw error;
-}
+let res = await client.api('/users')
+  .post({user : user});
 ```

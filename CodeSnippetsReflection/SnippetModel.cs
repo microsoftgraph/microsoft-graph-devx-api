@@ -36,7 +36,7 @@ namespace CodeSnippetsReflection
             this._edmModel = edmModel;
             this.Method = requestPayload.Method;
             this.ODataUri = GetODataUri(new Uri(serviceRootUrl), requestPayload.RequestUri);
-            this.ResponseVariableName = ODataUri.Path.LastOrDefault()?.Identifier;
+            this.ResponseVariableName = GetResponseVariableName(ODataUri.Path.LastOrDefault()) ;
             this.Segments = ODataUri.Path.ToList();
             this.Path = Uri.UnescapeDataString(requestPayload.RequestUri.AbsolutePath.Substring(5));
             this.ApiVersion = serviceRootUrl.Substring(serviceRootUrl.Length - 4);
@@ -50,7 +50,24 @@ namespace CodeSnippetsReflection
             GetRequestBodyAsync(requestPayload);
         }
 
-        
+        /// <summary>
+        ///Get a string showing the name variable to be manipulated by the segment
+        /// </summary>
+        /// <param name="oDataPathSegment">The pathe segment in question</param>
+        private string GetResponseVariableName(ODataPathSegment oDataPathSegment)
+        {
+            //check if its a collection and try gate the name of single entity
+            if (oDataPathSegment.EdmType is IEdmCollectionType innerCollection )
+            {
+                if(innerCollection.ElementType.Definition is IEdmNamedElement edmNamedElement)
+                    return edmNamedElement.Name;
+            }
+
+            //its not a collection so the identfier can do
+            return oDataPathSegment.Identifier;
+        }
+
+
         /// <summary>
         /// This function creates a Odata Uri object from the serviceRootUri and the RequestUri
         /// </summary>
