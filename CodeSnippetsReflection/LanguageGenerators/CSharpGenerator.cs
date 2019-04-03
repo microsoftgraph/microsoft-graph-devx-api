@@ -182,11 +182,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             var stringBuilder = new StringBuilder();
             var variableName = path.Last();
             var jsonObject = JsonConvert.DeserializeObject(jsonBody);
-            var className = CommonGenerator.GetClassNameFromIdentifier(pathSegment, path);
-
-            //we need to split the string and get last item and capitalize it in accordance the first character
-            //eg microsoft.graph.data => Data
-            className = UppercaseFirstLetter( className.Split(".").Last());
 
             switch (jsonObject)
             {
@@ -194,59 +189,67 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     stringBuilder.Append($"var {variableName} = \"{jsonObject}\";\r\n");
                     break;
                 case JObject jObject:
-                    stringBuilder.Append($"var {variableName} = new {className}\r\n");
-                    stringBuilder.Append("{\r\n");//opening curly brace
-                    //initialize each member of the class
-                    foreach (var (key, jToken) in jObject)
                     {
-                        var value = JsonConvert.SerializeObject(jToken);
-                        switch (jToken.Type)
+                        var className = CommonGenerator.GetClassNameFromIdentifier(pathSegment, path);
+                        className = UppercaseFirstLetter(className.Split(".").Last());
+                        stringBuilder.Append($"var {variableName} = new {className}\r\n");
+                        stringBuilder.Append("{\r\n");//opening curly brace
+                                                      //initialize each member of the class
+                        foreach (var (key, jToken) in jObject)
                         {
-                            case JTokenType.Array:
-                            case JTokenType.Object:
-                                //we need to create a new object make sure variable names are unique
-                                stringBuilder = EnsureVariableNameIsUnique(stringBuilder,key);
-                                //new nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
-                                var newPath = path.Append(key).ToList();
-                                //append this at the start since it needs to be declared before this object is constructed
-                                var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
-                                stringBuilder.Insert(0, newObject);
-                                //append the usage of declared variable
-                                stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = {key},\r\n");
-                                break;
-                            default:
-                                stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
-                                break;
+                            var value = JsonConvert.SerializeObject(jToken);
+                            switch (jToken.Type)
+                            {
+                                case JTokenType.Array:
+                                case JTokenType.Object:
+                                    //we need to create a new object make sure variable names are unique
+                                    stringBuilder = EnsureVariableNameIsUnique(stringBuilder, key);
+                                    //new nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
+                                    var newPath = path.Append(key).ToList();
+                                    //append this at the start since it needs to be declared before this object is constructed
+                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
+                                    stringBuilder.Insert(0, newObject);
+                                    //append the usage of declared variable
+                                    stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = {key},\r\n");
+                                    break;
+                                default:
+                                    stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
+                                    break;
+                            }
                         }
+                        //closing brace
+                        stringBuilder.Append("};\r\n");
                     }
-                    //closing brace
-                    stringBuilder.Append("};\r\n");
                     break;
                 case JArray array:
-                    //Item is a list/array so declare a typed list
-                    stringBuilder.Append($"var {variableName} = new List<{className}>();\r\n");
-                    var objectList = array.Children<JObject>();
-                    if (objectList.Any())
                     {
-                        foreach (var item in objectList)
+                        var className = CommonGenerator.GetClassNameFromIdentifier(pathSegment, path);
+                        className = UppercaseFirstLetter(className.Split(".").Last());
+                        //Item is a list/array so declare a typed list
+                        stringBuilder.Append($"var {variableName} = new List<{className}>();\r\n");
+                        var objectList = array.Children<JObject>();
+                        if (objectList.Any())
                         {
-                            var paramList = new List<string>();
-                            //Add each object item to the list
-                            foreach (var (key, jToken) in item)
+                            foreach (var item in objectList)
                             {
-                                //we need to create a new object make sure variable names are unique   
-                                stringBuilder = EnsureVariableNameIsUnique(stringBuilder, key );
-                                //nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
-                                var newPath = path.Append(key).ToList();
-                                //create the new object and place it at the start
-                                var jsonString = JsonConvert.SerializeObject(jToken);
-                                var newObject = CSharpGenerateObjectFromJson(pathSegment, jsonString, newPath);
-                                stringBuilder.Insert(0, newObject);
-                                paramList.Add(key);
-                            }
+                                var paramList = new List<string>();
+                                //Add each object item to the list
+                                foreach (var (key, jToken) in item)
+                                {
+                                    //we need to create a new object make sure variable names are unique   
+                                    stringBuilder = EnsureVariableNameIsUnique(stringBuilder, key);
+                                    //nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
+                                    var newPath = path.Append(key).ToList();
+                                    //create the new object and place it at the start
+                                    var jsonString = JsonConvert.SerializeObject(jToken);
+                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, jsonString, newPath);
+                                    stringBuilder.Insert(0, newObject);
+                                    paramList.Add(key);
+                                }
 
-                            //append nested object to the list
-                            stringBuilder.Append($"{variableName}.Add(new {className}({CommonGenerator.GetListAsStringForSnippet(paramList,",")}));\r\n");
+                                //append nested object to the list
+                                stringBuilder.Append($"{variableName}.Add(new {className}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")}));\r\n");
+                            }
                         }
                     }
                     break;
