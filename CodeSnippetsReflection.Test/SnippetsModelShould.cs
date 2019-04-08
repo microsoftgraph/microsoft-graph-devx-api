@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Net.Http;
 using System.Xml;
@@ -94,6 +93,37 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal("Prefer", snippetModel.RequestHeaders.First().Key);
             Assert.Equal("kenya-timezone", snippetModel.RequestHeaders.First().Value.First());
         }
+
+        [Fact]
+        public void PopulateRequestBody()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/")
+            {
+                Content = new StringContent("This is just a test")
+            };
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the request body is empty
+            Assert.Equal("This is just a test", snippetModel.RequestBody);
+        }
+
+        [Fact]
+        public void PopulateEmptyStringOnEmptyRequestBody()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the request body is empty
+            Assert.Equal("",snippetModel.RequestBody);
+        }
+
+
 
     }
 }

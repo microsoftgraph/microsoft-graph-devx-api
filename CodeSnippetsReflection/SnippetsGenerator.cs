@@ -16,8 +16,8 @@ namespace CodeSnippetsReflection
         private Lazy<IEdmModel> IedmModelBeta { get; set; }
         private Uri ServiceRootV1 { get; set; }
         private Uri ServiceRootBeta { get; set; }
-        private JavascriptExpressions JavascriptExpressions { get; set; }
-        private CSharpExpressions CSharpExpressions { get; set; }
+        private JavascriptExpressions JavascriptExpressions { get; }
+        private CSharpExpressions CSharpExpressions { get; }
 
         /// <summary>
         /// Class holding the Edm model and request processing for snippet generations

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -23,6 +23,7 @@ namespace CodeSnippetsReflection
         public List<string> FilterFieldList { get; set; }
         public List<string> OrderByFieldList { get; set; }
         public IEnumerable<KeyValuePair<string, IEnumerable<string>>> RequestHeaders { get; set; }
+        public string RequestBody { get; set; }
 
         /// <summary>
         /// Model for the information needed to create a snippet from the request message
@@ -35,7 +36,7 @@ namespace CodeSnippetsReflection
             this._edmModel = edmModel;
             this.Method = requestPayload.Method;
             this.ODataUri = GetODataUri(new Uri(serviceRootUrl), requestPayload.RequestUri);
-            this.ResponseVariableName = ODataUri.Path.LastOrDefault()?.Identifier;
+            this.ResponseVariableName = GetResponseVariableName(ODataUri.Path.LastOrDefault()) ;
             this.Segments = ODataUri.Path.ToList();
             this.Path = Uri.UnescapeDataString(requestPayload.RequestUri.AbsolutePath.Substring(5));
             this.ApiVersion = serviceRootUrl.Substring(serviceRootUrl.Length - 4);
@@ -46,9 +47,27 @@ namespace CodeSnippetsReflection
             this.RequestHeaders = requestPayload.Headers;
 
             PopulateQueryFieldLists(requestPayload.RequestUri.Query);
+            GetRequestBodyAsync(requestPayload);
         }
 
-        
+        /// <summary>
+        ///Get a string showing the name variable to be manipulated by the segment
+        /// </summary>
+        /// <param name="oDataPathSegment">The pathe segment in question</param>
+        private string GetResponseVariableName(ODataPathSegment oDataPathSegment)
+        {
+            //check if its a collection and try gate the name of single entity
+            if (oDataPathSegment.EdmType is IEdmCollectionType innerCollection )
+            {
+                if(innerCollection.ElementType.Definition is IEdmNamedElement edmNamedElement)
+                    return edmNamedElement.Name;
+            }
+
+            //its not a collection so the identfier can do
+            return oDataPathSegment.Identifier;
+        }
+
+
         /// <summary>
         /// This function creates a Odata Uri object from the serviceRootUri and the RequestUri
         /// </summary>
@@ -139,6 +158,23 @@ namespace CodeSnippetsReflection
             var querySegmentList = fullUriQuerySegment.Split('$');
 
             return querySegmentList;
+        }
+
+        /// <summary>
+        /// Reads the request body from the request payload to save it as a string for later processing
+        /// </summary>
+        /// <param name="requestPayload"><see cref="HttpRequestMessage"/> to read the body from</param>
+        private async void GetRequestBodyAsync(HttpRequestMessage requestPayload)
+        {
+            //do not try to read in the content if there isn't any
+            if (null != requestPayload.Content)
+            {
+                this.RequestBody = await requestPayload.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                this.RequestBody = "";
+            }
         }
     }
 
