@@ -87,27 +87,29 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Function to find the name of the type/class being used by identifier that is the last item in the path collection. This function gets
+        /// Function to find the <see cref="EdmType"/> being used by identifier that is the last item in the path collection. This function gets
         /// the right <see cref="IEdmType"/> that is is to be used for the search based on the segment type>
         /// </summary>
         /// <param name="oDataPathSegment">Odata path segment that is the root of the search </param>
         /// <param name="path">List of string that show the depth of the search into the definition from the odataPath type definition</param>
-        public static string GetClassNameFromIdentifier(ODataPathSegment oDataPathSegment, ICollection<string> path )
+        public static IEdmType GetEdmTypeFromIdentifier(ODataPathSegment oDataPathSegment, ICollection<string> path )
         {
 
-            var returnValue = "";
+            IEdmType returnValue;
 
             switch (oDataPathSegment)
             {
                 case KeySegment _:
                 case EntitySetSegment _:
                 case NavigationPropertySegment _:
+                case NavigationPropertyLinkSegment _:
                 case SingletonSegment _:
                 case PropertySegment _:
+                case ValueSegment _:
 
-                    returnValue = GetClassNameFromEdmType(oDataPathSegment.EdmType, path);
+                    returnValue = SearchForEdmType(oDataPathSegment.EdmType, path);
 
-                    if (!string.IsNullOrEmpty(returnValue))
+                    if (null != returnValue)
                         return returnValue;
 
                     break;
@@ -115,18 +117,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case OperationSegment operationSegment:
                     foreach (var parameters in operationSegment.Operations.First().Parameters)
                     {
-                        if (parameters.Name.ToLower().Equals("bindingparameter") || parameters.Name.ToLower().Equals("bindparameter"))
+                        if (!parameters.Name.Equals(path.FirstOrDefault(),StringComparison.OrdinalIgnoreCase))
                             continue;
 
-                        returnValue = GetClassNameFromEdmType(parameters.Type.Definition, path);
+                        returnValue = SearchForEdmType(parameters.Type.Definition, path);
 
-                        if (!string.IsNullOrEmpty(returnValue))
+                        if (null != returnValue)
                             return returnValue;
                     }
                     break;
             }
 
-            throw new Exception("No Class Found for Identifier");
+            throw new Exception($"No Class Name Found for Identifier {path.Last()}");
         }
 
         /// <summary>
@@ -135,7 +137,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="definition"><see cref="IEdmType"/> that has properties to be searched into</param>
         /// <param name="searchPath">List of string that shows the depth of the search into the definition from the odataPath type definition</param>
-        private static string GetClassNameFromEdmType(IEdmType definition, ICollection<string> searchPath)
+        private static IEdmType SearchForEdmType(IEdmType definition, ICollection<string> searchPath)
         {
             //if the type is a collection, use the type of the element of the collection
             var elementDefinition = GetEdmElementType(definition);
@@ -143,7 +145,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //we are at the root of the search so just return the definition of the root item
             if (searchPath.Count <= 1)
             {
-                return elementDefinition.ToString();
+                return elementDefinition;
             }
 
             //the second element in the path is the property we are searching for
@@ -163,21 +165,21 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         {
                             //get rid of the root item and do a deeper search
                             var subList = searchPath.Where(x => !x.Equals(searchPath.First())).ToList();
-                            return GetClassNameFromEdmType(property.Type.Definition, subList);
+                            return SearchForEdmType(property.Type.Definition, subList);
                         }
                         else
                         {
-                            return elementDefinition.ToString();
+                            return elementDefinition;
                         }
                     }
                 }
 
                 //check properties of the base type as it may be inherited
-                return GetClassNameFromEdmType(structuredType.BaseType, searchPath);
+                return SearchForEdmType(structuredType.BaseType, searchPath);
             }
 
             //search failed so return empty string
-            return "";
+            return null;
         }
 
         /// <summary>
