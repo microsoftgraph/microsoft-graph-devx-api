@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.OData.UriParser;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
@@ -22,6 +23,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             try
             {
                 var snippetBuilder = new StringBuilder();
+                //get the potential parameter for actions
+                var actionParameter = string.IsNullOrEmpty(snippetModel.RequestBody) ? "" : $"{{{GetObjectType(snippetModel.Segments.Last())} : { snippetModel.ResponseVariableName }}}";
                 //setup the auth snippet section
                 snippetBuilder.Append("const options = {\n");
                 snippetBuilder.Append("\tauthProvider,\n};\n\n");
@@ -36,22 +39,28 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
-                    var name = "";
-                    // create variable to send out if we have a body
-                    if (!string.IsNullOrEmpty(snippetModel.RequestBody))
-                    {
-                        name = snippetModel.ResponseVariableName;
-                        snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody,name));
-                        var objectType = CommonGenerator.GetClassNameFromIdentifier(snippetModel.Segments.Last() , new List<string> { snippetModel.ResponseVariableName });
-                        //we need to split the string and get last item
-                        //eg microsoft.graph.data => data
-                        objectType = objectType.Split(".").Last();
-                        //parameter for the post.
-                        name = $"{{{objectType} : { name }}}";
-                    }
+                    snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel,$"\n\t.post({actionParameter});"));
+                }
+                else if (snippetModel.Method == HttpMethod.Patch)
+                {
+                    if (string.IsNullOrEmpty(snippetModel.RequestBody))
+                        throw new Exception("No body present for PATCH method in Javascript");
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel,$"\n\t.post({name});"));
+                    snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.update({actionParameter});"));
+                }
+                else if (snippetModel.Method == HttpMethod.Delete)
+                {
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, "\n\t.delete();"));
+                }
+                else if (snippetModel.Method == HttpMethod.Put)
+                {
+                    if(string.IsNullOrEmpty(snippetModel.RequestBody))
+                        throw new Exception("No body present for PUT method in Javascript");
 
+                    snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.put({actionParameter});"));
                 }
                 else
                 {
@@ -66,6 +75,19 @@ namespace CodeSnippetsReflection.LanguageGenerators
             }
         }
 
+
+        /// <summary>
+        /// Return string to signifying the type of the object to be used
+        /// </summary>
+        /// <param name="pathSegment">The OdataPathSegment in use</param>
+        /// <returns>String representing the type in use</returns>
+        private static string GetObjectType(ODataPathSegment pathSegment)
+        {
+            var objectType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, new List<string> { pathSegment.Identifier });
+            //we need to split the string and get last item
+            //eg microsoft.graph.data => data
+            return objectType.ToString().Split(".").Last();
+        }
         /// <summary>
         /// Return string to signifying the endpoint to be used in the snippet
         /// </summary>
@@ -83,7 +105,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="actions">String of actions to be done inside the code block</param>
         private static string GenerateRequestSection(SnippetModel snippetModel, string actions)
         {
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
             stringBuilder.Append($"let res = await client.api('{snippetModel.Path}')");
             //append beta
             stringBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
@@ -100,7 +122,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String of the snippet of the json object declaration in JS code</returns>
         private static string JavascriptGenerateObjectFromJson(string jsonBody , string variableName)
         {
-            StringBuilder stringBuilder = new StringBuilder();
+            if (string.IsNullOrEmpty(jsonBody))
+                return "";//nothing to generate with no body
+
+            var stringBuilder = new StringBuilder();
             //remove the quotation marks from the JSON keys
             const string pattern = "\"(.*?) *\":";
             var javascriptObject = Regex.Replace(jsonBody.Trim(), pattern, "$1:");

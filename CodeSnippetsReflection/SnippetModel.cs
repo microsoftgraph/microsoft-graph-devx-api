@@ -24,6 +24,7 @@ namespace CodeSnippetsReflection
         public List<string> OrderByFieldList { get; set; }
         public IEnumerable<KeyValuePair<string, IEnumerable<string>>> RequestHeaders { get; set; }
         public string RequestBody { get; set; }
+        public string ContentType { get; set; }
 
         /// <summary>
         /// Model for the information needed to create a snippet from the request message
@@ -170,6 +171,8 @@ namespace CodeSnippetsReflection
             if (null != requestPayload.Content)
             {
                 this.RequestBody = await requestPayload.Content.ReadAsStringAsync();
+                if(null != requestPayload.Content.Headers.ContentType)
+                    this.ContentType = requestPayload.Content.Headers.ContentType.MediaType;
             }
             else
             {

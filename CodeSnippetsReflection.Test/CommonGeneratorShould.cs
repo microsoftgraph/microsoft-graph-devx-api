@@ -182,7 +182,7 @@ namespace CodeSnippetsReflection.Test
         }
         #endregion
 
-        #region Test GetClassNameFromIdentifier
+        #region Test GetEdmTypeFromIdentifier
         [Fact]
         public void GetClassNameFromIdentifier_ShouldReturnRootIdentifierOnFirstSearch()
         {
@@ -196,10 +196,10 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetClassNameFromIdentifier(snippetModel.Segments.Last(), path);
+            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
-            Assert.Equal("microsoft.graph.person", result);
+            Assert.Equal("microsoft.graph.person", result.ToString());
         }
 
         [Fact]
@@ -215,10 +215,10 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetClassNameFromIdentifier(snippetModel.Segments.Last(), path);
+            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
-            Assert.Equal("microsoft.graph.message", result);
+            Assert.Equal("microsoft.graph.message", result.ToString());
         }
 
         [Fact]
@@ -235,10 +235,10 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetClassNameFromIdentifier(snippetModel.Segments.Last(), path);
+            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
-            Assert.Equal("microsoft.graph.recipient", result);
+            Assert.Equal("microsoft.graph.recipient", result.ToString());
 
         }
 
@@ -256,10 +256,10 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetClassNameFromIdentifier(snippetModel.Segments.Last(), path);
+            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
-            Assert.Equal("microsoft.graph.itemBody", result);
+            Assert.Equal("microsoft.graph.itemBody", result.ToString());
 
         }
 
@@ -278,10 +278,10 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetClassNameFromIdentifier(snippetModel.Segments.Last(), path);
+            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
-            Assert.Equal("microsoft.graph.emailAddress", result);
+            Assert.Equal("microsoft.graph.emailAddress", result.ToString());
         }
 
         [Fact]
@@ -299,10 +299,10 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetClassNameFromIdentifier(snippetModel.Segments.Last(), path);
+            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
-            Assert.Equal("microsoft.graph.emailAddress", result);
+            Assert.Equal("microsoft.graph.emailAddress", result.ToString());
         }
         #endregion
     }

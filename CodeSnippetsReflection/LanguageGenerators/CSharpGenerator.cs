@@ -1,4 +1,4 @@
-﻿using Microsoft.OData.UriParser;
+using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
@@ -7,6 +7,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Microsoft.OData.Edm;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
@@ -26,42 +27,32 @@ namespace CodeSnippetsReflection.LanguageGenerators
             try
             {
                 snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n");
-
+                var segment = snippetModel.Segments.Last();
                 if (snippetModel.Method == HttpMethod.Get)
                 {
-                    snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = await graphClient");
-                    //Generate the Resources path for Csharp
-                    snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
-                    snippetBuilder.Append("\n\t.Request()");
-                    snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
-                    //Append footers
-                    snippetBuilder.Append("\n\t.GetAsync();");
+                    var extraSnippet = "";
+                    if (segment is PropertySegment)
+                    { 
+                        extraSnippet = GeneratePropertySectionSnippet(snippetModel);
+                    }
+                    snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
+                    var actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions) +"\n\t.GetAsync();";
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, actions));
+                    snippetBuilder.Append(extraSnippet);
 
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
-                    var segment = snippetModel.Segments.Last();
-
                     switch (segment)
                     {
                         case NavigationPropertySegment _:
                         case EntitySetSegment _:
-                            if (!string.IsNullOrEmpty(snippetModel.RequestBody))
-                            {
-                                snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
-
-                                snippetBuilder.Append("await graphClient");
-                                //Generate the Resources path for Csharp
-                                snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
-
-                                snippetBuilder.Append("\n\t.Request()");
-                                //Append footers
-                                snippetBuilder.Append($"\n\t.AddAsync({snippetModel.ResponseVariableName});");
-                            }
-                            else
-                            {
+                            if (string.IsNullOrEmpty(snippetModel.RequestBody))
                                 throw new Exception($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
-                            }
+
+                            snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+
                             break;
 
                         case OperationSegment _:
@@ -75,17 +66,46 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 }
                             }
                             
-                            snippetBuilder.Append("await graphClient");
-                            //Generate the Resources path for Csharp
-                            snippetBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
-                            
-                            //Append footers
-                            snippetBuilder.Append("\n\t.Request()");
-                            snippetBuilder.Append("\n\t.PostAsync()");
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, "\n\t.PostAsync()"));
                             break;
                         default:
-                            throw new Exception("Unknown Segment Type in URI");
+                            throw new Exception("Unknown Segment Type in URI for method POST");
                     }
+                }
+                else if (snippetModel.Method == HttpMethod.Patch)
+                {
+                    if (string.IsNullOrEmpty(snippetModel.RequestBody))
+                        throw new Exception($"No request Body present for Patch of entity {snippetModel.ResponseVariableName}");
+                    
+                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                   
+                    if (segment is PropertySegment)
+                    {
+                        snippetBuilder.Append(GeneratePropertySectionSnippet(snippetModel));
+                    }
+
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel,$"\n\t.UpdateAsync({snippetModel.ResponseVariableName});"));
+                }
+                else if(snippetModel.Method == HttpMethod.Delete)
+                {
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, "\n\t.DeleteAsync();"));
+                }
+                else if (snippetModel.Method == HttpMethod.Put)
+                {
+                    if (string.IsNullOrEmpty(snippetModel.RequestBody))
+                        throw new Exception($"No request Body present for PUT of entity {snippetModel.ResponseVariableName}");
+
+                    if (snippetModel.ContentType.Equals("application/json"))
+                    {
+                        snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                    }
+                    else
+                    {
+                        snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = \"{snippetModel.RequestBody.Trim()}\"\n\n");
+                    }
+
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.PutAsync({snippetModel.ResponseVariableName});"));
+
                 }
                 else
                 {
@@ -129,7 +149,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             {
                                 if ((parameter.Name.ToLower().Equals("bindingparameter")) || (parameter.Name.ToLower().Equals("bindparameter")))
                                     continue;
-                                paramList.Add(LowerCaseFirstLetter(parameter.Name));
+                                //append the suffix List if its a collection
+                                paramList.Add(parameter.Type.Definition is IEdmCollectionType
+                                    ? LowerCaseFirstLetter(parameter.Name + "List")
+                                    : LowerCaseFirstLetter(parameter.Name));
                             }
                             
                             resourcesPath.Append($"\n\t.{UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
@@ -159,7 +182,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             resourcesPath.Append($".{UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
                         }
                         break;
-
+                    case ValueSegment _:
+                        resourcesPath.Append(".Content");
+                        break;
+                    case PropertySegment _:
+                        //dont append anything since this is not accessed directly in C#
+                        break;
                     default:
                         //its most likely just a resource so append it
                         resourcesPath.Append($".{UppercaseFirstLetter(item.Identifier)}");
@@ -190,14 +218,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
                 case JObject jObject:
                     {
-                        var className = CommonGenerator.GetClassNameFromIdentifier(pathSegment, path);
-                        className = UppercaseFirstLetter(className.Split(".").Last());
+                        var className = GetCsharpClassName(pathSegment,path);
                         stringBuilder.Append($"var {variableName} = new {className}\r\n");
                         stringBuilder.Append("{\r\n");//opening curly brace
-                                                      //initialize each member of the class
+                        //initialize each member/property of the object
                         foreach (var (key, jToken) in jObject)
                         {
                             var value = JsonConvert.SerializeObject(jToken);
+                            var newPath = path.Append(key).ToList();//add new identifier to the path
+                            if (key.Contains("@odata"))
+                            {
+                                continue;
+                            }
                             switch (jToken.Type)
                             {
                                 case JTokenType.Array:
@@ -205,12 +237,37 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     //we need to create a new object make sure variable names are unique
                                     stringBuilder = EnsureVariableNameIsUnique(stringBuilder, key);
                                     //new nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
-                                    var newPath = path.Append(key).ToList();
-                                    //append this at the start since it needs to be declared before this object is constructed
                                     var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
+                                    //append this at the start since it needs to be declared before this object is constructed
                                     stringBuilder.Insert(0, newObject);
-                                    //append the usage of declared variable
-                                    stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = {key},\r\n");
+                                    //append the usage of declared variable depending on whether its an array or simple object
+                                    stringBuilder.Append(jToken.Type == JTokenType.Object
+                                        ? $"\t{UppercaseFirstLetter(key)} = {key},\r\n"
+                                        : $"\t{UppercaseFirstLetter(key)} = {key}List,\r\n");
+                                    break;
+                                case JTokenType.String:
+                                    var nestedEdmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath);
+                                    //check if the type is an enum and handle it
+                                    if (nestedEdmType is IEdmEnumType edmEnumType)
+                                    {
+                                        var typeName = GetCsharpClassName(pathSegment, newPath);
+                                        var enumName = UppercaseFirstLetter(edmEnumType.Members.First().Name);//default to first member incase serach fails
+                                        //look for the proper name of the enum in the members
+                                        foreach (var member in edmEnumType.Members)
+                                        {
+                                            if (member.Name.Equals(jToken.Value<string>(), StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                enumName = UppercaseFirstLetter(member.Name);
+                                            }
+                                        }
+                                        //Enum is accessed as the Classname then enum type e.g Importance.Low
+                                        stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = { typeName }.{enumName},\r\n");
+                                    }
+                                    else
+                                    {
+                                        //its just a normal string. Declare as is
+                                        stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
+                                    }
                                     break;
                                 default:
                                     stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
@@ -223,32 +280,31 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
                 case JArray array:
                     {
-                        var className = CommonGenerator.GetClassNameFromIdentifier(pathSegment, path);
-                        className = UppercaseFirstLetter(className.Split(".").Last());
+                        var className = GetCsharpClassName(pathSegment , path);
                         //Item is a list/array so declare a typed list
-                        stringBuilder.Append($"var {variableName} = new List<{className}>();\r\n");
+                        stringBuilder.Append($"var {variableName}List = new List<{className}>();\r\n");
                         var objectList = array.Children<JObject>();
                         if (objectList.Any())
                         {
                             foreach (var item in objectList)
                             {
-                                var paramList = new List<string>();
-                                //Add each object item to the list
-                                foreach (var (key, jToken) in item)
-                                {
-                                    //we need to create a new object make sure variable names are unique   
-                                    stringBuilder = EnsureVariableNameIsUnique(stringBuilder, key);
-                                    //nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
-                                    var newPath = path.Append(key).ToList();
-                                    //create the new object and place it at the start
-                                    var jsonString = JsonConvert.SerializeObject(jToken);
-                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, jsonString, newPath);
-                                    stringBuilder.Insert(0, newObject);
-                                    paramList.Add(key);
-                                }
-
                                 //append nested object to the list
-                                stringBuilder.Append($"{variableName}.Add(new {className}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")}));\r\n");
+                                var jsonString = JsonConvert.SerializeObject(item);
+                                stringBuilder = EnsureVariableNameIsUnique(stringBuilder, path.Last());
+                                //we need to create a new object
+                                var objectItem = CSharpGenerateObjectFromJson(pathSegment, jsonString, path);
+                                //prepend the new object created before this declaration
+                                stringBuilder.Insert(0, objectItem);
+                                //add declared object to the list
+                                stringBuilder.Append($"{variableName}List.Add( {path.Last()} );\r\n");
+                            }
+                        }
+                        else
+                        {
+                            //its not nested objects but a string collection
+                            foreach (var element in array)
+                            {
+                                stringBuilder.Append($"{variableName}List.Add( \"{element.Value<string>()}\" );\r\n");
                             }
                         }
                     }
@@ -268,6 +324,91 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
+        /// Generate the snippet section that makes the call to the api
+        /// </summary>
+        /// <param name="snippetModel">Snippet model built from the request</param>
+        /// <param name="actions">String of actions to be done inside the code block</param>
+        private static string GenerateRequestSection(SnippetModel snippetModel, string actions)
+        {
+            var stringBuilder = new StringBuilder();
+
+            stringBuilder.Append("await graphClient");
+            //Generate the Resources path for Csharp
+            stringBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
+            stringBuilder.Append("\n\t.Request()");
+            //Append footers
+            stringBuilder.Append(actions);
+
+            return stringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Return string representation of the classname for CSharp
+        /// </summary>
+        /// <param name="pathSegment">The OdataPathSegment in use</param>
+        /// <param name="path">Path to follow to get find the classname</param>
+        /// <returns>String representing the type in use</returns>
+        private static string GetCsharpClassName(ODataPathSegment pathSegment, ICollection<string> path)
+        {
+            var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
+            //we need to split the string and get last item
+            //eg microsoft.graph.data => Data
+            return UppercaseFirstLetter( edmType.ToString().Split(".").Last() );
+        }
+
+        /// <summary>
+        /// Generate the snippet section for the Property segment for CSharp code as this section cannot be directly accessed in \
+        /// a URL fashion
+        /// </summary>
+        /// <param name="snippetModel">Snippet model built from the request</param>
+        private static string GeneratePropertySectionSnippet(SnippetModel snippetModel)
+        {
+            if (snippetModel.Segments.Count < 2)
+                return "";
+
+            var stringBuilder = new StringBuilder();
+            var desiredSegment = snippetModel.Segments.Last();
+            var segmentIndex = snippetModel.Segments.Count - 1;
+
+            //move back to find first segment that is not a PropertySegment
+            while ((desiredSegment is PropertySegment) && (segmentIndex > 0))
+            {
+                desiredSegment = snippetModel.Segments[--segmentIndex];
+            }
+
+            var selectField = snippetModel.Segments[segmentIndex+1].Identifier;
+
+            //generate path to the property
+            var properties = "";
+            while (segmentIndex < snippetModel.Segments.Count - 1)
+            {
+                properties = properties + "." + UppercaseFirstLetter(snippetModel.Segments[++segmentIndex].Identifier);
+            }
+
+            //modify the responseVarible name
+            snippetModel.ResponseVariableName = desiredSegment.Identifier;
+            var variableName = snippetModel.Segments.Last().Identifier;
+            var parentClassName = GetCsharpClassName(desiredSegment, new List<string> { snippetModel.ResponseVariableName });
+
+            
+            if (snippetModel.Method == HttpMethod.Get)
+            {
+                //we are retrieving the value
+                snippetModel.SelectFieldList.Add(selectField);
+                stringBuilder.Append($"\n\nvar {variableName} = {snippetModel.ResponseVariableName}{properties};");
+            }
+            else
+            {
+                //we are modifying the value
+                stringBuilder.Append($"var {snippetModel.ResponseVariableName} = new {parentClassName}();");//initialise the classname
+                stringBuilder.Append($"\n{snippetModel.ResponseVariableName}{properties} = {variableName};\n\n");
+            }
+
+            return stringBuilder.ToString();
+        }
+
+
+        /// <summary>
         /// Helper function to make check and ensure that a variable name has not been used in declaring another instance variable.
         /// If variable name exists, return string with modified name by appending "Var"
         /// </summary>
@@ -278,7 +419,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         {
             if (stringBuilder.ToString().Contains($"var {variableName} = "))
             {
-                stringBuilder.Replace(variableName, variableName + "Var");
+                stringBuilder.Replace(variableName+" ", "_" + variableName+" " );
             }
             return stringBuilder;
         }

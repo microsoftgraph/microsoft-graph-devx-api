@@ -10,14 +10,15 @@ This shows how snippets requests look like for javascript
 
 ## Examples
 
-### Example 1
+### GET Request
 
-#### Get Request
+#### Example Get Request
 
 ```http
-GET /v1.0/me/events/AAMkAGIAAAoZDOFAAA=?$select=subject,body,bodyPreview,organizer,attendees,start,end,location
+GET /v1.0/me/events/AAMkAGIAAAoZDOFAAA=?$select=subject,body,bodyPreview,organizer,attendees,start,end,location HTTP/1.1
 Host: graph.microsoft.com
 Prefer: outlook.timezone="Pacific Standard Time"
+
 ```
 
 #### Snippet generated
@@ -40,7 +41,7 @@ let res = await client.api('/me/events/AAMkAGIAAAoZDOFAAA=')
 #### Example POST Request
 
 ```http
-POST /v1.0/users
+POST /v1.0/users HTTP/1.1
 Host: graph.microsoft.com
 Content-type: application/json
 
@@ -59,11 +60,6 @@ Content-type: application/json
 #### Example POST Request snippet generated
 
 ```javascript
-const options{
-  authProvider,
-};
-
-//initialise the client
 const options = {
   authProvider,
 };
@@ -83,4 +79,104 @@ const user = {
 
 let res = await client.api('/users')
   .post({user : user});
+```
+
+### PATCH Request
+
+#### Example PATCH Request
+
+```http
+PATCH /v1.0/me HTTP/1.1
+Host: graph.microsoft.com
+Content-type: application/json
+Content-length: 491
+
+{
+  "accountEnabled": true,
+  "businessPhones": [
+    "businessPhones-value"
+  ],
+  "city": "city-value"
+}
+```
+
+#### Example PATCH Request snippet generated
+
+```javascript
+const options = {
+  authProvider,
+};
+
+const client = Client.init(options);
+
+const me = {
+  accountEnabled: true,
+  businessPhones: [
+    "businessPhones-value"
+  ],
+  city: "city-value"
+};
+
+let res = await client.api('/me')
+  .update({user : me});
+```
+
+### PUT Request
+
+#### Example PUT Request
+
+```http
+PUT /beta/applications/{id}/synchronization/templates/{templateId} HTTP/1.1
+Host: graph.microsoft.com
+Authorization: Bearer <token>
+Content-type: application/json
+
+{
+    "id": "Slack",
+    "applicationId": "{id}",
+    "factoryTag": "CustomSCIM"
+}
+```
+
+#### Example PUT Request snippet generated
+
+```javascript
+const options = {
+  authProvider,
+};
+
+const client = Client.init(options);
+
+const templates = {
+    id: "Slack",
+    applicationId: "{id}",
+    factoryTag: "CustomSCIM"
+};
+
+let res = await client.api('/applications/{id}/synchronization/templates/{templateId}')
+  .version('beta')
+  .put({synchronizationTemplate : templates});
+```
+
+### DELETE Request
+
+#### Example DELETE Request
+
+```http
+DELETE /v1.0/me/messages/{id} HTTP/1.1
+Host: graph.microsoft.com
+
+```
+
+#### Example DELETE Request snippet generated
+
+```javascript
+const options = {
+  authProvider,
+};
+
+const client = Client.init(options);
+
+let res = await client.api('/me/messages/{id}')
+  .delete();
 ```

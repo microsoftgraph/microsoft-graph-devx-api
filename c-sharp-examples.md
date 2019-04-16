@@ -6,21 +6,21 @@ author: "andrueastman"
 
 # CSharp examples
 
-This shows how snippets requests look like for javascript
+This shows how snippets requests look like for C#
 
 ## Examples
 
-### Get Request
+### GET Request
 
-#### Example Get Request
+#### Example GET Request
 
 ```http
-GET /v1.0/me/events/AAMkAGIAAAoZDOFAAA=?$select=subject,body,bodyPreview,organizer,attendees,start,end,location
+GET /v1.0/me/events/AAMkAGIAAAoZDOFAAA=?$select=subject,body,bodyPreview,organizer,attendees,start,end,location HTTP/1.1
 Host: graph.microsoft.com
 Prefer: outlook.timezone="Pacific Standard Time"
 ```
 
-#### Example Get Request snippet generated
+#### Example GET Request snippet generated
 
 ```cs
 GraphServiceClient graphClient = new GraphServiceClient( authProvider );
@@ -37,7 +37,7 @@ var events = await graphClient.Me.Events["AAMkAGIAAAoZDOFAAA="]
 #### Example POST Request
 
 ```http
-POST /v1.0/users
+POST /v1.0/users HTTP/1.1
 Host: graph.microsoft.com
 Content-type: application/json
 
@@ -76,4 +76,96 @@ var user = new User
 await graphClient.Users
   .Request()
   .AddAsync(user);
+```
+
+### PATCH Request
+
+#### Example PATCH Request
+
+```http
+PATCH /v1.0/me HTTP/1.1
+Host: graph.microsoft.com
+Content-type: application/json
+Content-length: 491
+
+{
+  "accountEnabled": true,
+  "businessPhones": [
+    "businessPhones-value"
+  ],
+  "city": "city-value"
+}
+```
+
+#### Example PATCH Request snippet generated
+
+```cs
+GraphServiceClient graphClient = new GraphServiceClient( authProvider );
+
+var businessPhones = new List<String>();
+
+var me = new User
+{
+  AccountEnabled = true,
+  BusinessPhones = businessPhones,
+  City = "city-value",
+};
+
+await graphClient.Me
+  .Request()
+  .UpdateAsync(me);
+```
+
+### PUT Request
+
+#### Example PUT Request
+
+```http
+PUT /beta/applications/{id}/synchronization/templates/{templateId} HTTP/1.1
+Host: graph.microsoft.com
+Authorization: Bearer <token>
+Content-type: application/json
+
+{
+    "id": "Slack",
+    "applicationId": "{id}",
+    "factoryTag": "CustomSCIM"
+}
+```
+
+#### Example PUT Request snippet generated
+
+```cs
+GraphServiceClient graphClient = new GraphServiceClient( authProvider );
+
+var templates = new SynchronizationTemplate
+{
+  Id = "Slack",
+  ApplicationId = "{id}",
+  FactoryTag = "CustomSCIM",
+};
+
+await graphClient.Applications["{id}"].Synchronization.Templates["{templateId}"]
+  .Request()
+  .PutAsync(templates);
+```
+
+### DELETE Request
+
+#### Example DELETE Request
+
+```http
+DELETE /v1.0/me/messages/{id} HTTP/1.1
+Host: graph.microsoft.com
+
+```
+
+#### Example DELETE Request snippet generated
+
+```cs
+GraphServiceClient graphClient = new GraphServiceClient( authProvider );
+
+await graphClient.Me.Messages["{id}"]
+  .Request()
+  .DeleteAsync();
 ```
