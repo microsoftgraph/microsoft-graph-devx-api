@@ -148,8 +148,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
         public override string FilterExpressionDelimiter => ",";
 
-        public override string ExpandExpressionDelimiter => ",";
-
         public override string SelectExpressionDelimiter => ",";
 
         public override string OrderByExpressionDelimiter => " ";
