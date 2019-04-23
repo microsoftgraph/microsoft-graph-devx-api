@@ -56,14 +56,17 @@ namespace CodeSnippetsReflection
         /// <param name="oDataPathSegment">The pathe segment in question</param>
         private string GetResponseVariableName(ODataPathSegment oDataPathSegment)
         {
+            var edmType = oDataPathSegment.EdmType;
             //check if its a collection and try gate the name of single entity
-            if (oDataPathSegment.EdmType is IEdmCollectionType innerCollection )
+            if (edmType is IEdmCollectionType innerCollection )
             {
-                if(innerCollection.ElementType.Definition is IEdmNamedElement edmNamedElement)
-                    return edmNamedElement.Name;
+                edmType = innerCollection.ElementType.Definition;
             }
 
-            //its not a collection so the identfier can do
+            if (edmType is IEdmNamedElement edmNamedElement)
+                return edmNamedElement.Name;
+            
+            //its not a collection/or named type so the identfier can do
             return oDataPathSegment.Identifier;
         }
 

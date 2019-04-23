@@ -28,6 +28,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n");
                 var segment = snippetModel.Segments.Last();
+                snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName , languageExpressions);
+
                 if (snippetModel.Method == HttpMethod.Get)
                 {
                     var extraSnippet = "";
@@ -52,7 +54,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             if (string.IsNullOrEmpty(snippetModel.RequestBody))
                                 throw new Exception($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
 
-                            snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                            snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }, languageExpressions));
                             snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.AddAsync({snippetModel.ResponseVariableName});"));
 
                             break;
@@ -64,7 +66,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 foreach (var (key, jToken) in testObj)
                                 {
                                     var jsonString = JsonConvert.SerializeObject(jToken);
-                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { key }));
+                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { key },languageExpressions));
                                 }
                             }
                             
@@ -79,7 +81,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (string.IsNullOrEmpty(snippetModel.RequestBody))
                         throw new Exception($"No request Body present for Patch of entity {snippetModel.ResponseVariableName}");
                     
-                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName },languageExpressions));
                    
                     if (segment is PropertySegment)
                     {
@@ -99,7 +101,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     if (snippetModel.ContentType.Equals("application/json"))
                     {
-                        snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                        snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName },languageExpressions));
                     }
                     else
                     {
@@ -207,10 +209,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="jsonBody">Json string from which the information of the object to be initialized is held</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
-        private static string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path )
+        private static string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path , LanguageExpressions languageExpressions)
         {
             var stringBuilder = new StringBuilder();
-            var variableName = path.Last();
+            var variableName = CommonGenerator.EnsureVariableNameIsNotReserved( path.Last() , languageExpressions);
             var jsonObject = JsonConvert.DeserializeObject(jsonBody);
 
             switch (jsonObject)
@@ -239,7 +241,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     //we need to create a new object make sure variable names are unique
                                     stringBuilder = EnsureVariableNameIsUnique(stringBuilder, key);
                                     //new nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
-                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
+                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath ,languageExpressions);
                                     //append this at the start since it needs to be declared before this object is constructed
                                     stringBuilder.Insert(0, newObject);
                                     //append the usage of declared variable depending on whether its an array or simple object
@@ -294,7 +296,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 var jsonString = JsonConvert.SerializeObject(item);
                                 stringBuilder = EnsureVariableNameIsUnique(stringBuilder, path.Last());
                                 //we need to create a new object
-                                var objectItem = CSharpGenerateObjectFromJson(pathSegment, jsonString, path);
+                                var objectItem = CSharpGenerateObjectFromJson(pathSegment, jsonString, path ,languageExpressions);
                                 //prepend the new object created before this declaration
                                 stringBuilder.Insert(0, objectItem);
                                 //add declared object to the list
@@ -315,8 +317,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //do nothing
                     break;
                 default:
+                    var primitive = jsonObject.ToString();
+                    //json deserializer capitalizes the bool types so undo that
+                    if (primitive.Equals("True") || primitive.Equals("False"))
+                    {
+                        primitive = LowerCaseFirstLetter(primitive);
+                    }
                     //item is a primitive print as is
-                    stringBuilder.Append($"var {variableName} = {jsonObject};\r\n");
+                    stringBuilder.Append($"var {variableName} = {primitive};\r\n");
                     break;
             }
 
@@ -473,5 +481,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string SelectExpressionDelimiter => ",\n\t\t\t e.";
         public override string OrderByExpressionDelimiter => " ";
         public override string HeaderExpression => "\n\t.Header(\"{0}\",\"{1}\")";
+
+        public override string[] ReservedNames => new string[] {
+            "abstract","as","base","bool","break","byte","case","catch","char",
+            "checked","class","const","continue","decimal","default","delegate",
+            "do","double","else","enum","event","explicit","extern","false",
+            "finally","fixed","float","for","foreach","goto","if","implicit","in",
+            "int","interface","internal","is","lock","long","namespace","new","null",
+            "object","operator","out","override","params","private","protected","public",
+            "readonly","ref","return","sbyte","sealed","short","sizeof","stackalloc",
+            "static","string","struct","switch","this","throw","true","try","typeof","uint",
+            "ulong","unchecked","unsafe","ushort","using","using","static","virtual","void",
+            "volatile","while" };
     }
 }

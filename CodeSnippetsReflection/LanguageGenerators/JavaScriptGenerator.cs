@@ -23,8 +23,21 @@ namespace CodeSnippetsReflection.LanguageGenerators
             try
             {
                 var snippetBuilder = new StringBuilder();
+                snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName,languageExpressions);
                 //get the potential parameter for actions
-                var actionParameter = string.IsNullOrEmpty(snippetModel.RequestBody) ? "" : $"{{{GetObjectType(snippetModel.Segments.Last())} : { snippetModel.ResponseVariableName }}}";
+                var actionParameter = "";
+                if (!string.IsNullOrEmpty(snippetModel.RequestBody))
+                {
+                    var segment = snippetModel.Segments.Last();
+                    if (segment is OperationSegment)
+                    {
+                        actionParameter = $"{ snippetModel.ResponseVariableName }";
+                    }
+                    else
+                    {
+                        actionParameter = $"{{{GetObjectType(segment)} : { snippetModel.ResponseVariableName }}}";
+                    }
+                }
                 //setup the auth snippet section
                 snippetBuilder.Append("const options = {\n");
                 snippetBuilder.Append("\tauthProvider,\n};\n\n");
@@ -153,5 +166,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string OrderByExpressionDelimiter => " ";
 
         public override string HeaderExpression => "\n\t.header('{0}','{1}')";
+
+        public override string[] ReservedNames => new string [] {
+            "await","abstract", "arguments", "boolean", "break", "byte", "case",
+            "catch","char", "const", "continue", "debugger", "default", "delete",
+            "do","double", "else", "enum","export","extends","eval", "false", "final",
+            "finally", "float", "for","function", "goto", "if", "implements", "in",
+            "instanceof", "int","interface", "let", "long", "native", "new", "null",
+            "package","private", "protected", "public", "return", "short", "static",
+            "switch","synchronized", "this", "throw", "throws", "transient", "true",
+            "try","typeof", "var", "void", "volatile", "while", "with", "yield" };
+
     }
 }
