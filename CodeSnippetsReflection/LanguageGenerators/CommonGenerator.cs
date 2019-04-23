@@ -41,12 +41,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 snippetBuilder.Append(string.Format(languageExpressions.SearchExpression, snippetModel.SearchExpression));
             }
 
-            //Append any expand queries
-            if (snippetModel.ExpandFieldList.Any())
+            //Append the expand section
+            if (!string.IsNullOrEmpty(snippetModel.ExpandFieldExpression))
             {
-                var expandResult = GetListAsStringForSnippet(snippetModel.ExpandFieldList, languageExpressions.ExpandExpressionDelimiter);
                 //append the expand result to the snippet
-                snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, expandResult));
+                snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, snippetModel.ExpandFieldExpression));
             }
 
             //Append any select queries

@@ -36,6 +36,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         extraSnippet = GeneratePropertySectionSnippet(snippetModel);
                     }
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
+                    //Csharp properties are uppercase so replace with list with uppercase version
+                    snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(x => UppercaseFirstLetter(x)).ToList();
                     var actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions) +"\n\t.GetAsync();";
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, actions));
                     snippetBuilder.Append(extraSnippet);
@@ -462,14 +464,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string FilterExpression => "\n\t.Filter(\"{0}\")"; 
         public override string SearchExpression => "\n\t.Search(\"{0}\")"; 
         public override string ExpandExpression => "\n\t.Expand(\"{0}\")"; 
-        public override string SelectExpression => "\n\t.Select(\"{0}\")"; 
+        public override string SelectExpression => "\n\t.Select( e => new {{\n\t\t\t e.{0} \n\t\t\t }})"; 
         public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")"; 
         public override string SkipExpression => "\n\t.Skip({0})"; 
         public override string SkipTokenExpression => "\n\t.SkipToken(\"{0}\")"; 
         public override string TopExpression => "\n\t.Top({0})";
         public override string FilterExpressionDelimiter => ",";
-        public override string ExpandExpressionDelimiter => ",";
-        public override string SelectExpressionDelimiter => ",";
+        public override string SelectExpressionDelimiter => ",\n\t\t\t e.";
         public override string OrderByExpressionDelimiter => " ";
         public override string HeaderExpression => "\n\t.Header(\"{0}\",\"{1}\")";
     }

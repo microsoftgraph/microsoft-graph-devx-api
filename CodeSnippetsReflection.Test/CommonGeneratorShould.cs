@@ -129,6 +129,103 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal("\n\t.header('Prefer','kenya-timezone')", result);
         }
 
+        [Fact]
+        public void GenerateQuerySection_ShouldReturnAppropriateCSharpSelectExpression()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            //no query present
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users/{id}?$select=displayName,givenName,postalCode");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act
+            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
+
+            //Assert string is empty
+            Assert.Equal("\n\t.Select( e => new {\n\t\t\t e.displayName,\n\t\t\t e.givenName,\n\t\t\t e.postalCode \n\t\t\t })", result);
+        }
+
+        [Fact]
+        public void GenerateQuerySection_ShouldReturnAppropriateCSharpFilterExpression()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            //no query present
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users?$filter=startswith(givenName, 'J')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act
+            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
+
+            //Assert string is empty
+            Assert.Equal("\n\t.Filter(\"startswith(givenName, 'J')\")", result);
+        }
+
+        [Fact]
+        public void GenerateQuerySection_ShouldReturnAppropriateCSharpSearchExpression()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            //no query present
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/?$search=\"Irene McGowen\"");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act
+            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
+
+            //Assert string is empty
+            Assert.Equal("\n\t.Search(\"Irene McGowen\")", result);
+        }
+
+        [Fact]
+        public void GenerateQuerySection_ShouldReturnAppropriateCSharpSkipExpression()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            //no query present
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/events?$skip=20");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act
+            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
+
+            //Assert string is empty
+            Assert.Equal("\n\t.Skip(20)", result);
+        }
+
+        [Fact]
+        public void GenerateQuerySection_ShouldReturnAppropriateCSharpTopExpression()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            //no query present
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/events?$top=5");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act
+            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
+
+            //Assert string is empty
+            Assert.Equal("\n\t.Top(5)", result);
+        }
+
+        [Fact]
+        public void GenerateQuerySection_ShouldReturnAppropriateCSharpRequestHeaderExpression()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            //no query present
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users/{id}");
+            requestPayload.Headers.Add("Prefer", "kenya-timezone");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act
+            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
+
+            //Assert string is empty
+            Assert.Equal("\n\t.Header(\"Prefer\",\"kenya-timezone\")", result);
+        }
         #endregion
 
         #region Test GetListAsStringForSnippet

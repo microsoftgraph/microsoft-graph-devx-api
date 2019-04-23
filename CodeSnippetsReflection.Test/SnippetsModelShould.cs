@@ -13,7 +13,7 @@ namespace CodeSnippetsReflection.Test
         private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
 
         [Fact]
-        public void PopulateExpandListField()
+        public void PopulateExpandFieldExpression()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/drive/root?$expand=children");
@@ -22,7 +22,48 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
              //Assert
-            Assert.Equal("children", snippetModel.ExpandFieldList.First());
+            Assert.Equal("children", snippetModel.ExpandFieldExpression);
+        }
+
+        [Fact]
+        public void PopulateExpandFieldExpressionWithNestedQuery()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/drive/root?$expand=children($select=id,name)");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert
+            Assert.Equal("children($select=id,name)", snippetModel.ExpandFieldExpression);
+        }
+
+        [Fact]
+        public void PopulateExpandFieldExpressionFromMultipleQueryString()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users?$select=id,displayName,mail&$expand=extensions");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert
+            Assert.Equal("extensions", snippetModel.ExpandFieldExpression);
+
+        }
+
+        [Fact]
+        public void PopulateExpandFieldExpressionFromReversedMultipleQueryString()
+        {
+            //Reverse the query structure should still work
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users?$expand=extensions&$select=id,displayName,mail");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert
+            Assert.Equal("extensions", snippetModel.ExpandFieldExpression);
         }
 
         [Fact]

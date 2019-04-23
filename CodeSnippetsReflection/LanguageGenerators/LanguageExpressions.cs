@@ -5,7 +5,6 @@
         public abstract string FilterExpression { get;  }
         public abstract string FilterExpressionDelimiter { get; }
         public abstract string ExpandExpression { get;  }
-        public abstract string ExpandExpressionDelimiter { get; }
         public abstract string SelectExpression { get;  }
         public abstract string SelectExpressionDelimiter { get; }
         public abstract string OrderByExpression { get;  }

@@ -19,7 +19,7 @@ namespace CodeSnippetsReflection
         public string SearchExpression { get; set; }
         public List<ODataPathSegment> Segments { get; set; }
         public List<string> SelectFieldList { get; set; }
-        public List<string> ExpandFieldList { get; set; }
+        public string ExpandFieldExpression { get; set; }
         public List<string> FilterFieldList { get; set; }
         public List<string> OrderByFieldList { get; set; }
         public IEnumerable<KeyValuePair<string, IEnumerable<string>>> RequestHeaders { get; set; }
@@ -42,7 +42,6 @@ namespace CodeSnippetsReflection
             this.Path = Uri.UnescapeDataString(requestPayload.RequestUri.AbsolutePath.Substring(5));
             this.ApiVersion = serviceRootUrl.Substring(serviceRootUrl.Length - 4);
             this.SelectFieldList = new List<string>();
-            this.ExpandFieldList = new List<string>();
             this .FilterFieldList = new List<string>();
             this.OrderByFieldList = new List<string>();
             this.RequestHeaders = requestPayload.Headers;
@@ -88,10 +87,9 @@ namespace CodeSnippetsReflection
         /// This function populates the Select and Expand field lists in the class from reading the data from the
         /// Odata URI. <see cref="SelectExpandClause"/>
         /// </summary>
-        private void PopulateSelectAndExpandQueryFieldLists()
+        private void PopulateSelectAndExpandQueryFields(string queryString)
         {
             var pathSelectedItems = ODataUri.SelectAndExpand.SelectedItems;
-            //TODO the implementation of this is abit naive. Ideally the queries can be nested
             foreach (var item in pathSelectedItems)
             {
                 switch (item)
@@ -102,7 +100,15 @@ namespace CodeSnippetsReflection
                         break;
                     //its an expand query
                     case ExpandedNavigationSelectItem expandedNavigationSelectItem:
-                        ExpandFieldList.Add(expandedNavigationSelectItem.PathToNavigationProperty.FirstSegment.Identifier);
+                        //get the string from the start of the navigation source name.
+                        ExpandFieldExpression = queryString.Substring(queryString.IndexOf( expandedNavigationSelectItem.NavigationSource.Name));
+                        //check if there are other queries present and chunk them off to remain with only the expand parameter
+                        var index = ExpandFieldExpression.IndexOf("&");
+                        if (index > 0)
+                        {
+                            ExpandFieldExpression = ExpandFieldExpression.Substring(0, index);
+                        }
+                       
                         break;
                 }
             }
@@ -141,7 +147,7 @@ namespace CodeSnippetsReflection
 
             if (ODataUri.SelectAndExpand != null)
             {
-                PopulateSelectAndExpandQueryFieldLists();
+                PopulateSelectAndExpandQueryFields(queryString);
             }
 
         }
