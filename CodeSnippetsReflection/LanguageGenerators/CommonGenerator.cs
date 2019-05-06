@@ -217,5 +217,22 @@ namespace CodeSnippetsReflection.LanguageGenerators
             return result.ToString();
 
         }
+
+        /// <summary>
+        /// Helper function to make check and ensure that a variable name is not a reserved keyword for the language in use.
+        /// If it is reserved, return an appropiate transformation of the variale name 
+        /// </summary>
+        /// <param name="variableName">variable name to check for uniqueness</param>
+        /// <param name="languageExpressions">Language expressions that holds list of reserved words for filtering</param>
+        /// <returns>Modified variable name that is not a keyword</returns>
+        public static string EnsureVariableNameIsNotReserved(string variableName , LanguageExpressions languageExpressions)
+        {
+            if (languageExpressions.ReservedNames.Contains(variableName))
+            {
+                return "_" + variableName;//append an underscore
+            }
+
+            return variableName;
+        }
     }
 }

@@ -14,6 +14,7 @@
         public abstract string TopExpression { get;  }
         public abstract string SearchExpression { get; }
         public abstract string HeaderExpression { get; }
+        public abstract string[] ReservedNames { get; }
 
     }
 }
