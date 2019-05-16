@@ -15,6 +15,7 @@
         public abstract string SearchExpression { get; }
         public abstract string HeaderExpression { get; }
         public abstract string[] ReservedNames { get; }
-
+        public abstract string ReservedNameEscapeSequence { get; }
+        public abstract string DoubleQuotesEscapeSequence { get; }
     }
 }

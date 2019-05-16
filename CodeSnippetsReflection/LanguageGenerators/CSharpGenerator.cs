@@ -29,6 +29,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n");
                 var segment = snippetModel.Segments.Last();
                 snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName , languageExpressions);
+                //Csharp properties are uppercase so replace with list with uppercase version
+                snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(UppercaseFirstLetter).ToList();
+                var actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
@@ -36,12 +39,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (segment is PropertySegment)
                     { 
                         extraSnippet = GeneratePropertySectionSnippet(snippetModel);
+                        snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(UppercaseFirstLetter).ToList();
+                        actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
                     }
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
-                    //Csharp properties are uppercase so replace with list with uppercase version
-                    snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(x => UppercaseFirstLetter(x)).ToList();
-                    var actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions) +"\n\t.GetAsync();";
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, actions));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.GetAsync();"));
                     snippetBuilder.Append(extraSnippet);
 
                 }
@@ -54,8 +56,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             if (string.IsNullOrEmpty(snippetModel.RequestBody))
                                 throw new Exception($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
 
-                            snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }, languageExpressions));
-                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+                            snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
+                            snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.AddAsync({snippetModel.ResponseVariableName});"));
 
                             break;
 
@@ -66,11 +69,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 foreach (var (key, jToken) in testObj)
                                 {
                                     var jsonString = JsonConvert.SerializeObject(jToken);
-                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { key },languageExpressions));
+                                    snippetBuilder.Append($"var {key} = ");
+                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { key }));
                                 }
                             }
-                            
-                            snippetBuilder.Append(GenerateRequestSection(snippetModel, "\n\t.PostAsync()"));
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PostAsync();"));
                             break;
                         default:
                             throw new Exception("Unknown Segment Type in URI for method POST");
@@ -80,19 +83,20 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     if (string.IsNullOrEmpty(snippetModel.RequestBody))
                         throw new Exception($"No request Body present for Patch of entity {snippetModel.ResponseVariableName}");
-                    
-                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName },languageExpressions));
+
+                    snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
+                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
                    
                     if (segment is PropertySegment)
                     {
                         snippetBuilder.Append(GeneratePropertySectionSnippet(snippetModel));
                     }
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel,$"\n\t.UpdateAsync({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.UpdateAsync({snippetModel.ResponseVariableName});"));
                 }
                 else if(snippetModel.Method == HttpMethod.Delete)
                 {
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, "\n\t.DeleteAsync();"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.DeleteAsync();"));
                 }
                 else if (snippetModel.Method == HttpMethod.Put)
                 {
@@ -101,14 +105,15 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     if (snippetModel.ContentType.Equals("application/json"))
                     {
-                        snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName },languageExpressions));
+                        snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
+                        snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
                     }
                     else
                     {
                         snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = \"{snippetModel.RequestBody.Trim()}\"\n\n");
                     }
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.PutAsync({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PutAsync({snippetModel.ResponseVariableName});"));
 
                 }
                 else
@@ -153,10 +158,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             {
                                 if ((parameter.Name.ToLower().Equals("bindingparameter")) || (parameter.Name.ToLower().Equals("bindparameter")))
                                     continue;
-                                //append the suffix List if its a collection
-                                paramList.Add(parameter.Type.Definition is IEdmCollectionType
-                                    ? LowerCaseFirstLetter(parameter.Name + "List")
-                                    : LowerCaseFirstLetter(parameter.Name));
+
+                                paramList.Add(LowerCaseFirstLetter(parameter.Name));
                             }
                             
                             resourcesPath.Append($"\n\t.{UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
@@ -209,22 +212,29 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="jsonBody">Json string from which the information of the object to be initialized is held</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
-        private static string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path , LanguageExpressions languageExpressions)
+        private static string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path)
         {
             var stringBuilder = new StringBuilder();
-            var variableName = CommonGenerator.EnsureVariableNameIsNotReserved( path.Last() , languageExpressions);
             var jsonObject = JsonConvert.DeserializeObject(jsonBody);
+            var tabSpace = new string('\t', path.Count -1);//d
 
             switch (jsonObject)
             {
                 case string _:
-                    stringBuilder.Append($"var {variableName} = \"{jsonObject}\";\r\n");
+                    if (jsonObject.Equals("true") || jsonObject.Equals("false"))
+                    {
+                        stringBuilder.Append($"{tabSpace}{jsonObject}\r\n");//boolean primitives values masquerading as strings.
+                    }
+                    else
+                    {
+                        stringBuilder.Append($"{tabSpace}\"{jsonObject}\"\r\n");
+                    }
                     break;
                 case JObject jObject:
                     {
                         var className = GetCsharpClassName(pathSegment,path);
-                        stringBuilder.Append($"var {variableName} = new {className}\r\n");
-                        stringBuilder.Append("{\r\n");//opening curly brace
+                        stringBuilder.Append($"new {className}\r\n");
+                        stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
                         //initialize each member/property of the object
                         foreach (var (key, jToken) in jObject)
                         {
@@ -238,16 +248,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             {
                                 case JTokenType.Array:
                                 case JTokenType.Object:
-                                    //we need to create a new object make sure variable names are unique
-                                    stringBuilder = EnsureVariableNameIsUnique(stringBuilder, key);
-                                    //new nested object needs to be constructed so call this function recursively to make it and append it before the current snippet
-                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath ,languageExpressions);
-                                    //append this at the start since it needs to be declared before this object is constructed
-                                    stringBuilder.Insert(0, newObject);
-                                    //append the usage of declared variable depending on whether its an array or simple object
-                                    stringBuilder.Append(jToken.Type == JTokenType.Object
-                                        ? $"\t{UppercaseFirstLetter(key)} = {key},\r\n"
-                                        : $"\t{UppercaseFirstLetter(key)} = {key}List,\r\n");
+                                    //new nested object needs to be constructed so call this function recursively to make it
+                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath );
+                                    stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
                                     break;
                                 case JTokenType.String:
                                     var nestedEdmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath);
@@ -265,42 +268,40 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                             }
                                         }
                                         //Enum is accessed as the Classname then enum type e.g Importance.Low
-                                        stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = { typeName }.{enumName},\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = { typeName }.{enumName},\r\n");
                                     }
                                     else
                                     {
                                         //its just a normal string. Declare as is
-                                        stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
                                     }
                                     break;
                                 default:
-                                    stringBuilder.Append($"\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
+                                    stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
                                     break;
                             }
                         }
                         //closing brace
-                        stringBuilder.Append("};\r\n");
+                        stringBuilder.Append($"{tabSpace}}}\r\n");
                     }
                     break;
                 case JArray array:
                     {
                         var className = GetCsharpClassName(pathSegment , path);
                         //Item is a list/array so declare a typed list
-                        stringBuilder.Append($"var {variableName}List = new List<{className}>();\r\n");
+                        stringBuilder.Append($"new List<{className}>()\r\n");
+                        stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
                         var objectList = array.Children<JObject>();
                         if (objectList.Any())
                         {
                             foreach (var item in objectList)
                             {
-                                //append nested object to the list
                                 var jsonString = JsonConvert.SerializeObject(item);
-                                stringBuilder = EnsureVariableNameIsUnique(stringBuilder, path.Last());
                                 //we need to create a new object
-                                var objectItem = CSharpGenerateObjectFromJson(pathSegment, jsonString, path ,languageExpressions);
-                                //prepend the new object created before this declaration
-                                stringBuilder.Insert(0, objectItem);
-                                //add declared object to the list
-                                stringBuilder.Append($"{variableName}List.Add( {path.Last()} );\r\n");
+                                var objectStringFromJson = CSharpGenerateObjectFromJson(pathSegment, jsonString, path ).TrimEnd(";\r\n".ToCharArray());
+                                //indent it one tab level then append it to the string builder
+                                objectStringFromJson = $"{tabSpace}\t{objectStringFromJson.Replace("\r\n", "\r\n\t")}";
+                                stringBuilder.Append($"{objectStringFromJson},\r\n");
                             }
                         }
                         else
@@ -308,9 +309,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             //its not nested objects but a string collection
                             foreach (var element in array)
                             {
-                                stringBuilder.Append($"{variableName}List.Add( \"{element.Value<string>()}\" );\r\n");
+                                stringBuilder.Append($"{tabSpace}\t\"{element.Value<string>()}\",\r\n");
                             }
                         }
+                        stringBuilder.Append($"{tabSpace}}}\r\n");
                     }
                     break;
                 case null:
@@ -324,13 +326,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         primitive = LowerCaseFirstLetter(primitive);
                     }
                     //item is a primitive print as is
-                    stringBuilder.Append($"var {variableName} = {primitive};\r\n");
+                    stringBuilder.Append($"{tabSpace}{primitive}\r\n");
                     break;
             }
 
-            //add a blank line
-            stringBuilder.Append("\r\n");
-            return stringBuilder.ToString();
+            //check if this is the outermost object in a potential nested object structure and needs the semicolon termination character.
+            return path.Count == 1 ? $"{stringBuilder.ToString().TrimEnd()};\r\n\r\n" : stringBuilder.ToString();
         }
 
         /// <summary>
@@ -417,23 +418,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             return stringBuilder.ToString();
         }
 
-
-        /// <summary>
-        /// Helper function to make check and ensure that a variable name has not been used in declaring another instance variable.
-        /// If variable name exists, return string with modified name by appending "Var"
-        /// </summary>
-        /// <param name="stringBuilder">String builder instance to check for unique declaration</param>
-        /// <param name="variableName">variable name to check for uniqueness</param>
-        /// <returns>Modified string builder instance</returns>
-        private static StringBuilder EnsureVariableNameIsUnique(StringBuilder stringBuilder, string variableName)
-        {
-            if (stringBuilder.ToString().Contains($"var {variableName} = "))
-            {
-                stringBuilder.Replace(variableName+" ", "_" + variableName+" " );
-            }
-            return stringBuilder;
-        }
-
         /// <summary>
         /// Helper function to make the first character of a string to be capitalized
         /// </summary>
@@ -493,5 +477,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
             "static","string","struct","switch","this","throw","true","try","typeof","uint",
             "ulong","unchecked","unsafe","ushort","using","using","static","virtual","void",
             "volatile","while" };
+
+        public override string ReservedNameEscapeSequence => "@";
+
+        public override string DoubleQuotesEscapeSequence => "\\\"";
     }
 }

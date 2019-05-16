@@ -177,5 +177,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             "switch","synchronized", "this", "throw", "throws", "transient", "true",
             "try","typeof", "var", "void", "volatile", "while", "with", "yield" };
 
+        public override string ReservedNameEscapeSequence => "_";
+
+        public override string DoubleQuotesEscapeSequence => "\"";
     }
 }

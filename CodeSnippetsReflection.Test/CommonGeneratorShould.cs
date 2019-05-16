@@ -130,6 +130,24 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
+        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptRequestHeaderExpressionWithEscapedDoubleQuotes()
+        {
+            //Arrange
+            LanguageExpressions expressions = new JavascriptExpressions();
+            //no query present
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/events");
+            requestPayload.Headers.Add("Prefer", "outlook.timezone=\"Pacific Standard Time\"");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act
+            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
+
+            //Assert string is empty
+            Assert.Equal("\n\t.header('Prefer','outlook.timezone=\"Pacific Standard Time\"')", result);
+        }
+
+        [Fact]
         public void GenerateQuerySection_ShouldReturnAppropriateCSharpSelectExpression()
         {
             //Arrange
@@ -225,6 +243,24 @@ namespace CodeSnippetsReflection.Test
 
             //Assert string is empty
             Assert.Equal("\n\t.Header(\"Prefer\",\"kenya-timezone\")", result);
+        }
+
+        [Fact]
+        public void GenerateQuerySection_ShouldReturnAppropriateCSharpRequestHeaderExpressionWithEscapedDoubleQuotes()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            //no query present
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/events");
+            requestPayload.Headers.Add("Prefer", "outlook.timezone=\"Pacific Standard Time\"");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act
+            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
+
+            //Assert string is empty
+            Assert.Equal("\n\t.Header(\"Prefer\",\"outlook.timezone=\\\"Pacific Standard Time\\\"\")", result);
         }
         #endregion
 
@@ -400,6 +436,47 @@ namespace CodeSnippetsReflection.Test
 
             //Assert
             Assert.Equal("microsoft.graph.emailAddress", result.ToString());
+        }
+        #endregion
+
+        #region Test EnsureVariableNameIsNotReserved
+        [Fact]
+        public void EnsureVariableNameIsNotReserved_AppendsUnderscoreOnJavascriptKeywords()
+        {
+            //Arrange
+            LanguageExpressions expressions = new JavascriptExpressions();
+            var keyword = "transient";
+            //Act
+            var result = CommonGenerator.EnsureVariableNameIsNotReserved(keyword, expressions);
+
+            //Assert
+            Assert.Equal("_transient", result);
+        }
+
+        [Fact]
+        public void EnsureVariableNameIsNotReserved_AppendsTheAtSignOnCsharpKeywords()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            var keyword = "event";
+            //Act
+            var result = CommonGenerator.EnsureVariableNameIsNotReserved(keyword, expressions);
+
+            //Assert
+            Assert.Equal("@event", result);
+        }
+
+        [Fact]
+        public void EnsureVariableNameIsNotReserved_DoesNotModifyVariableNamesIfNotReserved()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            var keyword = "people";
+            //Act
+            var result = CommonGenerator.EnsureVariableNameIsNotReserved(keyword, expressions);
+
+            //Assert
+            Assert.Equal("people", result);
         }
         #endregion
     }
