@@ -53,20 +53,25 @@ namespace CodeSnippetsReflection
         /// <summary>
         ///Get a string showing the name variable to be manipulated by the segment
         /// </summary>
-        /// <param name="oDataPathSegment">The pathe segment in question</param>
+        /// <param name="oDataPathSegment">The path segment in question</param>
+        /// <returns> string to be used as return variable name in this call.</returns>
         private string GetResponseVariableName(ODataPathSegment oDataPathSegment)
         {
             var edmType = oDataPathSegment.EdmType;
-            //check if its a collection and try gate the name of single entity
-            if (edmType is IEdmCollectionType innerCollection )
+
+            // when we are trying to create an entity(method == Post) make sure we try to get the name
+            // of a single item in the collection as we will be posting a single item.
+            if ((this.Method == HttpMethod.Post) && (edmType is IEdmCollectionType innerCollection))
             {
                 edmType = innerCollection.ElementType.Definition;
             }
 
             if (edmType is IEdmNamedElement edmNamedElement)
+            {
                 return edmNamedElement.Name;
+            }
             
-            //its not a collection/or named type so the identfier can do
+            //its not a collection/or named type so the identifier can do
             return oDataPathSegment.Identifier;
         }
 

@@ -164,7 +164,100 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal("",snippetModel.RequestBody);
         }
 
+        #region Test ResponseVariableNames
+        [Fact]
+        public void SetAppropriateVariableNameForPeopleEntity()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the variable name is "people" for a collection
+            Assert.Equal("people", snippetModel.ResponseVariableName);
+        }
+
+        [Fact]
+        public void SetAppropriateVariableNameForUsersList()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the variable name is "users" for the users collection
+            Assert.Equal("users", snippetModel.ResponseVariableName);
+        }
 
 
+        [Fact]
+        public void SetAppropriateVariableNameForSingleUser()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users/{id|userPrincipalName}");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the variable name is "user" for the single user.
+            Assert.Equal("user", snippetModel.ResponseVariableName);
+
+        }
+
+        [Fact]
+        public void SetAppropriateVariableNameForChildrenItemsInDrive()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0//drives/{drive-id}/items/{item-id}/children");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the variable name is "children" for the collection returned
+            Assert.Equal("children", snippetModel.ResponseVariableName);
+        }
+
+        [Fact]
+        public void SetAppropriateVariableNameForCalendarGroups()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/calendarGroups");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the variable name is "calendarGroups" for the collection returned
+            Assert.Equal("calendarGroups", snippetModel.ResponseVariableName);
+        }
+
+        [Fact]
+        public void SetAppropriateVariableNameForEventCreate()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/events");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the variable name is "event" (singular) as we are making a post call to create an entity
+            Assert.Equal("event", snippetModel.ResponseVariableName);
+        }
+
+        [Fact]
+        public void SetsAppropriateVariableNameForEventUpdate()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/groups/{id}/events/{id}");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the variable name is "event" for an event update
+            Assert.Equal("event", snippetModel.ResponseVariableName);
+        }
+
+        #endregion
     }
 }
