@@ -6,8 +6,8 @@ The API takes in the HTTP request message to be sent to Microsoft Graph and the 
 
 The API currently supports the the generation of snippets to the Microsoft Graph API in the following languages
 
-- C# (POST and GET methods) 
-- Javascript (POST and GET methods)
+- C#
+- Javascript
 
 ## Example Snippets
 

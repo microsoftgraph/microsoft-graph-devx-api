@@ -25,11 +25,20 @@ Prefer: outlook.timezone="Pacific Standard Time"
 ```cs
 GraphServiceClient graphClient = new GraphServiceClient( authProvider );
 
-var events = await graphClient.Me.Events["AAMkAGIAAAoZDOFAAA="]
-  .Request()
-  .Header("Prefer","outlook.timezone="Pacific Standard Time"")
-  .Select("subject,body,bodyPreview,organizer,attendees,start,end,location")
-  .GetAsync();
+var @event = await graphClient.Me.Events["AAMkAGIAAAoZDOFAAA="]
+	.Request()
+	.Header("Prefer","outlook.timezone=\"Pacific Standard Time\"")
+	.Select( e => new {
+			 e.Subject,
+			 e.Body,
+			 e.BodyPreview,
+			 e.Organizer,
+			 e.Attendees,
+			 e.Start,
+			 e.End,
+			 e.Location 
+			 })
+	.GetAsync();
 ```
 
 ### POST Request
@@ -58,24 +67,22 @@ Content-type: application/json
 ```cs
 GraphServiceClient graphClient = new GraphServiceClient( authProvider );
 
-var passwordProfile = new PasswordProfile
-{
-  ForceChangePasswordNextSignIn = true,
-  Password = "password-value",
-};
-
 var user = new User
 {
-  AccountEnabled = true,
-  DisplayName = "displayName-value",
-  MailNickname = "mailNickname-value",
-  UserPrincipalName = "upn-value@tenant-value.onmicrosoft.com",
-  PasswordProfile = passwordProfile,
+	AccountEnabled = true,
+	DisplayName = "displayName-value",
+	MailNickname = "mailNickname-value",
+	UserPrincipalName = "upn-value@tenant-value.onmicrosoft.com",
+	PasswordProfile = new PasswordProfile
+	{
+		ForceChangePasswordNextSignIn = true,
+		Password = "password-value",
+	},
 };
 
 await graphClient.Users
-  .Request()
-  .AddAsync(user);
+	.Request()
+	.AddAsync(user);
 ```
 
 ### PATCH Request
@@ -102,18 +109,19 @@ Content-length: 491
 ```cs
 GraphServiceClient graphClient = new GraphServiceClient( authProvider );
 
-var businessPhones = new List<String>();
-
-var me = new User
+var user = new User
 {
-  AccountEnabled = true,
-  BusinessPhones = businessPhones,
-  City = "city-value",
+	AccountEnabled = true,
+	BusinessPhones = new List<String>()
+	{
+		"businessPhones-value",
+	},
+	City = "city-value",
 };
 
 await graphClient.Me
-  .Request()
-  .UpdateAsync(me);
+	.Request()
+	.UpdateAsync(user);
 ```
 
 ### PUT Request
@@ -138,16 +146,17 @@ Content-type: application/json
 ```cs
 GraphServiceClient graphClient = new GraphServiceClient( authProvider );
 
-var templates = new SynchronizationTemplate
+var synchronizationTemplate = new SynchronizationTemplate
 {
-  Id = "Slack",
-  ApplicationId = "{id}",
-  FactoryTag = "CustomSCIM",
+	Id = "Slack",
+	ApplicationId = "{id}",
+	FactoryTag = "CustomSCIM",
 };
 
 await graphClient.Applications["{id}"].Synchronization.Templates["{templateId}"]
-  .Request()
-  .PutAsync(templates);
+	.Request()
+	.Header("Authorization","Bearer <token>")
+	.PutAsync(synchronizationTemplate);
 ```
 
 ### DELETE Request
@@ -166,6 +175,6 @@ Host: graph.microsoft.com
 GraphServiceClient graphClient = new GraphServiceClient( authProvider );
 
 await graphClient.Me.Messages["{id}"]
-  .Request()
-  .DeleteAsync();
+	.Request()
+	.DeleteAsync();
 ```
