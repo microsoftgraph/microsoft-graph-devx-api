@@ -281,6 +281,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     break;
                             }
                         }
+                        //remove the trailing comma if we appended anything
+                        if (stringBuilder[stringBuilder.Length - 3].Equals(','))
+                        {
+                            stringBuilder.Remove(stringBuilder.Length - 3, 1);
+                        }
                         //closing brace
                         stringBuilder.Append($"{tabSpace}}}\r\n");
                     }
@@ -303,6 +308,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 objectStringFromJson = $"{tabSpace}\t{objectStringFromJson.Replace("\r\n", "\r\n\t")}";
                                 stringBuilder.Append($"{objectStringFromJson},\r\n");
                             }
+                            stringBuilder.Remove(stringBuilder.Length - 3, 1);//remove the trailing comma
                         }
                         else
                         {
@@ -310,6 +316,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             foreach (var element in array)
                             {
                                 stringBuilder.Append($"{tabSpace}\t\"{element.Value<string>()}\",\r\n");
+                            }
+                            //remove the trailing comma if we appended anything
+                            if (stringBuilder[stringBuilder.Length - 3].Equals(','))
+                            {
+                                stringBuilder.Remove(stringBuilder.Length - 3, 1);
                             }
                         }
                         stringBuilder.Append($"{tabSpace}}}\r\n");
