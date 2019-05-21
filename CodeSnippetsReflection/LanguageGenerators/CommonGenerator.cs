@@ -25,7 +25,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 if (key.ToLower().Equals("host"))
                     continue;
                 //append the header to the snippet
-                snippetBuilder.Append(string.Format(languageExpressions.HeaderExpression, key, value.First()));
+                var valueString = value.First().Replace("\"", languageExpressions.DoubleQuotesEscapeSequence);
+                snippetBuilder.Append(string.Format(languageExpressions.HeaderExpression, key, valueString));
             }
             //Append any filter queries
             if (snippetModel.FilterFieldList.Any())
@@ -229,7 +230,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         {
             if (languageExpressions.ReservedNames.Contains(variableName))
             {
-                return "_" + variableName;//append an underscore
+                return languageExpressions.ReservedNameEscapeSequence + variableName;//append the language specific escape sequence
             }
 
             return variableName;
