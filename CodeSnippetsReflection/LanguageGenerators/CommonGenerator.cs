@@ -22,7 +22,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             foreach (var (key, value) in snippetModel.RequestHeaders)
             {
                 //no need to generate source for the host header
-                if (key.ToLower().Equals("host"))
+                if (key.ToLower().Equals("host",StringComparison.Ordinal))
                     continue;
                 //append the header to the snippet
                 var valueString = value.First().Replace("\"", languageExpressions.DoubleQuotesEscapeSequence);
@@ -156,7 +156,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 foreach (var property in structuredType.DeclaredProperties)
                 {
-                    if (property.Name.Equals(searchIdentifier))
+                    if (property.Name.Equals(searchIdentifier,StringComparison.OrdinalIgnoreCase))
                     {
                         elementDefinition = GetEdmElementType(property.Type.Definition);
                         
@@ -164,7 +164,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         if (searchPath.Count > 2)
                         {
                             //get rid of the root item and do a deeper search
-                            var subList = searchPath.Where(x => !x.Equals(searchPath.First())).ToList();
+                            var subList = searchPath.Where(x => !x.Equals(searchPath.First(), StringComparison.OrdinalIgnoreCase)).ToList();
                             return SearchForEdmType(property.Type.Definition, subList);
                         }
                         else

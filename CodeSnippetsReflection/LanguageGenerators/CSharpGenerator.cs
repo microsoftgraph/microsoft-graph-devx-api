@@ -33,6 +33,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(UppercaseFirstLetter).ToList();
                 var actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
 
+                //append any custom queries present
+                snippetBuilder.Append(GenerateCustomQuerySection(snippetModel));
+
                 if (snippetModel.Method == HttpMethod.Get)
                 {
                     var extraSnippet = "";
@@ -69,8 +72,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 foreach (var (key, jToken) in testObj)
                                 {
                                     var jsonString = JsonConvert.SerializeObject(jToken);
-                                    snippetBuilder.Append($"var {key} = ");
-                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { key }));
+                                    snippetBuilder.Append($"var {LowerCaseFirstLetter(key)} = ");
+                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { LowerCaseFirstLetter(key) }));
                                 }
                             }
                             snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PostAsync();"));
@@ -103,7 +106,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (string.IsNullOrEmpty(snippetModel.RequestBody))
                         throw new Exception($"No request Body present for PUT of entity {snippetModel.ResponseVariableName}");
 
-                    if (snippetModel.ContentType.Equals("application/json"))
+                    if (snippetModel.ContentType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
                     {
                         snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
                         snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
@@ -221,13 +224,21 @@ namespace CodeSnippetsReflection.LanguageGenerators
             switch (jsonObject)
             {
                 case string _:
-                    if (jsonObject.Equals("true") || jsonObject.Equals("false"))
                     {
-                        stringBuilder.Append($"{tabSpace}{jsonObject}\r\n");//boolean primitives values masquerading as strings.
-                    }
-                    else
-                    {
-                        stringBuilder.Append($"{tabSpace}\"{jsonObject}\"\r\n");
+                        var enumString = GenerateEnumString(jsonObject.ToString(),pathSegment,path);
+                        if (!string.IsNullOrEmpty(enumString))
+                        {
+                            //Enum is accessed as the Classname then enum type e.g Importance.Low
+                            stringBuilder.Append($"{tabSpace}{enumString}\r\n");
+                        }
+                        else if (jsonObject.Equals("true") || jsonObject.Equals("false"))
+                        {
+                            stringBuilder.Append($"{tabSpace}{jsonObject}\r\n");//boolean primitives values masquerading as strings.
+                        }
+                        else
+                        {
+                            stringBuilder.Append($"{tabSpace}\"{jsonObject}\"\r\n");
+                        }
                     }
                     break;
                 case JObject jObject:
@@ -253,22 +264,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
                                     break;
                                 case JTokenType.String:
-                                    var nestedEdmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath);
+                                    var enumString = GenerateEnumString(jToken.ToString(), pathSegment,newPath);
                                     //check if the type is an enum and handle it
-                                    if (nestedEdmType is IEdmEnumType edmEnumType)
+                                    if (!string.IsNullOrEmpty(enumString))
                                     {
-                                        var typeName = GetCsharpClassName(pathSegment, newPath);
-                                        var enumName = UppercaseFirstLetter(edmEnumType.Members.First().Name);//default to first member incase serach fails
-                                        //look for the proper name of the enum in the members
-                                        foreach (var member in edmEnumType.Members)
-                                        {
-                                            if (member.Name.Equals(jToken.Value<string>(), StringComparison.OrdinalIgnoreCase))
-                                            {
-                                                enumName = UppercaseFirstLetter(member.Name);
-                                            }
-                                        }
                                         //Enum is accessed as the Classname then enum type e.g Importance.Low
-                                        stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = { typeName }.{enumName},\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = { enumString },\r\n");
                                     }
                                     else
                                     {
@@ -292,13 +293,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
                 case JArray array:
                     {
-                        var className = GetCsharpClassName(pathSegment , path);
-                        //Item is a list/array so declare a typed list
-                        stringBuilder.Append($"new List<{className}>()\r\n");
-                        stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
                         var objectList = array.Children<JObject>();
                         if (objectList.Any())
                         {
+                            var className = GetCsharpClassName(pathSegment, path);
+                            //Item is a list/array so declare a typed list
+                            stringBuilder.Append($"new List<{className}>()\r\n");
+                            stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
                             foreach (var item in objectList)
                             {
                                 var jsonString = JsonConvert.SerializeObject(item);
@@ -312,6 +313,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         else
                         {
+                            stringBuilder.Append($"new List<String>()\r\n{tabSpace}{{\r\n");
                             //its not nested objects but a string collection
                             foreach (var element in array)
                             {
@@ -332,7 +334,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 default:
                     var primitive = jsonObject.ToString();
                     //json deserializer capitalizes the bool types so undo that
-                    if (primitive.Equals("True") || primitive.Equals("False"))
+                    if (primitive.Equals("True", StringComparison.Ordinal) || primitive.Equals("False", StringComparison.Ordinal))
                     {
                         primitive = LowerCaseFirstLetter(primitive);
                     }
@@ -357,7 +359,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             stringBuilder.Append("await graphClient");
             //Generate the Resources path for Csharp
             stringBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
-            stringBuilder.Append("\n\t.Request()");
+            //check if there are any custom query options appended
+            stringBuilder.Append(snippetModel.CustomQueryOptions.Any() ? "\n\t.Request( queryOptions )" : "\n\t.Request()");
             //Append footers
             stringBuilder.Append(actions);
 
@@ -427,6 +430,80 @@ namespace CodeSnippetsReflection.LanguageGenerators
             }
 
             return stringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Generate the snippet section for the Property segment for CSharp code as this section cannot be directly accessed in \
+        /// a URL fashion
+        /// </summary>
+        /// <param name="snippetModel">Snippet model built from the request</param>
+        private static string GenerateCustomQuerySection(SnippetModel snippetModel)
+        {
+            if (!snippetModel.CustomQueryOptions.Any())
+            {
+                return string.Empty;//nothing to do here
+            }
+
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.Append("var queryOptions = new List<QueryOption>()\r\n");
+            stringBuilder.Append("{\r\n");//opening brace
+
+            foreach (var (key, value) in snippetModel.CustomQueryOptions)
+            {
+                stringBuilder.Append($"\tnew QueryOption(\"{key}\", \"{value}\"),\r\n");
+            }
+
+            stringBuilder.Remove(stringBuilder.Length - 3, 1);//remove the trailing comma
+            stringBuilder.Append("};\r\n\r\n");//closing brace
+            //return custom query options section
+            return stringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Get the Csharp representation of an enum type from a string hint and the odata path segment
+        /// </summary>
+        /// <param name="enumHint">string representing the hint to use for enum lookup</param>
+        /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
+        /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
+        private static string GenerateEnumString(string enumHint, ODataPathSegment pathSegment, ICollection<string> path)
+        {
+            IEdmType nestEdmType;
+
+            try
+            {
+                nestEdmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+
+            if (nestEdmType is IEdmEnumType edmEnumType)
+            {
+                var typeName = GetCsharpClassName(pathSegment, path);
+                var temp = enumHint.Split(", ".ToCharArray(),StringSplitOptions.RemoveEmptyEntries);//split incase we need to 'or' the members
+                var enumStringList = new List<string>();
+
+                //look for the proper name of the enum in the members
+                foreach (var member in edmEnumType.Members)
+                {
+                    if (temp.Contains(member.Name,StringComparer.OrdinalIgnoreCase))
+                    {
+                        enumStringList.Add($"{typeName}.{UppercaseFirstLetter(member.Name)}");
+                    }
+                }
+
+                //if search failed default to first element
+                if (!enumStringList.Any())
+                {
+                    enumStringList.Add($"{typeName}.{UppercaseFirstLetter(edmEnumType.Members.First().Name)}");
+                }
+
+                //return the enum type "ORed" together
+                return CommonGenerator.GetListAsStringForSnippet(enumStringList, " | ");
+            }
+
+            return string.Empty;
         }
 
         /// <summary>
