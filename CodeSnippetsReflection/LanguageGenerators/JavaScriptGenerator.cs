@@ -108,7 +108,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String of the snippet in JS code</returns>
         private static string BetaSectionString(string apiVersion)
         {
-            return apiVersion.Equals("beta") ? "\n\t.version('beta')" : "";
+            return apiVersion.Equals("beta",StringComparison.Ordinal) ? "\n\t.version('beta')" : "";
         }
 
         /// <summary>
@@ -119,7 +119,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private static string GenerateRequestSection(SnippetModel snippetModel, string actions)
         {
             var stringBuilder = new StringBuilder();
-            stringBuilder.Append($"let res = await client.api('{snippetModel.Path}')");
+            var path = snippetModel.Path;
+            if (snippetModel.CustomQueryOptions.Any())
+            {
+                //just append the query string since its a custom query
+                path += snippetModel.QueryString;
+            }
+            stringBuilder.Append($"let res = await client.api('{path}')");
             //append beta
             stringBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
             stringBuilder.Append(actions);

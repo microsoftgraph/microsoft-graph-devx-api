@@ -164,6 +164,22 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal("",snippetModel.RequestBody);
         }
 
+        [Fact]
+        public void PopulatesCustomQueryOptions()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/calendar/calendarView?startDateTime=2017-01-01T19:00:00.0000000&endDateTime=2017-01-07T19:00:00.0000000");
+
+            //Act
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Assert that the keys and values are as expected
+            Assert.Equal("startDateTime", snippetModel.CustomQueryOptions.First().Key);
+            Assert.Equal("2017-01-01T19:00:00.0000000", snippetModel.CustomQueryOptions.First().Value);
+            Assert.Equal("endDateTime", snippetModel.CustomQueryOptions.Last().Key);
+            Assert.Equal("2017-01-07T19:00:00.0000000", snippetModel.CustomQueryOptions.Last().Value);
+        }
+
         #region Test ResponseVariableNames
         [Fact]
         public void SetAppropriateVariableNameForPeopleEntity()
