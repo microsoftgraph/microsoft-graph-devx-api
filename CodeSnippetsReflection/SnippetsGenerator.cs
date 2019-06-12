@@ -18,6 +18,7 @@ namespace CodeSnippetsReflection
         private Uri ServiceRootBeta { get; set; }
         private JavascriptExpressions JavascriptExpressions { get; }
         private CSharpExpressions CSharpExpressions { get; }
+        private ObjectiveCExpressions ObjectiveCExpressions { get; }
 
         /// <summary>
         /// Class holding the Edm model and request processing for snippet generations
@@ -27,6 +28,7 @@ namespace CodeSnippetsReflection
             LoadGraphMetadata();
             JavascriptExpressions = new JavascriptExpressions();
             CSharpExpressions = new CSharpExpressions();
+            ObjectiveCExpressions = new ObjectiveCExpressions();
         }
 
         /// <summary>
@@ -60,6 +62,8 @@ namespace CodeSnippetsReflection
                 case "javascript":
                     return JavaScriptGenerator.GenerateCodeSnippet(snippetModel, JavascriptExpressions);
 
+                case "objective-c":
+                    return ObjectiveCGenerator.GenerateCodeSnippet(snippetModel, ObjectiveCExpressions);
                 default:
                     throw new Exception("Invalid Language selected");
 
