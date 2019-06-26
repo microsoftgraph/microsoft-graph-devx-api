@@ -235,5 +235,37 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             return variableName;
         }
+
+        /// <summary>
+        /// Helper function to make the first character of a string to be capitalized
+        /// </summary>
+        /// <param name="s">Input string to modified</param>
+        /// <returns>Modified string</returns>
+        public static string UppercaseFirstLetter(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                return string.Empty;
+            }
+            var a = s.ToCharArray();
+            a[0] = char.ToUpper(a[0]);
+            return new string(a);
+        }
+
+        /// <summary>
+        /// Helper function to make the first character of a string to be small letter
+        /// </summary>
+        /// <param name="s">Input string to modified</param>
+        /// <returns>Modified string</returns>
+        public static string LowerCaseFirstLetter(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                return string.Empty;
+            }
+            var a = s.ToCharArray();
+            a[0] = char.ToLower(a[0]);
+            return new string(a);
+        }
     }
 }

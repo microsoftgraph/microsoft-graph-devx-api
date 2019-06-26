@@ -30,7 +30,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 var segment = snippetModel.Segments.Last();
                 snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName , languageExpressions);
                 //Csharp properties are uppercase so replace with list with uppercase version
-                snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(UppercaseFirstLetter).ToList();
+                snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(CommonGenerator.UppercaseFirstLetter).ToList();
                 var actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
 
                 //append any custom queries present
@@ -42,7 +42,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (segment is PropertySegment)
                     { 
                         extraSnippet = GeneratePropertySectionSnippet(snippetModel);
-                        snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(UppercaseFirstLetter).ToList();
+                        snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(CommonGenerator.UppercaseFirstLetter).ToList();
                         actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
                     }
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
@@ -72,8 +72,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 foreach (var (key, jToken) in testObj)
                                 {
                                     var jsonString = JsonConvert.SerializeObject(jToken);
-                                    snippetBuilder.Append($"var {LowerCaseFirstLetter(key)} = ");
-                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { LowerCaseFirstLetter(key) }));
+                                    snippetBuilder.Append($"var {CommonGenerator.LowerCaseFirstLetter(key)} = ");
+                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { CommonGenerator.LowerCaseFirstLetter(key) }));
                                 }
                             }
                             snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PostAsync();"));
@@ -162,10 +162,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 if ((parameter.Name.ToLower().Equals("bindingparameter")) || (parameter.Name.ToLower().Equals("bindparameter")))
                                     continue;
 
-                                paramList.Add(LowerCaseFirstLetter(parameter.Name));
+                                paramList.Add(CommonGenerator.LowerCaseFirstLetter(parameter.Name));
                             }
                             
-                            resourcesPath.Append($"\n\t.{UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
+                            resourcesPath.Append($"\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
                         }
                         else
                         {
@@ -189,7 +189,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             }
                             //read parameters from url
                             //opening section
-                            resourcesPath.Append($".{UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
+                            resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
                         }
                         break;
                     case ValueSegment _:
@@ -200,7 +200,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         break;
                     default:
                         //its most likely just a resource so append it
-                        resourcesPath.Append($".{UppercaseFirstLetter(item.Identifier)}");
+                        resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         break;
                 }
             }
@@ -261,7 +261,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 case JTokenType.Object:
                                     //new nested object needs to be constructed so call this function recursively to make it
                                     var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath );
-                                    stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
+                                    stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
                                     break;
                                 case JTokenType.String:
                                     var enumString = GenerateEnumString(jToken.ToString(), pathSegment,newPath);
@@ -269,16 +269,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     if (!string.IsNullOrEmpty(enumString))
                                     {
                                         //Enum is accessed as the Classname then enum type e.g Importance.Low
-                                        stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = { enumString },\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = { enumString },\r\n");
                                     }
                                     else
                                     {
                                         //its just a normal string. Declare as is
-                                        stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
                                     }
                                     break;
                                 default:
-                                    stringBuilder.Append($"{tabSpace}\t{UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
+                                    stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
                                     break;
                             }
                         }
@@ -336,7 +336,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //json deserializer capitalizes the bool types so undo that
                     if (primitive.Equals("True", StringComparison.Ordinal) || primitive.Equals("False", StringComparison.Ordinal))
                     {
-                        primitive = LowerCaseFirstLetter(primitive);
+                        primitive = CommonGenerator.LowerCaseFirstLetter(primitive);
                     }
                     //item is a primitive print as is
                     stringBuilder.Append($"{tabSpace}{primitive}\r\n");
@@ -378,7 +378,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
             //we need to split the string and get last item
             //eg microsoft.graph.data => Data
-            return UppercaseFirstLetter( edmType.ToString().Split(".").Last() );
+            return CommonGenerator.UppercaseFirstLetter( edmType.ToString().Split(".").Last() );
         }
 
         /// <summary>
@@ -407,7 +407,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             var properties = "";
             while (segmentIndex < snippetModel.Segments.Count - 1)
             {
-                properties = properties + "." + UppercaseFirstLetter(snippetModel.Segments[++segmentIndex].Identifier);
+                properties = properties + "." + CommonGenerator.UppercaseFirstLetter(snippetModel.Segments[++segmentIndex].Identifier);
             }
 
             //modify the responseVarible name
@@ -489,14 +489,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     if (temp.Contains(member.Name,StringComparer.OrdinalIgnoreCase))
                     {
-                        enumStringList.Add($"{typeName}.{UppercaseFirstLetter(member.Name)}");
+                        enumStringList.Add($"{typeName}.{CommonGenerator.UppercaseFirstLetter(member.Name)}");
                     }
                 }
 
                 //if search failed default to first element
                 if (!enumStringList.Any())
                 {
-                    enumStringList.Add($"{typeName}.{UppercaseFirstLetter(edmEnumType.Members.First().Name)}");
+                    enumStringList.Add($"{typeName}.{CommonGenerator.UppercaseFirstLetter(edmEnumType.Members.First().Name)}");
                 }
 
                 //return the enum type "ORed" together
@@ -506,37 +506,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             return string.Empty;
         }
 
-        /// <summary>
-        /// Helper function to make the first character of a string to be capitalized
-        /// </summary>
-        /// <param name="s">Input string to modified</param>
-        /// <returns>Modified string</returns>
-        private static string UppercaseFirstLetter(string s)
-        {
-            if (string.IsNullOrEmpty(s))
-            {
-                return string.Empty;
-            }
-            var a = s.ToCharArray();
-            a[0] = char.ToUpper(a[0]);
-            return new string(a);
-        }
-
-        /// <summary>
-        /// Helper function to make the first character of a string to be small letter
-        /// </summary>
-        /// <param name="s">Input string to modified</param>
-        /// <returns>Modified string</returns>
-        private static string LowerCaseFirstLetter(string s)
-        {
-            if (string.IsNullOrEmpty(s))
-            {
-                return string.Empty;
-            }
-            var a = s.ToCharArray();
-            a[0] = char.ToLower(a[0]);
-            return new string(a);
-        }
     }
 
     internal class CSharpExpressions : LanguageExpressions
