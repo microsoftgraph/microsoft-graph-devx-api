@@ -141,6 +141,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private static string CSharpGenerateResourcesPath(SnippetModel snippetModel)
         {
             var resourcesPath = new StringBuilder();
+            var resourcesPathSuffix = string.Empty;
+
             // lets append all resources
             foreach (var item in snippetModel.Segments)
             {
@@ -198,6 +200,23 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case PropertySegment _:
                         //dont append anything since this is not accessed directly in C#
                         break;
+                    case ReferenceSegment _:
+                        resourcesPath.Append(".Reference");
+                        break;
+                    case NavigationPropertyLinkSegment navigationPropertyLinkSegment:
+                        /* 
+                         * The ODataURIParser may sometimes not create and add a ReferenceSegment object to the end of 
+                         * the segements collection in the event that there is a valid NavigationPropertySegement in the 
+                         * collection. It will replace this NavigationPropertySegement object with a NavigationPropertyLinkSegment 
+                         * object. Therefore we modify the suffix so that it may be appended to show the Reference section since 
+                         * the $ref should always be last in a valid Odata URI.
+                        */
+                        if (snippetModel.Path.Contains("$ref") && !(snippetModel.Segments.Last() is ReferenceSegment))
+                        {
+                            resourcesPathSuffix = ".Reference";
+                        }
+                        resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
+                        break;
                     default:
                         //its most likely just a resource so append it
                         resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
@@ -205,6 +224,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
             }
 
+            if (!string.IsNullOrEmpty(resourcesPathSuffix))
+            {
+                resourcesPath.Append(resourcesPathSuffix);
+            }
+            
             return resourcesPath.ToString();
         }
 

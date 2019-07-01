@@ -245,5 +245,27 @@ namespace CodeSnippetsReflection.Test
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
+
+        [Fact]
+        //This tests asserts that we can generate snippets with $ref operator inside it
+        public void GeneratesSnippetsWithReferenceSegmentInPath()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Delete,"https://graph.microsoft.com/v1.0/groups/{id}/owners/{id}/$ref");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "await graphClient.Groups[\"{id}\"].Owners[\"{id}\"].Reference\n" +
+                                        "\t.Request()\n" +
+                                        "\t.DeleteAsync();";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
     }
 }
