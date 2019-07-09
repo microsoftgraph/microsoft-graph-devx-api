@@ -56,6 +56,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     {
                         case NavigationPropertySegment _:
                         case EntitySetSegment _:
+                        case NavigationPropertyLinkSegment _:
                             if (string.IsNullOrEmpty(snippetModel.RequestBody))
                                 throw new Exception($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
 
@@ -203,17 +204,24 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case ReferenceSegment _:
                         resourcesPath.Append(".Reference");
                         break;
-                    case NavigationPropertyLinkSegment navigationPropertyLinkSegment:
+                    case NavigationPropertyLinkSegment _:
                         /* 
                          * The ODataURIParser may sometimes not create and add a ReferenceSegment object to the end of 
-                         * the segements collection in the event that there is a valid NavigationPropertySegement in the 
-                         * collection. It will replace this NavigationPropertySegement object with a NavigationPropertyLinkSegment 
+                         * the segments collection in the event that there is a valid NavigationPropertySegment in the 
+                         * collection. It will replace this NavigationPropertySegment object with a NavigationPropertyLinkSegment 
                          * object. Therefore we modify the suffix so that it may be appended to show the Reference section since 
                          * the $ref should always be last in a valid Odata URI.
                         */
                         if (snippetModel.Path.Contains("$ref") && !(snippetModel.Segments.Last() is ReferenceSegment))
                         {
-                            resourcesPathSuffix = ".Reference";
+
+                            var nextSegmentIndex = snippetModel.Segments.IndexOf(item) + 1;
+                            if (nextSegmentIndex >= snippetModel.Segments.Count)
+                                nextSegmentIndex = snippetModel.Segments.Count-1;
+
+                            var nextSegment = snippetModel.Segments[nextSegmentIndex];
+                            //check if the next segment is a KeySegment to know if we will be accessing a single entity of a collection.
+                            resourcesPathSuffix = (item.EdmType is IEdmCollectionType) && !(nextSegment is KeySegment) ? ".References" : ".Reference";
                         }
                         resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         break;
@@ -277,6 +285,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             var newPath = path.Append(key).ToList();//add new identifier to the path
                             if (key.Contains("@odata"))
                             {
+                                var additionalDataString = $"{tabSpace}\tAdditionalData = new Dictionary<string, object>()\r\n{tabSpace}\t{{\r\n";
+                                var keyValuePairElement = $"{tabSpace}\t\t{{\"{key}\",{value}}}";
+                                if (!stringBuilder.ToString().Contains(additionalDataString))//check if we ever inserted AdditionalData to this object.
+                                {
+                                    stringBuilder.Append($"{additionalDataString}{keyValuePairElement}\r\n{tabSpace}\t}},\r\n");
+                                }
+                                else
+                                {   
+                                    //insert new key value pair to already existing AdditionalData component
+                                    var insertionIndex = stringBuilder.ToString().IndexOf(additionalDataString, StringComparison.Ordinal) + additionalDataString.Length;
+                                    stringBuilder.Insert(insertionIndex, $"{keyValuePairElement},\r\n");
+                                }
                                 continue;
                             }
                             switch (jToken.Type)
