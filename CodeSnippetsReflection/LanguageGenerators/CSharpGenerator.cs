@@ -156,44 +156,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        if (snippetModel.Method == HttpMethod.Post)
-                        {
-                            //read parameters from request body
-                            var paramList = new List<string>();
-                            foreach (var parameter in operationSegment.Operations.First().Parameters)
-                            {
-                                if ((parameter.Name.ToLower().Equals("bindingparameter")) || (parameter.Name.ToLower().Equals("bindparameter")))
-                                    continue;
-
-                                paramList.Add(CommonGenerator.LowerCaseFirstLetter(parameter.Name));
-                            }
-                            
-                            resourcesPath.Append($"\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
-                        }
-                        else
-                        {
-                            var paramList = new List<string>();
-                            foreach (var parameter in operationSegment.Parameters)
-                            {
-                                switch (parameter.Value)
-                                {
-                                    case ConvertNode convertNode:
-                                    {
-                                        if (convertNode.Source is ConstantNode constantNode)
-                                        {
-                                            paramList.Add(constantNode.LiteralText);
-                                        }
-                                        break;
-                                    }
-                                    case ConstantNode constantNode:
-                                        paramList.Add(constantNode.LiteralText);
-                                        break;
-                                }
-                            }
-                            //read parameters from url
-                            //opening section
-                            resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList,",")})");
-                        }
+                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel.Method);
+                        resourcesPath.Append($"\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")})");
                         break;
                     case ValueSegment _:
                         resourcesPath.Append(".Content");
