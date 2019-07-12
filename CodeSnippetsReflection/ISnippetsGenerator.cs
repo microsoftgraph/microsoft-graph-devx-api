@@ -4,6 +4,6 @@ namespace CodeSnippetsReflection
 {
     public interface ISnippetsGenerator
     {
-        string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language);
+        string ProcessPayloadRequest(HttpRequestMessage requestPayload, string lang);
     }
 }
