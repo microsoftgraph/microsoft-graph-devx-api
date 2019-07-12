@@ -1,0 +1,53 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger: none
+
+pr:
+  branches:
+    include:
+    - dev
+    - master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+steps:
+- checkout: self
+  clean: true
+  fetchDepth: 1
+  
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: VSTest@2
+  inputs:
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: YodLabs.O365PostMessage.O365PostMessageBuild.O365PostMessageBuild@0
+  displayName: 'Graph Client Tooling pipeline fail notification'
+  inputs:
+    addressType: serviceEndpoint
+    serviceEndpointName: 'microsoftgraph pipeline status'
+    title: '$(Build.DefinitionName) failure notification'
+    text: 'This pipeline has failed. View the build details for further information. This is a blocking failure. '
+  condition: failed()
+  enabled: true
