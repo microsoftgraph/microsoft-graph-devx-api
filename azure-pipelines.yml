@@ -11,19 +11,7 @@ trigger:
     include:
       - GraphWebApi/*
       - GraphSnippetsReflection/*
-    exclude:
-      - .dockerignore
-      - .getattributes
-      - .gitignore
-      - LICENSE
-      - MSGraphWebApi.sln
-      - .gitignore
-      - README.md
-      - c-sharp-examples.md
-      - javascript-examples.md
-      - objective-c-examples.md
-      - azure-pipelines.yml
-
+      
 pool:
   vmImage: 'windows-latest'
 
