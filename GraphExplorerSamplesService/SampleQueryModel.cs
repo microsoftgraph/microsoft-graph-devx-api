@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace GraphExplorerSamplesService
 {
@@ -16,31 +17,30 @@ namespace GraphExplorerSamplesService
         public HttpMethods Method { get; set; }
 
         [JsonProperty(Required = Required.Always)]
-        public string HumanName { get; set; }
+        [StringLength(64, ErrorMessage = "Maximum number of characters allowed is 64")]            
+        public string HumanName { get; set; } 
 
         [JsonProperty(Required = Required.Always)]
         public string RequestUrl { get; set; }
 
-        [JsonProperty(Required = Required.AllowNull)]
+        [Url(ErrorMessage = "Invalid URL")]
         public string DocLink { get; set; }
 
-        [JsonProperty(Required = Required.AllowNull)]
+        public IEnumerable<Header> Headers { get; set; }
+
         public string Tip { get; set; }
 
-        [JsonProperty(Required = Required.AllowNull)]
-        public bool SkipTest { get; set; }
-
-        [JsonProperty(Required = Required.AllowNull)]
         public string PostBody { get; set; }
 
-        [JsonProperty(Required = Required.AllowNull)]
-        public List<Header> Headers { get; set; }
+        public bool SkipTest { get; set; }
+
 
         public class Header
         {
             public string Name { get; set; }
             public string Value { get; set; }
         }
+
 
         public enum HttpMethods
         {
