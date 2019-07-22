@@ -10,7 +10,8 @@ namespace GraphExplorerSamplesService
         /// Reads from a provided JSON file.
         /// </summary>
         /// <param name="filePathName">The directory path name of the JSON file.</param>
-        /// <returns>A list of all the Graph Explorer Sample Queries in the provided JSON file.</returns>
+        /// <exception cref="FileNotFoundException">Thrown when the provided file path name is unable to be resolved.</exception>
+        /// <returns>An enumerable collection of all the Graph Explorer sample queries in the provided JSON file.</returns>
         public SampleQueriesList ReadFromJsonFile(string filePathName)
         {
             try
