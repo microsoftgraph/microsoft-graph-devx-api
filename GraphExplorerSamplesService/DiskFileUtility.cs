@@ -3,50 +3,27 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace GraphExplorerSamplesService
 {
     public class DiskFileUtility : IFileUtility
     {
         /// <summary>
-        /// Reads from a provided JSON file from disk.
+        /// Reads the contents of a provided file on disk.
         /// </summary>
-        /// <param name="filePathSource">The directory path name of the JSON file.</param>
-        /// <exception cref="FileNotFoundException">Thrown when the provided file path name is unable to be resolved.</exception>
-        /// <returns>An enumerable collection of all the Graph Explorer sample queries in the provided JSON file.</returns>
-        //public SampleQueriesList ReadFromFile(string filePathSource)
-        //{
-        //    try
-        //    {
-        //        if (File.Exists(filePathSource))
-        //        {
-        //            using (StreamReader streamReader = new StreamReader(filePathSource))
-        //            {
-        //                string samplesQueriesString = streamReader.ReadToEnd();
-        //                SampleQueriesList sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(samplesQueriesString);
-        //                return sampleQueriesList;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            throw new FileNotFoundException("File not found!", filePathSource);
-        //        }
-        //    }
-        //    catch (Exception exception)
-        //    {
-        //        throw exception;
-        //    }
-        //}
-
-        
-        public ReadFromFile(string filePathSource)
+        /// <param name="filePathSource">The directory path name of the file on disk.</param>
+        /// <exception cref="DirectoryNotFoundException">Thrown when part of the file or directory cannot be found.</exception>
+        /// <exception cref="FileNotFoundException">Thrown when an attempt to access the file if it does not exist on disk fails.</exception>
+        /// <exception cref="IOException">Thrown when any other I/O error occurs.</exception>
+        /// <returns>The contents of the file.</returns>
+        public async Task<string> ReadFromFile(string filePathSource)
         {
             try
             {
                 using (StreamReader streamReader = new StreamReader(filePathSource))
                 {
-                    string fileContent = streamReader.ReadToEnd();
-                    return fileContent;
+                    return await streamReader.ReadToEndAsync();
                 }
             }
             catch(DirectoryNotFoundException dirException)
