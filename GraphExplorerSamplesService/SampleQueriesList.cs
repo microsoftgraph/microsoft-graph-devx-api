@@ -6,6 +6,6 @@ namespace GraphExplorerSamplesService
 {
     public class SampleQueriesList
     {
-        public IEnumerable<SampleQueryModel> SampleQueries { get; set; }
+        public List<SampleQueryModel> SampleQueries { get; set; }
     }
 }

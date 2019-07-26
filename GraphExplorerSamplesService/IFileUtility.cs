@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace GraphExplorerSamplesService
 {
     public interface IFileUtility
     {
-        string ReadFromFile(string filePathSource);
-
+        Task<string> ReadFromFile(string filePathSource);
     }
 }
