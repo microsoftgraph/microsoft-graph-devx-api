@@ -4,6 +4,7 @@ using GraphExplorerSamplesService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace GraphWebApi.Controllers
 {
@@ -11,34 +12,33 @@ namespace GraphWebApi.Controllers
     [ApiController]
     public class GraphExplorerSamplesController : ControllerBase
     {
-        private readonly ISamplesService _samplesService;
+        private readonly IFileUtility _fileUtility;
         private readonly IConfiguration _configuration;
 
-        public GraphExplorerSamplesController(ISamplesService samplesService, IConfiguration configuration)
+        public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration)
         {
-            _samplesService = samplesService;
+            _fileUtility = fileUtility;
             _configuration = configuration;
         }
 
         [HttpGet]
         [Produces("application/json")]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
             try
             {
-                // Get the entire list of sample queries
-                var listSamples = _samplesService.ReadFromJsonFile(_configuration["SampleQueriesFilePathName"]);
+                // Get the file contents
+                var jsonFileContents = await _fileUtility.ReadFromFile(_configuration["SampleQueriesFilePathName"]);
+
+                // Get a list of the sample queries from the file contents
+                var listSamples = SamplesService.GetSampleQueriesList(jsonFileContents);
+
                 if (listSamples != null)
                 {                    
                     return Ok(listSamples);
                 }
                 // List is empty, just return status code 204 - No Content
                 return NoContent();
-            }
-            catch (FileNotFoundException fileNotFoundException)
-            {
-                return new JsonResult(fileNotFoundException.Message + " : '" + fileNotFoundException.FileName + "'")
-                { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
