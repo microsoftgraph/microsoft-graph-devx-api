@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CodeSnippetsReflection\CodeSnippetsReflection.csproj" />
+    <ProjectReference Include="..\GraphExplorerSamplesService\GraphExplorerSamplesService.csproj" />
   </ItemGroup>
 
 </Project>
