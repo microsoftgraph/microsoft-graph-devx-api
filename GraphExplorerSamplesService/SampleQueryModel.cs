@@ -16,15 +16,33 @@ namespace GraphExplorerSamplesService
         [JsonProperty(Required = Required.Always)]
         public HttpMethods Method { get; set; }
 
-        [JsonProperty(Required = Required.Always)]
-        [StringLength(64, ErrorMessage = "Maximum number of characters allowed is 64")]            
-        public string HumanName { get; set; } 
+        [JsonProperty(Required = Required.Always)]                   
+        public string HumanName
+        {
+            get { return HumanName; }
+            set
+            {
+                if (value.Length > 64)
+                { throw new ArgumentOutOfRangeException(nameof(HumanName), "The maximum length allowed is 64 characters."); }
+
+                HumanName = value;
+            }
+        } 
 
         [JsonProperty(Required = Required.Always)]
-        public string RequestUrl { get; set; }
+        public string RequestUrl { get; set; }       
 
-        [Url(ErrorMessage = "Invalid URL")]
-        public string DocLink { get; set; }
+        public string DocLink
+        {
+            get { return DocLink; }
+            set
+            {
+                if (!Uri.IsWellFormedUriString(value, UriKind.Absolute))
+                { throw new ArgumentException(nameof(DocLink), "URL must be absolute and valid."); }
+
+                DocLink = value;
+            }
+        }
 
         public IEnumerable<Header> Headers { get; set; }
 
