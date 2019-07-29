@@ -3,6 +3,7 @@ using Microsoft.OData.UriParser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 
 namespace CodeSnippetsReflection.LanguageGenerators
@@ -266,6 +267,56 @@ namespace CodeSnippetsReflection.LanguageGenerators
             var a = s.ToCharArray();
             a[0] = char.ToLower(a[0]);
             return new string(a);
+        }
+
+        /// <summary>
+        /// This is a language agnostic function that looks at a operationSegment and returns a list of parameters needed by the operation.
+        /// If the method is a post, the parameters are sought for in the request body. Otherwise they are sort for in the request url
+        /// </summary>
+        /// <param name="operationSegment">OData OperationSegment representing a Function or action</param>
+        /// <param name="method">Http method used to access the operation segment</param>
+        /// <param name="collectionSuffix">Suffix to be added to elements that are proved to be members collections</param>
+        /// <returns></returns>
+        public static IEnumerable<string> GetParameterListFromOperationSegment(OperationSegment operationSegment, HttpMethod method, string collectionSuffix = "")
+        {
+            var paramList = new List<string>();
+
+            if (method == HttpMethod.Post)
+            {
+                //read parameters from request body since this is an odata action
+                foreach (var parameter in operationSegment.Operations.First().Parameters)
+                {
+                    if ((parameter.Name.ToLower().Equals("bindingparameter")) || (parameter.Name.ToLower().Equals("bindparameter")))
+                        continue;
+
+                    paramList.Add(parameter.Type.Definition is IEdmCollectionType
+                        ? $"{LowerCaseFirstLetter(parameter.Name)}{collectionSuffix}" 
+                        : LowerCaseFirstLetter(parameter.Name));
+                }
+            }
+            else
+            {
+                //read parameters from url since this is an odata function
+                foreach (var parameter in operationSegment.Parameters)
+                {
+                    switch (parameter.Value)
+                    {
+                        case ConvertNode convertNode:
+                            {
+                                if (convertNode.Source is ConstantNode constantNode)
+                                {
+                                    paramList.Add(constantNode.LiteralText);
+                                }
+                                break;
+                            }
+                        case ConstantNode constantNode:
+                            paramList.Add(constantNode.LiteralText);
+                            break;
+                    }
+                }
+            }
+
+            return paramList;
         }
     }
 }

@@ -19,6 +19,7 @@ namespace CodeSnippetsReflection
         private JavascriptExpressions JavascriptExpressions { get; }
         private CSharpExpressions CSharpExpressions { get; }
         private ObjectiveCExpressions ObjectiveCExpressions { get; }
+        private JavaExpressions JavaExpressions { get; }
 
         /// <summary>
         /// Class holding the Edm model and request processing for snippet generations
@@ -29,6 +30,7 @@ namespace CodeSnippetsReflection
             JavascriptExpressions = new JavascriptExpressions();
             CSharpExpressions = new CSharpExpressions();
             ObjectiveCExpressions = new ObjectiveCExpressions();
+            JavaExpressions = new JavaExpressions();
         }
 
         /// <summary>
@@ -64,6 +66,10 @@ namespace CodeSnippetsReflection
 
                 case "objective-c":
                     return ObjectiveCGenerator.GenerateCodeSnippet(snippetModel, ObjectiveCExpressions);
+
+                case "java":
+                    return JavaGenerator.GenerateCodeSnippet(snippetModel,JavaExpressions);
+
                 default:
                     throw new Exception("Invalid Language selected");
 
