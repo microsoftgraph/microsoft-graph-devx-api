@@ -7,6 +7,12 @@ namespace GraphExplorerSamplesService
 {
     public class SampleQueryModel
     {
+        // Field data for the custom mutator methods
+        private string _humanName;
+        private string _docLink;
+
+        /* Properties */
+
         [JsonProperty(Required = Required.Always)]
         public Guid Id { get; set; }
 
@@ -15,32 +21,32 @@ namespace GraphExplorerSamplesService
 
         [JsonProperty(Required = Required.Always)]
         public HttpMethods Method { get; set; }
-
+        
         [JsonProperty(Required = Required.Always)]                   
         public string HumanName
         {
-            get { return HumanName; }
+            get { return _humanName; }
             set
             {
                 if (value.Length > 64)
                 { throw new ArgumentOutOfRangeException(nameof(HumanName), "The maximum length allowed is 64 characters."); }
 
-                HumanName = value;
+                _humanName = value;
             }
         } 
 
         [JsonProperty(Required = Required.Always)]
-        public string RequestUrl { get; set; }       
-
+        public string RequestUrl { get; set; }
+                
         public string DocLink
         {
-            get { return DocLink; }
+            get { return _docLink; }
             set
             {
                 if (!Uri.IsWellFormedUriString(value, UriKind.Absolute))
                 { throw new ArgumentException(nameof(DocLink), "URL must be absolute and valid."); }
 
-                DocLink = value;
+                _docLink = value;
             }
         }
 
