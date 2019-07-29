@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.AspNetCore.Mvc;
 using GraphExplorerSamplesService;
 using Microsoft.Extensions.Configuration;
@@ -24,8 +24,13 @@ namespace GraphWebApi.Controllers
         // Gets the list of all Sample Queries
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(string id, string category)
         {
+            if (id != null && category != null)
+            {
+                return BadRequest(); // Only one search parameter is allowed
+            }
+
             try
             {
                 // Get the file contents
@@ -35,8 +40,37 @@ namespace GraphWebApi.Controllers
                 var sampleQueriesList = SamplesService.GetSampleQueriesList(jsonFileContents);
 
                 if (sampleQueriesList != null)
-                {                    
-                    return Ok(sampleQueriesList);
+                {
+                    if (string.IsNullOrEmpty(id) && string.IsNullOrEmpty(category))
+                    {
+                        return Ok(sampleQueriesList); // No query string values provided, return entire list of sample queries
+                    }
+                    else if (id != null)
+                    {
+                        // Search by Id
+                        var sampleQueriesById = sampleQueriesList.SampleQueries.FindAll(x => x.Id == Guid.Parse(id));
+                        if (sampleQueriesById != null)
+                        {
+                            return Ok(sampleQueriesById);
+                        }
+                        else
+                        {
+                            return NotFound();
+                        }
+                    }
+                    else
+                    {
+                        // Search by Category
+                        var sampleQueriesByCategory = sampleQueriesList.SampleQueries.FindAll(x => x.Category.ToLower() == category.ToLower());
+                        if (sampleQueriesByCategory != null)
+                        {
+                            return Ok(sampleQueriesByCategory);
+                        }
+                        else
+                        {
+                            return NotFound();
+                        }
+                    }
                 }
                 // List is empty, just return status code 204 - No Content
                 return NoContent();
@@ -44,7 +78,7 @@ namespace GraphWebApi.Controllers
             catch (Exception exception)
             {
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
-            }            
-        }                
+            }
+        }
     }
 }
