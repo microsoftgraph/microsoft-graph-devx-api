@@ -14,13 +14,12 @@ namespace GraphExplorerSamplesService
         /// <exception cref="ArgumentNullException">Thrown when the parameter is empty or null.</exception>
         /// <exception cref="JsonReaderException">Thrown when an error occurs when reading the JSON string.</exception>
         /// <exception cref="JsonException">Thrown when an error occurs during deserialization.</exception>
-        /// <exception cref="Exception">Thrown when any other error occurs during deserialization.</exception>
         /// <returns>The deserialized list of sample query objects.</returns>
         public static SampleQueriesList GetSampleQueriesList(string jsonString)
         {
             if(String.IsNullOrEmpty(jsonString))
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null.");
             }
 
             try
@@ -35,11 +34,7 @@ namespace GraphExplorerSamplesService
             catch (JsonException jsonException)
             {
                 throw jsonException;
-            }            
-            catch (Exception exception)
-            {
-                throw exception;
-            }
+            } 
         }
     }
 }
