@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +17,7 @@ namespace GraphExplorerSamplesService
         /// <returns>The deserialized list of sample query objects.</returns>
         public static SampleQueriesList GetSampleQueriesList(string jsonString)
         {
-            if(String.IsNullOrEmpty(jsonString))
+            if(string.IsNullOrEmpty(jsonString))
             {
                 throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null.");
             }
