@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -20,6 +21,7 @@ namespace GraphExplorerSamplesService
         public string Category { get; set; }
 
         [JsonProperty(Required = Required.Always)]
+        [JsonConverter(typeof(StringEnumConverter))]
         public HttpMethods Method { get; set; }
         
         [JsonProperty(Required = Required.Always)]                   
