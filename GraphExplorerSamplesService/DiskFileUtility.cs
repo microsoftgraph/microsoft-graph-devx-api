@@ -21,5 +21,19 @@ namespace GraphExplorerSamplesService
                 return await streamReader.ReadToEndAsync();
             }            
         }
+
+        /// <summary>
+        /// Writes contents to a provided file on disk
+        /// </summary>
+        /// <param name="fileContents">The string content to be written.</param>
+        /// <param name="filePathSource">The directory path name of the file on disk.</param>
+        /// <returns></returns>
+        public async Task WriteToFile(string fileContents, string filePathSource)
+        {
+            using (StreamWriter streamWriter = new StreamWriter(filePathSource))
+            {
+                await streamWriter.WriteLineAsync(fileContents);
+            }
+        }
     }
 }

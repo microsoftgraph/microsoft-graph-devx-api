@@ -8,5 +8,7 @@ namespace GraphExplorerSamplesService
     public interface IFileUtility
     {
         Task<string> ReadFromFile(string filePathSource);
+
+        Task WriteToFile(string fileContents, string filePathSource);
     }
 }
