@@ -52,7 +52,6 @@ namespace SamplesService.Test
             // Act
             var sampleQueriesList = GraphExplorerSamplesService.SamplesService.GetSampleQueriesList(validJsonString);
 
-            // Assert that all required fields are equal
             Assert.Collection(sampleQueriesList.SampleQueries, 
                 item => 
                 {
@@ -61,6 +60,8 @@ namespace SamplesService.Test
                     Assert.Equal(SampleQueryModel.HttpMethods.GET, item.Method);
                     Assert.Equal("my profile", item.HumanName);
                     Assert.Equal("/v1.0/me/", item.RequestUrl);
+                    Assert.Equal("https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/users", item.DocLink);
+                    Assert.False(item.SkipTest);
                 },
                 item =>
                 {
@@ -69,6 +70,10 @@ namespace SamplesService.Test
                     Assert.Equal(SampleQueryModel.HttpMethods.POST, item.Method);
                     Assert.Equal("create user", item.HumanName);
                     Assert.Equal("/v1.0/users", item.RequestUrl);
+                    Assert.Equal("https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_post_users", item.DocLink);
+                    Assert.NotEmpty(item.Headers);
+                    Assert.NotEmpty(item.PostBody);
+                    Assert.False(item.SkipTest);
                 });
         }
 
@@ -127,7 +132,6 @@ namespace SamplesService.Test
 
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() => GraphExplorerSamplesService.SamplesService.GetSampleQueriesList(nullArgument));
-
         }
 
         [Fact]

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -20,6 +21,7 @@ namespace GraphExplorerSamplesService
         public string Category { get; set; }
 
         [JsonProperty(Required = Required.Always)]
+        [JsonConverter(typeof(StringEnumConverter))]
         public HttpMethods Method { get; set; }
         
         [JsonProperty(Required = Required.Always)]                   
@@ -29,7 +31,9 @@ namespace GraphExplorerSamplesService
             set
             {
                 if (value.Length > 64)
-                { throw new ArgumentOutOfRangeException(nameof(HumanName), "The maximum length allowed is 64 characters."); }
+                {
+                    throw new ArgumentOutOfRangeException(nameof(HumanName), "The maximum length allowed is 64 characters.");
+                }
 
                 _humanName = value;
             }
@@ -44,7 +48,9 @@ namespace GraphExplorerSamplesService
             set
             {
                 if (!Uri.IsWellFormedUriString(value, UriKind.Absolute))
-                { throw new ArgumentException(nameof(DocLink), "URL must be absolute and valid."); }
+                {
+                    throw new ArgumentException(nameof(DocLink), "URL must be absolute and valid.");
+                }
 
                 _docLink = value;
             }
