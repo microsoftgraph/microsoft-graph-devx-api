@@ -14,7 +14,6 @@ namespace GraphExplorerSamplesService
 
         /* Properties */
 
-        [JsonProperty(Required = Required.Always)]
         public Guid Id { get; set; }
 
         [JsonProperty(Required = Required.Always)]
