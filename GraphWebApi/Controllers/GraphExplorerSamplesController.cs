@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using GraphExplorerSamplesService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
-using System.IO;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace GraphWebApi.Controllers
 {
@@ -20,60 +20,42 @@ namespace GraphWebApi.Controllers
             _fileUtility = fileUtility;
             _configuration = configuration;
         }
-
-        // Gets the list of all Sample Queries
+        
+        // Gets entire list of samples queries or search by category
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> Get(string id, string category)
+        public async Task<IActionResult> Get(string search)
         {
-            if (id != null && category != null)
-            {
-                return BadRequest(); // Only one search parameter is allowed
-            }
-
             try
             {
                 // Get the file contents
-                var jsonFileContents = await _fileUtility.ReadFromFile(_configuration["SampleQueriesFilePathName"]);
+                string jsonFileContents = await _fileUtility.ReadFromFile(_configuration["SampleQueriesFilePathName"]);
 
                 // Get a list of the sample queries from the file contents
-                var sampleQueriesList = SamplesService.GetSampleQueriesList(jsonFileContents);
+                SampleQueriesList sampleQueriesList = SamplesService.GetSampleQueriesList(jsonFileContents);
 
-                if (sampleQueriesList != null)
+                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
-                    if (string.IsNullOrEmpty(id) && string.IsNullOrEmpty(category))
-                    {
-                        return Ok(sampleQueriesList); // No query string values provided, return entire list of sample queries
-                    }
-                    else if (id != null)
-                    {
-                        // Search by Id
-                        var sampleQueriesById = sampleQueriesList.SampleQueries.FindAll(x => x.Id == Guid.Parse(id));
-                        if (sampleQueriesById != null)
-                        {
-                            return Ok(sampleQueriesById);
-                        }
-                        else
-                        {
-                            return NotFound();
-                        }
-                    }
-                    else
-                    {
-                        // Search by Category
-                        var sampleQueriesByCategory = sampleQueriesList.SampleQueries.FindAll(x => x.Category.ToLower() == category.ToLower());
-                        if (sampleQueriesByCategory != null)
-                        {
-                            return Ok(sampleQueriesByCategory);
-                        }
-                        else
-                        {
-                            return NotFound();
-                        }
-                    }
+                    // List is empty, just return status code 204 - No Content
+                    return NoContent();
                 }
-                // List is empty, just return status code 204 - No Content
-                return NoContent();
+
+                if (string.IsNullOrEmpty(search))
+                {
+                    // No query string values provided, return entire list of sample queries
+                    return Ok(sampleQueriesList);
+                }
+
+                // Search by Category
+                List<SampleQueryModel> sampleQueriesByCategory = sampleQueriesList.SampleQueries.FindAll(x => x.Category.ToLower() == search.ToLower());
+
+                if (sampleQueriesByCategory == null || sampleQueriesByCategory.Count == 0)
+                {
+                    // Search parameter data not found in list of sample queries
+                    return NotFound();                    
+                }
+
+                return Ok(sampleQueriesByCategory);
             }
             catch (Exception exception)
             {
