@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using GraphExplorerExtensions;
 
 namespace GraphWebApi.Controllers
 {
@@ -17,18 +18,19 @@ namespace GraphWebApi.Controllers
 
         public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration)
         {
-            _fileUtility = fileUtility;
-            _filePathSource = configuration["SampleQueriesFilePathName"];
+            _fileUtility = fileUtility;            
+            _filePathSource = configuration["SampleQueriesFilePathName"]; // Gets the path of the JSON file
         }
 
-        [Route("api/[controller]")]
-        [HttpGet]
+        // Gets the list of all sample queries or queries for the searched category
+        [Route("api/[controller]")]        
         [Produces("application/json")]
+        [HttpGet]
         public async Task<IActionResult> Get(string search)
         {
             try
             {
-                // Get the list of the sample queries
+                // Get the list of sample queries
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
@@ -46,14 +48,23 @@ namespace GraphWebApi.Controllers
                 // Search by Category
                 List<SampleQueryModel> sampleQueriesByCategory = sampleQueriesList.SampleQueries.FindAll(x => x.Category.ToLower() == search.ToLower());
 
-                return sampleQueriesByCategory != null ? Ok(sampleQueriesByCategory) : (IActionResult)NotFound();
+                if (sampleQueriesByCategory == null || sampleQueriesByCategory.Count == 0)
+                {
+                    // Search parameter not found in list of sample queries
+                    return NotFound();
+                }
+
+                // Success
+                return Ok(sampleQueriesByCategory);
             }
             catch (Exception exception)
             {
+                // Internal server error
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
 
+        // Gets a sample query from the list of sample queries by its id
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpGet]
@@ -61,26 +72,33 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                // Get the list of the sample queries
+                // Get the list of sample queries
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
 
-                if (sampleQueriesList == null)
-                {
-                    // List is empty, just return status code 204 - No Content
-                    return NoContent();
+                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                {                    
+                    return NoContent(); // list is empty, just return status code 204 - No Content
                 }
 
-                // Search for given id
+                // Search for sample query with the provided id
                 SampleQueryModel sampleQueryById = sampleQueriesList.SampleQueries.Find(x => x.Id == Guid.Parse(id));
 
-                return sampleQueryById != null ? Ok(sampleQueryById) : (IActionResult)NotFound();
+                if (sampleQueryById == null)
+                {                    
+                    return NotFound(); // sample query with the given id doesn't exist in the list of sample queries
+                }
+
+                // Return the found sample query
+                return Ok(sampleQueryById);
             }
             catch (Exception exception)
             {
+                // Internal server error
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
 
+        // Updates a sample query given its id value
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpPut]
@@ -88,39 +106,42 @@ namespace GraphWebApi.Controllers
         {          
             try
             {
-                // Get the list of the sample queries
+                // Get the list of sample queries
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
-                {
-                    // List is empty, the sample query model is definitely not in the list
-                    return NotFound();
+                {                    
+                    return NotFound(); // List is empty; the sample query being searched is definitely not in an empty list
                 }
 
+                // Update the provided sample query model into the list of sample queries
                 SampleQueriesList updatedSampleQueriesList = SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Guid.Parse(id));
 
                 if (updatedSampleQueriesList == null)
-                {
-                    // Sample query model not in the list
-                    return NotFound();
+                {                    
+                    return NotFound(); // Update failed; sample query model of provided id not found in the list of sample queries
                 }
 
-                // Get the serialized JSON string
+                // Get the serialized JSON string of this sample query
                 string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
 
-                // Save JSON string to source file
+                // Format the string into a document-readable JSON-styled string
+                updatedSampleQueriesJson = updatedSampleQueriesJson.FormatStringForJsonDocument();
+
+                // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(updatedSampleQueriesJson, _filePathSource);
 
-                // Return the sample query model that was updated
+                // Success; return the sample query model that was just updated
                 return Ok(sampleQueryModel);
-
             }
             catch (Exception exception)
             {
+                // Internal server error
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
 
+        // Adds a new sample query to the list of sample queries
         [Route("api/[controller]")]
         [Produces("application/json")]
         [HttpPost]
@@ -128,42 +149,92 @@ namespace GraphWebApi.Controllers
         {                    
             try
             {
-                /* Create and instantiate a new instance of SampleQueriesList for holding the list of sample queries
-                 * in case we get a null value when attempting to get the list of sample queries from a file source*/
-                SampleQueriesList sampleQueriesList = new SampleQueriesList();
+                // Get the list of sample queries
+                SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
 
-                // Get the list of the sample queries
-                sampleQueriesList = await GetSampleQueriesList();
-
-                // Add the new sample to the samples queries list
+                // Add the new sample query to the list of sample queries
                 SampleQueriesList newSampleQueriesList = SamplesService.AddToSampleQueriesList(sampleQueriesList, ref sampleQueryModel);
 
-                // Get the serialized JSON string
+                // Get the serialized JSON string of the sample query
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(newSampleQueriesList);
 
-                // Save the JSON string to the source file
+                // Format the string into a document-readable JSON-styled string
+                newSampleQueriesJson = newSampleQueriesJson.FormatStringForJsonDocument();
+
+                // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(newSampleQueriesJson, _filePathSource);
 
-                // Create the new sample query Uri
+                // Create the query Uri for the newly created sample query
                 string newSampleQueryUri = string.Format("{0}://{1}{2}/{3}", Request.Scheme, Request.Host, Request.Path.Value, sampleQueryModel.Id.ToString());
 
-                // Return the sample query that was updated along with its Uri
+                // Success; return the new sample query that was added along with its Uri
                 return Created(newSampleQueryUri, sampleQueryModel);
             }
             catch (Exception exception)
             {
+                // Internal server error
+                return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+            }
+        }
+
+        // Deletes a sample query of the provided id from the list of smaple queries
+        [Route("api/[controller]/{id}")]
+        [Produces("application/json")]
+        [HttpDelete]
+        public async Task<IActionResult> Delete(string id)
+        {
+            try
+            {
+                // Get the list of sample queries
+                SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
+
+                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                {                    
+                    return NotFound(); // list is empty; the sample query being searched is definitely not in an empty list
+                }
+
+                // Remove the sample query with given id from the list of sample queries
+                sampleQueriesList = SamplesService.RemoveSampleQuery(sampleQueriesList, Guid.Parse(id));
+
+                if (sampleQueriesList == null)
+                {                    
+                    return NotFound(); // sample query with provided id not found
+                }
+
+                // Get the serialized JSON string of the list of sample queries
+                string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(sampleQueriesList);
+
+                // Format the string into a document-readable JSON-styled string
+                newSampleQueriesJson = newSampleQueriesJson.FormatStringForJsonDocument();
+
+                // Save the document-readable JSON-styled string to the source file
+                await _fileUtility.WriteToFile(newSampleQueriesJson, _filePathSource);
+                                
+                // Success
+                return new JsonResult("Deleted successfully.") { StatusCode = StatusCodes.Status204NoContent};
+            }
+            catch (Exception exception)
+            {
+                // Internal server error
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
 
         /// <summary>
-        /// Gets the JSON file contents and gets a deserialized instance of a list of samples queries from this.
+        /// Gets the JSON file contents and returns a deserialized instance of a list of sample query objects from this.
         /// </summary>
-        /// <returns>The deserialized instance of the list of samples queries.</returns>
+        /// <returns>The deserialized instance of the list of sample queries.</returns>
         private async Task<SampleQueriesList> GetSampleQueriesList()
         {
             // Get the file contents from source
             string jsonFileContents = await _fileUtility.ReadFromFile(_filePathSource);
+
+            if (string.IsNullOrEmpty(jsonFileContents))
+            {
+                /* File is empty; instantiate a new list of sample query 
+                 * objects that will be used to add new sample queries*/
+                return new SampleQueriesList(new List<SampleQueryModel>());
+            }
 
             // Return the list of the sample queries from the file contents
             return SamplesService.GetSampleQueriesList(jsonFileContents);

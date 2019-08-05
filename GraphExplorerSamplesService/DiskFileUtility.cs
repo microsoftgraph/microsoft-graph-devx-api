@@ -1,8 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using System.Threading.Tasks;
 
 namespace GraphExplorerSamplesService
@@ -23,7 +19,7 @@ namespace GraphExplorerSamplesService
         }
 
         /// <summary>
-        /// Writes contents to a provided file on disk
+        /// Writes contents to a provided file on disk.
         /// </summary>
         /// <param name="fileContents">The string content to be written.</param>
         /// <param name="filePathSource">The directory path name of the file on disk.</param>
