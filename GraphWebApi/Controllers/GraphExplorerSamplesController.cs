@@ -76,21 +76,19 @@ namespace GraphWebApi.Controllers
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
-                {
-                    // List is empty, just return status code 204 - No Content
-                    return NoContent();
+                {                    
+                    return NoContent(); // list is empty, just return status code 204 - No Content
                 }
 
                 // Search for sample query with the provided id
                 SampleQueryModel sampleQueryById = sampleQueriesList.SampleQueries.Find(x => x.Id == Guid.Parse(id));
 
                 if (sampleQueryById == null)
-                {
-                    // Sample query with the given id doesn't exist in the list of sample queries
-                    return NotFound();
+                {                    
+                    return NotFound(); // sample query with the given id doesn't exist in the list of sample queries
                 }
 
-                // Success
+                // Return the found sample query
                 return Ok(sampleQueryById);
             }
             catch (Exception exception)
@@ -112,18 +110,16 @@ namespace GraphWebApi.Controllers
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
-                {
-                    // List is empty; the sample query being searched is definitely not in an empty list
-                    return NotFound();
+                {                    
+                    return NotFound(); // List is empty; the sample query being searched is definitely not in an empty list
                 }
 
                 // Update the provided sample query model into the list of sample queries
                 SampleQueriesList updatedSampleQueriesList = SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Guid.Parse(id));
 
                 if (updatedSampleQueriesList == null)
-                {
-                    // Update failed; sample query model of provided id not found in the list of sample queries
-                    return NotFound();
+                {                    
+                    return NotFound(); // Update failed; sample query model of provided id not found in the list of sample queries
                 }
 
                 // Get the serialized JSON string of this sample query
@@ -193,18 +189,16 @@ namespace GraphWebApi.Controllers
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
-                {
-                    // List is empty; the sample query being searched is definitely not in an empty list
-                    return NotFound();
+                {                    
+                    return NotFound(); // list is empty; the sample query being searched is definitely not in an empty list
                 }
 
                 // Remove the sample query with given id from the list of sample queries
                 sampleQueriesList = SamplesService.RemoveSampleQuery(sampleQueriesList, Guid.Parse(id));
 
                 if (sampleQueriesList == null)
-                {
-                    // Sample query with provided id not found
-                    return NotFound();
+                {                    
+                    return NotFound(); // sample query with provided id not found
                 }
 
                 // Get the serialized JSON string of the list of sample queries
