@@ -17,7 +17,7 @@ namespace GraphExplorerSamplesService
                 throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null.");
             }
 
-            var sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(jsonString);
+            SampleQueriesList sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(jsonString);
             return sampleQueriesList;
         }
 
@@ -33,12 +33,13 @@ namespace GraphExplorerSamplesService
                 throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null.");
             }
 
-            var sampleQueriesJson = JsonConvert.SerializeObject(sampleQueriesList);
+            string sampleQueriesJson = JsonConvert.SerializeObject(sampleQueriesList);
             return sampleQueriesJson;
         }
 
         /// <summary>
-        /// Updates a sample query model object in a list of sample queries.
+        /// Updates a sample query model object in a list of sample queries. 
+        /// The new sample query overwrites the existing one entirely except for its Id property.
         /// </summary>
         /// <param name="sampleQueriesList">The list of sample queries which contains the sample query model object be updated.</param>
         /// <param name="sampleQueryModel">The sample query model object to update.</param>
@@ -63,9 +64,15 @@ namespace GraphExplorerSamplesService
             int sampleQueryIndex = sampleQueriesList.SampleQueries.FindIndex(x => x.Id == sampleQueryId);
 
             if (sampleQueryIndex < 0)
+            {                
+                return null; // sample query not in the list of sample queries             
+            }
+
+            // Check if Id property has valid Guid value
+            if(sampleQueryModel.Id == Guid.Empty)
             {
-                // sample query model object is not in the list of sample queries
-                return null;                
+                // Assign the Id before inserting this sample query object in the list
+                sampleQueryModel.Id = sampleQueryId; 
             }
 
             // Insert the new sample query object into the list of sample queries at the index of the original sample query object
@@ -129,9 +136,8 @@ namespace GraphExplorerSamplesService
             int sampleQueryIndex = sampleQueriesList.SampleQueries.FindIndex(x => x.Id == sampleQueryId);
 
             if (sampleQueryIndex < 0)
-            {
-                // Sample query model object is not in the list of sample queries
-                return null;                
+            {                
+                return null; // sample query not in the list of sample queries               
             }
 
             // Delete the sample query model from the list of sample queries at its given index                
