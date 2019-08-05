@@ -23,9 +23,10 @@ namespace GraphExplorerSamplesService
 
         /* Properties */
 
+        [JsonProperty("id")]
         public Guid Id { get; set; }
-
-        [JsonProperty(Required = Required.Always)]
+                
+        [JsonProperty(Required = Required.Always, PropertyName = "category")]
         public string Category
         {
             get => _category;
@@ -33,18 +34,18 @@ namespace GraphExplorerSamplesService
             {
                 if (!Categories.Contains(value))
                 {
-                    throw new ArgumentOutOfRangeException(nameof(Category), "The category specified does not exist in the list of categories:\r\n" + GetListOfCategories().ToString());
+                    throw new ArgumentOutOfRangeException(nameof(Category), "The category specified does not exist in the list of categories:\r\n" + BuildStringOfCategories());
                 }
 
                 _category = value;
             }
         }
 
-        [JsonProperty(Required = Required.Always)]
+        [JsonProperty(Required = Required.Always, PropertyName = "method")]
         [JsonConverter(typeof(StringEnumConverter))]
         public HttpMethods Method { get; set; }
-        
-        [JsonProperty(Required = Required.Always)]                   
+
+        [JsonProperty(Required = Required.Always, PropertyName = "humanName")]                   
         public string HumanName
         {
             get => _humanName;
@@ -59,9 +60,10 @@ namespace GraphExplorerSamplesService
             }
         }
 
-        [JsonProperty(Required = Required.Always)]
+        [JsonProperty(Required = Required.Always, PropertyName = "requestUrl")]
         public string RequestUrl { get; set; }
                 
+        [JsonProperty("docLink")]
         public string DocLink
         {
             get => _docLink;
@@ -76,12 +78,16 @@ namespace GraphExplorerSamplesService
             }
         }
 
+        [JsonProperty("headers")]
         public IEnumerable<Header> Headers { get; set; }
 
+        [JsonProperty("tip")]
         public string Tip { get; set; }
 
+        [JsonProperty("postBody")]
         public string PostBody { get; set; }
 
+        [JsonProperty("skipTest")]
         public bool SkipTest { get; set; }
 
         [JsonIgnore]
@@ -118,7 +124,7 @@ namespace GraphExplorerSamplesService
             }
         }
 
-        private StringBuilder GetListOfCategories()
+        public string BuildStringOfCategories()
         {
             StringBuilder categoriesStringCollection = new StringBuilder();
           
@@ -127,10 +133,10 @@ namespace GraphExplorerSamplesService
                 categoriesStringCollection.Append(category + "\r\n");
             }
 
-            return categoriesStringCollection;
+            return categoriesStringCollection.ToString();
         }
-       
 
+        
         public class Header
         {
             public string Name { get; set; }
