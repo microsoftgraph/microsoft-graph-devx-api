@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Xml;
+using Microsoft.OData.UriParser;
 using Xunit;
 
 namespace CodeSnippetsReflection.Test
@@ -478,6 +479,25 @@ namespace CodeSnippetsReflection.Test
             //Assert
             Assert.Equal("people", result);
         }
+        #endregion
+
+        #region Test GetParameterListFromOperationSegment
+
+        [Fact]
+        public void GetParameterListFromOperationSegment_ShouldReturnStringWithDoubleQuotesForOdataActionParameter()
+        {
+            //Arrange
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/worksheets/{id|name}/range(address='A1:B2')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var operationSegment = snippetModel.Segments.Last() as OperationSegment;
+
+            //Act
+            var result = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel.Method);
+
+            //Assert the string parameter is now double quoted
+            Assert.Equal("\"A1:B2\"", result.First());
+        }
+
         #endregion
     }
 }
