@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 
-namespace GraphExplorerSamplesService
+namespace GraphExplorerSamplesService.Models
 {
-
+    /// <summary>
+    /// Defines a list which holds a collection of <see cref="SampleQueryModel"/> objects.
+    /// </summary>
     public class SampleQueriesList
     {
         /// <summary>
-        /// The list of sample query objects
+        /// A list of <see cref="SampleQueryModel"/> objects
         /// </summary>
         public List<SampleQueryModel> SampleQueries { get; set; }
 

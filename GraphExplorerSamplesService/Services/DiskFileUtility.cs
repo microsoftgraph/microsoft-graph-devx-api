@@ -1,8 +1,12 @@
-﻿using System.IO;
+﻿using GraphExplorerSamplesService.Interfaces;
+using System.IO;
 using System.Threading.Tasks;
 
-namespace GraphExplorerSamplesService
+namespace GraphExplorerSamplesService.Services
 {
+    /// <summary>
+    /// Implements an <see cref="IFileUtility"/> that reads from and writes contents to a file on disk.
+    /// </summary>
     public class DiskFileUtility : IFileUtility
     {
         /// <summary>
@@ -11,11 +15,11 @@ namespace GraphExplorerSamplesService
         /// <param name="filePathSource">The directory path name of the file on disk.</param>
         /// <returns>The contents of the file.</returns>
         public async Task<string> ReadFromFile(string filePathSource)
-        {            
+        {
             using (StreamReader streamReader = new StreamReader(filePathSource))
             {
                 return await streamReader.ReadToEndAsync();
-            }            
+            }
         }
 
         /// <summary>

@@ -1,5 +1,7 @@
-﻿
-namespace GraphExplorerExtensions
+﻿using GraphExplorerSamplesService;
+using System;
+
+namespace GraphExplorerSamplesService.Extensions
 {
     /// <summary>
     /// Extension methods for formatting strings.
@@ -9,12 +11,12 @@ namespace GraphExplorerExtensions
         /// <summary>
         /// Formats a JSON string into a document-readable JSON-styled string.
         /// </summary>
-        /// <param name="inputValue">The JSON string to be formatted.</param>
+        /// <param name="value">The JSON string to be formatted.</param>
         /// <returns>The document-readable JSON-styled string.</returns>
-        public static string FormatStringForJsonDocument(this string inputValue)
+        public static string FormatStringForJsonDocument(this string value)
         {
             return
-                inputValue
+                value
                 .Replace("[{\"", "[{\r\n\t\t\"")
                 .Replace("},{", "\r\n\t},\r\n\t{\r\n\t\t")
                 .Replace("\",\"", "\",\r\n\t\t\"")

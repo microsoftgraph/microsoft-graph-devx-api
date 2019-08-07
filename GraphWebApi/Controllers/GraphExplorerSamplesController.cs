@@ -1,15 +1,16 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
-using GraphExplorerSamplesService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using GraphExplorerExtensions;
+using GraphExplorerSamplesService.Services;
+using GraphExplorerSamplesService.Models;
+using GraphExplorerSamplesService.Interfaces;
+using GraphExplorerSamplesService.Extensions;
 
 namespace GraphWebApi.Controllers
 {
-
     [ApiController]
     public class GraphExplorerSamplesController : ControllerBase
     {
@@ -22,11 +23,11 @@ namespace GraphWebApi.Controllers
             _filePathSource = configuration["SampleQueriesFilePathName"]; // Gets the path of the JSON file
         }
 
-        // Gets the list of all sample queries or queries for the searched category
-        [Route("api/[controller]")]        
+        // Gets the list of all sample queries
+        [Route("api/[controller]")]
         [Produces("application/json")]
         [HttpGet]
-        public async Task<IActionResult> Get(string search)
+        public async Task<IActionResult> GetSampleQueriesList(string search)
         {
             try
             {
@@ -41,34 +42,36 @@ namespace GraphWebApi.Controllers
 
                 if (string.IsNullOrEmpty(search))
                 {
-                    // No query string value provided, return entire list of sample queries
+                    // No query string value provided; return entire list of sample queries
                     return Ok(sampleQueriesList); 
                 }
 
-                // Search by Category
-                List<SampleQueryModel> sampleQueriesByCategory = sampleQueriesList.SampleQueries.FindAll(x => x.Category.ToLower() == search.ToLower());
-
-                if (sampleQueriesByCategory == null || sampleQueriesByCategory.Count == 0)
+                // Search sample queries
+                List<SampleQueryModel> filteredSampleQueries = sampleQueriesList.SampleQueries.
+                    FindAll(x => (x.Category != null && x.Category.ToLower().Contains(search.ToLower())) || 
+                                 (x.HumanName != null && x.HumanName.ToLower().Contains(search.ToLower())) ||
+                                 (x.Tip != null && x.Tip.ToLower().Contains(search.ToLower())));
+                
+                if (filteredSampleQueries == null || filteredSampleQueries.Count == 0)
                 {
                     // Search parameter not found in list of sample queries
                     return NotFound();
                 }
 
-                // Success
-                return Ok(sampleQueriesByCategory);
+                // Success; return the found list of sample queries from filtered search
+                return Ok(filteredSampleQueries);
             }
             catch (Exception exception)
             {
-                // Internal server error
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
 
-        // Gets a sample query from the list of sample queries by its id
-        [Route("api/[controller]/{id}")]
-        [Produces("application/json")]
-        [HttpGet]
-        public async Task<IActionResult> GetById(string id)
+       // Gets a sample query from the list of sample queries by its id
+       [Route("api/[controller]/{id}")]
+       [Produces("application/json")]
+       [HttpGet]
+        public async Task<IActionResult> GetSampleQueryById(string id)
         {
             try
             {
@@ -76,7 +79,7 @@ namespace GraphWebApi.Controllers
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
-                {                    
+                {
                     return NoContent(); // list is empty, just return status code 204 - No Content
                 }
 
@@ -84,16 +87,15 @@ namespace GraphWebApi.Controllers
                 SampleQueryModel sampleQueryById = sampleQueriesList.SampleQueries.Find(x => x.Id == Guid.Parse(id));
 
                 if (sampleQueryById == null)
-                {                    
+                {
                     return NotFound(); // sample query with the given id doesn't exist in the list of sample queries
                 }
 
-                // Return the found sample query
+                // Success; return the found sample query
                 return Ok(sampleQueryById);
             }
             catch (Exception exception)
             {
-                // Internal server error
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -102,7 +104,7 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpPut]
-        public async Task<IActionResult> Put(string id, [FromBody]SampleQueryModel sampleQueryModel)
+        public async Task<IActionResult> UpdateSampleQuery(string id, [FromBody]SampleQueryModel sampleQueryModel)
         {          
             try
             {
@@ -131,12 +133,11 @@ namespace GraphWebApi.Controllers
                 // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(updatedSampleQueriesJson, _filePathSource);
 
-                // Success; return the sample query model that was just updated
+                // Success; return the sample query model object that was just updated
                 return Ok(sampleQueryModel);
             }
             catch (Exception exception)
             {
-                // Internal server error
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -145,7 +146,7 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]")]
         [Produces("application/json")]
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody]SampleQueryModel sampleQueryModel)
+        public async Task<IActionResult> CreateSampleQuery([FromBody]SampleQueryModel sampleQueryModel)
         {                    
             try
             {
@@ -172,7 +173,6 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception exception)
             {
-                // Internal server error
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -181,7 +181,7 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpDelete]
-        public async Task<IActionResult> Delete(string id)
+        public async Task<IActionResult> DeleteSampleQuery(string id)
         {
             try
             {
@@ -210,20 +210,19 @@ namespace GraphWebApi.Controllers
                 // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(newSampleQueriesJson, _filePathSource);
                                 
-                // Success
+                // Success; no content to return
                 return new JsonResult("Deleted successfully.") { StatusCode = StatusCodes.Status204NoContent};
             }
             catch (Exception exception)
             {
-                // Internal server error
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
 
         /// <summary>
-        /// Gets the JSON file contents and returns a deserialized instance of a list of sample query objects from this.
+        /// Gets the JSON file contents and returns a deserialized instance of a <see cref="SampleQueriesList"/> from this.
         /// </summary>
-        /// <returns>The deserialized instance of the list of sample queries.</returns>
+        /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
         private async Task<SampleQueriesList> GetSampleQueriesList()
         {
             // Get the file contents from source
@@ -237,7 +236,7 @@ namespace GraphWebApi.Controllers
             }
 
             // Return the list of the sample queries from the file contents
-            return SamplesService.GetSampleQueriesList(jsonFileContents);
+            return SamplesService.DeserializeSampleQueriesList(jsonFileContents);
         }
     }
 }
