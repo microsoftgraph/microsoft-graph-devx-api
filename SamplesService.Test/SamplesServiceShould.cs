@@ -490,9 +490,12 @@ namespace SamplesService.Test
 
             /* Act */
 
+            // Assign a new Id to the new sample query
+            sampleQueryModel.Id = Guid.NewGuid();
+
             // Add the new sample query to the list of sample queries
             SampleQueriesList newSampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList
-                (sampleQueriesList, ref sampleQueryModel);
+                (sampleQueriesList, sampleQueryModel);
 
             // Assert - the new sample query should be inserted at index[2] of the list of sample queries
             Assert.Equal(sampleQueryModel.Id, newSampleQueriesList.SampleQueries[2].Id);
@@ -517,18 +520,19 @@ namespace SamplesService.Test
                 DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_manager",
                 SkipTest = false
             };
-
-            Guid Id = Guid.NewGuid();
-
+            
             /* Act and Assert */
+
+            // Assign a new Id to the new sample query
+            sampleQueryModel.Id = Guid.NewGuid();
 
             // Null sample queries list
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(nullSampleQueriesList, ref sampleQueryModel));
+                GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(nullSampleQueriesList, sampleQueryModel));
 
             // Empty sample queries list
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(emptySampleQueriesList, ref sampleQueryModel));
+                GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(emptySampleQueriesList, sampleQueryModel));
         }
 
         [Fact]
@@ -573,14 +577,12 @@ namespace SamplesService.Test
             SampleQueriesList sampleQueriesList = new SampleQueriesList(sampleQueries);
 
             SampleQueryModel sampleQueryModel = null;
-
-            Guid Id = Guid.NewGuid();
-
+            
             /* Act and Assert */
-
+            
             // Null sample query model
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(sampleQueriesList, ref sampleQueryModel));
+                GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(sampleQueriesList, sampleQueryModel));
         }
 
         #endregion
