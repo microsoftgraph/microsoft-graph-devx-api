@@ -8,6 +8,7 @@ using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GraphWebApi.Controllers
 {
@@ -52,7 +53,7 @@ namespace GraphWebApi.Controllers
                                  (x.HumanName != null && x.HumanName.ToLower().Contains(search.ToLower())) ||
                                  (x.Tip != null && x.Tip.ToLower().Contains(search.ToLower())));
                 
-                if (filteredSampleQueries == null || filteredSampleQueries.Count == 0)
+                if (filteredSampleQueries.Count == 0)
                 {
                     // Search parameter not found in list of sample queries
                     return NotFound();
@@ -153,8 +154,11 @@ namespace GraphWebApi.Controllers
                 // Get the list of sample queries
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
 
+                // Assign a new Id to the new sample query
+                sampleQueryModel.Id = Guid.NewGuid();
+
                 // Add the new sample query to the list of sample queries
-                SampleQueriesList newSampleQueriesList = SamplesService.AddToSampleQueriesList(sampleQueriesList, ref sampleQueryModel);
+                SampleQueriesList newSampleQueriesList = SamplesService.AddToSampleQueriesList(sampleQueriesList, sampleQueryModel);
 
                 // Get the serialized JSON string of the sample query
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(newSampleQueriesList);
