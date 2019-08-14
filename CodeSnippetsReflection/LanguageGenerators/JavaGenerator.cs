@@ -22,6 +22,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String of the snippet in Java code</returns>
         public static string GenerateCodeSnippet(SnippetModel snippetModel, LanguageExpressions languageExpressions)
         {
+            /* As the Java beta SDK is not implemented yet throw this exception till it is */
+            if (snippetModel.ApiVersion.Equals("beta"))
+            {
+                throw new NotImplementedException("Java Beta SDK not implemented yet");
+            }
+
             var snippetBuilder = new StringBuilder();
             try
             {
