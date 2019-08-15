@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
 using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
@@ -105,7 +104,6 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpPut]
-        [Authorize]
         public async Task<IActionResult> UpdateSampleQuery(string id, [FromBody]SampleQueryModel sampleQueryModel)
         {          
             try
@@ -144,11 +142,10 @@ namespace GraphWebApi.Controllers
             }
         }
 
-        // Adds a new sample query to the list of sample queries        
+        // Adds a new sample query to the list of sample queries
         [Route("api/[controller]")]
         [Produces("application/json")]
         [HttpPost]
-        [Authorize]
         public async Task<IActionResult> CreateSampleQuery([FromBody]SampleQueryModel sampleQueryModel)
         {                    
             try
@@ -184,7 +181,6 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpDelete]
-        [Authorize]
         public async Task<IActionResult> DeleteSampleQuery(string id)
         {
             try
