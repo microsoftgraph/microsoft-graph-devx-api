@@ -286,7 +286,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 //read parameters from request body since this is an odata action
                 foreach (var parameter in operationSegment.Operations.First().Parameters)
                 {
-                    if ((parameter.Name.ToLower().Equals("bindingparameter")) || (parameter.Name.ToLower().Equals("bindparameter")))
+                    if ((parameter.Name.ToLower().Equals("bindingparameter")) 
+                        || (parameter.Name.ToLower().Equals("bindparameter")) 
+                        || (parameter.Name.ToLower().Equals("this")))
                         continue;
 
                     paramList.Add(parameter.Type.Definition is IEdmCollectionType
@@ -305,7 +307,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             {
                                 if (convertNode.Source is ConstantNode constantNode)
                                 {
-                                    paramList.Add(constantNode.LiteralText);
+                                    paramList.Add($"\"{constantNode.Value}\"");
                                 }
                                 break;
                             }

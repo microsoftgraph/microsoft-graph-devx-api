@@ -267,5 +267,29 @@ namespace CodeSnippetsReflection.Test
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
+
+        [Fact]
+        //This tests asserts that we can properly generate snippets for odata actions with parameters
+        public void GeneratesSnippetsForOdataActionsWithParameters()
+        {
+            //Arrange
+            LanguageExpressions expressions = new JavaExpressions();
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get,
+                "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/worksheets/{id|name}/range(address='A1:B2')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "WorkbookRange workbookRange = graphClient.me().drive().items(\"{id}\").workbook().worksheets(\"{id|name}\")\n" +
+                                           "\t.range(\"A1:B2\")\n" +//parameter has double quotes
+                                           "\t.buildRequest()\n" +
+                                           "\t.get();";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
     }
 }
