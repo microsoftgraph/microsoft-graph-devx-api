@@ -1,5 +1,6 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
@@ -104,6 +105,7 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpPut]
+        [Authorize]
         public async Task<IActionResult> UpdateSampleQuery(string id, [FromBody]SampleQueryModel sampleQueryModel)
         {          
             try
@@ -146,6 +148,7 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]")]
         [Produces("application/json")]
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> CreateSampleQuery([FromBody]SampleQueryModel sampleQueryModel)
         {                    
             try
@@ -181,6 +184,7 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpDelete]
+        [Authorize]
         public async Task<IActionResult> DeleteSampleQuery(string id)
         {
             try
