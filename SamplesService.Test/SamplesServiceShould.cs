@@ -502,14 +502,12 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfAddToSampleQueriesListSampleQueriesListParameterIsNullOrEmpty()
+        public void ThrowArgumentNullExceptionIfAddToSampleQueriesListSampleQueriesListParameterIsNull()
         {
             /* Arrange */
 
             SampleQueriesList nullSampleQueriesList = null;
-
-            SampleQueriesList emptySampleQueriesList = new SampleQueriesList(new List<SampleQueryModel>());
-
+            
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
             {
                 Id = Guid.Parse("3482cc10-f2be-40fc-bcdb-d3ac35f3e4c3"),
@@ -529,10 +527,6 @@ namespace SamplesService.Test
             // Null sample queries list
             Assert.Throws<ArgumentNullException>(() => 
                 GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(nullSampleQueriesList, sampleQueryModel));
-
-            // Empty sample queries list
-            Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(emptySampleQueriesList, sampleQueryModel));
         }
 
         [Fact]
