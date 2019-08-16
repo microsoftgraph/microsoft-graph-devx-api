@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using CodeSnippetsReflection;
-using GraphExplorerSamplesService;
+using GraphExplorerSamplesService.Services;
+using GraphExplorerSamplesService.Interfaces;
 
 namespace GraphWebApi
 {
