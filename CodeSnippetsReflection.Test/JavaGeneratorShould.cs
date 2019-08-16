@@ -300,6 +300,7 @@ namespace CodeSnippetsReflection.Test
             //Arrange
             LanguageExpressions expressions = new JavaExpressions();
 
+            //Act
             var requestPayload = new HttpRequestMessage(HttpMethod.Get,
                 "https://graph.microsoft.com/beta/me");
             var snippetModel = new SnippetModel(requestPayload, "https://graph.microsoft.com/beta", _edmModel);
