@@ -89,6 +89,7 @@ namespace GraphExplorerSamplesService.Services
             return sampleQueriesList;
         }
 
+
         /// <summary>
         /// Adds a <see cref="SampleQueryModel"/> object into an instance of a <see cref="SampleQueriesList"/>.
         /// </summary>
@@ -96,19 +97,16 @@ namespace GraphExplorerSamplesService.Services
         /// object will be added into.</param>
         /// <param name="sampleQueryModel">The <see cref="SampleQueryModel"/> object to be added.</param>
         /// <returns>The instance of a <see cref="SampleQueriesList"/> with the newly added <see cref="SampleQueryModel"/> object.</returns>
-        public static SampleQueriesList AddToSampleQueriesList(SampleQueriesList sampleQueriesList, ref SampleQueryModel sampleQueryModel)
+        public static SampleQueriesList AddToSampleQueriesList(SampleQueriesList sampleQueriesList, SampleQueryModel sampleQueryModel)
         {
-            if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+            if (sampleQueriesList == null)
             {
-                throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null or empty.");
+                throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null.");
             }
             if (sampleQueryModel == null)
             {
                 throw new ArgumentNullException(nameof(sampleQueryModel), "The sample query model object cannot be null.");
-            }
-
-            // Assign a new Id to the new sample query
-            sampleQueryModel.Id = Guid.NewGuid();
+            }                       
 
             // Determine the location in the list of query samples to add the new sample query in 
             int sampleQueryIndex = GetNewSampleQueryIndex(sampleQueriesList, sampleQueryModel);
@@ -165,7 +163,7 @@ namespace GraphExplorerSamplesService.Services
             // The current sample category will be the starting point of the linked list of categories
             var currentCategory = SampleQueriesCategories.CategoriesLinkedList.Find(sampleQuery.Category);
 
-            if (sampleQueriesList.SampleQueries.Count == 0 || currentCategory.Previous == null)
+            if (sampleQueriesList.SampleQueries.Count == 0 || currentCategory == null || currentCategory.Previous == null)
             {
                 // The list is either empty or the sample query category is the first in the hierarchy of the linked list of categories
                 return 0;

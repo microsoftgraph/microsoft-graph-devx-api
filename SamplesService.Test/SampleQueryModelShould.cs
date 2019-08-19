@@ -30,6 +30,7 @@ namespace SamplesService.Test
             // Assert
             Assert.False(sampleQueryModel.Category.StartsWith(" "));
             Assert.False(sampleQueryModel.Category.EndsWith(" "));
+            Assert.Equal("Users", sampleQueryModel.Category);
         }
 
         [Fact]
@@ -72,6 +73,7 @@ namespace SamplesService.Test
             // Assert
             Assert.False(sampleQueryModel.HumanName.StartsWith(" "));
             Assert.False(sampleQueryModel.HumanName.EndsWith(" "));
+            Assert.Equal("my profile", sampleQueryModel.HumanName);
         }
 
         #endregion
@@ -103,6 +105,7 @@ namespace SamplesService.Test
             // Assert
             Assert.False(sampleQueryModel.RequestUrl.StartsWith(" "));
             Assert.False(sampleQueryModel.RequestUrl.EndsWith(" "));
+            Assert.Equal("/v1.0/me/photo/$value", sampleQueryModel.RequestUrl);
         }
 
         #endregion
