@@ -436,6 +436,34 @@ namespace SamplesService.Test
         #region Add To Sample Queries List Tests
 
         [Fact]
+        public void AddSampleQueryIntoEmptyListOfSampleQueries()
+        {
+            /* Arrange */
+
+            SampleQueriesList sampleQueriesList = new SampleQueriesList(new List<SampleQueryModel>());
+
+            SampleQueryModel sampleQueryModel = new SampleQueryModel()
+            {
+                Id = Guid.Parse("3482cc10-f2be-40fc-bcdb-d3ac35f3e4c3"),
+                Category = "Getting Started",
+                Method = SampleQueryModel.HttpMethods.GET,
+                HumanName = "my manager",
+                RequestUrl = "/v1.0/me/manager",
+                DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_manager",
+                SkipTest = false
+            };
+
+            /* Act */
+
+            // Add the new sample query to the empty list of sample queries
+            sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList
+                (sampleQueriesList, sampleQueryModel);
+
+            // Assert
+            Assert.NotEmpty(sampleQueriesList.SampleQueries);
+        }
+
+        [Fact]
         public void AddSampleQueryIntoListOfSampleQueriesInHierarchicalOrderOfCategories()
         {
             /* Arrange */
