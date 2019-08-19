@@ -8,6 +8,22 @@ namespace GraphExplorerSamplesService.Services
     public class AccessControlService
     {
         /// <summary>
+        /// Deserializes a JSON string into a list of <see cref="CategoryRights"/> objects.
+        /// </summary>
+        /// <param name="jsonString">The JSON string to be deserialized into a list of <see cref="SampleQueryModel"/> objects.</param>
+        /// <returns>The deserialized list of <see cref="SampleQueryModel"/> objects.</returns>
+        public static SampleQueriesAccessRights DeserializeSampleQueriesAccessRights(string jsonString)
+        {
+            if (string.IsNullOrEmpty(jsonString))
+            {
+                throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null.");
+            }
+
+            SampleQueriesAccessRights accessRights = JsonConvert.DeserializeObject<SampleQueriesAccessRights>(jsonString);
+            return accessRights;
+        }
+
+        /// <summary>
         /// Serializes an instance of a <see cref="SampleQueriesAccessRights"/> into JSON string.
         /// </summary>
         /// <param name="sampleQueriesAccessRights">The instance of <see cref="SampleQueriesAccessRights"/> to be deserialized.</param>
