@@ -99,9 +99,9 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>The instance of a <see cref="SampleQueriesList"/> with the newly added <see cref="SampleQueryModel"/> object.</returns>
         public static SampleQueriesList AddToSampleQueriesList(SampleQueriesList sampleQueriesList, SampleQueryModel sampleQueryModel)
         {
-            if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+            if (sampleQueriesList == null)
             {
-                throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null or empty.");
+                throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null.");
             }
             if (sampleQueryModel == null)
             {
