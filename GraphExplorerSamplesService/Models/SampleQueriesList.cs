@@ -12,9 +12,9 @@ namespace GraphExplorerSamplesService.Models
         /// </summary>
         public List<SampleQueryModel> SampleQueries { get; set; }
 
-        public SampleQueriesList(List<SampleQueryModel> sampleQueries)
+        public SampleQueriesList()
         {
-            SampleQueries = sampleQueries;
+            SampleQueries = new List<SampleQueryModel>();
         }
     }
 }

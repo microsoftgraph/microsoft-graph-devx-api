@@ -1,15 +1,16 @@
 ﻿using Newtonsoft.Json;
+using static GraphExplorerSamplesService.Models.SampleQueryModel;
 
 namespace GraphExplorerSamplesService.Models
 {
     /// <summary>
-    /// Defines a representation of an access permission.
+    /// Defines a representation of a claim permission.
     /// </summary>
     public class Permission
     {
-        [JsonProperty (PropertyName = "name")]
+        [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
-        [JsonProperty (PropertyName = "value")]
-        public string Value { get; set; }
+        [JsonProperty(PropertyName = "value")]
+        public bool Value { get; set; }
     }
 }
