@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="AccessRightsTest.json" />
+    <Content Remove="PoliciesTest.json" />
+    <Content Remove="SampleQueryTest.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
