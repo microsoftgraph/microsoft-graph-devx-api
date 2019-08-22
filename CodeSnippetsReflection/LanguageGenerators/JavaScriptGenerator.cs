@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.OData.UriParser;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
@@ -24,20 +22,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 var snippetBuilder = new StringBuilder();
                 snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName,languageExpressions);
-                //get the potential parameter for actions
-                var actionParameter = "";
-                if (!string.IsNullOrEmpty(snippetModel.RequestBody))
-                {
-                    var segment = snippetModel.Segments.Last();
-                    if (segment is OperationSegment)
-                    {
-                        actionParameter = $"{ snippetModel.ResponseVariableName }";
-                    }
-                    else
-                    {
-                        actionParameter = $"{{{GetObjectType(segment)} : { snippetModel.ResponseVariableName }}}";
-                    }
-                }
                 //setup the auth snippet section
                 snippetBuilder.Append("const options = {\n");
                 snippetBuilder.Append("\tauthProvider,\n};\n\n");
@@ -53,7 +37,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
                     snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel,$"\n\t.post({actionParameter});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel,$"\n\t.post({snippetModel.ResponseVariableName});"));
                 }
                 else if (snippetModel.Method == HttpMethod.Patch)
                 {
@@ -61,7 +45,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         throw new Exception("No body present for PATCH method in Javascript");
 
                     snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.update({actionParameter});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.update({snippetModel.ResponseVariableName});"));
                 }
                 else if (snippetModel.Method == HttpMethod.Delete)
                 {
@@ -73,7 +57,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         throw new Exception("No body present for PUT method in Javascript");
 
                     snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.put({actionParameter});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.put({snippetModel.ResponseVariableName});"));
                 }
                 else
                 {
@@ -88,19 +72,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             }
         }
 
-
-        /// <summary>
-        /// Return string to signifying the type of the object to be used
-        /// </summary>
-        /// <param name="pathSegment">The OdataPathSegment in use</param>
-        /// <returns>String representing the type in use</returns>
-        private static string GetObjectType(ODataPathSegment pathSegment)
-        {
-            var objectType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, new List<string> { pathSegment.Identifier });
-            //we need to split the string and get last item
-            //eg microsoft.graph.data => data
-            return objectType.ToString().Split(".").Last();
-        }
         /// <summary>
         /// Return string to signifying the endpoint to be used in the snippet
         /// </summary>

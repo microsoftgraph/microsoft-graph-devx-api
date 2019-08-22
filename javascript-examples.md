@@ -78,7 +78,7 @@ const user = {
 };
 
 let res = await client.api('/users')
-  .post({user : user});
+  .post(user);
 ```
 
 ### PATCH Request
@@ -118,7 +118,7 @@ const me = {
 };
 
 let res = await client.api('/me')
-  .update({user : me});
+  .update(me);
 ```
 
 ### PUT Request
@@ -155,7 +155,7 @@ const templates = {
 
 let res = await client.api('/applications/{id}/synchronization/templates/{templateId}')
   .version('beta')
-  .put({synchronizationTemplate : templates});
+  .put(templates);
 ```
 
 ### DELETE Request
