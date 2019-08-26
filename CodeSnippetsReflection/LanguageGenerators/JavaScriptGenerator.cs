@@ -36,8 +36,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
-                    snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel,$"\n\t.post({snippetModel.ResponseVariableName});"));
+                    if (!string.IsNullOrEmpty(snippetModel.RequestBody))
+                    {
+                        snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
+                        snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.post({snippetModel.ResponseVariableName});"));
+                    }
+                    else
+                    {
+                        snippetBuilder.Append(GenerateRequestSection(snippetModel, "\n\t.post();"));
+                    }
+                    
                 }
                 else if (snippetModel.Method == HttpMethod.Patch)
                 {
