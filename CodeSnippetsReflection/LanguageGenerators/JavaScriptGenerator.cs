@@ -45,7 +45,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     {
                         snippetBuilder.Append(GenerateRequestSection(snippetModel, "\n\t.post();"));
                     }
-                    
                 }
                 else if (snippetModel.Method == HttpMethod.Patch)
                 {
