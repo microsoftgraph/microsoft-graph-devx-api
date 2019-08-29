@@ -1,10 +1,12 @@
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
@@ -274,17 +276,21 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// If the method is a post, the parameters are sought for in the request body. Otherwise they are sort for in the request url
         /// </summary>
         /// <param name="operationSegment">OData OperationSegment representing a Function or action</param>
-        /// <param name="method">Http method used to access the operation segment</param>
+        /// <param name="snippetModel">Snippet Model to obtain useful data from</param>
         /// <param name="collectionSuffix">Suffix to be added to elements that are proved to be members collections</param>
         /// <returns></returns>
-        public static IEnumerable<string> GetParameterListFromOperationSegment(OperationSegment operationSegment, HttpMethod method, string collectionSuffix = "")
+        public static IEnumerable<string> GetParameterListFromOperationSegment(OperationSegment operationSegment, SnippetModel snippetModel, string collectionSuffix = "")
         {
             var paramList = new List<string>();
 
-            if (method == HttpMethod.Post)
+            if (snippetModel.Method == HttpMethod.Post)
             {
                 //read parameters from request body since this is an odata action
-                foreach (var parameter in operationSegment.Operations.First().Parameters)
+                var requiredParameters = operationSegment.Operations.First().Parameters.Where(param => !param.Type.IsNullable);
+                var optionalParameters = operationSegment.Operations.First().Parameters.Where(param => param.Type.IsNullable);
+
+                //first populate the required parameters
+                foreach (var parameter in requiredParameters)
                 {
                     if ((parameter.Name.ToLower().Equals("bindingparameter")) 
                         || (parameter.Name.ToLower().Equals("bindparameter")) 
@@ -294,6 +300,29 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     paramList.Add(parameter.Type.Definition is IEdmCollectionType
                         ? $"{LowerCaseFirstLetter(parameter.Name)}{collectionSuffix}" 
                         : LowerCaseFirstLetter(parameter.Name));
+                }
+
+                //obtain the parameters provided from the body
+                var parametersProvided = new List<string>();
+                if (!string.IsNullOrEmpty(snippetModel.RequestBody) 
+                    && JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
+                {
+                    foreach (var (key, _) in testObj)
+                    {
+                        parametersProvided.Add(key);
+                    }
+                }
+
+                //populate the parameters that we have from the request
+                foreach (var parameter in optionalParameters)
+                {
+                    //if we actually have been given the parameter before we can add it.
+                    if (parametersProvided.Contains(parameter.Name, StringComparer.OrdinalIgnoreCase))
+                    {
+                        paramList.Add(parameter.Type.Definition is IEdmCollectionType
+                            ? $"{LowerCaseFirstLetter(parameter.Name)}{collectionSuffix}"
+                            : LowerCaseFirstLetter(parameter.Name));
+                    }
                 }
             }
             else

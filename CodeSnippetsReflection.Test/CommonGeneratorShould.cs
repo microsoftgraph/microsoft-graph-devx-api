@@ -492,7 +492,7 @@ namespace CodeSnippetsReflection.Test
             var operationSegment = snippetModel.Segments.Last() as OperationSegment;
 
             //Act
-            var result = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel.Method);
+            var result = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel);
 
             //Assert the string parameter is now double quoted
             Assert.Equal("\"A1:B2\"", result.First());
