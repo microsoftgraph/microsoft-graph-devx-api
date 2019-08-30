@@ -498,6 +498,75 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal("\"A1:B2\"", result.First());
         }
 
+        [Fact]
+        public void GetParameterListFromOperationSegment_ShouldReturnParameterListOrderedByOptionality()
+        {
+            //Arrange
+            //Arrange
+            const string jsonObject = "{\r\n  " +
+                                      "\"address\": \"Sheet1!A1:D5\",\r\n" +
+                                      "\"hasHeaders\": true\r\n" +
+                                      "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/tables/add")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var operationSegment = snippetModel.Segments.Last() as OperationSegment;
+
+            //Act
+            var result = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel).ToList();
+
+            //Assert the parameters are ordered as expected
+            Assert.Equal("hasHeaders", result[0]);
+            Assert.Equal("address", result[1]);
+        }
+
+        [Fact]
+        public void GetParameterListFromOperationSegment_ShouldReturnParameterListOrderedByMetadataReference()
+        {
+            //Arrange
+            const string jsonObject = "{\r\n  " +
+                                        "\"address\": \"Sheet1!A1:D5\",\r\n" +
+                                        "\"hasHeaders\": true\r\n" +
+                                      "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/tables/add")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var operationSegment = snippetModel.Segments.Last() as OperationSegment;
+
+            //Act
+            var result = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel,"",false).ToList();
+
+            //Assert the parameters are ordered as expected
+            Assert.Equal("address", result[0]);
+            Assert.Equal("hasHeaders", result[1]);
+        }
+
+        [Fact]
+        public void GetParameterListFromOperationSegment_ShouldNullNotProvidedParametersInList()
+        {
+            //Arrange
+            const string jsonObject = "{\r\n  " +
+                                      "\"hasHeaders\": true\r\n" +//we have not provided the optional address parameter
+                                      "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/tables/add")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var operationSegment = snippetModel.Segments.Last() as OperationSegment;
+
+            //Act
+            var result = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel).ToList();
+
+            //Assert the parameters are ordered as expected
+            Assert.Equal("hasHeaders", result[0]);
+            Assert.Equal("null", result[1]);
+        }
+
         #endregion
     }
 }

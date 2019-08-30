@@ -308,5 +308,39 @@ namespace CodeSnippetsReflection.Test
             //Assert that we do not generate snippets for java beta for now
             Assert.Throws<NotImplementedException>(() =>JavaGenerator.GenerateCodeSnippet(snippetModel, expressions));
         }
+
+        [Fact]
+        //This test asserts that a request with optional parameters is generated correctly with the order present
+        //in the metadata
+        public void GeneratesSnippetsWithOptionalParametersInCorrectOrder()
+        {
+            //Arrange
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{\r\n  " +
+                                      "\"address\": \"Sheet1!A1:D5\",\r\n" +
+                                      "\"hasHeaders\": true\r\n" +
+                                      "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/tables/add")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "String address = \"Sheet1!A1:D5\";\r\n" +
+                                           "\r\n" +
+                                           "boolean hasHeaders = true;\r\n" +
+                                           "\r\n" +
+                                           "graphClient.me().drive().items(\"{id}\").workbook().tables()\n" +
+                                                "\t.add(address,hasHeaders)\n" +
+                                                "\t.buildRequest()\n" +
+                                                "\t.post();";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
     }
 }

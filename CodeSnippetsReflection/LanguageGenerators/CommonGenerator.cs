@@ -286,7 +286,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             if (snippetModel.Method == HttpMethod.Post)
             {
-                //obtain the parameters provided from the body
+                //read parameters from request body since this is an odata action
                 var parametersProvided = new List<string>();
                 if (!string.IsNullOrEmpty(snippetModel.RequestBody)
                     && JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
@@ -299,14 +299,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 if (isOrderedByOptionalParameters)
                 {
-                    //read parameters from request body since this is an odata action
-                    var requiredParameters = operationSegment.Operations.First().Parameters.Where(param => !param.Type.IsNullable);
-                    var optionalParameters = operationSegment.Operations.First().Parameters.Where(param => param.Type.IsNullable);
-
                     //first populate the required parameters
+                    var requiredParameters = operationSegment.Operations.First().Parameters.Where(param => !param.Type.IsNullable);
                     paramList = AddValidParameterItemsFromIEdmOperationParameterList(paramList, requiredParameters, parametersProvided, collectionSuffix);
-
                     //populate the parameters the optional parameters we have from the request
+                    var optionalParameters = operationSegment.Operations.First().Parameters.Where(param => param.Type.IsNullable);
                     paramList = AddValidParameterItemsFromIEdmOperationParameterList(paramList, optionalParameters, parametersProvided, collectionSuffix);
                 }
                 else
@@ -341,7 +338,20 @@ namespace CodeSnippetsReflection.LanguageGenerators
             return paramList;
         }
 
-        private static List<string> AddValidParameterItemsFromIEdmOperationParameterList(List<string> initialParameterList , IEnumerable<IEdmOperationParameter> edmOperationParameterList, List<string> parametersProvided, string collectionSuffix)
+        /// <summary>
+        /// Helper function to add parameters from list of operationSegment parameters. This is validated from a list of parameters given
+        /// from the request to prevent unnecessary population of optional params.
+        /// </summary>
+        /// <param name="initialParameterList">Initial list of parameters that we need to add parameters to</param>
+        /// <param name="edmOperationParameterList">List of parameters for the operation segment</param>
+        /// <param name="parametersProvided">List of parameters that are present in the request</param>
+        /// <param name="collectionSuffix">Suffix to add in collection parameters</param>
+        /// <returns></returns>
+        private static List<string> AddValidParameterItemsFromIEdmOperationParameterList(
+            List<string> initialParameterList ,
+            IEnumerable<IEdmOperationParameter> edmOperationParameterList, 
+            List<string> parametersProvided, 
+            string collectionSuffix)
         {
             foreach (var parameter in edmOperationParameterList)
             {
@@ -358,8 +368,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         : LowerCaseFirstLetter(parameter.Name));
                 }
                 else
-                {
-                    initialParameterList.Add("null");//add null as the parameter is nullable
+                {   
+                    //add null as the parameter is not provided/nullable.
+                    initialParameterList.Add("null");
                 }
             }
             return initialParameterList;
