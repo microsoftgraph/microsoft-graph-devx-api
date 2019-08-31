@@ -37,7 +37,7 @@ namespace GraphExplorerSamplesService.Services
                 throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null or empty.");
             }
 
-            string sampleQueriesJson = JsonConvert.SerializeObject(sampleQueriesList);
+            string sampleQueriesJson = JsonConvert.SerializeObject(sampleQueriesList, Formatting.Indented);
             return sampleQueriesJson;
         }
 
