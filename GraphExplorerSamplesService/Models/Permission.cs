@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using static GraphExplorerSamplesService.Models.SampleQueryModel;
 
 namespace GraphExplorerSamplesService.Models
 {
