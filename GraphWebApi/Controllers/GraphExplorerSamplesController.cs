@@ -37,7 +37,7 @@ namespace GraphWebApi.Controllers
                 // Get the list of sample queries
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
 
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList.SampleQueries.Count == 0)
                 {
                     // List is empty, just return status code 204 - No Content
                     return NoContent();
@@ -81,7 +81,7 @@ namespace GraphWebApi.Controllers
                 // Get the list of sample queries
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
 
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList.SampleQueries.Count == 0)
                 {
                     return NoContent(); // list is empty, just return status code 204 - No Content
                 }
@@ -131,7 +131,7 @@ namespace GraphWebApi.Controllers
                 // Get the list of sample queries
                 SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
 
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList.SampleQueries.Count == 0)
                 {                    
                     return NotFound(); // List is empty; the sample query being searched is definitely not in an empty list
                 }
@@ -261,18 +261,13 @@ namespace GraphWebApi.Controllers
                     { StatusCode = StatusCodes.Status401Unauthorized };
                 }
 
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList.SampleQueries.Count == 0)
                 {                    
                     return NotFound(); // list is empty; the sample query being searched is definitely not in an empty list
                 }
 
                 // Remove the sample query with given id from the list of sample queries
                 sampleQueriesList = SamplesService.RemoveSampleQuery(sampleQueriesList, Guid.Parse(id));
-
-                if (sampleQueriesList == null)
-                {                    
-                    return NotFound(); // sample query with provided id not found
-                }
 
                 // Get the serialized JSON string of the list of sample queries
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(sampleQueriesList);
@@ -335,9 +330,6 @@ namespace GraphWebApi.Controllers
 
                 // Get the serialized JSON string of the list of policies
                 string policiesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(policies);
-
-                // Format the string into a document-readable JSON-styled string
-                policiesJson = policiesJson.FormatStringForJsonDocument();
 
                 // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(policiesJson, _policiesFilePathSource);
