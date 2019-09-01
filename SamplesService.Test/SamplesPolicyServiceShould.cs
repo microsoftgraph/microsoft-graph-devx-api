@@ -265,8 +265,36 @@ namespace SamplesService.Test
             // Arrange and Act
             SampleQueriesPolicies policiesTemplate = SamplesPolicyService.CreateDefaultPoliciesTemplate();
 
-            // Assert
-            Assert.NotEmpty(policiesTemplate.CategoryPolicies);
+            /* Assert that all items in the collection follow the specified
+             * template structure. */
+
+            Assert.All(policiesTemplate.CategoryPolicies,
+                policy =>
+                {
+                    Assert.NotNull(policy.CategoryName);
+                    Assert.Collection(policy.UserClaims,
+                        claim =>
+                        {
+                            Assert.Equal("Unspecified", claim.UserName);
+                            Assert.Equal("unspecified@xyz.com", claim.UserPrincipalName);
+                            Assert.Collection(claim.UserPermissions,
+                                permission =>
+                                {
+                                    Assert.Equal(HttpMethods.Post, permission.Name);
+                                    Assert.False(permission.Value);                                                                        
+                                },
+                                permission =>
+                                {
+                                    Assert.Equal(HttpMethods.Put, permission.Name);
+                                    Assert.False(permission.Value);
+                                },
+                                permission =>
+                                {
+                                    Assert.Equal(HttpMethods.Delete, permission.Name);
+                                    Assert.False(permission.Value);
+                                });
+                        });
+                });
         }
 
         #endregion
