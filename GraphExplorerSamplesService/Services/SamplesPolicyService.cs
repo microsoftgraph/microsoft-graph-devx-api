@@ -39,7 +39,7 @@ namespace GraphExplorerSamplesService.Services
                 throw new ArgumentNullException(nameof(policies), "The list of policies cannot be null.");
             }
 
-            string policiesJson = JsonConvert.SerializeObject(policies);
+            string policiesJson = JsonConvert.SerializeObject(policies, Formatting.Indented);
             return policiesJson;
         }
 
