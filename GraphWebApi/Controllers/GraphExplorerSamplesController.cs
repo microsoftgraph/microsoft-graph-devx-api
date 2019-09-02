@@ -7,8 +7,6 @@ using System.Collections.Generic;
 using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
 using GraphExplorerSamplesService.Interfaces;
-using GraphExplorerSamplesService.Extensions;
-using Microsoft.AspNetCore.Authorization;
 
 namespace GraphWebApi.Controllers
 {
@@ -128,9 +126,6 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of this sample query
                 string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
 
-                // Format the string into a document-readable JSON-styled string
-                updatedSampleQueriesJson = updatedSampleQueriesJson.FormatStringForJsonDocument();
-
                 // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(updatedSampleQueriesJson, _filePathSource);
 
@@ -162,9 +157,6 @@ namespace GraphWebApi.Controllers
 
                 // Get the serialized JSON string of the sample query
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(newSampleQueriesList);
-
-                // Format the string into a document-readable JSON-styled string
-                newSampleQueriesJson = newSampleQueriesJson.FormatStringForJsonDocument();
 
                 // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(newSampleQueriesJson, _filePathSource);
@@ -207,9 +199,6 @@ namespace GraphWebApi.Controllers
 
                 // Get the serialized JSON string of the list of sample queries
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(sampleQueriesList);
-
-                // Format the string into a document-readable JSON-styled string
-                newSampleQueriesJson = newSampleQueriesJson.FormatStringForJsonDocument();
 
                 // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(newSampleQueriesJson, _filePathSource);
