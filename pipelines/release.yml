@@ -61,3 +61,6 @@ steps:
     text: 'This pipeline has failed. View the build details for further information. This is a blocking failure. '
   condition: failed()
   enabled: true
+
+- task: PublishBuildArtifacts@1
+
