@@ -373,7 +373,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         return specialClassString;
                 }
             }
-            catch (Exception)
+            catch
             {
                 return specialClassString;
             }
