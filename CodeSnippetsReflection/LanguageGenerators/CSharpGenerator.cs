@@ -345,7 +345,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <summary>
         /// Get the Csharp representation of a string and add any parsing calls that may be required.
         /// </summary>
-        /// <param name="stringParameter">string parameter that mey need parsing</param>
+        /// <param name="stringParameter">String parameter that may need parsing</param>
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
         private static string GenerateSpecialClassString(string stringParameter, ODataPathSegment pathSegment, ICollection<string> path)
