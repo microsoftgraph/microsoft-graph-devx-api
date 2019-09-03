@@ -502,7 +502,6 @@ namespace CodeSnippetsReflection.Test
         public void GetParameterListFromOperationSegment_ShouldReturnParameterListOrderedByOptionality()
         {
             //Arrange
-            //Arrange
             const string jsonObject = "{\r\n  " +
                                       "\"address\": \"Sheet1!A1:D5\",\r\n" +
                                       "\"hasHeaders\": true\r\n" +
@@ -546,7 +545,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetParameterListFromOperationSegment_ShouldNullNotProvidedParametersInList()
+        public void GetParameterListFromOperationSegment_ShouldSetOptionalUnprovidedParameterToNull()
         {
             //Arrange
             const string jsonObject = "{\r\n  " +

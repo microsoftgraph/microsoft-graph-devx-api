@@ -348,16 +348,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="collectionSuffix">Suffix to add in collection parameters</param>
         /// <returns></returns>
         private static List<string> AddValidParameterItemsFromIEdmOperationParameterList(
-            List<string> initialParameterList ,
+            List<string> initialParameterList,
             IEnumerable<IEdmOperationParameter> edmOperationParameterList, 
             List<string> parametersProvided, 
             string collectionSuffix)
         {
             foreach (var parameter in edmOperationParameterList)
             {
-                if ((parameter.Name.ToLower().Equals("bindingparameter"))
-                    || (parameter.Name.ToLower().Equals("bindparameter"))
-                    || (parameter.Name.ToLower().Equals("this")))
+                if (parameter.Name.ToLower().Equals("bindingparameter")
+                    || parameter.Name.ToLower().Equals("bindparameter")
+                    || parameter.Name.ToLower().Equals("this"))
                     continue;
 
                 //if we actually have been given the parameter before we can add it.
