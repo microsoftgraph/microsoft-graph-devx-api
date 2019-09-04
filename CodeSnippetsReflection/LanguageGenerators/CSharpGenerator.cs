@@ -233,7 +233,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         else
                         {
-                            stringBuilder.Append($"{tabSpace}\"{jsonObject}\"\r\n");
+                            stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString($"{jsonObject}", pathSegment, path)}");
                         }
                     }
                     break;
@@ -271,22 +271,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath );
                                     stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
                                     break;
-                                case JTokenType.String:
-                                    var enumString = GenerateEnumString(jToken.ToString(), pathSegment,newPath);
-                                    //check if the type is an enum and handle it
-                                    if (!string.IsNullOrEmpty(enumString))
-                                    {
-                                        //Enum is accessed as the Classname then enum type e.g Importance.Low
-                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = { enumString },\r\n");
-                                    }
-                                    else
-                                    {
-                                        //its just a normal string. Declare as is
-                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
-                                    }
-                                    break;
                                 default:
-                                    stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = { value.Replace("\n", "").Replace("\r", "") },\r\n");
+                                    // we can call the function recursively to handle the other states of string/enum/special classes
+                                    stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {CSharpGenerateObjectFromJson(pathSegment, value, newPath).Trim()},\r\n");
                                     break;
                             }
                         }
@@ -302,12 +289,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case JArray array:
                     {
                         var objectList = array.Children<JObject>();
+                        var className = GetCsharpClassName(pathSegment, path);
+                        stringBuilder.Append($"new List<{className}>()\r\n{tabSpace}{{\r\n");
                         if (objectList.Any())
                         {
-                            var className = GetCsharpClassName(pathSegment, path);
-                            //Item is a list/array so declare a typed list
-                            stringBuilder.Append($"new List<{className}>()\r\n");
-                            stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
                             foreach (var item in objectList)
                             {
                                 var jsonString = JsonConvert.SerializeObject(item);
@@ -319,13 +304,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             }
                             stringBuilder.Remove(stringBuilder.Length - 3, 1);//remove the trailing comma
                         }
-                        else
+                        else //we don't have object nested but something else like empty list/strings/enums
                         {
-                            stringBuilder.Append($"new List<String>()\r\n{tabSpace}{{\r\n");
-                            //its not nested objects but a string collection
                             foreach (var element in array)
                             {
-                                stringBuilder.Append($"{tabSpace}\t\"{element.Value<string>()}\",\r\n");
+                                var listItem = CSharpGenerateObjectFromJson(pathSegment, JsonConvert.SerializeObject(element), path).TrimEnd(";\r\n".ToCharArray());
+                                stringBuilder.Append($"{tabSpace}\t{listItem.TrimStart()},\r\n");
                             }
                             //remove the trailing comma if we appended anything
                             if (stringBuilder[stringBuilder.Length - 3].Equals(','))
@@ -336,8 +320,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         stringBuilder.Append($"{tabSpace}}}\r\n");
                     }
                     break;
+                case DateTime _:
+                    stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString(jsonBody.Replace("\"",""), pathSegment, path)}");
+                    break;
                 case null:
-                    //do nothing
+                    stringBuilder.Append($"{tabSpace}null");
                     break;
                 default:
                     var primitive = jsonObject.ToString();
@@ -353,6 +340,43 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             //check if this is the outermost object in a potential nested object structure and needs the semicolon termination character.
             return path.Count == 1 ? $"{stringBuilder.ToString().TrimEnd()};\r\n\r\n" : stringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Get the Csharp representation of a string and add any parsing calls that may be required.
+        /// </summary>
+        /// <param name="stringParameter">String parameter that may need parsing</param>
+        /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
+        /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
+        private static string GenerateSpecialClassString(string stringParameter, ODataPathSegment pathSegment, ICollection<string> path)
+        {
+            string specialClassString = $"\"{stringParameter.Replace("\"", "\\\"")}\"";//double quoted string.
+            try
+            {
+                var className = GetCsharpClassName(pathSegment, path);
+                //check the classes and parse them appropriately
+                switch (className)
+                {
+                    case "DateTimeOffset":
+                        return $"DateTimeOffset.Parse({specialClassString})";
+
+                    case "Guid":
+                        return $"Guid.Parse({specialClassString})";
+
+                    case "Date"://try to parse the date to get the day,month and year params
+                        string parsedDate = DateTime.TryParse(stringParameter,out var dateTime)
+                            ? $"{dateTime.Year},{dateTime.Month},{dateTime.Day}" 
+                            : "1900,1,1";//use default params on parse failure
+                        return $"new Date({parsedDate})";
+
+                    default:
+                        return specialClassString;
+                }
+            }
+            catch
+            {
+                return specialClassString;
+            }
         }
 
         /// <summary>
