@@ -368,6 +368,326 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
+        //This tests asserts that we can properly generate snippets with DateTime strings present and parse them appropriately
+        public void GeneratesSnippetsWithDateTimeStrings()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string messageJsonObject = "{\r\n" +
+                                             "  \"receivedDateTime\": \"datetime-value\",\r\n" +//dateTimeOffsetObject
+                                             "  \"sentDateTime\": \"datetime-value\",\r\n" + //dateTime to be parsed
+                                                                                        //https://docs.microsoft.com/en-us/graph/api/resources/message?view=graph-rest-1.0#properties
+                                             "  \"hasAttachments\": true,\r\n" +
+                                             "  \"subject\": \"subject-value\",\r\n" +
+                                             "  \"body\": {\r\n" +
+                                             "    \"contentType\": \"\",\r\n" +
+                                             "    \"content\": \"content-value\"\r\n" +
+                                             "  },\r\n" +
+                                             "  \"bodyPreview\": \"bodyPreview-value\"\r\n" +
+                                             "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/mailFolders/{id}/messages")
+            {
+                Content = new StringContent(messageJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var message = new Message\r\n" +
+                                           "{\r\n" +
+                                                "\tReceivedDateTime = DateTimeOffset.Parse(\"datetime-value\"),\r\n" +
+                                               "\tSentDateTime = DateTimeOffset.Parse(\"datetime-value\"),\r\n" +
+                                               "\tHasAttachments = true,\r\n" +
+                                               "\tSubject = \"subject-value\",\r\n" +
+                                               "\tBody = new ItemBody\r\n" +
+                                               "\t{\r\n" +
+                                                   "\t\tContentType = BodyType.Text,\r\n" +
+                                                   "\t\tContent = \"content-value\"\r\n" +
+                                               "\t},\r\n" +
+                                               "\tBodyPreview = \"bodyPreview-value\"\r\n" +
+                                           "};\r\n" +
+                                           "\r\n" +
+                                           "await graphClient.Me.MailFolders[\"{id}\"].Messages\n" +
+                                               "\t.Request()\n" +
+                                               "\t.AddAsync(message);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
+        //This tests asserts that we can properly generate snippets with Guid strings present and parse them appropriately
+        public void GeneratesSnippetsWithGuidStrings()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string messageJsonObject = "{\r\n" +
+                                             "  \"name\": \"name-value\",\r\n" +
+                                             "  \"classId\": \"classId-value\",\r\n" + //this is GUID type according to docs here
+                                                                                       //https://docs.microsoft.com/en-us/graph/api/resources/calendargroup?view=graph-rest-1.0#properties
+                                             "  \"changeKey\": \"changeKey-value\"\r\n" +
+                                             "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/calendarGroups")
+            {
+                Content = new StringContent(messageJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var calendarGroup = new CalendarGroup\r\n" +
+                                           "{\r\n" +
+                                           "\tName = \"name-value\",\r\n" +
+                                           "\tClassId = Guid.Parse(\"classId-value\"),\r\n" +
+                                           "\tChangeKey = \"changeKey-value\"\r\n" +
+                                           "};\r\n" +
+                                           "\r\n" +
+                                           "await graphClient.Me.CalendarGroups\n" +
+                                           "\t.Request()\n" +
+                                           "\t.AddAsync(calendarGroup);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
+        //This tests asserts that we can properly generate snippets with DateTime strings that should stay as strings
+        public void GeneratesSnippetsWithDateTimeStringsThatShouldNotBeParsed()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string messageJsonObject = "{        \r\n" +
+                                             "    \"schedules\": [\"adelev@contoso.onmicrosoft.com\", \"meganb@contoso.onmicrosoft.com\"],\r\n" +
+                                             "    \"startTime\": {\r\n" +
+                                             "        \"dateTime\": \"2019-03-15T09:00:00\",\r\n" + //this stays as a string as it is part of dateTimeZone
+                                             "        \"timeZone\": \"Pacific Standard Time\"\r\n" +
+                                             "    },\r\n" +
+                                             "    \"endTime\": {\r\n" +
+                                             "        \"dateTime\": \"2019-03-15T18:00:00\",\r\n" + //this stays as a string as it is part of dateTimeZone
+                                             "        \"timeZone\": \"Pacific Standard Time\"\r\n" +
+                                             "    },\r\n" +
+                                             "    \"availabilityViewInterval\": \"60\"\r\n" +// integer primitive
+                                             "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/calendar/getSchedule")
+            {
+                Content = new StringContent(messageJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var schedules = new List<String>()\r\n" +
+                                           "{\r\n" +
+                                               "\t\"adelev@contoso.onmicrosoft.com\",\r\n" +
+                                               "\t\"meganb@contoso.onmicrosoft.com\"\r\n" +
+                                           "};\r\n" +
+                                           "\r\n" +
+                                           "var startTime = new DateTimeTimeZone\r\n" +
+                                           "{\r\n" +
+                                               "\tDateTime = \"2019-03-15T09:00:00\",\r\n" + //this stays as a string as it is part of dateTimeZone
+                                               "\tTimeZone = \"Pacific Standard Time\"\r\n" +
+                                           "};\r\n" +
+                                           "\r\n" +
+                                           "var endTime = new DateTimeTimeZone\r\n" +
+                                           "{\r\n" +
+                                               "\tDateTime = \"2019-03-15T18:00:00\",\r\n" + //this stays as a string as it is part of dateTimeZone
+                                               "\tTimeZone = \"Pacific Standard Time\"\r\n" +
+                                           "};\r\n" +
+                                           "\r\n" +
+                                           "var availabilityViewInterval = \"60\";\r\n" +
+                                           "\r\n" +
+                                           "await graphClient.Me.Calendar\n" +
+                                               "\t.GetSchedule(schedules,endTime,startTime,availabilityViewInterval)\n" +
+                                               "\t.Request()\n" +
+                                               "\t.PostAsync();";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
+        //This tests asserts that we can properly generate snippets with some property originally set to null.
+        public void GeneratesSnippetsWithRecurrencePropertySetToNull()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            //This request example is present at the link
+            //https://docs.microsoft.com/en-us/graph/api/event-update?view=graph-rest-1.0&tabs=http#request
+            const string messageJsonObject = "{\r\n" +
+                                             "  \"originalStartTimeZone\": \"originalStartTimeZone-value\",\r\n" +
+                                             "  \"originalEndTimeZone\": \"originalEndTimeZone-value\",\r\n" +
+                                             "  \"responseStatus\": {\r\n" +
+                                             "    \"response\": \"\",\r\n" +
+                                             "    \"time\": \"datetime-value\"\r\n" +
+                                             "  },\r\n" +
+                                             "  \"recurrence\": null,\r\n" +    //property set to null in request object
+                                             "  \"iCalUId\": \"iCalUId-value\",\r\n" +
+                                             "  \"reminderMinutesBeforeStart\": 99,\r\n" +
+                                             "  \"isReminderOn\": true\r\n" +
+                                             "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/me/events/{id}")
+            {
+                Content = new StringContent(messageJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var @event = new Event\r\n" +
+                                           "{\r\n" +
+                                           "\tOriginalStartTimeZone = \"originalStartTimeZone-value\",\r\n" +
+                                           "\tOriginalEndTimeZone = \"originalEndTimeZone-value\",\r\n" +
+                                           "\tResponseStatus = new ResponseStatus\r\n" +
+                                           "\t{\r\n" +
+                                           "\t\tResponse = ResponseType.None,\r\n" +
+                                           "\t\tTime = DateTimeOffset.Parse(\"datetime-value\")\r\n" +//the dateTimeOffset appropriately parsed
+                                           "\t},\r\n" +
+                                           "\tRecurrence = null,\r\n" +   //the property has been appropriately set to null
+                                           "\tICalUId = \"iCalUId-value\",\r\n" +
+                                           "\tReminderMinutesBeforeStart = 99,\r\n" +
+                                           "\tIsReminderOn = true\r\n" +
+                                           "};\r\n" +
+                                           "\r\n" +
+                                           "await graphClient.Me.Events[\"{id}\"]\n" +
+                                           "\t.Request()\n" +
+                                           "\t.UpdateAsync(@event);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
+        //This tests asserts that we can properly generate snippets and List that is not a string type but of Enums
+        public void GeneratesSnippetsForEnumTypedList()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            //This request example is present at the link
+            //https://docs.microsoft.com/en-us/graph/api/user-post-events?view=graph-rest-1.0&tabs=http#request-3
+            const string messageJsonObject = "{\r\n" +
+                                             "  \"subject\": \"Let's go for lunch\",\r\n" +
+                                             "  \"body\": {\r\n" +
+                                             "    \"contentType\": \"HTML\",\r\n" +
+                                             "    \"content\": \"Does noon time work for you?\"\r\n" +
+                                             "  },\r\n" +
+                                             "  \"start\": {\r\n" +
+                                             "      \"dateTime\": \"2017-09-04T12:00:00\",\r\n" +
+                                             "      \"timeZone\": \"Pacific Standard Time\"\r\n" +
+                                             "  },\r\n" +
+                                             "  \"end\": {\r\n" +
+                                             "      \"dateTime\": \"2017-09-04T14:00:00\",\r\n" +
+                                             "      \"timeZone\": \"Pacific Standard Time\"\r\n" +
+                                             "  },\r\n" +
+                                             "  \"recurrence\": {\r\n" +
+                                             "    \"pattern\": {\r\n" +
+                                             "      \"type\": \"weekly\",\r\n" +
+                                             "      \"interval\": 1,\r\n" +
+                                             "      \"daysOfWeek\": [ \"Monday\" ]\r\n" +   //this is a list of enums
+                                             "    },\r\n" +
+                                             "    \"range\": {\r\n" +
+                                             "      \"type\": \"endDate\",\r\n" +
+                                             "      \"startDate\": \"2017-09-04\",\r\n" +   //Date Type
+                                             "      \"endDate\": \"2017-12-31\"\r\n" +      //Date Type
+                                             "    }\r\n" +
+                                             "  },\r\n" +
+                                             "  \"location\":{\r\n" +
+                                             "      \"displayName\":\"Harry's Bar\"\r\n" +
+                                             "  },\r\n" +
+                                             "  \"attendees\": [\r\n" +
+                                             "    {\r\n" +
+                                             "      \"emailAddress\": {\r\n" +
+                                             "        \"address\":\"AdeleV@contoso.onmicrosoft.com\",\r\n" +
+                                             "        \"name\": \"Adele Vance\"\r\n" +
+                                             "      },\r\n" +
+                                             "      \"type\": \"required\"\r\n" +
+                                             "    }\r\n" +
+                                             "  ]\r\n" +
+                                             "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/me/events/{id}")
+            {
+                Content = new StringContent(messageJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var @event = new Event\r\n" +
+                                           "{\r\n" +
+                                               "\tSubject = \"Let's go for lunch\",\r\n" +
+                                               "\tBody = new ItemBody\r\n" +
+                                               "\t{\r\n" +
+                                                   "\t\tContentType = BodyType.Html,\r\n" +
+                                                   "\t\tContent = \"Does noon time work for you?\"\r\n" +
+                                               "\t},\r\n" +
+                                               "\tStart = new DateTimeTimeZone\r\n" +
+                                               "\t{\r\n" +
+                                                   "\t\tDateTime = \"2017-09-04T12:00:00\",\r\n" +
+                                                   "\t\tTimeZone = \"Pacific Standard Time\"\r\n" +
+                                               "\t},\r\n" +
+                                               "\tEnd = new DateTimeTimeZone\r\n" +
+                                               "\t{\r\n" +
+                                                   "\t\tDateTime = \"2017-09-04T14:00:00\",\r\n" +
+                                                   "\t\tTimeZone = \"Pacific Standard Time\"\r\n" +
+                                               "\t},\r\n" +
+                                               "\tRecurrence = new PatternedRecurrence\r\n" +
+                                               "\t{\r\n" +
+                                                   "\t\tPattern = new RecurrencePattern\r\n" +
+                                                   "\t\t{\r\n" +
+                                                       "\t\t\tType = RecurrencePatternType.Weekly,\r\n" +
+                                                       "\t\t\tInterval = 1,\r\n" +
+                                                       "\t\t\tDaysOfWeek = new List<DayOfWeek>()\r\n" +//list of DayOfWeek enum
+                                                       "\t\t\t{\r\n" +
+                                                       "\t\t\t\tDayOfWeek.Monday\r\n" +                //member of list
+                                                       "\t\t\t}\r\n" +
+                                                   "\t\t},\r\n" +
+                                                   "\t\tRange = new RecurrenceRange\r\n" +
+                                                   "\t\t{\r\n" +
+                                                       "\t\t\tType = RecurrenceRangeType.EndDate,\r\n" +
+                                                       "\t\t\tStartDate = new Date(2017,9,4),\r\n" +  //Date Type
+                                                       "\t\t\tEndDate = new Date(2017,12,31)\r\n" +   //Date Type
+                                                   "\t\t}\r\n" +
+                                               "\t},\r\n" +
+                                               "\tLocation = new Location\r\n" +
+                                               "\t{\r\n" +
+                                                    "\t\tDisplayName = \"Harry's Bar\"\r\n" +
+                                               "\t},\r\n" +
+                                               "\tAttendees = new List<Attendee>()\r\n" +
+                                               "\t{\r\n" +
+                                                   "\t\tnew Attendee\r\n" +
+                                                   "\t\t{\r\n" +
+                                                       "\t\t\tEmailAddress = new EmailAddress\r\n" +
+                                                       "\t\t\t{\r\n" +
+                                                           "\t\t\t\tAddress = \"AdeleV@contoso.onmicrosoft.com\",\r\n" +
+                                                           "\t\t\t\tName = \"Adele Vance\"\r\n" +
+                                                       "\t\t\t},\r\n" +
+                                                       "\t\t\tType = AttendeeType.Required\r\n" +
+                                                   "\t\t}\r\n" +
+                                               "\t}\r\n};\r\n" +
+                                           "\r\n" +
+                                           "await graphClient.Me.Events[\"{id}\"]\n" +
+                                               "\t.Request()\n" +
+                                               "\t.UpdateAsync(@event);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
         //This test asserts that a request with optional parameters is generated correctly with the required
         //parameters first
         public void GeneratesSnippetsWithOptionalParametersInCorrectOrder()
