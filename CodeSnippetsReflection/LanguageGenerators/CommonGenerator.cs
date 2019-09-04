@@ -348,7 +348,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="collectionSuffix">Suffix to add in collection parameters</param>
         /// <returns></returns>
         private static List<string> AddValidParameterItemsFromIEdmOperationParameterList(
-            List<string> initialParameterList ,
+            List<string> initialParameterList,
             IEnumerable<IEdmOperationParameter> edmOperationParameterList, 
             List<string> parametersProvided, 
             string collectionSuffix)
