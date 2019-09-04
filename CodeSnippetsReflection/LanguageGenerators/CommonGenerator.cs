@@ -355,9 +355,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
         {
             foreach (var parameter in edmOperationParameterList)
             {
-                if ((parameter.Name.ToLower().Equals("bindingparameter"))
-                    || (parameter.Name.ToLower().Equals("bindparameter"))
-                    || (parameter.Name.ToLower().Equals("this")))
+                //check if the parameter is from a function/action that is bound. If it is we don't add
+                //the first parameter of a bound function which is essentially the bind parameter
+                if (parameter.DeclaringOperation.IsBound &&
+                    parameter.DeclaringOperation.Parameters.First().Equals(parameter))
                     continue;
 
                 //if we actually have been given the parameter before we can add it.
