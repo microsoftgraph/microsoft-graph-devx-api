@@ -1,10 +1,12 @@
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
@@ -274,26 +276,41 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// If the method is a post, the parameters are sought for in the request body. Otherwise they are sort for in the request url
         /// </summary>
         /// <param name="operationSegment">OData OperationSegment representing a Function or action</param>
-        /// <param name="method">Http method used to access the operation segment</param>
+        /// <param name="snippetModel">Snippet Model to obtain useful data from</param>
         /// <param name="collectionSuffix">Suffix to be added to elements that are proved to be members collections</param>
+        /// <param name="isOrderedByOptionalParameters">Flag to show whether the parameters are ordered by the the metadata or optionality of params</param>
         /// <returns></returns>
-        public static IEnumerable<string> GetParameterListFromOperationSegment(OperationSegment operationSegment, HttpMethod method, string collectionSuffix = "")
+        public static IEnumerable<string> GetParameterListFromOperationSegment(OperationSegment operationSegment, SnippetModel snippetModel, string collectionSuffix = "", bool isOrderedByOptionalParameters = true)
         {
             var paramList = new List<string>();
 
-            if (method == HttpMethod.Post)
+            if (snippetModel.Method == HttpMethod.Post)
             {
                 //read parameters from request body since this is an odata action
-                foreach (var parameter in operationSegment.Operations.First().Parameters)
+                var parametersProvided = new List<string>();
+                if (!string.IsNullOrEmpty(snippetModel.RequestBody)
+                    && JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
                 {
-                    if ((parameter.Name.ToLower().Equals("bindingparameter")) 
-                        || (parameter.Name.ToLower().Equals("bindparameter")) 
-                        || (parameter.Name.ToLower().Equals("this")))
-                        continue;
+                    foreach (var (key, _) in testObj)
+                    {
+                        parametersProvided.Add(key);
+                    }
+                }
 
-                    paramList.Add(parameter.Type.Definition is IEdmCollectionType
-                        ? $"{LowerCaseFirstLetter(parameter.Name)}{collectionSuffix}" 
-                        : LowerCaseFirstLetter(parameter.Name));
+                if (isOrderedByOptionalParameters)
+                {
+                    //first populate the required parameters
+                    var requiredParameters = operationSegment.Operations.First().Parameters.Where(param => !param.Type.IsNullable);
+                    paramList = AddValidParameterItemsFromIEdmOperationParameterList(paramList, requiredParameters, parametersProvided, collectionSuffix);
+                    //populate the parameters the optional parameters we have from the request
+                    var optionalParameters = operationSegment.Operations.First().Parameters.Where(param => param.Type.IsNullable);
+                    paramList = AddValidParameterItemsFromIEdmOperationParameterList(paramList, optionalParameters, parametersProvided, collectionSuffix);
+                }
+                else
+                {
+                    //use the order from the metadata
+                    var parameters = operationSegment.Operations.First().Parameters;
+                    paramList = AddValidParameterItemsFromIEdmOperationParameterList(paramList, parameters, parametersProvided, collectionSuffix);
                 }
             }
             else
@@ -319,6 +336,45 @@ namespace CodeSnippetsReflection.LanguageGenerators
             }
 
             return paramList;
+        }
+
+        /// <summary>
+        /// Helper function to add parameters from list of operationSegment parameters. This is validated from a list of parameters given
+        /// from the request to prevent unnecessary population of optional params.
+        /// </summary>
+        /// <param name="initialParameterList">Initial list of parameters that we need to add parameters to</param>
+        /// <param name="edmOperationParameterList">List of parameters for the operation segment</param>
+        /// <param name="parametersProvided">List of parameters that are present in the request</param>
+        /// <param name="collectionSuffix">Suffix to add in collection parameters</param>
+        /// <returns></returns>
+        private static List<string> AddValidParameterItemsFromIEdmOperationParameterList(
+            List<string> initialParameterList,
+            IEnumerable<IEdmOperationParameter> edmOperationParameterList, 
+            List<string> parametersProvided, 
+            string collectionSuffix)
+        {
+            foreach (var parameter in edmOperationParameterList)
+            {
+                //check if the parameter is from a function/action that is bound. If it is we don't add
+                //the first parameter of a bound function which is essentially the bind parameter
+                if (parameter.DeclaringOperation.IsBound &&
+                    parameter.DeclaringOperation.Parameters.First().Equals(parameter))
+                    continue;
+
+                //if we actually have been given the parameter before we can add it.
+                if (parametersProvided.Contains(parameter.Name, StringComparer.OrdinalIgnoreCase))
+                {
+                    initialParameterList.Add(parameter.Type.Definition is IEdmCollectionType
+                        ? $"{LowerCaseFirstLetter(parameter.Name)}{collectionSuffix}"
+                        : LowerCaseFirstLetter(parameter.Name));
+                }
+                else
+                {   
+                    //add null as the parameter is not provided/nullable.
+                    initialParameterList.Add("null");
+                }
+            }
+            return initialParameterList;
         }
     }
 }

@@ -686,5 +686,38 @@ namespace CodeSnippetsReflection.Test
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
+
+        [Fact]
+        //This test asserts that a request with optional parameters is generated correctly with the required
+        //parameters first
+        public void GeneratesSnippetsWithOptionalParametersInCorrectOrder()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string jsonObject = "{\r\n  " +
+                                      "\"address\": \"Sheet1!A1:D5\",\r\n" +
+                                      "\"hasHeaders\": true\r\n" +
+                                      "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/tables/add")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var address = \"Sheet1!A1:D5\";\r\n" +
+                                           "\r\n" +
+                                           "var hasHeaders = true;\r\n" +
+                                           "\r\n" +
+                                           "await graphClient.Me.Drive.Items[\"{id}\"].Workbook.Tables\n" +
+                                           "\t.Add(hasHeaders,address)\n" +
+                                           "\t.Request()\n" +
+                                           "\t.PostAsync();";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
     }
 }
