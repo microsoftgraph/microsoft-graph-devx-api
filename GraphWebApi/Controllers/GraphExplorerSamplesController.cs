@@ -1,5 +1,6 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
@@ -14,26 +15,28 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSamplesController : ControllerBase
     {
         private readonly IFileUtility _fileUtility;
-        private readonly string _filePathSource;
+        private readonly string _queriesFilePathSource;
+        private readonly string _policiesFilePathSource;
 
         public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration)
         {
             _fileUtility = fileUtility;            
-            _filePathSource = configuration["SampleQueriesFilePathName"]; // Gets the path of the JSON file
+            _queriesFilePathSource = configuration["SampleQueriesFilePathName"]; // Sets the path of the sample queries JSON file
+            _policiesFilePathSource = configuration["SampleQueriesPoliciesFilePathName"]; // Sets the path of the policies file
         }
 
         // Gets the list of all sample queries
         [Route("api/[controller]")]
         [Produces("application/json")]
         [HttpGet]
-        public async Task<IActionResult> GetSampleQueriesList(string search)
+        public async Task<IActionResult> GetSampleQueriesListAsync(string search)
         {
             try
             {
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
+                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
 
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList.SampleQueries.Count == 0)
                 {
                     // List is empty, just return status code 204 - No Content
                     return NoContent();
@@ -70,14 +73,14 @@ namespace GraphWebApi.Controllers
        [Route("api/[controller]/{id}")]
        [Produces("application/json")]
        [HttpGet]
-        public async Task<IActionResult> GetSampleQueryById(string id)
+        public async Task<IActionResult> GetSampleQueryByIdAsync(string id)
         {
             try
             {
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
+                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
 
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList.SampleQueries.Count == 0)
                 {
                     return NoContent(); // list is empty, just return status code 204 - No Content
                 }
@@ -103,34 +106,59 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpPut]
-        public async Task<IActionResult> UpdateSampleQuery(string id, [FromBody]SampleQueryModel sampleQueryModel)
+        [Authorize]
+        public async Task<IActionResult> UpdateSampleQueryAsync(string id, [FromBody]SampleQueryModel sampleQueryModel)
         {          
             try
             {
-                // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
+                // Get the list of policies
+                SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
 
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                string categoryName = sampleQueryModel.Category;
+                string userPrincipalName = User.Identity.Name;
+
+                // Check if authenticated user is authorized for this action
+                bool isAuthorized = SamplesPolicyService.IsUserAuthorized(policies, userPrincipalName, categoryName, HttpMethods.Put);
+
+                if (!isAuthorized)
+                {
+                    return new JsonResult(
+                        $"{userPrincipalName} is not authorized to update the sample query. Category: '{categoryName}'")
+                    { StatusCode = StatusCodes.Status401Unauthorized };
+                }
+
+                // Get the list of sample queries
+                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
+
+                if (sampleQueriesList.SampleQueries.Count == 0)
                 {                    
                     return NotFound(); // List is empty; the sample query being searched is definitely not in an empty list
                 }
 
-                // Update the provided sample query model into the list of sample queries
-                SampleQueriesList updatedSampleQueriesList = SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Guid.Parse(id));
+                // Check if the sample query model exists in the list of sample queries
+                bool sampleQueryExists = sampleQueriesList.SampleQueries.Exists(x => x.Id == Guid.Parse(id));
 
-                if (updatedSampleQueriesList == null)
-                {                    
-                    return NotFound(); // Update failed; sample query model of provided id not found in the list of sample queries
+                if (!sampleQueryExists)
+                {
+                    throw new InvalidOperationException($"No sample query found with id: {id}");
                 }
+
+                // Update the provided sample query model into the list of sample queries
+                SampleQueriesList updatedSampleQueriesList = SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Guid.Parse(id));                              
 
                 // Get the serialized JSON string of this sample query
                 string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
 
                 // Save the document-readable JSON-styled string to the source file
-                await _fileUtility.WriteToFile(updatedSampleQueriesJson, _filePathSource);
+                await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
 
                 // Success; return the sample query model object that was just updated
                 return Ok(sampleQueryModel);
+            }
+            catch (InvalidOperationException invalidOpsException)
+            {
+                // sample query with provided id not found
+                return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
@@ -142,12 +170,29 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]")]
         [Produces("application/json")]
         [HttpPost]
-        public async Task<IActionResult> CreateSampleQuery([FromBody]SampleQueryModel sampleQueryModel)
+        [Authorize]
+        public async Task<IActionResult> CreateSampleQueryAsync([FromBody]SampleQueryModel sampleQueryModel)
         {                    
             try
             {
+                // Get the list of policies
+                SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
+
+                string categoryName = sampleQueryModel.Category;
+                string userPrincipalName = User.Identity.Name;                
+
+                // Check if authenticated user is authorized for this action
+                bool isAuthorized = SamplesPolicyService.IsUserAuthorized(policies, userPrincipalName, categoryName, HttpMethods.Post);
+                
+                if(!isAuthorized)
+                {
+                    return new JsonResult(
+                        $"{userPrincipalName} is not authorized to create the sample query. Category: '{categoryName}'")
+                        { StatusCode = StatusCodes.Status401Unauthorized };
+                }
+
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
+                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
 
                 // Assign a new Id to the new sample query
                 sampleQueryModel.Id = Guid.NewGuid();
@@ -159,7 +204,7 @@ namespace GraphWebApi.Controllers
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(newSampleQueriesList);
 
                 // Save the document-readable JSON-styled string to the source file
-                await _fileUtility.WriteToFile(newSampleQueriesJson, _filePathSource);
+                await _fileUtility.WriteToFile(newSampleQueriesJson, _queriesFilePathSource);
 
                 // Create the query Uri for the newly created sample query
                 string newSampleQueryUri = string.Format("{0}://{1}{2}/{3}", Request.Scheme, Request.Host, Request.Path.Value, sampleQueryModel.Id.ToString());
@@ -177,14 +222,39 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]/{id}")]
         [Produces("application/json")]
         [HttpDelete]
-        public async Task<IActionResult> DeleteSampleQuery(string id)
+        [Authorize]
+        public async Task<IActionResult> DeleteSampleQueryAsync(string id)
         {
             try
             {
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesList();
+                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
 
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                // Get the list of policies
+                SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
+
+                // Check if the sample query model exists in the list of sample queries
+                bool sampleQueryExists = sampleQueriesList.SampleQueries.Exists(x => x.Id == Guid.Parse(id));
+
+                if (!sampleQueryExists)
+                {
+                    throw new InvalidOperationException($"No sample query found with id: {id}");
+                }
+
+                string categoryName = sampleQueriesList.SampleQueries.Find(x => x.Id == Guid.Parse(id)).Category;
+                string userPrincipalName = User.Identity.Name;
+
+                // Check if authenticated user is authorized for this action
+                bool isAuthorized = SamplesPolicyService.IsUserAuthorized(policies, userPrincipalName, categoryName, HttpMethods.Delete);
+
+                if (!isAuthorized)
+                {
+                    return new JsonResult(
+                        $"{userPrincipalName} is not authorized to delete the sample query. Category: '{categoryName}'")
+                    { StatusCode = StatusCodes.Status401Unauthorized };
+                }
+
+                if (sampleQueriesList.SampleQueries.Count == 0)
                 {                    
                     return NotFound(); // list is empty; the sample query being searched is definitely not in an empty list
                 }
@@ -192,19 +262,19 @@ namespace GraphWebApi.Controllers
                 // Remove the sample query with given id from the list of sample queries
                 sampleQueriesList = SamplesService.RemoveSampleQuery(sampleQueriesList, Guid.Parse(id));
 
-                if (sampleQueriesList == null)
-                {                    
-                    return NotFound(); // sample query with provided id not found
-                }
-
                 // Get the serialized JSON string of the list of sample queries
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(sampleQueriesList);
 
                 // Save the document-readable JSON-styled string to the source file
-                await _fileUtility.WriteToFile(newSampleQueriesJson, _filePathSource);
+                await _fileUtility.WriteToFile(newSampleQueriesJson, _queriesFilePathSource);
                                 
                 // Success; no content to return
                 return new JsonResult("Deleted successfully.") { StatusCode = StatusCodes.Status204NoContent};
+            }            
+            catch (InvalidOperationException invalidOpsException)
+            {
+                // Sample query with provided id not found
+                return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
@@ -213,23 +283,53 @@ namespace GraphWebApi.Controllers
         }
 
         /// <summary>
-        /// Gets the JSON file contents and returns a deserialized instance of a <see cref="SampleQueriesList"/> from this.
+        /// Gets the JSON file contents of the sample queries and returns a deserialized instance of a 
+        /// <see cref="SampleQueriesList"/> from this.
         /// </summary>
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
-        private async Task<SampleQueriesList> GetSampleQueriesList()
+        private async Task<SampleQueriesList> GetSampleQueriesListAsync()
         {
             // Get the file contents from source
-            string jsonFileContents = await _fileUtility.ReadFromFile(_filePathSource);
+            string jsonFileContents = await _fileUtility.ReadFromFile(_queriesFilePathSource);
 
             if (string.IsNullOrEmpty(jsonFileContents))
             {
                 /* File is empty; instantiate a new list of sample query 
                  * objects that will be used to add new sample queries*/
-                return new SampleQueriesList(new List<SampleQueryModel>());
+                return new SampleQueriesList();
             }
 
             // Return the list of the sample queries from the file contents
             return SamplesService.DeserializeSampleQueriesList(jsonFileContents);
+        }
+
+        /// <summary>
+        /// Gets the JSON file contents of the policies and returns a deserialized instance of a
+        /// <see cref="SampleQueriesPolicies"/> from this.
+        /// </summary>
+        /// <returns></returns>
+        private async Task<SampleQueriesPolicies> GetSampleQueriesPoliciesAsync()
+        {
+            // Get the file contents from source
+            string jsonFileContents = await _fileUtility.ReadFromFile(_policiesFilePathSource);
+
+            if(string.IsNullOrEmpty(jsonFileContents))
+            {
+                // Create default policies template
+                SampleQueriesPolicies policies = SamplesPolicyService.CreateDefaultPoliciesTemplate();
+
+                // Get the serialized JSON string of the list of policies
+                string policiesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(policies);
+
+                // Save the document-readable JSON-styled string to the source file
+                await _fileUtility.WriteToFile(policiesJson, _policiesFilePathSource);
+
+                // Return the list of policies
+                return policies;
+            }
+
+            // Return the list of policies
+            return SamplesPolicyService.DeserializeSampleQueriesPolicies(jsonFileContents);
         }
     }
 }

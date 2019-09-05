@@ -49,7 +49,10 @@ namespace SamplesService.Test
                 },
             };
 
-            SampleQueriesList sampleQueriesList = new SampleQueriesList(sampleQueries);
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
 
             /* Act */
 
@@ -61,22 +64,27 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfSerializeSampleQueriesListSampleQueriesListParameterIsNullOrEmpty()
+        public void SerializeSampleQueriesListIfSampleQueriesListParameterIsEmptyCollection()
         {
-            /* Arrange */
+            // Arrange 
+            SampleQueriesList emptySampleQueriesList = new SampleQueriesList();
 
+            // Act
+            string sampleQueriesJson = GraphExplorerSamplesService.Services.SamplesService.SerializeSampleQueriesList(emptySampleQueriesList);
+
+            // Assert
+            Assert.NotNull(sampleQueriesJson);
+        }
+
+        [Fact]
+        public void ThrowArgumentNullExceptionIfSerializeSampleQueriesListSampleQueriesListParameterIsNull()
+        {
+            // Arrange
             SampleQueriesList nullSampleQueriesList = null;
-            SampleQueriesList emptySampleQueriesList = new SampleQueriesList(new List<SampleQueryModel>());
 
-            /* Act and Assert */
-
-            // Null sample queries list
+            // Act and Assert
             Assert.Throws<ArgumentNullException>(() => 
                 GraphExplorerSamplesService.Services.SamplesService.SerializeSampleQueriesList(nullSampleQueriesList));
-
-            // Empty sample queries list
-            Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.SerializeSampleQueriesList(emptySampleQueriesList));
         }
 
         #endregion
@@ -126,7 +134,7 @@ namespace SamplesService.Test
             }";
 
             // Act
-            var sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(validJsonString);
+            SampleQueriesList sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(validJsonString);
 
             Assert.Collection(sampleQueriesList.SampleQueries,
                 item =>
@@ -214,16 +222,16 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public void ReturnNullObjectWhenJsonFileIsEmptyInDeserializeSampleQueriesListJsonStringParameter()
+        public void ReturnEmptyCollectionWhenJsonFileIsEmptyInDeserializeSampleQueriesListJsonStringParameter()
         {
             // Arrange
-            string emptyJsonFile = "{ }";
+            string emptyJsonFileContents = "{ }";
 
-            // Act
-            var sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(emptyJsonFile);
+            // Act                        
+            SampleQueriesList sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(emptyJsonFileContents);
 
-            // Assert 
-            Assert.Null(sampleQueriesList.SampleQueries);
+            // Assert
+            Assert.Empty(sampleQueriesList.SampleQueries);
         }
 
         #endregion
@@ -269,7 +277,10 @@ namespace SamplesService.Test
                 }
             };
 
-            SampleQueriesList sampleQueriesList = new SampleQueriesList(sampleQueries);
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
 
             /* Create a 'Users' sample query model object that will update an existing 'Users' 
              * sample query object in the list of sample queries. 
@@ -282,17 +293,87 @@ namespace SamplesService.Test
                 RequestUrl = "/v1.0/me/directReports",
                 DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_directreports",
                 SkipTest = false,
-                Tip = "This item has been updated." // update
+                Tip = "This item has been updated." // update field
             };
+
+            Guid id = Guid.Parse("48b62369-3974-4783-a5c6-ae4ea2d8ae1b");
 
             /* Act */
 
             // Update the provided sample query model into the list of sample queries
             SampleQueriesList updatedSampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList
-                (sampleQueriesList, sampleQueryModel, Guid.Parse("48b62369-3974-4783-a5c6-ae4ea2d8ae1b"));
+                (sampleQueriesList, sampleQueryModel, id);
 
             // Assert - item on index[1] has an updated property value
             Assert.Equal(sampleQueryModel.Tip, updatedSampleQueriesList.SampleQueries[1].Tip);
+        }
+
+        [Fact]
+        public void ThrowInvalidOperationExceptionIfUpdateSampleQueriesListSampleQueryIdNotFoundInCollection()
+        {
+            /* Arrange */
+
+            // Create a list of sample queries
+            List<SampleQueryModel> sampleQueries = new List<SampleQueryModel>()
+            {
+                new SampleQueryModel()
+                {
+                    Id = Guid.Parse("3482cc10-f2be-40fc-bcdb-d3ac35f3e4c3"),
+                    Category = "Getting Started",
+                    Method = SampleQueryModel.HttpMethods.GET,
+                    HumanName = "my manager", RequestUrl = "/v1.0/me/manager",
+                    DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_manager",
+                    SkipTest = false
+                },
+                new SampleQueryModel()
+                {
+                    Id = Guid.Parse("48b62369-3974-4783-a5c6-ae4ea2d8ae1b"),
+                    Category = "Users",
+                    Method = SampleQueryModel.HttpMethods.GET,
+                    HumanName = "my direct reports",
+                    RequestUrl = "/v1.0/me/directReports",
+                    DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_directreports",
+                    SkipTest = false
+                },
+                new SampleQueryModel()
+                {
+                    Id = Guid.Parse("7d5bac53-2e16-4162-b78f-7da13e77da1b"),
+                    Category = "Groups",
+                    Method = SampleQueryModel.HttpMethods.GET,
+                    HumanName = "all groups in my organization",
+                    RequestUrl = "/v1.0/groups",
+                    DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/group",
+                    SkipTest = false
+                }
+            };
+
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
+
+            /* Create a 'Users' sample query model object that should update an existing 'Users' 
+             * sample query object in the list of sample queries. 
+             */
+            SampleQueryModel sampleQueryModel = new SampleQueryModel()
+            {
+                Category = "Users",
+                Method = SampleQueryModel.HttpMethods.GET,
+                HumanName = "my direct reports",
+                RequestUrl = "/v1.0/me/directReports",
+                DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_directreports",
+                SkipTest = false,
+                Tip = "This item has been updated." // updated field
+            };
+
+            Guid id = Guid.Parse("5484add6-d4be-4560-82ef-31ef738775e8"); // non-existent id
+
+            /* Act and Assert */
+
+            // Attempt to update the provided sample query model into the list of sample queries with a non existent id
+            Assert.Throws<InvalidOperationException>(() => 
+                GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList
+                (sampleQueriesList, sampleQueryModel, id));
         }
 
         [Fact]
@@ -334,17 +415,20 @@ namespace SamplesService.Test
                 }
             };
 
-            SampleQueriesList sampleQueriesList = new SampleQueriesList(sampleQueries);
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
 
             SampleQueryModel sampleQueryModel = null;
 
-            Guid Id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
 
             /* Act and Assert */
 
             // Null sample query model
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Id));
+                GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, id));
         }
 
         [Fact]
@@ -376,7 +460,10 @@ namespace SamplesService.Test
                 }
             };
 
-            SampleQueriesList sampleQueriesList = new SampleQueriesList(sampleQueries);
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            }; 
 
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
             {
@@ -389,23 +476,23 @@ namespace SamplesService.Test
                 SkipTest = false
             };
 
-            Guid Id = Guid.Empty;
+            Guid id = Guid.Empty;
 
             /* Act and Assert */
 
             // Empty sample query id
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Id));
+                GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, id));
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfUpdateSampleQueriesListSampleQueriesListParameterIsNullOrEmpty()
+        public void ThrowArgumentNullExceptionIfUpdateSampleQueriesListSampleQueriesListParameterIsNullOrEmptyCollection()
         {
             /* Arrange */
 
             SampleQueriesList nullSampleQueriesList = null;
 
-            SampleQueriesList emptySampleQueriesList = new SampleQueriesList(new List<SampleQueryModel>());
+            SampleQueriesList emptySampleQueriesList = new SampleQueriesList();
 
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
             {
@@ -418,17 +505,17 @@ namespace SamplesService.Test
                 SkipTest = false
             };
 
-            Guid Id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
 
             /* Act and Assert */
 
             // Null sample queries list
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(nullSampleQueriesList, sampleQueryModel, Id));
+                GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(nullSampleQueriesList, sampleQueryModel, id));
 
             // Empty sample queries list
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(emptySampleQueriesList, sampleQueryModel, Id));
+                GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(emptySampleQueriesList, sampleQueryModel, id));
         }
 
         #endregion
@@ -440,7 +527,7 @@ namespace SamplesService.Test
         {
             /* Arrange */
 
-            SampleQueriesList sampleQueriesList = new SampleQueriesList(new List<SampleQueryModel>());
+            SampleQueriesList sampleQueriesList = new SampleQueriesList();
 
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
             {
@@ -501,7 +588,10 @@ namespace SamplesService.Test
                     SkipTest = false},
             };
 
-            SampleQueriesList sampleQueriesList = new SampleQueriesList(sampleQueries);
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
 
             /* Create a new 'Users' sample query model object that will be inserted into  
              * the list of sample queries in a hierarchical order of categories.
@@ -596,7 +686,10 @@ namespace SamplesService.Test
                 }
             };
 
-            SampleQueriesList sampleQueriesList = new SampleQueriesList(sampleQueries);
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
 
             SampleQueryModel sampleQueryModel = null;
             
@@ -649,9 +742,12 @@ namespace SamplesService.Test
                     SkipTest = false},
             };
 
-            SampleQueriesList sampleQueriesList = new SampleQueriesList(sampleQueries);
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
 
-            Guid idToDelete = Guid.Parse("48b62369-3974-4783-a5c6-ae4ea2d8ae1b"); // item index[1] from the sample query list
+            Guid idToDelete = Guid.Parse("48b62369-3974-4783-a5c6-ae4ea2d8ae1b"); // id of sample query to delete from list of sample queries
 
             /* Act */
 
@@ -664,29 +760,83 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfRemoveSampleQuerySampleQueriesListParameterIsNullOrEmpty()
+        public void ThrowInvalidOperationExceptionIfRemoveSampleQuerySampleQueryIdNotFoundInCollection()
+        {
+            /* Arrange */
+
+            // Create a list of sample queries
+            List<SampleQueryModel> sampleQueries = new List<SampleQueryModel>()
+            {
+                new SampleQueryModel()
+                {
+                    Id = Guid.Parse("3482cc10-f2be-40fc-bcdb-d3ac35f3e4c3"),
+                    Category = "Getting Started",
+                    Method = SampleQueryModel.HttpMethods.GET,
+                    HumanName = "my manager", RequestUrl = "/v1.0/me/manager",
+                    DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_manager",
+                    SkipTest = false
+                },
+                new SampleQueryModel()
+                {
+                    Id = Guid.Parse("48b62369-3974-4783-a5c6-ae4ea2d8ae1b"),
+                    Category = "Users",
+                    Method = SampleQueryModel.HttpMethods.GET,
+                    HumanName = "my direct reports",
+                    RequestUrl = "/v1.0/me/directReports",
+                    DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_directreports",
+                    SkipTest = false
+                },
+                new SampleQueryModel()
+                {
+                    Id = Guid.Parse("7d5bac53-2e16-4162-b78f-7da13e77da1b"),
+                    Category = "Groups",
+                    Method = SampleQueryModel.HttpMethods.GET,
+                    HumanName = "all groups in my organization",
+                    RequestUrl = "/v1.0/groups",
+                    DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/group",
+                    SkipTest = false
+                }
+            };
+
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
+
+            Guid id = Guid.Parse("e6819ecc-f5aa-4792-ac86-c25234383513"); // Non-existent id
+
+            /* Act and Assert */
+
+            // Attempt to remove a sample query from the list of sample queries with a non-existent id
+            Assert.Throws<InvalidOperationException>(() =>
+                GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery
+                (sampleQueriesList, id));
+        }
+
+        [Fact]
+        public void ThrowArgumentNullExceptionIfRemoveSampleQuerySampleQueriesListParameterIsNullOrEmptyCollection()
         {
             /* Arrange */
 
             SampleQueriesList nullSampleQueriesList = null;
 
-            SampleQueriesList emptySampleQueriesList = new SampleQueriesList(new List<SampleQueryModel>());
+            SampleQueriesList emptySampleQueriesList = new SampleQueriesList();
 
-            Guid Id = Guid.NewGuid();
+            Guid id = Guid.Parse("9fd2bcca-6597-4fd8-a6de-0119a0b94e20");
 
             /* Act and Assert */
 
             // Null sample queries list
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery(nullSampleQueriesList, Id));
+                GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery(nullSampleQueriesList, id));
 
             // Empty sample queries list
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery(emptySampleQueriesList, Id));
+                GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery(emptySampleQueriesList, id));
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfRemoveSampleQuerySampleQueryModelParameterIsNull()
+        public void ThrowArgumentNullExceptionIfRemoveSampleQuerySampleQueryIdParameterIsEmpty()
         {
             /* Arrange */
 
@@ -724,15 +874,18 @@ namespace SamplesService.Test
                 }
             };
 
-            SampleQueriesList sampleQueriesList = new SampleQueriesList(sampleQueries);
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
 
-            Guid Id = Guid.Empty;
+            Guid id = Guid.Empty;
 
             /* Act and Assert */
 
             // Empty sample query Id
             Assert.Throws<ArgumentNullException>(() => 
-                GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery(sampleQueriesList, Id));
+                GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery(sampleQueriesList, id));
         }
 
         #endregion

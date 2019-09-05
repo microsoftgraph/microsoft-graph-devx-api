@@ -1,0 +1,556 @@
+{
+  "CategoryPolicies": [
+    {
+      "categoryName": "Getting Started",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Users",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Groups",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Outlook Mail",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Outlook Mail (beta)",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Outlook Calendar",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Personal Contacts",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "OneDrive",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Excel",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Planner",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Insights",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Insights (beta)",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "People",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Extensions",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "OneNote",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "SharePoint Sites",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "SharePoint Lists",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Batching",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Microsoft Teams",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Microsoft Teams (beta)",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Security",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "User Activities",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Applications (beta)",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "categoryName": "Notifications (beta)",
+      "userClaims": [
+        {
+          "userName": "Unspecified",
+          "userPrincipalName": "unspecified@xyz.com",
+          "userPermissions": [
+            {
+              "name": "POST",
+              "value": false
+            },
+            {
+              "name": "PUT",
+              "value": false
+            },
+            {
+              "name": "DELETE",
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
