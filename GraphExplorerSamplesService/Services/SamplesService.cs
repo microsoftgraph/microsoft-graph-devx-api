@@ -18,7 +18,7 @@ namespace GraphExplorerSamplesService.Services
         {
             if (string.IsNullOrEmpty(jsonString))
             {
-                throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null.");
+                throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null or empty.");
             }
 
             SampleQueriesList sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(jsonString);
@@ -32,9 +32,9 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>The serialized JSON string from an instance of a <see cref="SampleQueriesList"/>.</returns>
         public static string SerializeSampleQueriesList(SampleQueriesList sampleQueriesList)
         {
-            if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+            if (sampleQueriesList == null)
             {
-                throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null or empty.");
+                throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null.");
             }
 
             string sampleQueriesJson = JsonConvert.SerializeObject(sampleQueriesList, Formatting.Indented);
@@ -64,12 +64,13 @@ namespace GraphExplorerSamplesService.Services
                 throw new ArgumentNullException(nameof(sampleQueryId), "The sample query id cannot be empty.");
             }
 
-            // Check if the sample query model exists in the list of sample queries using its Id
+            // Get the index of the sample query model in the list of sample queries
             int sampleQueryIndex = sampleQueriesList.SampleQueries.FindIndex(x => x.Id == sampleQueryId);
 
+            // Check to ascertain the sample query is existent
             if (sampleQueryIndex < 0)
             {
-                return null; // sample query not in the list of sample queries             
+                throw new InvalidOperationException($"No sample query found with id: {sampleQueryId}");
             }
 
             // Check if Id property for the sample query model object is empty
@@ -88,7 +89,6 @@ namespace GraphExplorerSamplesService.Services
             // Return the new list of sample queries
             return sampleQueriesList;
         }
-
 
         /// <summary>
         /// Adds a <see cref="SampleQueryModel"/> object into an instance of a <see cref="SampleQueriesList"/>.
@@ -123,7 +123,7 @@ namespace GraphExplorerSamplesService.Services
         /// </summary>
         /// <param name="sampleQueriesList">The instance of a <see cref="SampleQueriesList"/> which the <see cref="SampleQueryModel"/> 
         /// object will be removed from.</param>
-        /// <param name="sampleQueryId">The Id value of the <see cref="SampleQueryModel"/> object to be removed.</param>
+        /// <param name="sampleQueryId">The Id value of the <see cref="SampleQueryModel"/> object to be deleted.</param>
         /// <returns>The new instance of a <see cref="SampleQueriesList"/> without the removed <see cref="SampleQueryModel"/> object.</returns>
         public static SampleQueriesList RemoveSampleQuery(SampleQueriesList sampleQueriesList, Guid sampleQueryId)
         {
@@ -133,15 +133,16 @@ namespace GraphExplorerSamplesService.Services
             }
             if (sampleQueryId == Guid.Empty)
             {
-                throw new ArgumentNullException(nameof(sampleQueryId), "The sample query id cannot be null.");
+                throw new ArgumentNullException(nameof(sampleQueryId), "The sample query id cannot be empty.");
             }
 
-            // Find the index of the sample query with the provided id from the list of sample queries
+            // Get the index of the sample query model in the list of sample queries
             int sampleQueryIndex = sampleQueriesList.SampleQueries.FindIndex(x => x.Id == sampleQueryId);
 
+            // Check to ascertain the sample query is existent
             if (sampleQueryIndex < 0)
             {
-                return null; // sample query not in the list of sample queries               
+                throw new InvalidOperationException($"No sample query found with id: {sampleQueryId}");
             }
 
             // Delete the sample query model from the list of sample queries at its given index                

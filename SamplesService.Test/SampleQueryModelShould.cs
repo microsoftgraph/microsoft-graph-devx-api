@@ -149,6 +149,5 @@ namespace SamplesService.Test
         }
 
         #endregion
-
     }
 }
