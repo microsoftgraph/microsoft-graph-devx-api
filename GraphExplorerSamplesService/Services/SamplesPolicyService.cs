@@ -129,15 +129,8 @@ namespace GraphExplorerSamplesService.Services
             // Get the location of the provided user claim from the temp. category policy
             int userClaimIndex = tempCategoryPolicy.UserClaims.FindIndex(x => x.UserPrincipalName == userClaim.UserPrincipalName);
 
-            if (userClaimIndex > 0)
-            {
-                // Update the current index with new user claim info.
-                tempCategoryPolicy.UserClaims.Insert(userClaimIndex, userClaim);
-
-                // Delete the original user claim pushed to the next index
-                tempCategoryPolicy.UserClaims.RemoveAt(++userClaimIndex);
-            }
-            else // new user claim request
+            // Add new user claim request
+            if (userClaimIndex < 0)
             {
                 // Check first whether we have default user claim values in the temp. category policy
 
@@ -145,11 +138,11 @@ namespace GraphExplorerSamplesService.Services
                 {
                     UserClaims = new List<UserClaim>()
                     {
-                        new UserClaim()                        
+                        new UserClaim()
                     }
                 };
 
-                if (tempCategoryPolicy.UserClaims.First().UserPrincipalName == 
+                if (tempCategoryPolicy.UserClaims.First().UserPrincipalName ==
                     defaultCategoryPolicyTemplate.UserClaims.First().UserPrincipalName)
                 {
                     /* This is the first claim for this category policy;
@@ -161,7 +154,15 @@ namespace GraphExplorerSamplesService.Services
                 {
                     // Insert the new user claim info. to the end of list of user claims
                     tempCategoryPolicy.UserClaims.Add(userClaim);
-                }                
+                }
+            }
+            else // Update user claim request
+            {
+                // Update the current index with new user claim info.
+                tempCategoryPolicy.UserClaims.Insert(userClaimIndex, userClaim);
+
+                // Delete the original user claim pushed to the next index
+                tempCategoryPolicy.UserClaims.RemoveAt(++userClaimIndex);
             }
 
             // Update the modified category policy back into list of policies           
