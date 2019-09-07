@@ -299,6 +299,739 @@ namespace SamplesService.Test
 
         #endregion
 
+        #region Modify User Claim Tests
+
+        [Fact]
+        public void ThrowArgumentNullExceptionIfModifyUserClaimCategoryPolicyParameterIsNull()
+        {
+            /* Arrange */
+                        
+            CategoryPolicy targetCategoryPolicy = null;
+
+            // Create list to hold category policies
+            List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
+
+            /* Create category policies */
+
+            CategoryPolicy categoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                    new UserClaim()
+                    {
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission() { Name = HttpMethods.Post },
+                            new Permission() { Name = HttpMethods.Put },
+                            new Permission() { Name = HttpMethods.Delete }
+                        }
+                    }
+                }
+            };
+
+            categoryPolicies.Add(categoryPolicy);
+
+            SampleQueriesPolicies policies = new SampleQueriesPolicies()
+            {
+                CategoryPolicies = categoryPolicies
+            };
+
+            // Act and Assert
+            Assert.Throws<ArgumentNullException>(() => SamplesPolicyService.ModifyUserClaim(policies, targetCategoryPolicy));
+        }
+
+        [Fact]
+        public void ThrowArgumentNullExceptionIfModifyUserClaimPoliciesParameterIsNull()
+        {
+            /* Arrange */
+
+            SampleQueriesPolicies nullPolicies = null;
+            SampleQueriesPolicies emptyPolicies = new SampleQueriesPolicies();
+
+            CategoryPolicy categoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                    new UserClaim()
+                    {
+                        UserName = "John Doe",
+                        UserPrincipalName = "john.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = true
+                            }
+                        }
+                    }
+                }
+            };
+
+            /* Act and Assert */
+
+            // Null policies
+            Assert.Throws<ArgumentNullException>(() => SamplesPolicyService.ModifyUserClaim(nullPolicies, categoryPolicy));
+
+            // Empty policies
+            Assert.Throws<ArgumentNullException>(() => SamplesPolicyService.ModifyUserClaim(emptyPolicies, categoryPolicy));
+        }
+
+        [Fact]
+        public void ThrowInvalidOperationExceptionIfModifyUserClaimCategoryPolicyParameterNotExistsInPoliciesParameter()
+        {
+            /* Arrange */
+
+            // Create the target category policy
+            CategoryPolicy targetCategoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Foobar", // non-existent category
+                UserClaims = new List<UserClaim>()
+                {
+                    new UserClaim()
+                    {
+                        UserName = "John Doe",
+                        UserPrincipalName = "john.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = true
+                            }
+                        }
+                    }
+                }
+            };
+
+            /* Create category policies */
+
+            // Create list to hold the category policies
+            List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
+
+            CategoryPolicy categoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                   new UserClaim()
+                    {
+                        UserName = "John Doe",
+                        UserPrincipalName = "john.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = false
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = false
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = false
+                            }
+                        }
+                    }
+                }
+            };
+
+            categoryPolicies.Add(categoryPolicy);
+
+            SampleQueriesPolicies policies = new SampleQueriesPolicies()
+            {
+                CategoryPolicies = categoryPolicies
+            };
+
+            // Assert and Act
+            Assert.Throws<InvalidOperationException>(() => SamplesPolicyService.ModifyUserClaim(policies, targetCategoryPolicy));
+        }
+
+        [Fact]
+        public void AddNewUserClaimInCategoryPolicyIfNotExists()
+        {
+            /* Arrange */
+
+            // Create the target category policy
+            CategoryPolicy targetCategoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                    new UserClaim()
+                    {
+                        UserName = "John Doe",
+                        UserPrincipalName = "john.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = true
+                            }
+                        }
+                    }
+                }
+            };
+
+            /* Create category policies */
+
+            // Create list to hold the category policies
+            List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
+
+            CategoryPolicy categoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                   new UserClaim()
+                    {
+                        UserName = "Jane Doe",
+                        UserPrincipalName = "jane.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = true
+                            }
+                        }
+                    }
+                }
+            };
+
+            categoryPolicies.Add(categoryPolicy);
+
+            SampleQueriesPolicies policies = new SampleQueriesPolicies()
+            {
+                CategoryPolicies = categoryPolicies
+            };
+
+            // Act - add new user claim for 'john.doe@microsoft.com'
+            SampleQueriesPolicies updatedPolicies = SamplesPolicyService.ModifyUserClaim(policies, targetCategoryPolicy);
+
+            // Assert
+            Assert.Collection(updatedPolicies.CategoryPolicies,
+                item =>
+                {
+                    // Assert 'jane.doe@microsoft.com' as the first user claim in the category
+                    Assert.Equal("Getting Started", item.CategoryName);
+                    Assert.Equal("Jane Doe", item.UserClaims[0].UserName);
+                    Assert.Equal("jane.doe@microsoft.com", item.UserClaims[0].UserPrincipalName);
+                    Assert.Equal("POST", item.UserClaims[0].UserPermissions[0].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[0].Value);
+                    Assert.Equal("PUT", item.UserClaims[0].UserPermissions[1].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[1].Value);
+                    Assert.Equal("DELETE", item.UserClaims[0].UserPermissions[2].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[2].Value);
+
+                    // Assert 'john.doe@microsoft.com' as the second user claim in the category
+                    Assert.Equal("Getting Started", item.CategoryName);
+                    Assert.Equal("John Doe", item.UserClaims[1].UserName);
+                    Assert.Equal("john.doe@microsoft.com", item.UserClaims[1].UserPrincipalName);
+                    Assert.Equal("POST", item.UserClaims[1].UserPermissions[0].Name);
+                    Assert.True(item.UserClaims[1].UserPermissions[0].Value);
+                    Assert.Equal("PUT", item.UserClaims[1].UserPermissions[1].Name);
+                    Assert.True(item.UserClaims[1].UserPermissions[1].Value);
+                    Assert.Equal("DELETE", item.UserClaims[1].UserPermissions[2].Name);
+                    Assert.True(item.UserClaims[1].UserPermissions[2].Value);
+                });
+        }
+
+        [Fact]
+        public void ReplaceDefaultUserClaimInCategoryPolicyWithNewUserClaim()
+        {
+            /* Arrange */
+
+            // Create the target category policy
+            CategoryPolicy targetCategoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                    new UserClaim()
+                    {
+                        UserName = "John Doe",
+                        UserPrincipalName = "john.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = true
+                            }
+                        }
+                    }
+                }
+            };
+
+            /* Create category policies */
+
+            // Create list to hold the category policies
+            List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
+
+            CategoryPolicy categoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                    new UserClaim()
+                    {
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission() { Name = HttpMethods.Post },
+                            new Permission() { Name = HttpMethods.Put },
+                            new Permission() { Name = HttpMethods.Delete }
+                        }
+                    }
+                }
+            };
+
+            categoryPolicies.Add(categoryPolicy);
+
+            SampleQueriesPolicies policies = new SampleQueriesPolicies()
+            {
+                CategoryPolicies = categoryPolicies
+            };
+
+            // Act - add new user claim for 'john.doe@microsoft.com'
+            SampleQueriesPolicies updatedPolicies = SamplesPolicyService.ModifyUserClaim(policies, targetCategoryPolicy);
+
+            // Assert
+            Assert.Collection(updatedPolicies.CategoryPolicies,
+                item =>
+                {
+                    // Assert 'john.doe@microsoft.com' as the first and only user claim in category
+                    Assert.Equal("Getting Started", item.CategoryName);
+                    Assert.Equal("John Doe", item.UserClaims[0].UserName);
+                    Assert.Equal("john.doe@microsoft.com", item.UserClaims[0].UserPrincipalName);
+                    Assert.Equal("POST", item.UserClaims[0].UserPermissions[0].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[0].Value);
+                    Assert.Equal("PUT", item.UserClaims[0].UserPermissions[1].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[1].Value);
+                    Assert.Equal("DELETE", item.UserClaims[0].UserPermissions[2].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[2].Value);
+                });
+        }
+
+        [Fact]
+        public void UpdateUserClaimInCategoryPolicyIfExists()
+        {
+            /* Arrange */
+
+            // Create the target category policy
+            CategoryPolicy targetCategoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                    new UserClaim()
+                    {
+                        UserName = "John Doe",
+                        UserPrincipalName = "john.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = true
+                            }
+                        }
+                    }
+                }
+            };
+
+            /* Create category policies */
+
+            // Create list to hold the category policies
+            List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
+
+            CategoryPolicy categoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                   new UserClaim()
+                    {
+                        UserName = "Jane Doe",
+                        UserPrincipalName = "jane.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = true
+                            }
+                        }
+                    },                   
+                   new UserClaim()
+                    {
+                        UserName = "John Doe",
+                        UserPrincipalName = "john.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            // All permissions are false for this target user claim
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = false
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = false
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = false
+                            }
+                        }
+                    }
+                }
+            };                       
+
+            categoryPolicies.Add(categoryPolicy);
+
+            SampleQueriesPolicies policies = new SampleQueriesPolicies()
+            {
+                CategoryPolicies = categoryPolicies
+            };
+
+            // Act - update user claim for 'john.doe@microsoft.com'
+            SampleQueriesPolicies updatedPolicies = SamplesPolicyService.ModifyUserClaim(policies, targetCategoryPolicy);
+
+            // Assert
+            Assert.Collection(updatedPolicies.CategoryPolicies,
+                item =>
+                {
+                    // Assert 'jane.doe@microsoft.com' as the first user claim in category
+                    Assert.Equal("Getting Started", item.CategoryName);
+                    Assert.Equal("Jane Doe", item.UserClaims[0].UserName);
+                    Assert.Equal("jane.doe@microsoft.com", item.UserClaims[0].UserPrincipalName);
+                    Assert.Equal("POST", item.UserClaims[0].UserPermissions[0].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[0].Value);
+                    Assert.Equal("PUT", item.UserClaims[0].UserPermissions[1].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[1].Value);
+                    Assert.Equal("DELETE", item.UserClaims[0].UserPermissions[2].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[2].Value);
+
+                    /* Assert 'john.doe@microsoft.com' as the second user claim in category
+                       with all permissions updated to true */
+                    Assert.Equal("Getting Started", item.CategoryName);
+                    Assert.Equal("John Doe", item.UserClaims[1].UserName);
+                    Assert.Equal("john.doe@microsoft.com", item.UserClaims[1].UserPrincipalName);
+                    Assert.Equal("POST", item.UserClaims[1].UserPermissions[0].Name);
+                    Assert.True(item.UserClaims[1].UserPermissions[0].Value);
+                    Assert.Equal("PUT", item.UserClaims[1].UserPermissions[1].Name);
+                    Assert.True(item.UserClaims[1].UserPermissions[1].Value);
+                    Assert.Equal("DELETE", item.UserClaims[1].UserPermissions[2].Name);
+                    Assert.True(item.UserClaims[1].UserPermissions[2].Value);
+                });
+        }
+
+        #endregion
+
+        #region Remove User Claim Tests
+
+        [Fact]
+        public void ThrowArgumentNullExceptionIfRemoveUserClaimCategoryPolicyNameParameterIsNullOrEmpty()
+        {
+            /* Arrange */
+
+            string nullCategoryPolicyName = null;
+            string emptyCategoryPolicyName = "";
+
+            string userPrincipalName = "john.doe@microsoft.com";
+
+            // Create list to hold category policies
+            List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
+
+            /* Create category policies */
+
+            CategoryPolicy categoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                    new UserClaim()
+                    {
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission() { Name = HttpMethods.Post },
+                            new Permission() { Name = HttpMethods.Put },
+                            new Permission() { Name = HttpMethods.Delete }
+                        }
+                    }
+                }
+            };
+
+            categoryPolicies.Add(categoryPolicy);
+
+            SampleQueriesPolicies policies = new SampleQueriesPolicies()
+            {
+                CategoryPolicies = categoryPolicies
+            };
+
+            /* Act and Assert */
+
+            // Null categoryPolicyName
+            Assert.Throws<ArgumentNullException>(() => 
+                SamplesPolicyService.RemoveUserClaim(policies, nullCategoryPolicyName, userPrincipalName));
+
+            // Empty categoryPolicyName
+            Assert.Throws<ArgumentNullException>(() =>
+                SamplesPolicyService.RemoveUserClaim(policies, emptyCategoryPolicyName, userPrincipalName));
+        }
+
+        [Fact]
+        public void ThrowArgumentNullExceptionIfRemoveUserClaimPoliciesParameterIsNull()
+        {
+            /* Arrange */
+
+            SampleQueriesPolicies nullPolicies = null;
+            SampleQueriesPolicies emptyPolicies = new SampleQueriesPolicies();
+
+            string categoryPolicyName = "Getting Started";
+            string userPrincipalName = "john.doe@microsoft.com";            
+
+            /* Act and Assert */
+
+            // Null policies
+            Assert.Throws<ArgumentNullException>(() => 
+                SamplesPolicyService.RemoveUserClaim(nullPolicies, categoryPolicyName, userPrincipalName));
+
+            // Empty policies
+            Assert.Throws<ArgumentNullException>(() => SamplesPolicyService.RemoveUserClaim(emptyPolicies, categoryPolicyName, userPrincipalName));
+        }
+
+        [Fact]
+        public void ThrowInvalidOperationExceptionIfRemoveUserClaimCategoryPolicyNameParameterNotExistsInPoliciesParameter()
+        {
+            /* Arrange */
+
+            string fakeCategoryName = "Foobar"; // non-existent category
+            string userPrincipalName = "john.doe@microsoft.com";
+
+            /* Create category policies */
+
+            // Create list to hold the category policies
+            List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
+
+            CategoryPolicy categoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                   new UserClaim()
+                    {
+                        UserName = "John Doe",
+                        UserPrincipalName = "john.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = false
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = false
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = false
+                            }
+                        }
+                    }
+                }
+            };
+
+            categoryPolicies.Add(categoryPolicy);
+
+            SampleQueriesPolicies policies = new SampleQueriesPolicies()
+            {
+                CategoryPolicies = categoryPolicies
+            };
+
+            // Assert and Act
+            Assert.Throws<InvalidOperationException>(() => SamplesPolicyService.RemoveUserClaim(policies, fakeCategoryName, userPrincipalName));
+        }
+
+        [Fact]
+        public void RemoveUserClaimFromCategoryPolicy()
+        {
+            /* Arrange */
+
+            string categoryPolicyName = "Getting Started";
+            string userPrincipalName = "john.doe@microsoft.com";
+
+            /* Create category policies */
+
+            // Create list to hold the category policies
+            List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
+
+            CategoryPolicy categoryPolicy = new CategoryPolicy()
+            {
+                CategoryName = "Getting Started",
+                UserClaims = new List<UserClaim>()
+                {
+                   new UserClaim()
+                    {
+                        UserName = "Jane Doe",
+                        UserPrincipalName = "jane.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = true
+                            }
+                        }
+                    },
+                   new UserClaim()
+                    {
+                        UserName = "John Doe",
+                        UserPrincipalName = "john.doe@microsoft.com",
+                        UserPermissions = new List<Permission>()
+                        {
+                            new Permission()
+                            {
+                                Name = HttpMethods.Post,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Put,
+                                Value = true
+                            },
+                            new Permission()
+                            {
+                                Name = HttpMethods.Delete,
+                                Value = true
+                            }
+                        }
+                    }
+                }
+            };
+
+            categoryPolicies.Add(categoryPolicy);
+
+            SampleQueriesPolicies policies = new SampleQueriesPolicies()
+            {
+                CategoryPolicies = categoryPolicies
+            };
+
+            // Act - remove the user claim for 'john.doe@microsoft.com'
+            SampleQueriesPolicies updatedPolicies = SamplesPolicyService.RemoveUserClaim(policies, categoryPolicyName, userPrincipalName);
+
+            // Assert
+            Assert.Collection(updatedPolicies.CategoryPolicies,
+                item =>
+                {
+                    // Assert 'jane.doe@microsoft.com' as the first and only user claim in category
+                    Assert.Equal("Getting Started", item.CategoryName);
+                    Assert.Equal("Jane Doe", item.UserClaims[0].UserName);
+                    Assert.Equal("jane.doe@microsoft.com", item.UserClaims[0].UserPrincipalName);
+                    Assert.Equal("POST", item.UserClaims[0].UserPermissions[0].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[0].Value);
+                    Assert.Equal("PUT", item.UserClaims[0].UserPermissions[1].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[1].Value);
+                    Assert.Equal("DELETE", item.UserClaims[0].UserPermissions[2].Name);
+                    Assert.True(item.UserClaims[0].UserPermissions[2].Value);
+                });
+        }
+
+        #endregion
+
         #region User Policy-Claim Authorization Tests
 
         [Fact]
