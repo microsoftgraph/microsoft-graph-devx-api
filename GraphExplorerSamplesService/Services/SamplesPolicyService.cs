@@ -90,12 +90,12 @@ namespace GraphExplorerSamplesService.Services
         }
 
         /// <summary>
-        /// Adds to or updates a <see cref="UserClaim"/> in a <see cref="CategoryPolicy" object./>.
+        /// Adds to or updates a <see cref="UserClaim"/> in a target <see cref="CategoryPolicy"/> object.
         /// </summary>
-        /// <param name="categoryPolicy">The target category policy where the user claim needs to be updated or added into.</param>
-        /// <param name="policies">The list of category policies where the <see cref="CategoryPolicy"/> is contained.</param>
+        /// <param name="categoryPolicy">The target <see cref="CategoryPolicy"/> object where the <see cref="UserClaim"/> needs to be updated or added into.</param>
+        /// <param name="policies">The list of <see cref="CategoryPolicy"/> where the target <see cref="CategoryPolicy"/> object is contained.</param>
         /// <returns>The updated list of <see cref="SampleQueriesPolicies"/> 
-        /// with the new <see cref="UserClaim"/> object added or updated at the provided <see cref="CategoryPolicy"/> instance.</returns>
+        /// with the new <see cref="UserClaim"/> added or updated at the target <see cref="CategoryPolicy"/> object.</returns>
         public static SampleQueriesPolicies ModifyUserClaim(SampleQueriesPolicies policies, CategoryPolicy categoryPolicy)
         {
             if (policies == null || policies.CategoryPolicies.Count == 0)
@@ -175,12 +175,13 @@ namespace GraphExplorerSamplesService.Services
         }
 
         /// <summary>
-        /// Removes a <see cref="UserClaim"/> from a <see cref="CategoryPolicy" object./>.
+        /// Removes a <see cref="UserClaim"/> from a <see cref="CategoryPolicy"/> object.
         /// </summary>
-        /// <param name="categoryPolicy">The target category policy where the user claim needs to be removed from.</param>
-        /// <param name="policies">The list of category policies where the <see cref="CategoryPolicy"/> is contained.</param>
+        /// <param name="policies">The list of <see cref="CategoryPolicy"/> where the target <see cref="CategoryPolicy"/> object is contained.</param>
+        /// <param name="categoryPolicyName">The target <see cref="CategoryPolicy"/> object where the <see cref="UserClaim"/> needs to be removed from.</param>    
+        /// <param name="userPrincipalName">The target User Principal Name whose <see cref="UserClaim"/> needs to be removed from the <see cref="CategoryPolicy"/> object.</param>
         /// <returns>The updated list of <see cref="SampleQueriesPolicies"/> 
-        /// with the new <see cref="UserClaim"/> object removed from the provided <see cref="CategoryPolicy"/> instance.</returns>
+        /// with the <see cref="UserClaim"/> of a target User Principal Name removed from the target <see cref="CategoryPolicy"/> object.</returns>
         public static SampleQueriesPolicies RemoveUserClaim(SampleQueriesPolicies policies, string categoryPolicyName,
                                                             string userPrincipalName)
         {
