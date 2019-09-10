@@ -5,9 +5,12 @@ using System.Threading.Tasks;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Models;
 using GraphExplorerSamplesService.Services;
+using GraphWebApi.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace GraphWebApi.Controllers
 {
@@ -17,14 +20,16 @@ namespace GraphWebApi.Controllers
     {
         private readonly IFileUtility _fileUtility;
         private readonly string _policiesFilePathSource;
+        private readonly SamplesAdministrators _administrators;
 
-        public GraphExplorerSamplesAdminController(IFileUtility fileUtility, IConfiguration configuration)
+        public GraphExplorerSamplesAdminController(IFileUtility fileUtility, IConfiguration configuration, IOptionsMonitor<SamplesAdministrators> administrators)
         {
             _fileUtility = fileUtility;
-            _policiesFilePathSource = configuration["SampleQueriesPoliciesFilePathName"]; // sets the path of the policies file
+            _policiesFilePathSource = configuration["Samples:SampleQueriesPoliciesFilePathName"]; // sets the path of the policies file
+            _administrators = administrators.CurrentValue; // sets the list of samples administrators
         }
 
-        // Gets a list of all category policies, or a filtered list based on search parameters
+        // Gets a list of all category policies, or a filtered list based on provided parameters
         [Produces("application/json")]
         [HttpGet]
         public async Task<IActionResult> GetSampleQueriesPoliciesListAsync([FromQuery] string userPrincipalName, [FromQuery] string categoryName)
@@ -34,7 +39,7 @@ namespace GraphWebApi.Controllers
                 // Fetch the list of category policies
                 SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
                 
-                // This will hold the filtered set of category policies
+                // This will hold the filtered list of category policies
                 SampleQueriesPolicies filteredPolicies = new SampleQueriesPolicies();
 
                 if (!string.IsNullOrEmpty(userPrincipalName) && !string.IsNullOrEmpty(categoryName))
@@ -47,7 +52,6 @@ namespace GraphWebApi.Controllers
                 }
                 else if (!string.IsNullOrEmpty(categoryName))
                 {
-                    // Find all the user claims for the specified category
                     filteredPolicies.CategoryPolicies = policies.CategoryPolicies.FindAll(x => x.CategoryName.ToLower() == categoryName.ToLower());
                 }
                 else
@@ -57,11 +61,11 @@ namespace GraphWebApi.Controllers
                 
                 if (filteredPolicies.CategoryPolicies == null || !filteredPolicies.CategoryPolicies.Any())
                 {
-                    // Search parameter not found in list of sample query policies
+                    // Search parameter value not found in list of category policies
                     return NotFound();
                 }
 
-                // Success; return the found list of sample query policies from filtered search
+                // Success; return the found list of category policies from filtered search
                 return Ok(filteredPolicies);
             }
             catch (Exception exception)
@@ -73,20 +77,30 @@ namespace GraphWebApi.Controllers
         // Adds a user claim into a category policy
         [Produces("application/json")]
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> CreateUserClaimAsync([FromBody] CategoryPolicy categoryPolicy)
         {
             try
             {
+                /* Validate whether authenticated user is samples administrator */
+
+                string userPrincipalName = User.Identity.Name;
+                bool isAdmin = _administrators.Administrators.Contains(userPrincipalName);
+
+                if (!isAdmin)
+                {
+                    return new JsonResult($"{userPrincipalName} is not authorized to create the user claim.")
+                    { StatusCode = StatusCodes.Status401Unauthorized };
+                }
+
                 // Get the list of policies
                 SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
 
                 // Add the new user claim in the given category policy
                 SampleQueriesPolicies updatedPoliciesList = SamplesPolicyService.ModifyUserClaim(policies, categoryPolicy);
                                 
-                // Get the serialized JSON string of the sample query
                 string updatedPoliciesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(updatedPoliciesList);
 
-                // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(updatedPoliciesJson, _policiesFilePathSource);
 
                 // Extract the first user claim from the given categoryPolicy; this is what was added
@@ -96,7 +110,6 @@ namespace GraphWebApi.Controllers
                 string newUserClaimUri = string.Format("{0}://{1}{2}?userprincipalname={3}&categoryname={4}", 
                     Request.Scheme, Request.Host, Request.Path.Value, userClaim.UserPrincipalName, categoryPolicy.CategoryName);
 
-                // Success; return the new user claim in the category policy that was added along with its Uri
                 return Created(newUserClaimUri, categoryPolicy);
             }
             catch (Exception exception)
@@ -108,24 +121,44 @@ namespace GraphWebApi.Controllers
         // Updates a user claim in a category policy
         [Produces("application/json")]
         [HttpPut]
+        [Authorize]
         public async Task<IActionResult> UpdateUserClaimAsync([FromBody] CategoryPolicy categoryPolicy)
         {
             try
             {
+                /* Validate whether authenticated user is samples administrator */
+
+                string userPrincipalName = User.Identity.Name;
+                bool isAdmin = _administrators.Administrators.Contains(userPrincipalName);
+
+                if (!isAdmin)
+                {
+                    return new JsonResult($"{userPrincipalName} is not authorized to update the user claim.")
+                    { StatusCode = StatusCodes.Status401Unauthorized };
+                }
+
                 // Get the list of policies
                 SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
 
                 // Update the user claim in the given category policy
                 SampleQueriesPolicies updatedPoliciesList = SamplesPolicyService.ModifyUserClaim(policies, categoryPolicy);
 
-                // Get the serialized JSON string of the sample query
                 string updatedPoliciesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(updatedPoliciesList);
 
-                // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(updatedPoliciesJson, _policiesFilePathSource);
 
                 // Success; return the user claim in the category policy that was just updated
                 return Ok(categoryPolicy);
+            }
+            catch (InvalidOperationException invalidOpsException)
+            {
+                //  Category policy provided doesn't exist
+                return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status404NotFound };
+            }
+            catch(ArgumentNullException argNullException)
+            {
+                // Missing required parameter
+                return new JsonResult(argNullException.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (Exception exception)
             {
@@ -136,14 +169,27 @@ namespace GraphWebApi.Controllers
         // Removes a user claim from a category policy given a User Principal Name and a category policy name
         [Produces("application/json")]
         [HttpDelete]
+        [Authorize]
         public async Task<IActionResult> RemoveUserClaim([FromQuery] string userPrincipalName, [FromQuery] string categoryName)
         {
             try
             {
+                /* Validate whether authenticated user is samples administrator */
+
+                string authenticatedUserPrincipalName = User.Identity.Name;
+                bool isAdmin = _administrators.Administrators.Contains(authenticatedUserPrincipalName);
+
+                if (!isAdmin)
+                {
+                    return new JsonResult(
+                       $"{userPrincipalName} is not authorized to remove the user claim.")
+                    { StatusCode = StatusCodes.Status401Unauthorized };
+                }
+
                 if (string.IsNullOrEmpty(userPrincipalName) || string.IsNullOrEmpty(categoryName))
                 {
-                    return new JsonResult($"Provide both the user principal name and category policy name in the search parameter. " +
-                        $"e.g. /api/GraphExplorerSamplesAdmin?search=xyz@microsoft.com&Users")
+                    return new JsonResult($"Provide both the user principal name and category name in the search parameters. " +
+                        $"e.g. /api/GraphExplorerSamplesAdmin?userprincipalname=john.doe@microsoft.com&categoryname=users")
                     { StatusCode = StatusCodes.Status400BadRequest };
                 }
 
@@ -153,16 +199,19 @@ namespace GraphWebApi.Controllers
                 // Remove the user claim in the given category policy
                 SampleQueriesPolicies updatedPoliciesList = SamplesPolicyService.RemoveUserClaim(policies, categoryName, userPrincipalName);
 
-                // Get the serialized JSON string of the sample query
                 string updatedPoliciesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(updatedPoliciesList);
 
-                // Save the document-readable JSON-styled string to the source file
                 await _fileUtility.WriteToFile(updatedPoliciesJson, _policiesFilePathSource);
 
                 // Get the category policy that has just been updated
-                CategoryPolicy categoryPolicy = updatedPoliciesList.CategoryPolicies.FirstOrDefault(x => x.CategoryName == categoryName);
+                CategoryPolicy categoryPolicy = updatedPoliciesList.CategoryPolicies.FirstOrDefault(x => x.CategoryName.ToLower() == categoryName.ToLower());
 
                 return Ok(categoryPolicy);
+            }
+            catch (InvalidOperationException invalidOpsException)
+            {
+                // One or more parameters values do not exist in the list of category policies
+                return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
@@ -202,8 +251,8 @@ namespace GraphWebApi.Controllers
         /// <summary>
         /// Gets the list of <see cref="CategoryPolicy"/> that a User Principal Name has claims in.
         /// </summary>
-        /// <param name="policies">The list of category policies to search in.</param>
-        /// <param name="userPrincipalName">The User Principal Name which to search for in the category policies.</param>
+        /// <param name="policies">The list of <see cref="CategoryPolicy"/> to search in.</param>
+        /// <param name="userPrincipalName">The User Principal Name which to search for in the list of <see cref="CategoryPolicy"/>.</param>
         /// <returns>A list of filtered <see cref="CategoryPolicy"/> for the specified User Principal Name.</returns>
         private static List<CategoryPolicy> GetUserPrincipalCategoryPolicies(SampleQueriesPolicies policies, string userPrincipalName)
         {
@@ -237,10 +286,11 @@ namespace GraphWebApi.Controllers
         /// <summary>
         /// Gets the <see cref="UserClaim"/> for a given <see cref="CategoryPolicy"/>. 
         /// </summary>
-        /// <param name="policies">The list of category policies to search in.</param>
-        /// <param name="userPrincipalName">The User Principal Name which to search for in the category policies.</param>
-        /// <param name="categoryName">The name of the category policy to be searched for in the list of <see cref="CategoryPolicy"/>.</param>
-        /// <returns>The list of <see cref="CategoryPolicy"/> with the searched for category and the <see cref="UserClaim"/> for the specified User Principal Name.</returns>
+        /// <param name="policies">The list of <see cref="CategoryPolicy"/> to search in.</param>
+        /// <param name="userPrincipalName">The User Principal Name which to search for in the target <see cref="CategoryPolicy"/>.</param>
+        /// <param name="categoryName">The name of the target <see cref="CategoryPolicy"/> to be searched for in the list of <see cref="CategoryPolicy"/>.</param>
+        /// <returns>The list of <see cref="CategoryPolicy"/> with the searched for target <see cref="CategoryPolicy"/> and the <see cref="UserClaim"/> 
+        /// for the specified User Principal Name.</returns>
         private static List<CategoryPolicy> GetUserPrincipalCategoryPolicies(SampleQueriesPolicies policies, string userPrincipalName, string categoryName)
         {
             // Find the category policy that the specified user principal has claims in
@@ -252,6 +302,7 @@ namespace GraphWebApi.Controllers
                 return null;
             }
 
+            // Extract the target user claim from the list of user claims in category policy
             UserClaim userClaim = categoryPolicy.UserClaims.Find(x => x.UserPrincipalName.ToLower() == userPrincipalName.ToLower());
             categoryPolicy.UserClaims = new List<UserClaim> {userClaim };
             List<CategoryPolicy> filteredCategoryPolicies = new List<CategoryPolicy> { categoryPolicy };
