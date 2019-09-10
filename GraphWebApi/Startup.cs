@@ -9,6 +9,7 @@ using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using GraphWebApi.Models;
 
 namespace GraphWebApi
 {
@@ -41,6 +42,7 @@ namespace GraphWebApi
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, DiskFileUtility>();
+            services.Configure<SamplesAdministrators>(Configuration);
         }      
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
