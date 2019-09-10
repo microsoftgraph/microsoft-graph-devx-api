@@ -44,7 +44,7 @@ namespace GraphWebApi.Controllers
 
                 if (!string.IsNullOrEmpty(userPrincipalName) && !string.IsNullOrEmpty(categoryName))
                 {
-                    filteredPolicies.CategoryPolicies =  GetUserPrincipalCategoryPolicies(policies, userPrincipalName, categoryName);
+                    filteredPolicies.CategoryPolicies = GetUserPrincipalCategoryPolicies(policies, userPrincipalName, categoryName);
                 }
                 else if (!string.IsNullOrEmpty(userPrincipalName))
                 {
@@ -165,7 +165,7 @@ namespace GraphWebApi.Controllers
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
-
+                
         // Removes a user claim from a category policy given a User Principal Name and a category policy name
         [Produces("application/json")]
         [HttpDelete]
@@ -223,7 +223,7 @@ namespace GraphWebApi.Controllers
         /// Gets the JSON file contents of the policies and returns a deserialized instance of a
         /// <see cref="SampleQueriesPolicies"/> from this.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A list of category policies.</returns>
         private async Task<SampleQueriesPolicies> GetSampleQueriesPoliciesAsync()
         {
             // Get the file contents from source
@@ -289,7 +289,7 @@ namespace GraphWebApi.Controllers
         /// <param name="policies">The list of <see cref="CategoryPolicy"/> to search in.</param>
         /// <param name="userPrincipalName">The User Principal Name which to search for in the target <see cref="CategoryPolicy"/>.</param>
         /// <param name="categoryName">The name of the target <see cref="CategoryPolicy"/> to be searched for in the list of <see cref="CategoryPolicy"/>.</param>
-        /// <returns>The list of <see cref="CategoryPolicy"/> with the searched for target <see cref="CategoryPolicy"/> and the <see cref="UserClaim"/> 
+        /// <returns>A list of <see cref="CategoryPolicy"/> with the found target <see cref="CategoryPolicy"/> and the <see cref="UserClaim"/> 
         /// for the specified User Principal Name.</returns>
         private static List<CategoryPolicy> GetUserPrincipalCategoryPolicies(SampleQueriesPolicies policies, string userPrincipalName, string categoryName)
         {
