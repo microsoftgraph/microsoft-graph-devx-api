@@ -1,8 +1,9 @@
-﻿using GraphExplorerSamplesService.Models;
+using GraphExplorerSamplesService.Models;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GraphExplorerSamplesService.Services
 {
@@ -84,6 +85,152 @@ namespace GraphExplorerSamplesService.Services
             {
                 CategoryPolicies = categoryPolicies
             };
+
+            return policies;
+        }
+
+        /// <summary>
+        /// Adds to or updates a <see cref="UserClaim"/> in a target <see cref="CategoryPolicy"/> object.
+        /// </summary>
+        /// <param name="categoryPolicy">The target <see cref="CategoryPolicy"/> object where the <see cref="UserClaim"/> needs to be updated or added into.</param>
+        /// <param name="policies">The list of <see cref="CategoryPolicy"/> where the target <see cref="CategoryPolicy"/> object is contained.</param>
+        /// <returns>The updated list of <see cref="SampleQueriesPolicies"/> 
+        /// with the new <see cref="UserClaim"/> added or updated at the target <see cref="CategoryPolicy"/> object.</returns>
+        public static SampleQueriesPolicies ModifyUserClaim(SampleQueriesPolicies policies, CategoryPolicy categoryPolicy)
+        {
+            if (policies == null || policies.CategoryPolicies.Count == 0)
+            {
+                throw new ArgumentNullException(nameof(SampleQueriesPolicies), "The list of policies cannot be null or empty.");
+            }
+            if (categoryPolicy == null)
+            {
+                throw new ArgumentNullException(nameof(CategoryPolicy), "The category policy cannot be null.");
+            }            
+
+            // Search the target category policy from the list of policies
+            CategoryPolicy tempCategoryPolicy = policies.CategoryPolicies.Find(x => x.CategoryName == categoryPolicy.CategoryName);
+
+            if (tempCategoryPolicy == null)
+            {
+                throw new InvalidOperationException($"The specified category policy doesn't exist: {categoryPolicy.CategoryName}");
+            }
+
+            // This will be used later to insert the updated category policy back into the list of policies
+            int tempCategoryPolicyIndex = policies.CategoryPolicies.FindIndex(x => x == tempCategoryPolicy);
+            
+            // Fetch the first user claim from the argument supplied
+            UserClaim userClaim = categoryPolicy.UserClaims.FirstOrDefault();
+
+            if (userClaim == null)
+            {
+                throw new ArgumentNullException(nameof(CategoryPolicy), "User claim information missing.");
+            }
+
+            // Get the location of the provided user claim from the temp. category policy
+            int userClaimIndex = tempCategoryPolicy.UserClaims.FindIndex(x => x.UserPrincipalName == userClaim.UserPrincipalName);
+
+            // Add new user claim request
+            if (userClaimIndex < 0)
+            {
+                // Check first whether we have default user claim values in the temp. category policy
+
+                CategoryPolicy defaultCategoryPolicyTemplate = new CategoryPolicy
+                {
+                    UserClaims = new List<UserClaim>()
+                    {
+                        new UserClaim()
+                    }
+                };
+
+                if (tempCategoryPolicy.UserClaims.First().UserPrincipalName ==
+                    defaultCategoryPolicyTemplate.UserClaims.First().UserPrincipalName)
+                {
+                    /* This is the first claim for this category policy;
+                       clear the default user claim and add the new user claim. */
+                    tempCategoryPolicy.UserClaims.Clear();
+                    tempCategoryPolicy.UserClaims.Add(userClaim);
+                }
+                else // we already have other unique user claim values in this category policy
+                {
+                    // Insert the new user claim info. to the end of list of user claims
+                    tempCategoryPolicy.UserClaims.Add(userClaim);
+                }
+            }
+            else // Update user claim request
+            {
+                // Update the current index with new user claim info.
+                tempCategoryPolicy.UserClaims.Insert(userClaimIndex, userClaim);
+
+                // Delete the original user claim pushed to the next index
+                tempCategoryPolicy.UserClaims.RemoveAt(++userClaimIndex);
+            }
+
+            // Update the modified category policy back into list of policies           
+            policies.CategoryPolicies.Insert(tempCategoryPolicyIndex, tempCategoryPolicy);
+
+            // Delete the original category policy pushed to the next index
+            policies.CategoryPolicies.RemoveAt(++tempCategoryPolicyIndex);
+
+            return policies;
+        }
+
+        /// <summary>
+        /// Removes a <see cref="UserClaim"/> from a <see cref="CategoryPolicy"/> object.
+        /// </summary>
+        /// <param name="policies">The list of <see cref="CategoryPolicy"/> where the target <see cref="CategoryPolicy"/> object is contained.</param>
+        /// <param name="categoryPolicyName">The target <see cref="CategoryPolicy"/> object where the <see cref="UserClaim"/> needs to be removed from.</param>    
+        /// <param name="userPrincipalName">The target User Principal Name whose <see cref="UserClaim"/> needs to be removed from the <see cref="CategoryPolicy"/> object.</param>
+        /// <returns>The updated list of <see cref="SampleQueriesPolicies"/> 
+        /// with the <see cref="UserClaim"/> of a target User Principal Name removed from the target <see cref="CategoryPolicy"/> object.</returns>
+        public static SampleQueriesPolicies RemoveUserClaim(SampleQueriesPolicies policies, string categoryPolicyName,
+                                                            string userPrincipalName)
+        {
+            if (policies == null || policies.CategoryPolicies.Count == 0)
+            {
+                throw new ArgumentNullException(nameof(SampleQueriesPolicies), "The list of policies cannot be null or empty.");
+            }            
+            if (string.IsNullOrEmpty(categoryPolicyName))
+            {
+                throw new ArgumentNullException(nameof(CategoryPolicy), "The category policy name cannot be null or empty.");
+            }
+            if (string.IsNullOrEmpty(userPrincipalName))
+            {
+                throw new ArgumentNullException(nameof(CategoryPolicy), "The user prinicpal name cannot be null or empty.");
+            }
+
+            // Search the target category policy from the list of policies
+            CategoryPolicy categoryPolicy = policies.CategoryPolicies.Find(
+                                                x => x.CategoryName.ToLower() == categoryPolicyName.ToLower());
+
+            if (categoryPolicy == null)
+            {
+                throw new InvalidOperationException($"The specified category policy doesn't exist: {categoryPolicyName}");
+            }
+
+            // This will be used later to insert the updated category policy back into the list of policies
+            int categoryPolicyIndex = policies.CategoryPolicies.FindIndex(x => x == categoryPolicy);
+
+            // Fetch the user claim
+            UserClaim userClaim = categoryPolicy.UserClaims.FirstOrDefault(
+                                    x => x.UserPrincipalName.ToLower() == userPrincipalName.ToLower());
+
+            if (userClaim == null)
+            {
+                throw new InvalidOperationException($"The specified user principal name has no claim in the specified category. " +
+                                                    $"UPN: {userPrincipalName}");
+            }
+
+            // Get the location of the provided user claim from the category policy
+            int userClaimIndex = categoryPolicy.UserClaims.FindIndex(x => x.UserPrincipalName == userClaim.UserPrincipalName);
+
+            // Remove this user claim from the list of user claims
+            categoryPolicy.UserClaims.RemoveAt(userClaimIndex);
+
+            // Update the modified category policy back into list of policies           
+            policies.CategoryPolicies.Insert(categoryPolicyIndex, categoryPolicy);
+
+            // Delete the original category policy pushed to the next index
+            policies.CategoryPolicies.RemoveAt(++categoryPolicyIndex);
 
             return policies;
         }
