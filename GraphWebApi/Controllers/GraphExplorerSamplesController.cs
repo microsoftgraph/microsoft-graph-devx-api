@@ -21,8 +21,8 @@ namespace GraphWebApi.Controllers
         public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration)
         {
             _fileUtility = fileUtility;            
-            _queriesFilePathSource = configuration["SampleQueriesFilePathName"]; // sets the path of the sample queries JSON file
-            _policiesFilePathSource = configuration["SampleQueriesPoliciesFilePathName"]; // sets the path of the sample queries policies JSON file
+            _queriesFilePathSource = configuration["Samples:SampleQueriesFilePathName"]; // sets the path of the sample queries JSON file
+            _policiesFilePathSource = configuration["Samples:SampleQueriesPoliciesFilePathName"]; // sets the path of the sample queries policies JSON file
         }
 
         // Gets the list of all sample queries
