@@ -52,7 +52,8 @@ namespace GraphWebApi.Controllers
                 }
                 else if (!string.IsNullOrEmpty(categoryName))
                 {
-                    filteredPolicies.CategoryPolicies = policies.CategoryPolicies.FindAll(x => x.CategoryName.ToLower() == categoryName.ToLower());
+                    filteredPolicies.CategoryPolicies = policies.CategoryPolicies.FindAll(x => 
+                        x.CategoryName.Equals(categoryName, StringComparison.OrdinalIgnoreCase));
                 }
                 else
                 {
@@ -204,7 +205,8 @@ namespace GraphWebApi.Controllers
                 await _fileUtility.WriteToFile(updatedPoliciesJson, _policiesFilePathSource);
 
                 // Get the category policy that has just been updated
-                CategoryPolicy categoryPolicy = updatedPoliciesList.CategoryPolicies.FirstOrDefault(x => x.CategoryName.ToLower() == categoryName.ToLower());
+                CategoryPolicy categoryPolicy = updatedPoliciesList.CategoryPolicies.FirstOrDefault(x => 
+                    x.CategoryName.Equals(categoryName, StringComparison.OrdinalIgnoreCase));
 
                 return Ok(categoryPolicy);
             }
@@ -269,7 +271,7 @@ namespace GraphWebApi.Controllers
             // Filter each category policy to extract the specified user principal's claims
             foreach (CategoryPolicy categoryPolicy in userPrincipalPolicies)
             {
-                UserClaim userClaim = categoryPolicy.UserClaims.Find(x => x.UserPrincipalName == userPrincipalName);
+                UserClaim userClaim = categoryPolicy.UserClaims.Find(x => x.UserPrincipalName.Equals(userPrincipalName, StringComparison.OrdinalIgnoreCase));
 
                 CategoryPolicy userPrincipalPolicy = new CategoryPolicy
                 {
@@ -295,7 +297,8 @@ namespace GraphWebApi.Controllers
         {
             // Find the category policy that the specified user principal has claims in
             CategoryPolicy categoryPolicy = policies.CategoryPolicies.Find
-               (x => x.CategoryName.ToLower() == categoryName.ToLower() && x.UserClaims.Exists(y => y.UserPrincipalName.ToLower() == userPrincipalName.ToLower()));
+               (x => x.CategoryName.Equals(categoryName, StringComparison.OrdinalIgnoreCase) && 
+                    x.UserClaims.Exists(y => y.UserPrincipalName.Equals(userPrincipalName, StringComparison.OrdinalIgnoreCase)));
 
             if (categoryPolicy == null)
             {
@@ -303,7 +306,7 @@ namespace GraphWebApi.Controllers
             }
 
             // Extract the target user claim from the list of user claims in category policy
-            UserClaim userClaim = categoryPolicy.UserClaims.Find(x => x.UserPrincipalName.ToLower() == userPrincipalName.ToLower());
+            UserClaim userClaim = categoryPolicy.UserClaims.Find(x => x.UserPrincipalName.Equals(userPrincipalName, StringComparison.OrdinalIgnoreCase));
             categoryPolicy.UserClaims = new List<UserClaim> {userClaim };
             List<CategoryPolicy> filteredCategoryPolicies = new List<CategoryPolicy> { categoryPolicy };
 
