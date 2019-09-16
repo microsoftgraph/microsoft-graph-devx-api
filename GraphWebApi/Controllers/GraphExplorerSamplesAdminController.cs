@@ -52,7 +52,8 @@ namespace GraphWebApi.Controllers
                 }
                 else if (!string.IsNullOrEmpty(categoryName))
                 {
-                    filteredPolicies.CategoryPolicies = policies.CategoryPolicies.FindAll(x => x.CategoryName.ToLower() == categoryName.ToLower());
+                    filteredPolicies.CategoryPolicies = policies.CategoryPolicies.FindAll(x => 
+                        x.CategoryName.Equals(categoryName, StringComparison.OrdinalIgnoreCase));
                 }
                 else
                 {
@@ -204,7 +205,8 @@ namespace GraphWebApi.Controllers
                 await _fileUtility.WriteToFile(updatedPoliciesJson, _policiesFilePathSource);
 
                 // Get the category policy that has just been updated
-                CategoryPolicy categoryPolicy = updatedPoliciesList.CategoryPolicies.FirstOrDefault(x => x.CategoryName.ToLower() == categoryName.ToLower());
+                CategoryPolicy categoryPolicy = updatedPoliciesList.CategoryPolicies.FirstOrDefault(x => 
+                    x.CategoryName.Equals(categoryName, StringComparison.OrdinalIgnoreCase));
 
                 return Ok(categoryPolicy);
             }
@@ -220,8 +222,7 @@ namespace GraphWebApi.Controllers
         }
 
         /// <summary>
-        /// Gets the JSON file contents of the policies and returns a deserialized instance of a
-        /// <see cref="SampleQueriesPolicies"/> from this.
+        /// Gets the JSON file contents of the policies and returns a deserialized instance of a <see cref="SampleQueriesPolicies"/> from this.
         /// </summary>
         /// <returns>A list of category policies.</returns>
         private async Task<SampleQueriesPolicies> GetSampleQueriesPoliciesAsync()
@@ -249,17 +250,40 @@ namespace GraphWebApi.Controllers
         }
 
         /// <summary>
-        /// Gets the list of <see cref="CategoryPolicy"/> that a User Principal Name has claims in.
+        /// Gets the list of <see cref="CategoryPolicy"/> or a <see cref="CategoryPolicy"/> that a User Principal Name has claims in.
         /// </summary>
         /// <param name="policies">The list of <see cref="CategoryPolicy"/> to search in.</param>
-        /// <param name="userPrincipalName">The User Principal Name which to search for in the list of <see cref="CategoryPolicy"/>.</param>
-        /// <returns>A list of filtered <see cref="CategoryPolicy"/> for the specified User Principal Name.</returns>
-        private static List<CategoryPolicy> GetUserPrincipalCategoryPolicies(SampleQueriesPolicies policies, string userPrincipalName)
+        /// <param name="userPrincipalName">The target User Principal Name which to search for in the list of <see cref="CategoryPolicy"/>.</param>
+        /// <param name="categoryName">The name of the target <see cref="CategoryPolicy"/> to be searched for in the list of <see cref="CategoryPolicy"/>. 
+        /// If unspecified, all the category policies will be included in the search.</param>
+        /// <returns>A list of filtered <see cref="CategoryPolicy"/> or the target <see cref="CategoryPolicy"/> with the claims for the specified User Principal Name.</returns>
+        private static List<CategoryPolicy> GetUserPrincipalCategoryPolicies(SampleQueriesPolicies policies, string userPrincipalName, string categoryName = null)
         {
-            // Find all category policies that the specified user principal has claims in
-            List<CategoryPolicy> userPrincipalPolicies = policies.CategoryPolicies.FindAll(x => x.UserClaims.Exists(y => y.UserPrincipalName == userPrincipalName));
+            List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
 
-            if (!userPrincipalPolicies.Any())
+            if (string.IsNullOrEmpty(categoryName))
+            {
+                // Search for all category policies that the specified user principal name has claims in
+                categoryPolicies = policies.CategoryPolicies.FindAll(x => x.UserClaims.Exists(y => y.UserPrincipalName == userPrincipalName));
+            }
+            else
+            {
+                // Search for the category policy that the specified user principal name has claims in             
+                CategoryPolicy categoryPolicy = policies.CategoryPolicies.Find
+                 (x => x.CategoryName.Equals(categoryName, StringComparison.OrdinalIgnoreCase) &&
+                      x.UserClaims.Exists(y => y.UserPrincipalName.Equals(userPrincipalName, StringComparison.OrdinalIgnoreCase)));
+ 
+                if (categoryPolicy == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    categoryPolicies.Add(categoryPolicy);
+                }
+            }
+
+            if (!categoryPolicies.Any())
             {
                 return null;
             }
@@ -267,9 +291,9 @@ namespace GraphWebApi.Controllers
             List<CategoryPolicy> filteredCategoryPolicies = new List<CategoryPolicy>();
 
             // Filter each category policy to extract the specified user principal's claims
-            foreach (CategoryPolicy categoryPolicy in userPrincipalPolicies)
+            foreach (CategoryPolicy categoryPolicy in categoryPolicies)
             {
-                UserClaim userClaim = categoryPolicy.UserClaims.Find(x => x.UserPrincipalName == userPrincipalName);
+                UserClaim userClaim = categoryPolicy.UserClaims.Find(x => x.UserPrincipalName.Equals(userPrincipalName, StringComparison.OrdinalIgnoreCase));
 
                 CategoryPolicy userPrincipalPolicy = new CategoryPolicy
                 {
@@ -279,33 +303,6 @@ namespace GraphWebApi.Controllers
 
                 filteredCategoryPolicies.Add(userPrincipalPolicy);
             }
-
-            return filteredCategoryPolicies;
-        }
-
-        /// <summary>
-        /// Gets the <see cref="UserClaim"/> for a given <see cref="CategoryPolicy"/>. 
-        /// </summary>
-        /// <param name="policies">The list of <see cref="CategoryPolicy"/> to search in.</param>
-        /// <param name="userPrincipalName">The User Principal Name which to search for in the target <see cref="CategoryPolicy"/>.</param>
-        /// <param name="categoryName">The name of the target <see cref="CategoryPolicy"/> to be searched for in the list of <see cref="CategoryPolicy"/>.</param>
-        /// <returns>A list of <see cref="CategoryPolicy"/> with the found target <see cref="CategoryPolicy"/> and the <see cref="UserClaim"/> 
-        /// for the specified User Principal Name.</returns>
-        private static List<CategoryPolicy> GetUserPrincipalCategoryPolicies(SampleQueriesPolicies policies, string userPrincipalName, string categoryName)
-        {
-            // Find the category policy that the specified user principal has claims in
-            CategoryPolicy categoryPolicy = policies.CategoryPolicies.Find
-               (x => x.CategoryName.ToLower() == categoryName.ToLower() && x.UserClaims.Exists(y => y.UserPrincipalName.ToLower() == userPrincipalName.ToLower()));
-
-            if (categoryPolicy == null)
-            {
-                return null;
-            }
-
-            // Extract the target user claim from the list of user claims in category policy
-            UserClaim userClaim = categoryPolicy.UserClaims.Find(x => x.UserPrincipalName.ToLower() == userPrincipalName.ToLower());
-            categoryPolicy.UserClaims = new List<UserClaim> {userClaim };
-            List<CategoryPolicy> filteredCategoryPolicies = new List<CategoryPolicy> { categoryPolicy };
 
             return filteredCategoryPolicies;
         }
