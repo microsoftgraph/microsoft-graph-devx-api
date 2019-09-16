@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using GraphExplorerSamplesService.Interfaces;
+using FileService.Interfaces;
 using GraphExplorerSamplesService.Models;
 using GraphExplorerSamplesService.Services;
 using GraphWebApi.Models;
