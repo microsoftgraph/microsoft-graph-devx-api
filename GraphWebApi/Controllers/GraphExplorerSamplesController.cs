@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
-using GraphExplorerSamplesService.Interfaces;
+using FileService.Interfaces;
 
 namespace GraphWebApi.Controllers
 {
