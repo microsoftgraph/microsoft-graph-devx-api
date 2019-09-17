@@ -1,6 +1,5 @@
 ﻿using System;
 using GraphExplorerPermissionsService.Interfaces;
-using GraphWebApi.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,13 +19,13 @@ namespace GraphWebApi.Controllers
         // Gets the permission scopes for a request url
         [HttpGet]
         [Produces("application/json")]
-        public IActionResult GetPermissionScopes([FromQuery] ScopeRequest scopeRequest)
+        public IActionResult GetPermissionScopes([FromQuery]string requestUrl, [FromQuery]string method = "GET", [FromQuery]string scopeType = "DelegatedWork")
         {
             try
             {
                 string[] result = null;
 
-                result = _permissionsStore.GetScopes(scopeRequest.RequestUrl, scopeRequest.HttpVerb, scopeRequest.ScopeType);
+                result = _permissionsStore.GetScopes(requestUrl, method, scopeType);
 
                 if (result == null)
                 {
@@ -41,7 +40,7 @@ namespace GraphWebApi.Controllers
             }
             catch (ArgumentNullException argNullException)
             {
-                return new JsonResult(argNullException.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+                return new JsonResult(argNullException.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (Exception exception)
             {
