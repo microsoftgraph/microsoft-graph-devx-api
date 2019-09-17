@@ -270,6 +270,385 @@ namespace PermissionsService.Test
         }
 
         [Fact]
+        public void ReturnNullGivenANonExistentHttpVerb()
+        {
+            /* Arrange */
+
+            Mock<IFileUtility> moqFileUtility = new Mock<IFileUtility>();
+            Mock<IConfiguration> moqConfiguration = new Mock<IConfiguration>();
+            string permissionsFilePathSource = ".\\Permissions\\apiPermissionsAndScopes.json";
+
+            moqFileUtility.Setup(x => x.ReadFromFile(permissionsFilePathSource)).ReturnsAsync(() =>
+                            @"{
+                            ""ApiPermissions"": {
+                                ""/security/alerts/{alert_id}"": [
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""PATCH"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    }
+                                ],
+                                ""/security/alerts"": [
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    }
+                                ]
+                                }
+                            }");
+
+            moqConfiguration.Setup(a => a["Permissions:PermissionsAndScopesFilePathName"]).Returns(permissionsFilePathSource);
+
+            PermissionsStore permissionsStore = new PermissionsStore(moqFileUtility.Object, moqConfiguration.Object);
+
+            // Act
+            string[] result = permissionsStore.GetScopes("/security/alerts/{alert_id}", "Foobar"); // non-existent http verb
+
+            // Assert that returned result is null
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void ReturnNullGivenANonExistentScopeType()
+        {
+            /* Arrange */
+
+            Mock<IFileUtility> moqFileUtility = new Mock<IFileUtility>();
+            Mock<IConfiguration> moqConfiguration = new Mock<IConfiguration>();
+            string permissionsFilePathSource = ".\\Permissions\\apiPermissionsAndScopes.json";
+
+            moqFileUtility.Setup(x => x.ReadFromFile(permissionsFilePathSource)).ReturnsAsync(() =>
+                            @"{
+                            ""ApiPermissions"": {
+                                ""/security/alerts/{alert_id}"": [
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""PATCH"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    }
+                                ],
+                                ""/security/alerts"": [
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    }
+                                ]
+                                }
+                            }");
+
+            moqConfiguration.Setup(a => a["Permissions:PermissionsAndScopesFilePathName"]).Returns(permissionsFilePathSource);
+
+            PermissionsStore permissionsStore = new PermissionsStore(moqFileUtility.Object, moqConfiguration.Object);
+
+            // Act
+            string[] result = permissionsStore.GetScopes("/security/alerts/{alert_id}", "PATCH", "Foobar"); // non-existent scope type
+
+            // Assert that returned result is null
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public void ReturnNullForEmptyPermissionScopesForRequestedScopeType()
+        {
+            /* Arrange */
+
+            Mock<IFileUtility> moqFileUtility = new Mock<IFileUtility>();
+            Mock<IConfiguration> moqConfiguration = new Mock<IConfiguration>();
+            string permissionsFilePathSource = ".\\Permissions\\apiPermissionsAndScopes.json";
+
+            // Empty scopes for the 'DelegatedPersonal' scope type
+            moqFileUtility.Setup(x => x.ReadFromFile(permissionsFilePathSource)).ReturnsAsync(() =>
+                            @"{
+                            ""ApiPermissions"": {
+                                ""/security/alerts/{alert_id}"": [
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                      
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""PATCH"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    }
+                                ],
+                                ""/security/alerts"": [
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    },
+                                    {
+                                    ""HttpVerb"": ""GET"",
+                                    ""DelegatedWork"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ],
+                                    ""DelegatedPersonal"": [
+                                        ""Not supported.""
+                                    ],
+                                    ""Application"": [
+                                        ""SecurityEvents.Read.All"",
+                                        ""SecurityEvents.ReadWrite.All""
+                                    ]
+                                    }
+                                ]
+                                }
+                            }");
+
+            moqConfiguration.Setup(a => a["Permissions:PermissionsAndScopesFilePathName"]).Returns(permissionsFilePathSource);
+
+            PermissionsStore permissionsStore = new PermissionsStore(moqFileUtility.Object, moqConfiguration.Object);
+
+            // Act by requesting scopes for the 'DelegatedPersonal' scope type
+            string[] result = permissionsStore.GetScopes("/security/alerts/{alert_id}", "GET", "DelegatedPersonal");
+
+            // Assert that returned result is null
+            Assert.Null(result);
+        }
+
+        [Fact]
         public void ThrowInvalidOperationExceptionIfTablesNotPopulatedDueToIncorrectPermissionsFilePathName()
         {
             /* Arrange */
