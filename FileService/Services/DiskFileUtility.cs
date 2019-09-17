@@ -1,8 +1,8 @@
-﻿using GraphExplorerSamplesService.Interfaces;
+﻿using FileService.Interfaces;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace GraphExplorerSamplesService.Services
+namespace FileService.Services
 {
     /// <summary>
     /// Implements an <see cref="IFileUtility"/> that reads from and writes contents to a file on disk.

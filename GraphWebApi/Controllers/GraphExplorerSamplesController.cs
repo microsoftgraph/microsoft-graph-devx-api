@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
-using GraphExplorerSamplesService.Interfaces;
+using FileService.Interfaces;
 
 namespace GraphWebApi.Controllers
 {
@@ -21,8 +21,8 @@ namespace GraphWebApi.Controllers
         public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration)
         {
             _fileUtility = fileUtility;            
-            _queriesFilePathSource = configuration["SampleQueriesFilePathName"]; // Sets the path of the sample queries JSON file
-            _policiesFilePathSource = configuration["SampleQueriesPoliciesFilePathName"]; // Sets the path of the policies file
+            _queriesFilePathSource = configuration["Samples:SampleQueriesFilePathName"]; // sets the path of the sample queries JSON file
+            _policiesFilePathSource = configuration["Samples:SampleQueriesPoliciesFilePathName"]; // sets the path of the sample queries policies JSON file
         }
 
         // Gets the list of all sample queries
