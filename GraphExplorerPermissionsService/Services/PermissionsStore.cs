@@ -67,7 +67,7 @@ namespace GraphExplorerPermissionsService
         /// <param name="httpVerb">The target http verb of the request url whose scopes are to be retrieved.</param>
         /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
         /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
-        public string[] GetScopes(string requestUrl, string httpVerb = "GET", string scopeType = "Application")
+        public string[] GetScopes(string requestUrl, string httpVerb = "GET", string scopeType = "DelegatedWork")
         {
             if (!_scopesTable.Any())
             {
