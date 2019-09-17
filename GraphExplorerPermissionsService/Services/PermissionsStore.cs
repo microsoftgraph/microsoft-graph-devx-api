@@ -91,10 +91,15 @@ namespace GraphExplorerPermissionsService
 
                 var resultValue = (JArray)_scopesTable[int.Parse(resultMatch.Key)];
 
-                string[] scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == httpVerb)
-                    .SelectToken(scopeType)
+                string[] scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == httpVerb)?
+                    .SelectToken(scopeType)?
                     .Select(s => (string)s)
                     .ToArray();
+
+                if (scopes == null || scopes.Count() == 0)
+                {
+                    return null;
+                }
 
                 return scopes;
             }
