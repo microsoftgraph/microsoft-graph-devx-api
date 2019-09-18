@@ -64,10 +64,10 @@ namespace GraphExplorerPermissionsService
         /// Retrieves the permission scopes for a given request url.
         /// </summary>
         /// <param name="requestUrl">The target request url whose scopes are to be retrieved.</param>
-        /// <param name="httpVerb">The target http verb of the request url whose scopes are to be retrieved.</param>
+        /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
         /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
         /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
-        public string[] GetScopes(string requestUrl, string httpVerb = "GET", string scopeType = "DelegatedWork")
+        public string[] GetScopes(string requestUrl, string method = "GET", string scopeType = "DelegatedWork")
         {
             if (!_scopesTable.Any())
             {
@@ -91,7 +91,7 @@ namespace GraphExplorerPermissionsService
 
                 var resultValue = (JArray)_scopesTable[int.Parse(resultMatch.Key)];
 
-                string[] scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == httpVerb)?
+                string[] scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
                     .SelectToken(scopeType)?
                     .Select(s => (string)s)
                     .ToArray();
