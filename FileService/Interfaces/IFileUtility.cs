@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace GraphExplorerSamplesService.Interfaces
+namespace FileService.Interfaces
 {
     /// <summary>
     /// Provides a contract for reading from and writing to file sources.

@@ -250,7 +250,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //json deserializer capitalizes the bool types so undo that
                     if (primitive.Equals("True", StringComparison.Ordinal) || primitive.Equals("False", StringComparison.Ordinal))
                     {
-                        stringBuilder.Append($"boolean {path.Last()} = {jsonObject};\r\n");
+                        stringBuilder.Append($"boolean {path.Last()} = {CommonGenerator.LowerCaseFirstLetter(primitive)};\r\n");
                     }
                     else
                     {
@@ -416,7 +416,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         break;
                     //handle functions/requestActions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment,snippetModel.Method,"List");
+                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment,snippetModel,"List",false);
                         resourcesPath.Append($"\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")})");
                         break;
                     case ReferenceSegment _:
