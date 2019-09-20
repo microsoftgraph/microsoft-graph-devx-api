@@ -6,6 +6,6 @@ namespace GraphExplorerPermissionsService.Interfaces
 {
     public interface IPermissionsStore
     {
-        string[] GetScopes(string requestUrl, string method = "GET", string scopeType = "Application");
+        string[] GetScopes(string requestUrl, string method = "GET", string scopeType = "DelegatedWork");
     }
 }
