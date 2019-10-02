@@ -50,7 +50,7 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>An instance of <see cref="SampleQueriesPolicies"/> containing a list of <see cref="CategoryPolicy"/>.</returns>
         public static SampleQueriesPolicies CreateDefaultPoliciesTemplate()
         {
-            if (SampleQueriesCategories.CategoriesLinkedList.Count == 0)
+            if (SampleQueriesCategories.CategoriesList.Count == 0)
             {
                 throw new InvalidOperationException("Cannot create a default policy template; the list of categories is empty.");
             }
@@ -59,7 +59,7 @@ namespace GraphExplorerSamplesService.Services
             List<CategoryPolicy> categoryPolicies = new List<CategoryPolicy>();
 
             // Create the default policy template for each category in the list
-            foreach(string category in SampleQueriesCategories.CategoriesLinkedList)
+            foreach(string category in SampleQueriesCategories.CategoriesList)
             {
                 CategoryPolicy categoryPolicy = new CategoryPolicy()
                 {
