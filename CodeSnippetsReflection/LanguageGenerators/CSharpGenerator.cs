@@ -39,7 +39,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 if (snippetModel.Method == HttpMethod.Get)
                 {
                     var extraSnippet = "";
-                    if (segment is PropertySegment)
+                    if (segment is PropertySegment && !segment.EdmType.IsStream())//streams can be sorted out normally
                     { 
                         extraSnippet = GeneratePropertySectionSnippet(snippetModel);
                         snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(CommonGenerator.UppercaseFirstLetter).ToList();
@@ -162,8 +162,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case ValueSegment _:
                         resourcesPath.Append(".Content");
                         break;
-                    case PropertySegment _:
-                        //dont append anything since this is not accessed directly in C#
+                    case PropertySegment propertySegment:
+                        //don't append anything that is not a stream since this is not accessed directly in C#
+                        if (propertySegment.EdmType.IsStream())
+                        {
+                            resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
+                        }
                         break;
                     case ReferenceSegment _:
                         resourcesPath.Append(".Reference");
