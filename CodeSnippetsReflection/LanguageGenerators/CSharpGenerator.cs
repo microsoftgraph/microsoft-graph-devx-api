@@ -253,18 +253,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             var newPath = path.Append(key).ToList();//add new identifier to the path
                             if (key.Contains("@odata"))
                             {
-                                var additionalDataString = $"{tabSpace}\tAdditionalData = new Dictionary<string, object>()\r\n{tabSpace}\t{{\r\n";
-                                var keyValuePairElement = $"{tabSpace}\t\t{{\"{key}\",{value}}}";
-                                if (!stringBuilder.ToString().Contains(additionalDataString))//check if we ever inserted AdditionalData to this object.
-                                {
-                                    stringBuilder.Append($"{additionalDataString}{keyValuePairElement}\r\n{tabSpace}\t}},\r\n");
-                                }
-                                else
-                                {   
-                                    //insert new key value pair to already existing AdditionalData component
-                                    var insertionIndex = stringBuilder.ToString().IndexOf(additionalDataString, StringComparison.Ordinal) + additionalDataString.Length;
-                                    stringBuilder.Insert(insertionIndex, $"{keyValuePairElement},\r\n");
-                                }
+                                stringBuilder = GenerateCSharpOdataSection(stringBuilder, key, jToken.Value<string>(), className, tabSpace);
                                 continue;
                             }
                             switch (jToken.Type)
@@ -344,6 +333,62 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             //check if this is the outermost object in a potential nested object structure and needs the semicolon termination character.
             return path.Count == 1 ? $"{stringBuilder.ToString().TrimEnd()};\r\n\r\n" : stringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Generates language specific code relate to various odata properties
+        /// </summary>
+        /// <param name="stringBuilder">The original string builder containing code generated so far</param>
+        /// <param name="key">The odata key/property</param>
+        /// <param name="value">The value related to the odata key/property</param>
+        /// <param name="className">The class name for the entity needing modification</param>
+        /// <param name="tabSpace">Tab space to use for formatting the code generated</param>
+        /// <returns>a string builder with the relevant odata code added</returns>
+        private static StringBuilder GenerateCSharpOdataSection(StringBuilder stringBuilder, string key, string value, string className, string tabSpace)
+        {
+            switch (key)
+            {
+                case "@odata.id" when className.Equals("DirectoryObject") :
+                    try
+                    {
+                        var uriLastSegmentString = new Uri(value).Segments.Last();
+                        uriLastSegmentString = Uri.UnescapeDataString(uriLastSegmentString);
+                        stringBuilder.Append($"{tabSpace}\tId = \"{uriLastSegmentString}\",\r\n");
+                    }
+                    catch (UriFormatException)
+                    {
+                        stringBuilder.Append($"{tabSpace}\tId = \"{value}\",\r\n");//its not really a URI
+                    }
+                    break;
+
+                case "@odata.type":
+                    var proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
+                    //check if the odata type specified is different
+                    // maybe due to the declaration of a subclass of the type specified from the url.
+                    if (!className.Equals(proposedType)) 
+                    {
+                        stringBuilder.Replace(className, proposedType);
+                    }
+                    break;
+
+                default:
+                    //just append the property as part of the additionalData of the object
+                    var additionalDataString = $"{tabSpace}\tAdditionalData = new Dictionary<string, object>()\r\n{tabSpace}\t{{\r\n";
+                    var keyValuePairElement = $"{tabSpace}\t\t{{\"{key}\",\"{value}\"}}";
+                    if (!stringBuilder.ToString().Contains(additionalDataString))//check if we ever inserted AdditionalData to this object.
+                    {
+                        stringBuilder.Append($"{additionalDataString}{keyValuePairElement}\r\n{tabSpace}\t}},\r\n");
+                    }
+                    else
+                    {
+                        //insert new key value pair to already existing AdditionalData component
+                        var insertionIndex = stringBuilder.ToString().IndexOf(additionalDataString, StringComparison.Ordinal) + additionalDataString.Length;
+                        stringBuilder.Insert(insertionIndex, $"{keyValuePairElement},\r\n");
+                    }
+                    break;
+            }
+
+            return stringBuilder;
         }
 
         /// <summary>

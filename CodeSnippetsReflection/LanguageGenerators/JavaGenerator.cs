@@ -183,7 +183,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             
                             if (key.Contains("@odata"))
                             {
-                                stringBuilder.Append($"{currentVarName}.additionalDataManager().put(\"{key}\", new JsonPrimitive({value}));\r\n");
+                                stringBuilder = GenerateJavaOdataSection(stringBuilder, key, jToken.ToString(), className, currentVarName);
                                 continue;
                             }
                             switch (jToken.Type)
@@ -261,6 +261,52 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             //check if this is the outermost object in a potential nested object structure and needs the semicolon termination character.
             return path.Count == 1 ? $"{stringBuilder.ToString().TrimEnd()}\r\n\r\n" : stringBuilder.ToString();
+        }
+
+
+        /// <summary>
+        /// Generates language specific code relate to various odata properties
+        /// </summary>
+        /// <param name="stringBuilder">The original string builder containing code generated so far</param>
+        /// <param name="key">The odata key/property</param>
+        /// <param name="value">The value related to the odata key/property</param>
+        /// <param name="className">The class name for the entity needing modification</param>
+        /// <param name="currentVarName">The variable name of the current object in use </param>
+        /// <returns>a string builder with the relevant odata code added</returns>
+        private static StringBuilder GenerateJavaOdataSection(StringBuilder stringBuilder, string key, string value, string className, string currentVarName)
+        {
+            switch (key)
+            {
+                case "@odata.id" when className.Equals("DirectoryObject"):
+                    try
+                    {
+                        var uriLastSegmentString = new Uri(value).Segments.Last();
+                        uriLastSegmentString = Uri.UnescapeDataString(uriLastSegmentString);
+                        stringBuilder.Append($"{currentVarName}.Id = \"{uriLastSegmentString}\";\r\n");
+                    }
+                    catch (UriFormatException)
+                    {
+                        stringBuilder.Append($"{currentVarName}.Id = \"{value}\";\r\n");//its not really a URI
+                    }
+                    break;
+
+                case "@odata.type":
+                    var proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
+                    // check if the odata type specified is different
+                    // maybe due to the declaration of a subclass of the type specified from the url.
+                    if (!className.Equals(proposedType))
+                    {
+                        stringBuilder.Replace(className, proposedType);
+                    }
+                    break;
+
+                default:
+                    //just append the property as part of the additionalData of the object
+                    stringBuilder.Append($"{currentVarName}.additionalDataManager().put(\"{key}\", new JsonPrimitive(\"{value}\"));\r\n");
+                    break;
+            }
+
+            return stringBuilder;
         }
 
         /// <summary>

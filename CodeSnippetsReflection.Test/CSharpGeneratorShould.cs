@@ -270,7 +270,7 @@ namespace CodeSnippetsReflection.Test
 
         [Fact]
         //This tests asserts that we can generate snippets with $ref that adds/creates references
-        public void GeneratesSnippetsAddingReferencesToObject()
+        public void GeneratesSnippetsAddingReferencesToDirectoryObject()
         {
             //Arrange
             LanguageExpressions expressions = new CSharpExpressions();
@@ -289,10 +289,7 @@ namespace CodeSnippetsReflection.Test
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var directoryObject = new DirectoryObject\r\n" +
                                            "{\r\n" +
-                                                "\tAdditionalData = new Dictionary<string, object>()\r\n" +
-                                                "\t{\r\n" +
-                                                    "\t\t{\"@odata.id\",\"https://graph.microsoft.com/v1.0/users/{id}\"}\r\n" +
-                                                "\t}\r\n" +
+                                            "\tId = \"{id}\"\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
 
@@ -305,14 +302,47 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
+        //This tests asserts that we can generate snippets with $ref that adds/creates references
+        public void GeneratesSnippetsAddingReferencesToDirectoryObjectWithNonUriReference()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string messageJsonObject = "{\r\n  \"@odata.id\": \"ExampleID\"\r\n}";//non uri reference
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/groups/{id}/owners/$ref")
+            {
+                Content = new StringContent(messageJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var directoryObject = new DirectoryObject\r\n" +
+                                           "{\r\n" +
+                                           "\tId = \"ExampleID\"\r\n" +
+                                           "};\r\n" +
+                                           "\r\n" +
+
+                                           "await graphClient.Groups[\"{id}\"].Owners.References" +
+                                           "\n\t.Request()" +
+                                           "\n\t.AddAsync(directoryObject);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
         //This tests asserts that we can generate snippets with $ref that adds/creates references with multiple additionalData inserted
-        public void GeneratesSnippetsAddingReferencesToObjectWithMultipleAdditionalData()
+        public void GeneratesSnippetsAddingReferencesToObjectWithExtraAdditionalData()
         {
             //Arrange
             LanguageExpressions expressions = new CSharpExpressions();
             const string messageJsonObject = "{\r\n  " +
                                              "\"@odata.id\": \"https://graph.microsoft.com/v1.0/users/{id}\" ," +
-                                             "\"@odata.type\": \"#microsoft.graph.user\"" +
+                                             "\"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users/$entity\"" +
                                              "\r\n}";
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/groups/{id}/owners/$ref")
             {
@@ -327,10 +357,10 @@ namespace CodeSnippetsReflection.Test
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var directoryObject = new DirectoryObject\r\n" +
                                            "{\r\n" +
+                                           "\tId = \"{id}\",\r\n" +
                                            "\tAdditionalData = new Dictionary<string, object>()\r\n" +
                                            "\t{\r\n" +
-                                           "\t\t{\"@odata.type\",\"#microsoft.graph.user\"},\r\n" +
-                                           "\t\t{\"@odata.id\",\"https://graph.microsoft.com/v1.0/users/{id}\"}\r\n" +
+                                           "\t\t{\"@odata.context\",\"https://graph.microsoft.com/v1.0/$metadata#users/$entity\"}\r\n" +
                                            "\t}\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
@@ -737,6 +767,40 @@ namespace CodeSnippetsReflection.Test
             const string expectedSnippet = "var stream = await graphClient.Me.Drive.Items[\"{item-id}\"].Content\n" +
                                            "\t.Request()\n" +
                                            "\t.GetAsync();";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
+        //This test asserts that a request with the odata.type property overrides the parent type from the metadata
+        public void GeneratesSnippetsWithOverridenTypeInBody()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string jsonObject = "{\r\n  " +
+                                      "\"@odata.type\": \"#microsoft.graph.fileAttachment\",\r\n  " + //subclass to use to override metadata superclass
+                                      "\"name\": \"smile\",\r\n  " +
+                                      "\"contentBytes\": \"R0lGODdhEAYEAA7\"\r\n" +
+                                      "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages/AAMkpsDRVK/attachments")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var attachment = new FileAttachment\r\n" + // Use the FileAttachment class rather than the Attachment superclass from metadata 
+                                           "{\r\n" +
+                                           "\tName = \"smile\",\r\n" +
+                                           "\tContentBytes = \"R0lGODdhEAYEAA7\"\r\n" +
+                                           "};\r\n" +
+
+                                           "\r\nawait graphClient.Me.Messages[\"AAMkpsDRVK\"].Attachments\n" +
+                                           "\t.Request()\n" +
+                                           "\t.AddAsync(attachment);";
 
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
