@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using CodeSnippetsReflection.LanguageGenerators;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
@@ -74,11 +75,11 @@ namespace CodeSnippetsReflection
 
             if (edmType is IEdmNamedElement edmNamedElement)
             {
-                return edmNamedElement.Name;
+                return CommonGenerator.LowerCaseFirstLetter(edmNamedElement.Name);
             }
             
             //its not a collection/or named type so the identifier can do
-            return oDataPathSegment.Identifier;
+            return CommonGenerator.LowerCaseFirstLetter(oDataPathSegment.Identifier);
         }
 
 

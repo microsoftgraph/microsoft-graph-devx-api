@@ -719,5 +719,27 @@ namespace CodeSnippetsReflection.Test
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
+
+        [Fact]
+        //This test asserts that a request for a structural properties of type stream are generated in the normal url like fashion as
+        // streams have the request builders generated.
+        public void GeneratesSnippetsWithStructuralPropertiesOfTypeStream()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/drive/items/{item-id}/content");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var stream = await graphClient.Me.Drive.Items[\"{item-id}\"].Content\n" +
+                                           "\t.Request()\n" +
+                                           "\t.GetAsync();";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
     }
 }
