@@ -240,8 +240,9 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        //This tests asserts that we can generate snippets with $ref that adds/creates references
-        public void GeneratesSnippetsAddingReferencesToObject()
+        //This tests asserts that we can generate snippets with $ref that adds/creates references with
+        // a Uri as reference
+        public void GeneratesSnippetsAddingReferencesToDirectoryObject()
         {
             //Arrange
             LanguageExpressions expressions = new JavaExpressions();
@@ -259,11 +260,77 @@ namespace CodeSnippetsReflection.Test
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "DirectoryObject directoryObject = new DirectoryObject();\r\n" +
-                                           "directoryObject.additionalDataManager().put(\"@odata.id\", new JsonPrimitive(\"https://graph.microsoft.com/v1.0/users/{id}\"));\r\n" +
+                                           "directoryObject.Id = \"{id}\";\r\n" +
+
                                            "\r\n" +
                                            "graphClient.groups(\"{id}\").owners().references()\n" +
                                                "\t.buildRequest()\n" +
                                                "\t.post(directoryObject);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
+        //This tests asserts that we can generate snippets with $ref that adds/creates references with multiple additionalData inserted
+        public void GeneratesSnippetsAddingReferencesToObjectWithExtraAdditionalData()
+        {
+            //Arrange
+            LanguageExpressions expressions = new JavaExpressions();
+            const string messageJsonObject = "{\r\n  " +
+                                             "\"@odata.id\": \"https://graph.microsoft.com/v1.0/users/{id}\" ," +
+                                             "\"@odata.context\": \"https://graph.microsoft.com/v1.0/$metadata#users/$entity\"" +
+                                             "\r\n}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/groups/{id}/owners/$ref")
+            {
+                Content = new StringContent(messageJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "DirectoryObject directoryObject = new DirectoryObject();\r\n" +
+                                           "directoryObject.Id = \"{id}\";\r\n" +
+                                           "directoryObject.additionalDataManager().put(\"@odata.context\", new JsonPrimitive(\"https://graph.microsoft.com/v1.0/$metadata#users/$entity\"));\r\n" +
+                                           "\r\n" +
+                                           "graphClient.groups(\"{id}\").owners().references()\n" +
+                                           "\t.buildRequest()\n" +
+                                           "\t.post(directoryObject);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
+        //This tests asserts that we can generate snippets with $ref that adds/creates references with
+        // a reference that is not a Uri
+        public void GeneratesSnippetsAddingReferencesToDirectoryObjectWithNonUriReference()
+        {
+            //Arrange
+            LanguageExpressions expressions = new JavaExpressions();
+            const string messageJsonObject = "{\r\n  \"@odata.id\": \"ExampleID\"\r\n}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/groups/{id}/owners/$ref")
+            {
+                Content = new StringContent(messageJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+
+            //Act by generating the code snippet
+            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "DirectoryObject directoryObject = new DirectoryObject();\r\n" +
+                                           "directoryObject.Id = \"ExampleID\";\r\n" +
+
+                                           "\r\n" +
+                                           "graphClient.groups(\"{id}\").owners().references()\n" +
+                                           "\t.buildRequest()\n" +
+                                           "\t.post(directoryObject);";
 
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
@@ -342,5 +409,38 @@ namespace CodeSnippetsReflection.Test
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
+
+        [Fact]
+        //This test asserts that a request with the odata.type property overrides the type from the metadata
+        public void GeneratesSnippetsWithOverridenTypeInBody()
+        {
+            //Arrange
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{\r\n  " +
+                                      "\"@odata.type\": \"#microsoft.graph.fileAttachment\",\r\n  " + //subclass to use to override metadata superclass
+                                      "\"name\": \"smile\",\r\n  " +
+                                      "\"contentBytes\": \"R0lGODdhEAYEAA7\"\r\n" +
+                                      "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages/AAMkpsDRVK/attachments")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "FileAttachment attachment = new FileAttachment();\r\n" + // Use the FileAttachment class rather than the Attachment superclass from metadata 
+                                           "attachment.name = \"smile\";\r\n" +
+                                           "attachment.contentBytes = \"R0lGODdhEAYEAA7\";\r\n" +
+                                           "\r\n" +
+                                           "graphClient.me().messages(\"AAMkpsDRVK\").attachments()\n" +
+                                           "\t.buildRequest()\n" +
+                                           "\t.post(attachment);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
     }
 }
