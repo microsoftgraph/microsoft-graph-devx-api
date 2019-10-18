@@ -7,7 +7,38 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="appsettingstest.json" />
+    <None Remove="TestFiles\appsettingstest-empty.json" />
+    <None Remove="TestFiles\appsettingstest-invalid.json" />
+    <None Remove="TestFiles\permissions-test-file-v1.0_empty.json" />
+    <None Remove="TestFiles\permissions-test-file-v1.0_ver1.json" />
+    <None Remove="TestFiles\permissions-test-file-v1.0_ver2.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestFiles\appsettingstest-empty.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\appsettingstest-invalid.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\appsettingstest-valid.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\permissions-test-file-v1.0_empty.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\permissions-test-file-v1.0_ver1.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\permissions-test-file-v1.0_ver2.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="microsoft.extensions.configuration.abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
     <PackageReference Include="moq" Version="4.13.0" />
     <PackageReference Include="xunit" Version="2.4.0" />
@@ -17,6 +48,12 @@
   <ItemGroup>
     <ProjectReference Include="..\FileService\FileService.csproj" />
     <ProjectReference Include="..\GraphExplorerPermissionsService\GraphExplorerPermissionsService.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Microsoft.IdentityModel.Protocols">
+      <HintPath>..\..\..\..\..\..\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.identitymodel.protocols\5.3.0\lib\netstandard2.0\Microsoft.IdentityModel.Protocols.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
