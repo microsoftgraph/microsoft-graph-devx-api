@@ -1,10 +1,11 @@
-﻿using FileService.Interfaces;
+using FileService.Interfaces;
 using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Tavis.UriTemplates;
 
 namespace GraphExplorerPermissionsService
@@ -14,16 +15,23 @@ namespace GraphExplorerPermissionsService
         private readonly UriTemplateTable _urlTemplateTable;
         private readonly IDictionary<int, object> _scopesTable;
         private readonly IFileUtility _fileUtility;
-        private readonly string _permissionsFilePathSource;        
+        private readonly List<string> _permissionsFilePaths;        
 
         public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration)
         {
-            _urlTemplateTable = new UriTemplateTable();
-            _scopesTable = new Dictionary<int, object>();
-            _fileUtility = fileUtility;
-            _permissionsFilePathSource = configuration["Permissions:PermissionsAndScopesFilePathName"];
+            try
+            {
+                _urlTemplateTable = new UriTemplateTable();
+                _scopesTable = new Dictionary<int, object>();
+                _fileUtility = fileUtility;
+                _permissionsFilePaths = configuration.GetSection("Permissions:FilePaths").Get<List<string>>();
 
-            SeedTables();
+                SeedTables();
+            }
+            catch
+            {
+                throw;
+            }            
         }
 
         /// <summary>
@@ -33,24 +41,35 @@ namespace GraphExplorerPermissionsService
         {
             try
             {
-                string jsonString = _fileUtility.ReadFromFile(_permissionsFilePathSource).GetAwaiter().GetResult();
+                HashSet<string> uniqueRequestUrlsTable = new HashSet<string>();
+                int count = 0;
 
-                if (!string.IsNullOrEmpty(jsonString))
+                foreach (string permissionPath in _permissionsFilePaths)
                 {
-                    JObject permissionsObject = JObject.Parse(jsonString);
-                                        
-                    JToken apiPermissions = permissionsObject.First.First;
+                    string jsonString = _fileUtility.ReadFromFile(permissionPath).GetAwaiter().GetResult();
 
-                    int count = 0;
-                    foreach (JProperty property in apiPermissions)
+                    if (!string.IsNullOrEmpty(jsonString))
                     {
-                        count++;
+                        JObject permissionsObject = JObject.Parse(jsonString);
 
-                        // Add the request url
-                        _urlTemplateTable.Add(count.ToString(), new UriTemplate(property.Name));
+                        JToken apiPermissions = permissionsObject.First.First;
+                        
+                        foreach (JProperty property in apiPermissions)
+                        {
+                            // Remove any '(...)' from the request url and set to lowercase for uniformity
+                            string requestUrl = Regex.Replace(property.Name.ToLower(), @"\(.*?\)", string.Empty);
 
-                        // Add the permission scopes
-                        _scopesTable.Add(count, property.Value);
+                            if (uniqueRequestUrlsTable.Add(requestUrl))
+                            {
+                                count++;
+
+                                // Add the request url
+                                _urlTemplateTable.Add(count.ToString(), new UriTemplate(requestUrl));
+
+                                // Add the permission scopes
+                                _scopesTable.Add(count, property.Value);
+                            }
+                        }
                     }
                 }
             }
@@ -72,7 +91,7 @@ namespace GraphExplorerPermissionsService
             if (!_scopesTable.Any())
             {
                 throw new InvalidOperationException($"The permissions and scopes data sources are empty; " +
-                    $"check the source file or check whether the file path is properly set. File path: {_permissionsFilePathSource}");
+                    $"check the source file or check whether the file path is properly set. File path: {_permissionsFilePaths}");
             }
             if (string.IsNullOrEmpty(requestUrl))
             {
@@ -81,27 +100,24 @@ namespace GraphExplorerPermissionsService
 
             try
             {
+                requestUrl = Regex.Replace(requestUrl.ToLower(), @"\(.*?\)", string.Empty);
+
                 // Check if requestUrl is contained in our Url Template table
-                var resultMatch = _urlTemplateTable.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
+                TemplateMatch resultMatch = _urlTemplateTable.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
 
                 if (resultMatch == null)
                 {
                     return null;
                 }
 
-                var resultValue = (JArray)_scopesTable[int.Parse(resultMatch.Key)];
+                JArray resultValue = (JArray)_scopesTable[int.Parse(resultMatch.Key)];
 
                 string[] scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
                     .SelectToken(scopeType)?
                     .Select(s => (string)s)
                     .ToArray();
 
-                if (scopes == null || scopes.Count() == 0)
-                {
-                    return null;
-                }
-
-                return scopes;
+                return scopes ?? null;
             }
             catch (ArgumentException)
             {
