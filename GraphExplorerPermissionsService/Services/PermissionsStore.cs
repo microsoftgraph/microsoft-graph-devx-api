@@ -104,10 +104,11 @@ namespace GraphExplorerPermissionsService
 
             try
             {
-                requestUrl = Regex.Replace(requestUrl.ToLower(), @"\(.*?\)", string.Empty);
+                requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
+                requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers 
 
                 // Check if requestUrl is contained in our Url Template table
-                TemplateMatch resultMatch = _urlTemplateTable.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
+                TemplateMatch resultMatch = _urlTemplateTable.Match(new Uri(requestUrl.ToLower(), UriKind.RelativeOrAbsolute));
 
                 if (resultMatch == null)
                 {
