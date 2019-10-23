@@ -121,6 +121,20 @@
           "IdentityRiskEvent.Read.All"
         ]
       }
+    ],
+    "/lorem/ipsum/{id}": [
+      {
+        "HttpVerb": "GET",
+        "DelegatedWork": [
+          "LoremIpsum.Read.All",
+          "LoremIpsum.ReadWrite.All"
+        ],
+        "DelegatedPersonal": [],
+        "Application": [
+          "LoremIpsum.Read.All",
+          "LoremIpsum.ReadWrite.All"
+        ]
+      }
     ]
   }
 }
