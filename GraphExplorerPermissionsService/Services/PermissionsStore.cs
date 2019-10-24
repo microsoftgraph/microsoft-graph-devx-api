@@ -65,9 +65,9 @@ namespace GraphExplorerPermissionsService
             HashSet<string> uniqueRequestUrlsTable = new HashSet<string>();
             int count = 0;
 
-            foreach (string permissionPath in _permissionsFilePaths)
+            foreach (string permissionFilePath in _permissionsFilePaths)
             {
-                string jsonString = _fileUtility.ReadFromFile(permissionPath).GetAwaiter().GetResult();
+                string jsonString = _fileUtility.ReadFromFile(permissionFilePath).GetAwaiter().GetResult();
 
                 if (!string.IsNullOrEmpty(jsonString))
                 {
