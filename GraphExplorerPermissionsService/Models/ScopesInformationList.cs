@@ -9,7 +9,7 @@ namespace GraphExplorerPermissionsService.Models
     /// <summary>
     /// Defines a list which holds a collection of delegated and application <see cref="ScopeInformation"/> objects.
     /// </summary>
-    public class ScopesInformationList
+    internal class ScopesInformationList
     {
         public List<ScopeInformation> DelegatedScopesList { get; set; }
         public List<ScopeInformation> ApplicationScopesList { get; set; }
