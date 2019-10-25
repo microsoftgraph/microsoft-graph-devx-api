@@ -287,6 +287,42 @@
         "skipTest": false
     },
     {
+        "id": "9a718c8a-588d-4130-8cdf-c47c5a5e77e0",
+        "category": "Outlook Mail",
+        "method": "GET",
+        "humanName": "my inbox rules",
+        "requestUrl": "/beta/me/mailFolders/inbox/messagerules",
+        "docLink": "https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/messagerule",
+        "skipTest": false
+    },
+    {
+        "id": "41683db9-63a8-4bea-903d-6812535d478f",
+        "category": "Outlook Mail",
+        "method": "GET",
+        "humanName": "my outlook categories",
+        "requestUrl": "/beta/me/outlook/masterCategories",
+        "docLink": "https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/api/outlookuser_list_mastercategories",
+        "skipTest": false
+    },
+    {
+        "id": "ba5b9178-8dd6-408d-9fa0-451c555f096b",
+        "category": "Outlook Mail",
+        "method": "GET",
+        "humanName": "get email headers",
+        "requestUrl": "/beta/me/messages?$select=internetMessageHeaders&$top=1",
+        "docLink": "https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/message",
+        "skipTest": false
+    },
+    {
+        "id": "5375c9af-0c41-40a6-a93d-410403286f5a",
+        "category": "Outlook Mail",
+        "method": "GET",
+        "humanName": "list conference rooms",
+        "requestUrl": "/beta/me/findRooms",
+        "docLink": "https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/api/user_findrooms",
+        "skipTest": false
+    },
+    {
         "id": "38792887-68ae-493c-b2d5-5deb4febc3aa",
         "category": "Outlook Mail (beta)",
         "method": "GET",
@@ -1204,42 +1240,6 @@
         "skipTest": false
     },
     {
-        "id": "9a718c8a-588d-4130-8cdf-c47c5a5e77e0",
-        "category": "Outlook Mail",
-        "method": "GET",
-        "humanName": "my inbox rules",
-        "requestUrl": "/beta/me/mailFolders/inbox/messagerules",
-        "docLink": "https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/messagerule",
-        "skipTest": false
-    },
-    {
-        "id": "41683db9-63a8-4bea-903d-6812535d478f",
-        "category": "Outlook Mail",
-        "method": "GET",
-        "humanName": "my outlook categories",
-        "requestUrl": "/beta/me/outlook/masterCategories",
-        "docLink": "https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/api/outlookuser_list_mastercategories",
-        "skipTest": false
-    },
-    {
-        "id": "ba5b9178-8dd6-408d-9fa0-451c555f096b",
-        "category": "Outlook Mail",
-        "method": "GET",
-        "humanName": "get email headers",
-        "requestUrl": "/beta/me/messages?$select=internetMessageHeaders&$top=1",
-        "docLink": "https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/resources/message",
-        "skipTest": false
-    },
-    {
-        "id": "5375c9af-0c41-40a6-a93d-410403286f5a",
-        "category": "Outlook Mail",
-        "method": "GET",
-        "humanName": "list conference rooms",
-        "requestUrl": "/beta/me/findRooms",
-        "docLink": "https://developer.microsoft.com/en-us/graph/docs/api-reference/beta/api/user_findrooms",
-        "skipTest": false
-    },
-    {
         "id": "9f1cd907-87ed-47dc-b18d-fb19c2d1342f",
         "category": "Security",
         "method": "GET",
@@ -1572,6 +1572,91 @@
         ],
         "postBody": "{\r\n  \"targetHostName\": \"graphnotifications.sample.windows.com\",\r\n  \"appNotificationId\": \"sampleDirectToastNotification\",\r\n  \"payload\": {\r\n    \"visualContent\": {\r\n      \"title\": \"Hello World!\",\r\n      \"body\": \"Notifications are Great!\"\r\n    }\r\n  },\r\n  \"targetPolicy\": {\r\n    \"platformTypes\": [\r\n      \"windows\",\r\n      \"ios\",\r\n      \"android\"\r\n    ]\r\n  },\r\n  \"priority\": \"High\",\r\n  \"displayTimeToLive\": \"60\"\r\n}",
         "tip": "Please enable the Notifications.ReadWrite.CreatedByApp permission in order to use this query.  A visual notification is a notification that a user can see by default within the notification center of the target platform. Note - This query will only work with a sample application by default. See https://aka.ms/projectRomeSamples/ for additional info.",
+        "skipTest": false
+    },
+    {
+        "id": "ae8adc92-9f78-4065-b4b9-22572bc98492",
+        "category": "Search (beta)",
+        "method": "POST",
+        "humanName": "search messages",
+        "requestUrl": "/beta/search/query",
+        "docLink": "https://aka.ms/mssearchapi",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            }
+        ],
+        "postBody": "{\r\n    \"requests\": [\r\n      {\r\n        \"entityTypes\": [\"microsoft.graph.message\"],\r\n        \"query\": {\r\n          \"query_string\": {\r\n            \"query\": \"test\"\r\n          }\r\n        },\r\n        \"from\": 0,\r\n        \"size\" : 5\r\n     }\r\n    ]\r\n  }",
+        "tip": "enable Mail.Read",
+        "skipTest": false
+    },
+    {
+        "id": "a90002df-c4f8-4764-a55f-d25f9e2e1b77",
+        "category": "Search (beta)",
+        "method": "POST",
+        "humanName": "search events",
+        "requestUrl": "/beta/search/query",
+        "docLink": "https://aka.ms/mssearchapi",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            }
+        ],
+        "postBody": "{\r\n  \"requests\": [\r\n    {\r\n      \"entityTypes\": [\"microsoft.graph.event\"],\r\n      \"query\": {\r\n          \"query_string\": {\r\n              \"query\": \"test\"\r\n          }\r\n      },\r\n      \"from\": 0,\r\n      \"size\": 5\r\n  }]\r\n}",
+        "tip": "enable Calendars.Read",
+        "skipTest": false
+    },
+    {
+        "id": "1c82a761-980c-4966-8bde-f35a96dc163e",
+        "category": "Search (beta)",
+        "method": "POST",
+        "humanName": "search driveitems",
+        "requestUrl": "/beta/search/query",
+        "docLink": "https://aka.ms/mssearchapi",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            }
+        ],
+        "postBody": "{\r\n  \"requests\": [\r\n    {\r\n      \"entityTypes\": [\"microsoft.graph.driveItem\"],\r\n      \"query\": {\r\n        \"query_string\": {\r\n          \"query\": \"test\"\r\n        }\r\n      },\r\n      \"from\": 0,\r\n      \"size\": 25\r\n    }\r\n  ]\r\n}",
+        "tip": "enable Files.Read.All",
+        "skipTest": false
+    },
+    {
+        "id": "27e73cb0-6584-457d-af0d-f775fbe18605",
+        "category": "Search (beta)",
+        "method": "POST",
+        "humanName": "search external files",
+        "requestUrl": "/beta/search/query",
+        "docLink": "https://aka.ms/mssearchapi",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            }
+        ],
+        "postBody": "{\r\n  \"requests\": [{    \r\n    \"entityTypes\": [\"microsoft.graph.externalFile\"],    \r\n    \"query\": {\r\n      \"query_string\": {\r\n        \"query\": \"test\"\r\n      }\r\n    },\r\n    \"from\": 0,\r\n    \"size\": 25\r\n  }]\r\n}",
+        "tip": "enable ExternalItem.Read.All",
+        "skipTest": false
+    },
+    {
+        "id": "b4d2041e-376e-41db-85a9-d03afcf14e84",
+        "category": "Search (beta)",
+        "method": "POST",
+        "humanName": "search external items",
+        "requestUrl": "/beta/search/query",
+        "docLink": "https://aka.ms/mssearchapi",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            }
+        ],
+        "postBody": "{\r\n  \"requests\": [{\r\n    \"entityTypes\": [\"microsoft.graph.externalItem\"],\r\n    \"contentSources\": [\"/external/connections/connection_friendly_name\"],\r\n    \"query\": {\r\n      \"query_string\": {\r\n        \"query\": \"test\"\r\n      }\r\n    },\r\n    \"from\": 0,\r\n    \"size\": 25,\r\n    \"stored_fields\": [\r\n      \t\"number\",\r\n      \t\"shortdescription\"\r\n       ]\r\n  }]\r\n}",
+        "tip": "enable ExternalItem.Read.All",
         "skipTest": false
     }
   ]
