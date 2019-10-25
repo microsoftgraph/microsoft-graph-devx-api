@@ -1,8 +1,14 @@
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
 using FileService.Interfaces;
 using FileService.Services;
 using GraphExplorerPermissionsService;
+using GraphExplorerPermissionsService.Models;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace PermissionsService.Test
@@ -23,22 +29,28 @@ namespace PermissionsService.Test
 
         [Fact]
         public void GetRequiredPermissionScopesGivenAnExistingRequestUrl()
-        {            
+        {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
-
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);                      
+            
             // Act
-            string[] result = permissionsStore.GetScopes("/security/alerts/{alert_id}");
-
+            List<ScopeInformation> result = permissionsStore.GetScopes("/security/alerts/{alert_id}");
+                        
             // Assert
             Assert.Collection(result,
                 item =>
                 {
-                    item.Equals("SecurityEvents.Read.All");
+                    Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
+                    Assert.Equal("Read your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events on your behalf.", item.Description);
+                    Assert.True(item.IsAdmin);
                 },
                 item =>
                 {
-                    item.Equals("SecurityEvents.ReadWrite.All");
+                    Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
+                    Assert.Equal("Read and update your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events on your behalf. Also allows you to update editable properties in security events.", item.Description);
+                    Assert.True(item.IsAdmin);
                 });
         }
 
@@ -49,7 +61,7 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
 
             // Act
-            string[] result = permissionsStore.GetScopes("/foo/bar/{alert_id}"); // non-existent request url
+            List<ScopeInformation> result = permissionsStore.GetScopes("/foo/bar/{alert_id}"); // non-existent request url
 
             // Assert that returned result is null
             Assert.Null(result);
@@ -62,7 +74,7 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
 
             // Act
-            string[] result = permissionsStore.GetScopes("/security/alerts/{alert_id}", "Foobar"); // non-existent http verb
+            List<ScopeInformation> result = permissionsStore.GetScopes("/security/alerts/{alert_id}", "Foobar"); // non-existent http verb
 
             // Assert that returned result is null
             Assert.Null(result);
@@ -75,7 +87,7 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
 
             // Act
-            string[] result = permissionsStore.GetScopes("/security/alerts/{alert_id}", "PATCH", "Foobar"); // non-existent scope type
+            List<ScopeInformation> result = permissionsStore.GetScopes("/security/alerts/{alert_id}", "PATCH", "Foobar"); // non-existent scope type
 
             // Assert that returned result is null
             Assert.Null(result);
@@ -88,9 +100,9 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
 
             // Act by requesting scopes for the 'DelegatedPersonal' scope type
-            string[] result = permissionsStore.GetScopes("/security/alerts/{alert_id}", "GET", "DelegatedPersonal");
+            List<ScopeInformation> result = permissionsStore.GetScopes("/security/alerts/{alert_id}", "GET", "DelegatedPersonal");
 
-            // Assert that returned result is null
+            // Assert that returned result is empty
             Assert.Empty(result);
         }
 
@@ -102,21 +114,37 @@ namespace PermissionsService.Test
 
             /* Act */
 
-            string[] result1 = permissionsStore.GetScopes("/users/{id}/calendars/{id}", "GET", "DelegatedWork"); // permission in ver1 doc.
-            string[] result2 = permissionsStore.GetScopes("/anonymousipriskevents/{id}", "GET", "DelegatedWork"); // permission in ver2 doc.
+            List<ScopeInformation> result1 = permissionsStore.GetScopes("/users/{id}/calendars/{id}", "GET", "DelegatedWork"); // permission in ver1 doc.
+            List<ScopeInformation> result2 = permissionsStore.GetScopes("/anonymousipriskevents/{id}", "GET", "DelegatedWork"); // permission in ver2 doc.
+            List<ScopeInformation> result3 = permissionsStore.GetScopes("/security/alerts/{id}", "PATCH", "Application"); // permission in ver1 doc.
 
             /* Assert */
 
             Assert.Collection(result1,
                 item =>
                 {
-                    item.Equals("Calendars.Read");
+                    Assert.Equal("Calendars.Read", item.ScopeName);
+                    Assert.Equal("Read your calendars ", item.DisplayName);
+                    Assert.Equal("Allows the app to read events in your calendars. ", item.Description);
+                    Assert.False(item.IsAdmin);
                 });
 
             Assert.Collection(result2,
               item =>
               {
-                  item.Equals("IdentityRiskEvent.Read.All");
+                  Assert.Equal("IdentityRiskEvent.Read.All", item.ScopeName);
+                  Assert.Equal("Read identity risk event information", item.DisplayName);
+                  Assert.Equal("Allows the app to read identity risk event information for all users in your organization on behalf of the signed-in user. ", item.Description);
+                  Assert.True(item.IsAdmin);
+              });
+
+            Assert.Collection(result3,
+              item =>
+              {
+                  Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
+                  Assert.Equal("Read and update your organization's security events", item.DisplayName);
+                  Assert.Equal("Allows the app to read your organization's security events without a signed-in user. Also allows the app to update editable properties in security events.", item.Description);
+                  Assert.False(item.IsAdmin);
               });
         }
 
@@ -128,14 +156,44 @@ namespace PermissionsService.Test
 
             // Act
             // RequestUrl in permission file: "/workbook/worksheets/{id}/charts/{id}/image(width=640)"
-            string[] result = permissionsStore.GetScopes("/workbook/worksheets/{id}/charts/{id}/image", "GET", "DelegatedWork");
+            List<ScopeInformation> result = permissionsStore.GetScopes("/workbook/worksheets/{id}/charts/{id}/image", "GET", "DelegatedWork");
 
             /* Assert */
 
             Assert.Collection(result,
                 item =>
                 {
-                    item.Equals("Files.ReadWrite");
+                    Assert.Equal("Files.ReadWrite", item.ScopeName);
+                    Assert.Equal("Have full access to your files", item.DisplayName);
+                    Assert.Equal("Allows the app to read, create, update, and delete your files.", item.Description);
+                    Assert.False(item.IsAdmin);
+                });
+        }
+
+        [Fact]
+        public void ReturnScopesForRequestUrlWhoseScopesInformationNotAvailable()
+        {
+            // Arrange
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+
+            // Act
+            List<ScopeInformation> result = permissionsStore.GetScopes("/lorem/ipsum/{id}"); // bogus permission whose scopes info are unavailable
+
+            // Assert
+            Assert.Collection(result,
+                item =>
+                {
+                    Assert.Equal("LoremIpsum.Read.All", item.ScopeName);
+                    Assert.Null(item.DisplayName);
+                    Assert.Null(item.Description);
+                    Assert.False(item.IsAdmin);
+                },
+                item =>
+                {
+                    Assert.Equal("LoremIpsum.ReadWrite.All", item.ScopeName);
+                    Assert.Null(item.DisplayName);
+                    Assert.Null(item.Description);
+                    Assert.False(item.IsAdmin);
                 });
         }
 
@@ -182,6 +240,6 @@ namespace PermissionsService.Test
 
             Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopes(nullRequestUrl)); // null requestUrl arg.
             Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopes(emptyRequestUrl)); // empty requestUrl arg.
-        }       
+        }
     }
 }
