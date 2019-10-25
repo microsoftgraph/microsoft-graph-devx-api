@@ -34,6 +34,7 @@ namespace GraphExplorerSamplesService.Models
                 "User Activities",
                 "Applications (beta)",
                 "Notifications (beta)",
+                "Search (beta)"
             };
 
         public static LinkedList<string> CategoriesLinkedList = new LinkedList<string>(categories);
