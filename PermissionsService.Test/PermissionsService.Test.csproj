@@ -13,6 +13,7 @@
     <None Remove="TestFiles\permissions-test-file-v1.0_empty.json" />
     <None Remove="TestFiles\permissions-test-file-v1.0_ver1.json" />
     <None Remove="TestFiles\permissions-test-file-v1.0_ver2.json" />
+    <None Remove="TestFiles\ScopesInformationList-test-file.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +33,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="TestFiles\permissions-test-file-v1.0_ver2.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\ScopesInformationList-test-file.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
