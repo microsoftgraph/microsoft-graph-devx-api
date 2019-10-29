@@ -251,9 +251,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         {
                             var value = JsonConvert.SerializeObject(jToken);
                             var newPath = path.Append(key).ToList();//add new identifier to the path
-                            if (key.Contains("@odata"))
+                            if (key.Contains("@odata") || key.StartsWith("@"))//sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
                             {
-                                stringBuilder = GenerateCSharpOdataSection(stringBuilder, key, jToken.Value<string>(), className, tabSpace);
+                                stringBuilder = GenerateCSharpAdditionalDataSection(stringBuilder, key, jToken.Value<string>(), className, tabSpace);
                                 continue;
                             }
                             switch (jToken.Type)
@@ -336,7 +336,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Generates language specific code relate to various odata properties
+        /// Generates language specific code relate to add special properties to the AdditionalData dictionary
         /// </summary>
         /// <param name="stringBuilder">The original string builder containing code generated so far</param>
         /// <param name="key">The odata key/property</param>
@@ -344,7 +344,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="className">The class name for the entity needing modification</param>
         /// <param name="tabSpace">Tab space to use for formatting the code generated</param>
         /// <returns>a string builder with the relevant odata code added</returns>
-        private static StringBuilder GenerateCSharpOdataSection(StringBuilder stringBuilder, string key, string value, string className, string tabSpace)
+        private static StringBuilder GenerateCSharpAdditionalDataSection(StringBuilder stringBuilder, string key, string value, string className, string tabSpace)
         {
             switch (key)
             {

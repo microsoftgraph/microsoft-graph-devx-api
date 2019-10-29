@@ -805,5 +805,45 @@ namespace CodeSnippetsReflection.Test
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
+
+        [Fact]
+        // This tests asserts that a type beginning wirth "@" character is also added to the AdditionalData bag
+        public void GeneratesSnippetsWithTypesStartingWithTheAtSymbol()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string jsonObject = "{\r\n" +
+                                      "  \"name\": \"New Folder\",\r\n" +
+                                      "  \"folder\": { },\r\n" +
+                                      "  \"@microsoft.graph.conflictBehavior\": \"rename\"\r\n" +//to be added to the AdditionalData
+                                      "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/root/children")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var driveItem = new DriveItem\r\n" +
+                                           "{\r\n" +
+                                                "\tName = \"New Folder\",\r\n" +
+                                               "\tFolder = new Folder\r\n" +
+                                               "\t{\r\n" +
+                                               "\t},\r\n" +
+                                               "\tAdditionalData = new Dictionary<string, object>()\r\n" +
+                                               "\t{\r\n" +
+                                                    "\t\t{\"@microsoft.graph.conflictBehavior\",\"rename\"}\r\n" +
+                                               "\t}\r\n" +
+                                           "};\r\n" +
+                                           "\r\n" +
+                                           "await graphClient.Me.Drive.Root.Children\n" +
+                                               "\t.Request()\n" +
+                                               "\t.AddAsync(driveItem);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
     }
 }
