@@ -265,7 +265,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
 
         /// <summary>
-        /// Generates language specific code relate to add special properties to the AdditionalData dictionary
+        /// Generates language specific code to add special properties to the AdditionalData dictionary
         /// </summary>
         /// <param name="stringBuilder">The original string builder containing code generated so far</param>
         /// <param name="key">The odata key/property</param>
