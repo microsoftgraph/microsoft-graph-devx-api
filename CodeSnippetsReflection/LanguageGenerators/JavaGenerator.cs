@@ -181,9 +181,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             var value = JsonConvert.SerializeObject(jToken);
                             var newPath = path.Append(key).ToList();//add new identifier to the path
                             
-                            if (key.Contains("@odata"))
+                            if (key.Contains("@odata") || key.StartsWith("@"))//sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
                             {
-                                stringBuilder = GenerateJavaOdataSection(stringBuilder, key, jToken.ToString(), className, currentVarName);
+                                stringBuilder = GenerateJavaAdditionalDataSection(stringBuilder, key, jToken.ToString(), className, currentVarName);
                                 continue;
                             }
                             switch (jToken.Type)
@@ -265,7 +265,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
 
         /// <summary>
-        /// Generates language specific code relate to various odata properties
+        /// Generates language specific code to add special properties to the AdditionalData dictionary
         /// </summary>
         /// <param name="stringBuilder">The original string builder containing code generated so far</param>
         /// <param name="key">The odata key/property</param>
@@ -273,7 +273,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="className">The class name for the entity needing modification</param>
         /// <param name="currentVarName">The variable name of the current object in use </param>
         /// <returns>a string builder with the relevant odata code added</returns>
-        private static StringBuilder GenerateJavaOdataSection(StringBuilder stringBuilder, string key, string value, string className, string currentVarName)
+        private static StringBuilder GenerateJavaAdditionalDataSection(StringBuilder stringBuilder, string key, string value, string className, string currentVarName)
         {
             switch (key)
             {

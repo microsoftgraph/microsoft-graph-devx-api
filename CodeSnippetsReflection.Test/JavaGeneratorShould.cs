@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Xml;
 using CodeSnippetsReflection.LanguageGenerators;
@@ -442,5 +442,39 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
 
+        [Fact]
+        // This tests asserts that a type beginning with "@" character is also added to the AdditionalData bag
+        public void GeneratesSnippetsWithTypesStartingWithTheAtSymbol()
+        {
+            //Arrange
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{\r\n" +
+                                      "  \"name\": \"New Folder\",\r\n" +
+                                      "  \"folder\": { },\r\n" +
+                                      "  \"@microsoft.graph.conflictBehavior\": \"rename\"\r\n" + //to be added to the AdditionalData
+                                      "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/root/children")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "DriveItem driveItem = new DriveItem();\r\n" +
+                                           "driveItem.name = \"New Folder\";\r\n" +
+                                           "Folder folder = new Folder();\r\n" +
+                                           "driveItem.folder = folder;\r\n" +
+                                           "driveItem.additionalDataManager().put(\"@microsoft.graph.conflictBehavior\", new JsonPrimitive(\"rename\"));\r\n" +
+                                           "\r\n" +
+                                           "graphClient.me().drive().root().children()\n" +
+                                                "\t.buildRequest()\n" +
+                                                "\t.post(driveItem);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
     }
 }
