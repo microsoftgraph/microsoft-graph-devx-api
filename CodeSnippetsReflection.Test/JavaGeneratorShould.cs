@@ -443,7 +443,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        // This tests asserts that a type beginning wirth "@" character is also added to the AdditionalData bag
+        // This tests asserts that a type beginning with "@" character is also added to the AdditionalData bag
         public void GeneratesSnippetsWithTypesStartingWithTheAtSymbol()
         {
             //Arrange
