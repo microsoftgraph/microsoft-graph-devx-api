@@ -1,7 +1,6 @@
 using GraphExplorerSamplesService.Models;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 
 namespace GraphExplorerSamplesService.Services
 {
