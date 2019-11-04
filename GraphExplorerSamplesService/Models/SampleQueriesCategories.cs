@@ -34,6 +34,7 @@ namespace GraphExplorerSamplesService.Models
                 "User Activities",
                 "Applications (beta)",
                 "Notifications (beta)",
+                "Search (beta)"
             };
 
         public static List<string> CategoriesList = new List<string>(categories);

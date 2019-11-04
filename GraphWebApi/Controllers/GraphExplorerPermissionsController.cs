@@ -1,5 +1,11 @@
-﻿using System;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using System;
+using System.Collections.Generic;
 using GraphExplorerPermissionsService.Interfaces;
+using GraphExplorerPermissionsService.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +29,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                string[] result = null;
+                List<ScopeInformation> result = null;
 
                 result = _permissionsStore.GetScopes(requestUrl, method, scopeType);
 
