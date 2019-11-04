@@ -161,7 +161,7 @@ namespace GraphExplorerSamplesService.Services
         /// <see cref="SampleQueriesList"/>.</returns>
         private static int GetNewSampleQueryIndex(SampleQueriesList sampleQueriesList, SampleQueryModel sampleQuery)
         {
-            // The current sample category will be the starting point of the linked list of categories
+            // The current sample category will be the starting point of the list of categories
             string currentCategory = SampleQueriesCategories.CategoriesList.Find(x => x == sampleQuery.Category);
 
             if (sampleQueriesList.SampleQueries.Count == 0)
