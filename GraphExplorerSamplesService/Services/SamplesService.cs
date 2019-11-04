@@ -156,6 +156,8 @@ namespace GraphExplorerSamplesService.Services
         /// Determines the zero-based index value in the instance of a <see cref="SampleQueriesList"/> where a given <see cref="SampleQueryModel"/> 
         /// object should be inserted.
         /// </summary>
+        /// <param name="sampleQueriesList">The instance of a <see cref="SampleQueriesList"/> where the given <see cref="SampleQueryModel"/> 
+        /// object should be inserted into.
         /// <param name="sampleQuery">The <see cref="SampleQueryModel"/> object which needs to be inserted.</param>
         /// <returns>The zero-based index where the <see cref="SampleQueryModel"/> object needs to be inserted into in an instance of a
         /// <see cref="SampleQueriesList"/>.</returns>
@@ -184,6 +186,6 @@ namespace GraphExplorerSamplesService.Services
             /* All sample queries categories in the list have been traversed with no match found; 
              * this is currently the top-most ranked sample query category in the list of sample queries */
             return 0;
-        }
+        }        
     }
 }
