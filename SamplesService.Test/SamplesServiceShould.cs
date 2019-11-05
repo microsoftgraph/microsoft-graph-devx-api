@@ -549,7 +549,7 @@ namespace SamplesService.Test
             // Assert
             Assert.NotEmpty(sampleQueriesList.SampleQueries);
         }
-
+               
         [Fact]
         public void AddSampleQueryIntoListOfSampleQueriesInHierarchicalOrderOfCategories()
         {
@@ -617,6 +617,68 @@ namespace SamplesService.Test
 
             // Assert - the new sample query should be inserted at index[2] of the list of sample queries
             Assert.Equal(sampleQueryModel.Id, newSampleQueriesList.SampleQueries[2].Id);
+        }
+
+        [Fact]
+        public void AddSampleQueryToTopOfListOfSampleQueriesIfHighestRankedSampleQueryCategory()
+        {
+            /* Arrange */
+
+            // Create a list of sample queries
+            List<SampleQueryModel> sampleQueries = new List<SampleQueryModel>()
+            {               
+                new SampleQueryModel()
+                {
+                    Id = Guid.Parse("7d5bac53-2e16-4162-b78f-7da13e77da1b"),
+                    Category = "Groups",
+                    Method = SampleQueryModel.HttpMethods.GET,
+                    HumanName = "all groups in my organization",
+                    RequestUrl = "/v1.0/groups",
+                    DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/group",
+                    SkipTest = false
+                },
+                 new SampleQueryModel()
+                {
+                    Id = Guid.Parse("48b62369-3974-4783-a5c6-ae4ea2d8ae1b"),
+                    Category = "Outlook Mail",
+                    Method = SampleQueryModel.HttpMethods.GET,
+                    HumanName = "my high important mail",
+                    RequestUrl = "/v1.0/me/messages?$filter=importance eq 'high'",
+                    DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_messages",
+                    SkipTest = false
+                }
+            };
+
+            SampleQueriesList sampleQueriesList = new SampleQueriesList()
+            {
+                SampleQueries = sampleQueries
+            };
+
+            /* Create a new 'Users' sample query model object that will be inserted into  
+             * the list of sample queries as the highest ranked sample category
+             */
+            SampleQueryModel sampleQueryModel = new SampleQueryModel()
+            {
+                Id = Guid.Parse("3482cc10-f2be-40fc-bcdb-d3ac35f3e4c3"),
+                Category = "Users",
+                Method = SampleQueryModel.HttpMethods.GET,
+                HumanName = "my manager",
+                RequestUrl = "/v1.0/me/manager",
+                DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_manager",
+                SkipTest = false
+            };
+
+            /* Act */
+
+            // Assign a new Id to the new sample query
+            sampleQueryModel.Id = Guid.NewGuid();
+
+            // Add the new sample query to the list of sample queries
+            SampleQueriesList newSampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList
+                (sampleQueriesList, sampleQueryModel);
+
+            // Assert - the new sample query should be inserted at index[0] of the list of sample queries
+            Assert.Equal(sampleQueryModel.Id, newSampleQueriesList.SampleQueries[0].Id);
         }
 
         [Fact]

@@ -3,7 +3,7 @@
 namespace GraphExplorerSamplesService.Models
 {
     /// <summary>
-    /// Contains the linked list of sample queries categories defined in hierarchical order.
+    /// Contains the list of sample queries categories defined in hierarchical order.
     /// </summary>
     internal class SampleQueriesCategories
     {
@@ -37,6 +37,6 @@ namespace GraphExplorerSamplesService.Models
                 "Search (beta)"
             };
 
-        public static LinkedList<string> CategoriesLinkedList = new LinkedList<string>(categories);
+        public static List<string> CategoriesList = new List<string>(categories);
     }
 }

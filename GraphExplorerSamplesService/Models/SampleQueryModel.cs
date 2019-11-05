@@ -30,7 +30,7 @@ namespace GraphExplorerSamplesService.Models
             set
             {
                 // Remove all leading and trailing whitespaces before comparing
-                if (!SampleQueriesCategories.CategoriesLinkedList.Contains(value.Trim(' ')))
+                if (!SampleQueriesCategories.CategoriesList.Contains(value.Trim(' ')))
                 {
                     throw new ArgumentOutOfRangeException(nameof(Category), 
                         "The category specified does not exist in the defined list of categories.\r\nAllowable values:\r\n" + BuildStringOfCategories());
@@ -113,7 +113,7 @@ namespace GraphExplorerSamplesService.Models
         {
             StringBuilder categoriesStringCollection = new StringBuilder();
 
-            foreach (string category in SampleQueriesCategories.CategoriesLinkedList)
+            foreach (string category in SampleQueriesCategories.CategoriesList)
             {
                 categoriesStringCollection.Append(category + "\r\n");
             }
