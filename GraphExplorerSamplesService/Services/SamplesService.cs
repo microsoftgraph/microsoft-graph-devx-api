@@ -1,6 +1,8 @@
 using GraphExplorerSamplesService.Models;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GraphExplorerSamplesService.Services
 {
@@ -22,7 +24,7 @@ namespace GraphExplorerSamplesService.Services
             }
 
             SampleQueriesList sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(jsonString);
-            return sampleQueriesList;
+            return OrderSamplesQueries(sampleQueriesList);
         }
 
         /// <summary>
@@ -168,7 +170,7 @@ namespace GraphExplorerSamplesService.Services
 
             if (sampleQueriesList.SampleQueries.Count == 0)
             {                
-                return 0; // the list is empty, this will be the first sample query
+                return 0; // the list is empty; this will be the first sample query
             }
 
             // Search for this category from the list of sample queries
@@ -184,8 +186,32 @@ namespace GraphExplorerSamplesService.Services
             }
 
             /* All sample queries categories in the list have been traversed with no match found; 
-             * this is currently the top-most ranked sample query category in the list of sample queries */
+             * Add it to the top of the list */
             return 0;
-        }        
+        }   
+        
+        /// <summary>
+        /// Orders the list of sample queries alphabetically based on their category names with 'Getting Started' as the top-most sample query.
+        /// </summary>
+        /// <param name="sampleQueries">An instance of <see cref="SampleQueriesList"/> whose list of sample queries need to be ordered.</param>
+        /// <returns>An instance of <see cref="SampleQueriesList"/> whose list of sample queries have been ordered alphabetically with 'Getting Started' 
+        /// as the top-most sample query.</returns>
+        private static SampleQueriesList OrderSamplesQueries(SampleQueriesList sampleQueries)
+        {
+            List<SampleQueryModel> sortedSampleQueries = sampleQueries.SampleQueries
+                .OrderBy(s => s.Category)
+                .SkipWhile(s => s.Category == "Getting Started") // skipped, as it should always be the top-most sample query in the list
+                .ToList();
+
+            SampleQueriesList sortedSampleQueriesList = new SampleQueriesList();
+
+            // Add back 'Getting Started' to the top of the list
+            sortedSampleQueriesList.SampleQueries.AddRange(sampleQueries.SampleQueries.FindAll(s => s.Category == "Getting Started"));
+
+            // Add the rest of the sample queries
+            sortedSampleQueriesList.SampleQueries.AddRange(sortedSampleQueries);
+
+            return sortedSampleQueriesList;
+        }
     }
 }
