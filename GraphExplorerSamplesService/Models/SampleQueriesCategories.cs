@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GraphExplorerSamplesService.Models
 {
@@ -9,8 +10,6 @@ namespace GraphExplorerSamplesService.Models
     {
         private static readonly string[] categories =
            {
-                // Order is important
-                "Getting Started",
                 "Users",
                 "Groups",
                 "Outlook Mail",
@@ -37,6 +36,6 @@ namespace GraphExplorerSamplesService.Models
                 "Search (beta)"
             };
 
-        public static List<string> CategoriesList = new List<string>(categories);
+         public static List<string> CategoriesList = new List<string>(categories.OrderBy(s => s).Prepend("Getting Started"));
     }
 }
