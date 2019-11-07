@@ -8,15 +8,6 @@ servers:
   
 paths:
   /GraphExplorerSnippets:
-    get:
-      parameters: 
-      - name: arg
-        in: query
-        schema:
-          type: string
-      responses:
-        200:
-          description: Ok
     post:
       parameters:
       - name: lang
@@ -25,7 +16,9 @@ paths:
           type: string
           enum:
             - C#
-            - javascript
+            - Javascript
+            - Java
+            - Objective-C
           default: C#
       requestBody:
         description: HTTP request message to be translated into code  
