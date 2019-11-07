@@ -3,10 +3,20 @@ info:
   title: "Graph Explorer API" 
   version: "1.0.0" 
 servers:
-  - url: https://localhost:3000 
-  - url: https://graphexplorerapi.azurewebsites.net
+  - url: https://graphexplorerapi.azurewebsites.net/api
+  - url: https://localhost:44399/api
+  
 paths:
-  /snippetGenerator:
+  /GraphExplorerSnippets:
+    get:
+      parameters: 
+      - name: arg
+        in: query
+        schema:
+          type: string
+      responses:
+        200:
+          description: Ok
     post:
       parameters:
       - name: lang
@@ -65,7 +75,9 @@ paths:
                 "C# GetUserProfile": 
                   value: | 
                     var user = await client.Me.Request().GetAsync();
-  /samples:
+        400:
+          description: Bad request
+  /GraphExplorerSamples:
     get:
       description: Get all sample queries or filter by category, humanName or tip. 
       parameters:
@@ -109,9 +121,11 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/sample'
+        403:
+          description: Forbidden
         500:
           description: Internal server error
-  /samples/{id}:
+  /GraphExplorerSamples/{id}:
     get:
       description: Get a specific sample query by its Id
       parameters:
@@ -143,7 +157,7 @@ paths:
         content:
           'application/json':
             schema:
-              $ref: "#/components/schemas/sample"
+              $ref: '#/components/schemas/sample'
             example:
               {
                 "category": "Security",
@@ -158,9 +172,11 @@ paths:
         200:
           description: Ok
           content:
-            "application/json":
+            'application/json':
               schema:
-                $ref: "#/components/schemas/sample"
+                $ref: '#/components/schemas/sample'
+        403:
+          description: Forbidden
         404:
           description: Not found
         500:
@@ -177,11 +193,13 @@ paths:
       responses:
         204:
           description: Deleted successfully
+        403:
+          description: Forbidden
         404:
           description: Not found
         500:
           description: Internal server error
-  /permissions:  #  GET /permissions?requesturl=/me/memberof&method=GET&scopetype=DelegatedWork
+  /GraphExplorerPermissions:  #  GET /permissions?requesturl=/me/memberof&method=GET&scopetype=DelegatedWork
     get:
       parameters:
         - name: requestUrl
@@ -196,7 +214,7 @@ paths:
             type: string
         - name: scopeType
           in: query
-          required: false
+          required: true
           schema:
             type: string
       responses:
@@ -234,7 +252,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /sampleQueriesPolicies:
+  /GraphExplorerSamplesAdmin:
     get:
       parameters:
         - name: userPrincipalName
@@ -258,13 +276,15 @@ paths:
                   type: string
         404:
           description: Not found
+        500:
+          description: Internal server error
     post:
       description: Adds a new user claim to a category policy
       requestBody:
         content:
           'application/json':
             schema:
-              $ref: "#/components/schemas/categoryPolicy"
+              $ref: '#/components/schemas/categoryPolicy'
             example:
               {
                 "categoryName": "Getting Started",
@@ -293,16 +313,20 @@ paths:
         201:
           description: Returns an array of all the user claims along with the newly created claim in the category policy
           content:
-            "application/json":
+            'application/json':
               schema:
-                $ref: "#/components/schemas/categoryPolicy"
+                $ref: '#/components/schemas/categoryPolicy'
+        403:
+          description: Forbidden
+        500:
+          description: Internal server error
     put:
       description: Updates a user claim in a category policy
       requestBody:
         content:
           'application/json':
             schema:
-              $ref: "#/components/schemas/categoryPolicy"
+              $ref: '#/components/schemas/categoryPolicy'
             example: 
               {
                 "categoryName": "Getting Started",
@@ -331,9 +355,17 @@ paths:
         200:
           description: Ok
           content:
-              "application/json":
+              'application/json':
                 schema:
                   $ref: '#/components/schemas/categoryPolicy'
+        400:
+          description: Bad request
+        403:
+          description: Forbidden
+        404:
+          description: Not found
+        500:
+          description: Internal server error
     delete:
       parameters:
         - name: userPrincipalName
@@ -349,6 +381,8 @@ paths:
       responses:
         204:
           description: Deleted successfully
+        403:
+          description: Forbidden
         404:
           description: Not found
         500:
@@ -358,6 +392,7 @@ components:
     sample:
       type: object
       required:
+        - category
         - method
         - humanName
         - requestUrl
