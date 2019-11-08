@@ -245,7 +245,6 @@ namespace SamplesService.Test
 
             string originalPassword = (string)originalPostBodyObject["passwordProfile"]["password"];
 
-
             /* Act */
 
             SampleQueriesList sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(jsonString);
