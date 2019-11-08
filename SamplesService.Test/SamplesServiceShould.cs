@@ -3,6 +3,7 @@ using System;
 using Xunit;
 using System.Collections.Generic;
 using GraphExplorerSamplesService.Models;
+using Newtonsoft.Json.Linq;
 
 namespace SamplesService.Test
 {
@@ -157,7 +158,7 @@ namespace SamplesService.Test
             /* Assert that the sample queries are returned in alphabetical order of their category names (with 'Getting Started' at the top-most)
              * and with all details correct */
 
-            Assert.Collection(sampleQueriesList.SampleQueries,
+          Assert.Collection(sampleQueriesList.SampleQueries,
                 item =>
                 {
                     Assert.Equal(Guid.Parse("F1E6738D-7C9C-4DB7-B5EC-1C92DADD03CB"), item.Id);
@@ -199,6 +200,70 @@ namespace SamplesService.Test
                     Assert.NotEmpty(item.Headers);
                     Assert.NotEmpty(item.PostBody);
                     Assert.False(item.SkipTest);
+                });
+        }
+
+        [Fact]
+        public void ReplaceDefaultPasswordWithUniqueValueInPostBodyTemplateOfUsersSampleQuery()
+        {
+            /* Act */
+
+            string jsonString = @"{
+                   ""SampleQueries"" :
+                    [                        
+                        {
+                        ""id"": ""F1E6738D-7C9C-4DB7-B5EC-1C92DADD03CB"",
+                        ""category"": ""Users"",
+                        ""method"": ""POST"",
+                        ""humanName"": ""create user"",
+                        ""requestUrl"": ""/v1.0/users"",
+                        ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_post_users"",
+                        ""headers"": [
+                            {
+                                ""name"": ""Content-type"",
+                                ""value"": ""application/json""
+                            }
+                        ],
+                        ""postBody"": ""{\r\n \""accountEnabled\"": true,\r\n \""city\"": \""Seattle\"",\r\n \""country\"": \""United States\"",\r\n
+                        \""department\"": \""Sales & Marketing\"",\r\n\""displayName\"": \""Melissa Darrow\"",\r\n\""givenName\"": \""Melissa\"",\r\n 
+                        \""jobTitle\"": \""Marketing Director\"",\r\n\""mailNickname\"": \""MelissaD\"",\r\n \""passwordPolicies\"": 
+                        \""DisablePasswordExpiration\"",\r\n \""passwordProfile\"": {\r\n \""password\"": \""Test1234\"",\r\n
+                        \""forceChangePasswordNextSignIn\"": false\r\n},\r\n \""officeLocation\"": \""131/1105\"",\r\n\""postalCode\"": \""98052\"",\r\n
+                        \""preferredLanguage\"": \""en -US\"",\r\n \""state\"": \""WA\"",\r\n \""streetAddress\"": \""9256 Towne Center Dr., Suite 400\"",\r\n 
+                        \""surname\"": \""Darrow\"",\r\n \""mobilePhone\"": \"" + 1 206 555 0110\"",\r\n \""usageLocation\"": \""US\"",\r\n \""userPrincipalName\"": 
+                        \""MelissaD@{domain}\""\r\n }"",
+                        ""skipTest"": false
+                        }
+                    ]
+            }";
+
+            /* Extract the original password from the passwordProfile key in the postBody template of the Users sample query. */
+
+            JObject sampleQueryObject = JObject.Parse(jsonString);
+
+            JObject originalPostBodyObject = JObject.Parse(sampleQueryObject.SelectToken("SampleQueries[0].postBody").ToString());
+
+            string originalPassword = (string)originalPostBodyObject["passwordProfile"]["password"];
+
+
+            /* Act */
+
+            SampleQueriesList sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(jsonString);
+
+            /* Extract the newly generated password. */
+
+            SampleQueryModel sampleQuery = sampleQueriesList.SampleQueries
+                .Find(s => s.Category == "Users" && s.Method == SampleQueryModel.HttpMethods.POST);
+
+            JObject newPostBodyObject = JObject.Parse(sampleQuery.PostBody);
+            string newPassword = (string)newPostBodyObject["passwordProfile"]["password"];
+
+            // Assert that the newly generated password is of type Guid and is unique
+            Assert.Collection(sampleQueriesList.SampleQueries,                
+                item =>
+                {
+                    Assert.IsType<Guid>(Guid.Parse(newPassword));
+                    Assert.NotEqual(originalPassword, newPassword);
                 });
         }
 
