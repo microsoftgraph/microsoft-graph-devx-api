@@ -1,14 +1,15 @@
 openapi: 3.0.0
-info:
-  title: "Graph Explorer API"
-  version: "1.0.0"
+info: 
+  title: "Graph Explorer API" 
+  version: "1.0.0" 
 servers:
   - url: https://graphexplorerapi.azurewebsites.net/api
   - url: https://localhost:44399/api
-
+  
 paths:
   /GraphExplorerSnippets:
     post:
+      description: Obtains a language code snippet from an example HttpRequestMessage sent out to the graph endpoint
       parameters:
       - name: lang
         in: query
@@ -23,17 +24,17 @@ paths:
       requestBody:
         description: HTTP request message to be translated into code.
         content:
-          'text/message;version=1.1;msgtype=request':
-            examples:
+          'text/message;version=1.1;msgtype=request':  
+            examples: 
               GetUserProfile:
                 value: |
-                    GET /v1.0/users/joe@tenant.com HTTP/1.1
-                    Host: https://graph.microsoft.com
+                    GET /v1.0/users/joe@tenant.com HTTP/1.1 
+                    Host: https://graph.microsoft.com  
                     Accept: application/json
               SendMail:
-                value: |
-                  POST /v1.0/me/sendMail
-                  Host: https://graph.microsoft.com
+                value: |  
+                  POST /v1.0/me/sendMail 
+                  Host: https://graph.microsoft.com 
                   Content-type: application/json
                   {
                     "message": {
@@ -61,18 +62,18 @@ paths:
                   }
       responses:
         200:
-         description: Generated language snippet
-         content:
-           "text/plain":
-              examples:
-                "C# GetUserProfile":
-                  value: |
+         description: Generated language snippet  
+         content: 
+           "text/plain":  
+              examples: 
+                "C# GetUserProfile": 
+                  value: | 
                     var user = await client.Me.Request().GetAsync();
         400:
           description: Bad request
   /GraphExplorerSamples:
     get:
-      description: Get all sample queries or filter by category, humanName or tip.
+      description: Get all sample queries or filter by category, humanName or tip. 
       parameters:
         - name: search   # /samples?search=user
           in: query
@@ -83,10 +84,10 @@ paths:
         200:
           description: Ok
           content:
-            'application/json':
+            'application/json': 
               schema:
                 type: array
-                items:
+                items: 
                   $ref: '#/components/schemas/sample'
         500:
           description: Internal server error
@@ -108,7 +109,7 @@ paths:
                 "skipTest": false
               }
       responses:
-        201:
+        201: 
           description: Returns created sample with provisioned Id value.
           content:
             'application/json':
@@ -174,7 +175,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-
+            
     delete:
       description: Delete a specific sample query by its Id.
       parameters:
@@ -218,26 +219,26 @@ paths:
             application/json:
               schema:
                 type: array
-                items:
+                items: 
                   type: string
               example: [
-                {
-                  "value":"Directory.Read.All",
-                  "consentDisplayName":"Read directory data",
-                  "consentDescription":"Allows the app to read data in your organization's directory.",
-                  "isAdmin":true
-                },
-                {
-                  "value":"Directory.ReadWrite.All",
-                  "consentDisplayName":"Read and write directory data",
+                { 
+                  "value":"Directory.Read.All", 
+                  "consentDisplayName":"Read directory data", 
+                  "consentDescription":"Allows the app to read data in your organization's directory.", 
+                  "isAdmin":true 
+                }, 
+                { 
+                  "value":"Directory.ReadWrite.All", 
+                  "consentDisplayName":"Read and write directory data", 
                   "consentDescription":"Allows the app to read and write data in your organization's directory, such as other users, groups. It does not allow the app to delete users or groups, or reset user passwords.",
                   "isAdmin":true
                 },
                 {
                   "value":"Directory.AccessAsUser.All",
                   "consentDisplayName":"Access the directory as you",
-                  "consentDescription":"Allows the app to have the same access to information in your work or school directory as you do.",
-                  "isAdmin":true
+                  "consentDescription":"Allows the app to have the same access to information in your work or school directory as you do.", 
+                  "isAdmin":true 
                 }
               ]
         400:
@@ -322,7 +323,7 @@ paths:
           'application/json':
             schema:
               $ref: '#/components/schemas/categoryPolicy'
-            example:
+            example: 
               {
                 "categoryName": "Getting Started",
                 "userClaims": [
@@ -413,7 +414,7 @@ components:
           type: string
         tip:
           type: string
-        skipTest:
+        skipTest: 
           type: boolean
         postBody:
           type: string
