@@ -226,11 +226,16 @@ namespace GraphExplorerSamplesService.Services
 
             if (sampleQuery != null && !string.IsNullOrEmpty(sampleQuery.PostBody))
             {
-                JObject postBodyObject = JObject.Parse(sampleQuery.PostBody);
+                try
+                {
+                    JObject postBodyObject = JObject.Parse(sampleQuery.PostBody);
 
-                postBodyObject["passwordProfile"]["password"] = Guid.NewGuid();
+                    postBodyObject["passwordProfile"]["password"] = Guid.NewGuid();
 
-                sampleQuery.PostBody = postBodyObject.ToString();
+                    sampleQuery.PostBody = postBodyObject.ToString();
+                }
+                catch
+                { }    
             }
         }
 
@@ -241,7 +246,7 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>An instance of <see cref="SampleQueriesList"/> that has been preprocessed with the established business rules.</returns>
         private static SampleQueriesList SanitizeSampleQueries(SampleQueriesList sampleQueriesList)
         {
-            var orderedSampleQueries = OrderSamplesQueries(sampleQueriesList);
+            SampleQueriesList orderedSampleQueries = OrderSamplesQueries(sampleQueriesList);
 
             GenerateUniqueUserPassword(orderedSampleQueries);
 
