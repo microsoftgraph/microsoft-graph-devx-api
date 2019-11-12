@@ -33,13 +33,10 @@
     <script src="./swagger-ui-bundle.js"></script>
     <script src="./swagger-ui-standalone-preset.js"></script>
     <script>
-        var origin = window.location.origin;
-        var docurl = origin + "/Documents/GraphExplorerApi-OpenApi-Spec.yaml";
-
         window.onload = function () {
             // Begin Swagger UI call region
             const ui = SwaggerUIBundle({
-                url: docurl,
+                url: "/OpenApi.yaml",
                 dom_id: '#swagger-ui',
                 deepLinking: true,
                 presets: [
