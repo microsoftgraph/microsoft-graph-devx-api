@@ -25,6 +25,7 @@
     <None Include="wwwroot\swagger\swagger-ui.css.map" />
     <None Include="wwwroot\swagger\swagger-ui.js" />
     <None Include="wwwroot\swagger\swagger-ui.js.map" />
+    <None Include="wwwroot\OpenApi.yaml" />
   </ItemGroup>
 
   <ItemGroup>

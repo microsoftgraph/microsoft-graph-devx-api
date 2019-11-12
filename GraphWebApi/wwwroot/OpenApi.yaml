@@ -3,12 +3,14 @@ info:
   title: "Graph Explorer API" 
   version: "1.0.0" 
 servers:
-  - url: https://graphexplorerapi.azurewebsites.net/api
-  - url: https://localhost:44399/api
+  - url: https://graphexplorerapi.azurewebsites.net/
+  - url: https://localhost:44399/
   
 paths:
-  /GraphExplorerSnippets:
+  /snippetgenerator:
     post:
+      tags:
+        - snippets
       description: Obtains a language code snippet from an example HttpRequestMessage sent out to the graph endpoint
       parameters:
       - name: lang
@@ -71,8 +73,10 @@ paths:
                     var user = await client.Me.Request().GetAsync();
         400:
           description: Bad request
-  /GraphExplorerSamples:
+  /samples:
     get:
+      tags:
+        - samples
       description: Get all sample queries or filter by category, humanName or tip. 
       parameters:
         - name: search   # /samples?search=user
@@ -92,7 +96,11 @@ paths:
         500:
           description: Internal server error
     post:
+      tags:
+        - samples
       description: Create a new sample.
+      security:
+        - bearerAuth: []
       requestBody:
         content:
           'application/json':
@@ -115,12 +123,16 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/sample'
+        401:
+          description: Unauthorized
         403:
           description: Forbidden
         500:
           description: Internal server error
-  /GraphExplorerSamples/{id}:
+  /samples/{id}:
     get:
+      tags:
+        - samples
       description: Get a specific sample query by its Id.
       parameters:
         - name: id
@@ -140,7 +152,11 @@ paths:
         500:
           description: Internal server error
     put:
+      tags:
+        - samples
       description: Update a specific sample query by its Id.
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -169,15 +185,20 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/sample'
+        401:
+          description: Unauthorized
         403:
           description: Forbidden
         404:
           description: Not found
         500:
           description: Internal server error
-            
     delete:
+      tags:
+        - samples
       description: Delete a specific sample query by its Id.
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -187,14 +208,18 @@ paths:
       responses:
         204:
           description: Deleted successfully
+        401:
+          description: Unauthorized
         403:
           description: Forbidden
         404:
           description: Not found
         500:
           description: Internal server error
-  /GraphExplorerPermissions:  #  GET /permissions?requesturl=/me/memberof&method=GET&scopetype=DelegatedWork
+  /permissions:  #  GET /permissions?requesturl=/me/memberof&method=GET&scopetype=DelegatedWork
     get:
+      tags:
+        - permissions
       description: Gets ordered array of permissions that enable access to a specified resource, from least to most privileged along with detailed information about the permissions.
       parameters:
         - name: requestUrl
@@ -247,8 +272,10 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /GraphExplorerSamplesAdmin:
+  /samplesadmin:
     get:
+      tags:
+        - admin
       description: Gets all category policies or filter by userPrincipalName or categoryName.
       parameters:
         - name: userPrincipalName
@@ -275,7 +302,11 @@ paths:
         500:
           description: Internal server error
     post:
+      tags:
+        - admin
       description: Adds a new user claim to a category policy.
+      security:
+        - bearerAuth: []
       requestBody:
         content:
           'application/json':
@@ -312,12 +343,18 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/categoryPolicy'
+        401:
+          description: Unauthorized
         403:
           description: Forbidden
         500:
           description: Internal server error
     put:
+      tags:
+        - admin
       description: Updates a user claim in a category policy.
+      security:
+        - bearerAuth: []
       requestBody:
         content:
           'application/json':
@@ -356,6 +393,8 @@ paths:
                   $ref: '#/components/schemas/categoryPolicy'
         400:
           description: Bad request
+        401:
+          description: Unauthorized
         403:
           description: Forbidden
         404:
@@ -363,7 +402,11 @@ paths:
         500:
           description: Internal server error
     delete:
+      tags:
+        - admin
       description: Deletes a user claim in a category policy.
+      security:
+        - bearerAuth: []
       parameters:
         - name: userPrincipalName
           in: query
@@ -378,6 +421,8 @@ paths:
       responses:
         204:
           description: Deleted successfully
+        401:
+          description: Unauthorized
         403:
           description: Forbidden
         404:
@@ -450,3 +495,9 @@ components:
                       type: string
                     value:
                       type: boolean
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: The bearer token used to validate the user with Microsoft Graph.
+      scheme: bearer
+      bearerFormat: JWT
