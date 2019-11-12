@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Graph Explorer APIs</title>
+    <title>Graph Explorer API</title>
     <link rel="stylesheet" type="text/css" href="./swagger-ui.css">
     <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
@@ -33,10 +33,13 @@
     <script src="./swagger-ui-bundle.js"></script>
     <script src="./swagger-ui-standalone-preset.js"></script>
     <script>
+        var origin = window.location.origin;
+        var docurl = origin + "/Documents/GraphExplorerApi-OpenApi-Spec.yaml";
+
         window.onload = function () {
             // Begin Swagger UI call region
             const ui = SwaggerUIBundle({
-                url: "GraphExplorerApi-OpenApi-Spec.json",
+                url: docurl,
                 dom_id: '#swagger-ui',
                 deepLinking: true,
                 presets: [
