@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
@@ -15,7 +15,6 @@
   <ItemGroup>
     <None Include="wwwroot\swagger\favicon-16x16.png" />
     <None Include="wwwroot\swagger\favicon-32x32.png" />
-    <None Include="wwwroot\swagger\GraphExplorerApi-OpenApi-Spec.yaml" />
     <None Include="wwwroot\swagger\index.html" />
     <None Include="wwwroot\swagger\oauth2-redirect.html" />
     <None Include="wwwroot\swagger\swagger-ui-bundle.js" />
