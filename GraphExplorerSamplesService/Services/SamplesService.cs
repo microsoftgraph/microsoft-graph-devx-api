@@ -1,6 +1,8 @@
 using GraphExplorerSamplesService.Models;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GraphExplorerSamplesService.Services
 {
@@ -22,7 +24,7 @@ namespace GraphExplorerSamplesService.Services
             }
 
             SampleQueriesList sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(jsonString);
-            return sampleQueriesList;
+            return OrderSamplesQueries(sampleQueriesList);
         }
 
         /// <summary>
@@ -156,48 +158,60 @@ namespace GraphExplorerSamplesService.Services
         /// Determines the zero-based index value in the instance of a <see cref="SampleQueriesList"/> where a given <see cref="SampleQueryModel"/> 
         /// object should be inserted.
         /// </summary>
+        /// <param name="sampleQueriesList">The instance of a <see cref="SampleQueriesList"/> where the given <see cref="SampleQueryModel"/> 
+        /// object should be inserted into.
         /// <param name="sampleQuery">The <see cref="SampleQueryModel"/> object which needs to be inserted.</param>
         /// <returns>The zero-based index where the <see cref="SampleQueryModel"/> object needs to be inserted into in an instance of a
         /// <see cref="SampleQueriesList"/>.</returns>
         private static int GetNewSampleQueryIndex(SampleQueriesList sampleQueriesList, SampleQueryModel sampleQuery)
         {
-            // The current sample category will be the starting point of the linked list of categories
-            var currentCategory = SampleQueriesCategories.CategoriesLinkedList.Find(sampleQuery.Category);
+            // The current sample category will be the starting point of the list of categories
+            string currentCategory = SampleQueriesCategories.CategoriesList.Find(x => x == sampleQuery.Category);
 
-            if (sampleQueriesList.SampleQueries.Count == 0 || currentCategory == null || currentCategory.Previous == null)
-            {
-                // The list is either empty or the sample query category is the first in the hierarchy of the linked list of categories
-                return 0;
+            if (sampleQueriesList.SampleQueries.Count == 0)
+            {                
+                return 0; // the list is empty; this will be the first sample query
             }
 
-            /* 
-             Given the starting position of the sample query's category in the linked list of categories,
-             search for a matching category value from the list of sample queries.
-             Repeat this for all the categories higher up the hierarchy of categories in the linked list. 
-             If a match is found, then the sample query should be inserted below the index value
-             of the matched category; else, the current category is the top-most ranked category 
-             in the list of sample queries and the sample query should be added to the top of the list. 
-            */
-            while (currentCategory != null)
+            // Search for this category from the list of sample queries
+            foreach (SampleQueryModel sampleQueryItem in sampleQueriesList.SampleQueries)
             {
-                foreach (var sampleQueryItem in sampleQueriesList.SampleQueries)
+                if (sampleQueryItem.Category.Contains(currentCategory))
                 {
-                    if (sampleQueryItem.Category.Contains(currentCategory.Value))
-                    {
-                        // Find the index of the last sample query in the batch of matched category
-                        int index = sampleQueriesList.SampleQueries.FindLastIndex(x => x.Category == currentCategory.Value);
+                    // Find the index of the last sample query in the batch of matched category
+                    int index = sampleQueriesList.SampleQueries.FindLastIndex(x => x.Category == currentCategory);
 
-                        return ++index; // new sample should be added in the next index position
-                    }
+                    return ++index; // new sample should be added in the next index position
                 }
-
-                // Go up the hierarchy and search again
-                currentCategory = currentCategory.Previous;
             }
 
-            /* All categories up the hierarchy have been traversed with no match found; 
-             * this is currently the top-most ranked category in the list of sample queries */
+            /* All sample queries categories in the list have been traversed with no match found; 
+             * Add it to the top of the list */
             return 0;
+        }   
+        
+        /// <summary>
+        /// Orders the list of sample queries alphabetically based on their category names with 'Getting Started' as the top-most sample query.
+        /// </summary>
+        /// <param name="sampleQueries">An instance of <see cref="SampleQueriesList"/> whose list of sample queries need to be ordered.</param>
+        /// <returns>An instance of <see cref="SampleQueriesList"/> whose list of sample queries have been ordered alphabetically with 'Getting Started' 
+        /// as the top-most sample query.</returns>
+        private static SampleQueriesList OrderSamplesQueries(SampleQueriesList sampleQueries)
+        {
+            List<SampleQueryModel> sortedSampleQueries = sampleQueries.SampleQueries
+                .OrderBy(s => s.Category)
+                .SkipWhile(s => s.Category == "Getting Started") // skipped, as it should always be the top-most sample query in the list
+                .ToList();
+
+            SampleQueriesList sortedSampleQueriesList = new SampleQueriesList();
+
+            // Add back 'Getting Started' to the top of the list
+            sortedSampleQueriesList.SampleQueries.AddRange(sampleQueries.SampleQueries.FindAll(s => s.Category == "Getting Started"));
+
+            // Add the rest of the sample queries
+            sortedSampleQueriesList.SampleQueries.AddRange(sortedSampleQueries);
+
+            return sortedSampleQueriesList;
         }
     }
 }

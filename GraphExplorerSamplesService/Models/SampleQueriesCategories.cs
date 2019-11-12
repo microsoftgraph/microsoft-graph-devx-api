@@ -1,16 +1,15 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GraphExplorerSamplesService.Models
 {
     /// <summary>
-    /// Contains the linked list of sample queries categories defined in hierarchical order.
+    /// Contains the list of sample queries categories defined in hierarchical order.
     /// </summary>
     internal class SampleQueriesCategories
     {
         private static readonly string[] categories =
            {
-                // Order is important
-                "Getting Started",
                 "Users",
                 "Groups",
                 "Outlook Mail",
@@ -37,6 +36,6 @@ namespace GraphExplorerSamplesService.Models
                 "Search (beta)"
             };
 
-        public static LinkedList<string> CategoriesLinkedList = new LinkedList<string>(categories);
+         public static List<string> CategoriesList = new List<string>(categories.OrderBy(s => s).Prepend("Getting Started"));
     }
 }
