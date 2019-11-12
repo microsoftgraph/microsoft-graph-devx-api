@@ -12,8 +12,6 @@ using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService;
 using FileService.Interfaces;
 using FileService.Services;
-using Microsoft.Extensions.FileProviders;
-using System.IO;
 
 namespace GraphWebApi
 {
@@ -62,14 +60,10 @@ namespace GraphWebApi
                 app.UseHsts();
             }
 
-            app.UseStaticFiles();
             app.UseStaticFiles(new StaticFileOptions
             {
                 DefaultContentType = "text/plain",
-                ServeUnknownFileTypes = true,
-                FileProvider = new PhysicalFileProvider(
-                Path.Combine(Directory.GetCurrentDirectory(), "Documents")),
-                RequestPath = "/Documents"
+                ServeUnknownFileTypes = true
             });
             app.UseHttpsRedirection();
             app.UseAuthentication();
