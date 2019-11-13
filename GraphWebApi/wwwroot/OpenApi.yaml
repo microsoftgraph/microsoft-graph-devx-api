@@ -243,9 +243,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items: 
-                  type: string
+                $ref: '#/components/schemas/permission'
               example: [
                 { 
                   "value":"Directory.Read.All", 
@@ -294,9 +292,54 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                $ref: '#/components/schemas/categoryPolicy'
+              example: 
+                {
+                  "CategoryPolicies": [
+                    {
+                      "categoryName": "Getting Started",
+                      "userClaims": [
+                        {
+                          "userName": "john doe",
+                          "userPrincipalName": "john.doe@microsoft.com",
+                          "userPermissions": [
+                            {
+                              "name": "POST",
+                              "value": true
+                            },
+                            {
+                              "name": "PUT",
+                              "value": true
+                            },
+                            {
+                              "name": "DELETE",
+                              "value": false
+                            }
+                          ]
+                        },
+                        {
+                          "userName": "jane doe",
+                          "userPrincipalName": "jane.doe@microsoft.com",
+                          "userPermissions": [
+                            {
+                              "name": "POST",
+                              "value": true
+                            },
+                            {
+                              "name": "PUT",
+                              "value": true
+                            },
+                            {
+                              "name": "DELETE",
+                              "value": true
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+                
         404:
           description: Not found
         500:
@@ -495,6 +538,25 @@ components:
                       type: string
                     value:
                       type: boolean
+    permission:
+      type: object
+      properties:
+        adminConsentDescription:
+          type: string
+        adminConsentDisplayName:
+          type: string
+        id:
+          type: string
+        isEnabled:
+          type: string
+        isAdmin:
+          type: string
+        consentDescription:
+          type: string
+        consentDisplayName:
+          type: string
+        value:
+          type: string
   securitySchemes:
     bearerAuth:
       type: http
