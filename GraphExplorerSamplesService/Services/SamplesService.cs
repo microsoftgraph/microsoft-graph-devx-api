@@ -201,7 +201,7 @@ namespace GraphExplorerSamplesService.Services
         {
             List<SampleQueryModel> sortedSampleQueries = sampleQueriesList.SampleQueries
                 .OrderBy(s => s.Category)
-                .SkipWhile(s => s.Category == "Getting Started") // skipped, as it should always be the top-most sample query in the list
+                .Where(s => s.Category != "Getting Started") // skipped, as it should always be the top-most sample query in the list
                 .ToList();
 
             SampleQueriesList sortedSampleQueriesList = new SampleQueriesList();
