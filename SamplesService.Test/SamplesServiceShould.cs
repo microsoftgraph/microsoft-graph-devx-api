@@ -155,8 +155,9 @@ namespace SamplesService.Test
             SampleQueriesList sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(validJsonString);
 
             /* Assert that the sample queries are returned in alphabetical order of their category names (with 'Getting Started' at the top-most)
-             * and with all details correct */
+             * and with all details and count of items correct */
 
+            Assert.True(sampleQueriesList.SampleQueries.Count == 4);
             Assert.Collection(sampleQueriesList.SampleQueries,
                 item =>
                 {
