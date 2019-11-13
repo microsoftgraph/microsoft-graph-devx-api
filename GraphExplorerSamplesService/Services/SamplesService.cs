@@ -235,7 +235,9 @@ namespace GraphExplorerSamplesService.Services
                     sampleQuery.PostBody = postBodyObject.ToString();
                 }
                 catch
-                { }    
+                {
+                    // no action required
+                }    
             }
         }
 
