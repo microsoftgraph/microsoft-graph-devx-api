@@ -127,7 +127,7 @@ namespace GraphWebApi.Controllers
                 {
                     return new JsonResult(
                         $"{userPrincipalName} is not authorized to update the sample query. Category: '{categoryName}'")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 // Get the list of sample queries
@@ -192,7 +192,7 @@ namespace GraphWebApi.Controllers
                 {
                     return new JsonResult(
                         $"{userPrincipalName} is not authorized to create the sample query. Category: '{categoryName}'")
-                        { StatusCode = StatusCodes.Status401Unauthorized };
+                        { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 // Get the list of sample queries
@@ -256,7 +256,7 @@ namespace GraphWebApi.Controllers
                 {
                     return new JsonResult(
                         $"{userPrincipalName} is not authorized to delete the sample query. Category: '{categoryName}'")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 if (sampleQueriesList.SampleQueries.Count == 0)

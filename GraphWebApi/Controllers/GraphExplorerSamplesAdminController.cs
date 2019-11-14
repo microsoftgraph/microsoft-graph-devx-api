@@ -92,7 +92,7 @@ namespace GraphWebApi.Controllers
                 if (!isAdmin)
                 {
                     return new JsonResult($"{userPrincipalName} is not authorized to create the user claim.")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 // Get the list of policies
@@ -136,7 +136,7 @@ namespace GraphWebApi.Controllers
                 if (!isAdmin)
                 {
                     return new JsonResult($"{userPrincipalName} is not authorized to update the user claim.")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 // Get the list of policies
@@ -185,7 +185,7 @@ namespace GraphWebApi.Controllers
                 {
                     return new JsonResult(
                        $"{userPrincipalName} is not authorized to remove the user claim.")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 if (string.IsNullOrEmpty(userPrincipalName) || string.IsNullOrEmpty(categoryName))
