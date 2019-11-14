@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace GraphWebApi.Controllers
 {
     [Route("api/[controller]")]
+    [Route("permissions")]
     [ApiController]
     public class GraphExplorerPermissionsController : ControllerBase
     {
