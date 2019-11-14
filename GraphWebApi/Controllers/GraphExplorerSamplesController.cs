@@ -222,7 +222,7 @@ namespace GraphWebApi.Controllers
             }
         }
 
-        // Deletes a sample query of the provided id from the list of smaple queries
+        // Deletes a sample query of the provided id from the list of sample queries
         [Route("api/[controller]/{id}")]
         [Route("samples/{id}")]
         [Produces("application/json")]

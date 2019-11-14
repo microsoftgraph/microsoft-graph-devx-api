@@ -23,7 +23,7 @@ namespace GraphWebApi.Controllers
             _permissionsStore = permissionsStore;
         }
 
-        // Gets the permission scopes for a request url
+        // Gets the permission scopes and info for a request url
         [HttpGet]
         [Produces("application/json")]
         public IActionResult GetPermissionScopes([FromQuery]string requestUrl, [FromQuery]string method = "GET", [FromQuery]string scopeType = "DelegatedWork")
