@@ -93,6 +93,10 @@ paths:
                 type: array
                 items: 
                   $ref: '#/components/schemas/sample'
+        204:
+          description: No content
+        404:
+          description: Not found
         500:
           description: Internal server error
     post:
@@ -147,6 +151,8 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/sample'
+        204:
+          description: No content
         404:
           description: Not found
         500:
