@@ -1,5 +1,6 @@
 using GraphExplorerSamplesService.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,7 @@ namespace GraphExplorerSamplesService.Services
             }
 
             SampleQueriesList sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(jsonString);
-            return OrderSamplesQueries(sampleQueriesList);
+            return SanitizeSampleQueries(sampleQueriesList);
         }
 
         /// <summary>
@@ -188,17 +189,17 @@ namespace GraphExplorerSamplesService.Services
             /* All sample queries categories in the list have been traversed with no match found; 
              * Add it to the top of the list */
             return 0;
-        }   
-        
+        }
+
         /// <summary>
         /// Orders the list of sample queries alphabetically based on their category names with 'Getting Started' as the top-most sample query.
         /// </summary>
-        /// <param name="sampleQueries">An instance of <see cref="SampleQueriesList"/> whose list of sample queries need to be ordered.</param>
+        /// <param name="sampleQueriesList">An instance of <see cref="SampleQueriesList"/> whose list of sample queries need to be ordered.</param>
         /// <returns>An instance of <see cref="SampleQueriesList"/> whose list of sample queries have been ordered alphabetically with 'Getting Started' 
         /// as the top-most sample query.</returns>
-        private static SampleQueriesList OrderSamplesQueries(SampleQueriesList sampleQueries)
+        private static SampleQueriesList OrderSamplesQueries(SampleQueriesList sampleQueriesList)
         {
-            List<SampleQueryModel> sortedSampleQueries = sampleQueries.SampleQueries
+            List<SampleQueryModel> sortedSampleQueries = sampleQueriesList.SampleQueries
                 .OrderBy(s => s.Category)
                 .Where(s => s.Category != "Getting Started") // skipped, as it should always be the top-most sample query in the list
                 .ToList();
@@ -206,12 +207,52 @@ namespace GraphExplorerSamplesService.Services
             SampleQueriesList sortedSampleQueriesList = new SampleQueriesList();
 
             // Add back 'Getting Started' to the top of the list
-            sortedSampleQueriesList.SampleQueries.AddRange(sampleQueries.SampleQueries.FindAll(s => s.Category == "Getting Started"));
+            sortedSampleQueriesList.SampleQueries.AddRange(sampleQueriesList.SampleQueries.FindAll(s => s.Category == "Getting Started"));
 
             // Add the rest of the sample queries
             sortedSampleQueriesList.SampleQueries.AddRange(sortedSampleQueries);
 
             return sortedSampleQueriesList;
+        }
+
+        /// <summary>
+        /// Replaces the default password with a random Guid value in the postBody template of the Users sample query.
+        /// </summary>
+        /// <param name="sampleQueriesList">An instance of <see cref="SampleQueriesList"/> with the Users sample query whose password in the postBody template 
+        /// needs to be replaced with a random Guid value.</param>
+        private static void GenerateUniqueUserPassword(SampleQueriesList sampleQueriesList)
+        {
+            SampleQueryModel sampleQuery = sampleQueriesList.SampleQueries.Find(s => s.Category == "Users" && s.Method == SampleQueryModel.HttpMethods.POST);
+
+            if (sampleQuery != null && !string.IsNullOrEmpty(sampleQuery.PostBody))
+            {
+                try
+                {
+                    JObject postBodyObject = JObject.Parse(sampleQuery.PostBody);
+
+                    postBodyObject["passwordProfile"]["password"] = Guid.NewGuid();
+
+                    sampleQuery.PostBody = postBodyObject.ToString();
+                }
+                catch
+                {
+                    // no action required
+                }    
+            }
+        }
+
+        /// <summary>
+        /// Preprocesses sample queries with the established business rules.
+        /// </summary>
+        /// <param name="sampleQueriesList">An instance of <see cref="SampleQueriesList"/> that requires preprocessing.</param>
+        /// <returns>An instance of <see cref="SampleQueriesList"/> that has been preprocessed with the established business rules.</returns>
+        private static SampleQueriesList SanitizeSampleQueries(SampleQueriesList sampleQueriesList)
+        {
+            SampleQueriesList orderedSampleQueries = OrderSamplesQueries(sampleQueriesList);
+
+            GenerateUniqueUserPassword(orderedSampleQueries);
+
+            return orderedSampleQueries;
         }
     }
 }
