@@ -239,7 +239,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the list of policies
                 string policiesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(policies);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(policiesJson, _policiesFilePathSource);
 
                 // Return the list of policies

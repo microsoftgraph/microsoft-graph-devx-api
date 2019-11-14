@@ -152,7 +152,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of this sample query
                 string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
 
                 // Success; return the sample query model object that was just updated
@@ -207,7 +207,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the sample query
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(newSampleQueriesList);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(newSampleQueriesJson, _queriesFilePathSource);
 
                 // Create the query Uri for the newly created sample query
@@ -270,7 +270,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the list of sample queries
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(sampleQueriesList);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(newSampleQueriesJson, _queriesFilePathSource);
                                 
                 // Success; no content to return
@@ -326,7 +326,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the list of policies
                 string policiesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(policies);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(policiesJson, _policiesFilePathSource);
 
                 // Return the list of policies
