@@ -27,6 +27,7 @@ namespace GraphWebApi.Controllers
 
         // Gets the list of all sample queries
         [Route("api/[controller]")]
+        [Route("samples")]
         [Produces("application/json")]
         [HttpGet]
         public async Task<IActionResult> GetSampleQueriesListAsync(string search)
@@ -71,6 +72,7 @@ namespace GraphWebApi.Controllers
 
        // Gets a sample query from the list of sample queries by its id
        [Route("api/[controller]/{id}")]
+       [Route("samples/{id}")]
        [Produces("application/json")]
        [HttpGet]
         public async Task<IActionResult> GetSampleQueryByIdAsync(string id)
@@ -104,6 +106,7 @@ namespace GraphWebApi.Controllers
 
         // Updates a sample query given its id value
         [Route("api/[controller]/{id}")]
+        [Route("samples/{id}")]
         [Produces("application/json")]
         [HttpPut]
         [Authorize]
@@ -168,6 +171,7 @@ namespace GraphWebApi.Controllers
 
         // Adds a new sample query to the list of sample queries
         [Route("api/[controller]")]
+        [Route("samples")]
         [Produces("application/json")]
         [HttpPost]
         [Authorize]
@@ -220,6 +224,7 @@ namespace GraphWebApi.Controllers
 
         // Deletes a sample query of the provided id from the list of smaple queries
         [Route("api/[controller]/{id}")]
+        [Route("samples/{id}")]
         [Produces("application/json")]
         [HttpDelete]
         [Authorize]
