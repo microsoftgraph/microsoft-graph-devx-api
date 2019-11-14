@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -108,7 +108,10 @@ namespace GraphWebApi.Controllers
                 // Extract the first user claim from the given categoryPolicy; this is what was added
                 UserClaim userClaim = categoryPolicy.UserClaims.First();
 
-                // Create the query Uri for the newly created sample query
+                // Fetch the category policy with the newly created user claim
+                categoryPolicy = updatedPoliciesList.CategoryPolicies.Find(x => x.CategoryName == categoryPolicy.CategoryName);
+
+                // Create the query Uri for the newly created user claim
                 string newUserClaimUri = string.Format("{0}://{1}{2}?userprincipalname={3}&categoryname={4}", 
                     Request.Scheme, Request.Host, Request.Path.Value, userClaim.UserPrincipalName, categoryPolicy.CategoryName);
 
@@ -148,6 +151,9 @@ namespace GraphWebApi.Controllers
                 string updatedPoliciesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(updatedPoliciesList);
 
                 await _fileUtility.WriteToFile(updatedPoliciesJson, _policiesFilePathSource);
+
+                // Fetch the category policy with the updated user claim
+                categoryPolicy = updatedPoliciesList.CategoryPolicies.Find(x => x.CategoryName == categoryPolicy.CategoryName);
 
                 // Success; return the user claim in the category policy that was just updated
                 return Ok(categoryPolicy);
