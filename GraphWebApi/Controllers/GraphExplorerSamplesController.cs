@@ -27,7 +27,6 @@ namespace GraphWebApi.Controllers
 
         // Gets the list of all sample queries
         [Route("api/[controller]")]
-        [Route("samples")]
         [Produces("application/json")]
         [HttpGet]
         public async Task<IActionResult> GetSampleQueriesListAsync(string search)
