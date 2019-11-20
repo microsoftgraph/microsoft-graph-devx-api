@@ -15,7 +15,6 @@ using Microsoft.Extensions.Options;
 namespace GraphWebApi.Controllers
 {
     [Route("api/[controller]")]
-    [Route("samplesadmin")]
     [ApiController]
     public class GraphExplorerSamplesAdminController : ControllerBase
     {
