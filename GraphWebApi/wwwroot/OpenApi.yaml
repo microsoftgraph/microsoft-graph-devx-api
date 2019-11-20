@@ -104,7 +104,7 @@ paths:
         - samples
       description: Create a new sample.
       security:
-        - bearerAuth: []
+        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
       requestBody:
         content:
           'application/json':
@@ -162,7 +162,7 @@ paths:
         - samples
       description: Update a specific sample query by its Id.
       security:
-        - bearerAuth: []
+        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
       parameters:
         - name: id
           in: path
@@ -204,7 +204,7 @@ paths:
         - samples
       description: Delete a specific sample query by its Id.
       security:
-        - bearerAuth: []
+        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
       parameters:
         - name: id
           in: path
@@ -355,7 +355,7 @@ paths:
         - admin
       description: Adds a new user claim to a category policy.
       security:
-        - bearerAuth: []
+        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
       requestBody:
         content:
           'application/json':
@@ -403,7 +403,7 @@ paths:
         - admin
       description: Updates a user claim in a category policy.
       security:
-        - bearerAuth: []
+        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
       requestBody:
         content:
           'application/json':
@@ -455,7 +455,7 @@ paths:
         - admin
       description: Deletes a user claim in a category policy.
       security:
-        - bearerAuth: []
+        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
       parameters:
         - name: userPrincipalName
           in: query
@@ -564,8 +564,11 @@ components:
         value:
           type: string
   securitySchemes:
-    bearerAuth:
-      type: http
-      description: The bearer token used to validate the user with Microsoft Graph.
-      scheme: bearer
-      bearerFormat: JWT
+    OAuth2Implicit:
+      type: oauth2
+      description: This API uses OAuth 2 with the implicit grant flow to authenticate with Azure AD.
+      flows:
+        implicit:
+          authorizationUrl: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
+          scopes: 
+            api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll: writes, updates and deletes workload samples.
