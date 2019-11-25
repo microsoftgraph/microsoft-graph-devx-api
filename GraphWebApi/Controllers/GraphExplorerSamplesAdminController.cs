@@ -15,6 +15,7 @@ using Microsoft.Extensions.Options;
 namespace GraphWebApi.Controllers
 {
     [Route("api/[controller]")]
+    [Route("samplesadmin")]
     [ApiController]
     public class GraphExplorerSamplesAdminController : ControllerBase
     {
@@ -91,7 +92,7 @@ namespace GraphWebApi.Controllers
                 if (!isAdmin)
                 {
                     return new JsonResult($"{userPrincipalName} is not authorized to create the user claim.")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 // Get the list of policies
@@ -107,7 +108,10 @@ namespace GraphWebApi.Controllers
                 // Extract the first user claim from the given categoryPolicy; this is what was added
                 UserClaim userClaim = categoryPolicy.UserClaims.First();
 
-                // Create the query Uri for the newly created sample query
+                // Fetch the category policy with the newly created user claim
+                categoryPolicy = updatedPoliciesList.CategoryPolicies.Find(x => x.CategoryName == categoryPolicy.CategoryName);
+
+                // Create the query Uri for the newly created user claim
                 string newUserClaimUri = string.Format("{0}://{1}{2}?userprincipalname={3}&categoryname={4}", 
                     Request.Scheme, Request.Host, Request.Path.Value, userClaim.UserPrincipalName, categoryPolicy.CategoryName);
 
@@ -135,7 +139,7 @@ namespace GraphWebApi.Controllers
                 if (!isAdmin)
                 {
                     return new JsonResult($"{userPrincipalName} is not authorized to update the user claim.")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 // Get the list of policies
@@ -147,6 +151,9 @@ namespace GraphWebApi.Controllers
                 string updatedPoliciesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(updatedPoliciesList);
 
                 await _fileUtility.WriteToFile(updatedPoliciesJson, _policiesFilePathSource);
+
+                // Fetch the category policy with the updated user claim
+                categoryPolicy = updatedPoliciesList.CategoryPolicies.Find(x => x.CategoryName == categoryPolicy.CategoryName);
 
                 // Success; return the user claim in the category policy that was just updated
                 return Ok(categoryPolicy);
@@ -184,7 +191,7 @@ namespace GraphWebApi.Controllers
                 {
                     return new JsonResult(
                        $"{userPrincipalName} is not authorized to remove the user claim.")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 if (string.IsNullOrEmpty(userPrincipalName) || string.IsNullOrEmpty(categoryName))
@@ -238,7 +245,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the list of policies
                 string policiesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(policies);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(policiesJson, _policiesFilePathSource);
 
                 // Return the list of policies
