@@ -35,6 +35,11 @@ This is the administrative endpoint of the API that is used by authorized PMs to
 ## How to use The endpoints
 This API makes use of Swagger UI to expose its endpoints for end user consumption.
 Some Protected resources are accessed only after a successful OAuth2 authentication with Azure AD
+
+### Register an application with Azure AD
+1. Navigate to the Azure portal [app registrations](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps) page and click on **New registration**. 
+1. Provide a suitable name, e.g. *GE-API-SwaggerUI*. Under **Redirect URI**, select *Web* and paste this value: *https://graphexplorerapi.azurewebsites.net/swagger/oauth2-redirect.html*. Select **Register**
+1. In the **Overview** blade, copy the Application (client) ID and paste it somewhere you can easily get to. You will use it during authorization on Swagger UI.
 1. Navigate to: https://graphexplorerapi.azurewebsites.net/swagger/index.html
 
 ## License
