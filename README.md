@@ -38,9 +38,13 @@ Some Protected resources are accessed only after a successful OAuth2 authenticat
 
 ### Register an application with Azure AD
 1. Navigate to the Azure portal [app registrations](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps) page and click on **New registration**. 
-1. Provide a suitable name, e.g. *GE-API-SwaggerUI*. Under **Redirect URI**, select *Web* and paste this value: *https://graphexplorerapi.azurewebsites.net/swagger/oauth2-redirect.html*. Select **Register**
-1. In the **Overview** blade, copy the Application (client) ID and paste it somewhere you can easily get to. You will use it during authorization on Swagger UI.
-1. Navigate to: https://graphexplorerapi.azurewebsites.net/swagger/index.html
+1. In the window that opens, provide a suitable name under the **Name** field, e.g. *GE-API-SwaggerUI*. Under **Redirect URI**, select *Web* and paste this value: *https://graphexplorerapi.azurewebsites.net/swagger/oauth2-redirect.html*. Select **Register**
+1. In the **Overview** blade, copy the Application (client) ID and paste it somewhere you can easily access. You will use it during authorization on Swagger UI.
+1. Navigate to: https://graphexplorerapi.azurewebsites.net/swagger/index.html and Click on **Authorize**. 
+1. Insert the Application (client) ID in the provided text box for client id.
+1. Select the *scope* checkbox.
+1. Choose **Authorize**
+1. You will be redirected to a separate page where you will be asked to log in to your Microsoft account. Log in with the account that you used to register the previous application on Azure AD.
 
 ## License
 
