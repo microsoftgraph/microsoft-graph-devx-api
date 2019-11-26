@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
 using FileService.Interfaces;
+using System.Security.Claims;
+using System.Linq;
 
 namespace GraphWebApi.Controllers
 {
@@ -118,7 +120,12 @@ namespace GraphWebApi.Controllers
                 SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
 
                 string categoryName = sampleQueryModel.Category;
-                string userPrincipalName = User.Identity.Name;
+
+                ClaimsIdentity identity = (ClaimsIdentity)User.Identity;
+                IEnumerable<Claim> claims = identity.Claims;
+                string userPrincipalName =
+                    (claims?.FirstOrDefault(x => x.Type.Equals("preferred_username", StringComparison.OrdinalIgnoreCase)) ??
+                        claims?.FirstOrDefault(x => x.Type.Equals("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", StringComparison.OrdinalIgnoreCase)))?.Value;
 
                 // Check if authenticated user is authorized for this action
                 bool isAuthorized = SamplesPolicyService.IsUserAuthorized(policies, userPrincipalName, categoryName, HttpMethods.Put);
@@ -183,7 +190,12 @@ namespace GraphWebApi.Controllers
                 SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
 
                 string categoryName = sampleQueryModel.Category;
-                string userPrincipalName = User.Identity.Name;                
+
+                ClaimsIdentity identity = (ClaimsIdentity)User.Identity;
+                IEnumerable<Claim> claims = identity.Claims;
+                string userPrincipalName =
+                    (claims?.FirstOrDefault(x => x.Type.Equals("preferred_username", StringComparison.OrdinalIgnoreCase)) ??
+                        claims?.FirstOrDefault(x => x.Type.Equals("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", StringComparison.OrdinalIgnoreCase)))?.Value;
 
                 // Check if authenticated user is authorized for this action
                 bool isAuthorized = SamplesPolicyService.IsUserAuthorized(policies, userPrincipalName, categoryName, HttpMethods.Post);
@@ -247,7 +259,12 @@ namespace GraphWebApi.Controllers
                 }
 
                 string categoryName = sampleQueriesList.SampleQueries.Find(x => x.Id == Guid.Parse(id)).Category;
-                string userPrincipalName = User.Identity.Name;
+
+                ClaimsIdentity identity = (ClaimsIdentity)User.Identity;
+                IEnumerable<Claim> claims = identity.Claims;
+                string userPrincipalName =
+                    (claims?.FirstOrDefault(x => x.Type.Equals("preferred_username", StringComparison.OrdinalIgnoreCase)) ??
+                        claims?.FirstOrDefault(x => x.Type.Equals("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", StringComparison.OrdinalIgnoreCase)))?.Value;
 
                 // Check if authenticated user is authorized for this action
                 bool isAuthorized = SamplesPolicyService.IsUserAuthorized(policies, userPrincipalName, categoryName, HttpMethods.Delete);

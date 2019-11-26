@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using FileService.Interfaces;
 using GraphExplorerSamplesService.Models;
@@ -86,7 +87,12 @@ namespace GraphWebApi.Controllers
             {
                 /* Validate whether authenticated user is samples administrator */
 
-                string userPrincipalName = User.Identity.Name;
+                ClaimsIdentity identity = (ClaimsIdentity)User.Identity;
+                IEnumerable<Claim> claims = identity.Claims;
+                string userPrincipalName =
+                    (claims?.FirstOrDefault(x => x.Type.Equals("preferred_username", StringComparison.OrdinalIgnoreCase)) ??
+                        claims?.FirstOrDefault(x => x.Type.Equals("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", StringComparison.OrdinalIgnoreCase)))?.Value;
+
                 bool isAdmin = _administrators.Administrators.Contains(userPrincipalName);
 
                 if (!isAdmin)
@@ -133,7 +139,12 @@ namespace GraphWebApi.Controllers
             {
                 /* Validate whether authenticated user is samples administrator */
 
-                string userPrincipalName = User.Identity.Name;
+                ClaimsIdentity identity = (ClaimsIdentity)User.Identity;
+                IEnumerable<Claim> claims = identity.Claims;
+                string userPrincipalName =
+                    (claims?.FirstOrDefault(x => x.Type.Equals("preferred_username", StringComparison.OrdinalIgnoreCase)) ??
+                        claims?.FirstOrDefault(x => x.Type.Equals("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", StringComparison.OrdinalIgnoreCase)))?.Value;
+
                 bool isAdmin = _administrators.Administrators.Contains(userPrincipalName);
 
                 if (!isAdmin)
@@ -184,7 +195,12 @@ namespace GraphWebApi.Controllers
             {
                 /* Validate whether authenticated user is samples administrator */
 
-                string authenticatedUserPrincipalName = User.Identity.Name;
+                ClaimsIdentity identity = (ClaimsIdentity)User.Identity;
+                IEnumerable<Claim> claims = identity.Claims;
+                string authenticatedUserPrincipalName =
+                    (claims?.FirstOrDefault(x => x.Type.Equals("preferred_username", StringComparison.OrdinalIgnoreCase)) ??
+                        claims?.FirstOrDefault(x => x.Type.Equals("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", StringComparison.OrdinalIgnoreCase)))?.Value;
+
                 bool isAdmin = _administrators.Administrators.Contains(authenticatedUserPrincipalName);
 
                 if (!isAdmin)
