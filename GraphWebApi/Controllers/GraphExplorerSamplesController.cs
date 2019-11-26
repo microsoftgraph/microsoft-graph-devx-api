@@ -27,6 +27,7 @@ namespace GraphWebApi.Controllers
 
         // Gets the list of all sample queries
         [Route("api/[controller]")]
+        [Route("samples")]
         [Produces("application/json")]
         [HttpGet]
         public async Task<IActionResult> GetSampleQueriesListAsync(string search)
@@ -71,6 +72,7 @@ namespace GraphWebApi.Controllers
 
        // Gets a sample query from the list of sample queries by its id
        [Route("api/[controller]/{id}")]
+       [Route("samples/{id}")]
        [Produces("application/json")]
        [HttpGet]
         public async Task<IActionResult> GetSampleQueryByIdAsync(string id)
@@ -104,6 +106,7 @@ namespace GraphWebApi.Controllers
 
         // Updates a sample query given its id value
         [Route("api/[controller]/{id}")]
+        [Route("samples/{id}")]
         [Produces("application/json")]
         [HttpPut]
         [Authorize]
@@ -124,7 +127,7 @@ namespace GraphWebApi.Controllers
                 {
                     return new JsonResult(
                         $"{userPrincipalName} is not authorized to update the sample query. Category: '{categoryName}'")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 // Get the list of sample queries
@@ -149,7 +152,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of this sample query
                 string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
 
                 // Success; return the sample query model object that was just updated
@@ -168,6 +171,7 @@ namespace GraphWebApi.Controllers
 
         // Adds a new sample query to the list of sample queries
         [Route("api/[controller]")]
+        [Route("samples")]
         [Produces("application/json")]
         [HttpPost]
         [Authorize]
@@ -188,7 +192,7 @@ namespace GraphWebApi.Controllers
                 {
                     return new JsonResult(
                         $"{userPrincipalName} is not authorized to create the sample query. Category: '{categoryName}'")
-                        { StatusCode = StatusCodes.Status401Unauthorized };
+                        { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 // Get the list of sample queries
@@ -203,7 +207,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the sample query
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(newSampleQueriesList);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(newSampleQueriesJson, _queriesFilePathSource);
 
                 // Create the query Uri for the newly created sample query
@@ -218,8 +222,9 @@ namespace GraphWebApi.Controllers
             }
         }
 
-        // Deletes a sample query of the provided id from the list of smaple queries
+        // Deletes a sample query of the provided id from the list of sample queries
         [Route("api/[controller]/{id}")]
+        [Route("samples/{id}")]
         [Produces("application/json")]
         [HttpDelete]
         [Authorize]
@@ -251,7 +256,7 @@ namespace GraphWebApi.Controllers
                 {
                     return new JsonResult(
                         $"{userPrincipalName} is not authorized to delete the sample query. Category: '{categoryName}'")
-                    { StatusCode = StatusCodes.Status401Unauthorized };
+                    { StatusCode = StatusCodes.Status403Forbidden };
                 }
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
@@ -265,7 +270,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the list of sample queries
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(sampleQueriesList);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(newSampleQueriesJson, _queriesFilePathSource);
                                 
                 // Success; no content to return
@@ -321,7 +326,7 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the list of policies
                 string policiesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(policies);
 
-                // Save the document-readable JSON-styled string to the source file
+                // Save the JSON string to the source file
                 await _fileUtility.WriteToFile(policiesJson, _policiesFilePathSource);
 
                 // Return the list of policies
