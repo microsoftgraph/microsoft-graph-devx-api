@@ -5,6 +5,7 @@ info:
 servers:
   - url: https://graphexplorerapi.azurewebsites.net/
   - url: https://localhost:44399/
+  - url: https://localhost:5001/
   
 paths:
   /snippetgenerator:
@@ -104,7 +105,7 @@ paths:
         - samples
       description: Create a new sample.
       security:
-        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
+        - OAuth2Implicit: [api://graphexplorerapi/Samples.ReadWrite]
       requestBody:
         content:
           'application/json':
@@ -162,7 +163,7 @@ paths:
         - samples
       description: Update a specific sample query by its Id.
       security:
-        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
+        - OAuth2Implicit: [api://graphexplorerapi/Samples.ReadWrite]
       parameters:
         - name: id
           in: path
@@ -204,7 +205,7 @@ paths:
         - samples
       description: Delete a specific sample query by its Id.
       security:
-        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
+        - OAuth2Implicit: [api://graphexplorerapi/Samples.ReadWrite]
       parameters:
         - name: id
           in: path
@@ -238,11 +239,21 @@ paths:
           required: true
           schema:
             type: string
+            enum:
+              - GET
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
         - name: scopeType
           in: query
           required: true
           schema:
             type: string
+            enum:
+              - DelegatedWork
+              - DelegatedPersonal
+              - Application
       responses:
         200:
           description: Ordered array of permissions that enable access to a specified resource, from least to most privileged along with detailed information about the permissions.
@@ -355,7 +366,7 @@ paths:
         - admin
       description: Adds a new user claim to a category policy.
       security:
-        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
+        - OAuth2Implicit: [api://graphexplorerapi/Samples.ReadWrite]
       requestBody:
         content:
           'application/json':
@@ -403,7 +414,7 @@ paths:
         - admin
       description: Updates a user claim in a category policy.
       security:
-        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
+        - OAuth2Implicit: [api://graphexplorerapi/Samples.ReadWrite]
       requestBody:
         content:
           'application/json':
@@ -455,7 +466,7 @@ paths:
         - admin
       description: Deletes a user claim in a category policy.
       security:
-        - OAuth2Implicit: [api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll]
+        - OAuth2Implicit: [api://graphexplorerapi/Samples.ReadWrite]
       parameters:
         - name: userPrincipalName
           in: query
@@ -571,4 +582,4 @@ components:
         implicit:
           authorizationUrl: https://login.microsoftonline.com/common/oauth2/v2.0/authorize
           scopes: 
-            api://xxxx-xxxx-xxxx-xxxx-xxxx/SampleQueries.ReadWriteAll: writes, updates and deletes workload samples.
+            api://graphexplorerapi/Samples.ReadWrite: writes, updates and deletes workload samples.
