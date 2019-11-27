@@ -56,13 +56,13 @@ Calling the secured resources of the API requires authentication with Azure AD.
 ![Try it out](readme-images/get-try-it.png)
 
 - For POST and PUT operations, you will be provided with an editable request body template in the *Request body* window which you can update with the details of the data you wish to send in your request. The content-type is JSON.
-![Request body](readme-images/requestbody-swaggerui.png)
+![Request body](readme-images/requestbody-swaggerui.PNG)
 
 - Click on the **Execute** button to make the request.
 ![Execute request](readme-images/execute-get-swaggerui.png)
 
 - Request responses will be displayed in the *Responses* window.
-![Request response](readme-images/response-swaggerui.png)
+![Request response](readme-images/response-swaggerui.PNG)
 
 
 ## License
