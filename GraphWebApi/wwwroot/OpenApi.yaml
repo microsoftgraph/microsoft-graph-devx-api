@@ -28,6 +28,8 @@ paths:
         description: HTTP request message to be translated into code.
         content:
           'text/message;version=1.1;msgtype=request':  
+            schema:
+              type: string
             examples: 
               GetUserProfile:
                 value: |
