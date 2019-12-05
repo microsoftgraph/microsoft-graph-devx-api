@@ -18,10 +18,10 @@ The API currently supports the generation of snippets to the Microsoft Graph API
 
 ### Example Snippets
 
-- [C#](c-sharp-examples.md)
-- [Javascript](javascript-examples.md)
-- [Objective C](objective-c-examples.md)
-- [Java](java-examples.md)
+- [C#](Documents/c-sharp-examples.md)
+- [Javascript](Documents/javascript-examples.md)
+- [Objective C](Documents/objective-c-examples.md)
+- [Java](Documents/java-examples.md)
 
 
 ### 2. Samples
@@ -43,26 +43,26 @@ Some protected resources can be called only after a successful authentication wi
 ### 1. Authorize on Swagger UI
 Calling the secured resources of the API requires authentication with Azure AD.
 1. Navigate to: https://graphexplorerapi.azurewebsites.net/swagger/index.html and click on the **Authorize** button. 
-![Authorize start](readme-images/authorize-start-swaggerui.png) 
+![Authorize start](Documents/readme-images/authorize-start-swaggerui.png) 
 1. In the dialog window that opens, select the *scope* checkbox.
 1. Choose **Authorize**.
-![Authorize with client id and scope](readme-images/authorize-scope-swaggerui.png)
+![Authorize with client id and scope](Documents/readme-images/authorize-scope-swaggerui.png)
 1. You will be redirected to a separate window where you will be asked to log in with your Microsoft account and asked to grant permission to *Graph Explorer API Swagger UI*. Choose **Accept**.
 1. Upon successful authorization, you will be redirected back to the Swagger UI window and you will see the below dialog. Choose **Close**.
-![Authorization success](readme-images/authorize-end-swaggerui.png)
+![Authorization success](Documents/readme-images/authorize-end-swaggerui.png)
 
 ### 3. Call the endpoints
 - Click the **Try it out** button to make a call to a resource.
-![Try it out](readme-images/get-try-it.png)
+![Try it out](Documents/readme-images/get-try-it.png)
 
 - For POST and PUT operations, you will be provided with an editable request body template in the *Request body* window which you can update with the details of the data you wish to send in your request. The content-type is JSON.
-![Request body](readme-images/requestbody-swaggerui.PNG)
+![Request body](Documents/readme-images/requestbody-swaggerui.PNG)
 
 - Click on the **Execute** button to make the request.
-![Execute request](readme-images/execute-get-swaggerui.png)
+![Execute request](Documents/readme-images/execute-get-swaggerui.png)
 
 - Request responses will be displayed in the *Responses* window.
-![Request response](readme-images/response-swaggerui.PNG)
+![Request response](Documents/readme-images/response-swaggerui.PNG)
 
 
 ## License
