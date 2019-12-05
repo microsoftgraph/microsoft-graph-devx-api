@@ -60,6 +60,11 @@ namespace GraphWebApi
                 app.UseHsts();
             }
 
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                DefaultContentType = "text/plain",
+                ServeUnknownFileTypes = true
+            });
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseMvc();
