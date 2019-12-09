@@ -10,6 +10,11 @@
     <Content Remove="AccessRightsTest.json" />
     <Content Remove="PoliciesTest.json" />
     <Content Remove="SampleQueryTest.json" />
+    <Content Remove="wwwroot\OpenApi.yaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="wwwroot\OpenApi.yaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,6 +48,7 @@
     <ProjectReference Include="..\FileService\FileService.csproj" />
     <ProjectReference Include="..\GraphExplorerPermissionsService\GraphExplorerPermissionsService.csproj" />
     <ProjectReference Include="..\GraphExplorerSamplesService\GraphExplorerSamplesService.csproj" />
+    <ProjectReference Include="..\OpenAPIService\OpenAPIService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
