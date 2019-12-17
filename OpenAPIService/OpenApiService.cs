@@ -1,9 +1,7 @@
 ﻿using Microsoft.OData.Edm.Csdl;
-using Microsoft.OData.Edm;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
-using Microsoft.OpenApi.Validations;
 using Microsoft.OpenApi.Writers;
 using System;
 using System.Collections.Generic;
@@ -16,8 +14,8 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Threading.Tasks;
 using Microsoft.OpenApi.OData;
-using Microsoft.OpenApi.Interfaces;
 using System.Collections.Concurrent;
+using Tavis.UriTemplates;
 
 namespace Microsoft.Graph.OpenAPIService
 {
@@ -27,11 +25,14 @@ namespace Microsoft.Graph.OpenAPIService
         PowerPlatform,
         Plain
     }
-
+       
     public class OpenApiService
     {
         static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
-
+        private static readonly UriTemplateTable _uriTemplateTable = new UriTemplateTable();
+        private static readonly IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+        private static OpenApiDocument _source = new OpenApiDocument();
+                
         /// <summary>
         /// Create partial document based on provided predicate
         /// </summary>
@@ -99,14 +100,22 @@ namespace Microsoft.Graph.OpenAPIService
         /// <summary>
         /// Create predicate function based on passed query parameters
         /// </summary>
-        /// <param name="operationIds">comma delimited list of operationIds or * for all operations</param>
-        /// <param name="tags">comma delimited list of tags or a single regex</param>
+        /// <param name="operationIds">Comma delimited list of operationIds or * for all operations.</param>
+        /// <param name="tags">Comma delimited list of tags or a single regex.</param>
+        /// <param name="url">Url path to match with Operation Ids.</param>
+        /// <param name="graphVersion">Version of Microsoft Graph.</param>
+        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
         /// <returns></returns>
-        public static Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags)
-        {
-            if (operationIds != null && tags != null)
-            {                
-                return null; // Cannot filter by OperationIds and Tags at the same time
+        public static Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags, string url, 
+            string graphVersion, bool forceRefresh)
+         {
+            if (operationIds != null && tags != null )
+            {  
+                return null; // Cannot filter by operationIds and tags at the same time
+            }
+            if (url != null && (operationIds != null || tags != null))
+            {
+                return null; // Cannot filter by url and either 0perationIds and tags at the same time
             }
 
             Func<OpenApiOperation, bool> predicate;
@@ -130,10 +139,55 @@ namespace Microsoft.Graph.OpenAPIService
                     var regex = new Regex(tagsArray[0]);
                     
                     predicate = (o) => o.Tags.Any(t => regex.IsMatch(t.Name));
-                } else
+                } 
+                else
                 {
                     predicate = (o) => o.Tags.Any(t => tagsArray.Contains(t.Name));
                 }
+            }
+            else if (url != null)
+            {                
+                /* Extract the respective Operation Ids that match the provided url path */
+
+                if (!_openApiOperationsTable.Any() || forceRefresh)
+                {
+                    HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
+
+                    _source = GetGraphOpenApiDocument(graphVersion, forceRefresh).GetAwaiter().GetResult();
+                    
+                    int count = 0;
+                                       
+                    foreach (var path in _source.Paths)
+                    {
+                        if (uniqueUrlsTable.Add(path.Key))
+                        {
+                            count++;
+
+                            // Replace placehoder values inside '{}' for efficient url pattern matching in the UriTemplate table
+                            string urlPath = Regex.Replace(path.Key, @"\{.*?\}", "{id}");
+                            _uriTemplateTable.Add(count.ToString(), new UriTemplate(urlPath.ToLower()));
+
+                            OpenApiOperation[] operations = path.Value.Operations.Values.ToArray();
+                            _openApiOperationsTable.Add(count, operations);
+                        }                        
+                    }
+                }
+
+                // Subsequently replace placehoder values inside '{}' within incoming url
+                url = Regex.Replace(url, @"\{.*?\}", "{id}");
+
+                TemplateMatch resultMatch = _uriTemplateTable.Match(new Uri(url.ToLower(), UriKind.RelativeOrAbsolute));
+
+                if (resultMatch == null)
+                {
+                    return null;
+                }
+
+                // Fetch the corresponding operations id for the matched url
+                OpenApiOperation[] openApiOps = _openApiOperationsTable[int.Parse(resultMatch.Key)];
+                string[] operationIdsArray = openApiOps.Select(x => x.OperationId).ToArray();
+
+                predicate = (o) => operationIdsArray.Contains(o.OperationId);
             }
             else
             {
