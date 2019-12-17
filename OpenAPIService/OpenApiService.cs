@@ -17,7 +17,7 @@ using Microsoft.OpenApi.OData;
 using System.Collections.Concurrent;
 using Tavis.UriTemplates;
 
-namespace Microsoft.Graph.OpenAPIService
+namespace OpenAPIService
 {
     public enum OpenApiStyle
     {
@@ -68,8 +68,7 @@ namespace Microsoft.Graph.OpenAPIService
             subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
             
             subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = $"https://graph.microsoft.com/{graphVersion}/" });
-
-            var operationObjects = new List<OpenApiOperation>();
+                       
             var results = FindOperations(source, predicate);
             foreach (var result in results)
             {
@@ -92,7 +91,7 @@ namespace Microsoft.Graph.OpenAPIService
                 pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
             }
 
-            OpenApiService.CopyReferences(subset);
+            CopyReferences(subset);
 
             return subset;
         }

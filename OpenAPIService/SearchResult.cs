@@ -1,7 +1,7 @@
 ﻿using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 
-namespace Microsoft.Graph.OpenAPIService
+namespace OpenAPIService
 {
     public class SearchResult
     {
