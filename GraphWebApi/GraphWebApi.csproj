@@ -13,7 +13,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
+    <None Include="wwwroot\swagger\favicon-16x16.png" />
+    <None Include="wwwroot\swagger\favicon-32x32.png" />
+    <None Include="wwwroot\swagger\index.html" />
+    <None Include="wwwroot\swagger\oauth2-redirect.html" />
+    <None Include="wwwroot\swagger\swagger-ui-bundle.js" />
+    <None Include="wwwroot\swagger\swagger-ui-bundle.js.map" />
+    <None Include="wwwroot\swagger\swagger-ui-standalone-preset.js" />
+    <None Include="wwwroot\swagger\swagger-ui-standalone-preset.js.map" />
+    <None Include="wwwroot\swagger\swagger-ui.css" />
+    <None Include="wwwroot\swagger\swagger-ui.css.map" />
+    <None Include="wwwroot\swagger\swagger-ui.js" />
+    <None Include="wwwroot\swagger\swagger-ui.js.map" />
+    <None Include="wwwroot\OpenApi.yaml" />
   </ItemGroup>
 
   <ItemGroup>

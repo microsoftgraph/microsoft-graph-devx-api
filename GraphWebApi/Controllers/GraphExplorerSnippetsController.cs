@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http.Internal;
 namespace GraphWebApi.Controllers
 {
     [Route("api/[controller]")]
+    [Route("snippetgenerator")]
     [ApiController]
     public class GraphExplorerSnippetsController : ControllerBase
     {
