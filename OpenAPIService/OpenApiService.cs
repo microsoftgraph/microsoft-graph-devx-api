@@ -1,9 +1,7 @@
 ﻿using Microsoft.OData.Edm.Csdl;
-using Microsoft.OData.Edm;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
-using Microsoft.OpenApi.Validations;
 using Microsoft.OpenApi.Writers;
 using System;
 using System.Collections.Generic;
@@ -16,10 +14,9 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Threading.Tasks;
 using Microsoft.OpenApi.OData;
-using Microsoft.OpenApi.Interfaces;
 using System.Collections.Concurrent;
 
-namespace Microsoft.Graph.OpenAPIService
+namespace OpenAPIService
 {
     public enum OpenApiStyle
     {

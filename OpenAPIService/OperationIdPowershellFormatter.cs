@@ -2,7 +2,7 @@
 using Microsoft.OpenApi.Services;
 using System.Text;
 
-namespace Microsoft.Graph.OpenAPIService
+namespace OpenAPIService
 {
     /// <summary>
     /// The last '.' character of the OperationId value separates the method group from the operation name.

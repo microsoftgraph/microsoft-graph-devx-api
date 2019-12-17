@@ -3,7 +3,7 @@ using Microsoft.OpenApi.Services;
 using System;
 using System.Collections.Generic;
 
-namespace Microsoft.Graph.OpenAPIService
+namespace OpenAPIService
 {
     public class OperationSearch : OpenApiVisitorBase
     {

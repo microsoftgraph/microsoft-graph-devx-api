@@ -2,9 +2,9 @@
 using System.Threading.Tasks;
 using GraphWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Graph.OpenAPIService;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
+using OpenAPIService;
 
 namespace GraphWebApi.Controllers
 {

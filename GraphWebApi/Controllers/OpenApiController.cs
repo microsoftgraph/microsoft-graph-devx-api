@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Graph.OpenAPIService;
+using OpenAPIService;
 using Microsoft.OpenApi.Models;
 using System.Threading.Tasks;
 
