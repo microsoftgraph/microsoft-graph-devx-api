@@ -13,9 +13,10 @@ namespace GraphWebApi.Controllers
         [Route("openapi")]
         [Route("$openapi")]
         [HttpGet]
-        public async Task<IActionResult> Get(
+        public async Task<IActionResult> Get(                                    
                                     [FromQuery]string operationIds = null,
                                     [FromQuery]string tags = null,
+                                    [FromQuery]string url = null,
                                     [FromQuery]string openApiVersion = "2",
                                     [FromQuery]string title = "Partial Graph API",
                                     [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
@@ -23,21 +24,28 @@ namespace GraphWebApi.Controllers
                                     [FromQuery]string graphVersion = "v1.0",
                                     [FromQuery]bool forceRefresh = false)
         {
-            var predicate = OpenApiService.CreatePredicate(operationIds, tags);
+            try
+            {
+                var predicate = OpenApiService.CreatePredicate(operationIds, tags, url, graphVersion, forceRefresh);
 
-            if (predicate == null)
+                if (predicate == null)
+                {
+                    return new BadRequestResult();
+                }
+
+                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocument(graphVersion, forceRefresh);
+
+                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, graphVersion, predicate);
+
+                subsetOpenApiDocument = OpenApiService.ApplyStyle(style, subsetOpenApiDocument);
+
+                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, openApiVersion, format);
+                return new FileStreamResult(stream, "application/json");
+            }
+            catch
             {
                 return new BadRequestResult();
-            }
-
-            OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocument(graphVersion, forceRefresh);
-
-            var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, graphVersion, predicate);
-
-            subsetOpenApiDocument = OpenApiService.ApplyStyle(style, subsetOpenApiDocument);
-
-            var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, openApiVersion, format);
-            return new FileStreamResult(stream, "application/json");
+            }            
         }
     }
 }
