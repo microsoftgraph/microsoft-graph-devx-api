@@ -491,6 +491,48 @@ paths:
           description: Not found
         500:
           description: Internal server error
+  /openapi:
+    get:
+      tags:
+        - openapi
+      parameters:
+      - name: tags
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+      - name: operationIds
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+      - name: format
+        in: query
+        schema:
+          type: string
+          enum:
+            - json
+            - yaml
+      - name: style
+        in: query
+        schema:
+          type: string
+          enum: 
+            - Plain        
+            - PowerPlatform
+            - PowerShell
+      - name: graphVersion
+        in: query
+        schema:
+          type: string        
+      responses:
+        2XX:
+          description: List of operations associated to a tag
+          content:
+            "application/vnd.oai.openapi": {}
+            "application/vnd.oai.openapi+json": {}
 components:
   schemas:
     sample:
