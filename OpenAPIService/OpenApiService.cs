@@ -104,7 +104,7 @@ namespace OpenAPIService
         /// <param name="url">Url path to match with Operation Ids.</param>
         /// <param name="graphVersion">Version of Microsoft Graph.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
-        /// <returns></returns>
+        /// <returns>A predicate</returns>
         public static Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags, string url, 
             string graphVersion, bool forceRefresh)
          {
@@ -146,29 +146,11 @@ namespace OpenAPIService
             }
             else if (url != null)
             {                
-                /* Extract the respective Operation Ids that match the provided url path */
+                /* Extract the respective Operation Id(s) that match the provided url path */
 
                 if (!_openApiOperationsTable.Any() || forceRefresh)
                 {
-                    HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
-
-                    _source = GetGraphOpenApiDocument(graphVersion, forceRefresh).GetAwaiter().GetResult();
-                    
-                    int count = 0;
-                                       
-                    foreach (var path in _source.Paths)
-                    {
-                        if (uniqueUrlsTable.Add(path.Key))
-                        {
-                            count++;
-
-                            string urlPath = path.Key.Replace('-', '_');
-                            _uriTemplateTable.Add(count.ToString(), new UriTemplate(urlPath.ToLower()));
-
-                            OpenApiOperation[] operations = path.Value.Operations.Values.ToArray();
-                            _openApiOperationsTable.Add(count, operations);
-                        }                        
-                    }
+                    PopulateReferenceTables(graphVersion, forceRefresh);
                 }
 
                 url = url.Replace('-', '_');
@@ -180,7 +162,8 @@ namespace OpenAPIService
                     return null;
                 }
 
-                // Fetch the corresponding operations id for the matched url
+                /* Fetch the corresponding Operations Id(s) for the matched url */
+
                 OpenApiOperation[] openApiOps = _openApiOperationsTable[int.Parse(resultMatch.Key)];
                 string[] operationIdsArray = openApiOps.Select(x => x.OperationId).ToArray();
 
@@ -192,6 +175,35 @@ namespace OpenAPIService
             }
 
             return predicate;
+        }
+
+        /// <summary>
+        /// Populates the _uriTemplateTable with the Graph url paths and the _openApiOperationsTable 
+        /// with the respective OpenApiOperations for these urls paths.
+        /// </summary>
+        /// <param name="graphVersion">Version of Microsoft Graph.</param>
+        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
+        private static void PopulateReferenceTables(string graphVersion, bool forceRefresh)
+        {
+            HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
+
+            _source = GetGraphOpenApiDocument(graphVersion, forceRefresh).GetAwaiter().GetResult();
+
+            int count = 0;
+
+            foreach (var path in _source.Paths)
+            {
+                if (uniqueUrlsTable.Add(path.Key))
+                {
+                    count++;
+
+                    string urlPath = path.Key.Replace('-', '_');
+                    _uriTemplateTable.Add(count.ToString(), new UriTemplate(urlPath.ToLower()));
+
+                    OpenApiOperation[] operations = path.Value.Operations.Values.ToArray();
+                    _openApiOperationsTable.Add(count, operations);
+                }
+            }
         }
 
         /// <summary>
