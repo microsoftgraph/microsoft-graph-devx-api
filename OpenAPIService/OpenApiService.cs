@@ -162,8 +162,7 @@ namespace OpenAPIService
                         {
                             count++;
 
-                            // Replace placehoder values inside '{}' for efficient url pattern matching in the UriTemplate table
-                            string urlPath = Regex.Replace(path.Key, @"\{.*?\}", "{id}");
+                            string urlPath = path.Key.Replace('-', '_');
                             _uriTemplateTable.Add(count.ToString(), new UriTemplate(urlPath.ToLower()));
 
                             OpenApiOperation[] operations = path.Value.Operations.Values.ToArray();
@@ -172,8 +171,7 @@ namespace OpenAPIService
                     }
                 }
 
-                // Subsequently replace placehoder values inside '{}' within incoming url
-                url = Regex.Replace(url, @"\{.*?\}", "{id}");
+                url = url.Replace('-', '_');
 
                 TemplateMatch resultMatch = _uriTemplateTable.Match(new Uri(url.ToLower(), UriKind.RelativeOrAbsolute));
 
