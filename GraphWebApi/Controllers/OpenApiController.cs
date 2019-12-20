@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using OpenAPIService;
 using Microsoft.OpenApi.Models;
 using System.Threading.Tasks;
@@ -69,7 +69,7 @@ namespace GraphWebApi.Controllers
             }           
         }
 
-        private static void WriteIndex(string baseUrl, string graphVersion, OpenApiDocument graphOpenApi, Stream stream)
+        private void WriteIndex(string baseUrl, string graphVersion, OpenApiDocument graphOpenApi, Stream stream)
         {
             var sw = new StreamWriter(stream);
             var indexSearch = new OpenApiOperationIndex();
