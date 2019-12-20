@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using OpenAPIService;
 using Microsoft.OpenApi.Models;
 using System.Threading.Tasks;
