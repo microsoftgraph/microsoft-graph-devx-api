@@ -89,12 +89,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         snippetModel.ResponseVariableName = edmNamedElement.Name;
                     }
                     snippetBuilder.Append("\t\tNSError *jsonError = nil;\r\n");
-                    snippetBuilder.Append("\t\tNSDictionary *jsonFinal = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];\r\n");
-                    snippetBuilder.Append($"\t\tNSMutableArray *{snippetModel.ResponseVariableName}List = [[NSMutableArray alloc] init];\r\n");
-                    snippetBuilder.Append($"\t\t{snippetModel.ResponseVariableName}List = [jsonFinal valueForKey:@\"value\"];\r\n");
+                    snippetBuilder.Append("\t\tMSCollection *collection = [[MSCollection alloc] initWithData:data error:&jsonError];\r\n");
                     snippetBuilder.Append($"\t\tMSGraph{CommonGenerator.UppercaseFirstLetter(snippetModel.ResponseVariableName)} *{snippetModel.ResponseVariableName} " +
                                           $"= [[MSGraph{CommonGenerator.UppercaseFirstLetter(snippetModel.ResponseVariableName)} alloc] " +
-                                          $"initWithDictionary:[{snippetModel.ResponseVariableName}List objectAtIndex: 0] error:&nserror];\r\n\r\n");
+                                          "initWithDictionary:[[collection value] objectAtIndex: 0] error:&nserror];\r\n\r\n");
                 }
                 else
                 {

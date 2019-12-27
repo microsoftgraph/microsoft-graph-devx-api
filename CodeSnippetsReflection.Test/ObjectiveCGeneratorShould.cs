@@ -1,7 +1,5 @@
-﻿using System;
-using CodeSnippetsReflection.LanguageGenerators;
+﻿using CodeSnippetsReflection.LanguageGenerators;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Xml;
 using Microsoft.OData.Edm;
@@ -240,6 +238,37 @@ namespace CodeSnippetsReflection.Test
                                                 "\tcompletionHandler: ^(NSData *data, NSURLResponse *response, NSError *nserror) {\r\n\r\n" +
                                                     "\t\t//Request Completed\r\n\r\n" +
                                            "}];\r\n" +
+                                           "\r\n" +
+                                           "[meDataTask execute];";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
+        //This tests that snippets that fetch collections are deserialized to MSCollection Instances
+        public void GeneratesSnippetsFetchingCollectionToMsCollectionInstances()
+        {
+            //Arrange
+            LanguageExpressions expressions = new ObjectiveCExpressions();
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/drive/root/children");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = ObjectiveCGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[MSGraphBaseURL stringByAppendingString:@\"/me/drive/root/children\"]]];\r\n" +
+                                           "[urlRequest setHTTPMethod:@\"GET\"];\r\n\r\nMSURLSessionDataTask *meDataTask = [httpClient dataTaskWithRequest:urlRequest \r\n" +
+                                                "\tcompletionHandler: ^(NSData *data, NSURLResponse *response, NSError *nserror) {\r\n" +
+                                                "\r\n" +
+                                                    "\t\tNSError *jsonError = nil;\r\n" +
+                                                    "\t\tMSCollection *collection = [[MSCollection alloc] initWithData:data error:&jsonError];\r\n" + //deserialize the data to a MSCollection
+                                                    "\t\tMSGraphDriveItem *driveItem = [[MSGraphDriveItem alloc] initWithDictionary:[[collection value] objectAtIndex: 0] error:&nserror];\r\n" + //get an single element in the collection
+                                           "\r\n" +
+                                           "}];" +
+                                           "\r\n" +
                                            "\r\n" +
                                            "[meDataTask execute];";
 
