@@ -183,11 +183,11 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="graphVersion">Version of Microsoft Graph.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
-        private static void PopulateReferenceTables(string graphVersion, bool forceRefresh)
+        private static async void PopulateReferenceTables(string graphVersion, bool forceRefresh)
         {
             HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
 
-            _source = GetGraphOpenApiDocument(graphVersion, forceRefresh).GetAwaiter().GetResult();
+            _source = await GetGraphOpenApiDocument(graphVersion, forceRefresh);
 
             int count = 0;
 
