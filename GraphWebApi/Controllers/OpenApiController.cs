@@ -36,7 +36,7 @@ namespace GraphWebApi.Controllers
                     return new BadRequestResult();
                 }
 
-                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocument(graphVersion, forceRefresh);
+                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphVersion, forceRefresh);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, graphVersion, predicate);
 
@@ -58,7 +58,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocument(graphVersion, forceRefresh);
+                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphVersion, forceRefresh);
                 WriteIndex(Request.Scheme + "://" + Request.Host.Value, graphVersion, graphOpenApi, Response.Body);
 
                 return new EmptyResult();

@@ -150,7 +150,7 @@ namespace OpenAPIService
 
                 if (!_openApiOperationsTable.Any() || forceRefresh)
                 {
-                    PopulateReferenceTables(graphVersion, forceRefresh);
+                    PopulateReferenceTablesAync(graphVersion, forceRefresh).GetAwaiter().GetResult();
                 }
 
                 url = url.Replace('-', '_');
@@ -183,11 +183,11 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="graphVersion">Version of Microsoft Graph.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
-        private static async void PopulateReferenceTables(string graphVersion, bool forceRefresh)
+        private static async Task PopulateReferenceTablesAync(string graphVersion, bool forceRefresh)
         {
             HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
 
-            _source = await GetGraphOpenApiDocument(graphVersion, forceRefresh);
+            _source = await GetGraphOpenApiDocumentAsync(graphVersion, forceRefresh);
 
             int count = 0;
 
@@ -246,7 +246,7 @@ namespace OpenAPIService
         /// <param name="graphVersion">Version of Microsoft Graph</param>
         /// <param name="forceRefresh">Don't read from in-memory cache</param>
         /// <returns>Instance of an OpenApiDocument</returns>
-        public static async Task<OpenApiDocument> GetGraphOpenApiDocument(string graphVersion, bool forceRefresh)
+        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphVersion, bool forceRefresh)
         {
             var csdlHref = new Uri($"https://graph.microsoft.com/{graphVersion}/$metadata");
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
@@ -254,7 +254,7 @@ namespace OpenAPIService
                 return doc;
             }
 
-            OpenApiDocument source = await CreateOpenApiDocument(csdlHref, forceRefresh);
+            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref, forceRefresh);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
@@ -309,7 +309,7 @@ namespace OpenAPIService
             return reader.Read(stream, out OpenApiDiagnostic diag);
         }
 
-        private static async Task<OpenApiDocument> CreateOpenApiDocument(Uri csdlHref, bool forceRefresh = false)
+        private static async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref, bool forceRefresh = false)
         {
             var httpClient = CreateHttpClient();
 
