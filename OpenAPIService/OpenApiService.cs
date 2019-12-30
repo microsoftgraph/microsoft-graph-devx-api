@@ -105,7 +105,7 @@ namespace OpenAPIService
         /// <param name="graphVersion">Version of Microsoft Graph.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
         /// <returns>A predicate</returns>
-        public static Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags, string url, 
+        public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url, 
             string graphVersion, bool forceRefresh)
          {
             if (operationIds != null && tags != null )
@@ -150,7 +150,7 @@ namespace OpenAPIService
 
                 if (!_openApiOperationsTable.Any() || forceRefresh)
                 {
-                    PopulateReferenceTablesAync(graphVersion, forceRefresh).GetAwaiter().GetResult();
+                    await PopulateReferenceTablesAync(graphVersion, forceRefresh);
                 }
 
                 url = url.Replace('-', '_');

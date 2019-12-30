@@ -29,7 +29,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                var predicate = OpenApiService.CreatePredicate(operationIds, tags, url, graphVersion, forceRefresh);
+                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, graphVersion, forceRefresh);
 
                 if (predicate == null)
                 {
