@@ -1,4 +1,4 @@
-using Microsoft.OData.Edm.Csdl;
+﻿using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
@@ -181,13 +181,13 @@ namespace OpenAPIService
         /// Populates the _uriTemplateTable with the Graph url paths and the _openApiOperationsTable 
         /// with the respective OpenApiOperations for these urls paths.
         /// </summary>
-        /// <param name="graphVersion">Version of Microsoft Graph.</param>
+        /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
-        private static async Task PopulateReferenceTablesAync(string graphVersion, bool forceRefresh)
+        private static async Task PopulateReferenceTablesAync(string graphUri, bool forceRefresh)
         {
             HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
 
-            _source = await GetGraphOpenApiDocumentAsync(graphVersion, forceRefresh);
+            _source = await GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
             int count = 0;
 
@@ -243,12 +243,12 @@ namespace OpenAPIService
         /// <summary>
         /// Get OpenApiDocument version of Microsoft Graph based on CSDL document 
         /// </summary>
-        /// <param name="graphVersion">Version of Microsoft Graph</param>
+        /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache</param>
         /// <returns>Instance of an OpenApiDocument</returns>
-        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphVersion, bool forceRefresh)
+        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
         {
-            var csdlHref = new Uri($"https://graph.microsoft.com/{graphVersion}/$metadata");
+            var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
             {
                 return doc;
