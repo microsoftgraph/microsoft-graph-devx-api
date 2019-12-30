@@ -30,9 +30,9 @@ namespace OpenAPIService
     {
         private static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
         private static OpenApiDocument _source = new OpenApiDocument();
-        private static UriTemplateTable _uriTemplateTable;
-        private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable;        
-                
+        private static UriTemplateTable _uriTemplateTable = new UriTemplateTable();
+        private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+
         /// <summary>
         /// Create partial document based on provided predicate
         /// </summary>
