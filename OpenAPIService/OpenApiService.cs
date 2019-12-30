@@ -1,4 +1,4 @@
-﻿using Microsoft.OData.Edm.Csdl;
+using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
@@ -72,7 +72,8 @@ namespace OpenAPIService
             var results = FindOperations(source, predicate);
             foreach (var result in results)
             {
-                OpenApiPathItem pathItem = null;
+                OpenApiPathItem pathItem;
+
                 if (subset.Paths == null)
                 {
                     subset.Paths = new OpenApiPaths();
@@ -152,6 +153,7 @@ namespace OpenAPIService
                 {
                     _uriTemplateTable = new UriTemplateTable();
                     _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+
                     await PopulateReferenceTablesAync(graphVersion, forceRefresh);
                 }
 
@@ -256,7 +258,7 @@ namespace OpenAPIService
                 return doc;
             }
 
-            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref, forceRefresh);
+            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
@@ -311,7 +313,7 @@ namespace OpenAPIService
             return reader.Read(stream, out OpenApiDiagnostic diag);
         }
 
-        private static async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref, bool forceRefresh = false)
+        private static async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
         {
             var httpClient = CreateHttpClient();
 
@@ -322,8 +324,7 @@ namespace OpenAPIService
                  EnableKeyAsSegment = true,
                  EnableOperationId = true,
                  PrefixEntityTypeNameBeforeKey =true,
-                 TagDepth = 2
-                  
+                 TagDepth = 2                  
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
