@@ -28,10 +28,10 @@ namespace OpenAPIService
        
     public class OpenApiService
     {
-        static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
-        private static readonly UriTemplateTable _uriTemplateTable = new UriTemplateTable();
-        private static readonly IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+        private static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
         private static OpenApiDocument _source = new OpenApiDocument();
+        private static UriTemplateTable _uriTemplateTable;
+        private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable;        
                 
         /// <summary>
         /// Create partial document based on provided predicate
@@ -150,6 +150,8 @@ namespace OpenAPIService
 
                 if (!_openApiOperationsTable.Any() || forceRefresh)
                 {
+                    _uriTemplateTable = new UriTemplateTable();
+                    _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
                     await PopulateReferenceTablesAync(graphVersion, forceRefresh);
                 }
 
@@ -350,7 +352,7 @@ namespace OpenAPIService
 
         private static HttpClient CreateHttpClient()
         {
-            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             var httpClient = new HttpClient(new HttpClientHandler()
             {
                 AutomaticDecompression = DecompressionMethods.GZip
