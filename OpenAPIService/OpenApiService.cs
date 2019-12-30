@@ -1,4 +1,4 @@
-﻿using Microsoft.OData.Edm.Csdl;
+using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
@@ -29,9 +29,9 @@ namespace OpenAPIService
     public class OpenApiService
     {
         static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
-        private static readonly UriTemplateTable _uriTemplateTable = new UriTemplateTable();
-        private static readonly IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
         private static OpenApiDocument _source = new OpenApiDocument();
+        private static readonly UriTemplateTable _uriTemplateTable = new UriTemplateTable();
+        private static readonly IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();        
                 
         /// <summary>
         /// Create partial document based on provided predicate
