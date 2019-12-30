@@ -1,4 +1,4 @@
-﻿using Microsoft.OData.Edm.Csdl;
+using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
@@ -56,8 +56,8 @@ namespace OpenAPIService
                 {
                     AuthorizationCode = new OpenApiOAuthFlow()
                     {
-                        AuthorizationUrl = new Uri("https://login.microsoftonline.com/common/oauth2/v2.0/authorize"),
-                        TokenUrl = new Uri("https://login.microsoftonline.com/common/oauth2/v2.0/token")
+                        AuthorizationUrl = new Uri(GraphConstants.GraphAuthorizationUrl),
+                        TokenUrl = new Uri(GraphConstants.GraphTokenUrl)
                     }
                 },
                 Reference = new OpenApiReference() { Id = "azureaadv2", Type = ReferenceType.SecurityScheme },
@@ -66,9 +66,9 @@ namespace OpenAPIService
             subset.Components.SecuritySchemes.Add("azureaadv2", aadv2Scheme);
 
             subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
-            
-            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = $"https://graph.microsoft.com/{graphVersion}/" });
-                       
+
+            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(GraphConstants.GraphUrl, graphVersion) });
+
             var results = FindOperations(source, predicate);
             foreach (var result in results)
             {
