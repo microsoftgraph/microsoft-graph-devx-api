@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.IO;
 using GraphWebApi.Models;
 using Microsoft.OpenApi.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace GraphWebApi.Controllers
 {
@@ -13,6 +14,12 @@ namespace GraphWebApi.Controllers
     /// </summary>
     public class OpenApiController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
+        public OpenApiController(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
         [Route("openapi")]
         [Route("$openapi")]
         [HttpGet]
@@ -29,14 +36,21 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, graphVersion, forceRefresh);
+                string graphUri = GetVersionUri(graphVersion);
+
+                if (graphUri == null)
+                {
+                    return new BadRequestResult();
+                }
+
+                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, graphUri, forceRefresh);
 
                 if (predicate == null)
                 {
                     return new BadRequestResult();
                 }
 
-                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphVersion, forceRefresh);
+                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, graphVersion, predicate);
 
@@ -58,7 +72,14 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphVersion, forceRefresh);
+                string graphUri = GetVersionUri(graphVersion);
+
+                if (graphUri == null)
+                {
+                    return new BadRequestResult();
+                }
+
+                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
                 WriteIndex(Request.Scheme + "://" + Request.Host.Value, graphVersion, graphOpenApi, Response.Body);
 
                 return new EmptyResult();
@@ -100,6 +121,19 @@ namespace GraphWebApi.Controllers
             }
             sw.WriteLine("</ul>");
             sw.Dispose();
+        }
+
+        private string GetVersionUri(string graphVersion)
+        {
+            switch (graphVersion)
+            {
+                case "v1.0":
+                    return _configuration["GraphMetadata:V1.0"];
+                case "beta":
+                    return _configuration["GraphMetadata:Beta"];
+                default:
+                    return null;
+            }
         }
     }
 }
