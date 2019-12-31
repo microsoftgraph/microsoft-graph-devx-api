@@ -1,4 +1,4 @@
-using Microsoft.OData.Edm.Csdl;
+﻿using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
@@ -365,7 +365,7 @@ namespace OpenAPIService
 
         private static void CopyReferences(OpenApiDocument target)
         {
-            bool morestuff = false;
+            bool morestuff;
             do
             {
                 var copy = new CopyReferences(target);
