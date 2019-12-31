@@ -28,11 +28,11 @@ namespace OpenAPIService
        
     public class OpenApiService
     {
-        static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
-        private static readonly UriTemplateTable _uriTemplateTable = new UriTemplateTable();
-        private static readonly IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+        private static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
         private static OpenApiDocument _source = new OpenApiDocument();
-                
+        private static UriTemplateTable _uriTemplateTable = new UriTemplateTable();
+        private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+
         /// <summary>
         /// Create partial document based on provided predicate
         /// </summary>
@@ -56,8 +56,8 @@ namespace OpenAPIService
                 {
                     AuthorizationCode = new OpenApiOAuthFlow()
                     {
-                        AuthorizationUrl = new Uri("https://login.microsoftonline.com/common/oauth2/v2.0/authorize"),
-                        TokenUrl = new Uri("https://login.microsoftonline.com/common/oauth2/v2.0/token")
+                        AuthorizationUrl = new Uri(GraphConstants.GraphAuthorizationUrl),
+                        TokenUrl = new Uri(GraphConstants.GraphTokenUrl)
                     }
                 },
                 Reference = new OpenApiReference() { Id = "azureaadv2", Type = ReferenceType.SecurityScheme },
@@ -66,13 +66,14 @@ namespace OpenAPIService
             subset.Components.SecuritySchemes.Add("azureaadv2", aadv2Scheme);
 
             subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
-            
-            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = $"https://graph.microsoft.com/{graphVersion}/" });
-                       
+
+            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(GraphConstants.GraphUrl, graphVersion) });
+
             var results = FindOperations(source, predicate);
             foreach (var result in results)
             {
-                OpenApiPathItem pathItem = null;
+                OpenApiPathItem pathItem;
+
                 if (subset.Paths == null)
                 {
                     subset.Paths = new OpenApiPaths();
@@ -150,6 +151,9 @@ namespace OpenAPIService
 
                 if (!_openApiOperationsTable.Any() || forceRefresh)
                 {
+                    _uriTemplateTable = new UriTemplateTable();
+                    _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+
                     await PopulateReferenceTablesAync(graphVersion, forceRefresh);
                 }
 
@@ -181,13 +185,13 @@ namespace OpenAPIService
         /// Populates the _uriTemplateTable with the Graph url paths and the _openApiOperationsTable 
         /// with the respective OpenApiOperations for these urls paths.
         /// </summary>
-        /// <param name="graphVersion">Version of Microsoft Graph.</param>
+        /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
-        private static async Task PopulateReferenceTablesAync(string graphVersion, bool forceRefresh)
+        private static async Task PopulateReferenceTablesAync(string graphUri, bool forceRefresh)
         {
             HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
 
-            _source = await GetGraphOpenApiDocumentAsync(graphVersion, forceRefresh);
+            _source = await GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
             int count = 0;
 
@@ -243,18 +247,18 @@ namespace OpenAPIService
         /// <summary>
         /// Get OpenApiDocument version of Microsoft Graph based on CSDL document 
         /// </summary>
-        /// <param name="graphVersion">Version of Microsoft Graph</param>
+        /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache</param>
         /// <returns>Instance of an OpenApiDocument</returns>
-        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphVersion, bool forceRefresh)
+        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
         {
-            var csdlHref = new Uri($"https://graph.microsoft.com/{graphVersion}/$metadata");
+            var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
             {
                 return doc;
             }
 
-            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref, forceRefresh);
+            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
@@ -309,7 +313,7 @@ namespace OpenAPIService
             return reader.Read(stream, out OpenApiDiagnostic diag);
         }
 
-        private static async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref, bool forceRefresh = false)
+        private static async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
         {
             var httpClient = CreateHttpClient();
 
@@ -320,8 +324,7 @@ namespace OpenAPIService
                  EnableKeyAsSegment = true,
                  EnableOperationId = true,
                  PrefixEntityTypeNameBeforeKey =true,
-                 TagDepth = 2
-                  
+                 TagDepth = 2                  
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
@@ -350,7 +353,7 @@ namespace OpenAPIService
 
         private static HttpClient CreateHttpClient()
         {
-            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             var httpClient = new HttpClient(new HttpClientHandler()
             {
                 AutomaticDecompression = DecompressionMethods.GZip
@@ -362,7 +365,7 @@ namespace OpenAPIService
 
         private static void CopyReferences(OpenApiDocument target)
         {
-            bool morestuff = false;
+            bool morestuff;
             do
             {
                 var copy = new CopyReferences(target);
