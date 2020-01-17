@@ -12,11 +12,11 @@ namespace GraphExplorerPermissionsService.Models
     public class ScopeInformation
     {
         [JsonProperty(Required = Required.Always, PropertyName = "value")]
-        public string ScopeName { get; set; }
+        public string ScopeName { get; set; } = "Undefined";
         [JsonProperty(Required = Required.Always, PropertyName = "consentDisplayName")]
-        public string DisplayName { get; set; }
+        public string DisplayName { get; set; } = "Undefined";
         [JsonProperty(Required = Required.Always, PropertyName = "consentDescription")]
-        public string Description { get; set; }
+        public string Description { get; set; } = "Undefined";
         [JsonProperty(Required = Required.Always, PropertyName = "isAdmin")]
         public bool IsAdmin { get; set; }
     }
