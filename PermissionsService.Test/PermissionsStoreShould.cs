@@ -184,15 +184,15 @@ namespace PermissionsService.Test
                 item =>
                 {
                     Assert.Equal("LoremIpsum.Read.All", item.ScopeName);
-                    Assert.Null(item.DisplayName);
-                    Assert.Null(item.Description);
+                    Assert.Equal("Undefined", item.DisplayName);
+                    Assert.Equal("Undefined", item.Description);
                     Assert.False(item.IsAdmin);
                 },
                 item =>
                 {
                     Assert.Equal("LoremIpsum.ReadWrite.All", item.ScopeName);
-                    Assert.Null(item.DisplayName);
-                    Assert.Null(item.Description);
+                    Assert.Equal("Undefined", item.DisplayName);
+                    Assert.Equal("Undefined", item.Description);
                     Assert.False(item.IsAdmin);
                 });
         }
