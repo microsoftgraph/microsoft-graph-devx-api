@@ -1,4 +1,4 @@
-﻿using Microsoft.OData.Edm.Csdl;
+using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
@@ -9,13 +9,13 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Threading.Tasks;
 using Microsoft.OpenApi.OData;
 using System.Collections.Concurrent;
 using Tavis.UriTemplates;
+using System.Globalization;
 
 namespace OpenAPIService
 {
