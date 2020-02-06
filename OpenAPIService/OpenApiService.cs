@@ -337,9 +337,12 @@ namespace OpenAPIService
         {
             // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
             // So we write it out, and read it back in again to fix it up.
-            var sb = new StringBuilder();
-            document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
-            var doc = new OpenApiStringReader().Read(sb.ToString(), out var diag);
+
+            var outputString = new StringWriter(CultureInfo.InvariantCulture);
+            var writer = new OpenApiYamlWriter(outputString, new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
+            document.SerializeAsV3(writer);
+            var doc = new OpenApiStringReader().Read(outputString.GetStringBuilder().ToString(), out var diag);
+            
             return doc;
         }
 
