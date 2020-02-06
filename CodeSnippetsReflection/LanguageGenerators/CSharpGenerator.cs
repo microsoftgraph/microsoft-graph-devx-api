@@ -520,7 +520,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="snippetModel">Snippet model built from the request</param>
         private static string GenerateCustomQuerySection(SnippetModel snippetModel)
         {
-            if (!snippetModel.CustomQueryOptions.Any())
+            if (!snippetModel.CustomQueryOptions.Any()
+            && string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
             {
                 return string.Empty;//nothing to do here
             }
@@ -532,6 +533,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
             foreach (var (key, value) in snippetModel.CustomQueryOptions)
             {
                 stringBuilder.Append($"\tnew QueryOption(\"{key}\", \"{value}\"),\r\n");
+            }
+
+            //Append any skip token queries
+            if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
+            {
+                stringBuilder.Append($"\tnew QueryOption(\"$skiptoken\", \"{snippetModel.ODataUri.SkipToken}\"),\r\n");
             }
 
             stringBuilder.Remove(stringBuilder.Length - 3, 1);//remove the trailing comma
@@ -597,7 +604,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string SelectExpression => "\n\t.Select( e => new {{\n\t\t\t e.{0} \n\t\t\t }})"; 
         public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")"; 
         public override string SkipExpression => "\n\t.Skip({0})"; 
-        public override string SkipTokenExpression => "\n\t.SkipToken(\"{0}\")"; 
+        public override string SkipTokenExpression => ""; 
         public override string TopExpression => "\n\t.Top({0})";
         public override string FilterExpressionDelimiter => ",";
         public override string SelectExpressionDelimiter => ",\n\t\t\t e.";

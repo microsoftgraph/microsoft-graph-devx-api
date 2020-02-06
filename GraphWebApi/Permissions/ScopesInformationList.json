@@ -1090,6 +1090,26 @@
                 "consentDescription":  "Allows the app to read and write financials data on your behalf.",
                 "consentDisplayName":  "Read and write financials data",
                 "value":  "Financials.ReadWrite.All"
+            },
+            {
+                "adminConsentDescription":  "Allows the app to read schedule, schedule groups, shifts and associated entities in the Teams/Shifts application on behalf of the signed-in user.",
+                "adminConsentDisplayName":  "Read user schedule items",
+                "id":  "c0bedd8c-bbf5-43f6-a02e-b74c485b6b48",
+                "isEnabled":  true,
+                "isAdmin":  true,
+                "consentDescription":  "Allows the app to read schedule, schedule groups, shifts and associated entities in the Teams/Shifts application on behalf of the signed-in user.",
+                "consentDisplayName":  "Read user schedule items",
+                "value":  "Schedule.Read.All"
+            },
+            {
+                "adminConsentDescription":  "Allows the app to manage schedule, schedule groups, shifts and associated entities in the Teams/Shifts application on behalf of the signed-in user.",
+                "adminConsentDisplayName":  "Read and write user schedule items",
+                "id":  "39e23db9-bf1b-46cf-9c91-3e3c71cfa775",
+                "isEnabled":  true,
+                "isAdmin":  true,
+                "consentDescription":  "Allows the app to manage schedule, schedule groups, shifts and associated entities in the Teams/Shifts application on behalf of the signed-in user.",
+                "consentDisplayName":  "Read and write user schedule items",
+                "value":  "Schedule.ReadWrite.All"
             }
         ],
     "applicationScopesList":
