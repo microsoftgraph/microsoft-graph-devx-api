@@ -1,4 +1,3 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29025.244
@@ -20,6 +19,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PermissionsService.Test", "PermissionsService.Test\PermissionsService.Test.csproj", "{A8F6FD5F-2C15-442F-9170-91BBE2293520}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAPIService", "OpenAPIService\OpenAPIService.csproj", "{308A9E8D-5D74-4AAA-9C01-F72053B47444}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.OpenAPI.OData.Reader", "..\OpenAPI.NET.OData\src\Microsoft.OpenApi.OData.Reader\Microsoft.OpenAPI.OData.Reader.csproj", "{6DCE270C-2E76-475F-964D-5D81BB9658E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +64,10 @@ Global
 		{308A9E8D-5D74-4AAA-9C01-F72053B47444}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{308A9E8D-5D74-4AAA-9C01-F72053B47444}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{308A9E8D-5D74-4AAA-9C01-F72053B47444}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DCE270C-2E76-475F-964D-5D81BB9658E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DCE270C-2E76-475F-964D-5D81BB9658E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DCE270C-2E76-475F-964D-5D81BB9658E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DCE270C-2E76-475F-964D-5D81BB9658E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
