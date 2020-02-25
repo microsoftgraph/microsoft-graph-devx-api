@@ -15,7 +15,7 @@ using System.Xml.Linq;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using Tavis.UriTemplates;
-using System.Globalization;
+using System.Text;
 
 namespace OpenAPIService
 {
@@ -215,20 +215,38 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="subset">OpenAPI document</param>
         /// <param name="openApiVersion"></param>
-        /// <param name="format"></param>
+        /// <param name="format">The format of the OpenAPI doc.</param>
+        /// <param name="style">The styling preference of the OpenAPI doc.</param>
         /// <returns></returns>
-        public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, string openApiVersion, string format)
+        public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, string openApiVersion, string format, OpenApiStyle style)
         {
             var stream = new MemoryStream();
             var sr = new StreamWriter(stream);
             OpenApiWriterBase writer;
+
             if (format == "yaml")
             {
-                writer = new OpenApiYamlWriter(sr);
+                if (style == OpenApiStyle.PowerPlatform)
+                {
+                    writer = new OpenApiYamlWriter(sr,
+                        new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
+                }
+                else
+                {
+                    writer = new OpenApiYamlWriter(sr);
+                }
             }
             else
             {
-                writer = new OpenApiJsonWriter(sr);
+                if (style == OpenApiStyle.PowerPlatform)
+                {
+                    writer = new OpenApiJsonWriter(sr,
+                        new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
+                }
+                else
+                {
+                    writer = new OpenApiJsonWriter(sr);
+                }
             }
 
             if (openApiVersion == "2")
@@ -337,11 +355,10 @@ namespace OpenAPIService
         {
             // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
             // So we write it out, and read it back in again to fix it up.
-
-            var outputString = new StringWriter(CultureInfo.InvariantCulture);
-            var writer = new OpenApiYamlWriter(outputString, new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
-            document.SerializeAsV3(writer);
-            var doc = new OpenApiStringReader().Read(outputString.GetStringBuilder().ToString(), out var diag);
+           
+            var sb = new StringBuilder();
+            document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
+            var doc = new OpenApiStringReader().Read(sb.ToString(), out var diag);
 
             return doc;
         }
