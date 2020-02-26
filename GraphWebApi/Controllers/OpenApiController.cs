@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using OpenAPIService;
-using Microsoft.OpenApi.Models;
-using System.Threading.Tasks;
-using System.IO;
-using GraphWebApi.Models;
-using Microsoft.OpenApi.Services;
+﻿using GraphWebApi.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Services;
+using OpenAPIService;
+using System.Globalization;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace GraphWebApi.Controllers
 {
@@ -125,7 +126,7 @@ namespace GraphWebApi.Controllers
 
         private string GetVersionUri(string graphVersion)
         {
-            switch (graphVersion)
+            switch (graphVersion.ToLower(CultureInfo.InvariantCulture))
             {
                 case "v1.0":
                     return _configuration["GraphMetadata:V1.0"];
