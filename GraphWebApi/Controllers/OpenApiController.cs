@@ -56,7 +56,7 @@ namespace GraphWebApi.Controllers
 
                 subsetOpenApiDocument = OpenApiService.ApplyStyle(style, subsetOpenApiDocument);
 
-                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, openApiVersion, format);
+                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, openApiVersion, format, style);
                 return new FileStreamResult(stream, "application/json");
             }
             catch

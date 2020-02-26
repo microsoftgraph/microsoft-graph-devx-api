@@ -54,7 +54,7 @@ namespace CodeSnippetsReflection
             this.RequestHeaders = requestPayload.Headers;
 
             PopulateQueryFieldLists(QueryString);
-            GetRequestBodyAsync(requestPayload);
+            GetRequestBody(requestPayload);
         }
 
         /// <summary>
@@ -186,12 +186,12 @@ namespace CodeSnippetsReflection
         /// Reads the request body from the request payload to save it as a string for later processing
         /// </summary>
         /// <param name="requestPayload"><see cref="HttpRequestMessage"/> to read the body from</param>
-        private async void GetRequestBodyAsync(HttpRequestMessage requestPayload)
+        private void GetRequestBody(HttpRequestMessage requestPayload)
         {
             //do not try to read in the content if there isn't any
             if (null != requestPayload.Content)
             {
-                this.RequestBody = await requestPayload.Content.ReadAsStringAsync();
+                this.RequestBody = requestPayload.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                 if(null != requestPayload.Content.Headers.ContentType)
                     this.ContentType = requestPayload.Content.Headers.ContentType.MediaType;
             }

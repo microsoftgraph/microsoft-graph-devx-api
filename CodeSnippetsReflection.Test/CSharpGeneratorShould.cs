@@ -845,5 +845,31 @@ namespace CodeSnippetsReflection.Test
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
+
+        [Fact]
+        // This tests asserts that a skiptoken is added as a Query option
+        public void GeneratesSnippetsSkipTokenAddedAsQueryOptions()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/calendarView/delta?$skiptoken=R0usmcCM996atia_s");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var queryOptions = new List<QueryOption>()\r\n" +
+                                           "{\r\n" +
+                                                "\tnew QueryOption(\"$skiptoken\", \"R0usmcCM996atia_s\")" +
+                                           "\r\n};\r\n" +
+                                           "\r\n" +
+                                           "await graphClient.Me.CalendarView\n" +
+                                                "\t.Delta()\n" +
+                                                "\t.Request()\n" +
+                                                "\t.PostAsync();";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
     }
 }
