@@ -1,4 +1,4 @@
-﻿using GraphWebApi.Models;
+using GraphWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
@@ -28,16 +28,18 @@ namespace GraphWebApi.Controllers
                                     [FromQuery]string operationIds = null,
                                     [FromQuery]string tags = null,
                                     [FromQuery]string url = null,
-                                    [FromQuery]string openApiVersion = "2",
+                                    [FromQuery]string openApiVersion = null,
                                     [FromQuery]string title = "Partial Graph API",
                                     [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
-                                    [FromQuery]string format = "yaml",
-                                    [FromQuery]string graphVersion = "v1.0",
+                                    [FromQuery]string format = null,
+                                    [FromQuery]string graphVersion = null,
                                     [FromQuery]bool forceRefresh = false)
         {
             try
             {
-                string graphUri = GetVersionUri(graphVersion);
+                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+
+                string graphUri = GetVersionUri(styleOptions.GraphVersion);
 
                 if (graphUri == null)
                 {
