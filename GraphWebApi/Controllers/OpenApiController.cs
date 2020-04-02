@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService;
+using OpenAPIService.Common;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -53,13 +54,13 @@ namespace GraphWebApi.Controllers
                     return new BadRequestResult();
                 }
 
-                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, graphVersion, predicate);
 
-                subsetOpenApiDocument = OpenApiService.ApplyStyle(style, subsetOpenApiDocument);
+                subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions, subsetOpenApiDocument);
 
-                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, openApiVersion, format, style);
+                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
                 return new FileStreamResult(stream, "application/json");
             }
             catch
