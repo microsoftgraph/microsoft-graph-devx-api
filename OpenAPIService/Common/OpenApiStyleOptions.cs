@@ -1,9 +1,8 @@
 ﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
-using OpenAPIService;
 
-namespace GraphWebApi.Models
+namespace OpenAPIService.Common
 {
     /// <summary>
     /// Defines a model class that defines the different style options for transforming the OpenAPI document.
