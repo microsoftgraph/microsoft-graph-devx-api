@@ -1,4 +1,4 @@
-﻿using Microsoft.OData.Edm.Csdl;
+using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
@@ -340,10 +340,14 @@ namespace OpenAPIService
             var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader());
 
             var settings = new OpenApiConvertSettings() {
-                 EnableKeyAsSegment = true,
-                 EnableOperationId = true,
-                 PrefixEntityTypeNameBeforeKey =true,
-                 TagDepth = 2                 
+                EnableKeyAsSegment = true,
+                EnableOperationId = true,
+                PrefixEntityTypeNameBeforeKey = true,
+                TagDepth = 2,
+                EnablePagination = styleOptions == null ? false : styleOptions.EnablePagination,
+                EnableDiscriminatorValue = styleOptions == null ? false : styleOptions.EnableDiscriminatorValue,
+                EnableDerivedTypesReferencesForRequestBody = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForRequestBody,
+                EnableDerivedTypesReferencesForResponses = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForResponses
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
