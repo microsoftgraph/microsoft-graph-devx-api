@@ -16,8 +16,8 @@ namespace OpenAPIService.Common
         public bool InlineLocalReferences { get; private set; } = false;
         public bool EnablePagination { get; private set; } = false;
         public bool EnableDiscriminatorValue { get; private set; } = false;
-        public bool ShowDerivedTypesReferencesForRequestBody { get; private set; } = false;
-        public bool ShowDerivedTypesReferencesForResponses { get; private set; } = false;
+        public bool EnableDerivedTypesReferencesForRequestBody { get; private set; } = false;
+        public bool EnableDerivedTypesReferencesForResponses { get; private set; } = false;
 
         public OpenApiStyleOptions(OpenApiStyle style, string openApiVersion = null, string graphVersion = null, string openApiFormat = null)
         {
@@ -69,8 +69,8 @@ namespace OpenAPIService.Common
             OpenApiFormat = OpenApiFormat ?? Constants.OpenApiConstants.Format_Yaml;
             EnablePagination = true;
             EnableDiscriminatorValue = true;
-            ShowDerivedTypesReferencesForRequestBody = true;
-            ShowDerivedTypesReferencesForResponses = true;
+            EnableDerivedTypesReferencesForRequestBody = true;
+            EnableDerivedTypesReferencesForResponses = true;
         }
     }
 }
