@@ -121,13 +121,13 @@ namespace GraphWebApi.Controllers
 
             foreach (var item in indexSearch.Index)
             {
-
-                var target = $"{baseUrl}/openapi?tags={item.Key.Name}&openApiVersion=3&graphVersion={graphVersion}";
-                sw.WriteLine($"<li>{item.Key.Name} [<a href='../../openapi?tags={target}'>OpenApi</a>]   [<a href='/swagger/index.html#url={target}'>Swagger UI</a>]</li>");
+                var target = $"{baseUrl}/openapi?tags={item.Key.Name}&openApiVersion={openApiVersion}&graphVersion={graphVersion}&format={format}&style={style}";
+                sw.WriteLine($"<li>{item.Key.Name} [<a href='{target}'>OpenApi</a>]   [<a href='/swagger/index.html#url={target}'>Swagger UI</a>]</li>");
                 sw.WriteLine("<ul>");
                 foreach (var op in item.Value)
                 {
-                    sw.WriteLine($"<li>{op.OperationId}  [<a href='../../openapi?operationIds={op.OperationId}'>OpenAPI</a>]</li>");
+                    sw.WriteLine($"<li>{op.OperationId}  [<a href='../../openapi?operationIds={op.OperationId}&openApiVersion={openApiVersion}&graphVersion={graphVersion}" +
+                        $"&format={format}&style={style}'>OpenAPI</a>]</li>");
                 }
                 sw.WriteLine("</ul>");
             }
