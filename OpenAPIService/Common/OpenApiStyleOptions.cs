@@ -5,7 +5,7 @@
 namespace OpenAPIService.Common
 {
     /// <summary>
-    /// Defines a model class that defines the different style options for transforming the OpenAPI document.
+    /// Defines a model class that defines the different styling options for rendering an OpenAPI document.
     /// </summary>
     public class OpenApiStyleOptions
     {
