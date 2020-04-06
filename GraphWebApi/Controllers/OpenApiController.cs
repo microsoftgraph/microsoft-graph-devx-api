@@ -71,20 +71,26 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/operations")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]string graphVersion = "v1.0", 
+        public async Task<IActionResult> Get([FromQuery]string graphVersion = null,
+                                             [FromQuery]string openApiVersion = null,
+                                             [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
+                                             [FromQuery]string format = null,
                                              [FromQuery]bool forceRefresh = false)
         {
             try
             {
-                string graphUri = GetVersionUri(graphVersion);
+                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+
+                string graphUri = GetVersionUri(styleOptions.GraphVersion);
 
                 if (graphUri == null)
                 {
                     return new BadRequestResult();
                 }
 
-                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-                WriteIndex(Request.Scheme + "://" + Request.Host.Value, graphVersion, graphOpenApi, Response.Body);
+                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
+                WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat, 
+                    graphOpenApi, Response.Body, styleOptions.Style);
 
                 return new EmptyResult();
             }
@@ -94,7 +100,9 @@ namespace GraphWebApi.Controllers
             }           
         }
 
-        private void WriteIndex(string baseUrl, string graphVersion, OpenApiDocument graphOpenApi, Stream stream)
+        private void WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format, 
+                                OpenApiDocument graphOpenApi, Stream stream, OpenApiStyle style)
+        
         {
             var sw = new StreamWriter(stream);
             var indexSearch = new OpenApiOperationIndex();
