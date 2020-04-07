@@ -1,4 +1,8 @@
-﻿using Microsoft.OData.Edm.Csdl;
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
@@ -16,6 +20,7 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using Tavis.UriTemplates;
 using System.Text;
+using OpenAPIService.Common;
 
 namespace OpenAPIService
 {
@@ -56,8 +61,8 @@ namespace OpenAPIService
                 {
                     AuthorizationCode = new OpenApiOAuthFlow()
                     {
-                        AuthorizationUrl = new Uri(GraphConstants.GraphAuthorizationUrl),
-                        TokenUrl = new Uri(GraphConstants.GraphTokenUrl)
+                        AuthorizationUrl = new Uri(Constants.GraphConstants.GraphAuthorizationUrl),
+                        TokenUrl = new Uri(Constants.GraphConstants.GraphTokenUrl)
                     }
                 },
                 Reference = new OpenApiReference() { Id = "azureaadv2", Type = ReferenceType.SecurityScheme },
@@ -67,7 +72,7 @@ namespace OpenAPIService
 
             subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
 
-            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(GraphConstants.GraphUrl, graphVersion) });
+            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, graphVersion) });
 
             var results = FindOperations(source, predicate);
             foreach (var result in results)
@@ -218,15 +223,15 @@ namespace OpenAPIService
         /// <param name="format">The format of the OpenAPI doc.</param>
         /// <param name="style">The styling preference of the OpenAPI doc.</param>
         /// <returns></returns>
-        public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, string openApiVersion, string format, OpenApiStyle style)
+        public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
             var stream = new MemoryStream();
             var sr = new StreamWriter(stream);
             OpenApiWriterBase writer;
 
-            if (format == "yaml")
+            if (styleOptions.OpenApiFormat == Constants.OpenApiConstants.Format_Yaml)
             {
-                if (style == OpenApiStyle.PowerPlatform)
+                if (styleOptions.Style == OpenApiStyle.PowerPlatform)
                 {
                     writer = new OpenApiYamlWriter(sr,
                         new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
@@ -238,7 +243,7 @@ namespace OpenAPIService
             }
             else
             {
-                if (style == OpenApiStyle.PowerPlatform)
+                if (styleOptions.Style == OpenApiStyle.PowerPlatform)
                 {
                     writer = new OpenApiJsonWriter(sr,
                         new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
@@ -249,7 +254,7 @@ namespace OpenAPIService
                 }
             }
 
-            if (openApiVersion == "2")
+            if (styleOptions.OpenApiVersion == Constants.OpenApiConstants.OpenApiVersion_2)
             {
                 subset.SerializeAsV2(writer);
             }
@@ -268,7 +273,7 @@ namespace OpenAPIService
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache</param>
         /// <returns>Instance of an OpenApiDocument</returns>
-        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
+        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, OpenApiStyleOptions styleOptions = null)
         {
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
@@ -276,7 +281,7 @@ namespace OpenAPIService
                 return doc;
             }
 
-            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
+            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref, styleOptions);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
@@ -287,9 +292,9 @@ namespace OpenAPIService
         /// <param name="style"></param>
         /// <param name="subsetOpenApiDocument"></param>
         /// <returns></returns>
-        public static OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument)
+        public static OpenApiDocument ApplyStyle(OpenApiStyleOptions styleOptions, OpenApiDocument subsetOpenApiDocument)
         {
-            if (style == OpenApiStyle.Plain)
+            if (styleOptions.Style == OpenApiStyle.Plain)
             {
                 return subsetOpenApiDocument;
             }
@@ -303,7 +308,7 @@ namespace OpenAPIService
             var walker = new OpenApiWalker(anyOfRemover);
             walker.Walk(subsetOpenApiDocument);
                         
-            if (style == OpenApiStyle.PowerShell)
+            if (styleOptions.Style == OpenApiStyle.PowerShell)
             {
                 // Format the OperationId for Powershell cmdlet names generation 
                 var operationIdFormatter = new OperationIdPowershellFormatter();
@@ -331,7 +336,7 @@ namespace OpenAPIService
             return reader.Read(stream, out OpenApiDiagnostic diag);
         }
 
-        private static async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
+        private static async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref, OpenApiStyleOptions styleOptions = null)
         {
             var httpClient = CreateHttpClient();
 
@@ -339,10 +344,14 @@ namespace OpenAPIService
             var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader());
 
             var settings = new OpenApiConvertSettings() {
-                 EnableKeyAsSegment = true,
-                 EnableOperationId = true,
-                 PrefixEntityTypeNameBeforeKey =true,
-                 TagDepth = 2                  
+                EnableKeyAsSegment = true,
+                EnableOperationId = true,
+                PrefixEntityTypeNameBeforeKey = true,
+                TagDepth = 2,
+                EnablePagination = styleOptions == null ? false : styleOptions.EnablePagination,
+                EnableDiscriminatorValue = styleOptions == null ? false : styleOptions.EnableDiscriminatorValue,
+                EnableDerivedTypesReferencesForRequestBody = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForRequestBody,
+                EnableDerivedTypesReferencesForResponses = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForResponses
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
