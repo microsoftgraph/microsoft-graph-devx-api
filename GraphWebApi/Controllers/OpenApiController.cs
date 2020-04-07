@@ -1,9 +1,14 @@
-﻿using GraphWebApi.Models;
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using GraphWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService;
+using OpenAPIService.Common;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -28,16 +33,18 @@ namespace GraphWebApi.Controllers
                                     [FromQuery]string operationIds = null,
                                     [FromQuery]string tags = null,
                                     [FromQuery]string url = null,
-                                    [FromQuery]string openApiVersion = "2",
+                                    [FromQuery]string openApiVersion = null,
                                     [FromQuery]string title = "Partial Graph API",
                                     [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
-                                    [FromQuery]string format = "yaml",
-                                    [FromQuery]string graphVersion = "v1.0",
+                                    [FromQuery]string format = null,
+                                    [FromQuery]string graphVersion = null,
                                     [FromQuery]bool forceRefresh = false)
         {
             try
             {
-                string graphUri = GetVersionUri(graphVersion);
+                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+
+                string graphUri = GetVersionUri(styleOptions.GraphVersion);
 
                 if (graphUri == null)
                 {
@@ -51,13 +58,13 @@ namespace GraphWebApi.Controllers
                     return new BadRequestResult();
                 }
 
-                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
 
-                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, graphVersion, predicate);
+                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
-                subsetOpenApiDocument = OpenApiService.ApplyStyle(style, subsetOpenApiDocument);
+                subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions, subsetOpenApiDocument);
 
-                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, openApiVersion, format, style);
+                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
                 return new FileStreamResult(stream, "application/json");
             }
             catch
@@ -68,20 +75,26 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/operations")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]string graphVersion = "v1.0", 
+        public async Task<IActionResult> Get([FromQuery]string graphVersion = null,
+                                             [FromQuery]string openApiVersion = null,
+                                             [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
+                                             [FromQuery]string format = null,
                                              [FromQuery]bool forceRefresh = false)
         {
             try
             {
-                string graphUri = GetVersionUri(graphVersion);
+                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+
+                string graphUri = GetVersionUri(styleOptions.GraphVersion);
 
                 if (graphUri == null)
                 {
                     return new BadRequestResult();
                 }
 
-                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-                WriteIndex(Request.Scheme + "://" + Request.Host.Value, graphVersion, graphOpenApi, Response.Body);
+                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
+                WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat, 
+                    graphOpenApi, Response.Body, styleOptions.Style);
 
                 return new EmptyResult();
             }
@@ -91,7 +104,9 @@ namespace GraphWebApi.Controllers
             }           
         }
 
-        private void WriteIndex(string baseUrl, string graphVersion, OpenApiDocument graphOpenApi, Stream stream)
+        private void WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format, 
+                                OpenApiDocument graphOpenApi, Stream stream, OpenApiStyle style)
+        
         {
             var sw = new StreamWriter(stream);
             var indexSearch = new OpenApiOperationIndex();
@@ -110,13 +125,13 @@ namespace GraphWebApi.Controllers
 
             foreach (var item in indexSearch.Index)
             {
-
-                var target = $"{baseUrl}/openapi?tags={item.Key.Name}&openApiVersion=3&graphVersion={graphVersion}";
-                sw.WriteLine($"<li>{item.Key.Name} [<a href='../../openapi?tags={target}'>OpenApi</a>]   [<a href='/swagger/index.html#url={target}'>Swagger UI</a>]</li>");
+                var target = $"{baseUrl}/openapi?tags={item.Key.Name}&openApiVersion={openApiVersion}&graphVersion={graphVersion}&format={format}&style={style}";
+                sw.WriteLine($"<li>{item.Key.Name} [<a href='{target}'>OpenApi</a>]   [<a href='/swagger/index.html#url={target}'>Swagger UI</a>]</li>");
                 sw.WriteLine("<ul>");
                 foreach (var op in item.Value)
                 {
-                    sw.WriteLine($"<li>{op.OperationId}  [<a href='../../openapi?operationIds={op.OperationId}'>OpenAPI</a>]</li>");
+                    sw.WriteLine($"<li>{op.OperationId}  [<a href='../../openapi?operationIds={op.OperationId}&openApiVersion={openApiVersion}&graphVersion={graphVersion}" +
+                        $"&format={format}&style={style}'>OpenAPI</a>]</li>");
                 }
                 sw.WriteLine("</ul>");
             }
