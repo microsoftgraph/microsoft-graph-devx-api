@@ -27,44 +27,39 @@ paths:
       requestBody:
         description: HTTP request message to be translated into code.
         content:
-          'text/message;version=1.1;msgtype=request':  
+          'application/http;msgtype=request':  
             schema:
               type: string
             examples: 
               GetUserProfile:
-                value: |
-                    GET /v1.0/users/joe@tenant.com HTTP/1.1 
-                    Host: https://graph.microsoft.com  
-                    Accept: application/json
+                value: "GET /v1.0/users/joe@tenant.com HTTP/1.1\r\nHost: graph.microsoft.com:443\r\nAccept: application/json\r\n\r\n"
+
               SendMail:
-                value: |  
-                  POST /v1.0/me/sendMail 
-                  Host: https://graph.microsoft.com 
-                  Content-type: application/json
+                value: "POST /v1.0/me/sendMail HTTP/1.1\r\nHost: graph.microsoft.com:443\r\nContent-type: application/json\r\n\r\n
                   {
-                    "message": {
-                      "subject": "Meet for lunch?",
-                      "body": {
-                        "contentType": "Text",
-                        "content": "The new cafeteria is open."
+                    \"message\": {
+                      \"subject\": \"Meet for lunch?\",
+                      \"body\": {
+                        \"contentType\": \"Text\",
+                        \"content\": \"The new cafeteria is open.\"
                       },
-                      "toRecipients": [
+                      \"toRecipients\": [
                         {
-                          "emailAddress": {
-                            "address": "fannyd@contoso.onmicrosoft.com"
+                          \"emailAddress\": {
+                            \"address\": \"fannyd@contoso.onmicrosoft.com\"
                           }
                         }
                       ],
-                      "ccRecipients": [
+                      \"ccRecipients\": [
                         {
-                          "emailAddress": {
-                            "address": "danas@contoso.onmicrosoft.com"
+                          \"emailAddress\": {
+                            \"address\": \"danas@contoso.onmicrosoft.com\"
                           }
                         }
                       ]
                     },
-                    "saveToSentItems": "false"
-                  }
+                    \"saveToSentItems\": \"false\"
+                  }"
       responses:
         200:
          description: Generated language snippet  

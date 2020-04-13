@@ -46,7 +46,6 @@ namespace GraphWebApi.Controllers
             Request.EnableRewind();
             var streamContent = new StreamContent(Request.Body);
             streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
-
             try
             {
                 using (HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false))
