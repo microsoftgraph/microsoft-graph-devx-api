@@ -225,10 +225,8 @@ namespace OpenAPIService
         /// <summary>
         /// Create a representation of the OpenApiDocument to return from an API
         /// </summary>
-        /// <param name="subset">OpenAPI document</param>
-        /// <param name="openApiVersion"></param>
-        /// <param name="format">The format of the OpenAPI doc.</param>
-        /// <param name="style">The styling preference of the OpenAPI doc.</param>
+        /// <param name="subset">OpenAPI document.</param>
+        /// <param name="OpenApiStyleOptions">The modal object containing the required styling options.</param>
         /// <returns></returns>
         public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
@@ -236,16 +234,31 @@ namespace OpenAPIService
             var sr = new StreamWriter(stream);
             OpenApiWriterBase writer;
 
-            if (styleOptions.InlineLocalReferences == true)
+            if (styleOptions.OpenApiFormat == Constants.OpenApiConstants.Format_Yaml)
             {
-                writer = new OpenApiYamlWriter(sr,
+                if (styleOptions.InlineLocalReferences == true)
+                {
+                    writer = new OpenApiYamlWriter(sr,
                         new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
+                }
+                else
+                {
+                    writer = new OpenApiYamlWriter(sr);
+                }
             }
-            else
+            else // json
             {
-                writer = new OpenApiYamlWriter(sr);
+                if (styleOptions.InlineLocalReferences == true)
+                {
+                    writer = new OpenApiJsonWriter(sr,
+                        new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
+                }
+                else
+                {
+                    writer = new OpenApiJsonWriter(sr);
+                }
             }
-            
+
             if (styleOptions.OpenApiVersion == Constants.OpenApiConstants.OpenApiVersion_2)
             {
                 subset.SerializeAsV2(writer);
