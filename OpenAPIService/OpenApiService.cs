@@ -236,7 +236,7 @@ namespace OpenAPIService
 
             if (styleOptions.OpenApiFormat == Constants.OpenApiConstants.Format_Yaml)
             {
-                if (styleOptions.InlineLocalReferences == true)
+                if (styleOptions.InlineLocalReferences)
                 {
                     writer = new OpenApiYamlWriter(sr,
                         new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
@@ -248,7 +248,7 @@ namespace OpenAPIService
             }
             else // json
             {
-                if (styleOptions.InlineLocalReferences == true)
+                if (styleOptions.InlineLocalReferences)
                 {
                     writer = new OpenApiJsonWriter(sr,
                         new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
