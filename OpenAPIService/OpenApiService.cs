@@ -432,9 +432,9 @@ namespace OpenAPIService
         }
 
         private static void RemoveContent(OpenApiDocument target)
-        {            
-            var copy = new ContentRemover();
-            var walker = new OpenApiWalker(copy);
+        {
+            ContentRemover contentRemover = new ContentRemover();
+            OpenApiWalker walker = new OpenApiWalker(contentRemover);
             walker.Walk(target);
         }
     }
