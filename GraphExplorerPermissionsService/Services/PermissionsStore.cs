@@ -38,7 +38,7 @@ namespace GraphExplorerPermissionsService
 
             SeedTables();
         }
-        
+
         private void SeedTables()
         {
             try
@@ -49,12 +49,12 @@ namespace GraphExplorerPermissionsService
                  * with confidence since permissions are already seeded. */
 
                 SeedPermissionsTables();
-                SeedScopesInfoTables();                
+                SeedScopesInfoTables();
             }
             catch
             {
                 // Do nothing; the tables will just be empty
-            }                  
+            }
         }
 
         /// <summary>
@@ -125,43 +125,65 @@ namespace GraphExplorerPermissionsService
         /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
         /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
         /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
-        public List<ScopeInformation> GetScopes(string requestUrl, string method = "GET", string scopeType = "DelegatedWork")
+        public List<ScopeInformation> GetScopes(string requestUrl = null, string method = "GET", string scopeType = "DelegatedWork")
         {
             if (!_scopesListTable.Any())
             {
                 throw new InvalidOperationException($"The permissions and scopes data sources are empty; " +
                     $"check the source file or check whether the file path is properly set. File path: {_permissionsFilePaths}");
             }
-            if (string.IsNullOrEmpty(requestUrl))
-            {
-                throw new ArgumentNullException(nameof(requestUrl), "The request url cannot be null or empty.");
-            }
 
             try
             {
-                requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
-                requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers 
+                JArray resultValue = new JArray();
+                string[] scopes = null;
 
-                // Check if requestUrl is contained in our Url Template table
-                TemplateMatch resultMatch = _urlTemplateTable.Match(new Uri(requestUrl.ToLower(), UriKind.RelativeOrAbsolute));
-
-                if (resultMatch == null)
+                if (string.IsNullOrEmpty(requestUrl))
                 {
-                    return null;
+                    var listOfScopes = _scopesListTable.Values.ToArray();
+                    List<string> permissionsList = new List<string>();
+
+                    foreach (var scope in listOfScopes)
+                    {
+                        var result = (JArray)scope;
+
+                        string[] permissions = result.FirstOrDefault()?
+                        .SelectToken(scopeType)?
+                        .Select(s => (string)s)
+                        .ToArray();
+
+                        if (permissions != null)
+                            permissionsList.AddRange(permissions);
+                    }
+                    if (permissionsList.Count > 0)
+                        scopes = permissionsList.Distinct().ToArray();
+                }
+                else
+                {
+                    requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
+                    requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers 
+
+                    // Check if requestUrl is contained in our Url Template table
+                    TemplateMatch resultMatch = _urlTemplateTable.Match(new Uri(requestUrl.ToLower(), UriKind.RelativeOrAbsolute));
+
+                    if (resultMatch == null)
+                    {
+                        return null;
+                    }
+                    resultValue = (JArray)_scopesListTable[int.Parse(resultMatch.Key)];
+
+                    string[] permissions = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
+                        .SelectToken(scopeType)?
+                        .Select(s => (string)s)
+                        .ToArray();
+
+                    scopes = permissions;
                 }
 
-                JArray resultValue = (JArray)_scopesListTable[int.Parse(resultMatch.Key)];
-
-                string[] scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
-                    .SelectToken(scopeType)?
-                    .Select(s => (string)s)
-                    .ToArray();
-
-                List<ScopeInformation> scopesList = null;
+                List<ScopeInformation> scopesList = new List<ScopeInformation>();
 
                 if (scopes != null)
                 {
-                    scopesList = new List<ScopeInformation>();
 
                     foreach (string scopeName in scopes)
                     {
@@ -170,17 +192,17 @@ namespace GraphExplorerPermissionsService
                         {
                             if (_delegatedScopesInfoTable.ContainsKey(scopeName))
                             {
-                                scopeInfo = _delegatedScopesInfoTable[scopeName];    
-                            }                                                       
+                                scopeInfo = _delegatedScopesInfoTable[scopeName];
+                            }
                         }
                         else // Application scopes
                         {
                             if (_applicationScopesInfoTable.ContainsKey(scopeName))
                             {
                                 scopeInfo = _applicationScopesInfoTable[scopeName];
-                            }                                
+                            }
                         }
-                        
+
                         if (scopeInfo == null)
                         {
                             scopesList.Add(new ScopeInformation
@@ -193,14 +215,15 @@ namespace GraphExplorerPermissionsService
                             scopesList.Add(scopeInfo);
                         }
                     }
+                    return scopesList;
                 }
 
-                return scopesList ?? null;
+                return null;
             }
             catch (ArgumentException)
             {
                 return null; // equivalent to no match for the given requestUrl
-            }                      
+            }
         }
     }
 }
