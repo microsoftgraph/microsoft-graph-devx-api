@@ -100,6 +100,7 @@ namespace OpenAPIService
                         
             if (styleOptions.Style == OpenApiStyle.GEAutocomplete)
             {
+                // Content property and its schema $refs are unnecessary for autocomplete
                 RemoveContent(subset);
             }          
 
@@ -262,7 +263,8 @@ namespace OpenAPIService
         /// Get OpenApiDocument version of Microsoft Graph based on CSDL document 
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
-        /// <param name="forceRefresh">Don't read from in-memory cache</param>
+        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
+        /// <param name="styleOptions">Optional modal object containing the required styling options.</param>
         /// <returns>Instance of an OpenApiDocument</returns>
         public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, OpenApiStyleOptions styleOptions = null)
         {
