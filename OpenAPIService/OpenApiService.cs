@@ -401,12 +401,12 @@ namespace OpenAPIService
                 var walker = new OpenApiWalker(copy);
                 walker.Walk(target);
 
-                morestuff = Add(copy.Components, target.Components);
+                morestuff = AddReferences(copy.Components, target.Components);
                 
             } while (morestuff);
         }
 
-        private static bool Add(OpenApiComponents newComponents, OpenApiComponents target)
+        private static bool AddReferences(OpenApiComponents newComponents, OpenApiComponents target)
         {
             var moreStuff = false; 
             foreach (var item in newComponents.Schemas)
@@ -415,7 +415,6 @@ namespace OpenAPIService
                 {
                     moreStuff = true;
                     target.Schemas.Add(item);
-
                 }
             }
 
