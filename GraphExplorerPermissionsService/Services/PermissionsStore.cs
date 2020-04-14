@@ -153,10 +153,15 @@ namespace GraphExplorerPermissionsService
                         .ToArray();
 
                         if (permissions != null)
+                        {
                             permissionsList.AddRange(permissions);
+                        }
+                            
                     }
                     if (permissionsList.Count > 0)
+                    {
                         scopes = permissionsList.Distinct().ToArray();
+                    }
                 }
                 else
                 {
