@@ -8,6 +8,9 @@ using System.Linq;
 
 namespace OpenAPIService
 {
+    /// <summary>
+    /// Provides OpenApi visitor methods that traverse an OpenAPI document and clears the OpenApiResponse and OpenApiRequestBody Content property values.
+    /// </summary>
     internal class ContentRemover: OpenApiVisitorBase
     {       
         public override void Visit(OpenApiResponse response)
