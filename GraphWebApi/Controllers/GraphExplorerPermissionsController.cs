@@ -31,11 +31,7 @@ namespace GraphWebApi.Controllers
             try
             {
                 List<ScopeInformation> result = null;
-                if (string.IsNullOrEmpty(requestUrl))
-                    result = _permissionsStore.GetScopes();
-                else
-                    result = _permissionsStore.GetScopes(requestUrl, method, scopeType);
-
+                result = _permissionsStore.GetScopes(requestUrl, method, scopeType);
 
                 if (result == null)
                 {
