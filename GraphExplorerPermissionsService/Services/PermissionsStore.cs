@@ -185,10 +185,9 @@ namespace GraphExplorerPermissionsService
                     scopes = permissions;
                 }
 
-                List<ScopeInformation> scopesList = new List<ScopeInformation>();
-
                 if (scopes != null)
                 {
+                    List<ScopeInformation> scopesList = new List<ScopeInformation>();
 
                     foreach (string scopeName in scopes)
                     {
