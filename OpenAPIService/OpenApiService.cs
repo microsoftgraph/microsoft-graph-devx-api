@@ -41,7 +41,7 @@ namespace OpenAPIService
         /// <summary>
         /// Create partial document based on provided predicate
         /// </summary>
-        public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, string graphVersion, Func<OpenApiOperation, bool> predicate)
+        public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, OpenApiStyleOptions styleOptions, Func<OpenApiOperation, bool> predicate)
         {
 
             var subset = new OpenApiDocument
@@ -49,7 +49,7 @@ namespace OpenAPIService
                 Info = new OpenApiInfo()
                 {
                     Title = title,
-                    Version = graphVersion
+                    Version = styleOptions.GraphVersion
                 },
 
                 Components = new OpenApiComponents()
@@ -72,7 +72,7 @@ namespace OpenAPIService
 
             subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
 
-            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, graphVersion) });
+            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, styleOptions.GraphVersion) });
 
             var results = FindOperations(source, predicate);
             foreach (var result in results)

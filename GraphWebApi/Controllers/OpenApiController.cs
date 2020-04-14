@@ -60,7 +60,7 @@ namespace GraphWebApi.Controllers
 
                 OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
 
-                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
+                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions, predicate);
 
                 subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions, subsetOpenApiDocument);
 
