@@ -15,7 +15,7 @@ namespace OpenAPIService
     {       
         public override void Visit(OpenApiResponse response)
         {            
-            if (response.Content.Any() == true)
+            if (response.Content.Any())
             {
                 response.Content.Clear();
                 base.Visit(response);
@@ -24,7 +24,7 @@ namespace OpenAPIService
 
         public override void Visit(OpenApiRequestBody requestBody)
         {
-            if (requestBody.Content.Any() == true)
+            if (requestBody.Content.Any())
             {
                requestBody.Content.Clear();
                base.Visit(requestBody);
