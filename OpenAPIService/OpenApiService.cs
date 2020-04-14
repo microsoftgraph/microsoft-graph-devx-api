@@ -28,7 +28,8 @@ namespace OpenAPIService
     {
         PowerShell,
         PowerPlatform,
-        Plain
+        Plain,
+        GEAutocomplete
     }
        
     public class OpenApiService
@@ -96,6 +97,11 @@ namespace OpenAPIService
 
                 pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
             }
+                        
+            if (styleOptions.Style == OpenApiStyle.GEAutocomplete)
+            {
+                RemoveContent(subset);
+            }          
 
             CopyReferences(subset);
 
@@ -229,31 +235,16 @@ namespace OpenAPIService
             var sr = new StreamWriter(stream);
             OpenApiWriterBase writer;
 
-            if (styleOptions.OpenApiFormat == Constants.OpenApiConstants.Format_Yaml)
+            if (styleOptions.InlineLocalReferences == true)
             {
-                if (styleOptions.Style == OpenApiStyle.PowerPlatform)
-                {
-                    writer = new OpenApiYamlWriter(sr,
+                writer = new OpenApiYamlWriter(sr,
                         new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
-                }
-                else
-                {
-                    writer = new OpenApiYamlWriter(sr);
-                }
             }
             else
             {
-                if (styleOptions.Style == OpenApiStyle.PowerPlatform)
-                {
-                    writer = new OpenApiJsonWriter(sr,
-                        new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
-                }
-                else
-                {
-                    writer = new OpenApiJsonWriter(sr);
-                }
+                writer = new OpenApiYamlWriter(sr);
             }
-
+            
             if (styleOptions.OpenApiVersion == Constants.OpenApiConstants.OpenApiVersion_2)
             {
                 subset.SerializeAsV2(writer);
@@ -437,5 +428,12 @@ namespace OpenAPIService
             }
             return moreStuff;
         }
-   }
+
+        private static void RemoveContent(OpenApiDocument target)
+        {            
+            var copy = new ContentRemover();
+            var walker = new OpenApiWalker(copy);
+            walker.Walk(target);
+        }
+    }
 }
