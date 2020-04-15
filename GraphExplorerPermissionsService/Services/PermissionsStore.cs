@@ -119,7 +119,7 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Retrieves the permission scopes for a given request url.
+        /// Retrieves the permission scopes
         /// </summary>
         /// <param name="requestUrl">The target request url whose scopes are to be retrieved.</param>
         /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
