@@ -177,12 +177,10 @@ namespace GraphExplorerPermissionsService
                     }
                     resultValue = (JArray)_scopesListTable[int.Parse(resultMatch.Key)];
 
-                    string[] permissions = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
+                    scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
                         .SelectToken(scopeType)?
                         .Select(s => (string)s)
                         .ToArray();
-
-                    scopes = permissions;
                 }
 
                 if (scopes != null)
