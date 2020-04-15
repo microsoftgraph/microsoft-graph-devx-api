@@ -31,11 +31,11 @@ namespace PermissionsService.Test
         public void GetRequiredPermissionScopesGivenAnExistingRequestUrl()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);                      
-            
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopes("/security/alerts/{alert_id}");
-                        
+
             // Assert
             Assert.Collection(result,
                 item =>
@@ -52,6 +52,19 @@ namespace PermissionsService.Test
                     Assert.Equal("Allows the app to read your organization's security events on your behalf. Also allows you to update editable properties in security events.", item.Description);
                     Assert.True(item.IsAdmin);
                 });
+        }
+
+        [Fact]
+        public void GetAllPermissionScopesGivenNoRequestUrl()
+        {
+            // Arrange
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+
+            // Act
+            List<ScopeInformation> result = permissionsStore.GetScopes();
+
+            // Assert
+            Assert.NotEmpty(result);
         }
 
         [Fact]
@@ -227,19 +240,5 @@ namespace PermissionsService.Test
             Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopes("/security/alerts/{alert_id}"));
         }
 
-        [Fact]
-        public void ThrowArgumentNullExceptionIfGetScopesRequestUrlParameterIsNullOrEmpty()
-        {
-            /* Arrange */
-
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
-            string nullRequestUrl = null;
-            string emptyRequestUrl = string.Empty;
-
-            /* Act and Assert */
-
-            Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopes(nullRequestUrl)); // null requestUrl arg.
-            Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopes(emptyRequestUrl)); // empty requestUrl arg.
-        }
     }
 }
