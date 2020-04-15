@@ -28,7 +28,8 @@ namespace OpenAPIService
     {
         PowerShell,
         PowerPlatform,
-        Plain
+        Plain,
+        GEAutocomplete
     }
        
     public class OpenApiService
@@ -41,7 +42,7 @@ namespace OpenAPIService
         /// <summary>
         /// Create partial document based on provided predicate
         /// </summary>
-        public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, string graphVersion, Func<OpenApiOperation, bool> predicate)
+        public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, OpenApiStyleOptions styleOptions, Func<OpenApiOperation, bool> predicate)
         {
 
             var subset = new OpenApiDocument
@@ -49,7 +50,7 @@ namespace OpenAPIService
                 Info = new OpenApiInfo()
                 {
                     Title = title,
-                    Version = graphVersion
+                    Version = styleOptions.GraphVersion
                 },
 
                 Components = new OpenApiComponents()
@@ -72,7 +73,7 @@ namespace OpenAPIService
 
             subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
 
-            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, graphVersion) });
+            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, styleOptions.GraphVersion) });
 
             var results = FindOperations(source, predicate);
             foreach (var result in results)
@@ -96,6 +97,12 @@ namespace OpenAPIService
 
                 pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
             }
+                        
+            if (styleOptions.Style == OpenApiStyle.GEAutocomplete)
+            {
+                // Content property and its schema $refs are unnecessary for autocomplete
+                RemoveContent(subset);
+            }          
 
             CopyReferences(subset);
 
@@ -218,10 +225,8 @@ namespace OpenAPIService
         /// <summary>
         /// Create a representation of the OpenApiDocument to return from an API
         /// </summary>
-        /// <param name="subset">OpenAPI document</param>
-        /// <param name="openApiVersion"></param>
-        /// <param name="format">The format of the OpenAPI doc.</param>
-        /// <param name="style">The styling preference of the OpenAPI doc.</param>
+        /// <param name="subset">OpenAPI document.</param>
+        /// <param name="OpenApiStyleOptions">The modal object containing the required styling options.</param>
         /// <returns></returns>
         public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
@@ -231,7 +236,7 @@ namespace OpenAPIService
 
             if (styleOptions.OpenApiFormat == Constants.OpenApiConstants.Format_Yaml)
             {
-                if (styleOptions.Style == OpenApiStyle.PowerPlatform)
+                if (styleOptions.InlineLocalReferences)
                 {
                     writer = new OpenApiYamlWriter(sr,
                         new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
@@ -241,9 +246,9 @@ namespace OpenAPIService
                     writer = new OpenApiYamlWriter(sr);
                 }
             }
-            else
+            else // json
             {
-                if (styleOptions.Style == OpenApiStyle.PowerPlatform)
+                if (styleOptions.InlineLocalReferences)
                 {
                     writer = new OpenApiJsonWriter(sr,
                         new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
@@ -271,7 +276,8 @@ namespace OpenAPIService
         /// Get OpenApiDocument version of Microsoft Graph based on CSDL document 
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
-        /// <param name="forceRefresh">Don't read from in-memory cache</param>
+        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
+        /// <param name="styleOptions">Optional modal object containing the required styling options.</param>
         /// <returns>Instance of an OpenApiDocument</returns>
         public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, OpenApiStyleOptions styleOptions = null)
         {
@@ -401,12 +407,12 @@ namespace OpenAPIService
                 var walker = new OpenApiWalker(copy);
                 walker.Walk(target);
 
-                morestuff = Add(copy.Components, target.Components);
+                morestuff = AddReferences(copy.Components, target.Components);
                 
             } while (morestuff);
         }
 
-        private static bool Add(OpenApiComponents newComponents, OpenApiComponents target)
+        private static bool AddReferences(OpenApiComponents newComponents, OpenApiComponents target)
         {
             var moreStuff = false; 
             foreach (var item in newComponents.Schemas)
@@ -415,7 +421,6 @@ namespace OpenAPIService
                 {
                     moreStuff = true;
                     target.Schemas.Add(item);
-
                 }
             }
 
@@ -438,5 +443,12 @@ namespace OpenAPIService
             }
             return moreStuff;
         }
-   }
+
+        private static void RemoveContent(OpenApiDocument target)
+        {
+            ContentRemover contentRemover = new ContentRemover();
+            OpenApiWalker walker = new OpenApiWalker(contentRemover);
+            walker.Walk(target);
+        }
+    }
 }
