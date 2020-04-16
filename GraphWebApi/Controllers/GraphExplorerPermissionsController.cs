@@ -23,15 +23,14 @@ namespace GraphWebApi.Controllers
             _permissionsStore = permissionsStore;
         }
 
-        // Gets the permission scopes and info for a request url
+        // Gets the permission scopes 
         [HttpGet]
         [Produces("application/json")]
-        public IActionResult GetPermissionScopes([FromQuery]string requestUrl, [FromQuery]string method = "GET", [FromQuery]string scopeType = "DelegatedWork")
+        public IActionResult GetPermissionScopes([FromQuery]string requestUrl = null, [FromQuery]string method = "GET", [FromQuery]string scopeType = "DelegatedWork")
         {
             try
             {
                 List<ScopeInformation> result = null;
-
                 result = _permissionsStore.GetScopes(requestUrl, method, scopeType);
 
                 if (result == null)
@@ -53,6 +52,6 @@ namespace GraphWebApi.Controllers
             {
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
-        }       
+        }
     }
 }

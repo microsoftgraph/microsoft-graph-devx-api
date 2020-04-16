@@ -42,6 +42,9 @@ namespace OpenAPIService.Common
                 case OpenApiStyle.PowerShell:
                     SetPowerShellStyle();
                     break;
+                case OpenApiStyle.GEAutocomplete:
+                    SetGEAutocompleteStyle();
+                    break;
                 default:
                     break;
             }
@@ -71,6 +74,14 @@ namespace OpenAPIService.Common
             EnableDiscriminatorValue = true;
             EnableDerivedTypesReferencesForRequestBody = true;
             EnableDerivedTypesReferencesForResponses = true;
+        }
+
+        private void SetGEAutocompleteStyle()
+        {
+            OpenApiVersion = OpenApiVersion ?? Constants.OpenApiConstants.OpenApiVersion_2;
+            GraphVersion = GraphVersion ?? Constants.OpenApiConstants.GraphVersion_V1;
+            OpenApiFormat = OpenApiFormat ?? Constants.OpenApiConstants.Format_Json;
+            InlineLocalReferences = true;
         }
     }
 }
