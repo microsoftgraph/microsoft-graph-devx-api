@@ -21,7 +21,7 @@ namespace Microsoft.OpenApi.OData.Operation
     /// </summary>
     internal class SingletonGetOperationHandler : SingletonOperationHandler
     {
-       /// <inheritdoc/>
+        /// <inheritdoc/>
         public override OperationType OperationType => OperationType.Get;
 
         /// <inheritdoc/>
@@ -98,9 +98,10 @@ namespace Microsoft.OpenApi.OData.Operation
                                     Schema = schema
                                 }
                             }
-                        }
+                        },
+                        Links = Context.CreateLinks(Singleton.EntityType(), Singleton.Name)
                     }
-                },
+                }
             };
 
             operation.Responses.Add(Constants.StatusCodeDefault, Constants.StatusCodeDefault.GetResponse());

@@ -21,7 +21,7 @@ namespace Microsoft.OpenApi.OData.Operation
     /// </summary>
     internal class SingletonPatchOperationHandler : SingletonOperationHandler
     {
-       /// <inheritdoc/>
+        /// <inheritdoc/>
         public override OperationType OperationType => OperationType.Patch;
 
         /// <inheritdoc/>

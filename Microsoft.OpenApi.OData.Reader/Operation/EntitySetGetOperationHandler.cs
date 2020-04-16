@@ -43,7 +43,7 @@ namespace Microsoft.OpenApi.OData.Operation
         }
 
         protected override void SetExtensions(OpenApiOperation operation)
-        {    
+        {
             if (Context.Settings.EnablePagination)
             {
                 OpenApiObject extension = new OpenApiObject
@@ -149,8 +149,8 @@ namespace Microsoft.OpenApi.OData.Operation
                 };
             }
 
-            var properties = new Dictionary<string, OpenApiSchema> 
-            { 
+            var properties = new Dictionary<string, OpenApiSchema>
+            {
                 {
                     "value",
                     new OpenApiSchema
@@ -161,7 +161,7 @@ namespace Microsoft.OpenApi.OData.Operation
                 }
             };
 
-            if (Context.Settings.EnablePagination) 
+            if (Context.Settings.EnablePagination)
             {
                 properties.Add(
                     "@odata.nextLink",
@@ -192,7 +192,8 @@ namespace Microsoft.OpenApi.OData.Operation
                                     }
                                 }
                             }
-                        }
+                        },
+                        Links = Context.CreateLinks(EntitySet.EntityType(), EntitySet.Name)
                     }
                 }
             };

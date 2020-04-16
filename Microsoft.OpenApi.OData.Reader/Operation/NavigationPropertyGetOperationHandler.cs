@@ -61,14 +61,14 @@ namespace Microsoft.OpenApi.OData.Operation
 
                     base.SetExtensions(operation);
                 }
-            }                           
+            }
         }
 
         /// <inheritdoc/>
         protected override void SetResponses(OpenApiOperation operation)
         {
             OpenApiSchema schema = null;
-            
+
             if (Context.Settings.EnableDerivedTypesReferencesForResponses)
             {
                 schema = EdmModelHelper.GetDerivedTypesReferenceSchema(NavigationProperty.ToEntityType(), Context.Model);
@@ -131,7 +131,8 @@ namespace Microsoft.OpenApi.OData.Operation
                                         }
                                     }
                                 }
-                            }
+                            },
+                            Links = Context.CreateLinks(NavigationProperty.ToEntityType(), NavigationProperty.Name)
                         }
                     }
                 };
