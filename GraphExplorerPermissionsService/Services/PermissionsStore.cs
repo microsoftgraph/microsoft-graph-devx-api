@@ -44,7 +44,7 @@ namespace GraphExplorerPermissionsService
             try
             {
                 /* Order of seeding matters. 
-                 * Scopes info. tables are less important to us vis-à-vis the Permission tables;
+                 * Scopes info. tables are less important to us vis-ï¿½-vis the Permission tables;
                  * In case of an exception when seeding the Scopes info. table we can safely exit 
                  * with confidence since permissions are already seeded. */
 
@@ -124,8 +124,9 @@ namespace GraphExplorerPermissionsService
         /// <param name="requestUrl">The target request url whose scopes are to be retrieved.</param>
         /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
         /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
+        /// <param name="localeCode">The language code for the preferred localized file.</param>
         /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
-        public List<ScopeInformation> GetScopes(string requestUrl = null, string method = "GET", string scopeType = "DelegatedWork")
+        public List<ScopeInformation> GetScopes(string requestUrl = null, string method = "GET", string scopeType = "DelegatedWork", string localeCode = null)
         {
             if (!_scopesListTable.Any())
             {
