@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
 using FileService.Interfaces;
+using FileService.Common;
 using System.Security.Claims;
 using System.Linq;
 using GraphWebApi.Models;
