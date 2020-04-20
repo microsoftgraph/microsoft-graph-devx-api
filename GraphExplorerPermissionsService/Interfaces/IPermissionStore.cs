@@ -7,8 +7,11 @@ using System.Collections.Generic;
 
 namespace GraphExplorerPermissionsService.Interfaces
 {
+    /// <summary>
+    /// Defines an interface that provides a method for fetching permission scopes.
+    /// </summary>
     public interface IPermissionsStore
     {
-        List<ScopeInformation> GetScopes(string requestUrl = null, string method = "GET", string scopeType = "DelegatedWork", string localeCode = null);
+        List<ScopeInformation> GetScopes(string scopeType = "DelegatedWork", string requestUrl = null, string method = null, string localeCode = null);
     }
 }
