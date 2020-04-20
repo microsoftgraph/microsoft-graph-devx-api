@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using FileService.Common;
 using FileService.Interfaces;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
@@ -23,8 +24,10 @@ namespace GraphExplorerPermissionsService
         private readonly IDictionary<string, ScopeInformation> _delegatedScopesInfoTable;
         private readonly IDictionary<string, ScopeInformation> _applicationScopesInfoTable;
         private readonly IFileUtility _fileUtility;
-        private readonly List<string> _permissionsFilePaths;
+        private readonly string _permissionsContainerName;
+        private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
+        private static string _localeCode = "en-US"; // default flag to be used to check against incoming Accept-Language request values
 
         public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration)
         {
@@ -33,8 +36,9 @@ namespace GraphExplorerPermissionsService
             _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
             _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
             _fileUtility = fileUtility;
-            _permissionsFilePaths = configuration.GetSection("Permissions:FilePaths").Get<List<string>>();
-            _scopesInformation = configuration["Permissions:ScopesInformationList"];
+            _permissionsContainerName = configuration["Containers:Permissions"];
+            _permissionsBlobNames = configuration.GetSection("Blobs:Permissions:Names").Get<List<string>>();
+            _scopesInformation = configuration["Blobs:Permissions:Descriptions"];
 
             SeedTables();
         }
@@ -44,7 +48,7 @@ namespace GraphExplorerPermissionsService
             try
             {
                 /* Order of seeding matters. 
-                 * Scopes info. tables are less important to us vis-ï¿½-vis the Permission tables;
+                 * Scopes info. tables are less important to us vis-à-vis the Permission tables;
                  * In case of an exception when seeding the Scopes info. table we can safely exit 
                  * with confidence since permissions are already seeded. */
 
@@ -61,13 +65,14 @@ namespace GraphExplorerPermissionsService
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
         /// </summary>
         private void SeedPermissionsTables()
-        {
+        {            
             HashSet<string> uniqueRequestUrlsTable = new HashSet<string>();
             int count = 0;
 
-            foreach (string permissionFilePath in _permissionsFilePaths)
+            foreach (string permissionFilePath in _permissionsBlobNames)
             {
-                string jsonString = _fileUtility.ReadFromFile(permissionFilePath).GetAwaiter().GetResult();
+                string absolutePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, permissionFilePath);
+                string jsonString = _fileUtility.ReadFromFile(absolutePermissionPath).GetAwaiter().GetResult();
 
                 if (!string.IsNullOrEmpty(jsonString))
                 {
@@ -98,9 +103,10 @@ namespace GraphExplorerPermissionsService
         /// <summary>
         /// Populates the delegated and application scopes information tables. 
         /// </summary>
-        private void SeedScopesInfoTables()
+        private void SeedScopesInfoTables(string localCode = null)
         {
-            string scopesInfoJson = _fileUtility.ReadFromFile(_scopesInformation).GetAwaiter().GetResult();
+            string absoluteScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, localCode);
+            string scopesInfoJson = _fileUtility.ReadFromFile(absoluteScopesInfoPath).GetAwaiter().GetResult();
 
             if (!string.IsNullOrEmpty(scopesInfoJson))
             {
@@ -131,7 +137,7 @@ namespace GraphExplorerPermissionsService
             if (!_scopesListTable.Any())
             {
                 throw new InvalidOperationException($"The permissions and scopes data sources are empty; " +
-                    $"check the source file or check whether the file path is properly set. File path: {_permissionsFilePaths}");
+                    $"check the source file or check whether the file path is properly set. File path: {_permissionsBlobNames}");
             }
 
             try
