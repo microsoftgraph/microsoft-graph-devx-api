@@ -3,7 +3,6 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using FileService.Interfaces;
-using FileService.Services;
 using GraphExplorerPermissionsService;
 using GraphExplorerPermissionsService.Models;
 using Microsoft.Extensions.Configuration;
@@ -15,8 +14,8 @@ namespace PermissionsService.Test
 {
     public class PermissionsStoreShould
     {
-        private IConfigurationRoot _configuration;
-        private IFileUtility _fileUtility;
+        private readonly IConfigurationRoot _configuration;
+        private readonly IFileUtility _fileUtility;
 
         public PermissionsStoreShould()
         {
