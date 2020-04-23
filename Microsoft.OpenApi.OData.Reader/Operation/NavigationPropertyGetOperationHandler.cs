@@ -109,7 +109,7 @@ namespace Microsoft.OpenApi.OData.Operation
                             Type = "string"
                         });
                 }
-
+                
                 operation.Responses = new OpenApiResponses
                 {
                     {
@@ -132,7 +132,8 @@ namespace Microsoft.OpenApi.OData.Operation
                                     }
                                 }
                             },
-                            Links = Context.CreateLinks(NavigationProperty.ToEntityType(), NavigationProperty.Name)
+                            Links = Context.CreateLinks(NavigationProperty.ToEntityType(), NavigationProperty.Name, 
+                            NavigationProperty.PropertyKind.ToString(), operation.Parameters, NavigationProperty.DeclaringEntityType().Name)
                         }
                     }
                 };
@@ -155,12 +156,14 @@ namespace Microsoft.OpenApi.OData.Operation
                                         Schema = schema
                                     }
                                 }
-                            }
+                            },
+                            Links = Context.CreateLinks(NavigationProperty.ToEntityType(), NavigationProperty.Name,
+                            NavigationProperty.PropertyKind.ToString(), operation.Parameters, NavigationProperty.DeclaringEntityType().Name)
                         }
                     }
                 };
             }
-
+            
             operation.Responses.Add(Constants.StatusCodeDefault, Constants.StatusCodeDefault.GetResponse());
 
             base.SetResponses(operation);
