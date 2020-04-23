@@ -52,7 +52,7 @@ namespace Microsoft.OpenApi.OData.Generator
 
             foreach (IEdmNavigationProperty navProp in entityType.NavigationProperties())
             {
-                var navPropEntity = navProp.ToEntityType();
+                IEdmEntityType navPropEntity = navProp.ToEntityType();                
                 string navPropName = navProp.Name;
                 string operationId;
 
