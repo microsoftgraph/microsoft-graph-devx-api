@@ -103,16 +103,16 @@ namespace GraphExplorerPermissionsService
         /// <summary>
         /// Populates the delegated and application scopes information tables. 
         /// </summary>
-        private void SeedScopesInfoTables(string localCode = null)
+        private void SeedScopesInfoTables(string localeCode = null)
         {
-            if (!string.IsNullOrEmpty(localCode))
+            if (!string.IsNullOrEmpty(localeCode))
             {
                 // Clear tables to store new localized descriptions
                 _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
                 _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
             }
 
-            string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, localCode);
+            string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, localeCode);
             string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
 
             if (!string.IsNullOrEmpty(scopesInfoJson))
