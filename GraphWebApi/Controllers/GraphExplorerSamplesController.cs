@@ -93,8 +93,10 @@ namespace GraphWebApi.Controllers
         {
             try
             {
+                string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
+
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync("En-Us");
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(localeCode);
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
                 {
