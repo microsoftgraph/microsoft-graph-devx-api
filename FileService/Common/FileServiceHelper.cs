@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -13,15 +13,16 @@ namespace FileService.Common
     public static class FileServiceHelper
     {        
         /// <summary>
-        /// Retrieves the directory and file names from a given a file path source.
+        /// Retrieves the directory name and file name from a given file path source.
         /// </summary>
         /// <param name="filePathSource">The complete file path.</param>
-        /// <param name="directoryName">The expected directory name.</param>
-        /// <param name="fileName">The expected file name.</param>
-        public static void RetrieveFilePathSourceValues(string filePathSource, out string directoryName, out string fileName)
+        /// <returns>A tuple projection of the directory name and file name.</returns>
+        public static (string DirectoryName, string FileName) RetrieveFilePathSourceValues(string filePathSource)
         {
-            directoryName = null;
-            fileName = null;
+            CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));
+
+            string directoryName = null;
+            string fileName = null;
 
             if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) > 0)
             {
@@ -30,6 +31,8 @@ namespace FileService.Common
                 directoryName = storageValues[0];
                 fileName = storageValues[1];
             }
+
+            return (directoryName, fileName);
         }
 
         /// <summary>
