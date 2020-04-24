@@ -27,7 +27,7 @@ namespace GraphExplorerPermissionsService
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
-        private static string _localeCode = "en-US"; // default flag to be used to check against incoming Accept-Language header values
+        private string _localeCode = "en-US"; // default flag to be used to check against incoming Accept-Language header values
 
         public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration)
         {
@@ -65,7 +65,7 @@ namespace GraphExplorerPermissionsService
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
         /// </summary>
         private void SeedPermissionsTables()
-        {            
+        {
             HashSet<string> uniqueRequestUrlsTable = new HashSet<string>();
             int count = 0;
 
