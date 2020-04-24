@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -93,7 +93,7 @@ namespace FileService.Common
         /// </summary>
         /// <param name="value">The input string.</param>
         /// <param name="parameterName">The input parameter name.</param>
-        private static void CheckArgumentNullOrEmpty(string value, string parameterName)
+        internal static void CheckArgumentNullOrEmpty(string value, string parameterName)
         {
             if (string.IsNullOrEmpty(value))
             {
