@@ -29,11 +29,14 @@ namespace FileService.Services
 
         public async Task<string> ReadFromFile(string filePathSource)
         {
+            FileServiceHelper.CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));
+
             if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
             {
                 throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
             }
-            FileServiceHelper.RetrieveFilePathSourceValues(filePathSource, out _containerName, out _blobName);
+                        
+            (_containerName, _blobName) = FileServiceHelper.RetrieveFilePathSourceValues(filePathSource);
             
             if (CloudStorageAccount.TryParse(_connectionString, out CloudStorageAccount storageAccount))
             {
@@ -64,7 +67,7 @@ namespace FileService.Services
 
         public async Task WriteToFile(string fileContents, string filePathSource)
         {
-            // Not implemented
+            throw new NotImplementedException();
         }
     }
 }
