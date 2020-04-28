@@ -71,9 +71,9 @@ namespace OpenAPIService.Common
             GraphVersion = GraphVersion ?? Constants.OpenApiConstants.GraphVersion_V1;
             OpenApiFormat = OpenApiFormat ?? Constants.OpenApiConstants.Format_Yaml;
             EnablePagination = true;
-            EnableDiscriminatorValue = true;
-            EnableDerivedTypesReferencesForRequestBody = true;
-            EnableDerivedTypesReferencesForResponses = true;
+            EnableDiscriminatorValue = false;
+            EnableDerivedTypesReferencesForRequestBody = false;
+            EnableDerivedTypesReferencesForResponses = false;
         }
 
         private void SetGEAutocompleteStyle()
