@@ -31,7 +31,8 @@ namespace Microsoft.OpenApi.OData.Generator
         /// <returns>The created dictionary of <see cref="OpenApiLink"/> object.</returns>
         public static IDictionary<string, OpenApiLink> CreateLinks(this ODataContext context,
             IEdmEntityType entityType, string sourceElementName, string sourceElementType,
-            IList<OpenApiParameter> parameters, string declaringEntityTypeName = null, bool targetMultiplicity = false)
+            IList<OpenApiParameter> parameters, string declaringEntityTypeName = null,
+            bool targetMultiplicity = false)
         {
             IDictionary<string, OpenApiLink> links = new Dictionary<string, OpenApiLink>();
 
