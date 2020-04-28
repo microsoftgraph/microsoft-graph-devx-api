@@ -26,80 +26,90 @@ namespace Microsoft.OpenApi.OData.Generator
         /// <param name ="sourceElementName">The name of the source of the <see cref="IEdmEntityType"/> object.</param>
         /// <param name="sourceElementType">"The type of the source of the <see cref="IEdmEntityType"/> object.</param>
         /// <param name="parameters">"The list of parameters from the incoming operation.</param>
+        /// <param name="declaringEntityTypeName">Optional parameter: Name of the Entity type that declares a Navigation property.</param>
+        /// <param name="targetMultiplicity">"Optional parameter: Flag indicating whether the source of the  <see cref="IEdmEntityType"/> object is a collection."</param>
         /// <returns>The created dictionary of <see cref="OpenApiLink"/> object.</returns>
-        public static IDictionary<string, OpenApiLink> CreateLinks(this ODataContext context, 
+        public static IDictionary<string, OpenApiLink> CreateLinks(this ODataContext context,
             IEdmEntityType entityType, string sourceElementName, string sourceElementType,
-            IList<OpenApiParameter> parameters, string declaringEntityTypeName = null)
+            IList<OpenApiParameter> parameters, string declaringEntityTypeName = null, bool targetMultiplicity = false)
         {
-            Utils.CheckArgumentNull(context, nameof(context));
-            Utils.CheckArgumentNull(entityType, nameof(entityType));
-            Utils.CheckArgumentNullOrEmpty(sourceElementName, nameof(sourceElementName));
-            Utils.CheckArgumentNullOrEmpty(sourceElementType, nameof(sourceElementType));
-            Utils.CheckArgumentNull(parameters, nameof(parameters));
-
             IDictionary<string, OpenApiLink> links = new Dictionary<string, OpenApiLink>();
-            List<string> pathKeyNames = new List<string>();
 
-            // Fetch defined Id(s) from url path of operation
-            foreach (var parameter in parameters)
+            if (!targetMultiplicity)
             {
-                if (!string.IsNullOrEmpty(parameter.Description) && 
-                    parameter.Description.ToLower().Contains("key"))
-                {
-                    pathKeyNames.Add(parameter.Name);
-                }
-            }                       
+                Utils.CheckArgumentNull(context, nameof(context));
+                Utils.CheckArgumentNull(entityType, nameof(entityType));
+                Utils.CheckArgumentNullOrEmpty(sourceElementName, nameof(sourceElementName));
+                Utils.CheckArgumentNullOrEmpty(sourceElementType, nameof(sourceElementType));
+                Utils.CheckArgumentNull(parameters, nameof(parameters));
 
-            foreach (IEdmNavigationProperty navProp in entityType.NavigationProperties())
-            {
-                IEdmEntityType navPropEntity = navProp.ToEntityType();                
-                string navPropName = navProp.Name;
-                string operationId;
+                List<string> pathKeyNames = new List<string>();
 
-                switch (sourceElementType)
+                // Fetch defined Id(s) from url path of operation
+                foreach (var parameter in parameters)
                 {
-                    case "Navigation":
-                        operationId = declaringEntityTypeName + "." + sourceElementName + ".Get" + Utils.UpperFirstChar(navPropName);
-                        break;
-                    default: // EntitySet, Entity, Singleton
-                        operationId = sourceElementName + ".Get" + Utils.UpperFirstChar(navPropName);
-                        break;
-                }
-
-                OpenApiLink link = new OpenApiLink
-                {
-                    OperationId = operationId,
-                    Parameters = new Dictionary<string, RuntimeExpressionAnyWrapper>()
-                };
-
-                if (pathKeyNames.Any())
-                {
-                    foreach (var pathKeyName in pathKeyNames)
+                    if (!string.IsNullOrEmpty(parameter.Description) &&
+                        parameter.Description.ToLower().Contains("key"))
                     {
-                        link.Parameters[pathKeyName] = new RuntimeExpressionAnyWrapper
+                        pathKeyNames.Add(parameter.Name);
+                    }
+                }
+
+                foreach (IEdmNavigationProperty navProp in entityType.DeclaredNavigationProperties())
+                {
+                    IEdmEntityType navPropEntity = navProp.ToEntityType();
+                    var navPropTypeName = navProp.ToEntityType().Name;
+                    string tag;
+                    string navPropName = navProp.Name;
+                    string operationId;
+
+                    switch (sourceElementType)
+                    {
+                        case "Navigation":
+                            operationId = declaringEntityTypeName + "." + sourceElementName + ".Get" + Utils.UpperFirstChar(navPropName);
+                            tag = declaringEntityTypeName + "." + entityType.Name;
+                            break;
+                        default: // EntitySet, Entity, Singleton
+                            operationId = sourceElementName + ".Get" + Utils.UpperFirstChar(navPropName);
+                            tag = sourceElementName + "." + navPropTypeName;
+                            break;
+                    }
+
+                    OpenApiLink link = new OpenApiLink
+                    {
+                        OperationId = operationId,
+                        Parameters = new Dictionary<string, RuntimeExpressionAnyWrapper>()
+                    };
+
+                    if (pathKeyNames.Any())
+                    {
+                        foreach (var pathKeyName in pathKeyNames)
                         {
-                            Any = new OpenApiString("$request.path." + pathKeyName)
+                            link.Parameters[pathKeyName] = new RuntimeExpressionAnyWrapper
+                            {
+                                Any = new OpenApiString("$request.path." + pathKeyName)
+                            };
+                        }
+                    }
+
+                    // Fetch Id(s) from response body
+                    foreach (IEdmStructuralProperty key in navPropEntity.Key())
+                    {
+                        string responseKeyName = key.Name;
+
+                        if (context.Settings.PrefixEntityTypeNameBeforeKey)
+                        {
+                            responseKeyName = navPropEntity.Name + "-" + responseKeyName;
+                        }
+
+                        link.Parameters[responseKeyName] = new RuntimeExpressionAnyWrapper
+                        {
+                            Any = new OpenApiString("$response.body#/" + key.Name)
                         };
                     }
+
+                    links[navProp.Name] = link;
                 }
-
-                // Fetch Id(s) from response body                
-                foreach (IEdmStructuralProperty key in navPropEntity.Key())
-                {
-                    string responseKeyName = key.Name;
-
-                    if (context.Settings.PrefixEntityTypeNameBeforeKey)
-                    {
-                        responseKeyName = navPropEntity.Name + "-" + responseKeyName;
-                    }
-
-                    link.Parameters[responseKeyName] = new RuntimeExpressionAnyWrapper
-                    {
-                        Any = new OpenApiString("$response.body#/" + key.Name)
-                    };
-                }
-
-                links[navProp.Name] = link;
             }
 
             return links;

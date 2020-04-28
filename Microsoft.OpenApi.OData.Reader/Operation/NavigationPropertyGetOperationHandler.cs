@@ -133,7 +133,7 @@ namespace Microsoft.OpenApi.OData.Operation
                                 }
                             },
                             Links = Context.CreateLinks(NavigationProperty.ToEntityType(), NavigationProperty.Name, 
-                            NavigationProperty.PropertyKind.ToString(), operation.Parameters, NavigationProperty.DeclaringEntityType().Name)
+                            NavigationProperty.PropertyKind.ToString(), operation.Parameters, NavigationProperty.DeclaringEntityType().Name, true)
                         }
                     }
                 };
