@@ -6,6 +6,7 @@ using FileService.Common;
 using FileService.Interfaces;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -19,46 +20,25 @@ namespace GraphExplorerPermissionsService
 {
     public class PermissionsStore : IPermissionsStore
     {
-        private readonly UriTemplateTable _urlTemplateTable;
-        private readonly IDictionary<int, object> _scopesListTable;
+        private UriTemplateTable _urlTemplateTable;
+        private IDictionary<int, object> _scopesListTable;
         private IDictionary<string, ScopeInformation> _delegatedScopesInfoTable;
         private IDictionary<string, ScopeInformation> _applicationScopesInfoTable;
+        private readonly IMemoryCache _permissionsCache;
         private readonly IFileUtility _fileUtility;
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
-        private string _localeCode = "en-US"; // default flag to be used to check against incoming Accept-Language header values
+        private static readonly int RefreshTimeInDays = 1; // life span of the in-memory cache
+        private const string LOCALE_CODE = "en-US"; // default locale language
 
-        public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration)
+        public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache permissionsCache)
         {
-            _urlTemplateTable = new UriTemplateTable();
-            _scopesListTable = new Dictionary<int, object>();
-            _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
-            _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
+            _permissionsCache = permissionsCache;
             _fileUtility = fileUtility;
             _permissionsContainerName = configuration["AzureBlobStorage:Containers:Permissions"];
             _permissionsBlobNames = configuration.GetSection("AzureBlobStorage:Blobs:Permissions:Names").Get<List<string>>();
             _scopesInformation = configuration["AzureBlobStorage:Blobs:Permissions:Descriptions"];
-
-            SeedTables();
-        }
-
-        private void SeedTables()
-        {
-            try
-            {
-                /* Order of seeding matters. 
-                 * Scopes info. tables are less important to us vis-à-vis the Permission tables;
-                 * In case of an exception when seeding the Scopes info. table we can safely exit 
-                 * with confidence since permissions are already seeded. */
-
-                SeedPermissionsTables();
-                SeedScopesInfoTables();
-            }
-            catch
-            {
-                // Do nothing; the tables will just be empty
-            }
         }
 
         /// <summary>
@@ -66,17 +46,25 @@ namespace GraphExplorerPermissionsService
         /// </summary>
         private void SeedPermissionsTables()
         {
+            _urlTemplateTable = new UriTemplateTable();
+            _scopesListTable = new Dictionary<int, object>();
+
             HashSet<string> uniqueRequestUrlsTable = new HashSet<string>();
             int count = 0;
 
             foreach (string permissionFilePath in _permissionsBlobNames)
             {
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, permissionFilePath);
-                string jsonString = _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
+                string jsonString =  _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
 
                 if (!string.IsNullOrEmpty(jsonString))
                 {
                     JObject permissionsObject = JObject.Parse(jsonString);
+
+                    if (permissionsObject.Count < 1)
+                    {
+                        throw new InvalidOperationException($"The permissions data sources cannot be empty.");
+                    }
 
                     JToken apiPermissions = permissionsObject.First.First;
 
@@ -101,61 +89,83 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Populates the delegated and application scopes information tables. 
+        /// Populates the delegated and application scopes information table caches.
         /// </summary>
-        private void SeedScopesInfoTables(string localeCode = null)
+        private void SeedScopesInfoTables(string localeCode = LOCALE_CODE)
         {
-            if (!string.IsNullOrEmpty(localeCode))
-            {
-                // Clear tables to store new localized descriptions
-                _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
-                _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
-            }
-
-            string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, localeCode);
-            string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
+            string scopesInfoJson = _permissionsCache.GetOrCreate($"ScopesInfoJson_{localeCode}", cacheEntry =>
+             {
+                 string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, localeCode);
+                 cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(RefreshTimeInDays);
+                 return  _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
+             });
 
             if (!string.IsNullOrEmpty(scopesInfoJson))
             {
-                ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
-
-                foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
+                ScopesInformationList scopesInformationList = _permissionsCache.GetOrCreate($"ScopesInfoList_{localeCode}", cacheEntry =>
                 {
-                    _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
-                }
+                    _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
+                    _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
 
-                foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
-                {
-                    _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
-                }
+                    scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+
+                    foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
+                    {
+                        _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
+                    }
+
+                    foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
+                    {
+                        _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
+                    }
+
+                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(RefreshTimeInDays);
+                    return scopesInformationList;
+                });
             }
         }
 
         /// <summary>
-        /// Retrieves the permission scopes
+        /// Determines whether the permissions tables need to be refreshed with new data based on the elapsed time
+        /// duration since the previous refresh.
+        /// </summary>
+        /// <returns>True or False based on whether the elapsed time duration is greater or less than the specified refresh time duration.</returns>
+        private bool RefreshPermissionsTables()
+        {
+            bool refreshPermissionsTables = false;
+            bool cacheState = _permissionsCache.GetOrCreate("PermissionsTablesState", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(RefreshTimeInDays);
+                return refreshPermissionsTables = true;
+            });
+
+            return refreshPermissionsTables;
+        }
+
+        /// <summary>
+        /// Retrieves permissions scopes
         /// </summary>
         /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
         /// <param name="requestUrl">The target request url whose scopes are to be retrieved.</param>
         /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
         /// <param name="localeCode">The language code for the preferred localized file.</param>
         /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
-        public List<ScopeInformation> GetScopes(string scopeType = "DelegatedWork", 
-            string requestUrl = null, string method = null, string localeCode = null)
+        public List<ScopeInformation> GetScopes(string scopeType = "DelegatedWork",
+            string requestUrl = null, string method = null, string localeCode = LOCALE_CODE)
         {
-            if (!_scopesListTable.Any())
-            {
-                throw new InvalidOperationException($"The permissions and scopes data sources are empty; " +
-                    $"check the source file or check whether the file path is properly set. File path: {_permissionsBlobNames}");
-            }
-
-            if (!string.IsNullOrEmpty(localeCode) && !localeCode.Equals(_localeCode, StringComparison.OrdinalIgnoreCase))
-            {
-                _localeCode = localeCode;
-                SeedScopesInfoTables(localeCode);
-            }
-
             try
-            {                
+            {
+                if (RefreshPermissionsTables())
+                {
+                    /* Permissions tables are not localized, so no need to keep different localized cached copies.
+                       Refresh tables only after the specified time duration has elapsed or no cached copy exists. */
+                    SeedPermissionsTables();
+                }
+
+                /* Ensure that the requested localized copy of permissions descriptions
+                   is available in the cache. */
+                SeedScopesInfoTables(localeCode);
+
                 string[] scopes = null;
 
                 if (string.IsNullOrEmpty(requestUrl))  // fetch all permissions
@@ -176,7 +186,7 @@ namespace GraphExplorerPermissionsService
                         {
                             permissionsList.AddRange(permissions);
                         }
-                            
+
                     }
                     if (permissionsList.Count > 0)
                     {
@@ -191,7 +201,7 @@ namespace GraphExplorerPermissionsService
                     }
 
                     requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
-                    requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers 
+                    requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
 
                     // Check if requestUrl is contained in our Url Template table
                     TemplateMatch resultMatch = _urlTemplateTable.Match(new Uri(requestUrl.ToLower(), UriKind.RelativeOrAbsolute));
@@ -244,6 +254,7 @@ namespace GraphExplorerPermissionsService
                             scopesList.Add(scopeInfo);
                         }
                     }
+
                     return scopesList;
                 }
 
