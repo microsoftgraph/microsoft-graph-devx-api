@@ -5,6 +5,8 @@
 using FileService.Interfaces;
 using GraphExplorerPermissionsService;
 using GraphExplorerPermissionsService.Models;
+using MemoryCache.Testing.Moq;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -30,7 +32,8 @@ namespace PermissionsService.Test
         public void GetRequiredPermissionScopesGivenAnExistingRequestUrl()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopes(requestUrl:"/security/alerts/{alert_id}", method: "GET");
@@ -57,7 +60,8 @@ namespace PermissionsService.Test
         public void GetAllPermissionScopesGivenNoRequestUrl()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopes();
@@ -70,7 +74,8 @@ namespace PermissionsService.Test
         public void ReturnNullGivenANonExistentRequestUrl()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopes(requestUrl:"/foo/bar/{alert_id}", method: "GET"); // non-existent request url
@@ -83,7 +88,8 @@ namespace PermissionsService.Test
         public void ReturnNullGivenANonExistentHttpVerb()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}", method: "Foobar"); // non-existent http verb
@@ -96,10 +102,11 @@ namespace PermissionsService.Test
         public void ReturnNullGivenANonExistentScopeType()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
-            List<ScopeInformation> result = 
+            List<ScopeInformation> result =
                 permissionsStore.GetScopes(scopeType: "Foobar", requestUrl: "/security/alerts/{alert_id}", method: "PATCH"); // non-existent scope type
 
             // Assert that returned result is null
@@ -110,10 +117,11 @@ namespace PermissionsService.Test
         public void ReturnEmptyArrayForEmptyPermissionScopes()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act by requesting scopes for the 'DelegatedPersonal' scope type
-            List<ScopeInformation> result = 
+            List<ScopeInformation> result =
                 permissionsStore.GetScopes(scopeType: "DelegatedPersonal", requestUrl: "/security/alerts/{alert_id}", method: "GET");
 
             // Assert that returned result is empty
@@ -124,15 +132,16 @@ namespace PermissionsService.Test
         public void ReturnScopesForRequestUrlsInEitherPermissionFilesProvided()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             /* Act */
 
-            List<ScopeInformation> result1 = 
+            List<ScopeInformation> result1 =
                 permissionsStore.GetScopes(scopeType: "DelegatedWork", requestUrl: "/users/{id}/calendars/{id}", method: "GET"); // permission in ver1 doc.
-            List<ScopeInformation> result2 = 
+            List<ScopeInformation> result2 =
                 permissionsStore.GetScopes(scopeType: "DelegatedWork", requestUrl: "/anonymousipriskevents/{id}", method: "GET"); // permission in ver2 doc.
-            List<ScopeInformation> result3 = 
+            List<ScopeInformation> result3 =
                 permissionsStore.GetScopes(scopeType: "Application", requestUrl: "/security/alerts/{id}", method: "PATCH"); // permission in ver1 doc.
 
             /* Assert */
@@ -169,11 +178,12 @@ namespace PermissionsService.Test
         public void RemoveParameterParanthesesFromRequestUrlsDuringLoadingOfPermissionsFiles()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
             // RequestUrl in permission file: "/workbook/worksheets/{id}/charts/{id}/image(width=640)"
-            List<ScopeInformation> result = 
+            List<ScopeInformation> result =
                 permissionsStore.GetScopes(scopeType: "DelegatedWork", requestUrl: "/workbook/worksheets/{id}/charts/{id}/image", method: "GET");
 
             /* Assert */
@@ -192,7 +202,8 @@ namespace PermissionsService.Test
         public void ReturnScopesForRequestUrlWhoseScopesInformationNotAvailable()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopes(requestUrl: "/lorem/ipsum/{id}", method: "GET"); // bogus permission whose scopes info are unavailable
@@ -219,10 +230,11 @@ namespace PermissionsService.Test
         public void ReturnLocalizedPermissionsDescriptionsForSupportedLanguage()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
-            List<ScopeInformation> result = 
+            List<ScopeInformation> result =
                 permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}", method: "GET", localeCode: "es-ES");
 
             // Assert
@@ -244,30 +256,16 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public void ThrowInvalidOperationExceptionIfTablesNotPopulatedDueToIncorrectPermissionsFilePathName()
-        {
-            /* Arrange */
-
-            IConfigurationRoot configuration = new ConfigurationBuilder()
-               .AddJsonFile(".\\TestFiles\\appsettingstest-invalid.json")
-               .Build();
-
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, configuration);
-
-            // Act and Assert
-            Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}"));
-        }
-
-        [Fact]
         public void ThrowInvalidOperationExceptionIfTablesNotPopulatedDueToEmptyPermissionsFile()
         {
             /* Arrange */
 
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest-empty.json")
                 .Build();
 
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, configuration);
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, configuration, _permissionsCache);
 
             // Act and Assert
             Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}"));
@@ -277,10 +275,11 @@ namespace PermissionsService.Test
         public void ThrowArgumentNullExceptionIfMethodIsNullOrEmptyAndRequestUrlHasValue()
         {
             // Arrange
-            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration);
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+            PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}"));           
+            Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}"));
         }
     }
 }
