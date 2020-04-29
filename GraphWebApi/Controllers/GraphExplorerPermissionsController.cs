@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -24,11 +24,11 @@ namespace GraphWebApi.Controllers
             _permissionsStore = permissionsStore;
         }
 
-        // Gets the permission scopes 
+        // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
-        public IActionResult GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork", 
-                                                 [FromQuery]string requestUrl = null, 
+        public IActionResult GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
+                                                 [FromQuery]string requestUrl = null,
                                                  [FromQuery]string method = null)
         {
             try
