@@ -1,0 +1,50 @@
+{
+  "delegatedScopesList":
+      [
+        {
+          "adminConsentDescription": "Permite que la aplicación lea los eventos de seguridad de su organización en nombre del usuario que inició sesión.",
+          "adminConsentDisplayName": "Lea los eventos de seguridad de su organización.",
+          "id": "64733abd-851e-478a-bffb-e47a14b18235",
+          "isEnabled": true,
+          "isAdmin": true,
+          "consentDescription": "Permite que la aplicación lea los eventos de seguridad de su organización en su nombre.",
+          "consentDisplayName": "Lea los eventos de seguridad de su organización.",
+          "value": "SecurityEvents.Read.All"
+        },
+        {
+          "adminConsentDescription": "Permite que la aplicación lea los eventos de seguridad de su organización en nombre del usuario que inició sesión. También permite que la aplicación actualice propiedades editables en eventos de seguridad en nombre del usuario que inició sesión.",
+          "adminConsentDisplayName": "Lea y actualice los eventos de seguridad de su organización.",
+          "id": "6aedf524-7e1c-45a7-bd76-ded8cab8d0fc",
+          "isEnabled": true,
+          "isAdmin": true,
+          "consentDescription": "Permite que la aplicación lea los eventos de seguridad de su organización en su nombre. También le permite actualizar propiedades editables en eventos de seguridad.",
+          "consentDisplayName": "Lea y actualice los eventos de seguridad de su organización.",
+          "value": "SecurityEvents.ReadWrite.All"
+        }
+      ],
+  "applicationScopesList":
+      [
+        {
+          "allowedMemberTypes": [
+            "Application"
+          ],
+          "consentDescription": "Permite que la aplicación lea los eventos de seguridad de su organización sin un usuario registrado.",
+          "consentDisplayName": "Lea los eventos de seguridad de su organización.",
+          "id": "bf394140-e372-4bf9-a898-299cfc7564e5",
+          "isEnabled": true,
+          "isAdmin": false,
+          "value": "SecurityEvents.Read.All"
+        },
+        {
+          "allowedMemberTypes": [
+            "Application"
+          ],
+          "consentDescription": "Permite que la aplicación lea los eventos de seguridad de su organización sin un usuario registrado. También permite que la aplicación actualice propiedades editables en eventos de seguridad.",
+          "consentDisplayName": "Lea y actualice los eventos de seguridad de su organización.",
+          "id": "d903a879-88e0-4c09-b0c9-82f6a1333f84",
+          "isEnabled": true,
+          "isAdmin": false,
+          "value": "SecurityEvents.ReadWrite.All"
+        }
+      ]
+}

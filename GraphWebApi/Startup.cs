@@ -1,3 +1,6 @@
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -43,7 +46,7 @@ namespace GraphWebApi
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
-            services.AddSingleton<IFileUtility, DiskFileUtility>();
+            services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.Configure<SamplesAdministrators>(Configuration);
         }      

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using FileService.Interfaces;
 using GraphExplorerSamplesService.Models;
 using GraphExplorerSamplesService.Services;
+using GraphWebApi.Common;
 using GraphWebApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

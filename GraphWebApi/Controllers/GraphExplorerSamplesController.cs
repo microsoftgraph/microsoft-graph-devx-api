@@ -1,3 +1,7 @@
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
 using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -8,9 +12,10 @@ using System.Collections.Generic;
 using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
 using FileService.Interfaces;
+using FileService.Common;
 using System.Security.Claims;
 using System.Linq;
-using GraphWebApi.Models;
+using GraphWebApi.Common;
 
 namespace GraphWebApi.Controllers
 {
@@ -18,14 +23,18 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSamplesController : ControllerBase
     {
         private readonly IFileUtility _fileUtility;
-        private readonly string _queriesFilePathSource;
+        private readonly IConfiguration _configuration;
         private readonly string _policiesFilePathSource;
+        private readonly string _sampleQueriesContainerName;
+        private readonly string _sampleQueriesBlobName;        
 
         public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration)
         {
-            _fileUtility = fileUtility;            
-            _queriesFilePathSource = configuration["Samples:SampleQueriesFilePathName"]; // sets the path of the sample queries JSON file
+            _fileUtility = fileUtility;
             _policiesFilePathSource = configuration["Samples:SampleQueriesPoliciesFilePathName"]; // sets the path of the sample queries policies JSON file
+            _configuration = configuration;
+            _sampleQueriesContainerName = _configuration["AzureBlobStorage:Containers:SampleQueries"];
+            _sampleQueriesBlobName = _configuration[$"AzureBlobStorage:Blobs:SampleQueries"];
         }
 
         // Gets the list of all sample queries
@@ -37,8 +46,10 @@ namespace GraphWebApi.Controllers
         {
             try
             {
+                string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
+               
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(localeCode);
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -82,8 +93,10 @@ namespace GraphWebApi.Controllers
         {
             try
             {
+                string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
+
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(localeCode);
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -139,7 +152,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync("En-Us");
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
                 {                    
@@ -160,8 +173,8 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of this sample query
                 string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
 
-                // Save the JSON string to the source file
-                await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
+                // Disabled functionality
+                //  await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
 
                 // Success; return the sample query model object that was just updated
                 return Ok(sampleQueryModel);
@@ -209,7 +222,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync("En-Us");
 
                 // Assign a new Id to the new sample query
                 sampleQueryModel.Id = Guid.NewGuid();
@@ -220,8 +233,8 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the sample query
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(newSampleQueriesList);
 
-                // Save the JSON string to the source file
-                await _fileUtility.WriteToFile(newSampleQueriesJson, _queriesFilePathSource);
+                // Disabled functionality
+                // await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
 
                 // Create the query Uri for the newly created sample query
                 string newSampleQueryUri = string.Format("{0}://{1}{2}/{3}", Request.Scheme, Request.Host, Request.Path.Value, sampleQueryModel.Id.ToString());
@@ -246,7 +259,7 @@ namespace GraphWebApi.Controllers
             try
             {
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await GetSampleQueriesListAsync();
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync("En-Us");
 
                 // Get the list of policies
                 SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
@@ -288,9 +301,9 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the list of sample queries
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(sampleQueriesList);
 
-                // Save the JSON string to the source file
-                await _fileUtility.WriteToFile(newSampleQueriesJson, _queriesFilePathSource);
-                                
+                // Disabled functionality
+                // await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
+
                 // Success; no content to return
                 return new JsonResult("Deleted successfully.") { StatusCode = StatusCodes.Status204NoContent};
             }            
@@ -309,11 +322,15 @@ namespace GraphWebApi.Controllers
         /// Gets the JSON file contents of the sample queries and returns a deserialized instance of a 
         /// <see cref="SampleQueriesList"/> from this.
         /// </summary>
+        /// <param name="localeCode">The language code for the preferred localized file.</param>
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
-        private async Task<SampleQueriesList> GetSampleQueriesListAsync()
+        private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string localeCode)
         {
+            // Fetch the requisite sample path source based on the locale language code
+            string queriesFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, localeCode);
+
             // Get the file contents from source
-            string jsonFileContents = await _fileUtility.ReadFromFile(_queriesFilePathSource);
+            string jsonFileContents = await _fileUtility.ReadFromFile(queriesFilePathSource);
 
             if (string.IsNullOrEmpty(jsonFileContents))
             {

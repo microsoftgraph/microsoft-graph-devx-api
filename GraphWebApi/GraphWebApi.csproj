@@ -54,12 +54,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="SampleQueries\SampleQueries.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Update="SampleQueriesPolicies\CategoryPolicies.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
