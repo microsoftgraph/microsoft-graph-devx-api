@@ -93,36 +93,35 @@ namespace GraphExplorerPermissionsService
         /// </summary>
         private void SeedScopesInfoTables(string localeCode = LocaleCode)
         {
-            string scopesInfoJson = _permissionsCache.GetOrCreate($"ScopesInfoJson_{localeCode}", cacheEntry =>
-             {
-                 string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, localeCode);
-                 cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(RefreshTimeInDays);
-                 return  _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
-             });
-
-            if (!string.IsNullOrEmpty(scopesInfoJson))
+            ScopesInformationList scopesInformationList = _permissionsCache.GetOrCreate($"ScopesInfoList_{localeCode}", cacheEntry =>
             {
-                ScopesInformationList scopesInformationList = _permissionsCache.GetOrCreate($"ScopesInfoList_{localeCode}", cacheEntry =>
+                _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
+                _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
+
+                string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, localeCode);
+                string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
+
+                if (string.IsNullOrEmpty(scopesInfoJson))
                 {
-                    _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
-                    _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
+                    return null;
+                }
 
-                    scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+                scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
 
-                    foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
-                    {
-                        _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
-                    }
+                foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
+                {
+                    _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
+                }
 
-                    foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
-                    {
-                        _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
-                    }
+                foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
+                {
+                    _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
+                }
 
-                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(RefreshTimeInDays);
-                    return scopesInformationList;
-                });
-            }
+                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(RefreshTimeInDays);
+
+                return scopesInformationList;
+            });
         }
 
         /// <summary>
