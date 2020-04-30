@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Tavis.UriTemplates;
 
 namespace GraphExplorerPermissionsService
@@ -44,7 +45,7 @@ namespace GraphExplorerPermissionsService
         /// <summary>
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
         /// </summary>
-        private void SeedPermissionsTables()
+        private async Task SeedPermissionsTables()
         {
             _urlTemplateTable = new UriTemplateTable();
             _scopesListTable = new Dictionary<int, object>();
@@ -55,7 +56,7 @@ namespace GraphExplorerPermissionsService
             foreach (string permissionFilePath in _permissionsBlobNames)
             {
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, permissionFilePath);
-                string jsonString = _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
+                string jsonString = await _fileUtility.ReadFromFile(relativePermissionPath);
 
                 if (!string.IsNullOrEmpty(jsonString))
                 {
@@ -91,15 +92,15 @@ namespace GraphExplorerPermissionsService
         /// <summary>
         /// Populates the delegated and application scopes information table caches.
         /// </summary>
-        private void SeedScopesInfoTables(string localeCode = LocaleCode)
+        private async Task SeedScopesInfoTables(string localeCode = LocaleCode)
         {
-            ScopesInformationList scopesInformationList = _permissionsCache.GetOrCreate($"ScopesInfoList_{localeCode}", cacheEntry =>
+            ScopesInformationList scopesInformationList = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{localeCode}", async cacheEntry =>
             {
                 _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
                 _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
 
                 string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, localeCode);
-                string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
+                string scopesInfoJson = await _fileUtility.ReadFromFile(relativeScopesInfoPath);
 
                 if (string.IsNullOrEmpty(scopesInfoJson))
                 {
@@ -159,12 +160,12 @@ namespace GraphExplorerPermissionsService
                 {
                     /* Permissions tables are not localized, so no need to keep different localized cached copies.
                        Refresh tables only after the specified time duration has elapsed or no cached copy exists. */
-                    SeedPermissionsTables();
+                    await SeedPermissionsTables();
                 }
 
                 /* Ensure that the requested localized copy of permissions descriptions
                    is available in the cache. */
-                SeedScopesInfoTables(localeCode);
+                await SeedScopesInfoTables(localeCode);
 
                 string[] scopes = null;
 
