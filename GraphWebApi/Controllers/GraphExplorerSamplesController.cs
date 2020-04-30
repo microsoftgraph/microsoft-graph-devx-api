@@ -29,7 +29,7 @@ namespace GraphWebApi.Controllers
         private readonly string _policiesFilePathSource;
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
-        private static readonly int RefreshTimeInDays = 1; // life span of the in-memory cache
+        private const int RefreshTimeInDays = 1; // life span of the in-memory cache
 
         public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache samplesCache)
         {

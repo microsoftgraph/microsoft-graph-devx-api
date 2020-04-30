@@ -29,8 +29,8 @@ namespace GraphExplorerPermissionsService
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
-        private static readonly int RefreshTimeInDays = 1; // life span of the in-memory cache
-        private const string LOCALE_CODE = "en-US"; // default locale language
+        private const int RefreshTimeInDays = 1; // life span of the in-memory cache
+        private const string LocaleCode = "en-US"; // default locale language
 
         public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache permissionsCache)
         {
@@ -55,7 +55,7 @@ namespace GraphExplorerPermissionsService
             foreach (string permissionFilePath in _permissionsBlobNames)
             {
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, permissionFilePath);
-                string jsonString =  _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
+                string jsonString = _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
 
                 if (!string.IsNullOrEmpty(jsonString))
                 {
@@ -91,7 +91,7 @@ namespace GraphExplorerPermissionsService
         /// <summary>
         /// Populates the delegated and application scopes information table caches.
         /// </summary>
-        private void SeedScopesInfoTables(string localeCode = LOCALE_CODE)
+        private void SeedScopesInfoTables(string localeCode = LocaleCode)
         {
             string scopesInfoJson = _permissionsCache.GetOrCreate($"ScopesInfoJson_{localeCode}", cacheEntry =>
              {
@@ -129,7 +129,8 @@ namespace GraphExplorerPermissionsService
         /// Determines whether the permissions tables need to be refreshed with new data based on the elapsed time
         /// duration since the previous refresh.
         /// </summary>
-        /// <returns>True or False based on whether the elapsed time duration is greater or less than the specified refresh time duration.</returns>
+        /// <returns>true or false based on whether the elapsed time duration is greater or less than the specified
+        /// refresh time duration.</returns>
         private bool RefreshPermissionsTables()
         {
             bool refreshPermissionsTables = false;
@@ -143,15 +144,15 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Retrieves permissions scopes
+        /// Retrieves permissions scopes.
         /// </summary>
         /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
         /// <param name="requestUrl">The target request url whose scopes are to be retrieved.</param>
         /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
         /// <param name="localeCode">The language code for the preferred localized file.</param>
         /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
-        public List<ScopeInformation> GetScopes(string scopeType = "DelegatedWork",
-            string requestUrl = null, string method = null, string localeCode = LOCALE_CODE)
+        public List<ScopeInformation> GetScopes(string scopeType = "DelegatedWork", string localeCode = LocaleCode,
+                                                string requestUrl = null, string method = null)
         {
             try
             {
