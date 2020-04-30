@@ -150,7 +150,7 @@ namespace GraphExplorerPermissionsService
         /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
         /// <param name="localeCode">The language code for the preferred localized file.</param>
         /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
-        public List<ScopeInformation> GetScopes(string scopeType = "DelegatedWork", string localeCode = LocaleCode,
+        public async Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork", string localeCode = LocaleCode,
                                                 string requestUrl = null, string method = null)
         {
             try

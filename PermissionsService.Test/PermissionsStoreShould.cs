@@ -36,7 +36,8 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
-            List<ScopeInformation> result = permissionsStore.GetScopes(requestUrl:"/security/alerts/{alert_id}", method: "GET");
+            List<ScopeInformation> result = permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}", method: "GET")
+                                                            .GetAwaiter().GetResult();
 
             // Assert
             Assert.Collection(result,
@@ -64,7 +65,7 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
-            List<ScopeInformation> result = permissionsStore.GetScopes();
+            List<ScopeInformation> result = permissionsStore.GetScopesAsync().GetAwaiter().GetResult();
 
             // Assert
             Assert.NotEmpty(result);
@@ -78,7 +79,8 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
-            List<ScopeInformation> result = permissionsStore.GetScopes(requestUrl:"/foo/bar/{alert_id}", method: "GET"); // non-existent request url
+            List<ScopeInformation> result = permissionsStore.GetScopesAsync(requestUrl: "/foo/bar/{alert_id}", method: "GET") // non-existent request url
+                                                            .GetAwaiter().GetResult();
 
             // Assert that returned result is null
             Assert.Null(result);
@@ -92,7 +94,8 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
-            List<ScopeInformation> result = permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}", method: "Foobar"); // non-existent http verb
+            List<ScopeInformation> result = permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}", method: "Foobar") // non-existent http verb
+                                                            .GetAwaiter().GetResult();
 
             // Assert that returned result is null
             Assert.Null(result);
@@ -107,7 +110,9 @@ namespace PermissionsService.Test
 
             // Act
             List<ScopeInformation> result =
-                permissionsStore.GetScopes(scopeType: "Foobar", requestUrl: "/security/alerts/{alert_id}", method: "PATCH"); // non-existent scope type
+                permissionsStore.GetScopesAsync(scopeType: "Foobar",
+                                                requestUrl: "/security/alerts/{alert_id}",
+                                                method: "PATCH").GetAwaiter().GetResult(); // non-existent scope type
 
             // Assert that returned result is null
             Assert.Null(result);
@@ -122,7 +127,7 @@ namespace PermissionsService.Test
 
             // Act by requesting scopes for the 'DelegatedPersonal' scope type
             List<ScopeInformation> result =
-                permissionsStore.GetScopes(scopeType: "DelegatedPersonal", requestUrl: "/security/alerts/{alert_id}", method: "GET");
+                permissionsStore.GetScopesAsync(scopeType: "DelegatedPersonal", requestUrl: "/security/alerts/{alert_id}", method: "GET").GetAwaiter().GetResult();
 
             // Assert that returned result is empty
             Assert.Empty(result);
@@ -138,11 +143,11 @@ namespace PermissionsService.Test
             /* Act */
 
             List<ScopeInformation> result1 =
-                permissionsStore.GetScopes(scopeType: "DelegatedWork", requestUrl: "/users/{id}/calendars/{id}", method: "GET"); // permission in ver1 doc.
+                permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/users/{id}/calendars/{id}", method: "GET").GetAwaiter().GetResult(); // permission in ver1 doc.
             List<ScopeInformation> result2 =
-                permissionsStore.GetScopes(scopeType: "DelegatedWork", requestUrl: "/anonymousipriskevents/{id}", method: "GET"); // permission in ver2 doc.
+                permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/anonymousipriskevents/{id}", method: "GET").GetAwaiter().GetResult(); // permission in ver2 doc.
             List<ScopeInformation> result3 =
-                permissionsStore.GetScopes(scopeType: "Application", requestUrl: "/security/alerts/{id}", method: "PATCH"); // permission in ver1 doc.
+                permissionsStore.GetScopesAsync(scopeType: "Application", requestUrl: "/security/alerts/{id}", method: "PATCH").GetAwaiter().GetResult(); // permission in ver1 doc.
 
             /* Assert */
 
@@ -184,7 +189,9 @@ namespace PermissionsService.Test
             // Act
             // RequestUrl in permission file: "/workbook/worksheets/{id}/charts/{id}/image(width=640)"
             List<ScopeInformation> result =
-                permissionsStore.GetScopes(scopeType: "DelegatedWork", requestUrl: "/workbook/worksheets/{id}/charts/{id}/image", method: "GET");
+                permissionsStore.GetScopesAsync(scopeType: "DelegatedWork",
+                                                requestUrl: "/workbook/worksheets/{id}/charts/{id}/image",
+                                                method: "GET").GetAwaiter().GetResult();
 
             /* Assert */
 
@@ -206,7 +213,9 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act
-            List<ScopeInformation> result = permissionsStore.GetScopes(requestUrl: "/lorem/ipsum/{id}", method: "GET"); // bogus permission whose scopes info are unavailable
+            List<ScopeInformation> result =
+                permissionsStore.GetScopesAsync(requestUrl: "/lorem/ipsum/{id}",
+                                                method: "GET").GetAwaiter().GetResult(); // bogus permission whose scopes info are unavailable
 
             // Assert
             Assert.Collection(result,
@@ -235,7 +244,9 @@ namespace PermissionsService.Test
 
             // Act
             List<ScopeInformation> result =
-                permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}", method: "GET", localeCode: "es-ES");
+                permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}",
+                                                method: "GET",
+                                                localeCode: "es-ES").GetAwaiter().GetResult();
 
             // Assert
             Assert.Collection(result,
@@ -268,7 +279,8 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, configuration, _permissionsCache);
 
             // Act and Assert
-            Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}"));
+            Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
+                                                                           .GetAwaiter().GetResult());
         }
 
         [Fact]
@@ -279,7 +291,8 @@ namespace PermissionsService.Test
             PermissionsStore permissionsStore = new PermissionsStore(_fileUtility, _configuration, _permissionsCache);
 
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopes(requestUrl: "/security/alerts/{alert_id}"));
+            Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
+                                                                       .GetAwaiter().GetResult());
         }
     }
 }

@@ -4,6 +4,7 @@
 
 using GraphExplorerPermissionsService.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace GraphExplorerPermissionsService.Interfaces
 {
@@ -12,6 +13,9 @@ namespace GraphExplorerPermissionsService.Interfaces
     /// </summary>
     public interface IPermissionsStore
     {
-        List<ScopeInformation> GetScopes(string scopeType = "DelegatedWork", string localeCode = null, string requestUrl = null, string method = null);
+        Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
+                                                    string localeCode = null,
+                                                    string requestUrl = null,
+                                                    string method = null);
     }
 }
