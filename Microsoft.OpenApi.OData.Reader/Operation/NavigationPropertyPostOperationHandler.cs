@@ -42,7 +42,7 @@ namespace Microsoft.OpenApi.OData.Operation
         protected override void SetRequestBody(OpenApiOperation operation)
         {
             OpenApiSchema schema = null;
-            
+
             if (Context.Settings.EnableDerivedTypesReferencesForRequestBody)
             {
                 schema = EdmModelHelper.GetDerivedTypesReferenceSchema(NavigationProperty.ToEntityType(), Context.Model);

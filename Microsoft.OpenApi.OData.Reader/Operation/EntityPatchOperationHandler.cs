@@ -120,6 +120,6 @@ namespace Microsoft.OpenApi.OData.Operation
             {
                 AppendCustomParameters(operation, update.CustomQueryOptions, ParameterLocation.Query);
             }
-        }        
+        }
     }
 }
