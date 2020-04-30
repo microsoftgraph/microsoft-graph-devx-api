@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
 using GraphWebApi.Common;
@@ -28,17 +27,22 @@ namespace GraphWebApi.Controllers
         // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
-                                                             [FromQuery]string requestUrl = null,
-                                                             [FromQuery]string method = null)
+        public IActionResult GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
+                                                 [FromQuery]string requestUrl = null,
+                                                 [FromQuery]string method = null)
         {
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
                 List<ScopeInformation> result = null;
-                result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
+                result = _permissionsStore.GetScopes(scopeType, localeCode, requestUrl, method);
 
-                return result == null ? NotFound() : (IActionResult)Ok(result);
+                if (result == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(result);
             }
             catch (InvalidOperationException invalidOpsException)
             {
