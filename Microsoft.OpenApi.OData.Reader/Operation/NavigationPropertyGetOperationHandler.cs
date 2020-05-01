@@ -61,14 +61,14 @@ namespace Microsoft.OpenApi.OData.Operation
 
                     base.SetExtensions(operation);
                 }
-            }                           
+            }
         }
 
         /// <inheritdoc/>
         protected override void SetResponses(OpenApiOperation operation)
         {
             OpenApiSchema schema = null;
-            
+
             if (Context.Settings.EnableDerivedTypesReferencesForResponses)
             {
                 schema = EdmModelHelper.GetDerivedTypesReferenceSchema(NavigationProperty.ToEntityType(), Context.Model);
@@ -109,7 +109,7 @@ namespace Microsoft.OpenApi.OData.Operation
                             Type = "string"
                         });
                 }
-
+                
                 operation.Responses = new OpenApiResponses
                 {
                     {
@@ -131,7 +131,9 @@ namespace Microsoft.OpenApi.OData.Operation
                                         }
                                     }
                                 }
-                            }
+                            },
+                            Links = Context.CreateLinks(NavigationProperty.ToEntityType(), NavigationProperty.Name, 
+                            NavigationProperty.PropertyKind.ToString(), operation.Parameters, NavigationProperty.DeclaringEntityType().Name, true)
                         }
                     }
                 };
@@ -154,12 +156,14 @@ namespace Microsoft.OpenApi.OData.Operation
                                         Schema = schema
                                     }
                                 }
-                            }
+                            },
+                            Links = Context.CreateLinks(NavigationProperty.ToEntityType(), NavigationProperty.Name,
+                            NavigationProperty.PropertyKind.ToString(), operation.Parameters, NavigationProperty.DeclaringEntityType().Name)
                         }
                     }
                 };
             }
-
+            
             operation.Responses.Add(Constants.StatusCodeDefault, Constants.StatusCodeDefault.GetResponse());
 
             base.SetResponses(operation);

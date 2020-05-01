@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
+using GraphWebApi.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,12 +27,15 @@ namespace GraphWebApi.Controllers
         // Gets the permission scopes 
         [HttpGet]
         [Produces("application/json")]
-        public IActionResult GetPermissionScopes([FromQuery]string requestUrl = null, [FromQuery]string method = "GET", [FromQuery]string scopeType = "DelegatedWork")
+        public IActionResult GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork", 
+                                                 [FromQuery]string requestUrl = null, 
+                                                 [FromQuery]string method = null)
         {
             try
             {
+                string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
                 List<ScopeInformation> result = null;
-                result = _permissionsStore.GetScopes(requestUrl, method, scopeType);
+                result = _permissionsStore.GetScopes(scopeType, requestUrl, method, localeCode);
 
                 if (result == null)
                 {
