@@ -35,7 +35,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = ObjectiveCGenerator.GenerateCodeSnippet(snippetModel,expressions);
+            var result = new ObjectiveCGenerator(_edmModel).GenerateCodeSnippet(snippetModel,expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[MSGraphBaseURL stringByAppendingString:@\"/users\"]]];\r\n" +
@@ -86,7 +86,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = ObjectiveCGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new ObjectiveCGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[MSGraphBaseURL stringByAppendingString:@\"/me\"]]];\r\n" +
@@ -152,7 +152,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = ObjectiveCGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new ObjectiveCGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[MSGraphBaseURL stringByAppendingString:@\"/me/messages\"]]];\r\n" +
@@ -215,7 +215,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = ObjectiveCGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new ObjectiveCGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[MSGraphBaseURL stringByAppendingString:@\"/me/getMailTips\"]]];\r\n" +
@@ -256,7 +256,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = ObjectiveCGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new ObjectiveCGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[MSGraphBaseURL stringByAppendingString:@\"/me/drive/root/children\"]]];\r\n" +

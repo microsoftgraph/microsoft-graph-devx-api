@@ -34,7 +34,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "User user = new User();\r\n" +
@@ -73,7 +73,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "User user = new User();\r\n" +
@@ -128,7 +128,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "Message message = new Message();\r\n" +
@@ -173,7 +173,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "LinkedList<Option> requestOptions = new LinkedList<Option>();\r\n" +
@@ -202,7 +202,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "LinkedList<Option> requestOptions = new LinkedList<Option>();\r\n" +
@@ -228,7 +228,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "graphClient.groups(\"{id}\").owners(\"{id}\").reference()\n" +
@@ -256,7 +256,7 @@ namespace CodeSnippetsReflection.Test
 
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "DirectoryObject directoryObject = new DirectoryObject();\r\n" +
@@ -289,7 +289,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "DirectoryObject directoryObject = new DirectoryObject();\r\n" +
@@ -321,7 +321,7 @@ namespace CodeSnippetsReflection.Test
 
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "DirectoryObject directoryObject = new DirectoryObject();\r\n" +
@@ -348,7 +348,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "WorkbookRange workbookRange = graphClient.me().drive().items(\"{id}\").workbook().worksheets(\"{id|name}\")\n" +
@@ -373,7 +373,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, "https://graph.microsoft.com/beta", _edmModel);
 
             //Assert that we do not generate snippets for java beta for now
-            Assert.Throws<NotImplementedException>(() =>JavaGenerator.GenerateCodeSnippet(snippetModel, expressions));
+            Assert.Throws<NotImplementedException>(() =>new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions));
         }
 
         [Fact]
@@ -394,7 +394,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "String address = \"Sheet1!A1:D5\";\r\n" +
@@ -427,7 +427,7 @@ namespace CodeSnippetsReflection.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "FileAttachment attachment = new FileAttachment();\r\n" + // Use the FileAttachment class rather than the Attachment superclass from metadata 
@@ -460,7 +460,7 @@ namespace CodeSnippetsReflection.Test
                 };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
             //Act by generating the code snippet
-            var result = JavaGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "DriveItem driveItem = new DriveItem();\r\n" +

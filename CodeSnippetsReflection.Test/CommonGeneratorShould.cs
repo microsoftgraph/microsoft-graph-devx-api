@@ -330,7 +330,8 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
+            var commonGenerator = new CommonGenerator(_edmModel);
+            var result = commonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
             Assert.Equal("microsoft.graph.person", result.ToString());
@@ -349,7 +350,8 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
+            var commonGenerator = new CommonGenerator(_edmModel);
+            var result = commonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
             Assert.Equal("microsoft.graph.message", result.ToString());
@@ -369,11 +371,31 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
+            var commonGenerator = new CommonGenerator(_edmModel);
+            var result = commonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
             Assert.Equal("microsoft.graph.recipient", result.ToString());
 
+        }
+
+        [Fact]
+        public void GetClassNameFromIdentifier_ShouldFindSubclassProperties()
+        {
+            // Arrange
+            List<string> path = new List<string>
+            {
+                "fileAttachment",
+                "contentBytes"
+            };
+
+            // Act
+            var commonGenerator = new CommonGenerator(_edmModel);
+            var type = _edmModel.FindDeclaredType("microsoft.graph.attachment");
+            var (contentBytesType, _) = commonGenerator.SearchForEdmType(type, path);
+
+            // Assert
+            Assert.Equal("Edm.Binary", contentBytesType.FullTypeName());
         }
 
         [Fact]
@@ -390,7 +412,8 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
+            var commonGenerator = new CommonGenerator(_edmModel);
+            var result = commonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
             Assert.Equal("microsoft.graph.itemBody", result.ToString());
@@ -412,7 +435,8 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
+            var commonGenerator = new CommonGenerator(_edmModel);
+            var result = commonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
             Assert.Equal("microsoft.graph.emailAddress", result.ToString());
@@ -433,7 +457,8 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act
-            var result = CommonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
+            var commonGenerator = new CommonGenerator(_edmModel);
+            var result = commonGenerator.GetEdmTypeFromIdentifier(snippetModel.Segments.Last(), path);
 
             //Assert
             Assert.Equal("microsoft.graph.emailAddress", result.ToString());

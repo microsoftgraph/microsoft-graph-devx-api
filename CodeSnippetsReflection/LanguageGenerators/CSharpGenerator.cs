@@ -12,15 +12,29 @@ using Microsoft.OData.Edm;
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
 {
-    public static class CSharpGenerator
+    public class CSharpGenerator
     {
+        /// <summary>
+        /// CommonGenerator instance
+        /// </summary>
+        private readonly CommonGenerator CommonGenerator;
+
+        /// <summary>
+        /// CSharpGenerator constructor
+        /// </summary>
+        /// <param name="model">Model representing metadata</param>
+        public CSharpGenerator(IEdmModel model)
+        {
+            CommonGenerator = new CommonGenerator(model);
+        }
+
         /// <summary>
         /// Formulates the requested Graph snippets and returns it as string for Csharp
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
         /// <param name="languageExpressions">The language expressions to be used for code Gen</param>
         /// <returns>String of the snippet in Csharp code</returns>
-        public static string GenerateCodeSnippet(SnippetModel snippetModel, LanguageExpressions languageExpressions)
+        public string GenerateCodeSnippet(SnippetModel snippetModel, LanguageExpressions languageExpressions)
         {
             var snippetBuilder = new StringBuilder();
 
@@ -40,7 +54,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     var extraSnippet = "";
                     if (segment is PropertySegment && !segment.EdmType.IsStream())//streams can be sorted out normally
-                    { 
+                    {
                         extraSnippet = GeneratePropertySectionSnippet(snippetModel);
                         snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(CommonGenerator.UppercaseFirstLetter).ToList();
                         actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
@@ -90,7 +104,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
                     snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
-                   
+
                     if (segment is PropertySegment)
                     {
                         snippetBuilder.Append(GeneratePropertySectionSnippet(snippetModel));
@@ -126,7 +140,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
 
                 return snippetBuilder.ToString();
-                
+
             }
             catch (Exception ex)
             {
@@ -173,11 +187,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         resourcesPath.Append(".Reference");
                         break;
                     case NavigationPropertyLinkSegment _:
-                        /* 
-                         * The ODataURIParser may sometimes not create and add a ReferenceSegment object to the end of 
-                         * the segments collection in the event that there is a valid NavigationPropertySegment in the 
-                         * collection. It will replace this NavigationPropertySegment object with a NavigationPropertyLinkSegment 
-                         * object. Therefore we modify the suffix so that it may be appended to show the Reference section since 
+                        /*
+                         * The ODataURIParser may sometimes not create and add a ReferenceSegment object to the end of
+                         * the segments collection in the event that there is a valid NavigationPropertySegment in the
+                         * collection. It will replace this NavigationPropertySegment object with a NavigationPropertyLinkSegment
+                         * object. Therefore we modify the suffix so that it may be appended to show the Reference section since
                          * the $ref should always be last in a valid Odata URI.
                         */
                         if (snippetModel.Path.Contains("$ref") && !(snippetModel.Segments.Last() is ReferenceSegment))
@@ -204,7 +218,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 resourcesPath.Append(resourcesPathSuffix);
             }
-            
+
             return resourcesPath.ToString();
         }
 
@@ -215,7 +229,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="jsonBody">Json string from which the information of the object to be initialized is held</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
-        private static string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path)
+        private string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path)
         {
             var stringBuilder = new StringBuilder();
             var jsonObject = JsonConvert.DeserializeObject(jsonBody);
@@ -246,9 +260,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         var className = GetCsharpClassName(pathSegment,path);
                         stringBuilder.Append($"new {className}\r\n");
                         stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
+
                         //initialize each member/property of the object
                         foreach (var (key, jToken) in jObject)
                         {
+
                             var value = JsonConvert.SerializeObject(jToken);
                             var newPath = path.Append(key).ToList();//add new identifier to the path
                             if (key.Contains("@odata") || key.StartsWith("@"))//sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
@@ -256,12 +272,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 stringBuilder = GenerateCSharpAdditionalDataSection(stringBuilder, key, jToken.Value<string>(), className, tabSpace);
                                 continue;
                             }
+
                             switch (jToken.Type)
                             {
                                 case JTokenType.Array:
                                 case JTokenType.Object:
                                     //new nested object needs to be constructed so call this function recursively to make it
-                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath );
+                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
                                     stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
                                     break;
                                 default:
@@ -282,8 +299,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case JArray array:
                     {
                         var objectList = array.Children<JObject>();
-                        var className = GetCsharpClassName(pathSegment, path);
-                        stringBuilder.Append($"new List<{className}>()\r\n{tabSpace}{{\r\n");
+
+                        var (className, isNavigationProperty) = GetCsharpClassNameAndNavigationProperty(pathSegment, path);
+
+                        // add a cast into ICollectionPage if the property is found as navigation property
+                        var cast = isNavigationProperty ? $"({GetCollectionInterfaceName(path)})" : string.Empty;
+
+                        stringBuilder.Append($"{cast}new List<{className}>()\r\n{tabSpace}{{\r\n");
                         if (objectList.Any())
                         {
                             foreach (var item in objectList)
@@ -365,7 +387,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     var proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
                     //check if the odata type specified is different
                     // maybe due to the declaration of a subclass of the type specified from the url.
-                    if (!className.Equals(proposedType)) 
+                    if (!className.Equals(proposedType))
                     {
                         stringBuilder.Replace(className, proposedType);
                     }
@@ -397,7 +419,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="stringParameter">String parameter that may need parsing</param>
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
-        private static string GenerateSpecialClassString(string stringParameter, ODataPathSegment pathSegment, ICollection<string> path)
+        private string GenerateSpecialClassString(string stringParameter, ODataPathSegment pathSegment, ICollection<string> path)
         {
             string specialClassString = $"\"{stringParameter.Replace("\"", "\\\"")}\"";//double quoted string.
             try
@@ -414,9 +436,15 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     case "Date"://try to parse the date to get the day,month and year params
                         string parsedDate = DateTime.TryParse(stringParameter,out var dateTime)
-                            ? $"{dateTime.Year},{dateTime.Month},{dateTime.Day}" 
+                            ? $"{dateTime.Year},{dateTime.Month},{dateTime.Day}"
                             : "1900,1,1";//use default params on parse failure
                         return $"new Date({parsedDate})";
+
+                    case "Duration":
+                        return $"new Duration({specialClassString})";
+
+                    case "Binary":
+                        return $"Encoding.ASCII.GetBytes({specialClassString})";
 
                     default:
                         return specialClassString;
@@ -453,13 +481,35 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">Path to follow to get find the classname</param>
-        /// <returns>String representing the type in use</returns>
-        private static string GetCsharpClassName(ODataPathSegment pathSegment, ICollection<string> path)
+        /// <returns>String representing the type in use and whether the property is found as navigation property</returns>
+        private (string csharpClassName, bool isNavigationProperty) GetCsharpClassNameAndNavigationProperty(ODataPathSegment pathSegment, ICollection<string> path)
         {
-            var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
+            var (edmType, isNavigationProperty) = CommonGenerator.GetEdmTypeFromIdentifierAndNavigationProperty(pathSegment, path);
             //we need to split the string and get last item
             //eg microsoft.graph.data => Data
-            return CommonGenerator.UppercaseFirstLetter( edmType.ToString().Split(".").Last() );
+            return (CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last()), isNavigationProperty);
+        }
+
+        /// <summary>
+        /// Return string representation of the classname for CSharp
+        /// </summary>
+        /// <param name="pathSegment">The OdataPathSegment in use</param>
+        /// <param name="path">Path to follow to get find the classname</param>
+        /// <returns>String representing the type in use</returns>
+        private string GetCsharpClassName(ODataPathSegment pathSegment, ICollection<string> path)
+        {
+            var (csharpClassName, _) = GetCsharpClassNameAndNavigationProperty(pathSegment, path);
+            return csharpClassName;
+        }
+
+        /// <summary>
+        /// Generates ICollectionPage interface name
+        /// </summary>
+        /// <param name="path">path in edm model</param>
+        /// <returns>ICollectionPage Interface name</returns>
+        private string GetCollectionInterfaceName(ICollection<string> path)
+        {
+            return "I" + string.Join("", path.Select(x => CommonGenerator.UppercaseFirstLetter(x))) + "CollectionPage";
         }
 
         /// <summary>
@@ -467,7 +517,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// a URL fashion
         /// </summary>
         /// <param name="snippetModel">Snippet model built from the request</param>
-        private static string GeneratePropertySectionSnippet(SnippetModel snippetModel)
+        private string GeneratePropertySectionSnippet(SnippetModel snippetModel)
         {
             if (snippetModel.Segments.Count < 2)
                 return "";
@@ -496,7 +546,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             var variableName = snippetModel.Segments.Last().Identifier;
             var parentClassName = GetCsharpClassName(desiredSegment, new List<string> { snippetModel.ResponseVariableName });
 
-            
+
             if (snippetModel.Method == HttpMethod.Get)
             {
                 //we are retrieving the value
@@ -553,7 +603,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="enumHint">string representing the hint to use for enum lookup</param>
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
-        private static string GenerateEnumString(string enumHint, ODataPathSegment pathSegment, ICollection<string> path)
+        private string GenerateEnumString(string enumHint, ODataPathSegment pathSegment, ICollection<string> path)
         {
             IEdmType nestEdmType;
 
@@ -598,13 +648,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
     internal class CSharpExpressions : LanguageExpressions
     {
-        public override string FilterExpression => "\n\t.Filter(\"{0}\")"; 
-        public override string SearchExpression => "\n\t.Search(\"{0}\")"; 
-        public override string ExpandExpression => "\n\t.Expand(\"{0}\")"; 
-        public override string SelectExpression => "\n\t.Select( e => new {{\n\t\t\t e.{0} \n\t\t\t }})"; 
-        public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")"; 
-        public override string SkipExpression => "\n\t.Skip({0})"; 
-        public override string SkipTokenExpression => ""; 
+        public override string FilterExpression => "\n\t.Filter(\"{0}\")";
+        public override string SearchExpression => "\n\t.Search(\"{0}\")";
+        public override string ExpandExpression => "\n\t.Expand(\"{0}\")";
+        public override string SelectExpression => "\n\t.Select( e => new {{\n\t\t\t e.{0} \n\t\t\t }})";
+        public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")";
+        public override string SkipExpression => "\n\t.Skip({0})";
+        public override string SkipTokenExpression => "";
         public override string TopExpression => "\n\t.Top({0})";
         public override string FilterExpressionDelimiter => ",";
         public override string SelectExpressionDelimiter => ",\n\t\t\t e.";
