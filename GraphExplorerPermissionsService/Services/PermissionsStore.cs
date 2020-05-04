@@ -32,6 +32,8 @@ namespace GraphExplorerPermissionsService
         private readonly string _scopesInformation;
         private readonly int _defaultRefreshTimeInHours; // life span of the in-memory cache
         private const string DefaultLocale = "en-US"; // default locale language
+        private readonly object _permissionsLock = new object();
+        private static bool _permissionsRefreshed = false;
 
         public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache permissionsCache)
         {
@@ -88,6 +90,8 @@ namespace GraphExplorerPermissionsService
                             _scopesListTable.Add(count, property.Value);
                         }
                     }
+
+                    _permissionsRefreshed = true;
                 }
             }
         }
@@ -136,14 +140,15 @@ namespace GraphExplorerPermissionsService
         /// refresh time duration.</returns>
         private bool RefreshPermissionsTables()
         {
-            bool refreshed = false;
+            bool refresh = false;
             bool cacheState = _permissionsCache.GetOrCreate("PermissionsTablesState", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-                return refreshed = true;
+                _permissionsRefreshed = false;
+                return refresh = true;
             });
 
-            return refreshed;
+            return refresh;
         }
 
         /// <summary>
@@ -163,7 +168,15 @@ namespace GraphExplorerPermissionsService
                 {
                     /* Permissions tables are not localized, so no need to keep different localized cached copies.
                        Refresh tables only after the specified time duration has elapsed or no cached copy exists. */
-                    await SeedPermissionsTables();
+                    lock (_permissionsLock)
+                    {
+                        // Ensure permissions tables are seeded by only one executing thread,
+                        // once per refresh cycle.
+                        if (!_permissionsRefreshed)
+                        {
+                            SeedPermissionsTables();
+                        }
+                    }
                 }
 
                 /* Ensure that the requested localized copy of permissions descriptions
