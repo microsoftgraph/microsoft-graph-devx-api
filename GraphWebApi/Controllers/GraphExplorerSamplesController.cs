@@ -348,8 +348,17 @@ namespace GraphWebApi.Controllers
                 return new SampleQueriesList();
             }
 
+            bool orderSamples = false;
+
+            if (localeCode.Equals("en-us", StringComparison.OrdinalIgnoreCase))
+            {
+                // Current business process only supports ordering of the English
+                // version of the sample queries.
+                orderSamples = true;
+            }
+
             // Return the list of the sample queries from the file contents
-            return SamplesService.DeserializeSampleQueriesList(jsonFileContents);
+            return SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples);
         }
 
         /// <summary>

@@ -115,6 +115,11 @@ namespace Microsoft.OpenApi.OData
         /// </summary>
         public bool EnableDerivedTypesReferencesForRequestBody { get; set; } = false;
 
+        /// <summary>
+        /// Gets/Sets a value indicating whether or not to show the root path of the described API.
+        /// </summary>
+        public bool ShowRootPath { get; set; } = false;
+
         internal OpenApiConvertSettings Clone()
         {
             var newSettings = new OpenApiConvertSettings
@@ -138,7 +143,8 @@ namespace Microsoft.OpenApi.OData
                 PageableOperationName = this.PageableOperationName,
                 EnableDiscriminatorValue = this.EnableDiscriminatorValue,
                 EnableDerivedTypesReferencesForResponses = this.EnableDerivedTypesReferencesForResponses,
-                EnableDerivedTypesReferencesForRequestBody = this.EnableDerivedTypesReferencesForRequestBody
+                EnableDerivedTypesReferencesForRequestBody = this.EnableDerivedTypesReferencesForRequestBody,
+                ShowRootPath = this.ShowRootPath
             };
 
             return newSettings;

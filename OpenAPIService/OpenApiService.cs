@@ -31,7 +31,7 @@ namespace OpenAPIService
         Plain,
         GEAutocomplete
     }
-       
+
     public class OpenApiService
     {
         private static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
@@ -97,12 +97,12 @@ namespace OpenAPIService
 
                 pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
             }
-                        
+
             if (styleOptions.Style == OpenApiStyle.GEAutocomplete)
             {
                 // Content property and its schema $refs are unnecessary for autocomplete
                 RemoveContent(subset);
-            }          
+            }
 
             CopyReferences(subset);
 
@@ -118,11 +118,11 @@ namespace OpenAPIService
         /// <param name="graphVersion">Version of Microsoft Graph.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
         /// <returns>A predicate</returns>
-        public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url, 
+        public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
             string graphVersion, bool forceRefresh)
          {
             if (operationIds != null && tags != null )
-            {  
+            {
                 return null; // Cannot filter by operationIds and tags at the same time
             }
             if (url != null && (operationIds != null || tags != null))
@@ -149,16 +149,16 @@ namespace OpenAPIService
                 if (tagsArray.Length == 1)
                 {
                     var regex = new Regex(tagsArray[0]);
-                    
+
                     predicate = (o) => o.Tags.Any(t => regex.IsMatch(t.Name));
-                } 
+                }
                 else
                 {
                     predicate = (o) => o.Tags.Any(t => tagsArray.Contains(t.Name));
                 }
             }
             else if (url != null)
-            {                
+            {
                 /* Extract the respective Operation Id(s) that match the provided url path */
 
                 if (!_openApiOperationsTable.Any() || forceRefresh)
@@ -194,7 +194,7 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Populates the _uriTemplateTable with the Graph url paths and the _openApiOperationsTable 
+        /// Populates the _uriTemplateTable with the Graph url paths and the _openApiOperationsTable
         /// with the respective OpenApiOperations for these urls paths.
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
@@ -273,7 +273,7 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Get OpenApiDocument version of Microsoft Graph based on CSDL document 
+        /// Get OpenApiDocument version of Microsoft Graph based on CSDL document
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
@@ -313,10 +313,10 @@ namespace OpenAPIService
             var anyOfRemover = new AnyOfRemover();
             var walker = new OpenApiWalker(anyOfRemover);
             walker.Walk(subsetOpenApiDocument);
-                        
+
             if (styleOptions.Style == OpenApiStyle.PowerShell)
             {
-                // Format the OperationId for Powershell cmdlet names generation 
+                // Format the OperationId for Powershell cmdlet names generation
                 var operationIdFormatter = new OperationIdPowershellFormatter();
                 walker = new OpenApiWalker(operationIdFormatter);
                 walker.Walk(subsetOpenApiDocument);
@@ -327,7 +327,7 @@ namespace OpenAPIService
                     subsetOpenApiDocument.Info.Version = "v1.0-" + version;
                 }
             }
-                        
+
             return subsetOpenApiDocument;
         }
 
@@ -357,7 +357,8 @@ namespace OpenAPIService
                 EnablePagination = styleOptions == null ? false : styleOptions.EnablePagination,
                 EnableDiscriminatorValue = styleOptions == null ? false : styleOptions.EnableDiscriminatorValue,
                 EnableDerivedTypesReferencesForRequestBody = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForRequestBody,
-                EnableDerivedTypesReferencesForResponses = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForResponses
+                EnableDerivedTypesReferencesForResponses = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForResponses,
+                ShowRootPath = styleOptions == null ? false : styleOptions.ShowRootPath
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
@@ -365,12 +366,12 @@ namespace OpenAPIService
 
             return document;
         }
-        
+
         private static OpenApiDocument FixReferences(OpenApiDocument document)
         {
             // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
             // So we write it out, and read it back in again to fix it up.
-           
+
             var sb = new StringBuilder();
             document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
             var doc = new OpenApiStringReader().Read(sb.ToString(), out var diag);
@@ -408,13 +409,13 @@ namespace OpenAPIService
                 walker.Walk(target);
 
                 morestuff = AddReferences(copy.Components, target.Components);
-                
+
             } while (morestuff);
         }
 
         private static bool AddReferences(OpenApiComponents newComponents, OpenApiComponents target)
         {
-            var moreStuff = false; 
+            var moreStuff = false;
             foreach (var item in newComponents.Schemas)
             {
                 if (!target.Schemas.ContainsKey(item.Key))
