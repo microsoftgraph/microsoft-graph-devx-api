@@ -65,7 +65,9 @@ namespace GraphExplorerPermissionsService
 
                     if (permissionsObject.Count < 1)
                     {
-                        throw new InvalidOperationException($"The permissions data sources cannot be empty.");
+                        throw new InvalidOperationException($"The permissions data sources cannot be empty." +
+                            $"Check the source file or check whether the file path is properly set. File path: " +
+                            $"{relativePermissionPath}");
                     }
 
                     JToken apiPermissions = permissionsObject.First.First;
@@ -134,14 +136,14 @@ namespace GraphExplorerPermissionsService
         /// refresh time duration.</returns>
         private bool RefreshPermissionsTables()
         {
-            bool refreshPermissionsTables = false;
+            bool refreshed = false;
             bool cacheState = _permissionsCache.GetOrCreate("PermissionsTablesState", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-                return refreshPermissionsTables = true;
+                return refreshed = true;
             });
 
-            return refreshPermissionsTables;
+            return refreshed;
         }
 
         /// <summary>
