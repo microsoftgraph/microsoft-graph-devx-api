@@ -30,11 +30,12 @@ namespace GraphExplorerPermissionsService
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
-        private const int RefreshTimeInDays = 1; // life span of the in-memory cache
+        private readonly int _defaultRefreshTimeInHours; // life span of the in-memory cache
         private const string LocaleCode = "en-US"; // default locale language
 
         public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache permissionsCache)
         {
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
             _permissionsCache = permissionsCache;
             _fileUtility = fileUtility;
             _permissionsContainerName = configuration["AzureBlobStorage:Containers:Permissions"];
@@ -136,7 +137,7 @@ namespace GraphExplorerPermissionsService
             bool refreshPermissionsTables = false;
             bool cacheState = _permissionsCache.GetOrCreate("PermissionsTablesState", entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(RefreshTimeInDays);
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
                 return refreshPermissionsTables = true;
             });
 

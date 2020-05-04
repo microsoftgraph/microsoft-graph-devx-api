@@ -29,10 +29,11 @@ namespace GraphWebApi.Controllers
         private readonly string _policiesFilePathSource;
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
-        private const int RefreshTimeInDays = 1; // life span of the in-memory cache
+        private readonly int _defaultRefreshTimeInHours;
 
         public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache samplesCache)
         {
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
             _fileUtility = fileUtility;
             _samplesCache = samplesCache;
             _policiesFilePathSource = configuration["Samples:SampleQueriesPoliciesFilePathName"]; // sets the path of the sample queries policies JSON file
@@ -55,7 +56,7 @@ namespace GraphWebApi.Controllers
                 // Fetch cached sample queries
                 SampleQueriesList sampleQueriesList = await _samplesCache.GetOrCreateAsync(localeCode, async cacheEntry =>
                 {
-                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(RefreshTimeInDays);
+                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
                     return await FetchSampleQueriesListAsync(localeCode);
                 });
 
