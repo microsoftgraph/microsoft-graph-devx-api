@@ -52,7 +52,7 @@ namespace Microsoft.OpenApi.OData.Generator
                     Operations = new Dictionary<OperationType, OpenApiOperation> {
                         {
                             OperationType.Get, new OpenApiOperation {
-                                OperationId = "root.GetRoot",
+                                OperationId = "graphService.GetGraphService",
                                 Responses = new OpenApiResponses()
                                 {
                                     { "200",new OpenApiResponse() {
