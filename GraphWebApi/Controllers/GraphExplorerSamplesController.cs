@@ -26,7 +26,7 @@ namespace GraphWebApi.Controllers
         private readonly IConfiguration _configuration;
         private readonly string _policiesFilePathSource;
         private readonly string _sampleQueriesContainerName;
-        private readonly string _sampleQueriesBlobName;        
+        private readonly string _sampleQueriesBlobName;
 
         public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration)
         {
@@ -47,7 +47,7 @@ namespace GraphWebApi.Controllers
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
-               
+
                 // Get the list of sample queries
                 SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(localeCode);
 
@@ -60,15 +60,15 @@ namespace GraphWebApi.Controllers
                 if (string.IsNullOrEmpty(search))
                 {
                     // No query string value provided; return entire list of sample queries
-                    return Ok(sampleQueriesList); 
+                    return Ok(sampleQueriesList);
                 }
 
                 // Search sample queries
                 List<SampleQueryModel> filteredSampleQueries = sampleQueriesList.SampleQueries.
-                    FindAll(x => (x.Category != null && x.Category.ToLower().Contains(search.ToLower())) || 
+                    FindAll(x => (x.Category != null && x.Category.ToLower().Contains(search.ToLower())) ||
                                  (x.HumanName != null && x.HumanName.ToLower().Contains(search.ToLower())) ||
                                  (x.Tip != null && x.Tip.ToLower().Contains(search.ToLower())));
-                
+
                 if (filteredSampleQueries.Count == 0)
                 {
                     // Search parameter not found in list of sample queries
@@ -127,7 +127,7 @@ namespace GraphWebApi.Controllers
         [HttpPut]
         [Authorize]
         public async Task<IActionResult> UpdateSampleQueryAsync(string id, [FromBody]SampleQueryModel sampleQueryModel)
-        {          
+        {
             try
             {
                 // Get the list of policies
@@ -155,7 +155,7 @@ namespace GraphWebApi.Controllers
                 SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync("En-Us");
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
-                {                    
+                {
                     return NotFound(); // List is empty; the sample query being searched is definitely not in an empty list
                 }
 
@@ -168,7 +168,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 // Update the provided sample query model into the list of sample queries
-                SampleQueriesList updatedSampleQueriesList = SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Guid.Parse(id));                              
+                SampleQueriesList updatedSampleQueriesList = SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Guid.Parse(id));
 
                 // Get the serialized JSON string of this sample query
                 string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
@@ -197,7 +197,7 @@ namespace GraphWebApi.Controllers
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> CreateSampleQueryAsync([FromBody]SampleQueryModel sampleQueryModel)
-        {                    
+        {
             try
             {
                 // Get the list of policies
@@ -213,7 +213,7 @@ namespace GraphWebApi.Controllers
 
                 // Check if authenticated user is authorized for this action
                 bool isAuthorized = SamplesPolicyService.IsUserAuthorized(policies, userPrincipalName, categoryName, HttpMethods.Post);
-                
+
                 if(!isAuthorized)
                 {
                     return new JsonResult(
@@ -291,7 +291,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
-                {                    
+                {
                     return NotFound(); // list is empty; the sample query being searched is definitely not in an empty list
                 }
 
@@ -306,7 +306,7 @@ namespace GraphWebApi.Controllers
 
                 // Success; no content to return
                 return new JsonResult("Deleted successfully.") { StatusCode = StatusCodes.Status204NoContent};
-            }            
+            }
             catch (InvalidOperationException invalidOpsException)
             {
                 // Sample query with provided id not found
@@ -319,7 +319,7 @@ namespace GraphWebApi.Controllers
         }
 
         /// <summary>
-        /// Gets the JSON file contents of the sample queries and returns a deserialized instance of a 
+        /// Gets the JSON file contents of the sample queries and returns a deserialized instance of a
         /// <see cref="SampleQueriesList"/> from this.
         /// </summary>
         /// <param name="localeCode">The language code for the preferred localized file.</param>
@@ -334,13 +334,22 @@ namespace GraphWebApi.Controllers
 
             if (string.IsNullOrEmpty(jsonFileContents))
             {
-                /* File is empty; instantiate a new list of sample query 
+                /* File is empty; instantiate a new list of sample query
                  * objects that will be used to add new sample queries*/
                 return new SampleQueriesList();
             }
 
+            bool orderSamples = false;
+
+            if (localeCode.Equals("en-us", StringComparison.OrdinalIgnoreCase))
+            {
+                // Current business process only supports ordering of the English
+                // version of the sample queries.
+                orderSamples = true;
+            }
+
             // Return the list of the sample queries from the file contents
-            return SamplesService.DeserializeSampleQueriesList(jsonFileContents);
+            return SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples);
         }
 
         /// <summary>
