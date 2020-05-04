@@ -46,7 +46,7 @@ namespace GraphExplorerPermissionsService
         /// <summary>
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
         /// </summary>
-        private async Task SeedPermissionsTables()
+        private void SeedPermissionsTables()
         {
             _urlTemplateTable = new UriTemplateTable();
             _scopesListTable = new Dictionary<int, object>();
@@ -57,7 +57,7 @@ namespace GraphExplorerPermissionsService
             foreach (string permissionFilePath in _permissionsBlobNames)
             {
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, permissionFilePath);
-                string jsonString = await _fileUtility.ReadFromFile(relativePermissionPath);
+                string jsonString = _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
 
                 if (!string.IsNullOrEmpty(jsonString))
                 {
