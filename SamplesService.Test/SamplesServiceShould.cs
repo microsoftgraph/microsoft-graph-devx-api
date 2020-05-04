@@ -67,7 +67,7 @@ namespace SamplesService.Test
         [Fact]
         public void SerializeSampleQueriesListIfSampleQueriesListParameterIsEmptyCollection()
         {
-            // Arrange 
+            // Arrange
             SampleQueriesList emptySampleQueriesList = new SampleQueriesList();
 
             // Act
@@ -84,7 +84,7 @@ namespace SamplesService.Test
             SampleQueriesList nullSampleQueriesList = null;
 
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.SerializeSampleQueriesList(nullSampleQueriesList));
         }
 
@@ -98,7 +98,7 @@ namespace SamplesService.Test
             // Arrange - sample queries in unsorted order
             string validJsonString = @"{
                    ""SampleQueries"" :
-                    [                        
+                    [
                         {
                         ""id"": ""B4C08825-FD6F-4987-B3CC-14B16ACC84A5"",
                         ""category"": ""Outlook Mail"",
@@ -116,7 +116,7 @@ namespace SamplesService.Test
                         ""requestUrl"": ""/v1.0/me/memberOf"",
                         ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_memberof"",
                         ""skipTest"": false
-                        },                        
+                        },
                         {
                         ""id"": ""F1E6738D-7C9C-4DB7-B5EC-1C92DADD03CB"",
                         ""category"": ""Users"",
@@ -131,12 +131,12 @@ namespace SamplesService.Test
                             }
                         ],
                         ""postBody"": ""{\r\n \""accountEnabled\"": true,\r\n \""city\"": \""Seattle\"",\r\n \""country\"": \""United States\"",\r\n
-                        \""department\"": \""Sales & Marketing\"",\r\n\""displayName\"": \""Melissa Darrow\"",\r\n\""givenName\"": \""Melissa\"",\r\n 
-                        \""jobTitle\"": \""Marketing Director\"",\r\n\""mailNickname\"": \""MelissaD\"",\r\n \""passwordPolicies\"": 
+                        \""department\"": \""Sales & Marketing\"",\r\n\""displayName\"": \""Melissa Darrow\"",\r\n\""givenName\"": \""Melissa\"",\r\n
+                        \""jobTitle\"": \""Marketing Director\"",\r\n\""mailNickname\"": \""MelissaD\"",\r\n \""passwordPolicies\"":
                         \""DisablePasswordExpiration\"",\r\n \""passwordProfile\"": {\r\n \""password\"": \""Test1234\"",\r\n
                         \""forceChangePasswordNextSignIn\"": false\r\n},\r\n \""officeLocation\"": \""131/1105\"",\r\n\""postalCode\"": \""98052\"",\r\n
-                        \""preferredLanguage\"": \""en -US\"",\r\n \""state\"": \""WA\"",\r\n \""streetAddress\"": \""9256 Towne Center Dr., Suite 400\"",\r\n 
-                        \""surname\"": \""Darrow\"",\r\n \""mobilePhone\"": \"" + 1 206 555 0110\"",\r\n \""usageLocation\"": \""US\"",\r\n \""userPrincipalName\"": 
+                        \""preferredLanguage\"": \""en -US\"",\r\n \""state\"": \""WA\"",\r\n \""streetAddress\"": \""9256 Towne Center Dr., Suite 400\"",\r\n
+                        \""surname\"": \""Darrow\"",\r\n \""mobilePhone\"": \"" + 1 206 555 0110\"",\r\n \""usageLocation\"": \""US\"",\r\n \""userPrincipalName\"":
                         \""MelissaD@{domain}\""\r\n }"",
                         ""skipTest"": false
                         },
@@ -221,7 +221,7 @@ namespace SamplesService.Test
                         ""requestUrl"": ""/v1.0/me/"",
                         ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/users"",
                         ""skipTest"": false
-                        
+
                         {
                         ""id"": ""F1E6738D-7C9C-4DB7-B5EC-1C92DADD03CB"",
                         ""category"": ""Users"",
@@ -236,12 +236,12 @@ namespace SamplesService.Test
                             }
                         ],
                         ""postBody"": ""{\r\n \""accountEnabled\"": true,\r\n \""city\"": \""Seattle\"",\r\n \""country\"": \""United States\"",\r\n
-                        \""department\"": \""Sales & Marketing\"",\r\n\""displayName\"": \""Melissa Darrow\"",\r\n\""givenName\"": \""Melissa\"",\r\n 
-                        \""jobTitle\"": \""Marketing Director\"",\r\n\""mailNickname\"": \""MelissaD\"",\r\n \""passwordPolicies\"": 
+                        \""department\"": \""Sales & Marketing\"",\r\n\""displayName\"": \""Melissa Darrow\"",\r\n\""givenName\"": \""Melissa\"",\r\n
+                        \""jobTitle\"": \""Marketing Director\"",\r\n\""mailNickname\"": \""MelissaD\"",\r\n \""passwordPolicies\"":
                         \""DisablePasswordExpiration\"",\r\n \""passwordProfile\"": {\r\n \""password\"": \""Test1234\"",\r\n
                         \""forceChangePasswordNextSignIn\"": false\r\n},\r\n \""officeLocation\"": \""131/1105\"",\r\n\""postalCode\"": \""98052\"",\r\n
-                        \""preferredLanguage\"": \""en -US\"",\r\n \""state\"": \""WA\"",\r\n \""streetAddress\"": \""9256 Towne Center Dr., Suite 400\"",\r\n 
-                        \""surname\"": \""Darrow\"",\r\n \""mobilePhone\"": \"" + 1 206 555 0110\"",\r\n \""usageLocation\"": \""US\"",\r\n \""userPrincipalName\"": 
+                        \""preferredLanguage\"": \""en -US\"",\r\n \""state\"": \""WA\"",\r\n \""streetAddress\"": \""9256 Towne Center Dr., Suite 400\"",\r\n
+                        \""surname\"": \""Darrow\"",\r\n \""mobilePhone\"": \"" + 1 206 555 0110\"",\r\n \""usageLocation\"": \""US\"",\r\n \""userPrincipalName\"":
                         \""MelissaD@{domain}\""\r\n }"",
                         ""skipTest"": false
                         }
@@ -249,7 +249,7 @@ namespace SamplesService.Test
             }";
 
             // Act and Assert
-            Assert.Throws<JsonReaderException>(() => 
+            Assert.Throws<JsonReaderException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(invalidJsonString));
         }
 
@@ -260,7 +260,7 @@ namespace SamplesService.Test
             string nullArgument = "";
 
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(nullArgument));
         }
 
@@ -270,7 +270,7 @@ namespace SamplesService.Test
             // Arrange
             string emptyJsonFileContents = "{ }";
 
-            // Act                        
+            // Act
             SampleQueriesList sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(emptyJsonFileContents);
 
             // Assert
@@ -325,8 +325,8 @@ namespace SamplesService.Test
                 SampleQueries = sampleQueries
             };
 
-            /* Create a 'Users' sample query model object that will update an existing 'Users' 
-             * sample query object in the list of sample queries. 
+            /* Create a 'Users' sample query model object that will update an existing 'Users'
+             * sample query object in the list of sample queries.
              */
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
             {
@@ -395,8 +395,8 @@ namespace SamplesService.Test
                 SampleQueries = sampleQueries
             };
 
-            /* Create a 'Users' sample query model object that should update an existing 'Users' 
-             * sample query object in the list of sample queries. 
+            /* Create a 'Users' sample query model object that should update an existing 'Users'
+             * sample query object in the list of sample queries.
              */
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
             {
@@ -414,7 +414,7 @@ namespace SamplesService.Test
             /* Act and Assert */
 
             // Attempt to update the provided sample query model into the list of sample queries with a non existent id
-            Assert.Throws<InvalidOperationException>(() => 
+            Assert.Throws<InvalidOperationException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList
                 (sampleQueriesList, sampleQueryModel, id));
         }
@@ -470,7 +470,7 @@ namespace SamplesService.Test
             /* Act and Assert */
 
             // Null sample query model
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, id));
         }
 
@@ -506,7 +506,7 @@ namespace SamplesService.Test
             SampleQueriesList sampleQueriesList = new SampleQueriesList()
             {
                 SampleQueries = sampleQueries
-            }; 
+            };
 
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
             {
@@ -524,7 +524,7 @@ namespace SamplesService.Test
             /* Act and Assert */
 
             // Empty sample query id
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, id));
         }
 
@@ -553,11 +553,11 @@ namespace SamplesService.Test
             /* Act and Assert */
 
             // Null sample queries list
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(nullSampleQueriesList, sampleQueryModel, id));
 
             // Empty sample queries list
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.UpdateSampleQueriesList(emptySampleQueriesList, sampleQueryModel, id));
         }
 
@@ -592,7 +592,7 @@ namespace SamplesService.Test
             // Assert
             Assert.NotEmpty(sampleQueriesList.SampleQueries);
         }
-               
+
         [Fact]
         public void AddSampleQueryIntoListOfSampleQueriesInHierarchicalOrderOfCategories()
         {
@@ -636,7 +636,7 @@ namespace SamplesService.Test
                 SampleQueries = sampleQueries
             };
 
-            /* Create a new 'Users' sample query model object that will be inserted into  
+            /* Create a new 'Users' sample query model object that will be inserted into
              * the list of sample queries in a hierarchical order of categories.
              */
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
@@ -669,7 +669,7 @@ namespace SamplesService.Test
 
             // Create a list of sample queries
             List<SampleQueryModel> sampleQueries = new List<SampleQueryModel>()
-            {               
+            {
                 new SampleQueryModel()
                 {
                     Id = Guid.Parse("7d5bac53-2e16-4162-b78f-7da13e77da1b"),
@@ -697,7 +697,7 @@ namespace SamplesService.Test
                 SampleQueries = sampleQueries
             };
 
-            /* Create a new 'Users' sample query model object that will be inserted into  
+            /* Create a new 'Users' sample query model object that will be inserted into
              * the list of sample queries as the highest ranked sample category
              */
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
@@ -730,7 +730,7 @@ namespace SamplesService.Test
             /* Arrange */
 
             SampleQueriesList nullSampleQueriesList = null;
-            
+
             SampleQueryModel sampleQueryModel = new SampleQueryModel()
             {
                 Id = Guid.Parse("3482cc10-f2be-40fc-bcdb-d3ac35f3e4c3"),
@@ -741,14 +741,14 @@ namespace SamplesService.Test
                 DocLink = "https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_manager",
                 SkipTest = false
             };
-            
+
             /* Act and Assert */
 
             // Assign a new Id to the new sample query
             sampleQueryModel.Id = Guid.NewGuid();
 
             // Null sample queries list
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(nullSampleQueriesList, sampleQueryModel));
         }
 
@@ -797,11 +797,11 @@ namespace SamplesService.Test
             };
 
             SampleQueryModel sampleQueryModel = null;
-            
+
             /* Act and Assert */
-            
+
             // Null sample query model
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.AddToSampleQueriesList(sampleQueriesList, sampleQueryModel));
         }
 
@@ -932,11 +932,11 @@ namespace SamplesService.Test
             /* Act and Assert */
 
             // Null sample queries list
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery(nullSampleQueriesList, id));
 
             // Empty sample queries list
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery(emptySampleQueriesList, id));
         }
 
@@ -989,7 +989,7 @@ namespace SamplesService.Test
             /* Act and Assert */
 
             // Empty sample query Id
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 GraphExplorerSamplesService.Services.SamplesService.RemoveSampleQuery(sampleQueriesList, id));
         }
 
