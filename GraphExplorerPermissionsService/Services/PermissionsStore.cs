@@ -31,7 +31,7 @@ namespace GraphExplorerPermissionsService
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
         private readonly int _defaultRefreshTimeInHours; // life span of the in-memory cache
-        private const string LocaleCode = "en-US"; // default locale language
+        private const string DefaultLocale = "en-US"; // default locale language
 
         public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache permissionsCache)
         {
@@ -93,14 +93,14 @@ namespace GraphExplorerPermissionsService
         /// <summary>
         /// Populates the delegated and application scopes information table caches.
         /// </summary>
-        private async Task SeedScopesInfoTables(string localeCode = LocaleCode)
+        private async Task SeedScopesInfoTables(string locale = DefaultLocale)
         {
-            ScopesInformationList scopesInformationList = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{localeCode}", async cacheEntry =>
+            ScopesInformationList scopesInformationList = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
             {
                 _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
                 _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
 
-                string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, localeCode);
+                string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
                 string scopesInfoJson = await _fileUtility.ReadFromFile(relativeScopesInfoPath);
 
                 if (string.IsNullOrEmpty(scopesInfoJson))
@@ -120,7 +120,7 @@ namespace GraphExplorerPermissionsService
                     _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
                 }
 
-                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(RefreshTimeInDays);
+                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
                 return scopesInformationList;
             });
@@ -150,9 +150,9 @@ namespace GraphExplorerPermissionsService
         /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
         /// <param name="requestUrl">The target request url whose scopes are to be retrieved.</param>
         /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
-        /// <param name="localeCode">The language code for the preferred localized file.</param>
+        /// <param name="locale">The language code for the preferred localized file.</param>
         /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
-        public async Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork", string localeCode = LocaleCode,
+        public async Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork", string locale = DefaultLocale,
                                                 string requestUrl = null, string method = null)
         {
             try
@@ -166,7 +166,7 @@ namespace GraphExplorerPermissionsService
 
                 /* Ensure that the requested localized copy of permissions descriptions
                    is available in the cache. */
-                await SeedScopesInfoTables(localeCode);
+                await SeedScopesInfoTables(locale);
 
                 string[] scopes = null;
 

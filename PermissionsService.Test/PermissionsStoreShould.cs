@@ -246,7 +246,7 @@ namespace PermissionsService.Test
             List<ScopeInformation> result =
                 permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}",
                                                 method: "GET",
-                                                localeCode: "es-ES").GetAwaiter().GetResult();
+                                                locale: "es-ES").GetAwaiter().GetResult();
 
             // Assert
             Assert.Collection(result,

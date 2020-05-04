@@ -14,7 +14,7 @@ namespace GraphExplorerPermissionsService.Interfaces
     public interface IPermissionsStore
     {
         Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
-                                                    string localeCode = null,
+                                                    string locale = null,
                                                     string requestUrl = null,
                                                     string method = null);
     }
