@@ -1,6 +1,5 @@
 using GraphExplorerSamplesService.Models;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,8 +15,9 @@ namespace GraphExplorerSamplesService.Services
         /// Deserializes a JSON string into a list of <see cref="SampleQueryModel"/> objects.
         /// </summary>
         /// <param name="jsonString">The JSON string to be deserialized into a list of <see cref="SampleQueryModel"/> objects.</param>
+        /// <param name="orderSamples">"Value indicating whether the sample queries are to be ordered or not."</param>
         /// <returns>The deserialized list of <see cref="SampleQueryModel"/> objects.</returns>
-        public static SampleQueriesList DeserializeSampleQueriesList(string jsonString)
+        public static SampleQueriesList DeserializeSampleQueriesList(string jsonString, bool orderSamples = false)
         {
             if (string.IsNullOrEmpty(jsonString))
             {
@@ -25,7 +25,13 @@ namespace GraphExplorerSamplesService.Services
             }
 
             SampleQueriesList sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(jsonString);
-            return SanitizeSampleQueries(sampleQueriesList);
+
+            if (orderSamples)
+            {
+                return OrderSamplesQueries(sampleQueriesList);
+            }
+
+            return sampleQueriesList;
         }
 
         /// <summary>
@@ -45,7 +51,7 @@ namespace GraphExplorerSamplesService.Services
         }
 
         /// <summary>
-        /// Updates a <see cref="SampleQueryModel"/> object within an instance of a <see cref="SampleQueriesList"/>. 
+        /// Updates a <see cref="SampleQueryModel"/> object within an instance of a <see cref="SampleQueriesList"/>.
         /// The new <see cref="SampleQueryModel"/> object overwrites the existing one entirely except for its Id property.
         /// </summary>
         /// <param name="sampleQueriesList">The list of sample queries which contains the <see cref="SampleQueryModel"/> model object be updated.</param>
@@ -96,7 +102,7 @@ namespace GraphExplorerSamplesService.Services
         /// <summary>
         /// Adds a <see cref="SampleQueryModel"/> object into an instance of a <see cref="SampleQueriesList"/>.
         /// </summary>
-        /// <param name="sampleQueriesList">The instance of a <see cref="SampleQueriesList"/> which the <see cref="SampleQueryModel"/> 
+        /// <param name="sampleQueriesList">The instance of a <see cref="SampleQueriesList"/> which the <see cref="SampleQueryModel"/>
         /// object will be added into.</param>
         /// <param name="sampleQueryModel">The <see cref="SampleQueryModel"/> object to be added.</param>
         /// <returns>The instance of a <see cref="SampleQueriesList"/> with the newly added <see cref="SampleQueryModel"/> object.</returns>
@@ -109,9 +115,9 @@ namespace GraphExplorerSamplesService.Services
             if (sampleQueryModel == null)
             {
                 throw new ArgumentNullException(nameof(sampleQueryModel), "The sample query model object cannot be null.");
-            }                       
+            }
 
-            // Determine the location in the list of query samples to add the new sample query in 
+            // Determine the location in the list of query samples to add the new sample query in
             int sampleQueryIndex = GetNewSampleQueryIndex(sampleQueriesList, sampleQueryModel);
 
             // Insert the new sample query into the list of sample queries
@@ -124,7 +130,7 @@ namespace GraphExplorerSamplesService.Services
         /// <summary>
         /// Removes a <see cref="SampleQueryModel"/> object from an instance of a <see cref="SampleQueriesList"/>.
         /// </summary>
-        /// <param name="sampleQueriesList">The instance of a <see cref="SampleQueriesList"/> which the <see cref="SampleQueryModel"/> 
+        /// <param name="sampleQueriesList">The instance of a <see cref="SampleQueriesList"/> which the <see cref="SampleQueryModel"/>
         /// object will be removed from.</param>
         /// <param name="sampleQueryId">The Id value of the <see cref="SampleQueryModel"/> object to be deleted.</param>
         /// <returns>The new instance of a <see cref="SampleQueriesList"/> without the removed <see cref="SampleQueryModel"/> object.</returns>
@@ -148,7 +154,7 @@ namespace GraphExplorerSamplesService.Services
                 throw new InvalidOperationException($"No sample query found with id: {sampleQueryId}");
             }
 
-            // Delete the sample query model from the list of sample queries at its given index                
+            // Delete the sample query model from the list of sample queries at its given index
             sampleQueriesList.SampleQueries.RemoveAt(sampleQueryIndex);
 
             // Return the new list of sample queries
@@ -156,10 +162,10 @@ namespace GraphExplorerSamplesService.Services
         }
 
         /// <summary>
-        /// Determines the zero-based index value in the instance of a <see cref="SampleQueriesList"/> where a given <see cref="SampleQueryModel"/> 
+        /// Determines the zero-based index value in the instance of a <see cref="SampleQueriesList"/> where a given <see cref="SampleQueryModel"/>
         /// object should be inserted.
         /// </summary>
-        /// <param name="sampleQueriesList">The instance of a <see cref="SampleQueriesList"/> where the given <see cref="SampleQueryModel"/> 
+        /// <param name="sampleQueriesList">The instance of a <see cref="SampleQueriesList"/> where the given <see cref="SampleQueryModel"/>
         /// object should be inserted into.
         /// <param name="sampleQuery">The <see cref="SampleQueryModel"/> object which needs to be inserted.</param>
         /// <returns>The zero-based index where the <see cref="SampleQueryModel"/> object needs to be inserted into in an instance of a
@@ -170,7 +176,7 @@ namespace GraphExplorerSamplesService.Services
             string currentCategory = SampleQueriesCategories.CategoriesList.Find(x => x == sampleQuery.Category);
 
             if (sampleQueriesList.SampleQueries.Count == 0)
-            {                
+            {
                 return 0; // the list is empty; this will be the first sample query
             }
 
@@ -186,19 +192,20 @@ namespace GraphExplorerSamplesService.Services
                 }
             }
 
-            /* All sample queries categories in the list have been traversed with no match found; 
+            /* All sample queries categories in the list have been traversed with no match found;
              * Add it to the top of the list */
             return 0;
         }
 
         /// <summary>
-        /// Orders the list of sample queries alphabetically based on their category names with 'Getting Started' as the top-most sample query.
+        /// Orders the list of sample queries alphabetically.
         /// </summary>
         /// <param name="sampleQueriesList">An instance of <see cref="SampleQueriesList"/> whose list of sample queries need to be ordered.</param>
-        /// <returns>An instance of <see cref="SampleQueriesList"/> whose list of sample queries have been ordered alphabetically with 'Getting Started' 
+        /// <returns>An instance of <see cref="SampleQueriesList"/> whose list of sample queries have been ordered alphabetically with 'Getting Started'
         /// as the top-most sample query.</returns>
         private static SampleQueriesList OrderSamplesQueries(SampleQueriesList sampleQueriesList)
         {
+            // This currently applies to English supported sample queries only
             List<SampleQueryModel> sortedSampleQueries = sampleQueriesList.SampleQueries
                 .OrderBy(s => s.Category)
                 .Where(s => s.Category != "Getting Started") // skipped, as it should always be the top-most sample query in the list
@@ -213,46 +220,6 @@ namespace GraphExplorerSamplesService.Services
             sortedSampleQueriesList.SampleQueries.AddRange(sortedSampleQueries);
 
             return sortedSampleQueriesList;
-        }
-
-        /// <summary>
-        /// Replaces the default password with a random Guid value in the postBody template of the Users sample query.
-        /// </summary>
-        /// <param name="sampleQueriesList">An instance of <see cref="SampleQueriesList"/> with the Users sample query whose password in the postBody template 
-        /// needs to be replaced with a random Guid value.</param>
-        private static void GenerateUniqueUserPassword(SampleQueriesList sampleQueriesList)
-        {
-            SampleQueryModel sampleQuery = sampleQueriesList.SampleQueries.Find(s => s.Category == "Users" && s.Method == SampleQueryModel.HttpMethods.POST);
-
-            if (sampleQuery != null && !string.IsNullOrEmpty(sampleQuery.PostBody))
-            {
-                try
-                {
-                    JObject postBodyObject = JObject.Parse(sampleQuery.PostBody);
-
-                    postBodyObject["passwordProfile"]["password"] = Guid.NewGuid();
-
-                    sampleQuery.PostBody = postBodyObject.ToString();
-                }
-                catch
-                {
-                    // no action required
-                }    
-            }
-        }
-
-        /// <summary>
-        /// Preprocesses sample queries with the established business rules.
-        /// </summary>
-        /// <param name="sampleQueriesList">An instance of <see cref="SampleQueriesList"/> that requires preprocessing.</param>
-        /// <returns>An instance of <see cref="SampleQueriesList"/> that has been preprocessed with the established business rules.</returns>
-        private static SampleQueriesList SanitizeSampleQueries(SampleQueriesList sampleQueriesList)
-        {
-            SampleQueriesList orderedSampleQueries = OrderSamplesQueries(sampleQueriesList);
-
-            GenerateUniqueUserPassword(orderedSampleQueries);
-
-            return orderedSampleQueries;
         }
     }
 }
