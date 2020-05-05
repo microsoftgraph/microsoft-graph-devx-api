@@ -13,22 +13,36 @@ using Newtonsoft.Json.Linq;
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
 {
-    public static class ObjectiveCGenerator
+    public class ObjectiveCGenerator
     {
+        /// <summary>
+        /// CommonGenerator instance
+        /// </summary>
+        private readonly CommonGenerator CommonGenerator;
+
+        /// <summary>
+        /// ObjectiveCGenerator constructor
+        /// </summary>
+        /// <param name="model">Model representing metadata</param>
+        public ObjectiveCGenerator(IEdmModel model)
+        {
+            CommonGenerator = new CommonGenerator(model);
+        }
+
         /// <summary>
         /// Formulates the requested Graph snippets and returns it as string for Objective C
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
         /// <param name="languageExpressions">The language expressions to be used for code Gen</param>
         /// <returns>String of the snippet in Objective C code</returns>
-        public static string GenerateCodeSnippet(SnippetModel snippetModel, LanguageExpressions languageExpressions)
+        public string GenerateCodeSnippet(SnippetModel snippetModel, LanguageExpressions languageExpressions)
         {
             StringBuilder snippetBuilder = new StringBuilder();
             var segment = snippetModel.Segments.Last();
 
             /*Auth provider section*/
             snippetBuilder.Append("MSHTTPClient *httpClient = [MSClientFactory createHTTPClientWithAuthenticationProvider:authenticationProvider];\r\n\r\n");
-            
+
             /*Request generation section*/
             snippetBuilder.Append($"NSString *MSGraphBaseURL = @\"{snippetModel.ODataUriParser.ServiceRoot}\";\r\n");
             snippetBuilder.Append($"NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[MSGraphBaseURL stringByAppendingString:@\"{snippetModel.Path}{snippetModel.QueryString}\"]]];\r\n");
@@ -39,7 +53,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 snippetModel.RequestHeaders = snippetModel.RequestHeaders.Append(new KeyValuePair<string, IEnumerable<string>>("Content-Type", new[] { snippetModel.ContentType }));
             }
-            
+
             snippetBuilder.Append(CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions));
             snippetBuilder.Append("\r\n");
 
@@ -118,7 +132,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="jsonBody">Json string from which the information of the object to be initialized is held</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
-        private static string ObjectiveCGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody, ICollection<string> path)
+        private string ObjectiveCGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody, ICollection<string> path)
         {
             var stringBuilder = new StringBuilder();
             var jsonObject = JsonConvert.DeserializeObject(jsonBody);
@@ -246,7 +260,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="enumHint">string representing the hint to use for enum lookup</param>
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
-        private static string GenerateEnumString(string enumHint, ODataPathSegment pathSegment, ICollection<string> path)
+        private string GenerateEnumString(string enumHint, ODataPathSegment pathSegment, ICollection<string> path)
         {
             IEdmType nestEdmType;
 
@@ -280,14 +294,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //not an enum
             return string.Empty;
         }
-        
+
         /// <summary>
         /// Return string representation of the classname for Objective C
         /// </summary>
         /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">Path to follow to get find the classname</param>
         /// <returns>String representing the type in use</returns>
-        private static string GetObjectiveCModelName(ODataPathSegment pathSegment, ICollection<string> path)
+        private string GetObjectiveCModelName(ODataPathSegment pathSegment, ICollection<string> path)
         {
             var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
             //we need to split the string and get last item

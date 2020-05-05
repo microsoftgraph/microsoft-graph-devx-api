@@ -10,10 +10,24 @@ using Newtonsoft.Json.Linq;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
-    public static class CommonGenerator
+    public class CommonGenerator
     {
         /// <summary>
-        /// Language agnostic function to generate Query section of code snippet 
+        /// Edm model of metadata
+        /// </summary>
+        private readonly IEdmModel Model;
+
+        /// <summary>
+        /// Common Generator constructor
+        /// </summary>
+        /// <param name="model">Edm model of metadata</param>
+        public CommonGenerator(IEdmModel model)
+        {
+            Model = model;
+        }
+
+        /// <summary>
+        /// Language agnostic function to generate Query section of code snippet
         /// </summary>
         /// <param name="snippetModel">Model of the snippet</param>
         /// <param name="languageExpressions">Instance of <see cref="LanguageExpressions"/> that holds the expressions for the specific language</param>
@@ -95,10 +109,24 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="oDataPathSegment">Odata path segment that is the root of the search </param>
         /// <param name="path">List of string that show the depth of the search into the definition from the odataPath type definition</param>
-        public static IEdmType GetEdmTypeFromIdentifier(ODataPathSegment oDataPathSegment, ICollection<string> path )
+        public IEdmType GetEdmTypeFromIdentifier(ODataPathSegment oDataPathSegment, ICollection<string> path)
+        {
+            var (edmType, _) = GetEdmTypeFromIdentifierAndNavigationProperty(oDataPathSegment, path);
+            return edmType;
+        }
+
+        /// <summary>
+        /// Function to find the <see cref="EdmType"/> being used by identifier that is the last item in the path collection. This function gets
+        /// the right <see cref="IEdmType"/> that is is to be used for the search based on the segment type>
+        /// </summary>
+        /// <param name="oDataPathSegment">Odata path segment that is the root of the search </param>
+        /// <param name="path">List of string that show the depth of the search into the definition from the odataPath type definition</param>
+        /// <returns>pair of Edm type name and whether type is found as navigation property</returns>
+        public (IEdmType type, bool isNavigationProperty) GetEdmTypeFromIdentifierAndNavigationProperty(ODataPathSegment oDataPathSegment, ICollection<string> path)
         {
 
-            IEdmType returnValue;
+            IEdmType type;
+            bool isNavigationProperty;
 
             switch (oDataPathSegment)
             {
@@ -110,23 +138,23 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case PropertySegment _:
                 case ValueSegment _:
 
-                    returnValue = SearchForEdmType(oDataPathSegment.EdmType, path);
+                    (type, isNavigationProperty) = SearchForEdmType(oDataPathSegment.EdmType, path);
 
-                    if (null != returnValue)
-                        return returnValue;
+                    if (null != type)
+                        return (type, isNavigationProperty);
 
                     break;
-                    
+
                 case OperationSegment operationSegment:
                     foreach (var parameters in operationSegment.Operations.First().Parameters)
                     {
                         if (!parameters.Name.Equals(path.FirstOrDefault(),StringComparison.OrdinalIgnoreCase))
                             continue;
 
-                        returnValue = SearchForEdmType(parameters.Type.Definition, path);
+                        (type, isNavigationProperty) = SearchForEdmType(parameters.Type.Definition, path);
 
-                        if (null != returnValue)
-                            return returnValue;
+                        if (null != type)
+                            return (type, isNavigationProperty);
                     }
                     break;
             }
@@ -135,26 +163,42 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Function to find the name of the type/class being used by identifier that is the last item in the path collection. 
+        /// Function to find the name of the type/class being used by identifier that is the last item in the path collection.
         /// This function can make recursive calls
         /// </summary>
         /// <param name="definition"><see cref="IEdmType"/> that has properties to be searched into</param>
         /// <param name="searchPath">List of string that shows the depth of the search into the definition from the odataPath type definition</param>
-        private static IEdmType SearchForEdmType(IEdmType definition, ICollection<string> searchPath)
+        /// <param name="searchingParent">Denotes whether we are searching for the property in parent classes</param>
+        /// <returns>pair of Edm type name and whether type is found as navigation property</returns>
+        public (IEdmType type, bool isNavigationProperty) SearchForEdmType(IEdmType definition, ICollection<string> searchPath, bool searchingParent = false)
         {
-            //if the type is a collection, use the type of the element of the collection
+            // if the type is a collection, use the type of the element of the collection
             var elementDefinition = GetEdmElementType(definition);
 
-            //we are at the root of the search so just return the definition of the root item
+            // we are at the root of the search so just return the definition of the root item
             if (searchPath.Count <= 1)
             {
-                return elementDefinition;
+                return (elementDefinition, false);
             }
 
-            //the second element in the path is the property we are searching for
+            // Find all derived types. This is required in cases where the path refers to a parent class,
+            // but the searched propery belongs to the child class.
+            // Example: "post/attachments" path refers to attachments as "Attachment", but one can have a "FileAttachment"
+            // in post. "ContentBytes", which exists only on the derived class, doesn't show up if looked in "Attachment".
+            // We are also checking if we are searching parent classes at the moment for inherited properties. If that is the case,
+            // we don't go to derived types, because that would cause searching for properties in sibling classes.
+            // It can cause infinite loop if the property is not found, because we have a way of both going up and down in the
+            // class hierarchy.
+            IEnumerable<IEdmStructuredType> derivedTypes = null;
+            if (!searchingParent && elementDefinition is IEdmStructuredType structuredTypeDefinition)
+            {
+                derivedTypes = Model?.FindAllDerivedTypes(structuredTypeDefinition);
+            }
+
+            // the second element in the path is the property we are searching for
             var searchIdentifier = searchPath.ElementAt(1);
-            
-            //Loop through the properties of the entity if is structured
+
+            // Loop through the properties of the entity if is structured
             if (elementDefinition is IEdmStructuredType structuredType)
             {
                 foreach (var property in structuredType.DeclaredProperties)
@@ -162,27 +206,40 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (property.Name.Equals(searchIdentifier,StringComparison.OrdinalIgnoreCase))
                     {
                         elementDefinition = GetEdmElementType(property.Type.Definition);
-                        
-                        //check if we need to search deeper to search the properties of a nested item
+
+                        // check if we need to search deeper to search the properties of a nested item
                         if (searchPath.Count > 2)
                         {
-                            //get rid of the root item and do a deeper search
+                            // get rid of the root item and do a deeper search
                             var subList = searchPath.Where(x => !x.Equals(searchPath.First(), StringComparison.OrdinalIgnoreCase)).ToList();
                             return SearchForEdmType(property.Type.Definition, subList);
                         }
                         else
                         {
-                            return elementDefinition;
+                            return (elementDefinition, property.PropertyKind == EdmPropertyKind.Navigation);
                         }
                     }
                 }
 
-                //check properties of the base type as it may be inherited
-                return SearchForEdmType(structuredType.BaseType, searchPath);
+                // search in derived types
+                if (derivedTypes is object)
+                {
+                    foreach (var derivedType in derivedTypes)
+                    {
+                        var (result, isNavigationProperty) = SearchForEdmType(derivedType, searchPath);
+                        if (result != null)
+                        {
+                            return (result, isNavigationProperty);
+                        }
+                    }
+                }
+
+                // check properties of the base type as it may be inherited
+                return SearchForEdmType(structuredType.BaseType, searchPath, searchingParent: true);
             }
 
-            //search failed so return empty string
-            return null;
+            // search failed so return null type
+            return (null, false);
         }
 
         /// <summary>
@@ -224,7 +281,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
         /// <summary>
         /// Helper function to make check and ensure that a variable name is not a reserved keyword for the language in use.
-        /// If it is reserved, return an appropiate transformation of the variale name 
+        /// If it is reserved, return an appropiate transformation of the variale name
         /// </summary>
         /// <param name="variableName">variable name to check for uniqueness</param>
         /// <param name="languageExpressions">Language expressions that holds list of reserved words for filtering</param>
@@ -349,8 +406,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns></returns>
         private static List<string> AddValidParameterItemsFromIEdmOperationParameterList(
             List<string> initialParameterList,
-            IEnumerable<IEdmOperationParameter> edmOperationParameterList, 
-            List<string> parametersProvided, 
+            IEnumerable<IEdmOperationParameter> edmOperationParameterList,
+            List<string> parametersProvided,
             string collectionSuffix)
         {
             foreach (var parameter in edmOperationParameterList)
@@ -369,7 +426,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         : LowerCaseFirstLetter(parameter.Name));
                 }
                 else
-                {   
+                {
                     //add null as the parameter is not provided/nullable.
                     initialParameterList.Add("null");
                 }

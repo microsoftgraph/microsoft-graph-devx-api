@@ -33,7 +33,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel,expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel,expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var user = new User\r\n" +
@@ -76,7 +76,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var user = new User\r\n" +
@@ -136,7 +136,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var message = new Message\r\n" +
@@ -197,7 +197,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var emailAddresses = new List<String>()\r\n" +
@@ -229,7 +229,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var queryOptions = new List<QueryOption>()\r\n" +
@@ -257,7 +257,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "await graphClient.Groups[\"{id}\"].Owners[\"{id}\"].Reference\n" +
@@ -284,7 +284,7 @@ namespace CodeSnippetsReflection.Test
             
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var directoryObject = new DirectoryObject\r\n" +
@@ -317,7 +317,7 @@ namespace CodeSnippetsReflection.Test
 
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var directoryObject = new DirectoryObject\r\n" +
@@ -352,7 +352,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var directoryObject = new DirectoryObject\r\n" +
@@ -385,7 +385,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var workbookRange = await graphClient.Me.Drive.Items[\"{id}\"].Workbook.Worksheets[\"{id|name}\"]\n" +
@@ -423,7 +423,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var message = new Message\r\n" +
@@ -468,7 +468,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var calendarGroup = new CalendarGroup\r\n" +
@@ -512,7 +512,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var schedules = new List<String>()\r\n" +
@@ -572,7 +572,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var @event = new Event\r\n" +
@@ -653,7 +653,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var @event = new Event\r\n" +
@@ -734,7 +734,7 @@ namespace CodeSnippetsReflection.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var address = \"Sheet1!A1:D5\";\r\n" +
@@ -761,7 +761,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
 
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var stream = await graphClient.Me.Drive.Items[\"{item-id}\"].Content\n" +
@@ -789,13 +789,13 @@ namespace CodeSnippetsReflection.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var attachment = new FileAttachment\r\n" + // Use the FileAttachment class rather than the Attachment superclass from metadata 
                                            "{\r\n" +
                                            "\tName = \"smile\",\r\n" +
-                                           "\tContentBytes = \"R0lGODdhEAYEAA7\"\r\n" +
+                                           "\tContentBytes = Encoding.ASCII.GetBytes(\"R0lGODdhEAYEAA7\")\r\n" +
                                            "};\r\n" +
 
                                            "\r\nawait graphClient.Me.Messages[\"AAMkpsDRVK\"].Attachments\n" +
@@ -823,7 +823,7 @@ namespace CodeSnippetsReflection.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var driveItem = new DriveItem\r\n" +
@@ -855,7 +855,7 @@ namespace CodeSnippetsReflection.Test
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/calendarView/delta?$skiptoken=R0usmcCM996atia_s");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
             //Act by generating the code snippet
-            var result = CSharpGenerator.GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var queryOptions = new List<QueryOption>()\r\n" +
