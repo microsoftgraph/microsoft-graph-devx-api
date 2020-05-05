@@ -26,7 +26,7 @@ namespace GraphWebApi.Controllers
         private readonly IConfiguration _configuration;
         private readonly string _policiesFilePathSource;
         private readonly string _sampleQueriesContainerName;
-        private readonly string _sampleQueriesBlobName;
+        private readonly string _sampleQueriesBlobName;        
 
         public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration)
         {
