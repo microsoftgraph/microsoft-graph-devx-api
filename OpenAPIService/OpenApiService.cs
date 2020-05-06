@@ -79,19 +79,20 @@ namespace OpenAPIService
             foreach (var result in results)
             {
                 OpenApiPathItem pathItem;
+                string pathKey = FormatPathFunctions(result.CurrentKeys.Path);
 
                 if (subset.Paths == null)
                 {
                     subset.Paths = new OpenApiPaths();
                     pathItem = new OpenApiPathItem();
-                    subset.Paths.Add(result.CurrentKeys.Path, pathItem);
+                    subset.Paths.Add(pathKey, pathItem);
                 }
                 else
                 {
                     if (!subset.Paths.TryGetValue(result.CurrentKeys.Path, out pathItem))
                     {
                         pathItem = new OpenApiPathItem();
-                        subset.Paths.Add(result.CurrentKeys.Path, pathItem);
+                        subset.Paths.Add(pathKey, pathItem);
                     }
                 }
 
@@ -450,6 +451,32 @@ namespace OpenAPIService
             ContentRemover contentRemover = new ContentRemover();
             OpenApiWalker walker = new OpenApiWalker(contentRemover);
             walker.Walk(target);
+        }
+
+        /// <summary>
+        /// Formats path functions, where present, by surrounding placeholder values with single quotation marks.
+        /// </summary>
+        /// <param name="pathKey">The path key in which the function placeholder(s) need to be formatted
+        /// with single quotation marks.</param>
+        /// <returns>The path key with its function placeholder(s), where applicable, formatted with single quotation marks.</returns>
+        private static string FormatPathFunctions(string pathKey)
+        {
+            if (string.IsNullOrEmpty(pathKey))
+            {
+                return null;
+            }
+
+            /* Example:
+             * Actual ---->  /workbooks({id})/microsoft.graph.delta(token={token})'
+             * Expected -->  /workbooks({id})/microsoft.graph.delta(token='{token}')'
+             */
+            string pattern = @"(=\{.*?\})";
+            string evaluator(Match match)
+            {
+                string output = match.ToString();
+                return $"{output.Substring(0, 1)}'{output.Substring(1)}'";
+            }
+            return Regex.Replace(pathKey, pattern, evaluator);
         }
     }
 }
