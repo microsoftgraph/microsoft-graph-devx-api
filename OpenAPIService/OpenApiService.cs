@@ -79,7 +79,7 @@ namespace OpenAPIService
             foreach (var result in results)
             {
                 OpenApiPathItem pathItem;
-                string pathKey = FormatPathFunctions(result.CurrentKeys.Path);
+                string pathKey = FormatPathFunctions(result.CurrentKeys.Path, result.Operation.Parameters);
 
                 if (subset.Paths == null)
                 {
@@ -454,27 +454,52 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Formats path functions, where present, by surrounding placeholder values with single quotation marks.
+        /// Formats path functions, where present, by surrounding placeholder values of string data types
+        /// with single quotation marks.
         /// </summary>
         /// <param name="pathKey">The path key in which the function placeholder(s) need to be formatted
         /// with single quotation marks.</param>
-        /// <returns>The path key with its function placeholder(s), where applicable, formatted with single quotation marks.</returns>
-        private static string FormatPathFunctions(string pathKey)
+        /// <returns>The path key with its function placeholder(s) of string data types, where applicable,
+        /// formatted with single quotation marks.</returns>
+        private static string FormatPathFunctions(string pathKey, IList<OpenApiParameter> parameters)
         {
             if (string.IsNullOrEmpty(pathKey))
             {
                 return null;
             }
 
+            var parameterTypes = new Dictionary<string, string>();
+            foreach (var parameter in parameters)
+            {
+                /* The type and format properties describe the data type of the function parameters.
+                 * For string data types the format property is usually undefined.
+                 */
+                if (string.IsNullOrEmpty(parameter.Schema.Format))
+                {
+                    parameterTypes.Add(parameter.Name, parameter.Schema.Type);
+                }
+            }
+
             /* Example:
-             * Actual ---->  /workbooks({id})/microsoft.graph.delta(token={token})'
-             * Expected -->  /workbooks({id})/microsoft.graph.delta(token='{token}')'
+             * Actual ---->  /reports/microsoft.graph.getTeamsUserActivityCounts(period={period})
+             * Expected -->  /reports/microsoft.graph.getTeamsUserActivityCounts(period='{period}')
              */
             string pattern = @"(=\{.*?\})";
             string evaluator(Match match)
             {
-                string output = match.ToString();
-                return $"{output.Substring(0, 1)}'{output.Substring(1)}'";
+                string output = match.ToString(); // e.g. ---> ={period}
+                string paramName = $"{output.Substring(2, output.Length - 3)}"; // e.g. ---> period
+
+                if (parameterTypes.TryGetValue(paramName, out string type))
+                {
+                    if (type.Equals("string", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Only format function parameters with string data types
+                        output = $"='{{{paramName}}}'";
+                        return output;
+                    }
+                }
+                return output;
             }
             return Regex.Replace(pathKey, pattern, evaluator);
         }
