@@ -446,6 +446,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "Binary":
                         return $"Encoding.ASCII.GetBytes({specialClassString})";
 
+                    case "Double":
+                        return $"(double){stringParameter}";
+
                     default:
                         return specialClassString;
                 }
