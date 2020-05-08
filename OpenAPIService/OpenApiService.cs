@@ -89,7 +89,7 @@ namespace OpenAPIService
                 }
                 else
                 {
-                    if (!subset.Paths.TryGetValue(result.CurrentKeys.Path, out pathItem))
+                    if (!subset.Paths.TryGetValue(pathKey, out pathItem))
                     {
                         pathItem = new OpenApiPathItem();
                         subset.Paths.Add(pathKey, pathItem);
@@ -97,6 +97,11 @@ namespace OpenAPIService
                 }
 
                 pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
+            }
+
+            if (subset.Paths == null)
+            {
+                throw new ArgumentNullException("No paths returned.");
             }
 
             if (styleOptions.Style == OpenApiStyle.GEAutocomplete)
@@ -463,11 +468,6 @@ namespace OpenAPIService
         /// formatted with single quotation marks.</returns>
         private static string FormatPathFunctions(string pathKey, IList<OpenApiParameter> parameters)
         {
-            if (string.IsNullOrEmpty(pathKey))
-            {
-                return null;
-            }
-
             var parameterTypes = new Dictionary<string, string>();
             foreach (var parameter in parameters)
             {
