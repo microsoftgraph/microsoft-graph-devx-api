@@ -11,7 +11,9 @@ namespace FileService.Common
     /// Defines a static class that contains helper methods that handle common file operations.
     /// </summary>
     public static class FileServiceHelper
-    {        
+    {
+        private const int DefaultRefreshTimeInHours = 24;
+
         /// <summary>
         /// Retrieves the directory name and file name from a given file path source.
         /// </summary>
@@ -43,7 +45,7 @@ namespace FileService.Common
         /// <param name="localeCode">The language code of the desired file. If empty or null or unsupported, this default to 'en-US'.</param>
         /// <returns>A string path of the fully qualified file name including the container name prepended to the resolved localized file name.</returns>
         public static string GetLocalizedFilePathSource(string containerName, string defaultBlobName, string localeCode = null)
-        {            
+        {
             CheckArgumentNullOrEmpty(containerName, nameof(containerName));
             CheckArgumentNullOrEmpty(defaultBlobName, nameof(defaultBlobName));
 
@@ -80,13 +82,13 @@ namespace FileService.Common
 
                 if (defaultBlobName.IndexOf('.') > 0 && localeCode != "en-US")
                 {
-                    /* All localized files have a consistent structure, e.g. sample-queries_fr-FR.json 
+                    /* All localized files have a consistent structure, e.g. sample-queries_fr-FR.json
                        except for 'en-Us' --> sample-queries.json or permissions-v1.0.json */
 
                     string[] blobNameParts = defaultBlobName.Split('.');
                     defaultBlobName = $"{blobNameParts[0]}_{localeCode}.{blobNameParts[1]}";
                 }
-            }          
+            }
 
             return $"{containerName}{FileServiceConstants.DirectorySeparator}{defaultBlobName}";
         }
@@ -104,6 +106,17 @@ namespace FileService.Common
             }
 
             return;
+        }
+
+        /// <summary>
+        /// Gets the cache refresh time from a string value.
+        /// This defaults to the default constant value if the conversion fails.
+        /// </summary>
+        /// <param name="value">"The string value of the cache refresh time."</param>
+        /// <returns>"The file cache refresh time."</returns>
+        public static int GetFileCacheRefreshTime(string value)
+        {
+            return int.TryParse(value, out int newTime) ? newTime : DefaultRefreshTimeInHours;
         }
     }
 }

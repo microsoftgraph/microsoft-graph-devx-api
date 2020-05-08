@@ -1,9 +1,10 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
 using GraphWebApi.Common;
@@ -24,25 +25,21 @@ namespace GraphWebApi.Controllers
             _permissionsStore = permissionsStore;
         }
 
-        // Gets the permission scopes 
+        // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
-        public IActionResult GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork", 
-                                                 [FromQuery]string requestUrl = null, 
-                                                 [FromQuery]string method = null)
+        public async Task<IActionResult> GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
+                                                             [FromQuery]string requestUrl = null,
+                                                             [FromQuery]string method = null)
         {
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
+
                 List<ScopeInformation> result = null;
-                result = _permissionsStore.GetScopes(scopeType, requestUrl, method, localeCode);
+                result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
 
-                if (result == null)
-                {
-                    return NotFound();
-                }
-
-                return Ok(result);
+                return result == null ? NotFound() : (IActionResult)Ok(result);
             }
             catch (InvalidOperationException invalidOpsException)
             {
