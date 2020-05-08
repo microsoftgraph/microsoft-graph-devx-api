@@ -59,21 +59,24 @@ namespace CodeSnippetsReflection
             switch (language.ToLower())
             {
                 case "c#":
-                    return CSharpGenerator.GenerateCodeSnippet(snippetModel, CSharpExpressions);
+                    var csharpGenerator = new CSharpGenerator(edmModel);
+                    return csharpGenerator.GenerateCodeSnippet(snippetModel, CSharpExpressions);
 
                 case "javascript":
                     return JavaScriptGenerator.GenerateCodeSnippet(snippetModel, JavascriptExpressions);
 
                 case "objective-c":
-                    return ObjectiveCGenerator.GenerateCodeSnippet(snippetModel, ObjectiveCExpressions);
+                    var objectiveCGenerator = new ObjectiveCGenerator(edmModel);
+                    return objectiveCGenerator.GenerateCodeSnippet(snippetModel, ObjectiveCExpressions);
 
                 case "java":
-                    return JavaGenerator.GenerateCodeSnippet(snippetModel,JavaExpressions);
+                    var javaGenerator = new JavaGenerator(edmModel);
+                    return javaGenerator.GenerateCodeSnippet(snippetModel, JavaExpressions);
 
                 default:
                     throw new Exception("Invalid Language selected");
 
-            }          
+            }
         }
 
         /// <summary>

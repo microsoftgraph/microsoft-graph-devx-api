@@ -12,15 +12,29 @@ using System.Text;
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
 {
-    public static class JavaGenerator
+    public class JavaGenerator
     {
+        /// <summary>
+        /// CommonGenerator instance
+        /// </summary>
+        private readonly CommonGenerator CommonGenerator;
+
+        /// <summary>
+        /// JavaGenerator constructor
+        /// </summary>
+        /// <param name="model">Model representing metadata</param>
+        public JavaGenerator(IEdmModel model)
+        {
+            CommonGenerator = new CommonGenerator(model);
+        }
+
         /// <summary>
         /// Formulates the requested Graph snippets and returns it as string for Java
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
         /// <param name="languageExpressions">The language expressions to be used for code Gen</param>
         /// <returns>String of the snippet in Java code</returns>
-        public static string GenerateCodeSnippet(SnippetModel snippetModel, LanguageExpressions languageExpressions)
+        public string GenerateCodeSnippet(SnippetModel snippetModel, LanguageExpressions languageExpressions)
         {
             /* As the Java beta SDK is not implemented yet throw this exception till it is */
             if (snippetModel.ApiVersion.Equals("beta"))
@@ -106,7 +120,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\n\t.delete();"));
                 }
                 else
-                { 
+                {
                     throw new NotImplementedException("HTTP method not implemented for Java");
                 }
 
@@ -144,7 +158,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="jsonString">Json string from which the information of the object to be initialized is held</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
         /// <param name="usedVarNames">List to keep track of variable names used to prevent use of the same variable name</param>
-        private static string JavaGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonString, List<string> path, List<string> usedVarNames = null)
+        private string JavaGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonString, List<string> path, List<string> usedVarNames = null)
         {
             var stringBuilder = new StringBuilder();
             var jsonObject = JsonConvert.DeserializeObject(jsonString);
@@ -180,7 +194,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         {
                             var value = JsonConvert.SerializeObject(jToken);
                             var newPath = path.Append(key).ToList();//add new identifier to the path
-                            
+
                             if (key.Contains("@odata") || key.StartsWith("@"))//sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
                             {
                                 stringBuilder = GenerateJavaAdditionalDataSection(stringBuilder, key, jToken.ToString(), className, currentVarName);
@@ -192,7 +206,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 case JTokenType.Object:
                                     //new nested object needs to be constructed so call this function recursively to make it
                                     stringBuilder.Append($"{JavaGenerateObjectFromJson(pathSegment, value, newPath, usedVarNames)}");
-                                    stringBuilder.Append(jToken.Type == JTokenType.Array 
+                                    stringBuilder.Append(jToken.Type == JTokenType.Array
                                         ? $"{ currentVarName }.{ newPath.Last() } = { EnsureJavaVariableNameIsUnique(newPath.Last()+"List", usedVarNames) };\r\n"
                                         : $"{ currentVarName }.{ newPath.Last() } = { EnsureJavaVariableNameIsUnique(newPath.Last(), usedVarNames) };\r\n");
                                     break;
@@ -331,7 +345,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="pathSegment">Odata path segment containing needed parent information to know the owner of the enum</param>
         /// <param name="path">List of string showing the path of traversal through the tree structure</param>
         /// <returns>Java representation of an enum type e.g. Importance.LOW</returns>
-        private static string GenerateEnumString(string enumHint, ODataPathSegment pathSegment, List<string> path)
+        private string GenerateEnumString(string enumHint, ODataPathSegment pathSegment, List<string> path)
         {
             IEdmType nestEdmType;
             try
@@ -387,7 +401,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">Path to follow to get find the classname</param>
         /// <returns>String representing the type in use</returns>
-        private static string GetJavaClassNameFromOdataPath(ODataPathSegment pathSegment, List<string> path)
+        private string GetJavaClassNameFromOdataPath(ODataPathSegment pathSegment, List<string> path)
         {
             var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
             //we need to split the string and get last item //eg microsoft.graph.data => Data
@@ -407,8 +421,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 if (collectionType.ElementType.Definition is IEdmNamedElement edmNamedElement)
                 {
-                    typeName = typeHint.Equals("delta",StringComparison.OrdinalIgnoreCase) 
-                        ? $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}DeltaCollectionPage" 
+                    typeName = typeHint.Equals("delta",StringComparison.OrdinalIgnoreCase)
+                        ? $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}DeltaCollectionPage"
                         : $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}CollectionPage";
                 }
                 else
@@ -475,11 +489,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         //do nothing we cant access it directly
                         break;
                     case NavigationPropertyLinkSegment _:
-                        /* 
-                         * The ODataURIParser may sometimes not create and add a ReferenceSegment object to the end of 
-                         * the segments collection in the event that there is a valid NavigationPropertySegment in the 
-                         * collection. It will replace this NavigationPropertySegment object with a NavigationPropertyLinkSegment 
-                         * object. Therefore we modify the suffix so that it may be appended to show the Reference section since 
+                        /*
+                         * The ODataURIParser may sometimes not create and add a ReferenceSegment object to the end of
+                         * the segments collection in the event that there is a valid NavigationPropertySegment in the
+                         * collection. It will replace this NavigationPropertySegment object with a NavigationPropertyLinkSegment
+                         * object. Therefore we modify the suffix so that it may be appended to show the Reference section since
                          * the $ref should always be last in a valid Odata URI.
                         */
                         if (snippetModel.Path.Contains("$ref") && !(snippetModel.Segments.Last() is ReferenceSegment))
@@ -585,7 +599,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>boolean value showing whether or not the snippet generation needs to have request options</returns>
         private static bool JavaModelHasRequestOptionsParameters(SnippetModel snippetModel)
         {
-            if (   snippetModel.CustomQueryOptions.Any() 
+            if (   snippetModel.CustomQueryOptions.Any()
                 || snippetModel.RequestHeaders.Any(x => !x.Key.ToLower().Equals("host"))
                 || snippetModel.FilterFieldList.Any()
                 || snippetModel.OrderByFieldList.Any()
@@ -611,7 +625,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string SearchExpression => string.Empty;
         public override string SkipExpression => string.Empty;
         public override string HeaderExpression => string.Empty;
-        public override string SkipTokenExpression => string.Empty; 
+        public override string SkipTokenExpression => string.Empty;
         public override string OrderByExpression => string.Empty;
         public override string OrderByExpressionDelimiter => " ";
         public override string[] ReservedNames => new [] {
