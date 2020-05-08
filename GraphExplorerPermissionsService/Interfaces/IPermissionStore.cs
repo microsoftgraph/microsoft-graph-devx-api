@@ -4,14 +4,18 @@
 
 using GraphExplorerPermissionsService.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace GraphExplorerPermissionsService.Interfaces
 {
     /// <summary>
-    /// Defines an interface that provides a method for fetching permission scopes.
+    /// Defines an interface that provides a method for fetching permissions scopes.
     /// </summary>
     public interface IPermissionsStore
     {
-        List<ScopeInformation> GetScopes(string scopeType = "DelegatedWork", string requestUrl = null, string method = null, string localeCode = null);
+        Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
+                                                    string locale = null,
+                                                    string requestUrl = null,
+                                                    string method = null);
     }
 }

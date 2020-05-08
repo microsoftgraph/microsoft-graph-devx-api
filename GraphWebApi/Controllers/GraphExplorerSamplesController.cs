@@ -16,6 +16,7 @@ using FileService.Common;
 using System.Security.Claims;
 using System.Linq;
 using GraphWebApi.Common;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace GraphWebApi.Controllers
 {
@@ -24,13 +25,17 @@ namespace GraphWebApi.Controllers
     {
         private readonly IFileUtility _fileUtility;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _samplesCache;
         private readonly string _policiesFilePathSource;
         private readonly string _sampleQueriesContainerName;
-        private readonly string _sampleQueriesBlobName;        
+        private readonly string _sampleQueriesBlobName;
+        private readonly int _defaultRefreshTimeInHours;
 
-        public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration)
+        public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache samplesCache)
         {
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
             _fileUtility = fileUtility;
+            _samplesCache = samplesCache;
             _policiesFilePathSource = configuration["Samples:SampleQueriesPoliciesFilePathName"]; // sets the path of the sample queries policies JSON file
             _configuration = configuration;
             _sampleQueriesContainerName = _configuration["AzureBlobStorage:Containers:SampleQueries"];
@@ -46,10 +51,10 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
+                string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
 
-                // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(localeCode);
+                // Fetch sample queries
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(locale);
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -93,10 +98,10 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
+                string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
 
-                // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(localeCode);
+                // Fetch sample queries
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(locale);
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -319,37 +324,46 @@ namespace GraphWebApi.Controllers
         }
 
         /// <summary>
-        /// Gets the JSON file contents of the sample queries and returns a deserialized instance of a
+        /// Fetches the sample queries from the cache or a JSON file and returns a deserialized instance of a
         /// <see cref="SampleQueriesList"/> from this.
         /// </summary>
-        /// <param name="localeCode">The language code for the preferred localized file.</param>
+        /// <param name="locale">The language code for the preferred localized file.</param>
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
-        private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string localeCode)
+        private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale)
         {
-            // Fetch the requisite sample path source based on the locale language code
-            string queriesFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, localeCode);
-
-            // Get the file contents from source
-            string jsonFileContents = await _fileUtility.ReadFromFile(queriesFilePathSource);
-
-            if (string.IsNullOrEmpty(jsonFileContents))
+            // Fetch cached sample queries
+            SampleQueriesList sampleQueriesList = await _samplesCache.GetOrCreateAsync(locale, async cacheEntry =>
             {
-                /* File is empty; instantiate a new list of sample query
-                 * objects that will be used to add new sample queries*/
-                return new SampleQueriesList();
-            }
+                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
-            bool orderSamples = false;
+                // Fetch the requisite sample path source based on the locale language code
+                string queriesFilePathSource =
+                       FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, locale);
 
-            if (localeCode.Equals("en-us", StringComparison.OrdinalIgnoreCase))
-            {
-                // Current business process only supports ordering of the English
-                // version of the sample queries.
-                orderSamples = true;
-            }
+                // Get the file contents from source
+                string jsonFileContents = await _fileUtility.ReadFromFile(queriesFilePathSource);
 
-            // Return the list of the sample queries from the file contents
-            return SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples);
+                if (string.IsNullOrEmpty(jsonFileContents))
+                {
+                    /* File is empty; instantiate a new list of sample query
+                     * objects that will be used to add new sample queries*/
+                    return new SampleQueriesList();
+                }
+
+                bool orderSamples = false;
+
+                if (locale.Equals("en-us", StringComparison.OrdinalIgnoreCase))
+                {
+                    /* Current business process only supports ordering of the English
+                       translation of the sample queries. */
+                    orderSamples = true;
+                }
+
+                // Return the list of the sample queries from the file contents
+                return SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples);
+            });
+
+            return sampleQueriesList;
         }
 
         /// <summary>
