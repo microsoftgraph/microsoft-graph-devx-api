@@ -281,7 +281,7 @@ namespace CodeSnippetsReflection.Test
             };
 
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
-            
+
 
             //Act by generating the code snippet
             var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
@@ -360,7 +360,7 @@ namespace CodeSnippetsReflection.Test
                                            "\tId = \"{id}\",\r\n" +
                                            "\tAdditionalData = new Dictionary<string, object>()\r\n" +
                                            "\t{\r\n" +
-                                           "\t\t{\"@odata.context\",\"https://graph.microsoft.com/v1.0/$metadata#users/$entity\"}\r\n" +
+                                           "\t\t{\"@odata.context\", \"https://graph.microsoft.com/v1.0/$metadata#users/$entity\"}\r\n" +
                                            "\t}\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
@@ -792,7 +792,7 @@ namespace CodeSnippetsReflection.Test
             var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
-            const string expectedSnippet = "var attachment = new FileAttachment\r\n" + // Use the FileAttachment class rather than the Attachment superclass from metadata 
+            const string expectedSnippet = "var attachment = new FileAttachment\r\n" + // Use the FileAttachment class rather than the Attachment superclass from metadata
                                            "{\r\n" +
                                            "\tName = \"smile\",\r\n" +
                                            "\tContentBytes = Encoding.ASCII.GetBytes(\"R0lGODdhEAYEAA7\")\r\n" +
@@ -834,7 +834,7 @@ namespace CodeSnippetsReflection.Test
                                                "\t},\r\n" +
                                                "\tAdditionalData = new Dictionary<string, object>()\r\n" +
                                                "\t{\r\n" +
-                                                    "\t\t{\"@microsoft.graph.conflictBehavior\",\"rename\"}\r\n" +
+                                                    "\t\t{\"@microsoft.graph.conflictBehavior\", \"rename\"}\r\n" +
                                                "\t}\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
