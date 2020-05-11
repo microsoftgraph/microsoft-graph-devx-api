@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Microsoft.OData.Edm;
+using CodeSnippetsReflection.TypeProperties;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
@@ -257,20 +258,52 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
                 case JObject jObject:
                     {
-                        var className = GetCsharpClassName(pathSegment,path);
+                        var typeProperties = GetCSharpTypeProperties(pathSegment, path);
+                        var className = typeProperties.ClassName;
                         stringBuilder.Append($"new {className}\r\n");
                         stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
+
+                        var additionalData = new Dictionary<string, string>();
 
                         //initialize each member/property of the object
                         foreach (var (key, jToken) in jObject)
                         {
-
                             var value = JsonConvert.SerializeObject(jToken);
                             var newPath = path.Append(key).ToList();//add new identifier to the path
-                            if (key.Contains("@odata") || key.StartsWith("@"))//sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
+
+                            if (key.Contains("@odata") || key.StartsWith("@")) // sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
                             {
-                                stringBuilder = GenerateCSharpAdditionalDataSection(stringBuilder, key, jToken.Value<string>(), className, tabSpace);
+                                switch (key)
+                                {
+                                    case "@odata.id" when className.Equals("DirectoryObject"):
+                                    case "@odata.type":
+                                        stringBuilder = ProcessOdataIdAndType(stringBuilder, key, jToken.Value<string>(), className, tabSpace);
+                                        break;
+                                    default:
+                                        additionalData.Add(key, value);
+                                        break;
+                                }
                                 continue;
+                            }
+
+                            // determine if property is found in type
+                            // allow arbitrary properties for OpenTypes through AdditionalData section
+                            // otherwise throw type not found error
+                            try
+                            {
+                                var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath);
+                            }
+                            catch
+                            {
+                                if (typeProperties.IsOpenType)
+                                {
+                                    additionalData.Add(key, value);
+                                    continue;
+                                }
+                                else
+                                {
+                                    throw;
+                                }
                             }
 
                             switch (jToken.Type)
@@ -287,11 +320,51 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     break;
                             }
                         }
+
+                        // add AdditionalData segment
+                        if (additionalData.Count > 0)
+                        {
+                            // make it readable with the constants below, otherwise it becomes an escape character mess
+                            const string quote = "\"";
+                            const string escape = "\\";
+                            const string tab = "\t";
+                            const string openCurly = "{";
+                            const string closeCurly = "}";
+
+                            var additionalDataTabSpace = tabSpace + tab;
+                            var dataRowTabSpace = tabSpace + tab + tab;
+
+                            // transform a key value pair into an AdditionalData row string
+                            string dataRow(KeyValuePair<string, string> kvp)
+                            {
+                                string value;
+                                if (kvp.Value.StartsWith($"{quote}")) // simple string
+                                {
+                                    value = kvp.Value;
+                                }
+                                else // complex JSON object, needs to be escaped
+                                {
+                                    var escapedValue = kvp.Value.Replace(quote, escape + quote);
+                                    value = quote + escapedValue + quote;
+                                }
+
+                                return dataRowTabSpace + openCurly + $"{quote}{kvp.Key}{quote}, " + value + closeCurly; // e.g. {"Quantity", "934"}
+                            };
+
+                            var additionalDataRows = string.Join(",\r\n", additionalData.Select(kvp => dataRow(kvp)));
+
+                            stringBuilder.Append($"{additionalDataTabSpace}AdditionalData = new Dictionary<string, object>()\r\n" +
+                                                 $"{additionalDataTabSpace}{{\r\n" +
+                                                 $"{additionalDataRows}\r\n" +
+                                                 $"{additionalDataTabSpace}}}\r\n");
+                        }
+
                         //remove the trailing comma if we appended anything
                         if (stringBuilder[stringBuilder.Length - 3].Equals(','))
                         {
                             stringBuilder.Remove(stringBuilder.Length - 3, 1);
                         }
+
                         //closing brace
                         stringBuilder.Append($"{tabSpace}}}\r\n");
                     }
@@ -300,12 +373,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     {
                         var objectList = array.Children<JObject>();
 
-                        var (className, isNavigationProperty) = GetCsharpClassNameAndNavigationProperty(pathSegment, path);
+                        var typeProperties = GetCSharpTypeProperties(pathSegment, path);
 
                         // add a cast into ICollectionPage if the property is found as navigation property
-                        var cast = isNavigationProperty ? $"({GetCollectionInterfaceName(path)})" : string.Empty;
+                        var cast = typeProperties.IsNavigationProperty ? $"({GetCollectionInterfaceName(path)})" : string.Empty;
 
-                        stringBuilder.Append($"{cast}new List<{className}>()\r\n{tabSpace}{{\r\n");
+                        stringBuilder.Append($"{cast}new List<{typeProperties.ClassName}>()\r\n{tabSpace}{{\r\n");
                         if (objectList.Any())
                         {
                             foreach (var item in objectList)
@@ -358,7 +431,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Generates language specific code to add special properties to the AdditionalData dictionary
+        /// Processes @odata.id and @odata.type properties
         /// </summary>
         /// <param name="stringBuilder">The original string builder containing code generated so far</param>
         /// <param name="key">The odata key/property</param>
@@ -366,7 +439,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="className">The class name for the entity needing modification</param>
         /// <param name="tabSpace">Tab space to use for formatting the code generated</param>
         /// <returns>a string builder with the relevant odata code added</returns>
-        private static StringBuilder GenerateCSharpAdditionalDataSection(StringBuilder stringBuilder, string key, string value, string className, string tabSpace)
+        private static StringBuilder ProcessOdataIdAndType(StringBuilder stringBuilder, string key, string value, string className, string tabSpace)
         {
             switch (key)
             {
@@ -394,20 +467,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
 
                 default:
-                    //just append the property as part of the additionalData of the object
-                    var additionalDataString = $"{tabSpace}\tAdditionalData = new Dictionary<string, object>()\r\n{tabSpace}\t{{\r\n";
-                    var keyValuePairElement = $"{tabSpace}\t\t{{\"{key}\",\"{value}\"}}";
-                    if (!stringBuilder.ToString().Contains(additionalDataString))//check if we ever inserted AdditionalData to this object.
-                    {
-                        stringBuilder.Append($"{additionalDataString}{keyValuePairElement}\r\n{tabSpace}\t}},\r\n");
-                    }
-                    else
-                    {
-                        //insert new key value pair to already existing AdditionalData component
-                        var insertionIndex = stringBuilder.ToString().IndexOf(additionalDataString, StringComparison.Ordinal) + additionalDataString.Length;
-                        stringBuilder.Insert(insertionIndex, $"{keyValuePairElement},\r\n");
-                    }
-                    break;
+                    throw new ArgumentException(nameof(key), "Key should be either @odata.id or @odata.type");
             }
 
             return stringBuilder;
@@ -446,6 +506,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "Binary":
                         return $"Encoding.ASCII.GetBytes({specialClassString})";
 
+                    case "Double":
+                        return $"(double){stringParameter}";
+
                     default:
                         return specialClassString;
                 }
@@ -477,17 +540,15 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Return string representation of the classname for CSharp
+        /// Return type properties such as CSharp class name, open type etc.
         /// </summary>
         /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">Path to follow to get find the classname</param>
-        /// <returns>String representing the type in use and whether the property is found as navigation property</returns>
-        private (string csharpClassName, bool isNavigationProperty) GetCsharpClassNameAndNavigationProperty(ODataPathSegment pathSegment, ICollection<string> path)
+        /// <returns>Type properties such as CSharp class name, open type etc.</returns>
+        private CSharpTypeProperties GetCSharpTypeProperties(ODataPathSegment pathSegment, ICollection<string> path)
         {
             var (edmType, isNavigationProperty) = CommonGenerator.GetEdmTypeFromIdentifierAndNavigationProperty(pathSegment, path);
-            //we need to split the string and get last item
-            //eg microsoft.graph.data => Data
-            return (CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last()), isNavigationProperty);
+            return new CSharpTypeProperties(edmType, isNavigationProperty);
         }
 
         /// <summary>
@@ -498,8 +559,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String representing the type in use</returns>
         private string GetCsharpClassName(ODataPathSegment pathSegment, ICollection<string> path)
         {
-            var (csharpClassName, _) = GetCsharpClassNameAndNavigationProperty(pathSegment, path);
-            return csharpClassName;
+            return GetCSharpTypeProperties(pathSegment, path).ClassName;
         }
 
         /// <summary>
