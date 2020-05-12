@@ -9,7 +9,12 @@ namespace CodeSnippetsReflection.TypeProperties
         /// <summary>
         /// returns C# class name from graph type: microsoft.graph.data => Data
         /// </summary>
-        public string ClassName => CommonGenerator.UppercaseFirstLetter(EdmType.ToString().Split(".").Last());
+        public string ClassName {
+            get {
+                var className = CommonGenerator.UppercaseFirstLetter(EdmType.ToString().Split(".").Last());
+                return className.EndsWith("Request") ? className + "Object" : className; // disambiguate class names that end with Request
+            }
+        }
 
         /// <summary>
         /// Whether the type is open, i.e. supports arbitrary properties (which goes in AdditionalData dictionary in SDK)
