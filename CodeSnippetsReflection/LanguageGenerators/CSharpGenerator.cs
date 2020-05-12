@@ -44,8 +44,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n");
                 var segment = snippetModel.Segments.Last();
                 snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName , languageExpressions);
-                //Csharp properties are uppercase so replace with list with uppercase version
-                snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(CommonGenerator.UppercaseFirstLetter).ToList();
                 var actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
 
                 //append any custom queries present
@@ -730,13 +728,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string FilterExpression => "\n\t.Filter(\"{0}\")";
         public override string SearchExpression => "\n\t.Search(\"{0}\")";
         public override string ExpandExpression => "\n\t.Expand(\"{0}\")";
-        public override string SelectExpression => "\n\t.Select( e => new {{\n\t\t\t e.{0} \n\t\t\t }})";
+        public override string SelectExpression => "\n\t.Select(\"{0}\")";
         public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")";
         public override string SkipExpression => "\n\t.Skip({0})";
         public override string SkipTokenExpression => "";
         public override string TopExpression => "\n\t.Top({0})";
         public override string FilterExpressionDelimiter => ",";
-        public override string SelectExpressionDelimiter => ",\n\t\t\t e.";
+        public override string SelectExpressionDelimiter => ",";
         public override string OrderByExpressionDelimiter => " ";
         public override string HeaderExpression => "\n\t.Header(\"{0}\",\"{1}\")";
 
