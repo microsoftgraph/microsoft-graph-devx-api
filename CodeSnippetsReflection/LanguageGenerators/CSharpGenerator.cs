@@ -240,7 +240,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 case string _:
                     {
-                        var enumString = GenerateEnumString(jsonObject.ToString(),pathSegment,path);
+                        var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path);
                         if (!string.IsNullOrEmpty(enumString))
                         {
                             //Enum is accessed as the Classname then enum type e.g Importance.Low
@@ -385,7 +385,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             {
                                 var jsonString = JsonConvert.SerializeObject(item);
                                 //we need to create a new object
-                                var objectStringFromJson = CSharpGenerateObjectFromJson(pathSegment, jsonString, path ).TrimEnd(";\r\n".ToCharArray());
+                                var objectStringFromJson = CSharpGenerateObjectFromJson(pathSegment, jsonString, path).TrimEnd(";\r\n".ToCharArray());
                                 //indent it one tab level then append it to the string builder
                                 objectStringFromJson = $"{tabSpace}\t{objectStringFromJson.Replace("\r\n", "\r\n\t")}";
                                 stringBuilder.Append($"{objectStringFromJson},\r\n");
@@ -409,20 +409,28 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     }
                     break;
                 case DateTime _:
-                    stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString(jsonBody.Replace("\"",""), pathSegment, path)}");
+                    stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString(jsonBody.Replace("\"", ""), pathSegment, path)}");
                     break;
                 case null:
                     stringBuilder.Append($"{tabSpace}null");
                     break;
                 default:
-                    var primitive = jsonObject.ToString();
-                    //json deserializer capitalizes the bool types so undo that
-                    if (primitive.Equals("True", StringComparison.Ordinal) || primitive.Equals("False", StringComparison.Ordinal))
+                    switch (GetCsharpClassName(pathSegment, path))
                     {
-                        primitive = CommonGenerator.LowerCaseFirstLetter(primitive);
+                        case "Single": // float
+                            stringBuilder.Append($"{tabSpace}{jsonObject}f");
+                            break;
+                        default:
+                            var primitive = jsonObject.ToString();
+                            //json deserializer capitalizes the bool types so undo that
+                            if (primitive.Equals("True", StringComparison.Ordinal) || primitive.Equals("False", StringComparison.Ordinal))
+                            {
+                                primitive = CommonGenerator.LowerCaseFirstLetter(primitive);
+                            }
+                            //item is a primitive print as is
+                            stringBuilder.Append($"{tabSpace}{primitive}\r\n");
+                            break;
                     }
-                    //item is a primitive print as is
-                    stringBuilder.Append($"{tabSpace}{primitive}\r\n");
                     break;
             }
 
@@ -508,6 +516,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     case "Double":
                         return $"(double){stringParameter}";
+
+                    case "TimeOfDay":
+                        return DateTime.TryParse(stringParameter, out var timeOfDay)
+                            ? $"new TimeOfDay({timeOfDay.Hour}, {timeOfDay.Minute}, {timeOfDay.Second})"
+                            : "new TimeOfDay(0, 0, 0)";
+
+                    case "Boolean":
+                        return bool.TryParse(stringParameter, out var boolValue)
+                            ? boolValue.ToString().ToLower()
+                            : "false";
 
                     default:
                         return specialClassString;
