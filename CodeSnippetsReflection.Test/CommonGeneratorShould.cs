@@ -161,7 +161,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Select( e => new {\n\t\t\t e.displayName,\n\t\t\t e.givenName,\n\t\t\t e.postalCode \n\t\t\t })", result);
+            Assert.Equal("\n\t.Select(\"displayName,givenName,postalCode\")", result);
         }
 
         [Fact]
