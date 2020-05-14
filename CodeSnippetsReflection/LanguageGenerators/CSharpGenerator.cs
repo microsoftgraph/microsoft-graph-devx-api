@@ -206,6 +206,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         break;
+                    case TypeSegment _:
+                        break; // type segment is not part of the resource path.
                     default:
                         //its most likely just a resource so append it
                         resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");

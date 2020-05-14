@@ -77,9 +77,12 @@ namespace CodeSnippetsReflection
             {
                 return CommonGenerator.LowerCaseFirstLetter(edmNamedElement.Name);
             }
-            
+
             //its not a collection/or named type so the identifier can do
-            return CommonGenerator.LowerCaseFirstLetter(oDataPathSegment.Identifier);
+            var identifier = oDataPathSegment.Identifier.Contains(".")
+                ? oDataPathSegment.Identifier.Split(".").Last()
+                : oDataPathSegment.Identifier;
+            return CommonGenerator.LowerCaseFirstLetter(identifier);
         }
 
 
@@ -123,7 +126,7 @@ namespace CodeSnippetsReflection
                         {
                             ExpandFieldExpression = ExpandFieldExpression.Substring(0, index);
                         }
-                       
+
                         break;
                 }
             }
