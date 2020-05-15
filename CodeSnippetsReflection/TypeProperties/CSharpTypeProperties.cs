@@ -12,7 +12,15 @@ namespace CodeSnippetsReflection.TypeProperties
         public string ClassName {
             get {
                 var className = CommonGenerator.UppercaseFirstLetter(EdmType.ToString().Split(".").Last());
-                return className.EndsWith("Request") ? className + "Object" : className; // disambiguate class names that end with Request
+                if (className == "Json")
+                {
+                    className = "JToken"; // graph.Json is JToken in SDK
+                }
+                else if (className.EndsWith("Request"))
+                {
+                    className += "Object"; // disambiguate class names that end with Request
+                }
+                return className;
             }
         }
 
