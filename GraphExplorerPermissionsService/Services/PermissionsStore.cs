@@ -25,6 +25,7 @@ namespace GraphExplorerPermissionsService
         private IDictionary<int, object> _scopesListTable;
         private IDictionary<string, ScopeInformation> _delegatedScopesInfoTable;
         private IDictionary<string, ScopeInformation> _applicationScopesInfoTable;
+        private IDictionary<string, IDictionary<string, ScopeInformation>> _scopesInformationDictionary;
         private readonly IMemoryCache _permissionsCache;
         private readonly IFileUtility _fileUtility;
         private readonly string _permissionsContainerName;
@@ -34,6 +35,8 @@ namespace GraphExplorerPermissionsService
         private const string DefaultLocale = "en-US"; // default locale language
         private readonly object _permissionsLock = new object();
         private static bool _permissionsRefreshed = false;
+        private const string Delegated = "Delegated";
+        private const string Application = "Application";
 
         public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache permissionsCache)
         {
@@ -101,7 +104,7 @@ namespace GraphExplorerPermissionsService
         /// </summary>
         private async Task SeedScopesInfoTablesAsync(string locale = DefaultLocale)
         {
-            ScopesInformationList scopesInformationList = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
+            _scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
             {
                 _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
                 _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
@@ -114,7 +117,7 @@ namespace GraphExplorerPermissionsService
                     return null;
                 }
 
-                scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+                ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
 
                 foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
                 {
@@ -128,7 +131,13 @@ namespace GraphExplorerPermissionsService
 
                 cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
-                return scopesInformationList;
+                _scopesInformationDictionary = new Dictionary<string, IDictionary<string, ScopeInformation>>
+                {
+                    { Delegated, _delegatedScopesInfoTable },
+                    { Application, _applicationScopesInfoTable }
+                };
+
+                return _scopesInformationDictionary;
             });
         }
 
@@ -246,18 +255,18 @@ namespace GraphExplorerPermissionsService
                     foreach (string scopeName in scopes)
                     {
                         ScopeInformation scopeInfo = null;
-                        if (scopeType.Contains("Delegated"))
+                        if (scopeType.Contains(Delegated))
                         {
-                            if (_delegatedScopesInfoTable.ContainsKey(scopeName))
+                            if (_scopesInformationDictionary[Delegated].ContainsKey(scopeName))
                             {
-                                scopeInfo = _delegatedScopesInfoTable[scopeName];
+                                scopeInfo = _scopesInformationDictionary[Delegated][scopeName];
                             }
                         }
                         else // Application scopes
                         {
-                            if (_applicationScopesInfoTable.ContainsKey(scopeName))
+                            if (_scopesInformationDictionary[Application].ContainsKey(scopeName))
                             {
-                                scopeInfo = _applicationScopesInfoTable[scopeName];
+                                scopeInfo = _scopesInformationDictionary[Application][scopeName];
                             }
                         }
 
