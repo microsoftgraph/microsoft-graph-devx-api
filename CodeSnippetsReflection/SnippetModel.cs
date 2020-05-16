@@ -43,7 +43,6 @@ namespace CodeSnippetsReflection
             this.ODataUriParser = GetODataUriParser(new Uri(serviceRootUrl), requestPayload.RequestUri);
             this.ODataUri = ODataUriParser.ParseUri();
             this.CustomQueryOptions = ODataUriParser.CustomQueryOptions;
-            this.ResponseVariableName = GetResponseVariableName(ODataUri.Path.LastOrDefault()) ;
             this.Segments = ODataUri.Path.ToList();
             this.Path = Uri.UnescapeDataString(requestPayload.RequestUri.AbsolutePath.Substring(5));
             this.QueryString = requestPayload.RequestUri.Query;
@@ -52,6 +51,11 @@ namespace CodeSnippetsReflection
             this.FilterFieldList = new List<string>();
             this.OrderByFieldList = new List<string>();
             this.RequestHeaders = requestPayload.Headers;
+
+            // replace the response variable name with generic response when URL has placeholder
+            // e.g. {size} in GET graph.microsoft.com/v1.0/me/drive/items/{item-id}/thumbnails/{thumb-id}/{size}
+            var responseVariableName = GetResponseVariableName(ODataUri.Path.LastOrDefault());
+            this.ResponseVariableName = responseVariableName.StartsWith("{") ? "response" : responseVariableName;
 
             PopulateQueryFieldLists(QueryString);
             GetRequestBody(requestPayload);

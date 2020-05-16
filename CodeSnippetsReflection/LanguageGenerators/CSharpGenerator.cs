@@ -166,7 +166,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case KeySegment keySegment:
                         resourcesPath.Append($"[\"{keySegment.Keys.FirstOrDefault().Value}\"]");
                         break;
-
+                    // handle special case of indexing on a property through extensions, e.g.
+                    // IThumbnailSetRequestBuilder has a manually written extension which allows indexing on {size}
+                    // https://github.com/microsoftgraph/msgraph-sdk-dotnet/blob/dev/src/Microsoft.Graph/Requests/Extensions/IThumbnailSetRequestBuilderExtensions.cs
+                    case DynamicPathSegment pathSegment when pathSegment.Identifier.Contains("{"):
+                        resourcesPath.Append($"[\"{pathSegment.Identifier}\"]");
+                        break;
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
                         var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel);
