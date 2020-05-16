@@ -319,17 +319,33 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     }
                                 }
 
+                                // following rename logic is taken from:
+                                // https://github.com/microsoftgraph/MSGraph-SDK-Code-Generator/blob/a5dffbf6db77c3830e45530f5c29622e06078b7e/src/GraphODataTemplateWriter/CodeHelpers/CSharp/TypeHelperCSharp.cs#L254
+                                var propertyName = CommonGenerator.UppercaseFirstLetter(key);
+                                if (propertyName == className) // one such example is list->list
+                                {
+                                    var propertyClassName = GetCsharpClassName(pathSegment, newPath);
+                                    if (propertyName == propertyClassName)
+                                    {
+                                        propertyName += "Property";
+                                    }
+                                    else
+                                    {
+                                        propertyName = propertyClassName;
+                                    }
+                                }
+
                                 switch (jToken.Type)
                                 {
                                     case JTokenType.Array:
                                     case JTokenType.Object:
                                         //new nested object needs to be constructed so call this function recursively to make it
                                         var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
-                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{propertyName} = {newObject}".TrimEnd() + ",\r\n");
                                         break;
                                     default:
                                         // we can call the function recursively to handle the other states of string/enum/special classes
-                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {CSharpGenerateObjectFromJson(pathSegment, value, newPath).Trim()},\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{propertyName} = {CSharpGenerateObjectFromJson(pathSegment, value, newPath).Trim()},\r\n");
                                         break;
                                 }
                             }
