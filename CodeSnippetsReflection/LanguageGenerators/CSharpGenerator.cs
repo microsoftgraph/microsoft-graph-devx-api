@@ -256,7 +256,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case string _:
                         {
                             var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path);
-                            if (!string.IsNullOrEmpty(enumString))
+                            if (className == "String")
+                            {
+                                stringBuilder.Append($"{jsonBody}\r\n");
+                            }
+                            else if (!string.IsNullOrEmpty(enumString))
                             {
                                 //Enum is accessed as the Classname then enum type e.g Importance.Low
                                 stringBuilder.Append($"{tabSpace}{enumString}\r\n");
