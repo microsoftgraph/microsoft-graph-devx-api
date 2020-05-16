@@ -175,7 +175,23 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
                         var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel);
-                        resourcesPath.Append($"\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")})");
+                        var parameters = string.Join(",", paramList.Select(x =>
+                        {
+                            if (x.Contains("'"))
+                            {
+                                // handle enums, e.g. microsoft.graph.timeZoneStandard'Iana'
+                                // do we have other special types that show up in URLs?
+                                var split = x.Split("'");
+                                var enumType = CommonGenerator.UppercaseFirstLetter(split[0].Split(".").Last()); // TimeZoneStandard
+                                var enumValue = split[1];
+                                return $"{enumType}.{enumValue}";
+                            }
+                            else
+                            {
+                                return x;
+                            }
+                        }));
+                        resourcesPath.Append($"\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({parameters})");
                         break;
                     case ValueSegment _:
                         resourcesPath.Append(".Content");
