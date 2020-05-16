@@ -387,7 +387,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             var objectList = array.Children<JObject>();
 
                             // add a cast into ICollectionPage if the property is found as navigation property
-                            var cast = typeProperties.IsNavigationProperty ? $"({GetCollectionInterfaceName(path)})" : string.Empty;
+                            var cast = typeProperties.IsNavigationProperty ? $"({GetCollectionInterfaceName(pathSegment, path)})" : string.Empty;
 
                             stringBuilder.Append($"{cast}new List<{typeProperties.ClassName}>()\r\n{tabSpace}{{\r\n");
                             if (objectList.Any())
@@ -596,11 +596,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <summary>
         /// Generates ICollectionPage interface name
         /// </summary>
+        /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">path in edm model</param>
         /// <returns>ICollectionPage Interface name</returns>
-        private string GetCollectionInterfaceName(ICollection<string> path)
+        private string GetCollectionInterfaceName(ODataPathSegment pathSegment, ICollection<string> path)
         {
-            return "I" + string.Join("", path.Select(x => CommonGenerator.UppercaseFirstLetter(x))) + "CollectionPage";
+            var type = GetCsharpClassName(pathSegment, path.ToList().GetRange(0, path.Count - 1));
+            var property = CommonGenerator.UppercaseFirstLetter(path.Last());
+            return $"I{type}{property}CollectionPage";
         }
 
         /// <summary>
