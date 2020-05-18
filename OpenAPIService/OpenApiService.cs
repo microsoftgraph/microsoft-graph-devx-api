@@ -127,7 +127,7 @@ namespace OpenAPIService
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
             string graphVersion, bool forceRefresh)
          {
-            if (operationIds != null && tags != null )
+            if (operationIds != null && tags != null)
             {
                 return null; // Cannot filter by operationIds and tags at the same time
             }
@@ -380,7 +380,7 @@ namespace OpenAPIService
 
             var sb = new StringBuilder();
             document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
-            var doc = new OpenApiStringReader().Read(sb.ToString(), out var diag);
+            var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
 
             return doc;
         }
