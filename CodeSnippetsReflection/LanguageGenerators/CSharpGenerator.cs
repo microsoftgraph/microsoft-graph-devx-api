@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Microsoft.OData.Edm;
+using CodeSnippetsReflection.TypeProperties;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
@@ -43,8 +44,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n");
                 var segment = snippetModel.Segments.Last();
                 snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName , languageExpressions);
-                //Csharp properties are uppercase so replace with list with uppercase version
-                snippetModel.SelectFieldList = snippetModel.SelectFieldList.Select(CommonGenerator.UppercaseFirstLetter).ToList();
                 var actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
 
                 //append any custom queries present
@@ -207,6 +206,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         break;
+                    case TypeSegment _:
+                        break; // type segment is not part of the resource path.
                     default:
                         //its most likely just a resource so append it
                         resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
@@ -234,123 +235,210 @@ namespace CodeSnippetsReflection.LanguageGenerators
             var stringBuilder = new StringBuilder();
             var jsonObject = JsonConvert.DeserializeObject(jsonBody);
             var tabSpace = new string('\t', path.Count -1);//d
-
-            switch (jsonObject)
+            var typeProperties = GetCSharpTypeProperties(pathSegment, path);
+            var className = typeProperties.ClassName;
+            if (className == "JToken") // handle special case of JToken
             {
-                case string _:
-                    {
-                        var enumString = GenerateEnumString(jsonObject.ToString(),pathSegment,path);
-                        if (!string.IsNullOrEmpty(enumString))
+                var jToken = jsonObject is string _
+                    ? jsonBody                                      // simple strings auto cast to JToken
+                    : $"JToken.Parse(\"{jsonBody}\")";    // complex objects need JToken.Parse()
+                stringBuilder.Append($"{jToken}\r\n");
+            }
+            else
+            {
+                switch (jsonObject)
+                {
+                    case string _:
                         {
-                            //Enum is accessed as the Classname then enum type e.g Importance.Low
-                            stringBuilder.Append($"{tabSpace}{enumString}\r\n");
-                        }
-                        else if (jsonObject.Equals("true") || jsonObject.Equals("false"))
-                        {
-                            stringBuilder.Append($"{tabSpace}{jsonObject}\r\n");//boolean primitives values masquerading as strings.
-                        }
-                        else
-                        {
-                            stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString($"{jsonObject}", pathSegment, path)}");
-                        }
-                    }
-                    break;
-                case JObject jObject:
-                    {
-                        var className = GetCsharpClassName(pathSegment,path);
-                        stringBuilder.Append($"new {className}\r\n");
-                        stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
-
-                        //initialize each member/property of the object
-                        foreach (var (key, jToken) in jObject)
-                        {
-
-                            var value = JsonConvert.SerializeObject(jToken);
-                            var newPath = path.Append(key).ToList();//add new identifier to the path
-                            if (key.Contains("@odata") || key.StartsWith("@"))//sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
+                            var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path);
+                            if (!string.IsNullOrEmpty(enumString))
                             {
-                                stringBuilder = GenerateCSharpAdditionalDataSection(stringBuilder, key, jToken.Value<string>(), className, tabSpace);
-                                continue;
+                                //Enum is accessed as the Classname then enum type e.g Importance.Low
+                                stringBuilder.Append($"{tabSpace}{enumString}\r\n");
                             }
-
-                            switch (jToken.Type)
+                            else if (jsonObject.Equals("true") || jsonObject.Equals("false"))
                             {
-                                case JTokenType.Array:
-                                case JTokenType.Object:
-                                    //new nested object needs to be constructed so call this function recursively to make it
-                                    var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
-                                    stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
-                                    break;
-                                default:
-                                    // we can call the function recursively to handle the other states of string/enum/special classes
-                                    stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {CSharpGenerateObjectFromJson(pathSegment, value, newPath).Trim()},\r\n");
-                                    break;
+                                stringBuilder.Append($"{tabSpace}{jsonObject}\r\n");//boolean primitives values masquerading as strings.
+                            }
+                            else
+                            {
+                                stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString($"{jsonObject}", pathSegment, path)}");
                             }
                         }
-                        //remove the trailing comma if we appended anything
-                        if (stringBuilder[stringBuilder.Length - 3].Equals(','))
+                        break;
+                    case JObject jObject:
                         {
-                            stringBuilder.Remove(stringBuilder.Length - 3, 1);
-                        }
-                        //closing brace
-                        stringBuilder.Append($"{tabSpace}}}\r\n");
-                    }
-                    break;
-                case JArray array:
-                    {
-                        var objectList = array.Children<JObject>();
+                            stringBuilder.Append($"new {className}\r\n");
+                            stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
 
-                        var (className, isNavigationProperty) = GetCsharpClassNameAndNavigationProperty(pathSegment, path);
+                            var additionalData = new Dictionary<string, string>();
 
-                        // add a cast into ICollectionPage if the property is found as navigation property
-                        var cast = isNavigationProperty ? $"({GetCollectionInterfaceName(path)})" : string.Empty;
-
-                        stringBuilder.Append($"{cast}new List<{className}>()\r\n{tabSpace}{{\r\n");
-                        if (objectList.Any())
-                        {
-                            foreach (var item in objectList)
+                            //initialize each member/property of the object
+                            foreach (var (key, jToken) in jObject)
                             {
-                                var jsonString = JsonConvert.SerializeObject(item);
-                                //we need to create a new object
-                                var objectStringFromJson = CSharpGenerateObjectFromJson(pathSegment, jsonString, path ).TrimEnd(";\r\n".ToCharArray());
-                                //indent it one tab level then append it to the string builder
-                                objectStringFromJson = $"{tabSpace}\t{objectStringFromJson.Replace("\r\n", "\r\n\t")}";
-                                stringBuilder.Append($"{objectStringFromJson},\r\n");
+                                var value = JsonConvert.SerializeObject(jToken);
+                                var newPath = path.Append(key).ToList();//add new identifier to the path
+
+                                if (key.Contains("@odata") || key.StartsWith("@")) // sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
+                                {
+                                    switch (key)
+                                    {
+                                        case "@odata.id" when className.Equals("DirectoryObject"):
+                                        case "@odata.type":
+                                            stringBuilder = ProcessOdataIdAndType(stringBuilder, key, jToken.Value<string>(), className, tabSpace);
+                                            break;
+                                        default:
+                                            additionalData.Add(key, value);
+                                            break;
+                                    }
+                                    continue;
+                                }
+
+                                // determine if property is found in type
+                                // allow arbitrary properties for OpenTypes through AdditionalData section
+                                // otherwise throw type not found error
+                                try
+                                {
+                                    var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath);
+                                }
+                                catch
+                                {
+                                    if (typeProperties.IsOpenType)
+                                    {
+                                        additionalData.Add(key, value);
+                                        continue;
+                                    }
+                                    else
+                                    {
+                                        throw;
+                                    }
+                                }
+
+                                switch (jToken.Type)
+                                {
+                                    case JTokenType.Array:
+                                    case JTokenType.Object:
+                                        //new nested object needs to be constructed so call this function recursively to make it
+                                        var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
+                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
+                                        break;
+                                    default:
+                                        // we can call the function recursively to handle the other states of string/enum/special classes
+                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {CSharpGenerateObjectFromJson(pathSegment, value, newPath).Trim()},\r\n");
+                                        break;
+                                }
                             }
-                            stringBuilder.Remove(stringBuilder.Length - 3, 1);//remove the trailing comma
-                        }
-                        else //we don't have object nested but something else like empty list/strings/enums
-                        {
-                            foreach (var element in array)
+
+                            // add AdditionalData segment
+                            if (additionalData.Count > 0)
                             {
-                                var listItem = CSharpGenerateObjectFromJson(pathSegment, JsonConvert.SerializeObject(element), path).TrimEnd(";\r\n".ToCharArray());
-                                stringBuilder.Append($"{tabSpace}\t{listItem.TrimStart()},\r\n");
+                                // make it readable with the constants below, otherwise it becomes an escape character mess
+                                const string quote = "\"";
+                                const string escape = "\\";
+                                const string tab = "\t";
+                                const string openCurly = "{";
+                                const string closeCurly = "}";
+
+                                var additionalDataTabSpace = tabSpace + tab;
+                                var dataRowTabSpace = tabSpace + tab + tab;
+
+                                // transform a key value pair into an AdditionalData row string
+                                string dataRow(KeyValuePair<string, string> kvp)
+                                {
+                                    string value;
+                                    if (kvp.Value.StartsWith($"{quote}")) // simple string
+                                    {
+                                        value = kvp.Value;
+                                    }
+                                    else // complex JSON object, needs to be escaped
+                                    {
+                                        var escapedValue = kvp.Value.Replace(quote, escape + quote);
+                                        value = quote + escapedValue + quote;
+                                    }
+
+                                    return dataRowTabSpace + openCurly + $"{quote}{kvp.Key}{quote}, " + value + closeCurly; // e.g. {"Quantity", "934"}
+                                };
+
+                                var additionalDataRows = string.Join(",\r\n", additionalData.Select(kvp => dataRow(kvp)));
+
+                                stringBuilder.Append($"{additionalDataTabSpace}AdditionalData = new Dictionary<string, object>()\r\n" +
+                                                     $"{additionalDataTabSpace}{{\r\n" +
+                                                     $"{additionalDataRows}\r\n" +
+                                                     $"{additionalDataTabSpace}}}\r\n");
                             }
+
                             //remove the trailing comma if we appended anything
                             if (stringBuilder[stringBuilder.Length - 3].Equals(','))
                             {
                                 stringBuilder.Remove(stringBuilder.Length - 3, 1);
                             }
+
+                            //closing brace
+                            stringBuilder.Append($"{tabSpace}}}\r\n");
                         }
-                        stringBuilder.Append($"{tabSpace}}}\r\n");
-                    }
-                    break;
-                case DateTime _:
-                    stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString(jsonBody.Replace("\"",""), pathSegment, path)}");
-                    break;
-                case null:
-                    stringBuilder.Append($"{tabSpace}null");
-                    break;
-                default:
-                    var primitive = jsonObject.ToString();
-                    //json deserializer capitalizes the bool types so undo that
-                    if (primitive.Equals("True", StringComparison.Ordinal) || primitive.Equals("False", StringComparison.Ordinal))
-                    {
-                        primitive = CommonGenerator.LowerCaseFirstLetter(primitive);
-                    }
-                    //item is a primitive print as is
-                    stringBuilder.Append($"{tabSpace}{primitive}\r\n");
-                    break;
+                        break;
+                    case JArray array:
+                        {
+                            var objectList = array.Children<JObject>();
+
+                            // add a cast into ICollectionPage if the property is found as navigation property
+                            var cast = typeProperties.IsNavigationProperty ? $"({GetCollectionInterfaceName(path)})" : string.Empty;
+
+                            stringBuilder.Append($"{cast}new List<{typeProperties.ClassName}>()\r\n{tabSpace}{{\r\n");
+                            if (objectList.Any())
+                            {
+                                foreach (var item in objectList)
+                                {
+                                    var jsonString = JsonConvert.SerializeObject(item);
+                                    //we need to create a new object
+                                    var objectStringFromJson = CSharpGenerateObjectFromJson(pathSegment, jsonString, path).TrimEnd(";\r\n".ToCharArray());
+                                    //indent it one tab level then append it to the string builder
+                                    objectStringFromJson = $"{tabSpace}\t{objectStringFromJson.Replace("\r\n", "\r\n\t")}";
+                                    stringBuilder.Append($"{objectStringFromJson},\r\n");
+                                }
+                                stringBuilder.Remove(stringBuilder.Length - 3, 1);//remove the trailing comma
+                            }
+                            else //we don't have object nested but something else like empty list/strings/enums
+                            {
+                                foreach (var element in array)
+                                {
+                                    var listItem = CSharpGenerateObjectFromJson(pathSegment, JsonConvert.SerializeObject(element), path).TrimEnd(";\r\n".ToCharArray());
+                                    stringBuilder.Append($"{tabSpace}\t{listItem.TrimStart()},\r\n");
+                                }
+                                //remove the trailing comma if we appended anything
+                                if (stringBuilder[stringBuilder.Length - 3].Equals(','))
+                                {
+                                    stringBuilder.Remove(stringBuilder.Length - 3, 1);
+                                }
+                            }
+                            stringBuilder.Append($"{tabSpace}}}\r\n");
+                        }
+                        break;
+                    case DateTime _:
+                        stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString(jsonBody.Replace("\"", ""), pathSegment, path)}");
+                        break;
+                    case null:
+                        stringBuilder.Append($"{tabSpace}null");
+                        break;
+                    default:
+                        switch (GetCsharpClassName(pathSegment, path))
+                        {
+                            case "Single": // float
+                                stringBuilder.Append($"{tabSpace}{jsonObject}f");
+                                break;
+                            default:
+                                var primitive = jsonObject.ToString();
+                                //json deserializer capitalizes the bool types so undo that
+                                if (primitive.Equals("True", StringComparison.Ordinal) || primitive.Equals("False", StringComparison.Ordinal))
+                                {
+                                    primitive = CommonGenerator.LowerCaseFirstLetter(primitive);
+                                }
+                                //item is a primitive print as is
+                                stringBuilder.Append($"{tabSpace}{primitive}\r\n");
+                                break;
+                        }
+                        break;
+                }
             }
 
             //check if this is the outermost object in a potential nested object structure and needs the semicolon termination character.
@@ -358,7 +446,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Generates language specific code to add special properties to the AdditionalData dictionary
+        /// Processes @odata.id and @odata.type properties
         /// </summary>
         /// <param name="stringBuilder">The original string builder containing code generated so far</param>
         /// <param name="key">The odata key/property</param>
@@ -366,7 +454,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="className">The class name for the entity needing modification</param>
         /// <param name="tabSpace">Tab space to use for formatting the code generated</param>
         /// <returns>a string builder with the relevant odata code added</returns>
-        private static StringBuilder GenerateCSharpAdditionalDataSection(StringBuilder stringBuilder, string key, string value, string className, string tabSpace)
+        private static StringBuilder ProcessOdataIdAndType(StringBuilder stringBuilder, string key, string value, string className, string tabSpace)
         {
             switch (key)
             {
@@ -385,6 +473,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 case "@odata.type":
                     var proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
+                    proposedType = proposedType.EndsWith("Request") ? proposedType + "Object" : proposedType; // disambiguate class names that end with Request
                     //check if the odata type specified is different
                     // maybe due to the declaration of a subclass of the type specified from the url.
                     if (!className.Equals(proposedType))
@@ -394,20 +483,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
 
                 default:
-                    //just append the property as part of the additionalData of the object
-                    var additionalDataString = $"{tabSpace}\tAdditionalData = new Dictionary<string, object>()\r\n{tabSpace}\t{{\r\n";
-                    var keyValuePairElement = $"{tabSpace}\t\t{{\"{key}\",\"{value}\"}}";
-                    if (!stringBuilder.ToString().Contains(additionalDataString))//check if we ever inserted AdditionalData to this object.
-                    {
-                        stringBuilder.Append($"{additionalDataString}{keyValuePairElement}\r\n{tabSpace}\t}},\r\n");
-                    }
-                    else
-                    {
-                        //insert new key value pair to already existing AdditionalData component
-                        var insertionIndex = stringBuilder.ToString().IndexOf(additionalDataString, StringComparison.Ordinal) + additionalDataString.Length;
-                        stringBuilder.Insert(insertionIndex, $"{keyValuePairElement},\r\n");
-                    }
-                    break;
+                    throw new ArgumentException(nameof(key), "Key should be either @odata.id or @odata.type");
             }
 
             return stringBuilder;
@@ -446,6 +522,19 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "Binary":
                         return $"Encoding.ASCII.GetBytes({specialClassString})";
 
+                    case "Double":
+                        return $"(double){stringParameter}";
+
+                    case "TimeOfDay":
+                        return DateTime.TryParse(stringParameter, out var timeOfDay)
+                            ? $"new TimeOfDay({timeOfDay.Hour}, {timeOfDay.Minute}, {timeOfDay.Second})"
+                            : "new TimeOfDay(0, 0, 0)";
+
+                    case "Boolean":
+                        return bool.TryParse(stringParameter, out var boolValue)
+                            ? boolValue.ToString().ToLower()
+                            : "false";
+
                     default:
                         return specialClassString;
                 }
@@ -477,17 +566,15 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Return string representation of the classname for CSharp
+        /// Return type properties such as CSharp class name, open type etc.
         /// </summary>
         /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">Path to follow to get find the classname</param>
-        /// <returns>String representing the type in use and whether the property is found as navigation property</returns>
-        private (string csharpClassName, bool isNavigationProperty) GetCsharpClassNameAndNavigationProperty(ODataPathSegment pathSegment, ICollection<string> path)
+        /// <returns>Type properties such as CSharp class name, open type etc.</returns>
+        private CSharpTypeProperties GetCSharpTypeProperties(ODataPathSegment pathSegment, ICollection<string> path)
         {
             var (edmType, isNavigationProperty) = CommonGenerator.GetEdmTypeFromIdentifierAndNavigationProperty(pathSegment, path);
-            //we need to split the string and get last item
-            //eg microsoft.graph.data => Data
-            return (CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last()), isNavigationProperty);
+            return new CSharpTypeProperties(edmType, isNavigationProperty);
         }
 
         /// <summary>
@@ -498,8 +585,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String representing the type in use</returns>
         private string GetCsharpClassName(ODataPathSegment pathSegment, ICollection<string> path)
         {
-            var (csharpClassName, _) = GetCsharpClassNameAndNavigationProperty(pathSegment, path);
-            return csharpClassName;
+            return GetCSharpTypeProperties(pathSegment, path).ClassName;
         }
 
         /// <summary>
@@ -651,13 +737,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string FilterExpression => "\n\t.Filter(\"{0}\")";
         public override string SearchExpression => "\n\t.Search(\"{0}\")";
         public override string ExpandExpression => "\n\t.Expand(\"{0}\")";
-        public override string SelectExpression => "\n\t.Select( e => new {{\n\t\t\t e.{0} \n\t\t\t }})";
+        public override string SelectExpression => "\n\t.Select(\"{0}\")";
         public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")";
         public override string SkipExpression => "\n\t.Skip({0})";
         public override string SkipTokenExpression => "";
         public override string TopExpression => "\n\t.Top({0})";
         public override string FilterExpressionDelimiter => ",";
-        public override string SelectExpressionDelimiter => ",\n\t\t\t e.";
+        public override string SelectExpressionDelimiter => ",";
         public override string OrderByExpressionDelimiter => " ";
         public override string HeaderExpression => "\n\t.Header(\"{0}\",\"{1}\")";
 
