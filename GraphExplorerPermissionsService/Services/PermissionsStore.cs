@@ -23,8 +23,6 @@ namespace GraphExplorerPermissionsService
     {
         private UriTemplateTable _urlTemplateTable;
         private IDictionary<int, object> _scopesListTable;
-        private IDictionary<string, ScopeInformation> _delegatedScopesInfoTable;
-        private IDictionary<string, ScopeInformation> _applicationScopesInfoTable;
         private IDictionary<string, IDictionary<string, ScopeInformation>> _scopesInformationDictionary;
         private readonly IMemoryCache _permissionsCache;
         private readonly IFileUtility _fileUtility;
@@ -106,8 +104,8 @@ namespace GraphExplorerPermissionsService
         {
             _scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
             {
-                _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
-                _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
+                var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
+                var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
 
                 string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
                 string scopesInfoJson = await _fileUtility.ReadFromFile(relativeScopesInfoPath);
@@ -131,13 +129,11 @@ namespace GraphExplorerPermissionsService
 
                 cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
-                _scopesInformationDictionary = new Dictionary<string, IDictionary<string, ScopeInformation>>
+                return new Dictionary<string, IDictionary<string, ScopeInformation>>
                 {
                     { Delegated, _delegatedScopesInfoTable },
                     { Application, _applicationScopesInfoTable }
                 };
-
-                return _scopesInformationDictionary;
             });
         }
 
