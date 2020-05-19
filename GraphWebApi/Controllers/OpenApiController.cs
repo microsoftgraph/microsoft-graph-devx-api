@@ -29,7 +29,7 @@ namespace GraphWebApi.Controllers
         [Route("openapi")]
         [Route("$openapi")]
         [HttpGet]
-        public async Task<IActionResult> Get(                                    
+        public async Task<IActionResult> Get(
                                     [FromQuery]string operationIds = null,
                                     [FromQuery]string tags = null,
                                     [FromQuery]string url = null,
@@ -70,7 +70,7 @@ namespace GraphWebApi.Controllers
             catch
             {
                 return new BadRequestResult();
-            }            
+            }
         }
 
         [Route("openapi/operations")]
@@ -93,20 +93,20 @@ namespace GraphWebApi.Controllers
                 }
 
                 var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
-                WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat, 
+                WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                     graphOpenApi, Response.Body, styleOptions.Style);
 
                 return new EmptyResult();
             }
-            catch 
+            catch
             {
                 return new BadRequestResult();
-            }           
+            }
         }
 
-        private void WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format, 
+        private void WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
                                 OpenApiDocument graphOpenApi, Stream stream, OpenApiStyle style)
-        
+
         {
             var sw = new StreamWriter(stream);
             var indexSearch = new OpenApiOperationIndex();

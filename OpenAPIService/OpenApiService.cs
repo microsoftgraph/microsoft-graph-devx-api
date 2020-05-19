@@ -79,23 +79,29 @@ namespace OpenAPIService
             foreach (var result in results)
             {
                 OpenApiPathItem pathItem;
+                string pathKey = FormatPathFunctions(result.CurrentKeys.Path, result.Operation.Parameters);
 
                 if (subset.Paths == null)
                 {
                     subset.Paths = new OpenApiPaths();
                     pathItem = new OpenApiPathItem();
-                    subset.Paths.Add(result.CurrentKeys.Path, pathItem);
+                    subset.Paths.Add(pathKey, pathItem);
                 }
                 else
                 {
-                    if (!subset.Paths.TryGetValue(result.CurrentKeys.Path, out pathItem))
+                    if (!subset.Paths.TryGetValue(pathKey, out pathItem))
                     {
                         pathItem = new OpenApiPathItem();
-                        subset.Paths.Add(result.CurrentKeys.Path, pathItem);
+                        subset.Paths.Add(pathKey, pathItem);
                     }
                 }
 
                 pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
+            }
+
+            if (subset.Paths == null)
+            {
+                throw new ArgumentNullException("No paths returned.");
             }
 
             if (styleOptions.Style == OpenApiStyle.GEAutocomplete)
@@ -121,7 +127,7 @@ namespace OpenAPIService
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
             string graphVersion, bool forceRefresh)
          {
-            if (operationIds != null && tags != null )
+            if (operationIds != null && tags != null)
             {
                 return null; // Cannot filter by operationIds and tags at the same time
             }
@@ -374,7 +380,7 @@ namespace OpenAPIService
 
             var sb = new StringBuilder();
             document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
-            var doc = new OpenApiStringReader().Read(sb.ToString(), out var diag);
+            var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
 
             return doc;
         }
@@ -450,6 +456,52 @@ namespace OpenAPIService
             ContentRemover contentRemover = new ContentRemover();
             OpenApiWalker walker = new OpenApiWalker(contentRemover);
             walker.Walk(target);
+        }
+
+        /// <summary>
+        /// Formats path functions, where present, by surrounding placeholder values of string data types
+        /// with single quotation marks.
+        /// </summary>
+        /// <param name="pathKey">The path key in which the function placeholder(s) need to be formatted
+        /// with single quotation marks.</param>
+        /// <returns>The path key with its function placeholder(s) of string data types, where applicable,
+        /// formatted with single quotation marks.</returns>
+        private static string FormatPathFunctions(string pathKey, IList<OpenApiParameter> parameters)
+        {
+            var parameterTypes = new Dictionary<string, string>();
+            foreach (var parameter in parameters)
+            {
+                /* The type and format properties describe the data type of the function parameters.
+                 * For string data types the format property is usually undefined.
+                 */
+                if (string.IsNullOrEmpty(parameter.Schema.Format))
+                {
+                    parameterTypes.Add(parameter.Name, parameter.Schema.Type);
+                }
+            }
+
+            /* Example:
+             * Actual ---->  /reports/microsoft.graph.getTeamsUserActivityCounts(period={period})
+             * Expected -->  /reports/microsoft.graph.getTeamsUserActivityCounts(period='{period}')
+             */
+            string pattern = @"(=\{.*?\})";
+            string evaluator(Match match)
+            {
+                string output = match.ToString(); // e.g. ---> ={period}
+                string paramName = $"{output.Substring(2, output.Length - 3)}"; // e.g. ---> period
+
+                if (parameterTypes.TryGetValue(paramName, out string type))
+                {
+                    if (type.Equals("string", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Only format function parameters with string data types
+                        output = $"='{{{paramName}}}'";
+                        return output;
+                    }
+                }
+                return output;
+            }
+            return Regex.Replace(pathKey, pattern, evaluator);
         }
     }
 }
