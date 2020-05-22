@@ -166,11 +166,32 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case KeySegment keySegment:
                         resourcesPath.Append($"[\"{keySegment.Keys.FirstOrDefault().Value}\"]");
                         break;
-
+                    // handle special case of indexing on a property through extensions, e.g.
+                    // IThumbnailSetRequestBuilder has a manually written extension which allows indexing on {size}
+                    // https://github.com/microsoftgraph/msgraph-sdk-dotnet/blob/dev/src/Microsoft.Graph/Requests/Extensions/IThumbnailSetRequestBuilderExtensions.cs
+                    case DynamicPathSegment pathSegment when pathSegment.Identifier.Contains("{"):
+                        resourcesPath.Append($"[\"{pathSegment.Identifier}\"]");
+                        break;
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
                         var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel);
-                        resourcesPath.Append($"\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")})");
+                        var parameters = string.Join(",", paramList.Select(x =>
+                        {
+                            if (x.Contains("'"))
+                            {
+                                // handle enums, e.g. microsoft.graph.timeZoneStandard'Iana'
+                                // do we have other special types that show up in URLs?
+                                var split = x.Split("'");
+                                var enumType = CommonGenerator.UppercaseFirstLetter(split[0].Split(".").Last()); // TimeZoneStandard
+                                var enumValue = split[1];
+                                return $"{enumType}.{enumValue}";
+                            }
+                            else
+                            {
+                                return x;
+                            }
+                        }));
+                        resourcesPath.Append($"\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({parameters})");
                         break;
                     case ValueSegment _:
                         resourcesPath.Append(".Content");
@@ -240,9 +261,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
             if (className == "JToken") // handle special case of JToken
             {
                 var jToken = jsonObject is string _
-                    ? jsonBody                                      // simple strings auto cast to JToken
+                    ? jsonBody                            // simple strings auto cast to JToken
                     : $"JToken.Parse(\"{jsonBody}\")";    // complex objects need JToken.Parse()
                 stringBuilder.Append($"{jToken}\r\n");
+            }
+            else if (jsonObject is JObject _ && className == "String") // special case where empty string is represented as {}
+            {
+                stringBuilder.Append("\"\"\r\n");
             }
             else
             {
@@ -251,7 +276,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case string _:
                         {
                             var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path);
-                            if (!string.IsNullOrEmpty(enumString))
+                            if (className == "String")
+                            {
+                                stringBuilder.Append($"{jsonBody}\r\n");
+                            }
+                            else if (!string.IsNullOrEmpty(enumString))
                             {
                                 //Enum is accessed as the Classname then enum type e.g Importance.Low
                                 stringBuilder.Append($"{tabSpace}{enumString}\r\n");
@@ -314,17 +343,33 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     }
                                 }
 
+                                // following rename logic is taken from:
+                                // https://github.com/microsoftgraph/MSGraph-SDK-Code-Generator/blob/a5dffbf6db77c3830e45530f5c29622e06078b7e/src/GraphODataTemplateWriter/CodeHelpers/CSharp/TypeHelperCSharp.cs#L254
+                                var propertyName = CommonGenerator.UppercaseFirstLetter(key);
+                                if (propertyName == className) // one such example is list->list
+                                {
+                                    var propertyClassName = GetCsharpClassName(pathSegment, newPath);
+                                    if (propertyName == propertyClassName)
+                                    {
+                                        propertyName += "Property";
+                                    }
+                                    else
+                                    {
+                                        propertyName = propertyClassName;
+                                    }
+                                }
+
                                 switch (jToken.Type)
                                 {
                                     case JTokenType.Array:
                                     case JTokenType.Object:
                                         //new nested object needs to be constructed so call this function recursively to make it
                                         var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
-                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {newObject}".TrimEnd() + ",\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{propertyName} = {newObject}".TrimEnd() + ",\r\n");
                                         break;
                                     default:
                                         // we can call the function recursively to handle the other states of string/enum/special classes
-                                        stringBuilder.Append($"{tabSpace}\t{CommonGenerator.UppercaseFirstLetter(key)} = {CSharpGenerateObjectFromJson(pathSegment, value, newPath).Trim()},\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{propertyName} = {CSharpGenerateObjectFromJson(pathSegment, value, newPath).Trim()},\r\n");
                                         break;
                                 }
                             }
@@ -382,7 +427,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             var objectList = array.Children<JObject>();
 
                             // add a cast into ICollectionPage if the property is found as navigation property
-                            var cast = typeProperties.IsNavigationProperty ? $"({GetCollectionInterfaceName(path)})" : string.Empty;
+                            var cast = typeProperties.IsNavigationProperty ? $"({GetCollectionInterfaceName(pathSegment, path)})" : string.Empty;
 
                             stringBuilder.Append($"{cast}new List<{typeProperties.ClassName}>()\r\n{tabSpace}{{\r\n");
                             if (objectList.Any())
@@ -591,11 +636,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <summary>
         /// Generates ICollectionPage interface name
         /// </summary>
+        /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">path in edm model</param>
         /// <returns>ICollectionPage Interface name</returns>
-        private string GetCollectionInterfaceName(ICollection<string> path)
+        private string GetCollectionInterfaceName(ODataPathSegment pathSegment, ICollection<string> path)
         {
-            return "I" + string.Join("", path.Select(x => CommonGenerator.UppercaseFirstLetter(x))) + "CollectionPage";
+            var type = GetCsharpClassName(pathSegment, path.ToList().GetRange(0, path.Count - 1));
+            var property = CommonGenerator.UppercaseFirstLetter(path.Last());
+            return $"I{type}{property}CollectionPage";
         }
 
         /// <summary>
