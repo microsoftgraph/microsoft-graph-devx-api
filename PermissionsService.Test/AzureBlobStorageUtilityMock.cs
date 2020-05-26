@@ -14,7 +14,7 @@ namespace PermissionsService.Test
     /// Defines a Mock class that simulates retrieving blobs from an Azure Blob Storage
     /// </summary>
     internal class AzureBlobStorageUtilityMock : IFileUtility
-    {        
+    {
         public async Task<string> ReadFromFile(string filePathSource)
         {
             if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
