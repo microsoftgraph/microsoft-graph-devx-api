@@ -32,6 +32,7 @@ namespace GraphExplorerPermissionsService
         private readonly int _defaultRefreshTimeInHours; // life span of the in-memory cache
         private const string DefaultLocale = "en-US"; // default locale language
         private readonly object _permissionsLock = new object();
+        private readonly object _scopesLock = new object();
         private static bool _permissionsRefreshed = false;
         private const string Delegated = "Delegated";
         private const string Application = "Application";
@@ -98,42 +99,57 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Populates the delegated and application scopes information table caches.
+        /// Retrieves or adds the localized permissions descriptions from the cache.
         /// </summary>
-        private async Task SeedScopesInfoTablesAsync(string locale = DefaultLocale)
+        private async Task SeedPermissionsDescriptionsAsync(string locale = DefaultLocale)
         {
             _scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
             {
-                var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
-                var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
-
-                string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
-                string scopesInfoJson = await _fileUtility.ReadFromFile(relativeScopesInfoPath);
-
-                if (string.IsNullOrEmpty(scopesInfoJson))
+                /* Localized copy of permissions descriptions
+                   is to be seeded by only one executing thread.
+                */
+                lock (_scopesLock)
                 {
-                    return null;
+                    /* Check whether a previous thread already seeded an
+                     * instance of the localized permissions descriptions
+                     * during the lock.
+                     */
+                    if (_permissionsCache.Get($"ScopesInfoList_{locale}") == null)
+                    {
+                        var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
+                        var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
+
+                        string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
+                        string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
+
+                        if (string.IsNullOrEmpty(scopesInfoJson))
+                        {
+                            return null;
+                        }
+
+                        ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+
+                        foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
+                        {
+                            _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
+                        }
+
+                        foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
+                        {
+                            _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
+                        }
+
+                        cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+
+                        return new Dictionary<string, IDictionary<string, ScopeInformation>>
+                        {
+                            { Delegated, _delegatedScopesInfoTable },
+                            { Application, _applicationScopesInfoTable }
+                        };
+                    }
+                    // Fetch the localized cached permissions descriptions already seeded
+                    return _permissionsCache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
                 }
-
-                ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
-
-                foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
-                {
-                    _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
-                }
-
-                foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
-                {
-                    _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
-                }
-
-                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-
-                return new Dictionary<string, IDictionary<string, ScopeInformation>>
-                {
-                    { Delegated, _delegatedScopesInfoTable },
-                    { Application, _applicationScopesInfoTable }
-                };
             });
         }
 
@@ -171,7 +187,13 @@ namespace GraphExplorerPermissionsService
         {
             try
             {
-                if (RefreshPermissionsTables())
+                /* Add multiple checks to ensure thread that
+                 * populated scopes information successfully
+                 * completed seeding.
+                */
+                    if (RefreshPermissionsTables() ||
+                    _scopesListTable == null ||
+                    !_scopesListTable.Any())
                 {
                     /* Permissions tables are not localized, so no need to keep different localized cached copies.
                        Refresh tables only after the specified time duration has elapsed or no cached copy exists. */
@@ -186,36 +208,28 @@ namespace GraphExplorerPermissionsService
                     }
                 }
 
-                /* Ensure that the requested localized copy of permissions descriptions
-                   is available in the cache. */
-                await SeedScopesInfoTablesAsync(locale);
-
-                string[] scopes = null;
+                await SeedPermissionsDescriptionsAsync(locale);
 
                 if (string.IsNullOrEmpty(requestUrl))  // fetch all permissions
                 {
-                    var listOfScopes = _scopesListTable.Values.ToArray();
-                    List<string> permissionsList = new List<string>();
+                    List<ScopeInformation> scopesListInfo = new List<ScopeInformation>();
 
-                    foreach (var scope in listOfScopes)
+                    if (scopeType.Contains(Delegated))
                     {
-                        var result = (JArray)scope;
-
-                        string[] permissions = result.FirstOrDefault()?
-                        .SelectToken(scopeType)?
-                        .Select(s => (string)s)
-                        .ToArray();
-
-                        if (permissions != null)
+                        foreach(var scopesInfo in _scopesInformationDictionary[Delegated])
                         {
-                            permissionsList.AddRange(permissions);
+                            scopesListInfo.Add(scopesInfo.Value);
                         }
-
                     }
-                    if (permissionsList.Count > 0)
+                    else // Application scopes
                     {
-                        scopes = permissionsList.Distinct().ToArray();
+                        foreach (var scopesInfo in _scopesInformationDictionary[Application])
+                        {
+                            scopesListInfo.Add(scopesInfo.Value);
+                        }
                     }
+
+                    return scopesListInfo;
                 }
                 else // fetch permissions for a given request url and method
                 {
@@ -224,6 +238,7 @@ namespace GraphExplorerPermissionsService
                         throw new ArgumentNullException(nameof(method), "The HTTP method value cannot be null or empty.");
                     }
 
+                    string[] scopes = null;
                     requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
                     requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
 
@@ -242,10 +257,12 @@ namespace GraphExplorerPermissionsService
                         .SelectToken(scopeType)?
                         .Select(s => (string)s)
                         .ToArray();
-                }
 
-                if (scopes != null)
-                {
+                    if (scopes == null)
+                    {
+                        return null;
+                    }
+
                     List<ScopeInformation> scopesList = new List<ScopeInformation>();
 
                     foreach (string scopeName in scopes)
@@ -281,8 +298,6 @@ namespace GraphExplorerPermissionsService
 
                     return scopesList;
                 }
-
-                return null;
             }
             catch (ArgumentNullException exception)
             {
