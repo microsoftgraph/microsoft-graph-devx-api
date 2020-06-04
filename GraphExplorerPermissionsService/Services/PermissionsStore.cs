@@ -100,6 +100,8 @@ namespace GraphExplorerPermissionsService
         /// <summary>
         /// Gets or creates the localized permissions descriptions from the cache.
         /// </summary>
+        /// <param name="locale">The locale of the permissions decriptions file.</param>
+        /// <returns>The localized instance of permissions descriptions.</returns>
         private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetOrCreatePermissionsDescriptionsAsync(string locale = DefaultLocale)
         {
             var scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
