@@ -218,16 +218,22 @@ namespace GraphExplorerPermissionsService
 
                     if (scopeType.Contains(Delegated))
                     {
-                        foreach(var scopesInfo in scopesInformationDictionary[Delegated])
+                        if (scopesInformationDictionary.ContainsKey(Delegated))
                         {
-                            scopesListInfo.Add(scopesInfo.Value);
+                            foreach (var scopesInfo in scopesInformationDictionary[Delegated])
+                            {
+                                scopesListInfo.Add(scopesInfo.Value);
+                            }
                         }
                     }
                     else // Application scopes
                     {
-                        foreach (var scopesInfo in scopesInformationDictionary[Application])
+                        if (scopesInformationDictionary.ContainsKey(Application))
                         {
-                            scopesListInfo.Add(scopesInfo.Value);
+                            foreach (var scopesInfo in scopesInformationDictionary[Application])
+                            {
+                                scopesListInfo.Add(scopesInfo.Value);
+                            }
                         }
                     }
 
