@@ -254,8 +254,7 @@ namespace GraphExplorerPermissionsService
                     JArray resultValue = new JArray();
                     resultValue = (JArray)_scopesListTable[int.Parse(resultMatch.Key)];
 
-                    string[] scopes = null;
-                    scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
+                    var scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
                         .SelectToken(scopeType)?
                         .Select(s => (string)s)
                         .ToArray();
