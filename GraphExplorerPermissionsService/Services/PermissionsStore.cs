@@ -23,7 +23,6 @@ namespace GraphExplorerPermissionsService
     {
         private UriTemplateTable _urlTemplateTable;
         private IDictionary<int, object> _scopesListTable;
-        private IDictionary<string, IDictionary<string, ScopeInformation>> _scopesInformationDictionary;
         private readonly IMemoryCache _permissionsCache;
         private readonly IFileUtility _fileUtility;
         private readonly string _permissionsContainerName;
@@ -99,11 +98,11 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Retrieves or adds the localized permissions descriptions from the cache.
+        /// Gets or creates the localized permissions descriptions from the cache.
         /// </summary>
-        private async Task SeedPermissionsDescriptionsAsync(string locale = DefaultLocale)
+        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetOrCreatePermissionsDescriptionsAsync(string locale = DefaultLocale)
         {
-            _scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
+            var scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
             {
                 /* Localized copy of permissions descriptions
                    is to be seeded by only one executing thread.
@@ -151,6 +150,7 @@ namespace GraphExplorerPermissionsService
                     return _permissionsCache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
                 }
             });
+            return scopesInformationDictionary;
         }
 
         /// <summary>
@@ -191,7 +191,7 @@ namespace GraphExplorerPermissionsService
                  * populated scopes information successfully
                  * completed seeding.
                 */
-                    if (RefreshPermissionsTables() ||
+                if (RefreshPermissionsTables() ||
                     _scopesListTable == null ||
                     !_scopesListTable.Any())
                 {
@@ -208,7 +208,7 @@ namespace GraphExplorerPermissionsService
                     }
                 }
 
-                await SeedPermissionsDescriptionsAsync(locale);
+                var scopesInformationDictionary = await GetOrCreatePermissionsDescriptionsAsync(locale);
 
                 if (string.IsNullOrEmpty(requestUrl))  // fetch all permissions
                 {
@@ -216,14 +216,14 @@ namespace GraphExplorerPermissionsService
 
                     if (scopeType.Contains(Delegated))
                     {
-                        foreach(var scopesInfo in _scopesInformationDictionary[Delegated])
+                        foreach(var scopesInfo in scopesInformationDictionary[Delegated])
                         {
                             scopesListInfo.Add(scopesInfo.Value);
                         }
                     }
                     else // Application scopes
                     {
-                        foreach (var scopesInfo in _scopesInformationDictionary[Application])
+                        foreach (var scopesInfo in scopesInformationDictionary[Application])
                         {
                             scopesListInfo.Add(scopesInfo.Value);
                         }
@@ -238,7 +238,6 @@ namespace GraphExplorerPermissionsService
                         throw new ArgumentNullException(nameof(method), "The HTTP method value cannot be null or empty.");
                     }
 
-                    string[] scopes = null;
                     requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
                     requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
 
@@ -253,6 +252,7 @@ namespace GraphExplorerPermissionsService
                     JArray resultValue = new JArray();
                     resultValue = (JArray)_scopesListTable[int.Parse(resultMatch.Key)];
 
+                    string[] scopes = null;
                     scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
                         .SelectToken(scopeType)?
                         .Select(s => (string)s)
@@ -270,16 +270,16 @@ namespace GraphExplorerPermissionsService
                         ScopeInformation scopeInfo = null;
                         if (scopeType.Contains(Delegated))
                         {
-                            if (_scopesInformationDictionary[Delegated].ContainsKey(scopeName))
+                            if (scopesInformationDictionary[Delegated].ContainsKey(scopeName))
                             {
-                                scopeInfo = _scopesInformationDictionary[Delegated][scopeName];
+                                scopeInfo = scopesInformationDictionary[Delegated][scopeName];
                             }
                         }
                         else // Application scopes
                         {
-                            if (_scopesInformationDictionary[Application].ContainsKey(scopeName))
+                            if (scopesInformationDictionary[Application].ContainsKey(scopeName))
                             {
-                                scopeInfo = _scopesInformationDictionary[Application][scopeName];
+                                scopeInfo = scopesInformationDictionary[Application][scopeName];
                             }
                         }
 
