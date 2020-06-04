@@ -115,7 +115,8 @@ namespace GraphExplorerPermissionsService
                      * instance of the localized permissions descriptions
                      * during the lock.
                      */
-                    if (_permissionsCache.Get($"ScopesInfoList_{locale}") == null)
+                    var seededScopesInfoDictionary = _permissionsCache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
+                    if (seededScopesInfoDictionary == null)
                     {
                         var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
                         var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
@@ -148,8 +149,9 @@ namespace GraphExplorerPermissionsService
                             { Application, _applicationScopesInfoTable }
                         };
                     }
-                    // Fetch the localized cached permissions descriptions already seeded
-                    return _permissionsCache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
+                    /* Fetch the localized cached permissions descriptions
+                       already seeded by previous thread. */
+                    return seededScopesInfoDictionary;
                 }
             });
             return scopesInformationDictionary;
@@ -201,8 +203,8 @@ namespace GraphExplorerPermissionsService
                        Refresh tables only after the specified time duration has elapsed or no cached copy exists. */
                     lock (_permissionsLock)
                     {
-                        // Ensure permissions tables are seeded by only one executing thread,
-                        // once per refresh cycle.
+                        /* Ensure permissions tables are seeded by only one executing thread,
+                           once per refresh cycle. */
                         if (!_permissionsRefreshed)
                         {
                             SeedPermissionsTables();
