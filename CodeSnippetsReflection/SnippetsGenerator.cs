@@ -42,23 +42,8 @@ namespace CodeSnippetsReflection
             ServiceRootBeta = new Uri("https://graph.microsoft.com/beta");
 
             // use transformed metadata, fallback to original if there are any parsing errors
-            try
-            {
-                IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_v10_metadata/cleanMetadataWithDescriptionsv1.0.xml")));
-            }
-            catch
-            {
-                IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(ServiceRootV1 + "/$metadata")));
-            }
-
-            try
-            {
-                IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_beta_metadata/cleanMetadataWithDescriptionsbeta.xml")));
-            }
-            catch
-            {
-                IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(ServiceRootBeta + "/$metadata")));
-            }
+            IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_v10_metadata/cleanMetadataWithDescriptionsv1.0.xml")));
+            IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_beta_metadata/cleanMetadataWithDescriptionsbeta.xml")));
         }
 
         /// <summary>
