@@ -111,7 +111,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.UpdateAsync({snippetModel.ResponseVariableName});"));
                 }
-                else if(snippetModel.Method == HttpMethod.Delete)
+                else if (snippetModel.Method == HttpMethod.Delete)
                 {
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.DeleteAsync();"));
                 }
@@ -120,6 +120,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (string.IsNullOrEmpty(snippetModel.RequestBody))
                         throw new Exception($"No request Body present for PUT of entity {snippetModel.ResponseVariableName}");
 
+                    var genericType = string.Empty;
                     if (snippetModel.ContentType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
                     {
                         snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
@@ -127,10 +128,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     }
                     else
                     {
-                        snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = \"{snippetModel.RequestBody.Trim()}\"\n\n");
+                        snippetBuilder.Append($"using var {snippetModel.ResponseVariableName} = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(\"{snippetModel.RequestBody.Trim()}\"));\n\n");
+
+                        // resolve type for PutAsync<T>
+                        var genericEdmType = snippetModel.Segments[snippetModel.Segments.Count - 2].EdmType;
+                        if ((genericEdmType as IEdmEntityType)?.HasStream == false)
+                        {
+                            genericType = "<" + CommonGenerator.UppercaseFirstLetter(genericEdmType.ToString().Split(".").Last()) + ">";
+                        }
                     }
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PutAsync({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PutAsync{genericType}({snippetModel.ResponseVariableName});"));
 
                 }
                 else
