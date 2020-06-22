@@ -109,7 +109,7 @@ namespace Microsoft.OpenApi.OData.Operation
                             Type = "string"
                         });
                 }
-                
+
                 operation.Responses = new OpenApiResponses
                 {
                     {
@@ -132,8 +132,9 @@ namespace Microsoft.OpenApi.OData.Operation
                                     }
                                 }
                             },
-                            Links = Context.CreateLinks(NavigationProperty.ToEntityType(), NavigationProperty.Name, 
-                            NavigationProperty.PropertyKind.ToString(), operation.Parameters, NavigationProperty.DeclaringEntityType().Name, true)
+                            Links = Context.CreateLinks(entityType: NavigationProperty.ToEntityType(), entityName: NavigationProperty.Name,
+                            entityKind: NavigationProperty.PropertyKind.ToString(), parameters: operation.Parameters,
+                            navSourceName: NavigationSource.Name, targetMultiplicity: true)
                         }
                     }
                 };
@@ -157,13 +158,14 @@ namespace Microsoft.OpenApi.OData.Operation
                                     }
                                 }
                             },
-                            Links = Context.CreateLinks(NavigationProperty.ToEntityType(), NavigationProperty.Name,
-                            NavigationProperty.PropertyKind.ToString(), operation.Parameters, NavigationProperty.DeclaringEntityType().Name)
+                            Links = Context.CreateLinks(entityType: NavigationProperty.ToEntityType(), entityName: NavigationProperty.Name,
+                            entityKind: NavigationProperty.PropertyKind.ToString(), parameters: operation.Parameters,
+                            navSourceName: NavigationSource.Name)
                         }
                     }
                 };
             }
-            
+
             operation.Responses.Add(Constants.StatusCodeDefault, Constants.StatusCodeDefault.GetResponse());
 
             base.SetResponses(operation);

@@ -81,7 +81,7 @@ namespace Microsoft.OpenApi.OData.Operation
                     }
                 };
             }
-            
+
             operation.Responses = new OpenApiResponses
             {
                 {
@@ -99,7 +99,8 @@ namespace Microsoft.OpenApi.OData.Operation
                                 }
                             }
                         },
-                        Links = Context.CreateLinks(Singleton.EntityType(), Singleton.Name, Singleton.ContainerElementKind.ToString(), operation.Parameters)
+                        Links = Context.CreateLinks(entityType: Singleton.EntityType(), entityName: Singleton.Name,
+                        entityKind: Singleton.ContainerElementKind.ToString(), parameters: operation.Parameters)
                     }
                 }
             };

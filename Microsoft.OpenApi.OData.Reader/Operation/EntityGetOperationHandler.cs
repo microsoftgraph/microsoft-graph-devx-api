@@ -99,7 +99,8 @@ namespace Microsoft.OpenApi.OData.Operation
                                 }
                             }
                         },
-                        Links = Context.CreateLinks(EntitySet.EntityType(), EntitySet.Name, EntitySet.ContainerElementKind.ToString(), operation.Parameters)
+                        Links = Context.CreateLinks(entityType: EntitySet.EntityType(), entityName: EntitySet.Name,
+                        entityKind: EntitySet.ContainerElementKind.ToString(), parameters: operation.Parameters)
                     }
                 }
             };
