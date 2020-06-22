@@ -56,7 +56,7 @@ namespace Microsoft.OpenApi.OData.Generator
                     }
                 }
 
-                foreach (IEdmNavigationProperty navProp in entityType.DeclaredNavigationProperties())
+                foreach (IEdmNavigationProperty navProp in entityType.NavigationProperties())
                 {
                     IEdmEntityType navPropEntity = navProp.ToEntityType();
                     var navPropTypeName = navProp.ToEntityType().Name;
@@ -64,16 +64,25 @@ namespace Microsoft.OpenApi.OData.Generator
                     string navPropName = navProp.Name;
                     string operationId;
 
+                    string operationPrefix;
+
                     switch (sourceElementType)
                     {
-                        case "Navigation":
-                            operationId = declaringEntityTypeName + "." + sourceElementName + ".Get" + Utils.UpperFirstChar(navPropName);
-                            tag = declaringEntityTypeName + "." + entityType.Name;
+                        case "Navigation":   // Just for contained navigations
+                            operationPrefix = declaringEntityTypeName + "." + sourceElementName;
                             break;
                         default: // EntitySet, Entity, Singleton
-                            operationId = sourceElementName + ".Get" + Utils.UpperFirstChar(navPropName);
-                            tag = sourceElementName + "." + navPropTypeName;
+                            operationPrefix = sourceElementName;
                             break;
+                    }
+
+                    if (navProp.TargetMultiplicity() == EdmMultiplicity.Many)
+                    {
+                        operationId = operationPrefix + ".List" + Utils.UpperFirstChar(navPropName);
+                    }
+                    else
+                    {
+                        operationId = operationPrefix + ".Get" + Utils.UpperFirstChar(navPropName);
                     }
 
                     OpenApiLink link = new OpenApiLink
@@ -91,22 +100,6 @@ namespace Microsoft.OpenApi.OData.Generator
                                 Any = new OpenApiString("$request.path." + pathKeyName)
                             };
                         }
-                    }
-
-                    // Fetch Id(s) from response body
-                    foreach (IEdmStructuralProperty key in navPropEntity.Key())
-                    {
-                        string responseKeyName = key.Name;
-
-                        if (context.Settings.PrefixEntityTypeNameBeforeKey)
-                        {
-                            responseKeyName = navPropEntity.Name + "-" + responseKeyName;
-                        }
-
-                        link.Parameters[responseKeyName] = new RuntimeExpressionAnyWrapper
-                        {
-                            Any = new OpenApiString("$response.body#/" + key.Name)
-                        };
                     }
 
                     links[navProp.Name] = link;
