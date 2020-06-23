@@ -91,9 +91,11 @@ namespace Microsoft.OpenApi.OData.Operation
             {
                 if (Context.Settings.ShowLinks)
                 {
+                    string operationId = GetOperationId();
+
                     links = Context.CreateLinks(entityType: NavigationProperty.ToEntityType(), entityName: NavigationProperty.Name,
                             entityKind: NavigationProperty.PropertyKind.ToString(), parameters: operation.Parameters,
-                            navSourceName: NavigationSource.Name, targetMultiplicity: true);
+                            navPropOperationId: operationId, targetMultiplicity: true);
                 }
 
                 var properties = new Dictionary<string, OpenApiSchema>
@@ -149,9 +151,11 @@ namespace Microsoft.OpenApi.OData.Operation
             {
                 if (Context.Settings.ShowLinks)
                 {
+                    string operationId = GetOperationId();
+
                     links = Context.CreateLinks(entityType: NavigationProperty.ToEntityType(), entityName: NavigationProperty.Name,
                             entityKind: NavigationProperty.PropertyKind.ToString(), parameters: operation.Parameters,
-                            navSourceName: NavigationSource.Name);
+                            navPropOperationId: operationId);
                 }
 
                 operation.Responses = new OpenApiResponses

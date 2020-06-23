@@ -26,12 +26,12 @@ namespace Microsoft.OpenApi.OData.Generator
         /// <param name ="entityName">The name of the source of the <see cref="IEdmEntityType"/> object.</param>
         /// <param name="entityKind">"The kind of the source of the <see cref="IEdmEntityType"/> object.</param>
         /// <param name="parameters">"The list of parameters of the incoming operation.</param>
-        /// <param name="navSourceName">Optional parameter: The name of the navigation source of the <see cref="IEdmEntityType"/> object.</param>
+        /// <param name="navPropOperationId">Optional parameter: The operation id of the source of the NavigationProperty object.</param>
         /// <param name="targetMultiplicity">"Optional parameter: Flag indicating whether the <see cref="IEdmEntityType"/> object is a collection."</param>
         /// <returns>The created dictionary of <see cref="OpenApiLink"/> object.</returns>
         public static IDictionary<string, OpenApiLink> CreateLinks(this ODataContext context,
             IEdmEntityType entityType, string entityName, string entityKind,
-            IList<OpenApiParameter> parameters, string navSourceName = null,
+            IList<OpenApiParameter> parameters, string navPropOperationId = null,
             bool targetMultiplicity = false)
         {
             IDictionary<string, OpenApiLink> links = new Dictionary<string, OpenApiLink>();
@@ -64,8 +64,8 @@ namespace Microsoft.OpenApi.OData.Generator
 
                     switch (entityKind)
                     {
-                        case "Navigation":   // just for contained navigations
-                            operationPrefix = navSourceName + "." + entityName;
+                        case "Navigation": // just for contained navigations
+                            operationPrefix = navPropOperationId;
                             break;
                         default: // EntitySet, Entity, Singleton
                             operationPrefix = entityName;
