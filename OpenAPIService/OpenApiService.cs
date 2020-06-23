@@ -364,7 +364,8 @@ namespace OpenAPIService
                 EnableDiscriminatorValue = styleOptions == null ? false : styleOptions.EnableDiscriminatorValue,
                 EnableDerivedTypesReferencesForRequestBody = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForRequestBody,
                 EnableDerivedTypesReferencesForResponses = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForResponses,
-                ShowRootPath = styleOptions == null ? false : styleOptions.ShowRootPath
+                ShowRootPath = styleOptions == null ? false : styleOptions.ShowRootPath,
+                ShowLinks = styleOptions == null ? false : styleOptions.ShowLinks
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
