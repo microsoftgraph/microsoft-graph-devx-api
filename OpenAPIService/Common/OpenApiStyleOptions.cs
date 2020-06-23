@@ -19,6 +19,7 @@ namespace OpenAPIService.Common
         public bool EnableDerivedTypesReferencesForRequestBody { get; private set; } = false;
         public bool EnableDerivedTypesReferencesForResponses { get; private set; } = false;
         public bool ShowRootPath { get; set; } = false;
+        public bool ShowLinks { get; set; } = false;
 
         public OpenApiStyleOptions(OpenApiStyle style, string openApiVersion = null, string graphVersion = null, string openApiFormat = null)
         {
@@ -84,6 +85,7 @@ namespace OpenAPIService.Common
             OpenApiFormat = OpenApiFormat ?? Constants.OpenApiConstants.Format_Json;
             InlineLocalReferences = true;
             ShowRootPath = true;
+            ShowLinks = true;
         }
     }
 }
