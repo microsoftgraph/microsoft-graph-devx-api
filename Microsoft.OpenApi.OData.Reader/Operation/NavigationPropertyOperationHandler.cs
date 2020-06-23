@@ -115,7 +115,7 @@ namespace Microsoft.OpenApi.OData.Operation
                     }
                 }
             }
-            
+
             string name = string.Join(".", items);
             OpenApiTag tag = new OpenApiTag
             {
