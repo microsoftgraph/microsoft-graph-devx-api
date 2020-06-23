@@ -30,7 +30,9 @@ namespace OpenAPIService
 
         public override void Visit(OpenApiSchema schema)
         {
-            schema.AdditionalPropertiesAllowed = true;
+            if (schema?.Type == "object") {
+                schema.AdditionalProperties = new OpenApiSchema() {Type = "object"};  // To make AutoREST happy
+            }
             base.Visit(schema);
         }
     }
