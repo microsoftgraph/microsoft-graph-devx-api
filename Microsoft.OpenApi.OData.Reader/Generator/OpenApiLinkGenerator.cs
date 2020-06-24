@@ -23,15 +23,15 @@ namespace Microsoft.OpenApi.OData.Generator
         /// </summary>
         /// <param name="context">The OData context.</param>
         /// <param name="entityType">The Entity type.</param>
-        /// <param name ="sourceElementName">The name of the source of the <see cref="IEdmEntityType"/> object.</param>
-        /// <param name="sourceElementType">"The type of the source of the <see cref="IEdmEntityType"/> object.</param>
-        /// <param name="parameters">"The list of parameters from the incoming operation.</param>
-        /// <param name="declaringEntityTypeName">Optional parameter: Name of the Entity type that declares a Navigation property.</param>
-        /// <param name="targetMultiplicity">"Optional parameter: Flag indicating whether the source of the  <see cref="IEdmEntityType"/> object is a collection."</param>
+        /// <param name ="entityName">The name of the source of the <see cref="IEdmEntityType"/> object.</param>
+        /// <param name="entityKind">"The kind of the source of the <see cref="IEdmEntityType"/> object.</param>
+        /// <param name="parameters">"The list of parameters of the incoming operation.</param>
+        /// <param name="navPropOperationId">Optional parameter: The operation id of the source of the NavigationProperty object.</param>
+        /// <param name="targetMultiplicity">"Optional parameter: Flag indicating whether the <see cref="IEdmEntityType"/> object is a collection."</param>
         /// <returns>The created dictionary of <see cref="OpenApiLink"/> object.</returns>
         public static IDictionary<string, OpenApiLink> CreateLinks(this ODataContext context,
-            IEdmEntityType entityType, string sourceElementName, string sourceElementType,
-            IList<OpenApiParameter> parameters, string declaringEntityTypeName = null,
+            IEdmEntityType entityType, string entityName, string entityKind,
+            IList<OpenApiParameter> parameters, string navPropOperationId = null,
             bool targetMultiplicity = false)
         {
             IDictionary<string, OpenApiLink> links = new Dictionary<string, OpenApiLink>();
@@ -40,13 +40,13 @@ namespace Microsoft.OpenApi.OData.Generator
             {
                 Utils.CheckArgumentNull(context, nameof(context));
                 Utils.CheckArgumentNull(entityType, nameof(entityType));
-                Utils.CheckArgumentNullOrEmpty(sourceElementName, nameof(sourceElementName));
-                Utils.CheckArgumentNullOrEmpty(sourceElementType, nameof(sourceElementType));
+                Utils.CheckArgumentNullOrEmpty(entityName, nameof(entityName));
+                Utils.CheckArgumentNullOrEmpty(entityKind, nameof(entityKind));
                 Utils.CheckArgumentNull(parameters, nameof(parameters));
 
                 List<string> pathKeyNames = new List<string>();
 
-                // Fetch defined Id(s) from url path of operation
+                // Fetch defined Id(s) from incoming parameters (if any)
                 foreach (var parameter in parameters)
                 {
                     if (!string.IsNullOrEmpty(parameter.Description) &&
@@ -56,24 +56,29 @@ namespace Microsoft.OpenApi.OData.Generator
                     }
                 }
 
-                foreach (IEdmNavigationProperty navProp in entityType.DeclaredNavigationProperties())
+                foreach (IEdmNavigationProperty navProp in entityType.NavigationProperties())
                 {
-                    IEdmEntityType navPropEntity = navProp.ToEntityType();
-                    var navPropTypeName = navProp.ToEntityType().Name;
-                    string tag;
                     string navPropName = navProp.Name;
                     string operationId;
+                    string operationPrefix;
 
-                    switch (sourceElementType)
+                    switch (entityKind)
                     {
-                        case "Navigation":
-                            operationId = declaringEntityTypeName + "." + sourceElementName + ".Get" + Utils.UpperFirstChar(navPropName);
-                            tag = declaringEntityTypeName + "." + entityType.Name;
+                        case "Navigation": // just for contained navigations
+                            operationPrefix = navPropOperationId;
                             break;
                         default: // EntitySet, Entity, Singleton
-                            operationId = sourceElementName + ".Get" + Utils.UpperFirstChar(navPropName);
-                            tag = sourceElementName + "." + navPropTypeName;
+                            operationPrefix = entityName;
                             break;
+                    }
+
+                    if (navProp.TargetMultiplicity() == EdmMultiplicity.Many)
+                    {
+                        operationId = operationPrefix + ".List" + Utils.UpperFirstChar(navPropName);
+                    }
+                    else
+                    {
+                        operationId = operationPrefix + ".Get" + Utils.UpperFirstChar(navPropName);
                     }
 
                     OpenApiLink link = new OpenApiLink
@@ -91,22 +96,6 @@ namespace Microsoft.OpenApi.OData.Generator
                                 Any = new OpenApiString("$request.path." + pathKeyName)
                             };
                         }
-                    }
-
-                    // Fetch Id(s) from response body
-                    foreach (IEdmStructuralProperty key in navPropEntity.Key())
-                    {
-                        string responseKeyName = key.Name;
-
-                        if (context.Settings.PrefixEntityTypeNameBeforeKey)
-                        {
-                            responseKeyName = navPropEntity.Name + "-" + responseKeyName;
-                        }
-
-                        link.Parameters[responseKeyName] = new RuntimeExpressionAnyWrapper
-                        {
-                            Any = new OpenApiString("$response.body#/" + key.Name)
-                        };
                     }
 
                     links[navProp.Name] = link;
