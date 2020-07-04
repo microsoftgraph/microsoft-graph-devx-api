@@ -364,7 +364,8 @@ namespace OpenAPIService
                 EnableDiscriminatorValue = styleOptions == null ? false : styleOptions.EnableDiscriminatorValue,
                 EnableDerivedTypesReferencesForRequestBody = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForRequestBody,
                 EnableDerivedTypesReferencesForResponses = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForResponses,
-                ShowRootPath = styleOptions == null ? false : styleOptions.ShowRootPath
+                ShowRootPath = styleOptions == null ? false : styleOptions.ShowRootPath,
+                ShowLinks = styleOptions == null ? false : styleOptions.ShowLinks
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
@@ -471,10 +472,11 @@ namespace OpenAPIService
             var parameterTypes = new Dictionary<string, string>();
             foreach (var parameter in parameters)
             {
-                /* The type and format properties describe the data type of the function parameters.
-                 * For string data types the format property is usually undefined.
+                /* The Type and Format properties describe the data type of the function parameters.
+                 * For string data types the Format property is usually undefined.
                  */
-                if (string.IsNullOrEmpty(parameter.Schema.Format))
+                if (string.IsNullOrEmpty(parameter.Schema.Format) &&
+                    !string.IsNullOrEmpty(parameter.Schema.Type))
                 {
                     parameterTypes.Add(parameter.Name, parameter.Schema.Type);
                 }
