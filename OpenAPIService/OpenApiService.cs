@@ -353,9 +353,18 @@ namespace OpenAPIService
             var httpClient = CreateHttpClient();
 
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
+
+            OpenApiDocument document = ConvertCsdlToOpenApi(styleOptions, csdl);
+
+            return document;
+        }
+
+        public static OpenApiDocument ConvertCsdlToOpenApi(OpenApiStyleOptions styleOptions, Stream csdl)
+        {
             var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader());
 
-            var settings = new OpenApiConvertSettings() {
+            var settings = new OpenApiConvertSettings()
+            {
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
                 PrefixEntityTypeNameBeforeKey = true,
@@ -370,7 +379,6 @@ namespace OpenAPIService
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
             document = FixReferences(document);
-
             return document;
         }
 
