@@ -323,8 +323,8 @@ namespace OpenAPIService
             if (styleOptions.Style == OpenApiStyle.PowerShell)
             {
                 // Format the OperationId for Powershell cmdlet names generation
-                var operationIdFormatter = new OperationIdPowershellFormatter();
-                walker = new OpenApiWalker(operationIdFormatter);
+                var powershellFormatter = new PowershellFormatter();
+                walker = new OpenApiWalker(powershellFormatter);
                 walker.Walk(subsetOpenApiDocument);
 
                 var version = subsetOpenApiDocument.Info.Version;
