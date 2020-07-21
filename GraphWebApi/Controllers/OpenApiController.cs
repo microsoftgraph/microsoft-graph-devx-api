@@ -53,14 +53,14 @@ namespace GraphWebApi.Controllers
                     return new BadRequestResult();
                 }
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, graphUri, forceRefresh);
+                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
+
+                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
 
                 if (predicate == null)
                 {
                     return new BadRequestResult();
                 }
-
-                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions, predicate);
 
@@ -100,14 +100,14 @@ namespace GraphWebApi.Controllers
                     return new BadRequestResult();
                 }
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, graphUri, forceRefresh);
+                OpenApiDocument source = OpenApiService.ConvertCsdlToOpenApi(styleOptions, Request.Body);
+
+                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
 
                 if (predicate == null)
                 {
                     return new BadRequestResult();
                 }
-
-                OpenApiDocument source = OpenApiService.ConvertCsdlToOpenApi(styleOptions, Request.Body);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions, predicate);
 

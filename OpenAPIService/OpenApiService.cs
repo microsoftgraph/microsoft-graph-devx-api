@@ -125,7 +125,7 @@ namespace OpenAPIService
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
         /// <returns>A predicate</returns>
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
-            string graphVersion, bool forceRefresh)
+            OpenApiDocument source, bool forceRefresh)
          {
             if (operationIds != null && tags != null)
             {
@@ -172,7 +172,7 @@ namespace OpenAPIService
                     _uriTemplateTable = new UriTemplateTable();
                     _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
 
-                    await PopulateReferenceTablesAync(graphVersion, forceRefresh);
+                    await PopulateReferenceTablesAync(source);
                 }
 
                 url = url.Replace('-', '_');
@@ -205,15 +205,13 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
-        private static async Task PopulateReferenceTablesAync(string graphUri, bool forceRefresh)
+        private static async Task PopulateReferenceTablesAync(OpenApiDocument source)
         {
             HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
 
-            _source = await GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-
             int count = 0;
 
-            foreach (var path in _source.Paths)
+            foreach (var path in source.Paths)
             {
                 if (uniqueUrlsTable.Add(path.Key))
                 {
