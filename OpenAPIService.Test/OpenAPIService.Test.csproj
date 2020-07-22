@@ -18,7 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Microsoft.OpenApi.OData.Reader\Microsoft.OpenAPI.OData.Reader.csproj" />
     <ProjectReference Include="..\OpenAPIService\OpenAPIService.csproj" />
   </ItemGroup>
 
