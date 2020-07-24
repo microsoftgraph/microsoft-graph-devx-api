@@ -29,8 +29,8 @@ namespace OpenAPIService.Test
             string graphVersion = "beta";
             OpenApiDocument source = _source;
             OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(OpenApiStyle.PowerShell, graphVersion: graphVersion);
-            var predicate_1 = OpenApiService.CreatePredicate(operationId_1, null, null, graphVersion, false).GetAwaiter().GetResult();
-            var predicate_2 = OpenApiService.CreatePredicate(operationId_2, null, null, graphVersion, false).GetAwaiter().GetResult();
+            var predicate_1 = OpenApiService.CreatePredicate(operationId_1, null, null, source, false).GetAwaiter().GetResult();
+            var predicate_2 = OpenApiService.CreatePredicate(operationId_2, null, null, source, false).GetAwaiter().GetResult();
 
             // Act
             var subsetOpenApiDocument_1 = OpenApiService.CreateFilteredDocument(source, Title, styleOptions, predicate_1);
