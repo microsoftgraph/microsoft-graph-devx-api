@@ -367,12 +367,12 @@ namespace OpenAPIService
                 EnableOperationId = true,
                 PrefixEntityTypeNameBeforeKey = true,
                 TagDepth = 2,
-                EnablePagination = styleOptions == null ? false : styleOptions.EnablePagination,
-                EnableDiscriminatorValue = styleOptions == null ? false : styleOptions.EnableDiscriminatorValue,
-                EnableDerivedTypesReferencesForRequestBody = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForRequestBody,
-                EnableDerivedTypesReferencesForResponses = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForResponses,
-                ShowRootPath = styleOptions == null ? false : styleOptions.ShowRootPath,
-                ShowLinks = styleOptions == null ? false : styleOptions.ShowLinks
+                EnablePagination = styleOptions != null && styleOptions.EnablePagination,
+                EnableDiscriminatorValue = styleOptions != null && styleOptions.EnableDiscriminatorValue,
+                EnableDerivedTypesReferencesForRequestBody = styleOptions != null && styleOptions.EnableDerivedTypesReferencesForRequestBody,
+                EnableDerivedTypesReferencesForResponses = styleOptions != null && styleOptions.EnableDerivedTypesReferencesForResponses,
+                ShowRootPath = styleOptions != null && styleOptions.ShowRootPath,
+                ShowLinks = styleOptions != null && styleOptions.ShowLinks
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
