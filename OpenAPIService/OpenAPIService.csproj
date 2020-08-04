@@ -7,10 +7,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.OData.Edm" Version="7.6.1" />
     <PackageReference Include="Tavis.UriTemplates" Version="1.1.1" />
+    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.2.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Microsoft.OpenApi.OData.Reader\Microsoft.OpenAPI.OData.Reader.csproj" />
+    <ProjectReference Include="..\Submodules\OpenAPI.NET.OData\src\Microsoft.OpenApi.OData.Reader\Microsoft.OpenAPI.OData.Reader.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,11 +4,13 @@
 
 using GraphWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters.Xml;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService;
 using OpenAPIService.Common;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -51,14 +53,14 @@ namespace GraphWebApi.Controllers
                     return new BadRequestResult();
                 }
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, graphUri, forceRefresh);
+                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
+
+                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
 
                 if (predicate == null)
                 {
                     return new BadRequestResult();
                 }
-
-                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions, predicate);
 
@@ -72,6 +74,65 @@ namespace GraphWebApi.Controllers
                 return new BadRequestResult();
             }
         }
+
+
+        [Route("openapi")]
+        [HttpPost]
+        public async Task<IActionResult> Post(
+                            [FromQuery] string operationIds = null,
+                            [FromQuery] string tags = null,
+                            [FromQuery] string url = null,
+                            [FromQuery] string openApiVersion = null,
+                            [FromQuery] string title = "Partial Graph API",
+                            [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
+                            [FromQuery] string format = null,
+                            [FromQuery] string graphVersion = null,
+                            [FromQuery] bool forceRefresh = false)
+        {
+            try
+            {
+                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+
+                string graphUri = GetVersionUri(styleOptions.GraphVersion);
+
+                if (graphUri == null)
+                {
+                    return new BadRequestResult();
+                }
+
+                OpenApiDocument source = OpenApiService.ConvertCsdlToOpenApi(styleOptions, Request.Body);
+
+                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
+
+                if (predicate == null)
+                {
+                    return new BadRequestResult();
+                }
+
+                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions, predicate);
+
+                subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions, subsetOpenApiDocument);
+
+                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
+                if (styleOptions.OpenApiFormat == "yaml")
+                {
+                    return new FileStreamResult(stream, "application/yaml");
+                } else
+                {
+                    return new FileStreamResult(stream, "application/json");
+                }
+            }
+            catch(Exception ex)
+            {
+                
+                return new BadRequestObjectResult(new ProblemDetails()
+                {
+                    Detail = ex.Message
+                });
+            }
+        }
+
+
 
         [Route("openapi/operations")]
         [HttpGet]

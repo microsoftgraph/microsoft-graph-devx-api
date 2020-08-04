@@ -44,11 +44,11 @@ namespace OpenAPIService.Test
                 EnableOperationId = true,
                 PrefixEntityTypeNameBeforeKey = true,
                 TagDepth = 2,
-                EnablePagination = styleOptions == null ? false : styleOptions.EnablePagination,
-                EnableDiscriminatorValue = styleOptions == null ? false : styleOptions.EnableDiscriminatorValue,
-                EnableDerivedTypesReferencesForRequestBody = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForRequestBody,
-                EnableDerivedTypesReferencesForResponses = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForResponses,
-                ShowRootPath = styleOptions == null ? false : styleOptions.ShowRootPath
+                EnablePagination = styleOptions != null && styleOptions.EnablePagination,
+                EnableDiscriminatorValue = styleOptions != null && styleOptions.EnableDiscriminatorValue,
+                EnableDerivedTypesReferencesForRequestBody = styleOptions != null && styleOptions.EnableDerivedTypesReferencesForRequestBody,
+                EnableDerivedTypesReferencesForResponses = styleOptions != null && styleOptions.EnableDerivedTypesReferencesForResponses,
+                ShowRootPath = styleOptions != null && styleOptions.ShowRootPath
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 

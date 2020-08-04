@@ -125,7 +125,7 @@ namespace OpenAPIService
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
         /// <returns>A predicate</returns>
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
-            string graphVersion, bool forceRefresh)
+            OpenApiDocument source, bool forceRefresh)
          {
             if (operationIds != null && tags != null)
             {
@@ -172,7 +172,7 @@ namespace OpenAPIService
                     _uriTemplateTable = new UriTemplateTable();
                     _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
 
-                    await PopulateReferenceTablesAync(graphVersion, forceRefresh);
+                    await PopulateReferenceTablesAync(source);
                 }
 
                 url = url.Replace('-', '_');
@@ -205,15 +205,13 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
-        private static async Task PopulateReferenceTablesAync(string graphUri, bool forceRefresh)
+        private static async Task PopulateReferenceTablesAync(OpenApiDocument source)
         {
             HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
 
-            _source = await GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-
             int count = 0;
 
-            foreach (var path in _source.Paths)
+            foreach (var path in source.Paths)
             {
                 if (uniqueUrlsTable.Add(path.Key))
                 {
@@ -323,8 +321,8 @@ namespace OpenAPIService
             if (styleOptions.Style == OpenApiStyle.PowerShell)
             {
                 // Format the OperationId for Powershell cmdlet names generation
-                var operationIdFormatter = new OperationIdPowershellFormatter();
-                walker = new OpenApiWalker(operationIdFormatter);
+                var powershellFormatter = new PowershellFormatter();
+                walker = new OpenApiWalker(powershellFormatter);
                 walker.Walk(subsetOpenApiDocument);
 
                 var version = subsetOpenApiDocument.Info.Version;
@@ -353,24 +351,32 @@ namespace OpenAPIService
             var httpClient = CreateHttpClient();
 
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
+
+            OpenApiDocument document = ConvertCsdlToOpenApi(styleOptions, csdl);
+
+            return document;
+        }
+
+        public static OpenApiDocument ConvertCsdlToOpenApi(OpenApiStyleOptions styleOptions, Stream csdl)
+        {
             var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader());
 
-            var settings = new OpenApiConvertSettings() {
+            var settings = new OpenApiConvertSettings()
+            {
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
                 PrefixEntityTypeNameBeforeKey = true,
                 TagDepth = 2,
-                EnablePagination = styleOptions == null ? false : styleOptions.EnablePagination,
-                EnableDiscriminatorValue = styleOptions == null ? false : styleOptions.EnableDiscriminatorValue,
-                EnableDerivedTypesReferencesForRequestBody = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForRequestBody,
-                EnableDerivedTypesReferencesForResponses = styleOptions == null ? false : styleOptions.EnableDerivedTypesReferencesForResponses,
-                ShowRootPath = styleOptions == null ? false : styleOptions.ShowRootPath,
-                ShowLinks = styleOptions == null ? false : styleOptions.ShowLinks
+                EnablePagination = styleOptions != null && styleOptions.EnablePagination,
+                EnableDiscriminatorValue = styleOptions != null && styleOptions.EnableDiscriminatorValue,
+                EnableDerivedTypesReferencesForRequestBody = styleOptions != null && styleOptions.EnableDerivedTypesReferencesForRequestBody,
+                EnableDerivedTypesReferencesForResponses = styleOptions != null && styleOptions.EnableDerivedTypesReferencesForResponses,
+                ShowRootPath = styleOptions != null && styleOptions.ShowRootPath,
+                ShowLinks = styleOptions != null && styleOptions.ShowLinks
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
             document = FixReferences(document);
-
             return document;
         }
 
