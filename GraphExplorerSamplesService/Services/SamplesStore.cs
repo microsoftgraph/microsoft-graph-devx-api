@@ -70,15 +70,10 @@ namespace GraphExplorerSamplesService.Services
                     // Get the file contents from source
                     string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
-                    bool orderSamples = false;
-
-                    if (lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase))
-                    {
-                        /* Current business process only supports ordering of the English
-                           translation of the sample queries.
-                        */
-                        orderSamples = true;
-                    }
+                    /* Current business process only supports ordering of the English
+                       translation of the sample queries.
+                     */
+                    bool orderSamples = lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase);
 
                     // Return the list of the sample queries from the file contents
                     return SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples);
