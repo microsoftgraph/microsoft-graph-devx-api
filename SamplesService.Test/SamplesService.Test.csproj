@@ -7,14 +7,39 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="TestFiles\appsettingstest.json" />
+    <None Remove="TestFiles\sample-queries-test.json" />
+    <None Remove="TestFiles\sample-queries-test_es-ES.json" />
+    <None Remove="TestFiles\sample-queries-test_fr-FR.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="TestFiles\appsettingstest.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="TestFiles\sample-queries-test.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestFiles\sample-queries-test_es-ES.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestFiles\sample-queries-test_fr-FR.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
     <PackageReference Include="xunit" Version="2.4.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FileService\FileService.csproj" />
     <ProjectReference Include="..\GraphExplorerSamplesService\GraphExplorerSamplesService.csproj" />
+    <ProjectReference Include="..\MockTestUtility\MockTestUtility.csproj" />
   </ItemGroup>
 
 </Project>
