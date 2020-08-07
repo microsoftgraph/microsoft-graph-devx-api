@@ -55,31 +55,33 @@ namespace GraphExplorerSamplesService.Services
                      */
                     var lockedLocale = locale;
                     var seededSampleQueriesList = _samplesCache.Get<SampleQueriesList>(lockedLocale);
-                    if (seededSampleQueriesList == null)
+
+                    if (seededSampleQueriesList != null)
                     {
-                        cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-
-                        // Fetch the requisite sample path source based on the locale
-                        string queriesFilePathSource =
-                               FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
-
-                        // Get the file contents from source
-                        string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
-
-                        bool orderSamples = false;
-
-                        if (lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase))
-                        {
-                            /* Current business process only supports ordering of the English
-                               translation of the sample queries.
-                            */
-                            orderSamples = true;
-                        }
-
-                        // Return the list of the sample queries from the file contents
-                        return SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples);
+                        return seededSampleQueriesList;
                     }
-                    return seededSampleQueriesList;
+
+                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+
+                    // Fetch the requisite sample path source based on the locale
+                    string queriesFilePathSource =
+                           FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
+
+                    // Get the file contents from source
+                    string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
+
+                    bool orderSamples = false;
+
+                    if (lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase))
+                    {
+                        /* Current business process only supports ordering of the English
+                           translation of the sample queries.
+                        */
+                        orderSamples = true;
+                    }
+
+                    // Return the list of the sample queries from the file contents
+                    return SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples);
                 }
             });
 
