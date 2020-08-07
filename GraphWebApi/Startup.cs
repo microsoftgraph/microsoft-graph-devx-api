@@ -15,6 +15,8 @@ using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService;
 using FileService.Interfaces;
 using FileService.Services;
+using GraphExplorerSamplesService.Interfaces;
+using GraphExplorerSamplesService.Services;
 
 namespace GraphWebApi
 {
@@ -48,8 +50,9 @@ namespace GraphWebApi
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
+            services.AddSingleton<ISamplesStore, SamplesStore>();
             services.Configure<SamplesAdministrators>(Configuration);
-        }      
+        }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
