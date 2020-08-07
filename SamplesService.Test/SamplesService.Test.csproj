@@ -11,6 +11,7 @@
     <None Remove="TestFiles\sample-queries-test.json" />
     <None Remove="TestFiles\sample-queries-test_es-ES.json" />
     <None Remove="TestFiles\sample-queries-test_fr-FR.json" />
+    <None Remove="TestFiles\sample-queries-test_ja-JP.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +29,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="TestFiles\sample-queries-test_fr-FR.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestFiles\sample-queries-test_ja-JP.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
 

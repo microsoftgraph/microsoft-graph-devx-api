@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 
 namespace GraphExplorerSamplesService.Services
 {
+    /// <summary>
+    /// Defines a method that retrieves or adds localized sample queries to and from a memory cache or a remote source.
+    /// </summary>
     public class SamplesStore : ISamplesStore
     {
         private readonly object _samplesLock = new object();
@@ -56,26 +59,20 @@ namespace GraphExplorerSamplesService.Services
                     {
                         cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
-                        // Fetch the requisite sample path source based on the locale language code
+                        // Fetch the requisite sample path source based on the locale
                         string queriesFilePathSource =
                                FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
 
                         // Get the file contents from source
                         string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
-                        if (string.IsNullOrEmpty(jsonFileContents))
-                        {
-                            /* File is empty; instantiate a new list of sample query
-                             * objects that will be used to add new sample queries*/
-                            return new SampleQueriesList();
-                        }
-
                         bool orderSamples = false;
 
                         if (lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase))
                         {
                             /* Current business process only supports ordering of the English
-                               translation of the sample queries. */
+                               translation of the sample queries.
+                            */
                             orderSamples = true;
                         }
 

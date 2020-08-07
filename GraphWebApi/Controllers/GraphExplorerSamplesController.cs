@@ -41,7 +41,7 @@ namespace GraphWebApi.Controllers
                 // Fetch sample queries
                 SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
 
-                if (sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
                     // List is empty, just return status code 204 - No Content
                     return NoContent();
@@ -88,7 +88,7 @@ namespace GraphWebApi.Controllers
                 // Fetch sample queries
                 SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
 
-                if (sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
                     return NoContent(); // list is empty, just return status code 204 - No Content
                 }
