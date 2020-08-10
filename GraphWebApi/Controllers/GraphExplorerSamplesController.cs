@@ -5,41 +5,26 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
-using FileService.Interfaces;
-using FileService.Common;
 using System.Security.Claims;
 using System.Linq;
 using GraphWebApi.Common;
-using Microsoft.Extensions.Caching.Memory;
+using GraphExplorerSamplesService.Interfaces;
 
 namespace GraphWebApi.Controllers
 {
     [ApiController]
     public class GraphExplorerSamplesController : ControllerBase
     {
-        private readonly IFileUtility _fileUtility;
-        private readonly IConfiguration _configuration;
-        private readonly IMemoryCache _samplesCache;
-        private readonly string _policiesFilePathSource;
-        private readonly string _sampleQueriesContainerName;
-        private readonly string _sampleQueriesBlobName;
-        private readonly int _defaultRefreshTimeInHours;
+        private readonly ISamplesStore _samplesStore;
 
-        public GraphExplorerSamplesController(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache samplesCache)
+        public GraphExplorerSamplesController(ISamplesStore samplesStore)
         {
-            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
-            _fileUtility = fileUtility;
-            _samplesCache = samplesCache;
-            _policiesFilePathSource = configuration["Samples:SampleQueriesPoliciesFilePathName"]; // sets the path of the sample queries policies JSON file
-            _configuration = configuration;
-            _sampleQueriesContainerName = _configuration["AzureBlobStorage:Containers:SampleQueries"];
-            _sampleQueriesBlobName = _configuration[$"AzureBlobStorage:Blobs:SampleQueries"];
+            _samplesStore = samplesStore;
         }
 
         // Gets the list of all sample queries
@@ -54,9 +39,9 @@ namespace GraphWebApi.Controllers
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
 
                 // Fetch sample queries
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(locale);
+                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
 
-                if (sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
                     // List is empty, just return status code 204 - No Content
                     return NoContent();
@@ -101,9 +86,9 @@ namespace GraphWebApi.Controllers
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
 
                 // Fetch sample queries
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(locale);
+                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
 
-                if (sampleQueriesList.SampleQueries.Count == 0)
+                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
                     return NoContent(); // list is empty, just return status code 204 - No Content
                 }
@@ -157,7 +142,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync("En-Us");
+                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("en-US");
 
                 if (sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -227,7 +212,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync("En-Us");
+                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("en-US");
 
                 // Assign a new Id to the new sample query
                 sampleQueryModel.Id = Guid.NewGuid();
@@ -264,7 +249,7 @@ namespace GraphWebApi.Controllers
             try
             {
                 // Get the list of sample queries
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync("En-Us");
+                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("en-US");
 
                 // Get the list of policies
                 SampleQueriesPolicies policies = await GetSampleQueriesPoliciesAsync();
@@ -324,75 +309,13 @@ namespace GraphWebApi.Controllers
         }
 
         /// <summary>
-        /// Fetches the sample queries from the cache or a JSON file and returns a deserialized instance of a
-        /// <see cref="SampleQueriesList"/> from this.
-        /// </summary>
-        /// <param name="locale">The language code for the preferred localized file.</param>
-        /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
-        private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale)
-        {
-            // Fetch cached sample queries
-            SampleQueriesList sampleQueriesList = await _samplesCache.GetOrCreateAsync(locale, async cacheEntry =>
-            {
-                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-
-                // Fetch the requisite sample path source based on the locale language code
-                string queriesFilePathSource =
-                       FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, locale);
-
-                // Get the file contents from source
-                string jsonFileContents = await _fileUtility.ReadFromFile(queriesFilePathSource);
-
-                if (string.IsNullOrEmpty(jsonFileContents))
-                {
-                    /* File is empty; instantiate a new list of sample query
-                     * objects that will be used to add new sample queries*/
-                    return new SampleQueriesList();
-                }
-
-                bool orderSamples = false;
-
-                if (locale.Equals("en-us", StringComparison.OrdinalIgnoreCase))
-                {
-                    /* Current business process only supports ordering of the English
-                       translation of the sample queries. */
-                    orderSamples = true;
-                }
-
-                // Return the list of the sample queries from the file contents
-                return SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples);
-            });
-
-            return sampleQueriesList;
-        }
-
-        /// <summary>
         /// Gets the JSON file contents of the policies and returns a deserialized instance of a
         /// <see cref="SampleQueriesPolicies"/> from this.
         /// </summary>
         /// <returns></returns>
         private async Task<SampleQueriesPolicies> GetSampleQueriesPoliciesAsync()
         {
-            // Get the file contents from source
-            string jsonFileContents = await _fileUtility.ReadFromFile(_policiesFilePathSource);
-
-            if(string.IsNullOrEmpty(jsonFileContents))
-            {
-                // Create default policies template
-                SampleQueriesPolicies policies = SamplesPolicyService.CreateDefaultPoliciesTemplate();
-
-                // Get the serialized JSON string of the list of policies
-                string policiesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(policies);
-
-                // Save the JSON string to the source file
-                await _fileUtility.WriteToFile(policiesJson, _policiesFilePathSource);
-
-                // Return the list of policies
-                return policies;
-            }
-
-            // Return the list of policies
-            return SamplesPolicyService.DeserializeSampleQueriesPolicies(jsonFileContents);
+            throw new NotImplementedException();
         }
     }
 }

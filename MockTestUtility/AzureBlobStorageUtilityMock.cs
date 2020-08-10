@@ -8,12 +8,12 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace PermissionsService.Test
+namespace MockTestUtility
 {
     /// <summary>
     /// Defines a Mock class that simulates retrieving blobs from an Azure Blob Storage
     /// </summary>
-    internal class AzureBlobStorageUtilityMock : IFileUtility
+    public class AzureBlobStorageUtilityMock : IFileUtility
     {
         public async Task<string> ReadFromFile(string filePathSource)
         {

@@ -21,7 +21,7 @@ namespace FileService.Services
         private readonly string _connectionString;
         private string _containerName;
         private string _blobName;
-        
+
         public AzureBlobStorageUtility(IConfiguration configuration)
         {
             _connectionString = configuration["AzureBlobStorage:ConnectionString"];
@@ -35,14 +35,14 @@ namespace FileService.Services
             {
                 throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
             }
-                        
+
             (_containerName, _blobName) = FileServiceHelper.RetrieveFilePathSourceValues(filePathSource);
-            
+
             if (CloudStorageAccount.TryParse(_connectionString, out CloudStorageAccount storageAccount))
             {
                 CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
                 CloudBlobContainer container = blobClient.GetContainerReference(_containerName);
-               
+
                 if (await container.ExistsAsync())
                 {
                     CloudBlockBlob blob = container.GetBlockBlobReference(_blobName);
