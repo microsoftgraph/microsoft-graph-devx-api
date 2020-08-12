@@ -34,7 +34,7 @@ namespace OpenAPIService
 
     public class OpenApiService
     {
-        private static ConcurrentDictionary<OpenApiStyle, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<OpenApiStyle, OpenApiDocument>();
+        private static ConcurrentDictionary<string, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<string, OpenApiDocument>();
         private static UriTemplateTable _uriTemplateTable = new UriTemplateTable();
         private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
 
@@ -285,24 +285,25 @@ namespace OpenAPIService
         /// <returns>Instance of an OpenApiDocument</returns>
         public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, OpenApiStyleOptions styleOptions)
         {
+            if (string.IsNullOrEmpty(graphUri))
+            {
+                throw new ArgumentNullException(nameof(graphUri), "Parameter cannot be null or empty.");
+            }
             if (styleOptions == null)
             {
                 throw new ArgumentNullException(nameof(styleOptions), "Parameter cannot be null.");
             }
 
-            if (!forceRefresh && _OpenApiDocuments.TryGetValue(styleOptions.Style, out OpenApiDocument doc))
+            var key = $"{styleOptions.Style}_{graphUri}";
+
+            if (!forceRefresh && _OpenApiDocuments.TryGetValue(key, out OpenApiDocument doc))
             {
                 return doc;
             }
 
-            if (string.IsNullOrEmpty(graphUri))
-            {
-                throw new ArgumentNullException(nameof(graphUri), "Parameter cannot be null or empty.");
-            }
-
             var csdlHref = new Uri(graphUri);
             OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref, styleOptions);
-            _OpenApiDocuments[styleOptions.Style] = source;
+            _OpenApiDocuments[key] = source;
             return source;
         }
 
