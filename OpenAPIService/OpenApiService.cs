@@ -34,8 +34,7 @@ namespace OpenAPIService
 
     public class OpenApiService
     {
-        private static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
-        private static OpenApiDocument _source = new OpenApiDocument();
+        private static ConcurrentDictionary<OpenApiStyle, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<OpenApiStyle, OpenApiDocument>();
         private static UriTemplateTable _uriTemplateTable = new UriTemplateTable();
         private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
 
@@ -277,22 +276,33 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Get OpenApiDocument version of Microsoft Graph based on CSDL document
+        /// Gets OpenApiDocument version of Microsoft Graph based on CSDL document
+        /// or retrieves one from the concurrent dictionary based on the OpenApiStyle key.
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
-        /// <param name="styleOptions">Optional modal object containing the required styling options.</param>
+        /// <param name="styleOptions">Modal object containing the required styling options.</param>
         /// <returns>Instance of an OpenApiDocument</returns>
-        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, OpenApiStyleOptions styleOptions = null)
+        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, OpenApiStyleOptions styleOptions)
         {
-            var csdlHref = new Uri(graphUri);
-            if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
+            if (styleOptions == null)
+            {
+                throw new ArgumentNullException(nameof(styleOptions), "Parameter cannot be null.");
+            }
+
+            if (!forceRefresh && _OpenApiDocuments.TryGetValue(styleOptions.Style, out OpenApiDocument doc))
             {
                 return doc;
             }
 
+            if (string.IsNullOrEmpty(graphUri))
+            {
+                throw new ArgumentNullException(nameof(graphUri), "Parameter cannot be null or empty.");
+            }
+
+            var csdlHref = new Uri(graphUri);
             OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref, styleOptions);
-            _OpenApiDocuments[csdlHref] = source;
+            _OpenApiDocuments[styleOptions.Style] = source;
             return source;
         }
 
