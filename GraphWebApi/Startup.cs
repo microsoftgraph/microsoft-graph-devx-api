@@ -17,17 +17,22 @@ using FileService.Interfaces;
 using FileService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Services;
+using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
+using Serilog;
 
 namespace GraphWebApi
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             Configuration = configuration;
+            _env = hostingEnvironment;
         }
 
         public IConfiguration Configuration { get; }
+
+        private readonly IHostingEnvironment _env;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -52,6 +57,26 @@ namespace GraphWebApi
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.Configure<SamplesAdministrators>(Configuration);
+            #region AppInsights
+
+            services.AddApplicationInsightsTelemetry(options =>
+            {
+                options.RequestCollectionOptions.InjectResponseHeaders = true;
+                options.RequestCollectionOptions.TrackExceptions = true;
+                options.EnableAuthenticationTrackingJavaScript = true;
+                options.EnableHeartbeat = true;
+                options.EnableAdaptiveSampling = true;
+                options.EnableQuickPulseMetricStream = true;
+                options.EnableDebugLogger = true;
+            });
+
+            if (!_env.IsDevelopment())
+            {
+                services.ConfigureTelemetryModule<QuickPulseTelemetryModule>((module, o) =>
+                    module.AuthenticationApiKey = Configuration["ApplicationInsights:AppInsightsApiKey"]);
+            }
+
+            #endregion
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -65,7 +90,7 @@ namespace GraphWebApi
             {
                 app.UseHsts();
             }
-
+            app.UseSerilogRequestLogging();
             app.UseStaticFiles(new StaticFileOptions
             {
                 DefaultContentType = "text/plain",
