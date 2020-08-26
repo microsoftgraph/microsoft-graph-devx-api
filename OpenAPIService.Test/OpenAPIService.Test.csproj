@@ -14,10 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="TestFiles\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\OpenAPIService\OpenAPIService.csproj" />
   </ItemGroup>
 
