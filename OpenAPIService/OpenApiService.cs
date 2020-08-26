@@ -34,15 +34,14 @@ namespace OpenAPIService
 
     public class OpenApiService
     {
-        private static ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
-        private static OpenApiDocument _source = new OpenApiDocument();
+        private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
         private static UriTemplateTable _uriTemplateTable = new UriTemplateTable();
         private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
 
         /// <summary>
         /// Create partial document based on provided predicate
         /// </summary>
-        public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, OpenApiStyleOptions styleOptions, Func<OpenApiOperation, bool> predicate)
+        public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, string graphVersion, Func<OpenApiOperation, bool> predicate)
         {
 
             var subset = new OpenApiDocument
@@ -50,7 +49,7 @@ namespace OpenAPIService
                 Info = new OpenApiInfo()
                 {
                     Title = title,
-                    Version = styleOptions.GraphVersion
+                    Version = graphVersion
                 },
 
                 Components = new OpenApiComponents()
@@ -73,7 +72,7 @@ namespace OpenAPIService
 
             subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
 
-            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, styleOptions.GraphVersion) });
+            subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, graphVersion) });
 
             var results = FindOperations(source, predicate);
             foreach (var result in results)
@@ -101,13 +100,7 @@ namespace OpenAPIService
 
             if (subset.Paths == null)
             {
-                throw new ArgumentNullException("No paths returned.");
-            }
-
-            if (styleOptions.Style == OpenApiStyle.GEAutocomplete)
-            {
-                // Content property and its schema $refs are unnecessary for autocomplete
-                RemoveContent(subset);
+                throw new ArgumentException("No paths returned.");
             }
 
             CopyReferences(subset);
@@ -125,15 +118,15 @@ namespace OpenAPIService
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
         /// <returns>A predicate</returns>
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
-            OpenApiDocument source, bool forceRefresh)
-         {
+            OpenApiDocument source, bool forceRefresh = false)
+        {
             if (operationIds != null && tags != null)
             {
-                return null; // Cannot filter by operationIds and tags at the same time
+                throw new ArgumentException("Cannot filter by operationIds and tags at the same time.");
             }
             if (url != null && (operationIds != null || tags != null))
             {
-                return null; // Cannot filter by url and either 0perationIds and tags at the same time
+                throw new ArgumentException("Cannot filter by url and either operationIds and tags at the same time.");
             }
 
             Func<OpenApiOperation, bool> predicate;
@@ -181,7 +174,7 @@ namespace OpenAPIService
 
                 if (resultMatch == null)
                 {
-                    return null;
+                    throw new ArgumentException("The url supplied could not be found.");
                 }
 
                 /* Fetch the corresponding Operations Id(s) for the matched url */
@@ -193,7 +186,7 @@ namespace OpenAPIService
             }
             else
             {
-                predicate = null;
+                throw new ArgumentNullException("Either operationIds, tags or url need to be specified.");
             }
 
             return predicate;
@@ -203,8 +196,8 @@ namespace OpenAPIService
         /// Populates the _uriTemplateTable with the Graph url paths and the _openApiOperationsTable
         /// with the respective OpenApiOperations for these urls paths.
         /// </summary>
-        /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
-        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
+        /// <param name="source">The OpenAPI document.</param>
+        /// <returns>A task.</returns>
         private static async Task PopulateReferenceTablesAync(OpenApiDocument source)
         {
             HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
@@ -230,8 +223,8 @@ namespace OpenAPIService
         /// Create a representation of the OpenApiDocument to return from an API
         /// </summary>
         /// <param name="subset">OpenAPI document.</param>
-        /// <param name="OpenApiStyleOptions">The modal object containing the required styling options.</param>
-        /// <returns></returns>
+        /// <param name="styleOptions">The modal object containing the required styling options.</param>
+        /// <returns>A memory stream.</returns>
         public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
             var stream = new MemoryStream();
@@ -281,9 +274,8 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
-        /// <param name="styleOptions">Optional modal object containing the required styling options.</param>
-        /// <returns>Instance of an OpenApiDocument</returns>
-        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, OpenApiStyleOptions styleOptions = null)
+        /// <returns>A task of the value of an OpenAPI document.</returns>
+        public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
         {
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
@@ -291,7 +283,7 @@ namespace OpenAPIService
                 return doc;
             }
 
-            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref, styleOptions);
+            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
@@ -299,37 +291,52 @@ namespace OpenAPIService
         /// <summary>
         /// Update the OpenAPI document based on the style option
         /// </summary>
-        /// <param name="style"></param>
-        /// <param name="subsetOpenApiDocument"></param>
-        /// <returns></returns>
-        public static OpenApiDocument ApplyStyle(OpenApiStyleOptions styleOptions, OpenApiDocument subsetOpenApiDocument)
+        /// <param name="style">The OpenApiStyle value.</param>
+        /// <param name="subsetOpenApiDocument">The subset of an OpenAPI document.</param>
+        /// <returns>An OpenAPI doc with the respective style applied.</returns>
+        public static OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument)
         {
-            if (styleOptions.Style == OpenApiStyle.Plain)
+            if (style == OpenApiStyle.GEAutocomplete)
             {
-                return subsetOpenApiDocument;
+                // Clone doc before making changes
+                subsetOpenApiDocument = Clone(subsetOpenApiDocument);
+
+                // The Content property and its schema $refs are unnecessary for autocomplete
+                RemoveContent(subsetOpenApiDocument);
             }
-
-            /* For Powershell and PowerPlatform Styles */
-
-            // Clone doc before making changes
-            subsetOpenApiDocument = Clone(subsetOpenApiDocument);
-
-            var anyOfRemover = new AnyOfRemover();
-            var walker = new OpenApiWalker(anyOfRemover);
-            walker.Walk(subsetOpenApiDocument);
-
-            if (styleOptions.Style == OpenApiStyle.PowerShell)
+            else if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
-                // Format the OperationId for Powershell cmdlet names generation
-                var powershellFormatter = new PowershellFormatter();
-                walker = new OpenApiWalker(powershellFormatter);
+                /* For Powershell and PowerPlatform Styles */
+
+                // Clone doc before making changes
+                subsetOpenApiDocument = Clone(subsetOpenApiDocument);
+
+                var anyOfRemover = new AnyOfRemover();
+                var walker = new OpenApiWalker(anyOfRemover);
                 walker.Walk(subsetOpenApiDocument);
 
-                var version = subsetOpenApiDocument.Info.Version;
-                if (!new Regex("v\\d\\.\\d").Match(version).Success)
+                if (style == OpenApiStyle.PowerShell)
                 {
-                    subsetOpenApiDocument.Info.Version = "v1.0-" + version;
+                    // Format the OperationId for Powershell cmdlet names generation
+                    var powershellFormatter = new PowershellFormatter();
+                    walker = new OpenApiWalker(powershellFormatter);
+                    walker.Walk(subsetOpenApiDocument);
+
+                    var version = subsetOpenApiDocument.Info.Version;
+                    if (!new Regex("v\\d\\.\\d").Match(version).Success)
+                    {
+                        subsetOpenApiDocument.Info.Version = "v1.0-" + version;
+                    }
+
+                    // Remove the root path to make AutoREST happy
+                    subsetOpenApiDocument.Paths.Remove("/");
                 }
+            }
+
+            if (subsetOpenApiDocument.Paths == null ||
+                !subsetOpenApiDocument.Paths.Any())
+            {
+                throw new ArgumentException ("No paths returned.");
             }
 
             return subsetOpenApiDocument;
@@ -343,21 +350,26 @@ namespace OpenAPIService
             writer.Flush();
             stream.Position = 0;
             var reader = new OpenApiStreamReader();
-            return reader.Read(stream, out OpenApiDiagnostic diag);
+            return reader.Read(stream, out _);
         }
 
-        private static async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref, OpenApiStyleOptions styleOptions = null)
+        private static async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
         {
             var httpClient = CreateHttpClient();
 
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
 
-            OpenApiDocument document = ConvertCsdlToOpenApi(styleOptions, csdl);
+            OpenApiDocument document = ConvertCsdlToOpenApi(csdl);
 
             return document;
         }
 
-        public static OpenApiDocument ConvertCsdlToOpenApi(OpenApiStyleOptions styleOptions, Stream csdl)
+        /// <summary>
+        /// Converts CSDL to OpenAPI
+        /// </summary>
+        /// <param name="csdl">The CSDL stream.</param>
+        /// <returns>An OpenAPI document.</returns>
+        public static OpenApiDocument ConvertCsdlToOpenApi(Stream csdl)
         {
             var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader());
 
@@ -367,12 +379,12 @@ namespace OpenAPIService
                 EnableOperationId = true,
                 PrefixEntityTypeNameBeforeKey = true,
                 TagDepth = 2,
-                EnablePagination = styleOptions != null && styleOptions.EnablePagination,
-                EnableDiscriminatorValue = styleOptions != null && styleOptions.EnableDiscriminatorValue,
-                EnableDerivedTypesReferencesForRequestBody = styleOptions != null && styleOptions.EnableDerivedTypesReferencesForRequestBody,
-                EnableDerivedTypesReferencesForResponses = styleOptions != null && styleOptions.EnableDerivedTypesReferencesForResponses,
-                ShowRootPath = styleOptions != null && styleOptions.ShowRootPath,
-                ShowLinks = styleOptions != null && styleOptions.ShowLinks
+                EnablePagination = true,
+                EnableDiscriminatorValue = false,
+                EnableDerivedTypesReferencesForRequestBody = false,
+                EnableDerivedTypesReferencesForResponses = false,
+                ShowRootPath = true,
+                ShowLinks = true
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
