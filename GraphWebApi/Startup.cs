@@ -57,10 +57,12 @@ namespace GraphWebApi
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.Configure<SamplesAdministrators>(Configuration);
+
             #region AppInsights
 
             services.AddApplicationInsightsTelemetry(options =>
             {
+                options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
                 options.RequestCollectionOptions.InjectResponseHeaders = true;
                 options.RequestCollectionOptions.TrackExceptions = true;
                 options.EnableAuthenticationTrackingJavaScript = true;
@@ -68,6 +70,7 @@ namespace GraphWebApi
                 options.EnableAdaptiveSampling = true;
                 options.EnableQuickPulseMetricStream = true;
                 options.EnableDebugLogger = true;
+               
             });
 
             if (!_env.IsDevelopment())
