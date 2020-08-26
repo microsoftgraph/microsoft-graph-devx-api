@@ -311,6 +311,7 @@ namespace OpenAPIService
                 // Clone doc before making changes
                 subsetOpenApiDocument = Clone(subsetOpenApiDocument);
 
+                // Remove AnyOf
                 var anyOfRemover = new AnyOfRemover();
                 var walker = new OpenApiWalker(anyOfRemover);
                 walker.Walk(subsetOpenApiDocument);

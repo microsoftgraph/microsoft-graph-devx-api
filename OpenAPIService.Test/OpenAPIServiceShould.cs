@@ -65,7 +65,7 @@ namespace OpenAPIService.Test
         [InlineData("users.user.ListUser", "users.user", null)]
         [InlineData("users.user.ListUser", null, "/users")]
         [InlineData(null, "users.user", "/users")]
-        public void ThrowsArgumentExceptionInCreatePredicateWhenInvalidArgumentsAreSpecified(string operationIds, string tags, string url)
+        public void ThrowsArgumentExceptionInCreatePredicateWhenInvalidNumberOfArgumentsAreSpecified(string operationIds, string tags, string url)
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
@@ -86,7 +86,7 @@ namespace OpenAPIService.Test
         }
 
         [Fact]
-        public void ThrowsArgumentExceptionWhenInvalidUrlArgumentIsSpecified()
+        public void ThrowsArgumentExceptionInCreatePredicateWhenInvalidUrlArgumentIsSpecified()
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
