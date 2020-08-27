@@ -22,10 +22,20 @@ namespace OpenAPIService.Test
         }
 
         [Fact]
-        public void ReturnAllPathsInGraphCsdl()
+        public void ReturnAllPathsInConvertCsdlToOpenApi()
         {
-            Assert.Equal(4586, _graphBetaSource.Paths.Count);
-            Assert.NotNull(_graphBetaSource.Paths["/"]); // root path
+            // Arrange
+            var rootPath = "/";
+            var pathsCount = 4586;
+            var linksCount = _graphBetaSource.Paths[rootPath]
+                                .Operations[OperationType.Get]
+                                .Responses["200"]
+                                .Links.Count;
+
+            // Assert
+            Assert.Equal(pathsCount, _graphBetaSource.Paths.Count);
+            Assert.NotNull(_graphBetaSource.Paths["/"]);
+            Assert.Equal(62, linksCount);
         }
 
         [Fact]
@@ -76,7 +86,7 @@ namespace OpenAPIService.Test
                 string.IsNullOrEmpty(url))
             {
                 Assert.Throws<ArgumentNullException>(() => OpenApiService.CreatePredicate(operationIds: operationIds, tags: tags, url: url, source: source)
-                .GetAwaiter().GetResult());
+                                .GetAwaiter().GetResult());
             }
             else
             {
@@ -167,7 +177,9 @@ namespace OpenAPIService.Test
             if (style == OpenApiStyle.GEAutocomplete || style == OpenApiStyle.Plain)
             {
                 var content = subsetOpenApiDocument.Paths[url]
-                    .Operations[OperationType.Get].Responses["200"].Content;
+                                .Operations[OperationType.Get]
+                                .Responses["200"]
+                                .Content;
 
                 Assert.Single(subsetOpenApiDocument.Paths);
 
@@ -183,14 +195,19 @@ namespace OpenAPIService.Test
             else // PowerShell || PowerPlatform
             {
                 var anyOf = subsetOpenApiDocument.Paths[url]
-                    .Operations[OperationType.Post].Responses["200"].Content["application/json"].Schema.AnyOf;
+                                .Operations[OperationType.Post]
+                                .Responses["200"]
+                                .Content["application/json"]
+                                .Schema
+                                .AnyOf;
 
                 Assert.Null(anyOf);
 
                 if (style == OpenApiStyle.PowerShell)
                 {
                     var newOperationId = subsetOpenApiDocument.Paths[url]
-                    .Operations[OperationType.Post].OperationId;
+                                            .Operations[OperationType.Post]
+                                            .OperationId;
 
                     Assert.Equal("administrativeUnits_restore", newOperationId);
                 }
