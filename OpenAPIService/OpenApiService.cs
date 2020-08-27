@@ -270,7 +270,8 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Get OpenApiDocument version of Microsoft Graph based on CSDL document
+        /// Gets an OpenAPI document version of Microsoft Graph based on CSDL document
+        /// from a dictionary cache or gets a new instance.
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Don't read from in-memory cache.</param>
