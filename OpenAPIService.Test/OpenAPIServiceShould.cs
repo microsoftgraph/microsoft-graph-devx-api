@@ -75,7 +75,7 @@ namespace OpenAPIService.Test
         [InlineData("users.user.ListUser", "users.user", null)]
         [InlineData("users.user.ListUser", null, "/users")]
         [InlineData(null, "users.user", "/users")]
-        public void ThrowsArgumentExceptionInCreatePredicateWhenInvalidNumberOfArgumentsAreSpecified(string operationIds, string tags, string url)
+        public void ThrowsInvalidOperationExceptionInCreatePredicateWhenInvalidNumberOfArgumentsAreSpecified(string operationIds, string tags, string url)
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
@@ -85,25 +85,68 @@ namespace OpenAPIService.Test
                 string.IsNullOrEmpty(tags) &&
                 string.IsNullOrEmpty(url))
             {
-                Assert.Throws<ArgumentNullException>(() => OpenApiService.CreatePredicate(operationIds: operationIds, tags: tags, url: url, source: source)
-                                .GetAwaiter().GetResult());
+                var message = Assert.Throws<InvalidOperationException>(() => OpenApiService.CreatePredicate(operationIds: operationIds, tags: tags, url: url, source: source)
+                                .GetAwaiter().GetResult()).Message;
+                Assert.Equal("Either operationIds, tags or url need to be specified.", message);
             }
             else
             {
-                Assert.Throws<ArgumentException>(() => OpenApiService.CreatePredicate(operationIds: operationIds, tags: tags, url: url, source: source)
-                                .GetAwaiter().GetResult());
+                var message = Assert.Throws<InvalidOperationException>(() => OpenApiService.CreatePredicate(operationIds: operationIds, tags: tags, url: url, source: source)
+                                .GetAwaiter().GetResult()).Message;
+
+                if (url != null && (operationIds != null || tags != null))
+                {
+                    Assert.Equal("Cannot filter by url and either operationIds and tags at the same time.", message);
+                }
+                else if (operationIds != null && tags != null)
+                {
+                    Assert.Equal("Cannot filter by operationIds and tags at the same time.", message);
+                }
             }
         }
 
         [Fact]
-        public void ThrowsArgumentExceptionInCreatePredicateWhenInvalidUrlArgumentIsSpecified()
+        public void ThrowsArgumentExceptionInCreatePredicateWhenNonExistentUrlArgumentIsSpecified()
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
 
             // Act and Assert
-            Assert.Throws<ArgumentException>(() => OpenApiService.CreatePredicate(operationIds: null, tags: null, url: "foo", source: source)
-                                .GetAwaiter().GetResult());
+            var message = Assert.Throws<ArgumentException>(() => OpenApiService.CreatePredicate(operationIds: null, tags: null, url: "/foo", source: source)
+                                .GetAwaiter().GetResult()).Message;
+            Assert.Equal("The url supplied could not be found.", message);
+        }
+
+        [Fact]
+        public void ThrowsArgumentExceptionInApplyStyleWhenNoPathsAreReturned()
+        {
+            // Arrange
+            OpenApiDocument source = _graphBetaSource;
+
+            var predicate = OpenApiService.CreatePredicate(operationIds: null, tags: null, url: "/", source: source)
+                                .GetAwaiter().GetResult(); // root path will be non-existent in a PowerShell styled doc.
+
+            var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+
+            // Act & Assert
+            var message = Assert.Throws<ArgumentException>(() => OpenApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument)).Message;
+            Assert.Equal("No paths found for the supplied parameters.", message);
+        }
+
+        [Theory]
+        [InlineData("foo.bar", null)]
+        [InlineData(null, "bar.foo")]
+        public void ThrowsArgumentExceptionInCreateFilteredDocumentWhenNonExistentOperationIdsAndTagsAreSupplied(string operationIds, string tags)
+        {
+            // Arrange
+            OpenApiDocument source = _graphBetaSource;
+
+            var predicate = OpenApiService.CreatePredicate(operationIds: operationIds, tags: tags, url: null, source: source)
+                                .GetAwaiter().GetResult();
+
+            // Act & Assert
+            var message = Assert.Throws<ArgumentException>(() => OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate)).Message;
+            Assert.Equal("No paths found for the supplied parameters.", message);
         }
 
         [Theory]
