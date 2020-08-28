@@ -50,7 +50,7 @@ namespace GraphWebApi.Controllers
 
                 if (graphUri == null)
                 {
-                    throw new ArgumentException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
+                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
                 OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
@@ -72,9 +72,13 @@ namespace GraphWebApi.Controllers
                     return new FileStreamResult(stream, "application/json");
                 }
             }
-            catch (ArgumentException ex)
+            catch (InvalidOperationException ex)
             {
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+            }
+            catch (ArgumentException ex)
+            {
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
@@ -103,7 +107,7 @@ namespace GraphWebApi.Controllers
 
                 if (graphUri == null)
                 {
-                    throw new ArgumentException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
+                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
                 OpenApiDocument source = OpenApiService.ConvertCsdlToOpenApi(Request.Body);
@@ -125,9 +129,13 @@ namespace GraphWebApi.Controllers
                     return new FileStreamResult(stream, "application/json");
                 }
             }
-            catch (ArgumentException ex)
+            catch (InvalidOperationException ex)
             {
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+            }
+            catch (ArgumentException ex)
+            {
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
@@ -151,7 +159,7 @@ namespace GraphWebApi.Controllers
 
                 if (graphUri == null)
                 {
-                    throw new ArgumentException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
+                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
                 var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
@@ -160,9 +168,13 @@ namespace GraphWebApi.Controllers
 
                 return new EmptyResult();
             }
-            catch (ArgumentException ex)
+            catch (InvalidOperationException ex)
             {
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+            }
+            catch (ArgumentException ex)
+            {
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {

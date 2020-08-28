@@ -100,7 +100,7 @@ namespace OpenAPIService
 
             if (subset.Paths == null)
             {
-                throw new ArgumentException("No paths returned.");
+                throw new ArgumentException("No paths found for the supplied parameters.");
             }
 
             CopyReferences(subset);
@@ -120,13 +120,13 @@ namespace OpenAPIService
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
             OpenApiDocument source, bool forceRefresh = false)
         {
-            if (operationIds != null && tags != null)
-            {
-                throw new ArgumentException("Cannot filter by operationIds and tags at the same time.");
-            }
             if (url != null && (operationIds != null || tags != null))
             {
-                throw new ArgumentException("Cannot filter by url and either operationIds and tags at the same time.");
+                throw new InvalidOperationException("Cannot filter by url and either operationIds and tags at the same time.");
+            }
+            else if (operationIds != null && tags != null)
+            {
+                throw new InvalidOperationException("Cannot filter by operationIds and tags at the same time.");
             }
 
             Func<OpenApiOperation, bool> predicate;
@@ -186,7 +186,7 @@ namespace OpenAPIService
             }
             else
             {
-                throw new ArgumentNullException("Either operationIds, tags or url need to be specified.");
+                throw new InvalidOperationException("Either operationIds, tags or url need to be specified.");
             }
 
             return predicate;
@@ -338,7 +338,7 @@ namespace OpenAPIService
             if (subsetOpenApiDocument.Paths == null ||
                 !subsetOpenApiDocument.Paths.Any())
             {
-                throw new ArgumentException ("No paths returned.");
+                throw new ArgumentException ("No paths found for the supplied parameters.");
             }
 
             return subsetOpenApiDocument;
