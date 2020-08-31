@@ -3,8 +3,8 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using GraphWebApi.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters.Xml;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -50,31 +50,41 @@ namespace GraphWebApi.Controllers
 
                 if (graphUri == null)
                 {
-                    return new BadRequestResult();
+                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
+                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
                 var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
 
-                if (predicate == null)
-                {
-                    return new BadRequestResult();
-                }
+                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
-                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions, predicate);
-
-                subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions, subsetOpenApiDocument);
+                subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
 
                 var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
-                return new FileStreamResult(stream, "application/json");
+
+                if (styleOptions.OpenApiFormat == "yaml")
+                {
+                    return new FileStreamResult(stream, "text/yaml");
+                }
+                else
+                {
+                    return new FileStreamResult(stream, "application/json");
+                }
             }
-            catch
+            catch (InvalidOperationException ex)
             {
-                return new BadRequestResult();
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+            }
+            catch (ArgumentException ex)
+            {
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
-
 
         [Route("openapi")]
         [HttpPost]
@@ -97,42 +107,41 @@ namespace GraphWebApi.Controllers
 
                 if (graphUri == null)
                 {
-                    return new BadRequestResult();
+                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                OpenApiDocument source = OpenApiService.ConvertCsdlToOpenApi(styleOptions, Request.Body);
+                OpenApiDocument source = OpenApiService.ConvertCsdlToOpenApi(Request.Body);
 
                 var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
 
-                if (predicate == null)
-                {
-                    return new BadRequestResult();
-                }
+                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
-                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions, predicate);
-
-                subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions, subsetOpenApiDocument);
+                subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
 
                 var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
+
                 if (styleOptions.OpenApiFormat == "yaml")
                 {
-                    return new FileStreamResult(stream, "application/yaml");
-                } else
+                    return new FileStreamResult(stream, "text/yaml");
+                }
+                else
                 {
                     return new FileStreamResult(stream, "application/json");
                 }
             }
-            catch(Exception ex)
+            catch (InvalidOperationException ex)
             {
-                
-                return new BadRequestObjectResult(new ProblemDetails()
-                {
-                    Detail = ex.Message
-                });
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+            }
+            catch (ArgumentException ex)
+            {
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
-
-
 
         [Route("openapi/operations")]
         [HttpGet]
@@ -150,18 +159,26 @@ namespace GraphWebApi.Controllers
 
                 if (graphUri == null)
                 {
-                    return new BadRequestResult();
+                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions);
+                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
                 WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                     graphOpenApi, Response.Body, styleOptions.Style);
 
                 return new EmptyResult();
             }
-            catch
+            catch (InvalidOperationException ex)
             {
-                return new BadRequestResult();
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+            }
+            catch (ArgumentException ex)
+            {
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
 
