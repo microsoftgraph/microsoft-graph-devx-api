@@ -13,6 +13,8 @@ namespace OpenAPIService
    /// </summary>
     internal class PowershellFormatter : OpenApiVisitorBase
     {
+        private const string DefaultPatchPrefix = ".Update";
+        private const string NewPatchPrefix = "_Set";
 
         /// <summary>
         /// The last '.' character of the OperationId value separates the method group from the operation name.
@@ -27,7 +29,16 @@ namespace OpenAPIService
             {
                 StringBuilder newOperationId = new StringBuilder(operationId);
 
-                newOperationId[charPos] = '_';
+                // Patch operation id should have the format -> {xxx}_Set{Yyy}
+                if (operationId.Contains(DefaultPatchPrefix))
+                {
+                    newOperationId.Replace(DefaultPatchPrefix, NewPatchPrefix);
+                }
+                else
+                {
+                    newOperationId[charPos] = '_';
+                }
+
                 operation.OperationId = newOperationId.ToString();
             }
         }
