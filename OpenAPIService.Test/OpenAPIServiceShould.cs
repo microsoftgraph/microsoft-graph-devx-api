@@ -26,7 +26,7 @@ namespace OpenAPIService.Test
         {
             // Arrange
             var rootPath = "/";
-            var pathsCount = 4586;
+            var pathsCount = 4458;
             var linksCount = _graphBetaSource.Paths[rootPath]
                                 .Operations[OperationType.Get]
                                 .Responses["200"]
@@ -199,11 +199,12 @@ namespace OpenAPIService.Test
         }
 
         [Theory]
-        [InlineData(OpenApiStyle.Plain, "/users/{user-id}")]
-        [InlineData(OpenApiStyle.GEAutocomplete, "/users/{user-id}")]
-        [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore")]
-        [InlineData(OpenApiStyle.PowerPlatform, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore")]
-        public void ReturnOpenApiDocumentInApplyStyleForAllOpenApiStyles(OpenApiStyle style, string url)
+        [InlineData(OpenApiStyle.Plain, "/users/{user-id}", OperationType.Get)]
+        [InlineData(OpenApiStyle.GEAutocomplete, "/users/{user-id}", OperationType.Get)]
+        [InlineData(OpenApiStyle.PowerPlatform, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
+        [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
+        [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch)]
+        public void ReturnOpenApiDocumentInApplyStyleForAllOpenApiStyles(OpenApiStyle style, string url, OperationType operationType)
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
@@ -220,7 +221,7 @@ namespace OpenAPIService.Test
             if (style == OpenApiStyle.GEAutocomplete || style == OpenApiStyle.Plain)
             {
                 var content = subsetOpenApiDocument.Paths[url]
-                                .Operations[OperationType.Get]
+                                .Operations[operationType]
                                 .Responses["200"]
                                 .Content;
 
@@ -237,22 +238,36 @@ namespace OpenAPIService.Test
             }
             else // PowerShell || PowerPlatform
             {
-                var anyOf = subsetOpenApiDocument.Paths[url]
-                                .Operations[OperationType.Post]
-                                .Responses["200"]
-                                .Content["application/json"]
-                                .Schema
-                                .AnyOf;
+                if (operationType == OperationType.Post)
+                {
+                    var anyOf = subsetOpenApiDocument.Paths[url]
+                                    .Operations[operationType]
+                                    .Responses["200"]
+                                    .Content["application/json"]
+                                    .Schema
+                                    .AnyOf;
 
-                Assert.Null(anyOf);
+                    Assert.Null(anyOf);
+                }
 
                 if (style == OpenApiStyle.PowerShell)
                 {
-                    var newOperationId = subsetOpenApiDocument.Paths[url]
-                                            .Operations[OperationType.Post]
+                    if (operationType == OperationType.Post)
+                    {
+                        var newOperationId = subsetOpenApiDocument.Paths[url]
+                                            .Operations[operationType]
                                             .OperationId;
 
-                    Assert.Equal("administrativeUnits_restore", newOperationId);
+                        Assert.Equal("administrativeUnits_restore", newOperationId);
+                    }
+                    else if (operationType == OperationType.Patch)
+                    {
+                        var newOperationId = subsetOpenApiDocument.Paths[url]
+                                            .Operations[operationType]
+                                            .OperationId;
+
+                        Assert.Equal("users.user_SetUser", newOperationId);
+                    }
                 }
             }
         }
@@ -272,7 +287,7 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = OpenApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(4585, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(4457, subsetOpenApiDocument.Paths.Count);
             Assert.False(subsetOpenApiDocument.Paths.ContainsKey("/")); // root path
         }
     }
