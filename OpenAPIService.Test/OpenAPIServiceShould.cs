@@ -204,6 +204,7 @@ namespace OpenAPIService.Test
         [InlineData(OpenApiStyle.PowerPlatform, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
         [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
         [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch)]
+        [InlineData(OpenApiStyle.PowerShell, "/applications/{application-id}/logo", OperationType.Put)]
         public void ReturnOpenApiDocumentInApplyStyleForAllOpenApiStyles(OpenApiStyle style, string url, OperationType operationType)
         {
             // Arrange
