@@ -269,6 +269,14 @@ namespace OpenAPIService.Test
 
                         Assert.Equal("users.user_UpdateUser", newOperationId);
                     }
+                    else if (operationType == OperationType.Put)
+                    {
+                        var newOperationId = subsetOpenApiDocument.Paths[url]
+                                            .Operations[operationType]
+                                            .OperationId;
+
+                        Assert.Equal("applications.application_SetLogo", newOperationId);
+                    }
                 }
             }
         }
