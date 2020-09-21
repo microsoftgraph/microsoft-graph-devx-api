@@ -267,7 +267,7 @@ namespace OpenAPIService.Test
                                             .Operations[operationType]
                                             .OperationId;
 
-                        Assert.Equal("users.user_SetUser", newOperationId);
+                        Assert.Equal("users.user_UpdateUser", newOperationId);
                     }
                 }
             }
