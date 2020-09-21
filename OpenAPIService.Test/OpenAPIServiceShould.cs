@@ -202,10 +202,11 @@ namespace OpenAPIService.Test
         [InlineData(OpenApiStyle.Plain, "/users/{user-id}", OperationType.Get)]
         [InlineData(OpenApiStyle.GEAutocomplete, "/users/{user-id}", OperationType.Get)]
         [InlineData(OpenApiStyle.PowerPlatform, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
-        [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
-        [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch)]
-        [InlineData(OpenApiStyle.PowerShell, "/applications/{application-id}/logo", OperationType.Put)]
-        public void ReturnOpenApiDocumentInApplyStyleForAllOpenApiStyles(OpenApiStyle style, string url, OperationType operationType)
+        [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post, "administrativeUnits_restore")]
+        [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch, "users.user_UpdateUser")]
+        [InlineData(OpenApiStyle.PowerShell, "/applications/{application-id}/logo", OperationType.Put, "applications.application_SetLogo")]
+        public void ReturnStyledOpenApiDocumentInApplyStyleForAllOpenApiStyles(OpenApiStyle style, string url,
+            OperationType operationType, string expectedOperationId = null)
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
@@ -259,7 +260,7 @@ namespace OpenAPIService.Test
                                             .Operations[operationType]
                                             .OperationId;
 
-                        Assert.Equal("administrativeUnits_restore", newOperationId);
+                        Assert.Equal(expectedOperationId, newOperationId);
                     }
                     else if (operationType == OperationType.Patch)
                     {
@@ -267,7 +268,7 @@ namespace OpenAPIService.Test
                                             .Operations[operationType]
                                             .OperationId;
 
-                        Assert.Equal("users.user_UpdateUser", newOperationId);
+                        Assert.Equal(expectedOperationId, newOperationId);
                     }
                     else if (operationType == OperationType.Put)
                     {
@@ -275,7 +276,7 @@ namespace OpenAPIService.Test
                                             .Operations[operationType]
                                             .OperationId;
 
-                        Assert.Equal("applications.application_SetLogo", newOperationId);
+                        Assert.Equal(expectedOperationId, newOperationId);
                     }
                 }
             }
