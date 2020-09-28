@@ -891,7 +891,7 @@ namespace CodeSnippetsReflection.Test
             var result = new CSharpGenerator(betaIeEdmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
-            const string expectedSnippet = "var set = new TermStore.Set\r\n" +
+            const string expectedSnippet = "var set = new Microsoft.Graph.TermStore.Set\r\n" +
                                            "{\r\n" +
                                                 "\tDescription = \"mySet\"\r\n" +
                                            "};\r\n" +
