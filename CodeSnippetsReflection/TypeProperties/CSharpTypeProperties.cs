@@ -7,6 +7,11 @@ namespace CodeSnippetsReflection.TypeProperties
     public class CSharpTypeProperties
     {
         /// <summary>
+        /// Default namespace string for the graph
+        /// </summary>
+        private const string DefaultNamespace = "microsoft.graph";
+
+        /// <summary>
         /// returns C# class name from graph type: microsoft.graph.data => Data
         /// </summary>
         public string ClassName {
@@ -19,6 +24,23 @@ namespace CodeSnippetsReflection.TypeProperties
                 else if (className.EndsWith("Request"))
                 {
                     className += "Object"; // disambiguate class names that end with Request
+                }
+
+                string namespaceString = (string)EdmType.GetType().GetProperty("Namespace")?.GetValue(EdmType, null) ?? DefaultNamespace;
+                // the classname is okay if we are in the default(or Edm) namespace.
+                if (namespaceString.Equals(DefaultNamespace) || namespaceString == "Edm") 
+                    return className;
+
+                // Otherwise modify the classname by concatenation the Namespace prefix.
+                // 1. Fist remove the prefix which is the default namespace
+                // 2. Join any parts by uppercase first letter and dots.
+                var suffix = namespaceString.Replace(DefaultNamespace + ".", string.Empty);
+                var segments = suffix.Split(".");
+                foreach (var segment in segments)
+                {
+                    // prepend the uppercase of each segment and form the classname
+                    var uppercaseSegment = CommonGenerator.UppercaseFirstLetter(segment);
+                    className = uppercaseSegment + "." + className;
                 }
                 return className;
             }
