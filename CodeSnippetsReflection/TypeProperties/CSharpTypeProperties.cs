@@ -32,7 +32,7 @@ namespace CodeSnippetsReflection.TypeProperties
                 if (namespaceString.Equals(DefaultNamespace) || namespaceString == "Edm") 
                     return className;
 
-                // Otherwise modify the classname by concatenation the Namespace prefix.
+                // Otherwise modify the classname by concatenating with the Namespace prefix.
                 // Join any parts by uppercase first letter and dots.
                 var segments = namespaceString.Split(".");
                 var fullClassName = string.Empty;
