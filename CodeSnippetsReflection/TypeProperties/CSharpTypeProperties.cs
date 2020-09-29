@@ -1,7 +1,7 @@
 ﻿using CodeSnippetsReflection.LanguageGenerators;
 using Microsoft.OData.Edm;
 using System.Linq;
-using System.Reflection.Metadata;
+using System.Text;
 
 namespace CodeSnippetsReflection.TypeProperties
 {
@@ -35,15 +35,17 @@ namespace CodeSnippetsReflection.TypeProperties
                 // Otherwise modify the classname by concatenating with the Namespace prefix.
                 // Join any parts by uppercase first letter and dots.
                 var segments = namespaceString.Split(".");
-                var fullClassName = string.Empty;
+                var stringBuilder = new StringBuilder();
                 foreach (var segment in segments)
                 {
                     // prepend the uppercase of each segment and form the classname
                     var uppercaseSegment = CommonGenerator.UppercaseFirstLetter(segment);
-                    fullClassName = fullClassName + "." + uppercaseSegment;
+                    stringBuilder.Append("." + uppercaseSegment);
                 }
+                // append the classname
+                stringBuilder.Append("." + className);
                 // remove starting dot
-                return fullClassName.Substring(1) + "." + className;
+                return stringBuilder.ToString().Substring(1);
             }
         }
 
