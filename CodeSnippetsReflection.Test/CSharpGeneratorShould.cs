@@ -871,5 +871,38 @@ namespace CodeSnippetsReflection.Test
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
+
+        [Fact]
+        // This tests asserts that snippets is correctly generated for other namespaces
+        public void GeneratesSnippetsInOtherNamespace()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/beta/termStore/sets/{setId}");
+            const string jsonObject = "{\r\n" +
+                                      "  \"description\": \"mySet\",\r\n" +
+                                      "}";
+            requestPayload.Content = new StringContent(jsonObject);
+            string betaServiceUrl = "https://graph.microsoft.com/beta";
+            IEdmModel betaIeEdmModel = CsdlReader.Parse(XmlReader.Create(betaServiceUrl + "/$metadata"));
+            var snippetModel = new SnippetModel(requestPayload, betaServiceUrl, betaIeEdmModel);
+            
+            //Act by generating the code snippet
+            var result = new CSharpGenerator(betaIeEdmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "var set = new Microsoft.Graph.TermStore.Set\r\n" +
+                                           "{\r\n" +
+                                                "\tDescription = \"mySet\"\r\n" +
+                                           "};\r\n" +
+                                           "\r\n" +
+                                           "await graphClient.TermStore.Sets[\"{setId}\"]\n" +
+                                                "\t.Request()\n" +
+                                                "\t.UpdateAsync(set);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
     }
 }
