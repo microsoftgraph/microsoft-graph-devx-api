@@ -4,15 +4,16 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 
 namespace CodeSnippetsReflection.App
 {
     /// <summary>
     /// This is a thin layer that exposes snippet generation logic as an executable.
     /// It takes two arguments:
-    /// Argument 0: Full path to a directory which holds HTTP snippets. HTTP snippets are expected to appear
+    /// SnippetPath: Full path to a directory which holds HTTP snippets. HTTP snippets are expected to appear
     ///             one per file where the file name ends with -httpSnippet.
-    /// Argument 1: Languages, comma separated.
+    /// Languages:   Languages, comma separated.
     ///             As of this writing, values are c#, javascript, objective-c, java
     /// 
     /// Output is generated in the same folder as the HTTP snippets. -httpSnippet part of the file name is
@@ -22,23 +23,30 @@ namespace CodeSnippetsReflection.App
     {
         static void Main(string[] args)
         {
-            if (args.Length != 2)
+            IConfiguration config = new ConfigurationBuilder()
+                .AddCommandLine(args)
+                .Build();
+
+            var snippetsPathArg = config.GetSection("SnippetsPath");
+            var languagesArg = config.GetSection("Languages");
+            if (!snippetsPathArg.Exists() || !languagesArg.Exists())
             {
                 Console.Error.WriteLine("Http snippets directory and languages should be specified");
                 Console.WriteLine(@"Example usage:
-  .\CodeSnippetReflection.App.exe C:\snippets c#,javascript");
+  .\CodeSnippetReflection.App.exe --SnippetsPath C:\snippets --Languages c#,javascript");
                 return;
             }
 
-            var httpSnippetsDir = args[0];
+            var httpSnippetsDir = snippetsPathArg.Value;
             if (!Directory.Exists(httpSnippetsDir))
             {
                 Console.Error.WriteLine($@"Directory {httpSnippetsDir} does not exist!");
                 return;
             }
 
-            var languages = args[1]
+            var languages = languagesArg.Value
                 .Split(",")
+                .Select(l => l.Trim())
                 .Where(l => l != string.Empty) // eliminate trailing, leading or consecutive commas
                 .Distinct();
 
@@ -92,6 +100,8 @@ namespace CodeSnippetsReflection.App
                 // This is a very fast operation, it is fine to make is synchronuous.
                 // With the parallel foreach in the main method, processing all snippets for C# in both Beta and V1 takes about 7 seconds.
                 // As of this writing, the code was processing 2650 snippets
+                // Using async-await is costlier as this operation is all in-memory and task creation and scheduling overhead is high for that.
+                // With async-await, the same operation takes 1 minute 7 seconds.
                 using var message = streamContent.ReadAsHttpRequestMessageAsync().Result;
                 snippet = generator.ProcessPayloadRequest(message, language);
             }
