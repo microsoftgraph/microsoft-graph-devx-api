@@ -305,11 +305,42 @@ namespace CodeSnippetsReflection.LanguageGenerators
         {
             var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
             var namespaceString = (string)edmType.GetType().GetProperty("Namespace")?.GetValue(edmType, null) ?? string.Empty;
-            var namespaceModel = (namespaceString.Equals("microsoft.graph") || namespaceString.Equals("Edm")) ? string.Empty : namespaceString.Split(".").Last();
-            //we need to split the string and get last item taking the namespace into account
-            //eg microsoft.graph.data => MSGraphData
-            //eg microsoft.graph.termStore.data => MSGraphTermStoreData
-            return "MSGraph" + CommonGenerator.UppercaseFirstLetter(namespaceModel) + CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last());
+            var typeString = CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last());
+            var stringBuilder = new StringBuilder();
+            
+            switch (namespaceString)
+            {
+                case "microsoft.graph":
+                case "Edm":
+                    //Start with MSGraph
+                    stringBuilder.Append("MSGraph");
+                    // no namespaces inserted
+                    // Append the type
+                    stringBuilder.Append(CommonGenerator.UppercaseFirstLetter(typeString)) ;
+                    break;
+
+                default:
+                    // extract the namespace/sub namespaces to obtain the name
+                    // microsoft.graph.termStore.set => MSGraphTermStoreSet
+                    // alpha.beta.omega.theta => AlphaBetaOmegaTheta
+                    var nameSpaceStringChunks = namespaceString.Split(".");
+                    if ((nameSpaceStringChunks.Length > 2) && nameSpaceStringChunks[0].Equals("microsoft") && nameSpaceStringChunks[1].Equals("graph"))
+                    {
+                        //Start with MSGraph
+                        stringBuilder.Append("MSGraph");
+                        // skip the microsoft and the graph in the full string
+                        nameSpaceStringChunks = nameSpaceStringChunks.Skip(2).ToArray();
+                    }
+                    //Uppercase each sub namespace and append it.
+                    foreach (var chunk in nameSpaceStringChunks)
+                    {
+                        stringBuilder.Append(CommonGenerator.UppercaseFirstLetter(chunk));
+                    }
+                    // Append the type
+                    stringBuilder.Append(CommonGenerator.UppercaseFirstLetter(typeString));
+                    break;
+            }
+            return stringBuilder.ToString();
         }
     }
     internal class ObjectiveCExpressions : LanguageExpressions
