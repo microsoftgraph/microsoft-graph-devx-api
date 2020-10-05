@@ -304,9 +304,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private string GetObjectiveCModelName(ODataPathSegment pathSegment, ICollection<string> path)
         {
             var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
-            //we need to split the string and get last item
+            var namespaceString = (string)edmType.GetType().GetProperty("Namespace")?.GetValue(edmType, null) ?? string.Empty;
+            var namespaceModel = (namespaceString.Equals("microsoft.graph") || namespaceString.Equals("Edm")) ? string.Empty : namespaceString.Split(".").Last();
+            //we need to split the string and get last item taking the namespace into account
             //eg microsoft.graph.data => MSGraphData
-            return "MSGraph" + CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last());
+            //eg microsoft.graph.termStore.data => MSGraphTermStoreData
+            return "MSGraph" + CommonGenerator.UppercaseFirstLetter(namespaceModel) + CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last());
         }
     }
     internal class ObjectiveCExpressions : LanguageExpressions

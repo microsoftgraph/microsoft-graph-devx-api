@@ -276,5 +276,51 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
 
+        [Fact]
+        //This tests that snippets that Namespaces and sub namespaces are taken into account.
+        public void GeneratesSnippetsWithMultipleNamespaces()
+        {
+            //Arrange
+            string authProviderPrefixBeta = "MSHTTPClient *httpClient = [MSClientFactory createHTTPClientWithAuthenticationProvider:authenticationProvider];\r\n\r\n" +
+                                                      "NSString *MSGraphBaseURL = @\"https://graph.microsoft.com/beta/\";\r\n";
+            LanguageExpressions expressions = new ObjectiveCExpressions();
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/beta/termStore/sets/{setId}");
+            const string jsonObject = "{\r\n" +
+                                      "  \"description\": \"mySet\",\r\n" +
+                                      "}";
+            requestPayload.Content = new StringContent(jsonObject);
+            string betaServiceUrl = "https://graph.microsoft.com/beta";
+            IEdmModel betaIeEdmModel = CsdlReader.Parse(XmlReader.Create(betaServiceUrl + "/$metadata"));
+            var snippetModel = new SnippetModel(requestPayload, betaServiceUrl, betaIeEdmModel);
+
+            //Act by generating the code snippet
+            var result = new ObjectiveCGenerator(betaIeEdmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet = "NSMutableURLRequest *urlRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:[MSGraphBaseURL stringByAppendingString:@\"/termStore/sets/{setId}\"]]];\r\n" +
+                                           "[urlRequest setHTTPMethod:@\"PATCH\"];\r\n" +
+                                           "[urlRequest setValue:@\"text/plain\" forHTTPHeaderField:@\"Content-Type\"];\r\n" +
+                                           "\r\n" +
+                                           "MSGraphTermStoreSet *set = [[MSGraphTermStoreSet alloc] init];\r\n" +
+                                           "[set setDescription:@\"mySet\"];\r\n" +
+                                           "\r\n" +
+                                           "NSError *error;\r\n" +
+                                           "NSData *setData = [set getSerializedDataWithError:&error];\r\n" +
+                                           "[urlRequest setHTTPBody:setData];\r\n" +
+                                           "\r\n" +
+                                           "MSURLSessionDataTask *meDataTask = [httpClient dataTaskWithRequest:urlRequest \r\n" +
+                                           "\tcompletionHandler: ^(NSData *data, NSURLResponse *response, NSError *nserror) {\r\n" +
+                                           "\r\n" +
+                                           "\t\t//Request Completed\r\n" +
+                                           "\r\n" +
+                                           "}];\r\n" +
+                                           "\r\n" +
+                                           "[meDataTask execute];";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(authProviderPrefixBeta + expectedSnippet, result);
+        }
+
     }
 }
