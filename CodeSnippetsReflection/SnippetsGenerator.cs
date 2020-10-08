@@ -4,6 +4,7 @@ using System.Xml;
 using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
 using CodeSnippetsReflection.LanguageGenerators;
+using System.Collections.Generic;
 
 namespace CodeSnippetsReflection
 {
@@ -12,6 +13,14 @@ namespace CodeSnippetsReflection
     /// </summary>
     public class SnippetsGenerator : ISnippetsGenerator
     {
+        public static HashSet<string> SupportedLanguages = new HashSet<string>
+        {
+            "c#",
+            "javascript",
+            "objective-c",
+            "java"
+        };
+
         private Lazy<IEdmModel> IedmModelV1 { get; set; }
         private Lazy<IEdmModel> IedmModelBeta { get; set; }
         private Uri ServiceRootV1 { get; set; }
