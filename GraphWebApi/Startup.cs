@@ -62,7 +62,7 @@ namespace GraphWebApi
 
             services.AddApplicationInsightsTelemetry(options =>
             {
-                options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
+               // options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
                 options.RequestCollectionOptions.InjectResponseHeaders = false;
                 options.RequestCollectionOptions.TrackExceptions = false;
                 options.EnableAuthenticationTrackingJavaScript = false;
