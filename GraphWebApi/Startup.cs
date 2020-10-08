@@ -63,14 +63,13 @@ namespace GraphWebApi
             services.AddApplicationInsightsTelemetry(options =>
             {
                 options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
-                options.RequestCollectionOptions.InjectResponseHeaders = true;
-                options.RequestCollectionOptions.TrackExceptions = true;
-                options.EnableAuthenticationTrackingJavaScript = true;
-                options.EnableHeartbeat = true;
-                options.EnableAdaptiveSampling = true;
-                options.EnableQuickPulseMetricStream = true;
-                options.EnableDebugLogger = true;
-               
+                options.RequestCollectionOptions.InjectResponseHeaders = false;
+                options.RequestCollectionOptions.TrackExceptions = false;
+                options.EnableAuthenticationTrackingJavaScript = false;
+                options.EnableHeartbeat = false;
+                options.EnableAdaptiveSampling = false;
+                options.EnableQuickPulseMetricStream = false;
+                options.EnableDebugLogger = false;
             });
 
             if (!_env.IsDevelopment())
