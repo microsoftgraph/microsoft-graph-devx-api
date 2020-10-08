@@ -18,9 +18,9 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using Tavis.UriTemplates;
 using System.Text;
 using OpenAPIService.Common;
+using UriMatchService;
 
 namespace OpenAPIService
 {
