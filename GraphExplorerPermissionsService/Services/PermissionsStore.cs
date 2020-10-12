@@ -15,13 +15,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Tavis.UriTemplates;
+using UriMatchingService;
 
 namespace GraphExplorerPermissionsService
 {
     public class PermissionsStore : IPermissionsStore
     {
-        private UriTemplateTable _urlTemplateTable;
+        private UriTemplateMatcher _urlTemplateMatcher;
         private IDictionary<int, object> _scopesListTable;
         private readonly IMemoryCache _permissionsCache;
         private readonly IFileUtility _fileUtility;
@@ -51,7 +51,7 @@ namespace GraphExplorerPermissionsService
         /// </summary>
         private void SeedPermissionsTables()
         {
-            _urlTemplateTable = new UriTemplateTable();
+            _urlTemplateMatcher = new UriTemplateMatcher();
             _scopesListTable = new Dictionary<int, object>();
 
             HashSet<string> uniqueRequestUrlsTable = new HashSet<string>();
@@ -85,7 +85,7 @@ namespace GraphExplorerPermissionsService
                             count++;
 
                             // Add the request url
-                            _urlTemplateTable.Add(count.ToString(), new UriTemplate(requestUrl));
+                            _urlTemplateMatcher.Add(count.ToString(), requestUrl);
 
                             // Add the permission scopes
                             _scopesListTable.Add(count, property.Value);
@@ -252,7 +252,7 @@ namespace GraphExplorerPermissionsService
                     requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
 
                     // Check if requestUrl is contained in our Url Template table
-                    TemplateMatch resultMatch = _urlTemplateTable.Match(new Uri(requestUrl.ToLower(), UriKind.RelativeOrAbsolute));
+                    TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl.ToLower(), UriKind.RelativeOrAbsolute));
 
                     if (resultMatch == null)
                     {

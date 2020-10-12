@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Text;
 using OpenAPIService.Common;
-using UriMatchService;
+using UriMatchingService;
 
 namespace OpenAPIService
 {
@@ -35,7 +35,7 @@ namespace OpenAPIService
     public class OpenApiService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
-        private static UriTemplateTable _uriTemplateTable = new UriTemplateTable();
+        private static UriTemplateMatcher _uriTemplateTable = new UriTemplateMatcher();
         private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
 
         /// <summary>
@@ -162,7 +162,7 @@ namespace OpenAPIService
 
                 if (!_openApiOperationsTable.Any() || forceRefresh)
                 {
-                    _uriTemplateTable = new UriTemplateTable();
+                    _uriTemplateTable = new UriTemplateMatcher();
                     _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
 
                     await PopulateReferenceTablesAync(source);
@@ -211,7 +211,7 @@ namespace OpenAPIService
                     count++;
 
                     string urlPath = path.Key.Replace('-', '_');
-                    _uriTemplateTable.Add(count.ToString(), new UriTemplate(urlPath.ToLower()));
+                    _uriTemplateTable.Add(count.ToString(), urlPath.ToLower());
 
                     OpenApiOperation[] operations = path.Value.Operations.Values.ToArray();
                     _openApiOperationsTable.Add(count, operations);
