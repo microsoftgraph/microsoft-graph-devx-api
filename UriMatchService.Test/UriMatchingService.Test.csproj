@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UriMatchService\UriMatchService.csproj" />
+    <ProjectReference Include="..\UriMatchService\UriMatchingService.csproj" />
   </ItemGroup>
 
 </Project>
