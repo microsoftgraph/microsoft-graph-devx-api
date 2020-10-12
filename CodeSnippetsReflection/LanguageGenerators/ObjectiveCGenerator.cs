@@ -304,9 +304,43 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private string GetObjectiveCModelName(ODataPathSegment pathSegment, ICollection<string> path)
         {
             var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
-            //we need to split the string and get last item
-            //eg microsoft.graph.data => MSGraphData
-            return "MSGraph" + CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last());
+            var namespaceString = (string)edmType.GetType().GetProperty("Namespace")?.GetValue(edmType, null) ?? string.Empty;
+            var typeString = CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last());
+            var stringBuilder = new StringBuilder();
+            
+            switch (namespaceString)
+            {
+                case "microsoft.graph":
+                case "Edm":
+                    //Start with MSGraph
+                    stringBuilder.Append("MSGraph");
+                    // no namespaces inserted
+                    // Append the type
+                    stringBuilder.Append(CommonGenerator.UppercaseFirstLetter(typeString)) ;
+                    break;
+
+                default:
+                    // extract the namespace/sub namespaces to obtain the name
+                    // microsoft.graph.termStore.set => MSGraphTermStoreSet
+                    // alpha.beta.omega.theta => AlphaBetaOmegaTheta
+                    var nameSpaceStringChunks = namespaceString.Split(".");
+                    if ((nameSpaceStringChunks.Length > 2) && nameSpaceStringChunks[0].Equals("microsoft") && nameSpaceStringChunks[1].Equals("graph"))
+                    {
+                        //Start with MSGraph
+                        stringBuilder.Append("MSGraph");
+                        // skip the microsoft and the graph in the full string
+                        nameSpaceStringChunks = nameSpaceStringChunks.Skip(2).ToArray();
+                    }
+                    //Uppercase each sub namespace and append it.
+                    foreach (var chunk in nameSpaceStringChunks)
+                    {
+                        stringBuilder.Append(CommonGenerator.UppercaseFirstLetter(chunk));
+                    }
+                    // Append the type
+                    stringBuilder.Append(CommonGenerator.UppercaseFirstLetter(typeString));
+                    break;
+            }
+            return stringBuilder.ToString();
         }
     }
     internal class ObjectiveCExpressions : LanguageExpressions
