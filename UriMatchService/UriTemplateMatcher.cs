@@ -1,46 +1,105 @@
-﻿using System;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace UriMatchService
+namespace UriMatchingService
 {
-    public class UriTemplate
+    /// <summary>
+    /// Provides utility for matching a given uri against
+    /// a list of pre-defined uri templates.
+    /// </summary>
+    public class UriTemplateMatcher
     {
-        private readonly string _template;
-        private Regex _ParameterRegex = null;
-        private const string varname = "[a-zA-Z0-9_]*";
-        private const string op = "(?<op>[+#./;?&]?)";
-        private const string var = "(?<var>(?:(?<lvar>" + varname + ")[*]?,?)*)";
-        private const string varspec = "(?<varspec>{" + op + var + "})";
+        private readonly Dictionary<string, string> _templates = new Dictionary<string, string>();
 
-        public UriTemplate(string template)
+        public void Add(string key, string template)
         {
-            _template = template;
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new ArgumentNullException(nameof(key), Constants.ValueNullOrEmpty);
+            }
+            if (string.IsNullOrEmpty(template))
+            {
+                throw new ArgumentNullException(nameof(template), Constants.ValueNullOrEmpty);
+            }
+
+            _templates.Add(key, template);
         }
 
         /// <summary>
-        ///
+        /// Matches a uri against the list of uri templates defined
+        /// in the template table.
         /// </summary>
-        /// <param name="uri"></param>
-        /// <returns></returns>
-        public IDictionary<string, string> GetParameters(Uri uri)
+        /// <param name="uri">The uri to match.</param>
+        /// <returns>A <see cref="TemplateMatch"/> if a match is found, else a null result.</returns>
+        public TemplateMatch Match(Uri uri)
         {
-            if (_ParameterRegex == null)
+            if (uri == null)
             {
-                var matchingRegex = CreateMatchingRegex(_template);
-                _ParameterRegex = new Regex(matchingRegex);
+                throw new ArgumentNullException(nameof(uri), Constants.ValueNull);
             }
 
-            var match = _ParameterRegex.Match(uri.OriginalString);
+            Uri absolutePath = uri;
+            if (uri.IsAbsoluteUri)
+            {
+                absolutePath = new Uri(uri.AbsolutePath, UriKind.Relative);
+            }
+
+            foreach (var template in _templates)
+            {
+                var parameters = GetParameters(absolutePath, template.Value);
+                if (parameters != null)
+                {
+                    return new TemplateMatch() { Key = template.Key, Template = template.Value };
+                }
+            }
+            return null;
+        }
+
+        public string this[string key]
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(key))
+                {
+                    throw new ArgumentNullException(nameof(key), Constants.ValueNullOrEmpty);
+                }
+
+                if (_templates.TryGetValue(key, out string value))
+                {
+                    return value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        private IDictionary<string, string> GetParameters(Uri uri, string template)
+        {
+            Regex parameterRegex = null;
+
+            if (parameterRegex == null)
+            {
+                var matchingRegex = CreateMatchingRegex(template);
+                parameterRegex = new Regex(matchingRegex);
+            }
+
+            var match = parameterRegex.Match(uri.OriginalString);
             var parameters = new Dictionary<string, string>();
 
             for (int x = 1; x < match.Groups.Count; x++)
             {
                 if (match.Groups[x].Success)
                 {
-                    var paramName = _ParameterRegex.GroupNameFromNumber(x);
+                    var paramName = parameterRegex.GroupNameFromNumber(x);
                     if (!string.IsNullOrEmpty(paramName))
                     {
                         parameters.Add(paramName, Uri.UnescapeDataString(match.Groups[x].Value));
@@ -50,14 +109,9 @@ namespace UriMatchService
             return match.Success ? parameters : null;
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="uriTemplate"></param>
-        /// <returns></returns>
         private string CreateMatchingRegex(string uriTemplate)
         {
-            var findParam = new Regex(varspec);
+            var findParam = new Regex(Constants.VarSpec);
 
             var template = new Regex(@"([^{]|^)\?").Replace(uriTemplate, @"$+\?");
             var regex = findParam.Replace(template, delegate (Match m)
@@ -134,7 +188,6 @@ namespace UriMatchService
                 case ".":
                     paramDelim = "[^./?#]+";
                     break;
-
                 default:
                     paramDelim = "[^/?&]+";
                     break;
@@ -159,4 +212,14 @@ namespace UriMatchService
             return sb.ToString();
         }
     }
+
+    /// <summary>
+    /// Defines properties of a uri template match.
+    /// </summary>
+    public class TemplateMatch
+    {
+        public string Key { get; set; }
+        public string Template { get; set; }
+    }
 }
+
