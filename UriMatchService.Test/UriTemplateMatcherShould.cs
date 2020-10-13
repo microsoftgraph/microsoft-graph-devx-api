@@ -2,6 +2,11 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+/* This code was partially ported from: https://github.com/tavis-software/Tavis.UriTemplates;
+ * From the following class: UriTemplateTableTests.cs
+ * Some code refactoring, renaming and updates have been applied.
+ */
+
 using System;
 using Xunit;
 

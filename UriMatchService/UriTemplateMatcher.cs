@@ -2,6 +2,17 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+/* This code was partially ported from: https://github.com/tavis-software/Tavis.UriTemplates;
+ * From the following classes: UriTemplateTable.cs and UriTemplate.cs
+ * Some code refactoring and renaming have been applied.
+ * The decision to switch from using the Tavis.UriTemplates Nuget library package to porting the
+ * functional code from the original public repo to this solution was influenced by the DevX API
+ * needing an urgent bug fix to how the mapping was being done in the respective library.
+ * Details of this bug can be found here: https://github.com/microsoftgraph/microsoft-graph-explorer-api/issues/331
+ * This bug fix wasn't able to be fixed timely in the Tavis.UriTemplates repo without causing
+ * breaking experiences for other scenarios for other customers of that respective library.
+ */
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
