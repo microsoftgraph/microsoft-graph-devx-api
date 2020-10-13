@@ -82,7 +82,7 @@ namespace UriMatchingService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionForNullUriValueInAdd()
+        public void ThrowArgumentNullExceptionForNullUriValueInMatch()
         {
             // Arrange
             var table = new UriTemplateMatcher();
