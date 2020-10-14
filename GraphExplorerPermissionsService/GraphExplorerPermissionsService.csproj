@@ -9,11 +9,11 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Include="Tavis.UriTemplates" Version="1.1.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FileService\FileService.csproj" />
+    <ProjectReference Include="..\UriMatchService\UriMatchingService.csproj" />
   </ItemGroup>
 
 </Project>
