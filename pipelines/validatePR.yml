@@ -42,7 +42,6 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
     diagnosticsEnabled: true
-    platform: AnyCPU
     otherConsoleOptions: '/Framework:.NETCoreApp'
 
 - task: YodLabs.O365PostMessage.O365PostMessageBuild.O365PostMessageBuild@0
