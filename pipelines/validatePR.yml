@@ -42,7 +42,7 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
     diagnosticsEnabled: true
-    otherConsoleOptions: '/Framework:.NETCoreApp'
+    otherConsoleOptions: '/Framework:.NETCoreApp,Version=v3.1'
 
 - task: YodLabs.O365PostMessage.O365PostMessageBuild.O365PostMessageBuild@0
   displayName: 'Graph Client Tooling pipeline fail notification'

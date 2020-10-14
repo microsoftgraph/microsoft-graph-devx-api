@@ -44,6 +44,8 @@ steps:
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+    diagnosticsEnabled: true
+    otherConsoleOptions: '/Framework:.NETCoreApp,Version=v3.1'
 
 - task: VSBuild@1
   inputs:
