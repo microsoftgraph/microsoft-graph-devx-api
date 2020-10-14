@@ -26,7 +26,7 @@ namespace OpenAPIService.Test
         {
             // Arrange
             var rootPath = "/";
-            var pathsCount = 4458;
+            var pathsCount = 4545;
             var linksCount = _graphBetaSource.Paths[rootPath]
                                 .Operations[OperationType.Get]
                                 .Responses["200"]
@@ -190,7 +190,7 @@ namespace OpenAPIService.Test
             }
             else if (!string.IsNullOrEmpty(tags))
             {
-                Assert.Equal(2, subsetOpenApiDocument.Paths.Count);
+                Assert.Equal(16, subsetOpenApiDocument.Paths.Count);
             }
             else // url
             {
@@ -297,7 +297,7 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = OpenApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(4457, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(4544, subsetOpenApiDocument.Paths.Count);
             Assert.False(subsetOpenApiDocument.Paths.ContainsKey("/")); // root path
         }
     }
