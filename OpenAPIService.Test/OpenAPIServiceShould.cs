@@ -190,7 +190,7 @@ namespace OpenAPIService.Test
             }
             else if (!string.IsNullOrEmpty(tags))
             {
-                Assert.Equal(16, subsetOpenApiDocument.Paths.Count);
+                Assert.Equal(2, subsetOpenApiDocument.Paths.Count);
             }
             else // url
             {
