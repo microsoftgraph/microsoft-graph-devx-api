@@ -24,7 +24,7 @@ resources:
      type: github
      endpoint: microsoftgraph
      name: microsoftgraph/apidoctor
-     ref: zengin/snippets
+     ref: generate-snippets
 
 pool:
   vmImage: 'windows-latest'
