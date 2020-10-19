@@ -1,8 +1,17 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+# Pipeline for Snippet injection into docs
+
 trigger: none
 pr: none
+schedules:
+  - cron: "30 12 * * 2"
+    displayName: Weekly Tuesday snippets updates
+    branches:
+      include:
+      - master
+    always: true
 
 resources:
  repositories:
