@@ -67,7 +67,6 @@ steps:
     targetType: inline
     workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
     script: |
-      
       Write-Host "The new branch name will be: $env:branchName"
       git checkout -B $env:branchName | Write-Host
 
