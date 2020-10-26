@@ -1,0 +1,145 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline for Snippet injection into docs
+
+trigger: none
+pr: none
+schedules:
+  - cron: "30 12 * * 2"
+    displayName: Weekly Tuesday snippets updates
+    branches:
+      include:
+      - master
+    always: true
+
+resources:
+ repositories:
+   - repository: microsoft-graph-docs
+     type: github
+     endpoint: microsoftgraph
+     name: microsoftgraph/microsoft-graph-docs
+     ref: master
+   - repository: apidoctor
+     type: github
+     endpoint: microsoftgraph
+     name: microsoftgraph/apidoctor
+     ref: generate-snippets
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  apidoctorPath: 'apidoctor'
+  apidoctorSolution: '$(apidoctorPath)/**/*.sln'
+  snippetLanguages: 'C#,JavaScript,Objective-C,Java'
+
+steps:
+- checkout: self
+  displayName: checkout GE api
+  fetchDepth: 1
+  persistCredentials: true
+
+- checkout: microsoft-graph-docs
+  displayName: checkout docs
+  fetchDepth: 1
+  persistCredentials: true
+
+- checkout: apidoctor
+  displayName: checkout apidoctor
+  fetchDepth: 1
+  submodules: recursive
+  persistCredentials: true
+
+- task: PowerShell@2
+  displayName: 'Calculate and set pipeline variables for this job'
+  inputs:
+    targetType: inline
+    script: |
+      $branchName = "snippet-generation/$env:Build_BuildId" # Match the spec in the GH Action
+      Write-Host "Branch path spec for the pull request will be $branchName"
+      Write-Host "##vso[task.setvariable variable=branchName]$branchName"
+
+- task: PowerShell@2
+  displayName: 'Git: branch from master named with the build id: $(Build.BuildId)'
+  inputs:
+    targetType: inline
+    workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
+    script: |
+      Write-Host "The new branch name will be: $env:branchName"
+      git checkout -B $env:branchName | Write-Host
+
+- task: PowerShell@2
+  displayName: 'Git: set user config'
+  inputs:
+    targetType: inline
+    workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
+    script: |
+      git config user.email "GraphTooling@service.microsoft.com"
+      git config user.name "Microsoft Graph DevX Tooling"
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build snippet generator'
+  inputs:
+    command: 'build'
+    projects: 'microsoft-graph-explorer-api\CodeSnippetsReflection.App\CodeSnippetsReflection.App.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+
+- task: NuGetToolInstaller@1
+  displayName: 'Install Nuget.exe'
+
+- task: NuGetCommand@2
+  displayName: 'Restore packages for apidoctor'
+  inputs:
+    restoreSolution: '$(apidoctorSolution)'
+
+- task: VSBuild@1
+  displayName: 'Build apidoctor'
+  inputs:
+    solution: '$(apidoctorSolution)'
+    platform: 'Any CPU'
+    configuration: '$(buildConfiguration)'
+
+- task: PowerShell@2
+  displayName: 'Generate snippets'
+  inputs:
+    workingDirectory: microsoft-graph-docs
+    targetType: 'inline'
+    script: |
+      # release folder can change based on .NET core version, so search recursively in bin folder
+      $snippetGeneratorPath = (Get-ChildItem $env:Build_SourcesDirectory\microsoft-graph-explorer-api\CodeSnippetsReflection.App\bin\Release *App.exe -Recurse).FullName
+      Write-Host "Path to snippet generator tool: $snippetGeneratorPath"
+
+      $apidoctorPath = (Get-ChildItem $env:Build_SourcesDirectory\apidoctor\ApiDoctor.Console\bin\Release apidoc.exe -Recurse).FullName
+      Write-Host "Path to apidoctor tool: $apidoctorPath"
+
+      & $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "C:\Program Files\Git\bin\git.exe"
+
+- task: PowerShell@2
+  displayName: 'Git: stage and commit generated files'
+  inputs:
+    targetType: inline
+    workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
+    script: |
+      Write-Host "About to add files....." -ForegroundColor Green
+      git add . | Write-Host
+      if ($env:Build_Reason -eq 'Manual') # Skip CI if manually running this pipeline.
+      {
+        git commit -m "Update generated files with build $env:Build_BuildId [skip ci]" | Write-Host
+      }
+      else
+      {
+        git commit -m "Update generated files with build $env:Build_BuildId" | Write-Host
+      }
+      Write-Host "Added and commited generated files." -ForegroundColor Green
+
+- task: PowerShell@2
+  displayName: 'Git: push updates'
+  inputs:
+    targetType: inline
+    workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
+    script: |
+      git push --set-upstream origin $env:branchName | Write-Host
+      Write-Host "Pushed the results of the build to the $env:branchName branch." -ForegroundColor Green
+  enabled: true
