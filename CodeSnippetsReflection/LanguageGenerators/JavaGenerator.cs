@@ -556,36 +556,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 stringBuilder.Append(string.Format(requestOptionsPattern, key, value));
             }
 
-            //Append any filter queries
-            if (snippetModel.FilterFieldList.Any())
-            {
-                var filterResult = CommonGenerator.GetListAsStringForSnippet(snippetModel.FilterFieldList, languageExpressions.FilterExpressionDelimiter);
-                stringBuilder.Append(string.Format(requestOptionsPattern, "$filter", filterResult));//append the filter to the snippet
-            }
-
-            //Append any order by queries
-            if (snippetModel.OrderByFieldList.Any())
-            {
-                var orderByResult = CommonGenerator.GetListAsStringForSnippet(snippetModel.OrderByFieldList, languageExpressions.OrderByExpressionDelimiter);
-                stringBuilder.Append(string.Format(requestOptionsPattern, "$orderby", orderByResult));//append the order by result to the snippet
-            }
-
-            //Append any skip queries
-            if (snippetModel.ODataUri.Skip.HasValue)
-            {
-                stringBuilder.Append(string.Format(requestOptionsPattern, "$skip", snippetModel.ODataUri.Skip));
-            }
-
             //Append any search queries
             if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
             {
                 stringBuilder.Append(string.Format(requestOptionsPattern, "$search", snippetModel.SearchExpression));
-            }
-
-            //Append any skip token queries
-            if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
-            {
-                stringBuilder.Append(string.Format(requestOptionsPattern,"$skiptoken", snippetModel.ODataUri.SkipToken));
             }
 
             //return request options section with a new line appended
@@ -601,11 +575,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         {
             if (   snippetModel.CustomQueryOptions.Any()
                 || snippetModel.RequestHeaders.Any(x => !x.Key.ToLower().Equals("host"))
-                || snippetModel.FilterFieldList.Any()
-                || snippetModel.OrderByFieldList.Any()
-                || snippetModel.ODataUri.Skip.HasValue
-                || !string.IsNullOrEmpty(snippetModel.SearchExpression)
-                || !string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken) )
+                || !string.IsNullOrEmpty(snippetModel.SearchExpression))
             {
                 return true;
             }
@@ -620,13 +590,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string SelectExpression => "\n\t.select(\"{0}\")";
         public override string SelectExpressionDelimiter => ",";
         public override string TopExpression => "\n\t.top({0})";
-        public override string FilterExpression => string.Empty;
+        public override string FilterExpression => "\n\t.filter({0})";
         public override string FilterExpressionDelimiter => ",";
         public override string SearchExpression => string.Empty;
-        public override string SkipExpression => string.Empty;
+        public override string SkipExpression => "\n\t.skip({0})";
         public override string HeaderExpression => string.Empty;
-        public override string SkipTokenExpression => string.Empty;
-        public override string OrderByExpression => string.Empty;
+        public override string SkipTokenExpression => "\n\t.skipToken({0})";
+        public override string OrderByExpression => "\n\t.orderBy({0})";
         public override string OrderByExpressionDelimiter => " ";
         public override string[] ReservedNames => new [] {
             "abstract","assert","boolean","break","byte","case","catch","char",
