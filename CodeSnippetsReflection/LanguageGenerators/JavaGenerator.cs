@@ -590,13 +590,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string SelectExpression => "\n\t.select(\"{0}\")";
         public override string SelectExpressionDelimiter => ",";
         public override string TopExpression => "\n\t.top({0})";
-        public override string FilterExpression => "\n\t.filter({0})";
+        public override string FilterExpression => "\n\t.filter(\"{0}\")";
         public override string FilterExpressionDelimiter => ",";
         public override string SearchExpression => string.Empty;
         public override string SkipExpression => "\n\t.skip({0})";
         public override string HeaderExpression => string.Empty;
-        public override string SkipTokenExpression => "\n\t.skipToken({0})";
-        public override string OrderByExpression => "\n\t.orderBy({0})";
+        public override string SkipTokenExpression => "\n\t.skipToken(\"{0}\")";
+        public override string OrderByExpression => "\n\t.orderBy(\"{0}\")";
         public override string OrderByExpressionDelimiter => " ";
         public override string[] ReservedNames => new [] {
             "abstract","assert","boolean","break","byte","case","catch","char",
