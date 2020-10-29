@@ -260,7 +260,7 @@ namespace CodeSnippetsReflection.Test
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "DirectoryObject directoryObject = new DirectoryObject();\r\n" +
-                                           "directoryObject.Id = \"{id}\";\r\n" +
+                                           "directoryObject.id = \"{id}\";\r\n" +
 
                                            "\r\n" +
                                            "graphClient.groups(\"{id}\").owners().references()\n" +
@@ -293,7 +293,7 @@ namespace CodeSnippetsReflection.Test
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "DirectoryObject directoryObject = new DirectoryObject();\r\n" +
-                                           "directoryObject.Id = \"{id}\";\r\n" +
+                                           "directoryObject.id = \"{id}\";\r\n" +
                                            "directoryObject.additionalDataManager().put(\"@odata.context\", new JsonPrimitive(\"https://graph.microsoft.com/v1.0/$metadata#users/$entity\"));\r\n" +
                                            "\r\n" +
                                            "graphClient.groups(\"{id}\").owners().references()\n" +
@@ -325,7 +325,7 @@ namespace CodeSnippetsReflection.Test
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "DirectoryObject directoryObject = new DirectoryObject();\r\n" +
-                                           "directoryObject.Id = \"ExampleID\";\r\n" +
+                                           "directoryObject.id = \"ExampleID\";\r\n" +
 
                                            "\r\n" +
                                            "graphClient.groups(\"{id}\").owners().references()\n" +
