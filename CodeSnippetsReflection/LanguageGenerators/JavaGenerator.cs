@@ -296,11 +296,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     {
                         var uriLastSegmentString = new Uri(value).Segments.Last();
                         uriLastSegmentString = Uri.UnescapeDataString(uriLastSegmentString);
-                        stringBuilder.Append($"{currentVarName}.Id = \"{uriLastSegmentString}\";\r\n");
+                        stringBuilder.Append($"{currentVarName}.id = \"{uriLastSegmentString}\";\r\n");
                     }
                     catch (UriFormatException)
                     {
-                        stringBuilder.Append($"{currentVarName}.Id = \"{value}\";\r\n");//its not really a URI
+                        stringBuilder.Append($"{currentVarName}.id = \"{value}\";\r\n");//its not really a URI
                     }
                     break;
 
