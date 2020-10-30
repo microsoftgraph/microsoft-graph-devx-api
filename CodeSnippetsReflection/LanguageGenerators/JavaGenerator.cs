@@ -429,6 +429,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     typeName = $"I{typeName}CollectionPage";
                 }
+            } 
+            else if (edmType.FullTypeName().Equals("Edm.Stream"))
+            {
+                typeName = "InputStream";
             }
             else
             {
