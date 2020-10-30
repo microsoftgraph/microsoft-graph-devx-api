@@ -15,6 +15,17 @@ namespace CodeSnippetsReflection.Test
         private const string AuthProviderPrefix = "IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n";
 
         [Fact]
+        public void HasStreamUseInputStreams()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/messages/4aade2547798441eab5188a7a2436bc1/$value");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            Assert.Contains("InputStream", result);
+        }
+        [Fact]
         //This tests asserts that we can generate snippets from json objects with nested objects inside them.
         public void RecursivelyGeneratesNestedPasswordProfileObjectFromJson()
         {
