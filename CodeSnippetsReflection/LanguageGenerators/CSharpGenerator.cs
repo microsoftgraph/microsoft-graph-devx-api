@@ -124,7 +124,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     var objectToBePut = snippetModel.ResponseVariableName;
                     if (snippetModel.ContentType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (snippetModel.Segments.Last() is ReferenceSegment)
+                        if (snippetModel.Segments.Last() is NavigationPropertyLinkSegment)
                         {
                             // if we are putting reference, we should send id to that object in PutAsync()
                             // and the request body should contain a JSON with @odata.id key
