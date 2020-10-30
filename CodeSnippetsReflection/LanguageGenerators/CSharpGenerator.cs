@@ -683,7 +683,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 properties = properties + "." + CommonGenerator.UppercaseFirstLetter(snippetModel.Segments[++segmentIndex].Identifier);
             }
 
-            //modify the responseVarible name
+            //modify the responseVariable name while registering the object created above.
+            var propertyName = snippetModel.ResponseVariableName;
             snippetModel.ResponseVariableName = desiredSegment.Identifier;
             var variableName = snippetModel.Segments.Last().Identifier;
             var parentClassName = GetCsharpClassName(desiredSegment, new List<string> { snippetModel.ResponseVariableName });
@@ -699,7 +700,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 //we are modifying the value
                 stringBuilder.Append($"var {snippetModel.ResponseVariableName} = new {parentClassName}();");//initialise the classname
-                stringBuilder.Append($"\n{snippetModel.ResponseVariableName}{properties} = {variableName};\n\n");
+                stringBuilder.Append($"\n{snippetModel.ResponseVariableName}{properties} = {propertyName};\n\n");
             }
 
             return stringBuilder.ToString();
