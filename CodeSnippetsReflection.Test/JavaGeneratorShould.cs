@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Xml;
 using CodeSnippetsReflection.LanguageGenerators;
 using Microsoft.OData.Edm;
@@ -14,6 +15,87 @@ namespace CodeSnippetsReflection.Test
         private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
         private const string AuthProviderPrefix = "IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n";
 
+        [Fact]
+        public void MapCorrectTypeForGuidProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string userJsonObject = "{"
+                                              + "\"principalId\": \"principalId-value\",\r\n"
+                                              + "\"resourceId\": \"resourceId-value\",\r\n"
+                                              + "\"appRoleId\": \"appRoleId-value\"\r\n"
+                                        + "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/users/{id}/appRoleAssignments")
+            {
+                Content = new StringContent(userJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("UUID.fromString(\"principalId-value\");", result);
+        }
+        [Fact]
+        public void MapCorrectTypeForBinaryProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string userJsonObject = "{"
+                                            +"\"@odata.type\": \"#microsoft.graph.fileAttachment\",\n\t"
+                                            + "\"name\": \"menu.txt\",\n\t"
+                                            + "\"contentBytes\": \"base64bWFjIGFuZCBjaGVlc2UgdG9kYXk=\"\n\t"
+                                        +"}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/events/AAMkAGI1AAAt9AHjAAA=/attachments")
+            {
+                Content = new StringContent(userJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains(" Base64.getDecoder().decode(\"base64bW", result);
+        }
+        [Fact]
+        public void MapCorrectTypeForDateTimeProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string userJsonObject = "{"
+                                            + "\"responseStatus\": {"
+                                            + "\"response\": \"\","
+                                            + "\"time\": \"datetime-value\""
+                                            +"},"
+                                        + "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/me/events/{id}")
+            {
+                Content = new StringContent(userJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains(" CalendarSerializer.deserialize(\"datetime-value\")", result);
+        }
+        [Fact]
+        public void MapCorrectTypeForDoubleProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string userJsonObject = "{"
+                                            + "\"id\": \"id-value\","
+                                            + "\"height\": 99,"
+                                            + "\"left\": 99"
+                                        + "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/worksheets/{id|name}/charts")
+            {
+                Content = new StringContent(userJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Matches(new Regex(@"\d+d"), result);
+        }
         [Fact]
         //This tests asserts that we can generate snippets from json objects with nested objects inside them.
         public void RecursivelyGeneratesNestedPasswordProfileObjectFromJson()
