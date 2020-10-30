@@ -129,8 +129,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             // if we are putting reference, we should send id to that object in PutAsync()
                             // and the request body should contain a JSON with @odata.id key
                             var body = JsonConvert.DeserializeObject(snippetModel.RequestBody) as JObject;
-                            var id = body["@odata.id"].ToString();
-                            objectToBePut = "\"{id}\"";
+
+                            // HTTP sample is in this format: https://graph.microsoft.com/v1.0/users/{id}
+                            // but C# SDK reconstructs the URL from {id}
+                            var id = body["@odata.id"].ToString().Split("/").Last();
+                            objectToBePut = $"\"{id}\"";
                         }
                         else
                         {
