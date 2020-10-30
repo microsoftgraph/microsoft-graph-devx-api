@@ -121,10 +121,22 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         throw new Exception($"No request Body present for PUT of entity {snippetModel.ResponseVariableName}");
 
                     var genericType = string.Empty;
+                    var objectToBePut = snippetModel.ResponseVariableName;
                     if (snippetModel.ContentType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
                     {
-                        snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
-                        snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                        if (snippetModel.Segments.Last() is ReferenceSegment)
+                        {
+                            // if we are putting reference, we should send id to that object in PutAsync()
+                            // and the request body should contain a JSON with @odata.id key
+                            var body = JsonConvert.DeserializeObject(snippetModel.RequestBody) as JObject;
+                            var id = body["@odata.id"].ToString();
+                            objectToBePut = "\"{id}\"";
+                        }
+                        else
+                        {
+                            snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
+                            snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                        }
                     }
                     else
                     {
@@ -138,7 +150,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                     }
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PutAsync{genericType}({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PutAsync{genericType}({objectToBePut});"));
 
                 }
                 else
