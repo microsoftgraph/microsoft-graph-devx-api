@@ -328,12 +328,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         return $"JsonParser.parseString({AddQuotesIfMising(stringParameter)})";
 
                     default:
-                        return AddQuotesIfMising(stringParameter);
+                        return stringParameter;
                 }
             }
             catch
             {
-                return AddQuotesIfMising(stringParameter);
+                return stringParameter;
             }
         }
 
