@@ -57,7 +57,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
-                    var typeName = GetJavaReturnTypeName(segment.EdmType,snippetModel.ResponseVariableName);
+                    var typeName = GetJavaReturnTypeName(segment,snippetModel.ResponseVariableName);
                     snippetBuilder.Append($"{typeName} {snippetModel.ResponseVariableName} = ");
 
                     if (segment is PropertySegment)
@@ -141,7 +141,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns></returns>
         private static string GenerateCustomRequestForPropertySegment(StringBuilder stringBuilder,SnippetModel snippetModel)
         {
-            stringBuilder.Append($"graphClient.customRequest(\"{snippetModel.Path}\", { GetJavaReturnTypeName(snippetModel.Segments.Last().EdmType, snippetModel.ResponseVariableName) }.class)");
+            stringBuilder.Append($"graphClient.customRequest(\"{snippetModel.Path}\", { GetJavaReturnTypeName(snippetModel.Segments.Last(), snippetModel.ResponseVariableName) }.class)");
             stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
             stringBuilder.Append(snippetModel.Method == HttpMethod.Get
                 ? "\n\t.get();"
@@ -185,7 +185,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         else
                         {
-                            stringBuilder.Append($"{GetJavaReturnTypeName(CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path), string.Empty)} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
+                            stringBuilder.Append($"{GetJavaReturnTypeName(pathSegment, string.Empty)} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
                         }
                     }
                     break;
@@ -475,20 +475,20 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <summary>
         /// Java specific function that infers the return type for java that is going to be returned
         /// </summary>
-        /// <param name="edmType">Definition of the type from the OData model</param>
+        /// <param name="pathSegment">Segment from the URI</param>
         /// <param name="typeHint">Hint of the variable name that is coming back</param>
         /// <returns>String representing the return type</returns>
-        private static string GetJavaReturnTypeName(IEdmType edmType , string typeHint)
+        private static string GetJavaReturnTypeName(ODataPathSegment pathSegment, string typeHint)
         {
-            if (edmType is IEdmCollectionType collectionType)
+            if (pathSegment.EdmType is IEdmCollectionType collectionType)
                 if (collectionType.ElementType.Definition is IEdmNamedElement edmNamedElement)
                     return typeHint.Equals("delta", StringComparison.OrdinalIgnoreCase)
                         ? $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}DeltaCollectionPage"
-                        : $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}CollectionPage";
+                        : $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}Collection{(pathSegment is NavigationPropertySegment navPropPathSeg && !navPropPathSeg.NavigationProperty.ContainsTarget ? "WithReferences": string.Empty)}Page";
                 else
-                    return $"I{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}CollectionPage";
+                    return $"I{CommonGenerator.UppercaseFirstLetter(pathSegment.EdmType.FullTypeName().Split(".").Last())}CollectionPage";
             else
-                switch(edmType.FullTypeName())
+                switch(pathSegment?.EdmType?.FullTypeName())
                 {
                     case "Edm.Stream":
                         return "InputStream";
@@ -501,7 +501,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "microsoft.graph.Json":
                         return "JsonElement";
                     default:
-                        return edmType == null ? "Content" : CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last());
+                        return pathSegment.EdmType == null ? "Content" : CommonGenerator.UppercaseFirstLetter(pathSegment.EdmType.FullTypeName().Split(".").Last());
                 }
         }
 

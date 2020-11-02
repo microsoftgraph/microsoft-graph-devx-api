@@ -790,5 +790,17 @@ namespace CodeSnippetsReflection.Test
 
             Assert.Contains("\\\"", result);
         }
+        [Fact]
+        public void UseCollectionPagesWithReferencesWhenNecessary()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/applications/{id}/owners");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("WithReferencesPage", result);
+        }
     }
 }
