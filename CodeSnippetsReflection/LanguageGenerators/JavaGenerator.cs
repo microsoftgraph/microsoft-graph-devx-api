@@ -139,7 +139,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="stringBuilder">Current state of the snippet built</param>
         /// <param name="snippetModel">model containing info about snippet to be generated</param>
         /// <returns></returns>
-        private static string GenerateCustomRequestForPropertySegment(StringBuilder stringBuilder,SnippetModel snippetModel)
+        private string GenerateCustomRequestForPropertySegment(StringBuilder stringBuilder,SnippetModel snippetModel)
         {
             stringBuilder.Append($"graphClient.customRequest(\"{snippetModel.Path}\", { GetJavaReturnTypeName(snippetModel.Segments.Last()) }.class)");
             stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
@@ -185,7 +185,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         else
                         {
-                            stringBuilder.Append($"{GetJavaReturnTypeName(pathSegment)} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
+                            stringBuilder.Append($"{GetJavaReturnTypeName(pathSegment, path)} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
                         }
                     }
                     break;
@@ -476,10 +476,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// Java specific function that infers the return type for java that is going to be returned
         /// </summary>
         /// <param name="pathSegment">Segment from the URI</param>
+        /// <param name="path">query path</param>
         /// <returns>String representing the return type</returns>
-        private static string GetJavaReturnTypeName(ODataPathSegment pathSegment)
+        private string GetJavaReturnTypeName(ODataPathSegment pathSegment, List<string> path = null)
         {
-            if (pathSegment.EdmType is IEdmCollectionType collectionType)
+            var edmType = pathSegment?.EdmType ?? ( path == null ? null : CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path));
+            if (edmType is IEdmCollectionType collectionType)
                 if (pathSegment is OperationSegment opSegment)
                 {
                     var typeName = opSegment.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.Definition?.FullTypeName()?.Split(".")?.LastOrDefault()?.Replace(")", string.Empty); //last replace is for the case we have collections
@@ -488,9 +490,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 else if (collectionType.ElementType.Definition is IEdmNamedElement edmNamedElement)
                     return $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}Collection{(pathSegment is NavigationPropertySegment navPropPathSeg && !navPropPathSeg.NavigationProperty.ContainsTarget ? "WithReferences" : string.Empty)}Page";
                 else
-                    return $"I{CommonGenerator.UppercaseFirstLetter(pathSegment.EdmType.FullTypeName().Split(".").Last())}CollectionPage";
+                    return $"I{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}CollectionPage";
             else
-                switch (pathSegment?.EdmType?.FullTypeName())
+                switch (edmType?.FullTypeName())
                 {
                     case "Edm.Stream":
                         return "InputStream";
@@ -503,7 +505,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "microsoft.graph.Json":
                         return "JsonElement";
                     default:
-                        return pathSegment.EdmType == null ? "Content" : CommonGenerator.UppercaseFirstLetter(pathSegment.EdmType.FullTypeName().Split(".").Last());
+                        return edmType == null ? "Content" : CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last());
                 }
         }
 
