@@ -185,7 +185,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         else
                         {
-                            stringBuilder.Append($"{className} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
+                            stringBuilder.Append($"{GetJavaReturnTypeName(CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path), string.Empty)} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
                         }
                     }
                     break;
@@ -477,30 +477,27 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String representing the return type</returns>
         private static string GetJavaReturnTypeName(IEdmType edmType , string typeHint)
         {
-            var typeName = string.Empty;
             if (edmType is IEdmCollectionType collectionType)
-            {
                 if (collectionType.ElementType.Definition is IEdmNamedElement edmNamedElement)
-                {
-                    typeName = typeHint.Equals("delta",StringComparison.OrdinalIgnoreCase)
+                    return typeHint.Equals("delta", StringComparison.OrdinalIgnoreCase)
                         ? $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}DeltaCollectionPage"
                         : $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}CollectionPage";
-                }
                 else
-                {
-                    typeName = $"I{typeName}CollectionPage";
-                }
-            } 
-            else if (edmType.FullTypeName().Equals("Edm.Stream"))
-            {
-                typeName = "InputStream";
-            }
+                    return $"I{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}CollectionPage";
             else
-            {
-                typeName = edmType == null ? "Content": CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last());
-            }
-
-            return typeName;
+                switch(edmType.FullTypeName())
+                {
+                    case "Edm.Stream":
+                        return "InputStream";
+                    case "Edm.Guid":
+                        return "UUID";
+                    case "Edm.DateTimeOffset":
+                        return "Calendar";
+                    case "Edm.Date":
+                        return "DateOnly";
+                    default:
+                        return edmType == null ? "Content" : CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last());
+                }
         }
 
         /// <summary>

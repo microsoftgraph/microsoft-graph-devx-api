@@ -16,6 +16,26 @@ namespace CodeSnippetsReflection.Test
         private const string AuthProviderPrefix = "IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n";
 
         [Fact]
+        public void MapCorrectTypeForGuidReturnType()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string userJsonObject = "{"
+                                            + "\"keyId\": \"f0b0b335-1d71-4883-8f98-567911bfdca6\","
+                                            + "\"proof\":\"eyJ0eXAiOiJ...\""
+                                        + "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/applications/{id}/removeKey")
+            {
+                Content = new StringContent(userJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("UUID keyId", result);
+        }
+
+        [Fact]
         public void MapCorrectTypeForGuidProperties()
         {
             LanguageExpressions expressions = new JavaExpressions();
