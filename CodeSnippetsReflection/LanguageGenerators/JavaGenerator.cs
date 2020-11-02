@@ -324,14 +324,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         return bool.TryParse(stringParameter, out var boolValue)
                             ? boolValue.ToString().ToLower()
                             : "false";
+                    case "Json":
+                        return $"JsonParser.parseString({AddQuotesIfMising(stringParameter)})";
 
                     default:
-                        return stringParameter;
+                        return AddQuotesIfMising(stringParameter);
                 }
             }
             catch
             {
-                return stringParameter;
+                return AddQuotesIfMising(stringParameter);
             }
         }
 
@@ -495,6 +497,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         return "Calendar";
                     case "Edm.Date":
                         return "DateOnly";
+                    case "microsoft.graph.Json":
+                        return "JsonElement";
                     default:
                         return edmType == null ? "Content" : CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last());
                 }
