@@ -328,7 +328,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             ? boolValue.ToString().ToLower()
                             : "false";
                     case "Json":
-                        return $"JsonParser.parseString({AddQuotesIfMising(stringParameter)})";
+                        return $"JsonParser.parseString({AddQuotesIfMising(ClearStringLiteralsFromBreakingCharacters(stringParameter))})";
 
                     default:
                         return stringParameter;
@@ -383,12 +383,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 default:
                     //just append the property as part of the additionalData of the object
-                    stringBuilder.Append($"{currentVarName}.additionalDataManager().put(\"{key}\", new JsonPrimitive(\"{value.Replace(quote, escapedQuote)}\"));\r\n");
+                    stringBuilder.Append($"{currentVarName}.additionalDataManager().put(\"{key}\", new JsonPrimitive(\"{ClearStringLiteralsFromBreakingCharacters(value)}\"));\r\n");
                     break;
             }
 
             return stringBuilder;
         }
+
+        private static string ClearStringLiteralsFromBreakingCharacters(string input) => input?.
+                                                            Replace(quote, escapedQuote)?.
+                                                            Replace("\r", string.Empty)?.
+                                                            Replace("\n", string.Empty);
 
         /// <summary>
         /// Java specific function to check how many times a variableName has been used and append a number at the end to make it unique
