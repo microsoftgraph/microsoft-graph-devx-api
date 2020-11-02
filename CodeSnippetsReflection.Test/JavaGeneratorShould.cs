@@ -138,6 +138,28 @@ namespace CodeSnippetsReflection.Test
             Assert.Matches(new Regex(@"\d+d"), result);
         }
         [Fact]
+        public void MapCorrectTypeForLongProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string userJsonObject = "{"
+                                              + "\"AttachmentItem\": {"
+                                                + "\"attachmentType\": \"file\","
+                                                + "\"name\": \"flower\", "
+                                                + "\"size\": 3483322"
+                                              + "}"
+                                            + "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages/AAMkADI5MAAIT3drCAAA=/attachments/createUploadSession")
+            {
+                Content = new StringContent(userJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Matches(new Regex(@"\d+L"), result);
+        }
+        [Fact]
         public void MapCorrectTypeForDurationProperties()
         {
             LanguageExpressions expressions = new JavaExpressions();

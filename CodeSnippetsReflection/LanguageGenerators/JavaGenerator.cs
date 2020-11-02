@@ -314,6 +314,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     case "Double":
                         return $"{stringParameter}d";
+                    
+                    case "Int64":
+                        return $"{stringParameter}L";
 
                     case "TimeOfDay":
                         return DateTime.TryParse(stringParameter, out var timeOfDay)
@@ -502,6 +505,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         return "Calendar";
                     case "Edm.Date":
                         return "DateOnly";
+                    case "Edm.Int64":
+                        return "Long";
                     case "microsoft.graph.Json":
                         return "JsonElement";
                     default:
