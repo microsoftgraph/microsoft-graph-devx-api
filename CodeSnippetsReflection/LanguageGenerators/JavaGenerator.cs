@@ -342,7 +342,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
         private const string quote = "\"";
         private const string escapedQuote = "\\\"";
-        private string AddQuotesIfMising(string parameter) => $"{(parameter.StartsWith(quote) ? string.Empty : quote)}{parameter}{(parameter.EndsWith(quote) ? string.Empty : quote)}";
+        private string AddQuotesIfMising(string parameter) => $"{(parameter.StartsWith(quote) ? string.Empty : quote)}{parameter}{(parameter.EndsWith(quote) && !parameter.EndsWith(escapedQuote) ? string.Empty : quote)}";
 
 
         /// <summary>
