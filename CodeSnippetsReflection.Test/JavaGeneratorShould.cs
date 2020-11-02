@@ -683,7 +683,7 @@ namespace CodeSnippetsReflection.Test
             //Assert code snippet string matches expectation
             const string expectedSnippet = "FileAttachment attachment = new FileAttachment();\r\n" + // Use the FileAttachment class rather than the Attachment superclass from metadata 
                                            "attachment.name = \"smile\";\r\n" +
-                                           "attachment.contentBytes = \"R0lGODdhEAYEAA7\";\r\n" +
+                                           "attachment.contentBytes = Base64.getDecoder().decode(\"R0lGODdhEAYEAA7\");\r\n" +
                                            "\r\n" +
                                            "graphClient.me().messages(\"AAMkpsDRVK\").attachments()\n" +
                                            "\t.buildRequest()\n" +
