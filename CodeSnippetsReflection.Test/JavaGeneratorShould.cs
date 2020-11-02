@@ -152,6 +152,61 @@ namespace CodeSnippetsReflection.Test
             Assert.Contains("DatatypeFactory.newInstance().newDuration", result);
         }
         [Fact]
+        public void MapCorrectTypeForDateOnlyProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string userJsonObject = "{"
+                                              + "\"subject\": \"Let's go for lunch\","
+                                              + "\"body\": {"
+                                                + "\"contentType\": \"HTML\","
+                                                + "\"content\": \"Does noon time work for you?\""
+                                              + "},"
+                                              + "\"start\": {"
+                                                  + "\"dateTime\": \"2017-09-04T12:00:00\","
+                                                  + "\"timeZone\": \"Pacific Standard Time\""
+                                              + "},"
+                                              + "\"end\": {"
+                                                  + "\"dateTime\": \"2017-09-04T14:00:00\","
+                                                  + "\"timeZone\": \"Pacific Standard Time\""
+                                              + "},"
+                                              + "\"recurrence\": {"
+                                                + "\"pattern\": {"
+                                                  + "\"type\": \"weekly\","
+                                                  + "\"interval\": 1,"
+                                                  + "\"daysOfWeek\": [ \"Monday\" ]"
+                                                + "},"
+                                                + "\"range\": {"
+                                                  + "\"type\": \"endDate\","
+                                                  + "\"startDate\": \"2017-09-04\","
+                                                  + "\"endDate\": \"2017-12-31\""
+                                                + "}"
+                                              + "},"
+                                              + "\"location\":{"
+                                                  + "\"displayName\":\"Harry's Bar\""
+                                              + "},"
+                                              + "\"attendees\": ["
+                                                + "{"
+                                                  + "\"emailAddress\": {"
+                                                    + "\"address\":\"AdeleV@contoso.onmicrosoft.com\","
+                                                    + "\"name\": \"Adele Vance\""
+                                                  + "},"
+                                                  + "\"type\": \"required\""
+                                                + "}"
+                                              + "],"
+                                              + "\"allowNewTimeProposals\": true"
+                                            + "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/events")
+            {
+                Content = new StringContent(userJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("new DateOnly(", result);
+        }
+        [Fact]
         public void HasStreamUseInputStreams()
         {
             LanguageExpressions expressions = new JavaExpressions();

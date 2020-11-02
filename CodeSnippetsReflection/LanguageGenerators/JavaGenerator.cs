@@ -304,7 +304,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         string parsedDate = DateTime.TryParse(stringParameter, out var dateTime)
                             ? $"{dateTime.Year},{dateTime.Month},{dateTime.Day}"
                             : "1900,1,1";//use default params on parse failure
-                        return $"new Date({parsedDate})"; //TODO
+                        return $"new DateOnly({parsedDate})";
 
                     case "Duration":
                         return $"DatatypeFactory.newInstance().newDuration({AddQuotesIfMising(stringParameter)})";
@@ -335,7 +335,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             }
         }
 
-        private string AddQuotesIfMising(string parameter) => $"{(parameter.StartsWith("\"")? string.Empty : "\"")}{parameter}{(parameter.EndsWith("\"") ? string.Empty : "\"")}";
+        private const string quote = "\"";
+        private string AddQuotesIfMising(string parameter) => $"{(parameter.StartsWith(quote) ? string.Empty : quote)}{parameter}{(parameter.EndsWith(quote) ? string.Empty : quote)}";
 
 
         /// <summary>
