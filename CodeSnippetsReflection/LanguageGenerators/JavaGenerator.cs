@@ -338,6 +338,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         private const string quote = "\"";
+        private const string escapedQuote = "\\\"";
         private string AddQuotesIfMising(string parameter) => $"{(parameter.StartsWith(quote) ? string.Empty : quote)}{parameter}{(parameter.EndsWith(quote) ? string.Empty : quote)}";
 
 
@@ -379,7 +380,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 default:
                     //just append the property as part of the additionalData of the object
-                    stringBuilder.Append($"{currentVarName}.additionalDataManager().put(\"{key}\", new JsonPrimitive(\"{value}\"));\r\n");
+                    stringBuilder.Append($"{currentVarName}.additionalDataManager().put(\"{key}\", new JsonPrimitive(\"{value.Replace(quote, escapedQuote)}\"));\r\n");
                     break;
             }
 

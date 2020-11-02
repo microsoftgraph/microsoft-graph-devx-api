@@ -768,5 +768,27 @@ namespace CodeSnippetsReflection.Test
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
+        [Fact]
+        public void EscapeQuotesForJsonPrimitives()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                      + "\"members@odata.bind\": ["
+                                        + "\"https://graph.microsoft.com/v1.0/directoryObjects/{id}\","
+                                        + "\"https://graph.microsoft.com/v1.0/directoryObjects/{id}\","
+                                        + "\"https://graph.microsoft.com/v1.0/directoryObjects/{id}\""
+                                        + "]"
+                                    + "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/groups/{group-id}")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("\\\"", result);
+        }
     }
 }
