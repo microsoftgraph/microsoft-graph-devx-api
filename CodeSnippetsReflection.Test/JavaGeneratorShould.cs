@@ -802,5 +802,29 @@ namespace CodeSnippetsReflection.Test
 
             Assert.Contains("WithReferencesPage", result);
         }
+        [Fact]
+        public void UseCollectionPagesWithMethodsNamesForMethods()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/drives/{drive-id}/items/{item-id}/getActivitiesByInterval(startDateTime='2017-01-01',endDateTime='2017-01-3',interval='day')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("DriveItemGetActivitiesByIntervalCollectionPage ", result);
+        }
+        [Fact]
+        public void GenerateDeltaCollectionPages()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/groups/delta");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("GroupDeltaCollectionPage ", result);
+        }
     }
 }
