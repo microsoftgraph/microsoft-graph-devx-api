@@ -185,7 +185,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         else
                         {
-                            stringBuilder.Append($"{className} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)}");
+                            stringBuilder.Append($"{className} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
                         }
                     }
                     break;
@@ -295,10 +295,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 switch (className)
                 {
                     case "DateTimeOffset":
-                        return $"CalendarSerializer.deserialize({stringParameter})";
+                        return $"CalendarSerializer.deserialize({AddQuotesIfMising(stringParameter)})";
 
                     case "Guid":
-                        return $"UUID.fromString({stringParameter})";
+                        return $"UUID.fromString({AddQuotesIfMising(stringParameter)})";
 
                     case "Date"://try to parse the date to get the day,month and year params
                         string parsedDate = DateTime.TryParse(stringParameter, out var dateTime)
@@ -307,10 +307,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         return $"new Date({parsedDate})"; //TODO
 
                     case "Duration":
-                        return $"new Duration({stringParameter})";//TODO
+                        return $"DatatypeFactory.newInstance().newDuration({AddQuotesIfMising(stringParameter)})";
 
                     case "Binary":
-                        return $"Base64.getDecoder().decode({stringParameter})";
+                        return $"Base64.getDecoder().decode({AddQuotesIfMising(stringParameter)})";
 
                     case "Double":
                         return $"{stringParameter}d";
@@ -334,6 +334,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 return stringParameter;
             }
         }
+
+        private string AddQuotesIfMising(string parameter) => $"{(parameter.StartsWith("\"")? string.Empty : "\"")}{parameter}{(parameter.EndsWith("\"") ? string.Empty : "\"")}";
 
 
         /// <summary>

@@ -97,6 +97,61 @@ namespace CodeSnippetsReflection.Test
             Assert.Matches(new Regex(@"\d+d"), result);
         }
         [Fact]
+        public void MapCorrectTypeForDurationProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string userJsonObject = "{ "
+                                          + "\"attendees\": [ "
+                                            + "{ "
+                                              + "\"type\": \"required\",  "
+                                              + "\"emailAddress\": { "
+                                                + "\"name\": \"Alex Wilbur\","
+                                                + "\"address\": \"alexw@contoso.onmicrosoft.com\" "
+                                              + "} "
+                                            + "}"
+                                          + "],  "
+                                          + "\"locationConstraint\": { "
+                                            + "\"isRequired\": \"false\",  "
+                                            + "\"suggestLocation\": \"false\",  "
+                                            + "\"locations\": [ "
+                                              + "{ "
+                                                + "\"resolveAvailability\": \"false\","
+                                                + "\"displayName\": \"Conf room Hood\" "
+                                              + "} "
+                                            + "] "
+                                          + "},  "
+                                          + "\"timeConstraint\": {"
+                                            + "\"activityDomain\":\"work\", "
+                                            + "\"timeSlots\": [ "
+                                              + "{ "
+                                                + "\"start\": { "
+                                                  + "\"dateTime\": \"2019-04-16T09:00:00\",  "
+                                                  + "\"timeZone\": \"Pacific Standard Time\" "
+                                                + "},  "
+                                                + "\"end\": { "
+                                                  + "\"dateTime\": \"2019-04-18T17:00:00\",  "
+                                                  + "\"timeZone\": \"Pacific Standard Time\" "
+                                                + "} "
+                                              + "} "
+                                            + "] "
+                                          + "},  "
+                                          + "\"isOrganizerOptional\": \"false\","
+                                          + "\"meetingDuration\": \"PT1H\","
+                                          + "\"returnSuggestionReasons\": \"true\","
+                                          + "\"minimumAttendeePercentage\": \"100\""
+                                        + "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/findMeetingTimes")
+            {
+                Content = new StringContent(userJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("DatatypeFactory.newInstance().newDuration", result);
+        }
+        [Fact]
         public void HasStreamUseInputStreams()
         {
             LanguageExpressions expressions = new JavaExpressions();
