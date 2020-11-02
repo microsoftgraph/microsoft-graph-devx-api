@@ -318,7 +318,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "TimeOfDay":
                         return DateTime.TryParse(stringParameter, out var timeOfDay)
                             ? $"new TimeOfDay({timeOfDay.Hour}, {timeOfDay.Minute}, {timeOfDay.Second})"
-                            : "new TimeOfDay(0, 0, 0)";//TODO
+                            : "new TimeOfDay(0, 0, 0)";
 
                     case "Boolean":
                         return bool.TryParse(stringParameter, out var boolValue)

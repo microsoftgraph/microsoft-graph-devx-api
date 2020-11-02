@@ -207,6 +207,54 @@ namespace CodeSnippetsReflection.Test
             Assert.Contains("new DateOnly(", result);
         }
         [Fact]
+        public void MapCorrectTypeForTimeOfDayProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string userJsonObject = "{"
+                                              + "\"workingHours\": {"
+                                                  + "\"endTime\" : \"18:30:00.0000000\", "
+                                                  + "\"daysOfWeek\": [ "
+                                                      + "\"Monday\", "
+                                                      + "\"Tuesday\", "
+                                                      + "\"Wednesday\", "
+                                                      + "\"Thursday\", "
+                                                      + "\"Friday\", "
+                                                      + "\"Saturday\" "
+                                                  + "], "
+                                                  + "\"timeZone\" : { "
+                                                     + "\"@odata.type\": \"#microsoft.graph.customTimeZone\", "
+                                                     + "\"bias\":-300, "
+                                                     + "\"name\": \"Customized Time Zone\","
+                                                     + "\"standardOffset\":{   "
+                                                       + "\"time\":\"02:00:00.0000000\", "
+                                                       + "\"dayOccurrence\":2, "
+                                                       + "\"dayOfWeek\":\"Sunday\", "
+                                                       + "\"month\":10, "
+                                                       + "\"year\":0 "
+                                                     + "}, "
+                                                     + "\"daylightOffset\":{   "
+                                                       + "\"daylightBias\":100, "
+                                                       + "\"time\":\"02:00:00.0000000\", "
+                                                       + "\"dayOccurrence\":4, "
+                                                       + "\"dayOfWeek\":\"Sunday\", "
+                                                       + "\"month\":5, "
+                                                       + "\"year\":0 "
+                                                     + "} "
+                                                  + "} "
+                                              + "}"
+                                            + "}";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/me/mailboxSettings")
+            {
+                Content = new StringContent(userJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("new TimeOfDay(", result);
+        }
+        [Fact]
         public void HasStreamUseInputStreams()
         {
             LanguageExpressions expressions = new JavaExpressions();
