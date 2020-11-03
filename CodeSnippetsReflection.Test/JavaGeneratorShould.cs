@@ -372,22 +372,6 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        //This tests asserts that we return an error if we try to get beta snippets for Java
-        public void ThrowsNotImplementedExceptionForBeta()
-        {
-            //Arrange
-            LanguageExpressions expressions = new JavaExpressions();
-
-            //Act
-            var requestPayload = new HttpRequestMessage(HttpMethod.Get,
-                "https://graph.microsoft.com/beta/me");
-            var snippetModel = new SnippetModel(requestPayload, "https://graph.microsoft.com/beta", _edmModel);
-
-            //Assert that we do not generate snippets for java beta for now
-            Assert.Throws<NotImplementedException>(() =>new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions));
-        }
-
-        [Fact]
         //This test asserts that a request with optional parameters is generated correctly with the order present
         //in the metadata
         public void GeneratesSnippetsWithOptionalParametersInCorrectOrder()
