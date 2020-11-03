@@ -51,7 +51,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 /*Auth provider section*/
                 snippetBuilder.Append("IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n");
                 //append any request options present
-                snippetBuilder.Append(GenerateRequestOptionsSection(snippetModel,languageExpressions));
+                snippetBuilder.Append(GenerateRequestOptionsSection(snippetModel, languageExpressions));
                 /*Generate the query section of the request*/
                 var requestActions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
 
@@ -139,7 +139,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="stringBuilder">Current state of the snippet built</param>
         /// <param name="snippetModel">model containing info about snippet to be generated</param>
         /// <returns></returns>
-        private string GenerateCustomRequestForPropertySegment(StringBuilder stringBuilder,SnippetModel snippetModel)
+        private string GenerateCustomRequestForPropertySegment(StringBuilder stringBuilder, SnippetModel snippetModel)
         {
             stringBuilder.Append($"graphClient.customRequest(\"{snippetModel.Path}\", { GetJavaReturnTypeName(snippetModel.Segments.Last()) }.class)");
             stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
@@ -170,7 +170,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case string _:
                     {
                         var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path);
-                        if(className == "String")
+                        if (className == "String")
                         {
                             stringBuilder.Append($"String {path.Last()} = \"{jsonObject}\";\r\n");
                         }
@@ -208,10 +208,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             {
                                 case JTokenType.Array:
                                 case JTokenType.Object:
+                                    // in the case we have a collection page property, we need to reference the collection page variable instead
+                                    var collectionType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath);
+                                    var referenceSuffix = collectionType.TypeKind == EdmTypeKind.Entity ? $"Collection{page}" : "List";
+                                    var variableName = (referenceSuffix.Contains(page) ? collectionType.FullTypeName().Split('.').Last() : newPath.Last()) + referenceSuffix;
                                     //new nested object needs to be constructed so call this function recursively to make it
                                     stringBuilder.Append($"{JavaGenerateObjectFromJson(pathSegment, value, newPath, usedVarNames)}");
                                     stringBuilder.Append(jToken.Type == JTokenType.Array
-                                        ? $"{ currentVarName }.{ newPath.Last() } = { EnsureJavaVariableNameIsUnique(newPath.Last()+"List", usedVarNames) };\r\n"
+                                        ? $"{ currentVarName }.{ newPath.Last() } = { EnsureJavaVariableNameIsUnique(variableName, usedVarNames) };\r\n"
                                         : $"{ currentVarName }.{ newPath.Last() } = { EnsureJavaVariableNameIsUnique(newPath.Last(), usedVarNames) };\r\n");
                                     break;
                                 case JTokenType.String:
@@ -222,10 +226,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                         : $"{ currentVarName }.{newPath.Last()} = {GenerateSpecialClassString($"{value}", pathSegment, newPath)};\r\n");
                                     break;
                                 default:
-                                        stringBuilder.Append($"{ currentVarName }.{newPath.Last()} = { GenerateSpecialClassString($"{value}", pathSegment, newPath)};\r\n");
+                                    stringBuilder.Append($"{ currentVarName }.{newPath.Last()} = { GenerateSpecialClassString($"{value}", pathSegment, newPath)};\r\n");
                                     break;
                             }
-                            usedVarNames.Add(jToken.Type == JTokenType.Array? $"{newPath.Last()}List": newPath.Last());//add used variable name to used list
+                            usedVarNames.Add(jToken.Type == JTokenType.Array ? $"{newPath.Last()}List" : newPath.Last());//add used variable name to used list
                         }
                     }
                     break;
@@ -234,18 +238,29 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         var objectList = array.Children<JObject>();
                         if (objectList.Any())
                         {
-                            var currentListName = EnsureJavaVariableNameIsUnique(path.Last()+"List", usedVarNames);
+                            var currentListName = EnsureJavaVariableNameIsUnique(path.Last() + "List", usedVarNames);
                             //Item is a list/array so declare a typed list
                             stringBuilder.Append($"LinkedList<{className}> {currentListName} = new LinkedList<{className}>();\r\n");
                             foreach (var item in objectList)
                             {
-                                var currentListItemName = EnsureJavaVariableNameIsUnique(path.Last() , usedVarNames);
+                                var currentListItemName = EnsureJavaVariableNameIsUnique(path.Last(), usedVarNames);
                                 var jsonItemString = JsonConvert.SerializeObject(item);
                                 //we need to create a new object
                                 var objectStringFromJson = JavaGenerateObjectFromJson(pathSegment, jsonItemString, path, usedVarNames);
                                 stringBuilder.Append($"{objectStringFromJson}");
                                 stringBuilder.Append($"{currentListName}.add({currentListItemName});\r\n");
                                 usedVarNames.Add(path.Last());//add used variable name to used list
+                            }
+                            var collectionType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
+                            if (collectionType.TypeKind == EdmTypeKind.Entity)
+                            {
+                                var currentPageTypeName = CommonGenerator.UppercaseFirstLetter($"{CommonGenerator.UppercaseFirstLetter(collectionType.FullTypeName().Split('.').Last())}Collection{page}");
+                                var currentPageCollectionName = EnsureJavaVariableNameIsUnique(CommonGenerator.LowerCaseFirstLetter(currentPageTypeName), usedVarNames);
+                                var currentResponseTypeName = currentPageTypeName.Replace(page, "Response");
+                                var currentResponseCollectionName = EnsureJavaVariableNameIsUnique(CommonGenerator.LowerCaseFirstLetter(currentResponseTypeName), usedVarNames);
+                                stringBuilder.Append($"{currentResponseTypeName} {currentResponseCollectionName} = new {currentResponseTypeName}();\r\n");
+                                stringBuilder.Append($"{currentResponseCollectionName}.value = {currentListName};\r\n");
+                                stringBuilder.Append($"{currentPageTypeName} {currentPageCollectionName} = new {currentPageTypeName}({currentResponseCollectionName}, null);\r\n");
                             }
                         }
                         else
@@ -314,7 +329,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     case "Double":
                         return $"{stringParameter}d";
-                    
+
                     case "Int64":
                         return $"{stringParameter}L";
 
@@ -400,7 +415,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="variableName">Variable name to be used</param>
         /// <param name="usedList">List of variable names that have been already used</param>
-        private static string EnsureJavaVariableNameIsUnique(string variableName, IEnumerable<string> usedList )
+        private static string EnsureJavaVariableNameIsUnique(string variableName, IEnumerable<string> usedList)
         {
             var count = usedList.Count(x => x.Equals(variableName));
             if (count > 0)
@@ -480,6 +495,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             return CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last());
         }
 
+        private const string page = "Page";
         /// <summary>
         /// Java specific function that infers the return type for java that is going to be returned
         /// </summary>
@@ -488,17 +504,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String representing the return type</returns>
         private string GetJavaReturnTypeName(ODataPathSegment pathSegment, List<string> path = null)
         {
-            var edmType = pathSegment?.EdmType ?? ( path == null ? null : CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path));
+            var edmType = pathSegment?.EdmType ?? (path == null ? null : CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path));
             if (edmType is IEdmCollectionType collectionType)
                 if (pathSegment is OperationSegment opSegment)
                 {
                     var typeName = opSegment.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.Definition?.FullTypeName()?.Split(".")?.LastOrDefault()?.Replace(")", string.Empty); //last replace is for the case we have collections
-                    return $"I{CommonGenerator.UppercaseFirstLetter(typeName)}{CommonGenerator.UppercaseFirstLetter(opSegment.Identifier)}CollectionPage";
+                    return $"I{CommonGenerator.UppercaseFirstLetter(typeName)}{CommonGenerator.UppercaseFirstLetter(opSegment.Identifier)}Collection{page}";
                 }
                 else if (collectionType.ElementType.Definition is IEdmNamedElement edmNamedElement)
-                    return $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}Collection{(pathSegment is NavigationPropertySegment navPropPathSeg && !navPropPathSeg.NavigationProperty.ContainsTarget ? "WithReferences" : string.Empty)}Page";
+                    return $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}Collection{(pathSegment is NavigationPropertySegment navPropPathSeg && !navPropPathSeg.NavigationProperty.ContainsTarget ? "WithReferences" : string.Empty)}{page}";
                 else
-                    return $"I{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}CollectionPage";
+                    return $"I{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}Collection{page}";
             else
                 switch (edmType?.FullTypeName())
                 {
@@ -530,7 +546,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             stringBuilder.Append("graphClient");
             stringBuilder.Append(JavaGenerateResourcesPath(snippetModel));//Generate the Resources path for Csharp
             //check if there are any custom query options appended
-            stringBuilder.Append( JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
+            stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
             stringBuilder.Append(requestActions);//Append footers
             return stringBuilder.ToString();
         }
@@ -552,12 +568,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     //handle indexing into collections
                     case KeySegment keySegment:
-                        resourcesPath.Remove(resourcesPath.Length-2 , 2);//first remove the preceding curly braces
+                        resourcesPath.Remove(resourcesPath.Length - 2, 2);//first remove the preceding curly braces
                         resourcesPath.Append($"(\"{keySegment.Keys.FirstOrDefault().Value}\")");
                         break;
                     //handle functions/requestActions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment,snippetModel,"List",false);
+                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel, "List", false);
                         resourcesPath.Append($"\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")})");
                         break;
                     case ReferenceSegment _:
@@ -654,7 +670,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>boolean value showing whether or not the snippet generation needs to have request options</returns>
         private static bool JavaModelHasRequestOptionsParameters(SnippetModel snippetModel)
         {
-            if (   snippetModel.CustomQueryOptions.Any()
+            if (snippetModel.CustomQueryOptions.Any()
                 || snippetModel.RequestHeaders.Any(x => !x.Key.ToLower().Equals("host"))
                 || !string.IsNullOrEmpty(snippetModel.SearchExpression))
             {
@@ -679,7 +695,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string SkipTokenExpression => "\n\t.skipToken(\"{0}\")";
         public override string OrderByExpression => "\n\t.orderBy(\"{0}\")";
         public override string OrderByExpressionDelimiter => " ";
-        public override string[] ReservedNames => new [] {
+        public override string[] ReservedNames => new[] {
             "abstract","assert","boolean","break","byte","case","catch","char",
             "class","const","continue","default","do","double","else","enum",
             "extends","final","finally","float","for","goto","if","implements",

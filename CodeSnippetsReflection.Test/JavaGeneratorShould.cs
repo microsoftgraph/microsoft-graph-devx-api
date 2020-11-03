@@ -848,5 +848,34 @@ namespace CodeSnippetsReflection.Test
 
             Assert.Contains("GroupDeltaCollectionPage ", result);
         }
+        [Fact]
+        public void MapCollectionPagesProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                        + "\"@odata.type\": \"#Microsoft.Graph.channel\","
+                                        + "\"membershipType\": \"private\","
+                                        + "\"displayName\": \"My First Private Channel\","
+                                        + "\"description\": \"This is my first private channels\","
+                                        + "\"members\":"
+                                            + "["
+                                            + "{"
+                                                + "\"@odata.type\":\"#microsoft.graph.aadUserConversationMember\","
+                                                + "\"user@odata.bind\":\"https://graph.microsoft.com/v1.0/users('{user_id}')\","
+                                                + "\"roles\":[\"owner\"]"
+                                            + "}"
+                                            + "]"
+                                    + "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/teams/{group_id}/channels")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("channel.members = conversationMemberCollectionPage;", result);
+        }
     }
 }
