@@ -861,5 +861,32 @@ namespace CodeSnippetsReflection.Test
 
             Assert.Contains("channel.members = conversationMemberCollectionPage;", result);
         }
+
+        [Fact]
+        public void MapEnumSetsProperties()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                      + "\"policyViolation\": {"
+                                        + "\"policyTip\": {"
+                                          + "\"generalText\" : \"This item has been blocked by the administrator.\","
+                                          + "\"complianceUrl\" : \"https://contoso.com/dlp-policy-page\","
+                                          + "\"matchedConditionDescriptions\" : [\"Credit Card Number\"]"
+                                        + "},"
+                                        + "\"verdictDetails\" : \"AllowOverrideWithoutJustification,AllowFalsePositiveOverride\","
+                                        + "\"dlpAction\" : \"BlockAccess\""
+                                      + "}"
+                                    + "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/teams/e1234567-e123-4276-55555-6232b0e3a89a/channels/a7654321-e321-0000-0000-123b0e3a00a/messages/19%3Aa21b0b0c05194ebc9e30000000000f61%40thread.skype")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("EnumSet.of", result);
+        }
     }
 }

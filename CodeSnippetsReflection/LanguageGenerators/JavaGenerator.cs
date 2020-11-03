@@ -214,9 +214,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     break;
                                 case JTokenType.String:
                                     var enumString = GenerateEnumString(jToken.ToString(), pathSegment, newPath);
+                                    var enumIsFlags = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath) is IEdmEnumType enumType && enumType.IsFlags;
                                     //check if the type is an enum and handle it
                                     stringBuilder.Append(!string.IsNullOrEmpty(enumString)
-                                        ? $"{ currentVarName }.{newPath.Last()} = {enumString};\r\n"
+                                        ? $"{ currentVarName }.{newPath.Last()} = {(enumIsFlags ? "EnumSet.of(" : string.Empty)}{enumString}{(enumIsFlags ? ")" : string.Empty)};\r\n"
                                         : $"{ currentVarName }.{newPath.Last()} = {GenerateSpecialClassString($"{value}", pathSegment, newPath)};\r\n");
                                     break;
                                 default:
