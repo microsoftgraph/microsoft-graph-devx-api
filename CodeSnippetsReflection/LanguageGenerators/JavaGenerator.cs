@@ -498,7 +498,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String representing the return type</returns>
         private string GetJavaReturnTypeName(ODataPathSegment pathSegment, List<string> path = null)
         {
-            var edmType = pathSegment?.EdmType ?? (path == null ? null : CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path));
+            var edmType = (path == null ? null : CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path)) ?? pathSegment?.EdmType;
             if (edmType is IEdmCollectionType collectionType)
                 if (pathSegment is OperationSegment opSegment)
                 {
