@@ -231,9 +231,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case JArray array:
                     {
                         var objectList = array.Children<JObject>();
+                        var currentListName = EnsureJavaVariableNameIsUnique(path.Last() + "List", usedVarNames);
+                        var collectionType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
                         if (objectList.Any())
                         {
-                            var currentListName = EnsureJavaVariableNameIsUnique(path.Last() + "List", usedVarNames);
                             //Item is a list/array so declare a typed list
                             stringBuilder.Append($"LinkedList<{className}> {currentListName} = new LinkedList<{className}>();\r\n");
                             foreach (var item in objectList)
@@ -246,7 +247,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 stringBuilder.Append($"{currentListName}.add({currentListItemName});\r\n");
                                 usedVarNames.Add(path.Last());//add used variable name to used list
                             }
-                            var collectionType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
                             if (collectionType.TypeKind == EdmTypeKind.Entity)
                             {
                                 var currentPageTypeName = CommonGenerator.UppercaseFirstLetter($"{CommonGenerator.UppercaseFirstLetter(collectionType.FullTypeName().Split('.').Last())}Collection{page}");
@@ -257,14 +257,23 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 stringBuilder.Append($"{currentResponseCollectionName}.value = {currentListName};\r\n");
                                 stringBuilder.Append($"{currentPageTypeName} {currentPageCollectionName} = new {currentPageTypeName}({currentResponseCollectionName}, null);\r\n");
                             }
+                        } 
+                        else if (collectionType.TypeKind == EdmTypeKind.Enum)
+                        {
+                            stringBuilder.Append($"LinkedList<{className}> {currentListName} = new LinkedList<{className}>();\r\n");
+                            foreach (var element in array)
+                            {
+                                var enumString = GenerateEnumString(element.Value<string>(), pathSegment, path);
+                                stringBuilder.Append($"{currentListName}.add({enumString});\r\n");
+                            }
                         }
                         else
                         {
-                            stringBuilder.Append($"LinkedList<String> {path.Last()}List = new LinkedList<String>();\r\n");
+                            stringBuilder.Append($"LinkedList<String> {currentListName} = new LinkedList<String>();\r\n");
                             //its not nested objects but a string collection
                             foreach (var element in array)
                             {
-                                stringBuilder.Append($"{path.Last()}List.add(\"{element.Value<string>()}\");\r\n");
+                                stringBuilder.Append($"{currentListName}.add(\"{element.Value<string>()}\");\r\n");
                             }
                         }
                     }

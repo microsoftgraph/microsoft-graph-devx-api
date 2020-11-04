@@ -888,5 +888,43 @@ namespace CodeSnippetsReflection.Test
 
             Assert.Contains("EnumSet.of", result);
         }
+        [Fact]
+        public void MapEnumSetsVariables()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                          + "\"@odata.type\": \"#microsoft.graph.call\","
+                                          + "\"callbackUri\": \"https://bot.contoso.com/callback\","
+                                          + "\"targets\": ["
+                                            + "{"
+                                              + "\"@odata.type\": \"#microsoft.graph.invitationParticipantInfo\","
+                                              + "\"identity\": {"
+                                                + "\"@odata.type\": \"#microsoft.graph.identitySet\","
+                                                + "\"user\": {"
+                                                  + "\"@odata.type\": \"#microsoft.graph.identity\","
+                                                  + "\"displayName\": \"John\","
+                                                  + "\"id\": \"112f7296-5fa4-42ca-bae8-6a692b15d4b8\""
+                                                + "}"
+                                              + "}"
+                                            + "}"
+                                          + "],"
+                                          + "\"requestedModalities\": ["
+                                            + "\"audio\""
+                                          + "],"
+                                          + "\"mediaConfig\": {"
+                                            + "\"@odata.type\": \"#microsoft.graph.serviceHostedMediaConfig\""
+                                          + "}"
+                                        + "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/communications/calls")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("LinkedList<Modality>", result);
+        }
     }
 }
