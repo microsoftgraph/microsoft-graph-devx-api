@@ -45,13 +45,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 /*Auth provider section*/
                 snippetBuilder.Append("IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n");
                 //append any request options present
-                snippetBuilder.Append(GenerateRequestOptionsSection(snippetModel,languageExpressions));
+                snippetBuilder.Append(GenerateRequestOptionsSection(snippetModel, languageExpressions));
                 /*Generate the query section of the request*/
                 var requestActions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
-                    var typeName = GetJavaReturnTypeName(segment.EdmType,snippetModel.ResponseVariableName);
+                    var typeName = GetJavaReturnTypeName(segment);
                     snippetBuilder.Append($"{typeName} {snippetModel.ResponseVariableName} = ");
 
                     if (segment is PropertySegment)
@@ -133,9 +133,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="stringBuilder">Current state of the snippet built</param>
         /// <param name="snippetModel">model containing info about snippet to be generated</param>
         /// <returns></returns>
-        private static string GenerateCustomRequestForPropertySegment(StringBuilder stringBuilder,SnippetModel snippetModel)
+        private string GenerateCustomRequestForPropertySegment(StringBuilder stringBuilder, SnippetModel snippetModel)
         {
-            stringBuilder.Append($"graphClient.customRequest(\"{snippetModel.Path}\", { GetJavaReturnTypeName(snippetModel.Segments.Last().EdmType, snippetModel.ResponseVariableName) }.class)");
+            stringBuilder.Append($"graphClient.customRequest(\"{snippetModel.Path}\", { GetJavaReturnTypeName(snippetModel.Segments.Last()) }.class)");
             stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
             stringBuilder.Append(snippetModel.Method == HttpMethod.Get
                 ? "\n\t.get();"
@@ -157,13 +157,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
             var stringBuilder = new StringBuilder();
             var jsonObject = JsonConvert.DeserializeObject(jsonString);
             usedVarNames = usedVarNames ?? new List<string>();//make sure list is not null
+            var className = GetJavaClassNameFromOdataPath(pathSegment, path);
 
             switch (jsonObject)
             {
                 case string _:
                     {
                         var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path);
-                        if (!string.IsNullOrEmpty(enumString))
+                        if (className == "String")
+                        {
+                            stringBuilder.Append($"String {path.Last()} = \"{jsonObject}\";\r\n");
+                        }
+                        else if (!string.IsNullOrEmpty(enumString))
                         {
                             //Enum is accessed as the Classname then enum type e.g Importance.LOW
                             stringBuilder.Append($"{enumString.Split(".").First()} {path.Last()} = {enumString};\r\n");
@@ -174,14 +179,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         else
                         {
-                            stringBuilder.Append($"String {path.Last()} = \"{jsonObject}\";\r\n");
+                            stringBuilder.Append($"{GetJavaReturnTypeName(pathSegment, path)} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
                         }
                     }
                     break;
                 case JObject jObject:
                     {
                         var currentVarName = EnsureJavaVariableNameIsUnique(path.Last(), usedVarNames);
-                        var className = GetJavaClassNameFromOdataPath(pathSegment, path);
                         stringBuilder.Append($"{className} { currentVarName } = new {className}();\r\n");
                         //initialize each member/property of the object
                         foreach (var (key, jToken) in jObject)
@@ -198,24 +202,29 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             {
                                 case JTokenType.Array:
                                 case JTokenType.Object:
+                                    // in the case we have a collection page property, we need to reference the collection page variable instead
+                                    var collectionType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath);
+                                    var referenceSuffix = collectionType.TypeKind == EdmTypeKind.Entity ? $"Collection{page}" : "List";
+                                    var variableName = (referenceSuffix.Contains(page) ? collectionType.FullTypeName().Split('.').Last() : newPath.Last()) + referenceSuffix;
                                     //new nested object needs to be constructed so call this function recursively to make it
                                     stringBuilder.Append($"{JavaGenerateObjectFromJson(pathSegment, value, newPath, usedVarNames)}");
                                     stringBuilder.Append(jToken.Type == JTokenType.Array
-                                        ? $"{ currentVarName }.{ newPath.Last() } = { EnsureJavaVariableNameIsUnique(newPath.Last()+"List", usedVarNames) };\r\n"
+                                        ? $"{ currentVarName }.{ newPath.Last() } = { EnsureJavaVariableNameIsUnique(variableName, usedVarNames) };\r\n"
                                         : $"{ currentVarName }.{ newPath.Last() } = { EnsureJavaVariableNameIsUnique(newPath.Last(), usedVarNames) };\r\n");
                                     break;
                                 case JTokenType.String:
                                     var enumString = GenerateEnumString(jToken.ToString(), pathSegment, newPath);
+                                    var enumIsFlags = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath) is IEdmEnumType enumType && enumType.IsFlags;
                                     //check if the type is an enum and handle it
                                     stringBuilder.Append(!string.IsNullOrEmpty(enumString)
-                                        ? $"{ currentVarName }.{newPath.Last()} = {enumString};\r\n"
-                                        : $"{ currentVarName }.{newPath.Last()} = {value.Replace("\n", "").Replace("\r", "")};\r\n");
+                                        ? $"{ currentVarName }.{newPath.Last()} = {(enumIsFlags ? "EnumSet.of(" : string.Empty)}{enumString}{(enumIsFlags ? ")" : string.Empty)};\r\n"
+                                        : $"{ currentVarName }.{newPath.Last()} = {GenerateSpecialClassString($"{value}", pathSegment, newPath)};\r\n");
                                     break;
                                 default:
-                                        stringBuilder.Append($"{ currentVarName }.{newPath.Last()} = { value.Replace("\n", "").Replace("\r", "") };\r\n");
+                                    stringBuilder.Append($"{ currentVarName }.{newPath.Last()} = { GenerateSpecialClassString($"{value}", pathSegment, newPath)};\r\n");
                                     break;
                             }
-                            usedVarNames.Add(jToken.Type == JTokenType.Array? $"{newPath.Last()}List": newPath.Last());//add used variable name to used list
+                            usedVarNames.Add(jToken.Type == JTokenType.Array ? $"{newPath.Last()}List" : newPath.Last());//add used variable name to used list
                         }
                     }
                     break;
@@ -224,19 +233,29 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         var objectList = array.Children<JObject>();
                         if (objectList.Any())
                         {
-                            var className = GetJavaClassNameFromOdataPath(pathSegment, path);
-                            var currentListName = EnsureJavaVariableNameIsUnique(path.Last()+"List", usedVarNames);
+                            var currentListName = EnsureJavaVariableNameIsUnique(path.Last() + "List", usedVarNames);
                             //Item is a list/array so declare a typed list
                             stringBuilder.Append($"LinkedList<{className}> {currentListName} = new LinkedList<{className}>();\r\n");
                             foreach (var item in objectList)
                             {
-                                var currentListItemName = EnsureJavaVariableNameIsUnique(path.Last() , usedVarNames);
+                                var currentListItemName = EnsureJavaVariableNameIsUnique(path.Last(), usedVarNames);
                                 var jsonItemString = JsonConvert.SerializeObject(item);
                                 //we need to create a new object
                                 var objectStringFromJson = JavaGenerateObjectFromJson(pathSegment, jsonItemString, path, usedVarNames);
                                 stringBuilder.Append($"{objectStringFromJson}");
                                 stringBuilder.Append($"{currentListName}.add({currentListItemName});\r\n");
                                 usedVarNames.Add(path.Last());//add used variable name to used list
+                            }
+                            var collectionType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
+                            if (collectionType.TypeKind == EdmTypeKind.Entity)
+                            {
+                                var currentPageTypeName = CommonGenerator.UppercaseFirstLetter($"{CommonGenerator.UppercaseFirstLetter(collectionType.FullTypeName().Split('.').Last())}Collection{page}");
+                                var currentPageCollectionName = EnsureJavaVariableNameIsUnique(CommonGenerator.LowerCaseFirstLetter(currentPageTypeName), usedVarNames);
+                                var currentResponseTypeName = currentPageTypeName.Replace(page, "Response");
+                                var currentResponseCollectionName = EnsureJavaVariableNameIsUnique(CommonGenerator.LowerCaseFirstLetter(currentResponseTypeName), usedVarNames);
+                                stringBuilder.Append($"{currentResponseTypeName} {currentResponseCollectionName} = new {currentResponseTypeName}();\r\n");
+                                stringBuilder.Append($"{currentResponseCollectionName}.value = {currentListName};\r\n");
+                                stringBuilder.Append($"{currentPageTypeName} {currentPageCollectionName} = new {currentPageTypeName}({currentResponseCollectionName}, null);\r\n");
                             }
                         }
                         else
@@ -270,6 +289,70 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //check if this is the outermost object in a potential nested object structure and needs the semicolon termination character.
             return path.Count == 1 ? $"{stringBuilder.ToString().TrimEnd()}\r\n\r\n" : stringBuilder.ToString();
         }
+
+        /// <summary>
+        /// Get the Csharp representation of a string and add any parsing calls that may be required.
+        /// </summary>
+        /// <param name="stringParameter">String parameter that may need parsing</param>
+        /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
+        /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
+        private string GenerateSpecialClassString(string stringParameter, ODataPathSegment pathSegment, ICollection<string> path)
+        {
+            try
+            {
+                var className = GetJavaClassNameFromOdataPath(pathSegment, path);
+                //check the classes and parse them appropriately
+                switch (className)
+                {
+                    case "DateTimeOffset":
+                        return $"CalendarSerializer.deserialize({AddQuotesIfMising(stringParameter)})";
+
+                    case "Guid":
+                        return $"UUID.fromString({AddQuotesIfMising(stringParameter)})";
+
+                    case "Date"://try to parse the date to get the day,month and year params
+                        string parsedDate = DateTime.TryParse(stringParameter, out var dateTime)
+                            ? $"{dateTime.Year},{dateTime.Month},{dateTime.Day}"
+                            : "1900,1,1";//use default params on parse failure
+                        return $"new DateOnly({parsedDate})";
+
+                    case "Duration":
+                        return $"DatatypeFactory.newInstance().newDuration({AddQuotesIfMising(stringParameter)})";
+
+                    case "Binary":
+                        return $"Base64.getDecoder().decode({AddQuotesIfMising(stringParameter)})";
+
+                    case "Double":
+                        return $"{stringParameter}d";
+
+                    case "Int64":
+                        return $"{stringParameter}L";
+
+                    case "TimeOfDay":
+                        return DateTime.TryParse(stringParameter, out var timeOfDay)
+                            ? $"new TimeOfDay({timeOfDay.Hour}, {timeOfDay.Minute}, {timeOfDay.Second})"
+                            : "new TimeOfDay(0, 0, 0)";
+
+                    case "Boolean":
+                        return bool.TryParse(stringParameter, out var boolValue)
+                            ? boolValue.ToString().ToLower()
+                            : "false";
+                    case "Json":
+                        return $"JsonParser.parseString({AddQuotesIfMising(ClearStringLiteralsFromBreakingCharacters(stringParameter))})";
+
+                    default:
+                        return stringParameter;
+                }
+            }
+            catch
+            {
+                return stringParameter;
+            }
+        }
+
+        private const string quote = "\"";
+        private const string escapedQuote = "\\\"";
+        private string AddQuotesIfMising(string parameter) => $"{(parameter.StartsWith(quote) ? string.Empty : quote)}{parameter}{(parameter.EndsWith(quote) && !parameter.EndsWith(escapedQuote) ? string.Empty : quote)}";
 
 
         /// <summary>
@@ -310,19 +393,24 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 default:
                     //just append the property as part of the additionalData of the object
-                    stringBuilder.Append($"{currentVarName}.additionalDataManager().put(\"{key}\", new JsonPrimitive(\"{value}\"));\r\n");
+                    stringBuilder.Append($"{currentVarName}.additionalDataManager().put(\"{key}\", new JsonPrimitive(\"{ClearStringLiteralsFromBreakingCharacters(value)}\"));\r\n");
                     break;
             }
 
             return stringBuilder;
         }
 
+        private static string ClearStringLiteralsFromBreakingCharacters(string input) => input?.
+                                                            Replace(quote, escapedQuote)?.
+                                                            Replace("\r", string.Empty)?.
+                                                            Replace("\n", string.Empty);
+
         /// <summary>
         /// Java specific function to check how many times a variableName has been used and append a number at the end to make it unique
         /// </summary>
         /// <param name="variableName">Variable name to be used</param>
         /// <param name="usedList">List of variable names that have been already used</param>
-        private static string EnsureJavaVariableNameIsUnique(string variableName, IEnumerable<string> usedList )
+        private static string EnsureJavaVariableNameIsUnique(string variableName, IEnumerable<string> usedList)
         {
             var count = usedList.Count(x => x.Equals(variableName));
             if (count > 0)
@@ -395,45 +483,51 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">Path to follow to get find the classname</param>
         /// <returns>String representing the type in use</returns>
-        private string GetJavaClassNameFromOdataPath(ODataPathSegment pathSegment, List<string> path)
+        private string GetJavaClassNameFromOdataPath(ODataPathSegment pathSegment, ICollection<string> path)
         {
             var edmType = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path);
             //we need to split the string and get last item //eg microsoft.graph.data => Data
             return CommonGenerator.UppercaseFirstLetter(edmType.ToString().Split(".").Last());
         }
 
+        private const string page = "Page";
         /// <summary>
         /// Java specific function that infers the return type for java that is going to be returned
         /// </summary>
-        /// <param name="edmType">Definition of the type from the OData model</param>
-        /// <param name="typeHint">Hint of the variable name that is coming back</param>
+        /// <param name="pathSegment">Segment from the URI</param>
+        /// <param name="path">query path</param>
         /// <returns>String representing the return type</returns>
-        private static string GetJavaReturnTypeName(IEdmType edmType , string typeHint)
+        private string GetJavaReturnTypeName(ODataPathSegment pathSegment, List<string> path = null)
         {
-            var typeName = string.Empty;
+            var edmType = (path == null ? null : CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path)) ?? pathSegment?.EdmType;
             if (edmType is IEdmCollectionType collectionType)
-            {
-                if (collectionType.ElementType.Definition is IEdmNamedElement edmNamedElement)
+                if (pathSegment is OperationSegment opSegment)
                 {
-                    typeName = typeHint.Equals("delta",StringComparison.OrdinalIgnoreCase)
-                        ? $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}DeltaCollectionPage"
-                        : $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}CollectionPage";
+                    var typeName = opSegment.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.Definition?.FullTypeName()?.Split(".")?.LastOrDefault()?.Replace(")", string.Empty); //last replace is for the case we have collections
+                    return $"I{CommonGenerator.UppercaseFirstLetter(typeName)}{CommonGenerator.UppercaseFirstLetter(opSegment.Identifier)}Collection{page}";
                 }
+                else if (collectionType.ElementType.Definition is IEdmNamedElement edmNamedElement)
+                    return $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}Collection{(pathSegment is NavigationPropertySegment navPropPathSeg && !navPropPathSeg.NavigationProperty.ContainsTarget ? "WithReferences" : string.Empty)}{page}";
                 else
-                {
-                    typeName = $"I{typeName}CollectionPage";
-                }
-            } 
-            else if (edmType.FullTypeName().Equals("Edm.Stream"))
-            {
-                typeName = "InputStream";
-            }
+                    return $"I{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}Collection{page}";
             else
-            {
-                typeName = edmType == null ? "Content": CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last());
-            }
-
-            return typeName;
+                switch (edmType?.FullTypeName())
+                {
+                    case "Edm.Stream":
+                        return "InputStream";
+                    case "Edm.Guid":
+                        return "UUID";
+                    case "Edm.DateTimeOffset":
+                        return "Calendar";
+                    case "Edm.Date":
+                        return "DateOnly";
+                    case "Edm.Int64":
+                        return "Long";
+                    case "microsoft.graph.Json":
+                        return "JsonElement";
+                    default:
+                        return edmType == null ? "Content" : CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last());
+                }
         }
 
         /// <summary>
@@ -447,7 +541,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             stringBuilder.Append("graphClient");
             stringBuilder.Append(JavaGenerateResourcesPath(snippetModel));//Generate the Resources path for Csharp
             //check if there are any custom query options appended
-            stringBuilder.Append( JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
+            stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
             stringBuilder.Append(requestActions);//Append footers
             return stringBuilder.ToString();
         }
@@ -469,12 +563,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     //handle indexing into collections
                     case KeySegment keySegment:
-                        resourcesPath.Remove(resourcesPath.Length-2 , 2);//first remove the preceding curly braces
+                        resourcesPath.Remove(resourcesPath.Length - 2, 2);//first remove the preceding curly braces
                         resourcesPath.Append($"(\"{keySegment.Keys.FirstOrDefault().Value}\")");
                         break;
                     //handle functions/requestActions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment,snippetModel,"List",false);
+                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel, "List", false);
                         resourcesPath.Append($"\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")})");
                         break;
                     case ReferenceSegment _:
@@ -571,7 +665,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>boolean value showing whether or not the snippet generation needs to have request options</returns>
         private static bool JavaModelHasRequestOptionsParameters(SnippetModel snippetModel)
         {
-            if (   snippetModel.CustomQueryOptions.Any()
+            if (snippetModel.CustomQueryOptions.Any()
                 || snippetModel.RequestHeaders.Any(x => !x.Key.ToLower().Equals("host"))
                 || !string.IsNullOrEmpty(snippetModel.SearchExpression))
             {
@@ -596,7 +690,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string SkipTokenExpression => "\n\t.skipToken(\"{0}\")";
         public override string OrderByExpression => "\n\t.orderBy(\"{0}\")";
         public override string OrderByExpressionDelimiter => " ";
-        public override string[] ReservedNames => new [] {
+        public override string[] ReservedNames => new[] {
             "abstract","assert","boolean","break","byte","case","catch","char",
             "class","const","continue","default","do","double","else","enum",
             "extends","final","finally","float","for","goto","if","implements",
