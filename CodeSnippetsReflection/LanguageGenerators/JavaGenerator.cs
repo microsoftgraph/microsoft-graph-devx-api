@@ -109,7 +109,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (snippetModel.ContentType.Contains("json"))
                         snippetBuilder.Append(JavaGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
                     else
-                        snippetBuilder.Append($"InputStream {snippetModel.ResponseVariableName} = new ByteArrayInputStream(Base64.getDecoder().decode({AddQuotesIfMising(snippetModel.RequestBody?.Replace("\n", string.Empty)?.Replace("\r", string.Empty))}));\n\t");
+                        snippetBuilder.Append($"byte[] {snippetModel.ResponseVariableName} = Base64.getDecoder().decode({AddQuotesIfMising(snippetModel.RequestBody?.Replace("\n", string.Empty)?.Replace("\r", string.Empty))});\n\t");
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\n\t.put({snippetModel.ResponseVariableName});"));
                 }
                 else if (snippetModel.Method == HttpMethod.Delete)

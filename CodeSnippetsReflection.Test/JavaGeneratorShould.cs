@@ -907,7 +907,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
             //Act by generating the code snippet
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
-            Assert.Contains("ByteArrayInputStream", result);
+            Assert.Contains("byte[]", result);
         }
     }
 }
