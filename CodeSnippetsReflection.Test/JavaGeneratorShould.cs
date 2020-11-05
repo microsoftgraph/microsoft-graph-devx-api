@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -1042,6 +1043,26 @@ namespace CodeSnippetsReflection.Test
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             Assert.Contains("LinkedList<UUID>", result);
+        }
+        [Fact]
+        public void GenerateProfilePicture()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            using var mstream = new MemoryStream();
+            using var writer = new StreamWriter(mstream);
+            writer.Write("dummy content");
+            writer.Flush();
+            mstream.Position = 0;
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Put, "https://graph.microsoft.com/v1.0/me/photo/$value")
+                {
+                    Content = new StreamContent(mstream)
+                };
+            requestPayload.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            Assert.Contains("byte[]", result);
         }
     }
 }
