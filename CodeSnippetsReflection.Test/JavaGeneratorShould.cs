@@ -1012,7 +1012,7 @@ namespace CodeSnippetsReflection.Test
             //Act by generating the code snippet
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
-            Assert.Contains("Int index = 3;", result);
+            Assert.Contains("int index = 3;", result);
         }
     }
 }

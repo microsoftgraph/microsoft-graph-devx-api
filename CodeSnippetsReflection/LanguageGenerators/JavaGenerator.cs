@@ -541,7 +541,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "Edm.Int16":
                         return "Short";
                     case "Edm.Int32":
-                        return "Int";
+                        return "int";
                     case "Edm.Int64":
                         return "Long";
                     case "microsoft.graph.Json":
