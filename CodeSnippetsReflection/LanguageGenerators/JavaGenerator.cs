@@ -467,10 +467,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 var temp = enumHint?.
                     Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)?.
                     Select(x => x.Trim())?.
-                    Join(edmEnumType.Members.Select(x => x.Name.ToLowerInvariant()),
-                            x => x?.ToLowerInvariant(),
+                    Join(edmEnumType.Members.Select(x => x.Name),
                             x => x,
-                            (x, y) => $"{typeName}.{ GetSnakeCaseFromCamelCase(x) }");
+                            x => x,
+                            (x, y) => $"{typeName}.{ GetSnakeCaseFromCamelCase(y) }",
+                            StringComparer.OrdinalIgnoreCase);
                 if (temp.Any())
                     return temp.Aggregate((x, y) => $"{x},{y}");
                 else //return the first value of the enum as a fallback

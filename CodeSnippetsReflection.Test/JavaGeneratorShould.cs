@@ -948,5 +948,48 @@ namespace CodeSnippetsReflection.Test
 
             Assert.Contains("EnumSet<ClonableTeamParts>", result);
         }
+        [Fact]
+        public void SnakeCaseEnumsProperly()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                      + "\"subject\": \"Let's go for lunch\","
+                                      + "\"body\": {"
+                                        + "\"contentType\": \"HTML\","
+                                        + "\"content\": \"Does mid month work for you?\""
+                                      + "},"
+                                      + "\"start\": {"
+                                          + "\"dateTime\": \"2019-03-15T12:00:00\","
+                                          + "\"timeZone\": \"Pacific Standard Time\""
+                                      + "},"
+                                      + "\"end\": {"
+                                          + "\"dateTime\": \"2019-03-15T14:00:00\","
+                                          + "\"timeZone\": \"Pacific Standard Time\""
+                                      + "},"
+                                      + "\"location\":{"
+                                          + "\"displayName\":\"Harry's Bar\""
+                                      + "},"
+                                      + "\"attendees\": ["
+                                        + "{"
+                                          + "\"emailAddress\": {"
+                                            + "\"address\":\"adelev@contoso.onmicrosoft.com\","
+                                            + "\"name\": \"Adele Vance\""
+                                          + "},"
+                                          + "\"type\": \"required\""
+                                        + "}"
+                                      + "],"
+                                      + "\"transactionId\":\"7E163156-7762-4BEB-A1C6-729EA81755A7\""
+                                    + "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/calendars/AAMkAGViNDU7zAAAAAGtlAAA=/events")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("BodyType.HTML;", result);
+        }
     }
 }
