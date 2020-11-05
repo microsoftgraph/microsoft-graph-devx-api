@@ -157,14 +157,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
             var stringBuilder = new StringBuilder();
             var jsonObject = JsonConvert.DeserializeObject(jsonString);
             usedVarNames = usedVarNames ?? new List<string>();//make sure list is not null
-            var className = GetJavaClassNameFromOdataPath(pathSegment, path);
+            var className = GetJavaReturnTypeName(pathSegment, path);
 
             switch (jsonObject)
             {
                 case string _:
                     {
                         var enumIsFlags = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path) is IEdmEnumType enumType && enumType.IsFlags;
-                        var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path); //TODO pop stash for types mapping correction
+                        var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path);
                         var currentVarName = EnsureJavaVariableNameIsUnique(path.Last(), usedVarNames);
                         if (className == "String")
                         {
@@ -360,6 +360,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "Json":
                         return $"JsonParser.parseString({AddQuotesIfMising(ClearStringLiteralsFromBreakingCharacters(stringParameter))})";
 
+                    case "Int16":
+                    case "Int32":
                     default:
                         return stringParameter;
                 }
@@ -541,6 +543,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         return "Calendar";
                     case "Edm.Date":
                         return "DateOnly";
+                    case "Edm.Double":
+                        return "Double";
+                    case "Edm.Int16":
+                        return "Short";
+                    case "Edm.Int32":
+                        return "Int";
                     case "Edm.Int64":
                         return "Long";
                     case "microsoft.graph.Json":
