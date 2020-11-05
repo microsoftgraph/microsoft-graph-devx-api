@@ -697,7 +697,7 @@ namespace CodeSnippetsReflection.Test
             //Assert code snippet string matches expectation
             const string expectedSnippet = "String address = \"Sheet1!A1:D5\";\r\n" +
                                            "\r\n" +
-                                           "boolean hasHeaders = true;\r\n" +
+                                           "Boolean hasHeaders = true;\r\n" +
                                            "\r\n" +
                                            "graphClient.me().drive().items(\"{id}\").workbook().tables()\n" +
                                                 "\t.add(address,hasHeaders)\n" +
