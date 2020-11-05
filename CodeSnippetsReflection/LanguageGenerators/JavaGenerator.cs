@@ -625,6 +625,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         resourcesPath.Append($".{CommonGenerator.LowerCaseFirstLetter(item.Identifier)}()");
                         break;
+                    case CountSegment _:
+                        resourcesPath.Append(".count()");
+                        break;
                     default:
                         //its most likely just a resource so append it with lower case first letter and `()` at the end
                         resourcesPath.Append($".{CommonGenerator.LowerCaseFirstLetter(item.Identifier)}()");

@@ -1041,8 +1041,21 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
             //Act by generating the code snippet
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
-
             Assert.Contains("LinkedList<UUID>", result);
+        }
+        [Fact]
+        public void RemoveDollarSignFromCountSegment()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/groups/{id}/transitiveMembers/$count");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.DoesNotContain("$", result);
         }
         [Fact]
         public void GenerateProfilePicture()
