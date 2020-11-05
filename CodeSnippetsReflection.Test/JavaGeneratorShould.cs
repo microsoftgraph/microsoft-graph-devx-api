@@ -991,5 +991,28 @@ namespace CodeSnippetsReflection.Test
 
             Assert.Contains("BodyType.HTML;", result);
         }
+        [Fact]
+        public void MapCorrectTypeForPrimitiveVariables()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                      + "\"index\": 3,"
+                                      + "\"values\": ["
+                                        + "{"
+                                        + "}"
+                                      + "]"
+                                    + "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/tables/{id|name}/columns/add")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("Int index = 3;", result);
+        }
     }
 }

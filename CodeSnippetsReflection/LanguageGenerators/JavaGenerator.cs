@@ -192,7 +192,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case JObject jObject:
                     {
                         var currentVarName = EnsureJavaVariableNameIsUnique(path.Last(), usedVarNames);
-                        stringBuilder.Append($"{className} { currentVarName } = new {className}();\r\n");
+                        var localClassNameOverride = className.Equals("JsonElement") ? "JsonObject" : className; //jsonelements are abstract and cannot be instanciated
+                        stringBuilder.Append($"{className} { currentVarName } = new {localClassNameOverride}();\r\n");
                         //initialize each member/property of the object
                         foreach (var (key, jToken) in jObject)
                         {
@@ -270,13 +271,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         else if (collectionType.TypeKind == EdmTypeKind.Enum)
                         {
                             stringBuilder.Append($"LinkedList<{className}> {currentListName} = new LinkedList<{className}>();\r\n");
-                            foreach (var element in array)
-                            {
-                                GenerateEnumString(element.Value<string>(), pathSegment, path)?.
-                                    Split(",", StringSplitOptions.RemoveEmptyEntries)?.
-                                    ToList()?.
-                                    ForEach(x => stringBuilder.Append($"{currentListName}.add({x});\r\n"));
-                            }
+                            array?.Select(x => x.Value<string>())?.
+                                SelectMany(x => GenerateEnumString(x, pathSegment, path)?.
+                                            Split(",", StringSplitOptions.RemoveEmptyEntries))?.
+                                ToList()?.
+                                ForEach(x => stringBuilder.Append($"{currentListName}.add({x});\r\n"));
                         }
                         else
                         {
@@ -294,15 +293,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
                 default:
                     var primitive = jsonObject.ToString();
-                    //json deserializer capitalizes the bool types so undo that
-                    if (primitive.Equals("True", StringComparison.Ordinal) || primitive.Equals("False", StringComparison.Ordinal))
-                    {
-                        stringBuilder.Append($"boolean {path.Last()} = {CommonGenerator.LowerCaseFirstLetter(primitive)};\r\n");
-                    }
-                    else
-                    {
-                        stringBuilder.Append($"int {path.Last()} = {primitive};\r\n");//item is a primitive print as is
-                    }
+                    var curVarName = EnsureJavaVariableNameIsUnique(path.Last(), usedVarNames);
+                    stringBuilder.Append($"{className} {curVarName} = {GenerateSpecialClassString(primitive, pathSegment, path)};\r\n");//item is a primitive print as is
                     break;
             }
 
@@ -465,7 +457,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 var typeName = GetJavaClassNameFromOdataPath(pathSegment, path);
                 var temp = enumHint?.
-                    Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)?.
+                    Split(", |".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)?.
                     Select(x => x.Trim())?.
                     Join(edmEnumType.Members.Select(x => x.Name),
                             x => x,
