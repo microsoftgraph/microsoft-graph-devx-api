@@ -1014,5 +1014,34 @@ namespace CodeSnippetsReflection.Test
 
             Assert.Contains("int index = 3;", result);
         }
+        [Fact]
+        public void MapCorrectTypeForCollectionsOfPrimitiveVariables()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                      + "\"addLicenses\": ["
+                                        + "{"
+                                          + "\"disabledPlans\": [ \"11b0131d-43c8-4bbb-b2c8-e80f9a50834a\" ],"
+                                          + "\"skuId\": \"skuId-value-1\""
+                                        + "},"
+                                        + "{"
+                                          + "\"disabledPlans\": [ \"a571ebcc-fqe0-4ca2-8c8c-7a284fd6c235\" ],"
+                                          + "\"skuId\": \"skuId-value-2\""
+                                        + "}"
+                                      + "],"
+                                      + "\"removeLicenses\": []"
+                                    + "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/groups/1ad75eeb-7e5a-4367-a493-9214d90d54d0/assignLicense")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("LinkedList<UUID>", result);
+        }
     }
 }

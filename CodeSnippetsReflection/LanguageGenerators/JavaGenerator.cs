@@ -279,11 +279,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                         else
                         {
-                            stringBuilder.Append($"LinkedList<String> {currentListName} = new LinkedList<String>();\r\n");
+                            stringBuilder.Append($"LinkedList<{className}> {currentListName} = new LinkedList<{className}>();\r\n");
                             //its not nested objects but a string collection
                             foreach (var element in array)
                             {
-                                stringBuilder.Append($"{currentListName}.add(\"{element.Value<string>()}\");\r\n");
+                                stringBuilder.Append($"{currentListName}.add({(className == "String" ? AddQuotesIfMising(element.Value<string>()) : GenerateSpecialClassString(element.Value<string>(), pathSegment, path))});\r\n");
                             }
                         }
                     }
