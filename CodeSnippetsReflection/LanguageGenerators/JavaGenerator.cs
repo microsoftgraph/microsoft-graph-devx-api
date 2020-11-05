@@ -294,7 +294,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 default:
                     var primitive = jsonObject.ToString();
                     var curVarName = EnsureJavaVariableNameIsUnique(path.Last(), usedVarNames);
-                    stringBuilder.Append($"{className} {curVarName} = {GenerateSpecialClassString(primitive, pathSegment, path)};\r\n");//item is a primitive print as is
+                    stringBuilder.Append($"{className} {curVarName} = {(className == "String" ? AddQuotesIfMising(primitive) : GenerateSpecialClassString(primitive, pathSegment, path))};\r\n");//item is a primitive print as is
                     break;
             }
 
