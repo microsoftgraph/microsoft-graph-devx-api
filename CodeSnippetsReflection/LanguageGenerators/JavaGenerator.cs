@@ -163,23 +163,29 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 case string _:
                     {
-                        var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path);
+                        var enumIsFlags = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, path) is IEdmEnumType enumType && enumType.IsFlags;
+                        var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path); //TODO pop stash for types mapping correction
+                        var currentVarName = EnsureJavaVariableNameIsUnique(path.Last(), usedVarNames);
                         if (className == "String")
                         {
-                            stringBuilder.Append($"String {path.Last()} = \"{jsonObject}\";\r\n");
+                            stringBuilder.Append($"String {currentVarName} = \"{jsonObject}\";\r\n");
                         }
                         else if (!string.IsNullOrEmpty(enumString))
                         {
                             //Enum is accessed as the Classname then enum type e.g Importance.LOW
-                            stringBuilder.Append($"{enumString.Split(".").First()} {path.Last()} = {enumString};\r\n");
+                            var enumTypeName = enumString.Split(".").First();
+                            if (enumIsFlags)
+                                stringBuilder.Append($"EnumSet<{enumTypeName}> {currentVarName} = EnumSet.of({enumString});\r\n");
+                            else
+                                stringBuilder.Append($"{enumTypeName} {currentVarName} = {enumString.Split(",", StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()};\r\n");
                         }
                         else if (jsonObject.Equals("true") || jsonObject.Equals("false"))
                         {
-                            stringBuilder.Append($"boolean {path.Last()} = {jsonObject};\r\n");//boolean primitives values masquerading as strings.
+                            stringBuilder.Append($"boolean {currentVarName} = {jsonObject};\r\n");//boolean primitives values masquerading as strings.
                         }
                         else
                         {
-                            stringBuilder.Append($"{GetJavaReturnTypeName(pathSegment, path)} {path.Last()} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
+                            stringBuilder.Append($"{GetJavaReturnTypeName(pathSegment, path)} {currentVarName} = {GenerateSpecialClassString($"{jsonObject}", pathSegment, path)};\r\n");
                         }
                     }
                     break;
@@ -215,10 +221,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 case JTokenType.String:
                                     var enumString = GenerateEnumString(jToken.ToString(), pathSegment, newPath);
                                     var enumIsFlags = CommonGenerator.GetEdmTypeFromIdentifier(pathSegment, newPath) is IEdmEnumType enumType && enumType.IsFlags;
-                                    //check if the type is an enum and handle it
-                                    stringBuilder.Append(!string.IsNullOrEmpty(enumString)
-                                        ? $"{ currentVarName }.{newPath.Last()} = {(enumIsFlags ? "EnumSet.of(" : string.Empty)}{enumString}{(enumIsFlags ? ")" : string.Empty)};\r\n"
-                                        : $"{ currentVarName }.{newPath.Last()} = {GenerateSpecialClassString($"{value}", pathSegment, newPath)};\r\n");
+                                    stringBuilder.Append($"{ currentVarName }.{newPath.Last()} = ");
+                                    if (string.IsNullOrEmpty(enumString))
+                                        stringBuilder.Append($"{GenerateSpecialClassString($"{value}", pathSegment, newPath)};\r\n");
+                                    else if(enumIsFlags)
+                                        stringBuilder.Append($"EnumSet.of({enumString});\r\n");
+                                    else
+                                        stringBuilder.Append($"{enumString.Split(",", StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()};\r\n");
                                     break;
                                 default:
                                     stringBuilder.Append($"{ currentVarName }.{newPath.Last()} = { GenerateSpecialClassString($"{value}", pathSegment, newPath)};\r\n");
@@ -263,8 +272,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                             stringBuilder.Append($"LinkedList<{className}> {currentListName} = new LinkedList<{className}>();\r\n");
                             foreach (var element in array)
                             {
-                                var enumString = GenerateEnumString(element.Value<string>(), pathSegment, path);
-                                stringBuilder.Append($"{currentListName}.add({enumString});\r\n");
+                                GenerateEnumString(element.Value<string>(), pathSegment, path)?.
+                                    Split(",", StringSplitOptions.RemoveEmptyEntries)?.
+                                    ToList()?.
+                                    ForEach(x => stringBuilder.Append($"{currentListName}.add({x});\r\n"));
                             }
                         }
                         else
@@ -451,17 +462,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
             if (nestEdmType is IEdmEnumType edmEnumType)
             {
                 var typeName = GetJavaClassNameFromOdataPath(pathSegment, path);
-                var temp = string.IsNullOrEmpty(enumHint) ? string.Empty : enumHint.Split(", ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries).First();//split in case we need to 'or' the members
-                //look for the proper name of the enum in the members
-                foreach (var member in edmEnumType.Members)
-                {
-                    if (temp.Equals(member.Name, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return $"{typeName}.{ GetSnakeCaseFromCamelCase(member.Name) }";
-                    }
-                }
-                //return the enum type in uppercase java fashion
-                return $"{typeName}.{ GetSnakeCaseFromCamelCase(edmEnumType.Members.First().Name) }";
+                var temp = enumHint?.
+                    Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)?.
+                    Select(x => x.Trim())?.
+                    Join(edmEnumType.Members.Select(x => x.Name.ToLowerInvariant()),
+                            x => x?.ToLowerInvariant(),
+                            x => x,
+                            (x, y) => $"{typeName}.{ GetSnakeCaseFromCamelCase(x) }");
+                if (temp.Any())
+                    return temp.Aggregate((x, y) => $"{x},{y}");
+                else //return the first value of the enum as a fallback
+                    return $"{typeName}.{ GetSnakeCaseFromCamelCase(edmEnumType.Members.First().Name) }";
             }
 
             return string.Empty;

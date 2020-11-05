@@ -889,7 +889,7 @@ namespace CodeSnippetsReflection.Test
             Assert.Contains("EnumSet.of", result);
         }
         [Fact]
-        public void MapEnumSetsVariables()
+        public void MapEnumListVariables()
         {
             LanguageExpressions expressions = new JavaExpressions();
             const string jsonObject = "{"
@@ -925,6 +925,28 @@ namespace CodeSnippetsReflection.Test
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             Assert.Contains("LinkedList<Modality>", result);
+        }
+        [Fact]
+        public void MapEnumSetVariables()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                         + "\"displayName\": \"Library Assist\","
+                                         + "\"description\": \"Self help community for library\","
+                                         + "\"mailNickname\": \"libassist\","
+                                         + "\"partsToClone\": \"apps,tabs,settings,channels,members\","
+                                         + "\"visibility\": \"public\""
+                                    + "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/teams/{id}/clone")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("EnumSet<ClonableTeamParts>", result);
         }
     }
 }
