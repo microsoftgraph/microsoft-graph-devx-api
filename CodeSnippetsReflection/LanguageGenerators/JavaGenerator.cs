@@ -338,10 +338,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         return $"Base64.getDecoder().decode({AddQuotesIfMising(stringParameter)})";
 
                     case "Double":
-                        return $"{stringParameter}d";
+                        return $"{DefaultNumericValues(stringParameter)}d";
 
                     case "Int64":
-                        return $"{stringParameter}L";
+                        return $"{DefaultNumericValues(stringParameter)}L";
 
                     case "TimeOfDay":
                         return DateTime.TryParse(stringParameter, out var timeOfDay)
@@ -357,6 +357,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     case "Int16":
                     case "Int32":
+                        return DefaultNumericValues(stringParameter);
                     default:
                         return stringParameter;
                 }
@@ -370,6 +371,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private const string quote = "\"";
         private const string escapedQuote = "\\\"";
         private string AddQuotesIfMising(string parameter) => $"{(parameter.StartsWith(quote) ? string.Empty : quote)}{parameter}{(parameter.EndsWith(quote) && !parameter.EndsWith(escapedQuote) ? string.Empty : quote)}";
+        private string DefaultNumericValues(string parameter) => parameter.Equals("null", StringComparison.InvariantCultureIgnoreCase) ? "0" : parameter;
 
 
         /// <summary>
