@@ -118,11 +118,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     // follow the values in the comments with the example above
 
                                     var parameter = CommonGenerator.LowerCaseFirstLetter(key);  // "index"
-                                    var parameterType = os.Operations
-                                        .Single(o => o.Name == os.Identifier)                   // selects "add" action
-                                        .Parameters                                             // [bindparameter, index, values]
-                                        .Single(p => p.Name == parameter)                       // [index : Edm.Int32]
-                                        .Type;                                                  // Edm.Int32
 
                                     var path = new List<string> { CommonGenerator.LowerCaseFirstLetter(key) }; // { "index" }
                                     var value = CSharpGenerateObjectFromJson(segment, jsonString, path);       // null;
@@ -133,6 +128,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     // In these cases, we look for the type of "index" in action parameters.
                                     if (value.Trim() == "null;")
                                     {
+                                        var parameterType = os.Operations
+                                            .Single(o => o.Name == os.Identifier)                   // selects "add" action
+                                            .Parameters                                             // [bindparameter, index, values]
+                                            .Single(p => p.Name == parameter)                       // [index : Edm.Int32]
+                                            .Type;                                                  // Edm.Int32
+
                                         if (parameterType.IsNullable)
                                         {
                                             typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName; // Int32
