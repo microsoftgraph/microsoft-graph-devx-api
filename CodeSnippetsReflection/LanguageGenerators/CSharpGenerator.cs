@@ -21,6 +21,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private readonly CommonGenerator CommonGenerator;
 
         /// <summary>
+        /// Represents the types that need a trailing ? to make it nullable.
+        /// The other Edm types have the corresponding types that are nullable by default:
+        ///     such as String and Stream (System namespace)
+        ///     or Duration, Date, TimeOfDay (Microsoft.Graph namespace)
+        /// </summary>
+        private static readonly HashSet<string> EdmTypesNonNullableByDefault = new HashSet<string>{ "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
+
+        /// <summary>
         /// CSharpGenerator constructor
         /// </summary>
         /// <param name="model">Model representing metadata</param>
@@ -127,7 +135,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     {
                                         if (parameterType.IsNullable)
                                         {
-                                            typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName + "?"; // Int32?
+                                            typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName; // Int32
+                                            if (EdmTypesNonNullableByDefault.Contains(typeHintOnTheLeftHandSide))
+                                            {
+                                                typeHintOnTheLeftHandSide += "?"; // Int32?
+                                            }
                                         }
                                         else
                                         {

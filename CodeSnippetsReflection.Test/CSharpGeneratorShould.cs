@@ -10,7 +10,9 @@ namespace CodeSnippetsReflection.Test
     public class CSharpGeneratorShould
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
+        private const string ServiceRootUrlBeta = "https://graph.microsoft.com/beta";
         private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
+        private readonly IEdmModel _edmModelBeta = CsdlReader.Parse(XmlReader.Create(ServiceRootUrlBeta + "/$metadata"));
         private const string AuthProviderPrefix = "GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n";
 
         [Fact]
@@ -103,7 +105,7 @@ namespace CodeSnippetsReflection.Test
         [Fact]
         // This tests asserts that we can generate snippets where value is assigned to null and the
         // only type hint we have is the function parameter type.
-        public void TypeIsInferredFromActionParameters()
+        public void TypeIsInferredFromActionParametersForNonNullableType()
         {
             // Arrange
             LanguageExpressions expressions = new CSharpExpressions();
@@ -129,6 +131,44 @@ namespace CodeSnippetsReflection.Test
 
             // Assert the snippet generated is as expected
             Assert.Contains("Int32? index = null;", result);
+        }
+
+        [Fact]
+        // This tests asserts that we can generate snippets where value is assigned to null and the
+        // only type hint we have is the function parameter type.
+        // The difference from the other test TypeIsInferredFromActionParametersForNonNullableType is that
+        // parameter type is String, so it is nullable by default and we don't need question mark following the type name.
+        public void TypeIsInferredFromActionParametersForNullableType()
+        {
+            // Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+
+            // json string with nested objects string array
+            const string rowsJsonObject = @"{
+                                              ""displayName"": ""Test Printer"",
+                                              ""manufacturer"": ""Test Printer Manufacturer"",
+                                              ""model"": ""Test Printer Model"",
+                                              ""physicalDeviceId"": null,
+                                              ""hasPhysicalDevice"": false,
+                                              ""certificateSigningRequest"": {
+                                                            ""content"": ""{content}"",
+                                                ""transportKey"": ""{sampleTransportKey}""
+                                              },
+                                              ""connectorId"": null
+                                            }";
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/beta/print/printers/create")
+            {
+                Content = new StringContent(rowsJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta);
+
+            // Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            // Assert the snippet generated is as expected
+            Assert.Contains("String physicalDeviceId = null;", result);
         }
 
 
