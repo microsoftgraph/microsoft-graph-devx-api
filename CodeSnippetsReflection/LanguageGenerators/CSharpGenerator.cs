@@ -79,15 +79,63 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                             break;
 
-                        case OperationSegment _:
+                        case OperationSegment os:
                             //deserialize the object since the json top level contains the list of parameter objects
                             if (JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
                             {
                                 foreach (var (key, jToken) in testObj)
                                 {
                                     var jsonString = JsonConvert.SerializeObject(jToken);
-                                    snippetBuilder.Append($"var {CommonGenerator.LowerCaseFirstLetter(key)} = ");
-                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { CommonGenerator.LowerCaseFirstLetter(key) }));
+
+                                    // example URL:
+                                    // POST https://graph.microsoft.com/beta/me/drive/items/{id}/workbook/tables/{id|name}/rows/add
+
+                                    // example body:
+                                    // {
+                                    //   "index": null,
+                                    //   "values": [
+                                    //      [1, 2, 3],
+                                    //      [4, 5, 6]
+                                    //    ]
+                                    // }
+
+                                    // Corresponding example operation:
+                                    // <Action Name="add" IsBound="true">
+                                    //   <Parameter Name="bindparameter" Type="Collection(graph.workbookTableRow)"/>
+                                    //   <Parameter Name="index" Type="Edm.Int32"/>
+                                    //   <Parameter Name="values" Type="graph.Json"/>
+                                    //   <ReturnType Type="graph.workbookTableRow"/>
+                                    // </Action>
+
+                                    // follow the values in the comments with the example above
+
+                                    var parameter = CommonGenerator.LowerCaseFirstLetter(key);  // "index"
+                                    var parameterType = os.Operations
+                                        .Single(o => o.Name == os.Identifier)                   // selects "add" action
+                                        .Parameters                                             // [bindparameter, index, values]
+                                        .Single(p => p.Name == parameter)                       // [index : Edm.Int32]
+                                        .Type;                                                  // Edm.Int32
+
+                                    var path = new List<string> { CommonGenerator.LowerCaseFirstLetter(key) }; // { "index" }
+                                    var value = CSharpGenerateObjectFromJson(segment, jsonString, path);       // null;
+                                    var typeHintOnTheLeftHandSide = "var";
+
+                                    // If the value is null we can't resolve the type by using var on the left hand side.
+                                    // For example, we can't say "var index = null;". That won't be a compilable snippet.
+                                    // In these cases, we look for the type of "index" in action parameters.
+                                    if (value.Trim() == "null;")
+                                    {
+                                        if (parameterType.IsNullable)
+                                        {
+                                            typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName + "?"; // Int32?
+                                        }
+                                        else
+                                        {
+                                            throw new NotSupportedException("Not nullable type is set to null in the sample!");
+                                        }
+                                    }
+
+                                    snippetBuilder.Append($"{typeHintOnTheLeftHandSide} {parameter} = {value}"); // Int32? index = null;
                                 }
                             }
                             snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PostAsync();"));

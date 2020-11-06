@@ -100,6 +100,37 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
 
+        [Fact]
+        // This tests asserts that we can generate snippets where value is assigned to null and the
+        // only type hint we have is the function parameter type.
+        public void TypeIsInferredFromActionParameters()
+        {
+            // Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+
+            // json string with nested objects string array
+            const string rowsJsonObject = @"{
+                                                ""index"": null,
+                                                ""values"": [
+                                                    [1, 2, 3],
+                                                    [4, 5, 6]
+                                                 ]
+                                            }";
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/tables/{id|name}/rows/add")
+            {
+                Content = new StringContent(rowsJsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+
+            // Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            // Assert the snippet generated is as expected
+            Assert.Contains("Int32? index = null;", result);
+        }
+
 
         [Fact]
         //This tests asserts that we can generate snippets from json objects with nested object lists(JArray) inside them.
