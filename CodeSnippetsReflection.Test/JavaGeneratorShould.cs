@@ -698,7 +698,7 @@ namespace CodeSnippetsReflection.Test
             //Assert code snippet string matches expectation
             const string expectedSnippet = "String address = \"Sheet1!A1:D5\";\r\n" +
                                            "\r\n" +
-                                           "boolean hasHeaders = true;\r\n" +
+                                           "Boolean hasHeaders = true;\r\n" +
                                            "\r\n" +
                                            "graphClient.me().drive().items(\"{id}\").workbook().tables()\n" +
                                                 "\t.add(address,hasHeaders)\n" +
@@ -888,6 +888,160 @@ namespace CodeSnippetsReflection.Test
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             Assert.Contains("EnumSet.of", result);
+        }
+        [Fact]
+        public void MapEnumListVariables()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                          + "\"@odata.type\": \"#microsoft.graph.call\","
+                                          + "\"callbackUri\": \"https://bot.contoso.com/callback\","
+                                          + "\"targets\": ["
+                                            + "{"
+                                              + "\"@odata.type\": \"#microsoft.graph.invitationParticipantInfo\","
+                                              + "\"identity\": {"
+                                                + "\"@odata.type\": \"#microsoft.graph.identitySet\","
+                                                + "\"user\": {"
+                                                  + "\"@odata.type\": \"#microsoft.graph.identity\","
+                                                  + "\"displayName\": \"John\","
+                                                  + "\"id\": \"112f7296-5fa4-42ca-bae8-6a692b15d4b8\""
+                                                + "}"
+                                              + "}"
+                                            + "}"
+                                          + "],"
+                                          + "\"requestedModalities\": ["
+                                            + "\"audio\""
+                                          + "],"
+                                          + "\"mediaConfig\": {"
+                                            + "\"@odata.type\": \"#microsoft.graph.serviceHostedMediaConfig\""
+                                          + "}"
+                                        + "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/communications/calls")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("LinkedList<Modality>", result);
+        }
+        [Fact]
+        public void MapEnumSetVariables()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                         + "\"displayName\": \"Library Assist\","
+                                         + "\"description\": \"Self help community for library\","
+                                         + "\"mailNickname\": \"libassist\","
+                                         + "\"partsToClone\": \"apps,tabs,settings,channels,members\","
+                                         + "\"visibility\": \"public\""
+                                    + "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/teams/{id}/clone")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("EnumSet<ClonableTeamParts>", result);
+        }
+        [Fact]
+        public void SnakeCaseEnumsProperly()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                      + "\"subject\": \"Let's go for lunch\","
+                                      + "\"body\": {"
+                                        + "\"contentType\": \"HTML\","
+                                        + "\"content\": \"Does mid month work for you?\""
+                                      + "},"
+                                      + "\"start\": {"
+                                          + "\"dateTime\": \"2019-03-15T12:00:00\","
+                                          + "\"timeZone\": \"Pacific Standard Time\""
+                                      + "},"
+                                      + "\"end\": {"
+                                          + "\"dateTime\": \"2019-03-15T14:00:00\","
+                                          + "\"timeZone\": \"Pacific Standard Time\""
+                                      + "},"
+                                      + "\"location\":{"
+                                          + "\"displayName\":\"Harry's Bar\""
+                                      + "},"
+                                      + "\"attendees\": ["
+                                        + "{"
+                                          + "\"emailAddress\": {"
+                                            + "\"address\":\"adelev@contoso.onmicrosoft.com\","
+                                            + "\"name\": \"Adele Vance\""
+                                          + "},"
+                                          + "\"type\": \"required\""
+                                        + "}"
+                                      + "],"
+                                      + "\"transactionId\":\"7E163156-7762-4BEB-A1C6-729EA81755A7\""
+                                    + "}";
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/calendars/AAMkAGViNDU7zAAAAAGtlAAA=/events")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("BodyType.HTML;", result);
+        }
+        [Fact]
+        public void MapCorrectTypeForPrimitiveVariables()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                      + "\"index\": 3,"
+                                      + "\"values\": ["
+                                        + "{"
+                                        + "}"
+                                      + "]"
+                                    + "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/tables/{id|name}/columns/add")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains("int index = 3;", result);
+        }
+        [Fact]
+        public void MapCorrectTypeForCollectionsOfPrimitiveVariables()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{"
+                                      + "\"addLicenses\": ["
+                                        + "{"
+                                          + "\"disabledPlans\": [ \"11b0131d-43c8-4bbb-b2c8-e80f9a50834a\" ],"
+                                          + "\"skuId\": \"skuId-value-1\""
+                                        + "},"
+                                        + "{"
+                                          + "\"disabledPlans\": [ \"a571ebcc-fqe0-4ca2-8c8c-7a284fd6c235\" ],"
+                                          + "\"skuId\": \"skuId-value-2\""
+                                        + "}"
+                                      + "],"
+                                      + "\"removeLicenses\": []"
+                                    + "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/groups/1ad75eeb-7e5a-4367-a493-9214d90d54d0/assignLicense")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            //Act by generating the code snippet
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            Assert.Contains("LinkedList<UUID>", result);
         }
         [Fact]
         public void RemoveDollarSignFromCountSegment()
