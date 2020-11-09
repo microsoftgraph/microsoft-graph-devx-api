@@ -120,7 +120,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                             throw new NotSupportedException("Parameter type from URL is not found in metadata!");
                                         }
 
-                                        if (parameterType?.IsNullable == true)
+                                        if (parameterType.IsNullable)
                                         {
                                             typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName;
                                             if (EdmTypesNonNullableByDefault.Contains(typeHintOnTheLeftHandSide))
