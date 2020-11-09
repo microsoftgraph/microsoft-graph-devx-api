@@ -524,12 +524,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 if (pathSegment is OperationSegment opSegment)
                 {
                     var typeName = opSegment.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.Definition?.FullTypeName()?.Split(".")?.LastOrDefault()?.Replace(")", string.Empty); //last replace is for the case we have collections
-                    return $"I{CommonGenerator.UppercaseFirstLetter(typeName)}{CommonGenerator.UppercaseFirstLetter(opSegment.Identifier)}Collection{page}";
+                    return $"{CommonGenerator.UppercaseFirstLetter(typeName)}{CommonGenerator.UppercaseFirstLetter(opSegment.Identifier)}Collection{page}";
                 }
                 else if (collectionType.ElementType.Definition is IEdmNamedElement edmNamedElement)
-                    return $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}Collection{(pathSegment is NavigationPropertySegment navPropPathSeg && !navPropPathSeg.NavigationProperty.ContainsTarget ? "WithReferences" : string.Empty)}{page}";
+                    return $"{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}Collection{(pathSegment is NavigationPropertySegment navPropPathSeg && !navPropPathSeg.NavigationProperty.ContainsTarget ? "WithReferences" : string.Empty)}{page}";
                 else
-                    return $"I{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}Collection{page}";
+                    return $"{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}Collection{page}";
             else
                 switch (edmType?.FullTypeName())
                 {
