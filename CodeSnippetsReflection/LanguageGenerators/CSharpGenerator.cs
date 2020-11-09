@@ -95,32 +95,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 {
                                     var jsonString = JsonConvert.SerializeObject(jToken);
 
-                                    // example URL:
-                                    // POST https://graph.microsoft.com/beta/me/drive/items/{id}/workbook/tables/{id|name}/rows/add
+                                    // see examples in TypeIsInferredFromActionParametersForNonNullableType
+                                    // and TypeIsInferredFromActionParametersForNullableType tests.
 
-                                    // example body:
-                                    // {
-                                    //   "index": null,
-                                    //   "values": [
-                                    //      [1, 2, 3],
-                                    //      [4, 5, 6]
-                                    //    ]
-                                    // }
+                                    var parameter = CommonGenerator.LowerCaseFirstLetter(key);
 
-                                    // Corresponding example operation:
-                                    // <Action Name="add" IsBound="true">
-                                    //   <Parameter Name="bindparameter" Type="Collection(graph.workbookTableRow)"/>
-                                    //   <Parameter Name="index" Type="Edm.Int32"/>
-                                    //   <Parameter Name="values" Type="graph.Json"/>
-                                    //   <ReturnType Type="graph.workbookTableRow"/>
-                                    // </Action>
-
-                                    // follow the values in the comments with the example above
-
-                                    var parameter = CommonGenerator.LowerCaseFirstLetter(key);  // "index"
-
-                                    var path = new List<string> { CommonGenerator.LowerCaseFirstLetter(key) }; // { "index" }
-                                    var value = CSharpGenerateObjectFromJson(segment, jsonString, path);       // null;
+                                    var path = new List<string> { CommonGenerator.LowerCaseFirstLetter(key) };
+                                    var value = CSharpGenerateObjectFromJson(segment, jsonString, path);
                                     var typeHintOnTheLeftHandSide = "var";
 
                                     // If the value is null we can't resolve the type by using var on the left hand side.
@@ -128,18 +109,23 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     // In these cases, we look for the type of "index" in action parameters.
                                     if (value.Trim() == "null;")
                                     {
-                                        var parameterType = os.Operations
-                                            .Single(o => o.Name == os.Identifier)                   // selects "add" action
-                                            .Parameters                                             // [bindparameter, index, values]
-                                            .Single(p => p.Name == parameter)                       // [index : Edm.Int32]
-                                            .Type;                                                  // Edm.Int32
+                                        var parameterType = os.Operations?
+                                            .SingleOrDefault(o => o.Name == os.Identifier)?
+                                            .Parameters?
+                                            .SingleOrDefault(p => p.Name == parameter)?
+                                            .Type;
 
-                                        if (parameterType.IsNullable)
+                                        if (parameterType == null)
                                         {
-                                            typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName; // Int32
+                                            throw new NotSupportedException("Parameter type from URL is not found in metadata!");
+                                        }
+
+                                        if (parameterType?.IsNullable == true)
+                                        {
+                                            typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName;
                                             if (EdmTypesNonNullableByDefault.Contains(typeHintOnTheLeftHandSide))
                                             {
-                                                typeHintOnTheLeftHandSide += "?"; // Int32?
+                                                typeHintOnTheLeftHandSide += "?";
                                             }
                                         }
                                         else
@@ -148,7 +134,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                         }
                                     }
 
-                                    snippetBuilder.Append($"{typeHintOnTheLeftHandSide} {parameter} = {value}"); // Int32? index = null;
+                                    snippetBuilder.Append($"{typeHintOnTheLeftHandSide} {parameter} = {value}");
                                 }
                             }
                             snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PostAsync();"));
