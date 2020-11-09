@@ -495,7 +495,7 @@ namespace CodeSnippetsReflection.Test
                                            "requestOptions.add(new QueryOption(\"startDateTime\", \"2017-01-01T19:00:00.0000000\"));\r\n" + //Query Options present
                                            "requestOptions.add(new QueryOption(\"endDateTime\", \"2017-01-07T19:00:00.0000000\"));\r\n" + //Query Options present
                                            "\r\n" +
-                                           "IEventCollectionPage calendarView = graphClient.me().calendar().calendarView()\n" +
+                                           "EventCollectionPage calendarView = graphClient.me().calendar().calendarView()\n" +
                                                 "\t.buildRequest( requestOptions )\n" +
                                                 "\t.get();";
 
