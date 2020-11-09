@@ -21,6 +21,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private readonly CommonGenerator CommonGenerator;
 
         /// <summary>
+        /// Represents the types that need a trailing ? to make it nullable.
+        /// The other Edm types have the corresponding types that are nullable by default:
+        ///     such as String and Stream (System namespace)
+        ///     or Duration, Date, TimeOfDay (Microsoft.Graph namespace)
+        /// </summary>
+        private static readonly HashSet<string> EdmTypesNonNullableByDefault = new HashSet<string>{ "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
+
+        /// <summary>
         /// CSharpGenerator constructor
         /// </summary>
         /// <param name="model">Model representing metadata</param>
@@ -79,15 +87,54 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                             break;
 
-                        case OperationSegment _:
+                        case OperationSegment os:
                             //deserialize the object since the json top level contains the list of parameter objects
                             if (JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
                             {
                                 foreach (var (key, jToken) in testObj)
                                 {
                                     var jsonString = JsonConvert.SerializeObject(jToken);
-                                    snippetBuilder.Append($"var {CommonGenerator.LowerCaseFirstLetter(key)} = ");
-                                    snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, jsonString, new List<string> { CommonGenerator.LowerCaseFirstLetter(key) }));
+
+                                    // see examples in TypeIsInferredFromActionParametersForNonNullableType
+                                    // and TypeIsInferredFromActionParametersForNullableType tests.
+
+                                    var parameter = CommonGenerator.LowerCaseFirstLetter(key);
+
+                                    var path = new List<string> { CommonGenerator.LowerCaseFirstLetter(key) };
+                                    var value = CSharpGenerateObjectFromJson(segment, jsonString, path);
+                                    var typeHintOnTheLeftHandSide = "var";
+
+                                    // If the value is null we can't resolve the type by using var on the left hand side.
+                                    // For example, we can't say "var index = null;". That won't be a compilable snippet.
+                                    // In these cases, we look for the type of "index" in action parameters.
+                                    if (value.Trim() == "null;")
+                                    {
+                                        var parameterType = os.Operations?
+                                            .SingleOrDefault(o => o.Name == os.Identifier)?
+                                            .Parameters?
+                                            .SingleOrDefault(p => p.Name == parameter)?
+                                            .Type;
+
+                                        if (parameterType == null)
+                                        {
+                                            throw new NotSupportedException("Parameter type from URL is not found in metadata!");
+                                        }
+
+                                        if (parameterType.IsNullable)
+                                        {
+                                            typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName;
+                                            if (EdmTypesNonNullableByDefault.Contains(typeHintOnTheLeftHandSide))
+                                            {
+                                                typeHintOnTheLeftHandSide += "?";
+                                            }
+                                        }
+                                        else
+                                        {
+                                            throw new NotSupportedException("Not nullable type is set to null in the sample!");
+                                        }
+                                    }
+
+                                    snippetBuilder.Append($"{typeHintOnTheLeftHandSide} {parameter} = {value}");
                                 }
                             }
                             snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PostAsync();"));
@@ -121,10 +168,25 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         throw new Exception($"No request Body present for PUT of entity {snippetModel.ResponseVariableName}");
 
                     var genericType = string.Empty;
+                    var objectToBePut = snippetModel.ResponseVariableName;
                     if (snippetModel.ContentType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
                     {
-                        snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
-                        snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                        if (snippetModel.Segments.Last() is NavigationPropertyLinkSegment)
+                        {
+                            // if we are putting reference, we should send id to that object in PutAsync()
+                            // and the request body should contain a JSON with @odata.id key
+                            var body = JsonConvert.DeserializeObject(snippetModel.RequestBody) as JObject;
+
+                            // HTTP sample is in this format: https://graph.microsoft.com/v1.0/users/{id}
+                            // but C# SDK reconstructs the URL from {id}
+                            var id = body["@odata.id"].ToString().Split("/").Last();
+                            objectToBePut = $"\"{id}\"";
+                        }
+                        else
+                        {
+                            snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
+                            snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
+                        }
                     }
                     else
                     {
@@ -138,7 +200,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                     }
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PutAsync{genericType}({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PutAsync{genericType}({objectToBePut});"));
 
                 }
                 else
@@ -683,7 +745,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 properties = properties + "." + CommonGenerator.UppercaseFirstLetter(snippetModel.Segments[++segmentIndex].Identifier);
             }
 
-            //modify the responseVarible name
+            //modify the responseVariable name while registering the object created above.
+            var propertyName = snippetModel.ResponseVariableName;
             snippetModel.ResponseVariableName = desiredSegment.Identifier;
             var variableName = snippetModel.Segments.Last().Identifier;
             var parentClassName = GetCsharpClassName(desiredSegment, new List<string> { snippetModel.ResponseVariableName });
@@ -699,7 +762,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 //we are modifying the value
                 stringBuilder.Append($"var {snippetModel.ResponseVariableName} = new {parentClassName}();");//initialise the classname
-                stringBuilder.Append($"\n{snippetModel.ResponseVariableName}{properties} = {variableName};\n\n");
+                stringBuilder.Append($"\n{snippetModel.ResponseVariableName}{properties} = {propertyName};\n\n");
             }
 
             return stringBuilder.ToString();
