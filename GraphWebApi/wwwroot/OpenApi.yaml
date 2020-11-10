@@ -491,6 +491,28 @@ paths:
           description: Not found
         500:
           description: Internal server error
+  /changelog:
+    get:
+      tags:
+        - changelog
+      parameters:
+      - name: workloadArea
+        in: query
+        schema:
+          type: string
+      responses:
+        200:
+          description: Ok
+          content:
+            'application/json': 
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/changeLog'
+        404:
+          description: Not found
+        500:
+          description: Internal server error
   /openapi:
     get:
       tags:
@@ -576,6 +598,38 @@ components:
                 type: string
               value:
                 type: string
+    changeLog:
+      type: object
+      properties:
+        changeList:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              apiChange:
+                type: string
+              changedApiName:
+                type: string
+              changeType:
+                type: string
+              description:
+                type: string
+              target:
+                type: string  
+        id:
+          type: string
+        cloud:
+          type: string
+        version:
+          type: string
+        createdDateTime:
+          type: string
+        workloadArea:
+          type: string
+        subArea:
+          type: string        
     categoryPolicy:
       type: object
       properties:
