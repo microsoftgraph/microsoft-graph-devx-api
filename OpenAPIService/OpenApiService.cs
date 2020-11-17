@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using OpenAPIService.Common;
 using UriMatchingService;
+using System.Xml;
 
 namespace OpenAPIService
 {
@@ -373,7 +374,10 @@ namespace OpenAPIService
         /// <returns>An OpenAPI document.</returns>
         public static OpenApiDocument ConvertCsdlToOpenApi(Stream csdl)
         {
-            var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader());
+            // Function to load referenced model xml
+            XmlReader getReferencedModelReaderFunc(Uri x) => XmlReader.Create(x.ToString());
+
+            var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader(), getReferencedModelReaderFunc);
 
             var settings = new OpenApiConvertSettings()
             {
