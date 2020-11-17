@@ -491,13 +491,14 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /changelog:
+  /changes:
     get:
       tags:
-        - changelog
+        - changes
       parameters:
       - name: workloadArea
         in: query
+        required: false
         schema:
           type: string
       responses:
@@ -599,37 +600,54 @@ components:
               value:
                 type: string
     changeLog:
-      type: object
-      properties:
-        changeList:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              apiChange:
-                type: string
-              changedApiName:
-                type: string
-              changeType:
-                type: string
-              description:
-                type: string
-              target:
-                type: string  
-        id:
-          type: string
-        cloud:
-          type: string
-        version:
-          type: string
-        createdDateTime:
-          type: string
-        workloadArea:
-          type: string
-        subArea:
-          type: string        
+      type: array
+      items:
+        type: object
+        properties:
+          changeList:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                apiChange:
+                  type: string
+                changedApiName:
+                  type: string
+                changeType:
+                  type: string
+                description:
+                  type: string
+                target:
+                  type: string  
+                required:
+                  - id
+                  - apiChange
+                  - changedApiName
+                  - changeType
+                  - description
+                  - target
+          id:
+            type: string
+          cloud:
+            type: string
+          version:
+            type: string
+          createdDateTime:
+            type: string
+          workloadArea:
+            type: string
+          subArea:
+            type: string
+        required:
+          - changeList
+          - id
+          - cloud
+          - version
+          - createdDateTime
+          - workloadArea
+          - subArea
     categoryPolicy:
       type: object
       properties:
