@@ -375,7 +375,16 @@ namespace OpenAPIService
         public static OpenApiDocument ConvertCsdlToOpenApi(Stream csdl)
         {
             // Function to load referenced model xml
-            XmlReader getReferencedModelReaderFunc(Uri x) => XmlReader.Create(x.ToString());
+            XmlReader getReferencedModelReaderFunc(Uri uri)
+            {
+                if (uri != null)
+                {
+                    var httpClient = new HttpClient();
+                    var referenceCsdl = httpClient.GetStringAsync(uri.OriginalString).GetAwaiter().GetResult();
+                    return XElement.Parse(referenceCsdl).CreateReader();
+                }
+                return null;
+            }
 
             var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader(), getReferencedModelReaderFunc);
 
