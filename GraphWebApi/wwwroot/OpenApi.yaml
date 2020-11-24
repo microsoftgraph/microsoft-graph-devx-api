@@ -496,7 +496,7 @@ paths:
       tags:
         - changes
       parameters:
-      - name: workloadArea
+      - name: requestUrl
         in: query
         required: false
         schema:
