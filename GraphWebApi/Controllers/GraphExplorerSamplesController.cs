@@ -21,10 +21,12 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSamplesController : ControllerBase
     {
         private readonly ISamplesStore _samplesStore;
+        private readonly ISamplesTestStore _samplesTestStore;
 
-        public GraphExplorerSamplesController(ISamplesStore samplesStore)
+        public GraphExplorerSamplesController(ISamplesStore samplesStore, ISamplesTestStore samplesTestStore)
         {
             _samplesStore = samplesStore;
+            _samplesTestStore = samplesTestStore;
         }
 
         // Gets the list of all sample queries
@@ -32,14 +34,24 @@ namespace GraphWebApi.Controllers
         [Route("samples")]
         [Produces("application/json")]
         [HttpGet]
-        public async Task<IActionResult> GetSampleQueriesListAsync(string search)
+        public async Task<IActionResult> GetSampleQueriesListAsync(string search, string org, string branchName)
         {
             try
             {
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
+                SampleQueriesList sampleQueriesList = null;
 
-                // Fetch sample queries
-                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
+                if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
+                {
+                    //Fetch samples file from Github
+                    sampleQueriesList = await _samplesTestStore.FetchSampleQueriesFromGithub(locale, org, branchName);
+                }
+
+                else
+                {
+                    // Fetch sample queries from Azure Blob
+                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
+                }
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
