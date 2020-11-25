@@ -19,10 +19,12 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerPermissionsController : ControllerBase
     {
         private readonly IPermissionsStore _permissionsStore;
+        private readonly IPermissionsTestStore _permissionsTestStore;
 
-        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore)
+        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, IPermissionsTestStore permissionsTestStore)
         {
             _permissionsStore = permissionsStore;
+            _permissionsTestStore = permissionsTestStore;
         }
 
         // Gets the permissions scopes
@@ -30,14 +32,26 @@ namespace GraphWebApi.Controllers
         [Produces("application/json")]
         public async Task<IActionResult> GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
                                                              [FromQuery]string requestUrl = null,
-                                                             [FromQuery]string method = null)
+                                                             [FromQuery]string method = null,
+                                                             [FromQuery] string org = null,
+                                                             [FromQuery] string branchName = null)
         {
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
 
                 List<ScopeInformation> result = null;
-                result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
+                if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
+                {
+                    //Fetch permissions descriptions file from Github
+                    result = await _permissionsTestStore.FetchPermissionsDescriptionsFromGithub(localeCode, org, branchName);
+                }
+
+                else
+                {
+                    // Fetch permissions files from Azure Blob
+                    result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
+                }
 
                 return result == null ? NotFound() : (IActionResult)Ok(result);
             }
