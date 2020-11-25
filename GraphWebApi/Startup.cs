@@ -17,8 +17,10 @@ using FileService.Interfaces;
 using FileService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Services;
+using GraphExplorerPermissionsService.Services;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using Serilog;
+using System;
 
 namespace GraphWebApi
 {
@@ -51,11 +53,22 @@ namespace GraphWebApi
                        };
                    });
 
+            services.AddHttpClient("github", c =>
+            {
+                c.BaseAddress = new Uri("https://api.github.com/");
+                c.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+                c.DefaultRequestHeaders.Add("User-Agent", "HttpClientFactory-Sample");
+            });
+
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
+            services.AddScoped<IPermissionsTestStore, PermissionsTestStore>();
+            services.AddScoped<ISamplesTestStore, SamplesTestStore>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
+            //services.AddScoped<ISamplesTestStore, SamplesTestStore>();
             services.Configure<SamplesAdministrators>(Configuration);
 
             #region AppInsights
