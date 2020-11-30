@@ -9,6 +9,6 @@ namespace GraphExplorerSamplesService.Interfaces
 {
     public interface ISamplesTestStore
     {
-        Task<SampleQueriesList> FetchSampleQueriesFromGithub(string locale, string org, string branchName);
+        Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale, string org, string branchName);
     }
 }
