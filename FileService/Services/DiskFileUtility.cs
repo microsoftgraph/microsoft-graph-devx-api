@@ -14,7 +14,7 @@ namespace FileService.Services
         /// </summary>
         /// <param name="filePathSource">The directory path name of the file on disk.</param>
         /// <returns>The contents of the file.</returns>
-        public async Task<string> ReadFromFile(string filePathSource)
+        public async Task<string> ReadFromFile(string filePathSource, string host = null)
         {
             using (StreamReader streamReader = new StreamReader(filePathSource))
             {
