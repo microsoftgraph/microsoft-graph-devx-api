@@ -44,7 +44,7 @@ namespace GraphWebApi.Controllers
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {
                     //Fetch samples file from Github
-                    sampleQueriesList = await _samplesTestStore.FetchSampleQueriesFromGithub(locale, org, branchName);
+                    sampleQueriesList = await _samplesTestStore.FetchSampleQueriesListAsync(locale, org, branchName);
                 }
 
                 else
