@@ -24,14 +24,14 @@ namespace FileService.Services
 
         public AzureBlobStorageUtility(IConfiguration configuration)
         {
-            _connectionString = configuration["AzureBlobStorage:ConnectionString"];
+            _connectionString = configuration["BlobStorage:ConnectionString"];
         }
 
         public async Task<string> ReadFromFile(string filePathSource)
         {
             FileServiceHelper.CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));
 
-            if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
+            if (filePathSource.IndexOf(FileServiceConstants.AzureDirectorySeparator) < 1)
             {
                 throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
             }

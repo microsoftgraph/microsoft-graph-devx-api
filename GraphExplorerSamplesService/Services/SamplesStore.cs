@@ -31,8 +31,8 @@ namespace GraphExplorerSamplesService.Services
             _fileUtility = fileUtility;
             _samplesCache = samplesCache;
             _configuration = configuration;
-            _sampleQueriesContainerName = _configuration["AzureBlobStorage:Containers:SampleQueries"];
-            _sampleQueriesBlobName = _configuration[$"AzureBlobStorage:Blobs:SampleQueries"];
+            _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
+            _sampleQueriesBlobName = _configuration[$"BlobStorage:Blobs:SampleQueries"];
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
         }
 
