@@ -4,33 +4,45 @@
 
 using FileService.Common;
 using FileService.Interfaces;
+using FileService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace GraphExplorerSamplesService.Services
 {
     /// <summary>
-    /// Defines a method that retrieves or adds localized sample queries to and from a memory cache or a remote source.
+    /// Retrieves or adds localized sample queries to and from a memory cache or a remote source.
     /// </summary>
     public class SamplesStore : ISamplesStore
     {
         private readonly object _samplesLock = new object();
         private readonly IFileUtility _fileUtility;
+        private readonly IFileUtility _azureBlobFileUtility;
+        private readonly IFileUtility _githubBlobFileUtility;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IMemoryCache _samplesCache;
         private readonly IConfiguration _configuration;
+        private readonly string _host;
+        private readonly string _repo;
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
 
-        public SamplesStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache samplesCache)
+        public SamplesStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache samplesCache, IHttpClientFactory httpClientFactory)
         {
+            _httpClientFactory = httpClientFactory;
             _fileUtility = fileUtility;
             _samplesCache = samplesCache;
             _configuration = configuration;
+            _azureBlobFileUtility = new AzureBlobStorageUtility(configuration);
+            _githubBlobFileUtility = new GithubBlobStorageUtility(httpClientFactory);
+            _host = _configuration["BlobStorage:GithubHost"];
+            _repo = _configuration["BlobStorage:RepoName"];
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = _configuration[$"BlobStorage:Blobs:SampleQueries"];
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
@@ -70,16 +82,48 @@ namespace GraphExplorerSamplesService.Services
                     // Get the file contents from source
                     string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
-                    /* Current business process only supports ordering of the English
-                       translation of the sample queries.
-                     */
-                    bool orderSamples = lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase);
-
                     // Return the list of the sample queries from the file contents
-                    return SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples);
+                    return DeserializeSamplesList(jsonFileContents, lockedLocale);
                 }
             });
 
+            return sampleQueriesList;
+        }
+
+        /// <summary>
+        /// Fetches the sample query files from Github and returns a deserialized instance of a
+        /// <see cref="SampleQueriesList"/> from this.
+        /// </summary>
+        /// <param name="locale"></param>
+        /// <param name="org"></param>
+        /// <param name="branchName"></param>
+        /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
+        public async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale, string org, string branchName)
+        {
+            // Fetch the requisite sample path source based on the locale
+            string localizedFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, locale);
+
+            // Get the full file path from configuration and query param, then read from the file
+            var queriesFilePathSource = string.Concat(_host, org, _repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
+            string jsonFileContents = _githubBlobFileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();            
+
+            return DeserializeSamplesList(jsonFileContents, locale);
+        }
+
+        /// <summary>
+        /// Orders the English version of sample queries and deserializes the file contents
+        /// </summary>
+        /// <param name="fileContents"></param>
+        /// <param name="locale"></param>
+        /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
+        private SampleQueriesList DeserializeSamplesList(string fileContents, string locale)
+        {
+            /* Current business process only supports ordering of the English
+               translation of the sample queries.
+             */
+            bool orderSamples = locale.Equals("en-us", StringComparison.OrdinalIgnoreCase);
+
+            SampleQueriesList sampleQueriesList = SamplesService.DeserializeSampleQueriesList(fileContents, orderSamples);
             return sampleQueriesList;
         }
     }
