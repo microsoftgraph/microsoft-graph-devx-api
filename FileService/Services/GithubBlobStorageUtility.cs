@@ -11,19 +11,25 @@ namespace FileService.Services
     /// </summary>
     public class GithubBlobStorageUtility : IFileUtility
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-        public GithubBlobStorageUtility(IHttpClientFactory httpClientFactory)
+        public HttpClient _client { get; }
+
+        public GithubBlobStorageUtility(HttpClient client)
         {
-            _httpClientFactory = httpClientFactory;
-        }       
-       
+            // Configure a HTTPClient instance to interact and make calls to Github API
+            client.BaseAddress = new Uri("https://api.github.com/");
+            // GitHub API versioning and add a user agent
+            client.DefaultRequestHeaders.Add("Accept",
+                "application/vnd.github.v3+json");          
+            client.DefaultRequestHeaders.Add("User-Agent",
+                "HttpClientFactory-Sample");
+
+            _client = client;            
+        }     
+      
         public async Task<string> ReadFromFile(string filePathSource)
         {
-            string hostName = FileServiceConstants.HostName;
-          
             // Download sample query file contents from github
-            var client = _httpClientFactory.CreateClient(hostName);
-            var sampleQueriesFiles = await client.GetAsync(filePathSource);
+            var sampleQueriesFiles = await _client.GetAsync(filePathSource);
             var fileContents = await sampleQueriesFiles.Content.ReadAsStringAsync();
 
             return fileContents;      
