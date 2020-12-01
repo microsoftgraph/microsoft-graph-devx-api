@@ -52,13 +52,7 @@ namespace GraphWebApi
                        };
                    });
 
-            services.AddHttpClient("github", c =>
-            {
-                c.BaseAddress = new Uri("https://api.github.com/");
-                c.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-                c.DefaultRequestHeaders.Add("User-Agent", "HttpClientFactory-Sample");
-            });
-
+            services.AddHttpClient<GithubBlobStorageUtility>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
