@@ -26,10 +26,10 @@ namespace FileService.Common
             string directoryName = null;
             string fileName = null;
 
-            if (filePathSource.IndexOf(FileServiceConstants.AzureDirectorySeparator) > 0)
+            if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) > 0)
             {
                 // File path source format --> directoryName\\fileName
-                string[] storageValues = filePathSource.Split(FileServiceConstants.AzureDirectorySeparator);
+                string[] storageValues = filePathSource.Split(FileServiceConstants.DirectorySeparator);
                 directoryName = storageValues[0];
                 fileName = storageValues[1];
             }
@@ -44,14 +44,14 @@ namespace FileService.Common
         /// <param name="defaultBlobName">The name of the default file.</param>
         /// <param name="localeCode">The language code of the desired file. If empty or null or unsupported, this default to 'en-US'.</param>
         /// <returns>A string path of the fully qualified file name including the container name prepended to the resolved localized file name.</returns>
-        public static string GetLocalizedFilePathSource(string containerName, string defaultBlobName, string localeCode = null, string source = null)
+        public static string GetLocalizedFilePathSource(string containerName, string defaultBlobName, string localeCode = null)
         {
             CheckArgumentNullOrEmpty(containerName, nameof(containerName));
             CheckArgumentNullOrEmpty(defaultBlobName, nameof(defaultBlobName));
 
             if (!string.IsNullOrEmpty(localeCode))
             {
-                //This switch statement helps filter for only the supported locale languages
+                // This switch statement helps filter for only the supported locale languages
                 switch (localeCode.ToLower(CultureInfo.InvariantCulture))
                 {
                     case "fr-fr":
@@ -89,17 +89,9 @@ namespace FileService.Common
                     defaultBlobName = $"{blobNameParts[0]}_{localeCode}.{blobNameParts[1]}";
                 }
             }
-
-            if(!string.IsNullOrEmpty(source))
-            {
-                // Github File path source format --> directoryName/fileName
-                return $"{containerName}{FileServiceConstants.GithubDirectorySeparator}{defaultBlobName}";
-            }
-            else
-            {
-                // Azure File path source format --> directoryName\\fileName
-                return $"{containerName}{FileServiceConstants.AzureDirectorySeparator}{defaultBlobName}";
-            }
+            
+            // File path source format --> directoryName\\fileName
+            return $"{containerName}{FileServiceConstants.DirectorySeparator}{defaultBlobName}";
         }       
 
         /// <summary>

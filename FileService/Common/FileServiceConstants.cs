@@ -9,7 +9,7 @@ namespace FileService.Common
     /// </summary>
     public static class FileServiceConstants
     {
-        public const char AzureDirectorySeparator = '\\';
-        public const char GithubDirectorySeparator = '/';
+        public const char DirectorySeparator = '\\';
+        public const string HostName = "github";
     }
 }
