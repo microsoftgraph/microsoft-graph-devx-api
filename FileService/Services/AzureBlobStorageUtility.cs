@@ -9,7 +9,6 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace FileService.Services
@@ -30,8 +29,8 @@ namespace FileService.Services
 
         public async Task<string> ReadFromFile(string filePathSource)
         {
-            FileServiceHelper.CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));       
-                        
+            FileServiceHelper.CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));
+
             if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
             {
                 throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
@@ -64,7 +63,7 @@ namespace FileService.Services
             }
 
             throw new IOException("Failed to connect to the blob storage account.");
-                       
+
         }
 
         public async Task WriteToFile(string fileContents, string filePathSource)

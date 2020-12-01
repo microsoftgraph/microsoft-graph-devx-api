@@ -19,7 +19,6 @@ using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Services;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using Serilog;
-using System;
 
 namespace GraphWebApi
 {

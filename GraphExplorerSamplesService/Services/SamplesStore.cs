@@ -10,7 +10,6 @@ using GraphExplorerSamplesService.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace GraphExplorerSamplesService.Services
@@ -101,7 +100,7 @@ namespace GraphExplorerSamplesService.Services
 
             // Get the full file path from configuration and query param, then read from the file
             var queriesFilePathSource = string.Concat(_host, org, _repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
-            string jsonFileContents = _githubBlobFileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();            
+            string jsonFileContents = _githubBlobFileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
             return DeserializeSamplesList(jsonFileContents, locale);
         }
