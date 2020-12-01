@@ -21,10 +21,8 @@ namespace GraphExplorerSamplesService.Services
     public class SamplesStore : ISamplesStore
     {
         private readonly object _samplesLock = new object();
-        private readonly IFileUtility _fileUtility;
         private readonly IFileUtility _azureBlobFileUtility;
         private readonly IFileUtility _githubBlobFileUtility;
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IMemoryCache _samplesCache;
         private readonly IConfiguration _configuration;
         private readonly string _host;
@@ -33,14 +31,12 @@ namespace GraphExplorerSamplesService.Services
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
 
-        public SamplesStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache samplesCache, IHttpClientFactory httpClientFactory)
+        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache, GithubBlobStorageUtility githubBlobStorageUtility)
         {
-            _httpClientFactory = httpClientFactory;
-            _fileUtility = fileUtility;
             _samplesCache = samplesCache;
             _configuration = configuration;
+            _githubBlobFileUtility = githubBlobStorageUtility;
             _azureBlobFileUtility = new AzureBlobStorageUtility(configuration);
-            _githubBlobFileUtility = new GithubBlobStorageUtility(httpClientFactory);
             _host = _configuration["BlobStorage:GithubHost"];
             _repo = _configuration["BlobStorage:RepoName"];
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
@@ -80,7 +76,7 @@ namespace GraphExplorerSamplesService.Services
                            FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
 
                     // Get the file contents from source
-                    string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
+                    string jsonFileContents = _azureBlobFileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
                     // Return the list of the sample queries from the file contents
                     return DeserializeSamplesList(jsonFileContents, lockedLocale);
