@@ -500,7 +500,27 @@ paths:
         in: query
         required: false
         schema:
+          type: string # https://graph.microsoft.com/v1.0/me/
+      - name: workload
+        in: query
+        required: false
+        schema: 
           type: string
+      - name: daysRange
+        in: query
+        required: false
+        schema:
+          type: number # 90
+      - name: startDate 
+        in: query
+        required: false
+        schema:
+          type: string # YYYY-MM-DD
+      - name: endDate
+        in: query
+        required: false
+        schema:
+          type: string # YYYY-MM-DD
       responses:
         200:
           description: Ok
