@@ -29,6 +29,7 @@ namespace CodeSnippetsReflection.App
 
             var snippetsPathArg = config.GetSection("SnippetsPath");
             var languagesArg = config.GetSection("Languages");
+            var customMetadataPathArg = config.GetSection("CustomMetadataPath");
             if (!snippetsPathArg.Exists() || !languagesArg.Exists())
             {
                 Console.Error.WriteLine("Http snippets directory and languages should be specified");
@@ -41,6 +42,12 @@ namespace CodeSnippetsReflection.App
             if (!Directory.Exists(httpSnippetsDir))
             {
                 Console.Error.WriteLine($@"Directory {httpSnippetsDir} does not exist!");
+                return;
+            }
+
+            if (customMetadataPathArg.Exists() && !File.Exists(customMetadataPathArg.Value))
+            {
+                Console.Error.WriteLine($@"Metadata file {customMetadataPathArg.Value} does not exist!");
                 return;
             }
 
@@ -71,7 +78,9 @@ namespace CodeSnippetsReflection.App
                 Console.WriteLine($"Supported languages: {string.Join(" ", SnippetsGenerator.SupportedLanguages)}");
             }
 
-            var generator = new SnippetsGenerator();
+            var generator = customMetadataPathArg.Exists()
+                ? new SnippetsGenerator(customMetadataPathArg.Value)
+                : new SnippetsGenerator();
             var files = Directory.EnumerateFiles(httpSnippetsDir, "*-httpSnippet");
 
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
