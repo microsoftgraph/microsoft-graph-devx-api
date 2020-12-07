@@ -72,7 +72,7 @@ steps:
 
 - task: UseDotNet@2
   displayName: 'Install dotnet core SDK'
-  input:
+  inputs:
     version: 5.x
 
 - task: DotNetCoreCLI@2
