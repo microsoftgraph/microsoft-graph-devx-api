@@ -14,6 +14,8 @@ using System.Security.Claims;
 using System.Linq;
 using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
+using Microsoft.Extensions.Configuration;
+using FileService.Services;
 
 namespace GraphWebApi.Controllers
 {
@@ -21,10 +23,12 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSamplesController : ControllerBase
     {
         private readonly ISamplesStore _samplesStore;
+        private readonly IConfiguration _configuration;
 
-        public GraphExplorerSamplesController(ISamplesStore samplesStore)
+        public GraphExplorerSamplesController(ISamplesStore samplesStore, IConfiguration configuration)
         {
             _samplesStore = samplesStore;
+            _configuration = configuration;
         }
 
         // Gets the list of all sample queries
@@ -39,10 +43,14 @@ namespace GraphWebApi.Controllers
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
                 SampleQueriesList sampleQueriesList = null;
 
+                var baseUrl = _configuration["GithubBaseUrl"];
+                var samplesStore = new SamplesStore(configuration: _configuration,
+                    fileUtility: new HttpClientUtility(baseUrl));
+
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {
                     //Fetch samples file from Github
-                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
+                    sampleQueriesList = await samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
                 }
                 else
                 {

@@ -2,6 +2,8 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using System;
+
 namespace FileService.Common
 {
     /// <summary>
@@ -10,6 +12,6 @@ namespace FileService.Common
     public static class FileServiceConstants
     {
         public const char DirectorySeparator = '\\';
-        public const string HostName = "github";
+        public const string ApplicationJsonMediaType = "application/json";
     }
 }
