@@ -70,6 +70,11 @@ steps:
   displayName: 'Git: set user config'
   workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
 
+- task: UseDotNet@2
+  displayName: 'Install dotnet core SDK'
+  input:
+    version: 5.x
+
 - task: DotNetCoreCLI@2
   displayName: 'Build snippet generator'
   inputs:
@@ -77,27 +82,25 @@ steps:
     projects: 'microsoft-graph-explorer-api\CodeSnippetsReflection.App\CodeSnippetsReflection.App.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
-- task: NuGetToolInstaller@1
-  displayName: 'Install Nuget.exe'
-
-- task: NuGetCommand@2
-  displayName: 'Restore packages for apidoctor'
+- task: DotNetCoreCLI@2
+  displayName: 'Restore packages for APIDoctor'
   inputs:
-    restoreSolution: '$(apidoctorSolution)'
+    command: 'restore'
+    projects: '$(apidoctorSolution)'
 
-- task: VSBuild@1
-  displayName: 'Build apidoctor'
+- task: DotNetCoreCLI@2
+  displayName: 'Build APIDoctor'
   inputs:
-    solution: '$(apidoctorSolution)'
-    platform: 'Any CPU'
-    configuration: '$(buildConfiguration)'
+    command: 'build'
+    projects: '$(apidoctorSolution)'
+    arguments: '--configuration $(buildConfiguration)'
 
 - pwsh: |
     # release folder can change based on .NET core version, so search recursively in bin folder
-    $snippetGeneratorPath = (Get-ChildItem $env:Build_SourcesDirectory\microsoft-graph-explorer-api\CodeSnippetsReflection.App\bin\Release *App.exe -Recurse).FullName
+    $snippetGeneratorPath = (Get-ChildItem $env:Build_SourcesDirectory\microsoft-graph-explorer-api\CodeSnippetsReflection.App\bin\Release\net5.0 *App.exe -Recurse).FullName
     Write-Host "Path to snippet generator tool: $snippetGeneratorPath"
 
-    $apidoctorPath = (Get-ChildItem $env:Build_SourcesDirectory\apidoctor\ApiDoctor.Console\bin\Release apidoc.exe -Recurse).FullName
+    $apidoctorPath = (Get-ChildItem $env:Build_SourcesDirectory\apidoctor\ApiDoctor.Console\bin\Release\net5.0 apidoc.exe -Recurse).FullName
     Write-Host "Path to apidoctor tool: $apidoctorPath"
 
     & $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "C:\Program Files\Git\bin\git.exe"
