@@ -19,6 +19,8 @@ using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Services;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using Serilog;
+using ChangesService.Services;
+using ChangesService.Interfaces;
 
 namespace GraphWebApi
 {
@@ -56,6 +58,7 @@ namespace GraphWebApi
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
+            services.AddSingleton<IChangesStore, ChangesStore>();
             services.Configure<SamplesAdministrators>(Configuration);
 
             #region AppInsights
