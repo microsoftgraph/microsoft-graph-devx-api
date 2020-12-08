@@ -28,28 +28,16 @@ namespace GraphWebApi.Controllers
         // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
-                                                             [FromQuery]string requestUrl = null,
-                                                             [FromQuery]string method = null,
-                                                             [FromQuery] string org = null,
-                                                             [FromQuery] string branchName = null)
+        public async Task<IActionResult> GetPermissionScopes([FromQuery] string scopeType = "DelegatedWork",
+                                                             [FromQuery] string requestUrl = null,
+                                                             [FromQuery] string method = null)
         {
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
 
                 List<ScopeInformation> result = null;
-                if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
-                {
-                    //Fetch permissions descriptions file from Github
-                    result = await _permissionsTestStore.FetchPermissionsDescriptionsFromGithub(localeCode, org, branchName);
-                }
-
-                else
-                {
-                    // Fetch permissions files from Azure Blob
-                    result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
-                }
+                result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
 
                 return result == null ? NotFound() : (IActionResult)Ok(result);
             }
