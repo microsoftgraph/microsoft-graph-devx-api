@@ -57,6 +57,7 @@ namespace GraphWebApi.Controllers
                 {
                     GraphProxyBaseUrl = _configuration[ChangesServiceConstants.GraphProxyBaseUrlConfigPath],
                     GraphProxyRelativeUrl = _configuration[ChangesServiceConstants.GraphProxyRelativeUrlConfigPath],
+                    GraphProxyAuthorization = _configuration[ChangesServiceConstants.GraphProxyAuthorization],
                     GraphVersion = graphVersion
                 };
 
