@@ -17,6 +17,7 @@ namespace ChangesService.Common
         // Microsoft Graph proxy configuration paths constants
         public static string GraphProxyBaseUrlConfigPath = "GraphProxy:BaseUrl";
         public static string GraphProxyRelativeUrlConfigPath = "GraphProxy:RelativeUrl";
+        public static string GraphProxyAuthorization = "GraphProxy:Authorization";
 
         // Error constants
         public static string ValueNullError = "Value cannot be null.";

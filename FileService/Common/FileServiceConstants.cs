@@ -25,7 +25,6 @@ namespace FileService.Common
 
             public static string ApplicationJsonMediaType = "application/json";
             public static string DevxApiUserAgent = "DevX-API-v1.0";
-            public static string MicrosoftGraphProxyAuthorization = "Bearer {token:https://graph.microsoft.com/}";
         }
     }
 }

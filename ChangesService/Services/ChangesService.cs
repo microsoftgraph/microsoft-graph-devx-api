@@ -196,7 +196,7 @@ namespace ChangesService.Services
             {
                 // Authorization
                 { FileServiceConstants.HttpRequest.Headers.Authorization.ToString(),
-                    FileServiceConstants.HttpRequest.MicrosoftGraphProxyAuthorization },
+                    graphProxy.GraphProxyAuthorization },
 
                 // Accept
                 { FileServiceConstants.HttpRequest.Headers.Accept.ToString(),

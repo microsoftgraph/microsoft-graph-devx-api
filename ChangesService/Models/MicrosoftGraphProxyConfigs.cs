@@ -13,5 +13,6 @@ namespace ChangesService.Models
         public string GraphVersion { get; set; } = "v1.0";
         public string GraphProxyBaseUrl { get; set; } = "https://proxy.apisandbox.msdn.microsoft.com/";
         public string GraphProxyRelativeUrl { get; set; } = "svc?url=https://graph.microsoft.com/{0}{1}?$whatif";
+        public string GraphProxyAuthorization { get; set; }
     }
 }
