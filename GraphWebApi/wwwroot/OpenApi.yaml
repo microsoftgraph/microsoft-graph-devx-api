@@ -501,6 +501,11 @@ paths:
         required: false
         schema:
           type: string # https://graph.microsoft.com/v1.0/me/
+      - name: graphVersion
+        in: query
+        required: false
+        schema:
+          type: string
       - name: workload
         in: query
         required: false
@@ -521,6 +526,16 @@ paths:
         required: false
         schema:
           type: string # YYYY-MM-DD
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: int
+      - name: pageLimit
+        in: query
+        required: false
+        schema:
+          type: int
       responses:
         200:
           description: Ok
