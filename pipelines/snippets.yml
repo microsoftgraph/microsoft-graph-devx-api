@@ -62,13 +62,13 @@ steps:
     Write-Host "The new branch name will be: $env:BRANCHNAME"
     git checkout -B $env:BRANCHNAME | Write-Host
   displayName: 'Git: branch from master named with the build id: $(Build.BuildId)'
-  workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
+  workingDirectory: 'microsoft-graph-docs'
 
 - pwsh: |
     git config user.email "GraphTooling@service.microsoft.com"
     git config user.name "Microsoft Graph DevX Tooling"
   displayName: 'Git: set user config'
-  workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
+  workingDirectory: 'microsoft-graph-docs'
 
 - task: UseDotNet@2
   displayName: 'Install dotnet core SDK'
@@ -100,7 +100,7 @@ steps:
     $snippetGeneratorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-explorer-api/CodeSnippetsReflection.App/bin/Release *App -Recurse).FullName
     Write-Host "Path to snippet generator tool: $snippetGeneratorPath"
 
-    $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release/net5.0 apidoc -Recurse).FullName
+    $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
     Write-Host "Path to apidoctor tool: $apidoctorPath"
 
     . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "/bin/git"
@@ -120,10 +120,10 @@ steps:
     }
     Write-Host "Added and commited generated files." -ForegroundColor Green
   displayName: 'Git: stage and commit generated files'
-  workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
+  workingDirectory: 'microsoft-graph-docs'
 
 - pwsh: |
     git push --set-upstream origin $env:BRANCHNAME | Write-Host
     Write-Host "Pushed the results of the build to the $env:BRANCHNAME branch." -ForegroundColor Green
   displayName: 'Git: push updates'
-  workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
+  workingDirectory: 'microsoft-graph-docs'
