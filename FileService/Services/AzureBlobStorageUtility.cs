@@ -22,9 +22,13 @@ namespace FileService.Services
         private string _containerName;
         private string _blobName;
 
-        public AzureBlobStorageUtility(IConfiguration configuration)
+        public AzureBlobStorageUtility(string connectionString)
         {
-            _connectionString = configuration["AzureBlobStorage:ConnectionString"];
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new ArgumentNullException(nameof(connectionString), "Value cannot be null.");
+            }
+            _connectionString = connectionString;
         }
 
         public async Task<string> ReadFromFile(string filePathSource)
