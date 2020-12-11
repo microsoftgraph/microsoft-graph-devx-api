@@ -498,11 +498,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                             if (typeProperties.IsNavigationProperty)
                             {
-                                stringBuilder.Append($"new List<{typeProperties.ClassName}>()\r\n{tabSpace}{{\r\n");
+                                stringBuilder.Append($"new {GetCollectionPageClassName(pathSegment, path)}()\r\n{tabSpace}{{\r\n");
                             }
                             else
                             {
-                                stringBuilder.Append($"new {GetCollectionPageClassName(pathSegment, path)}()\r\n{tabSpace}{{\r\n");
+                                stringBuilder.Append($"new List<{typeProperties.ClassName}>()\r\n{tabSpace}{{\r\n");
                             }
 
                             if (objectList.Any())
