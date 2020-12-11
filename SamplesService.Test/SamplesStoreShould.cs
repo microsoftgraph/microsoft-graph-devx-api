@@ -35,7 +35,7 @@ namespace SamplesService.Test
         public async Task CorrectlySeedLocaleCachesOfSampleQueriesWhenMultipleRequestsReceived()
         {
             // Arrange
-            _samplesStore = new SamplesStore(_fileUtility, _configuration, _samplesCache);
+            _samplesStore = new SamplesStore(_configuration, _samplesCache, _fileUtility);
 
             /* Act */
 
@@ -70,7 +70,7 @@ namespace SamplesService.Test
         public async Task ReturnNullIfSampleQueryFileIsEmpty()
         {
             // Arrange
-            _samplesStore = new SamplesStore(_fileUtility, _configuration, _samplesCache);
+            _samplesStore = new SamplesStore(_configuration, _samplesCache, _fileUtility);
 
             // Act - Fetch ja-JP sample queries which is empty
             SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP");
