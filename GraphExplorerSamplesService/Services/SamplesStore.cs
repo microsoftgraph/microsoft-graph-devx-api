@@ -22,18 +22,16 @@ namespace GraphExplorerSamplesService.Services
         private readonly object _samplesLock = new object();
         private readonly IFileUtility _fileUtility;
         private readonly IMemoryCache _samplesCache;
-        private readonly IConfiguration _configuration;
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
 
         public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache, IFileUtility fileUtility = null)
         {
-            _fileUtility = fileUtility ?? new AzureBlobStorageUtility(_configuration["BlobStorage:AzureConnectionString"]);
             _samplesCache = samplesCache;
-            _configuration = configuration;
-            _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
-            _sampleQueriesBlobName = _configuration[$"BlobStorage:Blobs:SampleQueries"];
+            _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration["BlobStorage:AzureConnectionString"]);  
+            _sampleQueriesContainerName = configuration["BlobStorage:Containers:SampleQueries"];
+            _sampleQueriesBlobName = configuration[$"BlobStorage:Blobs:SampleQueries"];
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
         }
 
