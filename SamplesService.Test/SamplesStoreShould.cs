@@ -112,7 +112,7 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public async Task ReturnNotNullIfSampleQueriesFileIsEmpty()
+        public async Task ReturnNotNullIfSampleQueriesFileHasEmptyJsonObject()
         {
             //Arrange
             var configuration = new ConfigurationBuilder()

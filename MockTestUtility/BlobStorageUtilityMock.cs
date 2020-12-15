@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace MockTestUtility
 {
     /// <summary>
-    /// Defines a Mock class that simulates retrieving blobs from an Azure Blob Storage
+    /// Defines a Mock class that simulates retrieving blobs from a remote blob storage container
     /// </summary>
     public class BlobStorageUtilityMock : IFileUtility
     {

@@ -33,7 +33,7 @@ namespace GraphExplorerSamplesService.Services
             _configuration = configuration;
             _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration);
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
-            _sampleQueriesBlobName = _configuration[$"BlobStorage:Blobs:SampleQueries"];
+            _sampleQueriesBlobName = _configuration["BlobStorage:Blobs:SampleQueries"];
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
         }
 
@@ -105,8 +105,8 @@ namespace GraphExplorerSamplesService.Services
         /// <summary>
         /// Orders the English version of sample queries and deserializes the file contents
         /// </summary>
-        /// <param name="fileContents"></param>
-        /// <param name="locale"></param>
+        /// <param name="fileContents">The json files to be deserialized.</param>
+        /// <param name="locale">The language code for the preferred localized file.</param>
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
         private SampleQueriesList DeserializeSamplesList(string fileContents, string locale)
         {
