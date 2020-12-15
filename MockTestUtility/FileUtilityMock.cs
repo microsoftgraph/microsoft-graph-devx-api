@@ -13,7 +13,7 @@ namespace MockTestUtility
     /// <summary>
     /// Defines a Mock class that simulates retrieving blobs from a remote blob storage container
     /// </summary>
-    public class BlobStorageUtilityMock : IFileUtility
+    public class FileUtilityMock : IFileUtility
     {
         public async Task<string> ReadFromFile(string filePathSource)
         {
