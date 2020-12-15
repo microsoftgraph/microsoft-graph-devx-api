@@ -35,8 +35,8 @@ namespace GraphWebApi.Controllers
                                          [FromQuery] string requestUrl = null,
                                          [FromQuery] string workload = null,
                                          [FromQuery] double daysRange = 0,
-                                         [FromQuery] DateTime? startDate = null,
-                                         [FromQuery] DateTime? endDate = null,
+                                         [FromQuery] DateTime? startDate = null, // yyyy-MM-ddTHH:mm:ss
+                                         [FromQuery] DateTime? endDate = null, // yyyy-MM-ddTHH:mm:ss
                                          [FromQuery] int page = 1,
                                          [FromQuery] int? pageLimit = null,
                                          [FromQuery] string graphVersion = "v1.0")
