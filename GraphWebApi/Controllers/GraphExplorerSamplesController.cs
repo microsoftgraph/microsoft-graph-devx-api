@@ -43,13 +43,13 @@ namespace GraphWebApi.Controllers
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
                 SampleQueriesList sampleQueriesList = null;
 
-                var baseUrl = _configuration["GithubBaseUrl"];
-                var samplesStore = new SamplesStore(configuration: _configuration,
-                    fileUtility: new HttpClientUtility(baseUrl));
-
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {
-                    //Fetch samples file from Github
+                    var baseUrl = _configuration["GithubBaseUrl"];
+                    var samplesStore = new SamplesStore(configuration: _configuration,
+                        fileUtility: new HttpClientUtility(baseUrl));
+
+                    // Fetch samples file from Github
                     sampleQueriesList = await samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
                 }
                 else

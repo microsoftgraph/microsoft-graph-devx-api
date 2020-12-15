@@ -1,4 +1,8 @@
-﻿using FileService.Common;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using FileService.Common;
 using FileService.Interfaces;
 using System;
 using System.IO;
@@ -6,8 +10,11 @@ using System.Threading.Tasks;
 
 namespace MockTestUtility
 {
-    public class HttpClientUtilityMock : IFileUtility
-    {      
+    /// <summary>
+    /// Defines a Mock class that simulates retrieving blobs from an Azure Blob Storage
+    /// </summary>
+    public class BlobStorageUtilityMock : IFileUtility
+    {
         public async Task<string> ReadFromFile(string filePathSource)
         {
             if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
@@ -16,9 +23,9 @@ namespace MockTestUtility
             }
 
             // Prepend the root directory notation since we're reading off of a relative folder location
-            filePathSource = $".\\GithubTestFiles\\{filePathSource}";
+            filePathSource = $".\\{filePathSource}";
 
-            // Mock reading from github repo
+            // Mock reading blob source from upstream Azure storage account
             using (StreamReader streamReader = new StreamReader(filePathSource))
             {
                 return await streamReader.ReadToEndAsync();

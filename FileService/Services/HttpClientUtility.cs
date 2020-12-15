@@ -26,7 +26,7 @@ namespace FileService.Services
                 BaseAddress = new Uri(baseUrl)
             };
             // GitHub API versioning and add a user agent
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(mediaType));            
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(mediaType));
         }
 
         public async Task<string> ReadFromFile(string filePathSource)

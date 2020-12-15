@@ -12,20 +12,19 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using MockTestUtility;
 using Xunit;
-using Newtonsoft.Json.Linq;
 
 namespace SamplesService.Test
 {
     public class SamplesStoreShould
     {
         private readonly IConfigurationRoot _configuration;
-        private readonly IFileUtility _fileUtility;
         private readonly IMemoryCache _samplesCache;
+        private readonly IFileUtility _fileUtility;
         private ISamplesStore _samplesStore;
 
         public SamplesStoreShould()
         {
-            _fileUtility = new AzureBlobStorageUtilityMock();
+            _fileUtility = new BlobStorageUtilityMock();
             _samplesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest.json")
@@ -91,7 +90,7 @@ namespace SamplesService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            _samplesStore = new SamplesStore(configuration, fileUtility: new HttpClientUtilityMock());
+            _samplesStore = new SamplesStore(configuration: configuration, fileUtility: _fileUtility);
 
             /* Act */
 
@@ -123,7 +122,7 @@ namespace SamplesService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            _samplesStore = new SamplesStore(configuration, fileUtility: new HttpClientUtilityMock());
+            _samplesStore = new SamplesStore(configuration : configuration, fileUtility: _fileUtility);
 
             // Act - Fetch ja-JP sample queries which is empty
             SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP", org, branchName);
