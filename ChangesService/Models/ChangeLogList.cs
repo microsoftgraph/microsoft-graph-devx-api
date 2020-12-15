@@ -13,13 +13,13 @@ namespace ChangesService.Models
     /// </summary>
     public class ChangeLogList : ChangeLogPagination
     {
-        private IEnumerable<ChangeLog> _changeLogs;
+        private List<ChangeLog> _changeLogs;
 
         /// <summary>
         /// The list of changelogs.
         /// </summary>
         [JsonProperty(PropertyName = "ChangeLog")]
-        public IEnumerable<ChangeLog> ChangeLogs
+        public List<ChangeLog> ChangeLogs
         {
             get
             {

@@ -80,7 +80,7 @@ namespace ChangesService.Services
 
                 // Search by the workload name
                 changeLogListByWorkload.ChangeLogs = FilterChangeLogListByWorkload(tempChangeLogList,
-                                                                      workload);
+                                                                      workload).ToList();
 
                 tempChangeLogList = changeLogListByWorkload;
             }
@@ -88,7 +88,7 @@ namespace ChangesService.Services
             {
                 // Search by the workload name
                 changeLogListByWorkload.ChangeLogs = FilterChangeLogListByWorkload(tempChangeLogList,
-                                                                      searchOptions.Workload);
+                                                                      searchOptions.Workload).ToList();
 
                 tempChangeLogList = changeLogListByWorkload;
             }
@@ -101,7 +101,8 @@ namespace ChangesService.Services
                 // Filter by start date and end date
                 changeLogListByDate.ChangeLogs = tempChangeLogList.ChangeLogs
                                                  .Where(x => x.CreatedDateTime >= searchOptions.StartDate &&
-                                                    x.CreatedDateTime <= searchOptions.EndDate);
+                                                    x.CreatedDateTime <= searchOptions.EndDate)
+                                                 .ToList();
 
                 tempChangeLogList = changeLogListByDate;
             }
@@ -112,7 +113,8 @@ namespace ChangesService.Services
 
                 changeLogListByDate.ChangeLogs = tempChangeLogList.ChangeLogs
                                                  .Where(x => x.CreatedDateTime >= startDate &&
-                                                    x.CreatedDateTime <= DateTime.Today);
+                                                    x.CreatedDateTime <= DateTime.Today)
+                                                 .ToList();
 
                 tempChangeLogList = changeLogListByDate;
             }
@@ -130,7 +132,8 @@ namespace ChangesService.Services
 
                     tempChangeLogList.Page = 1;
                     tempChangeLogList.ChangeLogs = tempChangeLogList.ChangeLogs
-                                                    .Take(searchOptions.PageLimit.Value);
+                                                    .Take(searchOptions.PageLimit.Value)
+                                                    .ToList();
                 }
                 else if (searchOptions.Page < tempChangeLogList.TotalPages)
                 {
@@ -142,7 +145,8 @@ namespace ChangesService.Services
                     int skipItems = (searchOptions.Page - 1) * searchOptions.PageLimit.Value;
                     tempChangeLogList.ChangeLogs = tempChangeLogList.ChangeLogs
                                                     .Skip(skipItems)
-                                                    .Take(searchOptions.PageLimit.Value);
+                                                    .Take(searchOptions.PageLimit.Value)
+                                                    .ToList();
                 }
                 else
                 {
@@ -154,7 +158,8 @@ namespace ChangesService.Services
 
                     int lastItems = tempChangeLogList.ChangeLogs.Count() % searchOptions.PageLimit.Value;
                     tempChangeLogList.ChangeLogs = tempChangeLogList.ChangeLogs
-                                                    .TakeLast(lastItems);
+                                                    .TakeLast(lastItems)
+                                                    .ToList();
                 }
             }
 
