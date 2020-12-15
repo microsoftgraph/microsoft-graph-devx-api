@@ -26,7 +26,7 @@ namespace PermissionsService.Test
                 .AddJsonFile(".\\TestFiles\\appsettingstest-valid.json")
                 .Build();
 
-            _fileUtility = new AzureBlobStorageUtilityMock();
+            _fileUtility = new FileUtilityMock();
         }
 
         [Fact]

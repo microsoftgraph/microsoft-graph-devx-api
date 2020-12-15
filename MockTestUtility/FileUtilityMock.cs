@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 namespace MockTestUtility
 {
     /// <summary>
-    /// Defines a Mock class that simulates retrieving blobs from an Azure Blob Storage
+    /// Defines a Mock class that retrieves files from a directory path.
     /// </summary>
-    public class AzureBlobStorageUtilityMock : IFileUtility
+    public class FileUtilityMock : IFileUtility
     {
         public async Task<string> ReadFromFile(string filePathSource)
         {
@@ -25,7 +25,6 @@ namespace MockTestUtility
             // Prepend the root directory notation since we're reading off of a relative folder location
             filePathSource = $".\\{filePathSource}";
 
-            // Mock reading blob source from upstream Azure storage account
             using (StreamReader streamReader = new StreamReader(filePathSource))
             {
                 return await streamReader.ReadToEndAsync();

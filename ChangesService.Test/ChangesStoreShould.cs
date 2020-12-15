@@ -19,13 +19,13 @@ namespace ChangesService.Test
     public class ChangesStoreShould
     {
         private readonly IConfigurationRoot _configuration;
-        private readonly IFileUtility _httpClientUtility;
+        private readonly IFileUtility _fileUtility;
         private readonly IMemoryCache _changessCache;
         private IChangesStore _changesStore;
 
         public ChangesStoreShould()
         {
-            _httpClientUtility = new HttpClientUtilityMock();
+            _fileUtility = new FileUtilityMock();
             _changessCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest.json")
@@ -36,7 +36,7 @@ namespace ChangesService.Test
         public async Task CorrectlySeedLocaleCachesOfChangeLogListsWhenMultipleRequestsMultipleLocaleReceived()
         {
             // Arrange
-            _changesStore = new ChangesStore(_configuration, _changessCache, _httpClientUtility);
+            _changesStore = new ChangesStore(_configuration, _changessCache, _fileUtility);
 
             /* Act */
 
@@ -68,7 +68,7 @@ namespace ChangesService.Test
         public async Task CorrectlySeedLocaleCachesOfChangeLogListsWhenMultipleRequestsSingleLocaleReceived()
         {
             // Arrange
-            _changesStore = new ChangesStore(_configuration, _changessCache, _httpClientUtility);
+            _changesStore = new ChangesStore(_configuration, _changessCache, _fileUtility);
 
             /* Act */
 
@@ -102,7 +102,7 @@ namespace ChangesService.Test
         public async Task SetDefaultLocaleInFetchChangeLogList(string locale)
         {
             // Arrange
-            _changesStore = new ChangesStore(_configuration, _changessCache, _httpClientUtility);
+            _changesStore = new ChangesStore(_configuration, _changessCache, _fileUtility);
 
             /* Act */
 

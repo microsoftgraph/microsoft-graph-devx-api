@@ -24,7 +24,7 @@ namespace SamplesService.Test
 
         public SamplesStoreShould()
         {
-            _fileUtility = new AzureBlobStorageUtilityMock();
+            _fileUtility = new FileUtilityMock();
             _samplesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest.json")
