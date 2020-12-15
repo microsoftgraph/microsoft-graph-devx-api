@@ -36,7 +36,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
+                string locale = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
 
                 // Fetch sample queries
                 SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
