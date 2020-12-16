@@ -16,7 +16,8 @@ namespace FileService.Services
     /// </summary>
     public class HttpClientUtility : IFileUtility
     {
-        private readonly HttpClient _httpClient;
+        // HttpClient is intended to be instantiated once per application, rather than per-use.
+        static readonly HttpClient _httpClient = new HttpClient();
 
         /// <summary>
         /// Instantiates a new HTTP client and configures the default request headers
@@ -25,11 +26,8 @@ namespace FileService.Services
         /// <param name="mediaType"> Specifies the content type of the response.</param>
         public HttpClientUtility(string baseUrl, string mediaType = FileServiceConstants.ApplicationJsonMediaType)
         {
-            _httpClient = new HttpClient
-            {
-                // Configure a HTTPClient instance with the specified baseUrl
-                BaseAddress = new Uri(baseUrl)
-            };
+            // Configure a Http client instance with the specified baseUrl
+            _httpClient.BaseAddress = new Uri(baseUrl);
             // GitHub API versioning and add a user agent
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(mediaType));
         }
