@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http;
 using System.Xml;
 using Microsoft.OData.Edm;
@@ -23,6 +24,12 @@ namespace CodeSnippetsReflection
 
         private Lazy<IEdmModel> IedmModelV1 { get; set; }
         private Lazy<IEdmModel> IedmModelBeta { get; set; }
+
+        /// <summary>
+        /// initialized only if custom metadata path is specified in constructor
+        /// </summary>
+        private Lazy<IEdmModel> CustomEdmModel { get; set; }
+
         private Uri ServiceRootV1 { get; set; }
         private Uri ServiceRootBeta { get; set; }
         private JavascriptExpressions JavascriptExpressions { get; }
@@ -33,9 +40,10 @@ namespace CodeSnippetsReflection
         /// <summary>
         /// Class holding the Edm model and request processing for snippet generations
         /// </summary>
-        public SnippetsGenerator()
+        /// <param name="customMetadataPath">Full file path to the metadata</param>
+        public SnippetsGenerator(string customMetadataPath = null)
         {
-            LoadGraphMetadata();
+            LoadGraphMetadata(customMetadataPath);
             JavascriptExpressions = new JavascriptExpressions();
             CSharpExpressions = new CSharpExpressions();
             ObjectiveCExpressions = new ObjectiveCExpressions();
@@ -45,7 +53,8 @@ namespace CodeSnippetsReflection
         /// <summary>
         /// Load the IEdmModel for both V1 and Beta
         /// </summary>
-        private void LoadGraphMetadata()
+        /// <param name="customMetadataPath">Full file path to the metadata</param>
+        private void LoadGraphMetadata(string customMetadataPath)
         {
             ServiceRootV1 = new Uri("https://graph.microsoft.com/v1.0");
             ServiceRootBeta = new Uri("https://graph.microsoft.com/beta");
@@ -53,6 +62,24 @@ namespace CodeSnippetsReflection
             // use clean metadata
             IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_v10_metadata/cleanMetadataWithDescriptionsv1.0.xml")));
             IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_beta_metadata/cleanMetadataWithDescriptionsbeta.xml")));
+
+            if (customMetadataPath == null)
+            {
+                return;
+            }
+
+            if (!File.Exists(customMetadataPath))
+            {
+                throw new FileNotFoundException("Metadata file is not found in the specified path!", nameof(customMetadataPath));
+            }
+
+            CustomEdmModel = new Lazy<IEdmModel>(() =>
+            {
+                using (var reader = File.OpenText(customMetadataPath))
+                {
+                    return CsdlReader.Parse(XmlReader.Create(reader));
+                }
+            });
         }
 
         /// <summary>
@@ -99,10 +126,10 @@ namespace CodeSnippetsReflection
             switch (requestUri.Segments[1])
             {
                 case "v1.0/":
-                    return (IedmModelV1.Value, ServiceRootV1);
+                    return ((CustomEdmModel ?? IedmModelV1).Value, ServiceRootV1);
 
                 case "beta/":
-                    return (IedmModelBeta.Value, ServiceRootBeta);
+                    return ((CustomEdmModel ?? IedmModelBeta).Value, ServiceRootBeta);
 
                 default:
                     throw new Exception("Unsupported Graph version in url");

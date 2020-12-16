@@ -41,9 +41,9 @@ namespace GraphExplorerPermissionsService
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
             _permissionsCache = permissionsCache;
             _fileUtility = fileUtility;
-            _permissionsContainerName = configuration["AzureBlobStorage:Containers:Permissions"];
-            _permissionsBlobNames = configuration.GetSection("AzureBlobStorage:Blobs:Permissions:Names").Get<List<string>>();
-            _scopesInformation = configuration["AzureBlobStorage:Blobs:Permissions:Descriptions"];
+            _permissionsContainerName = configuration["BlobStorage:Containers:Permissions"];
+            _permissionsBlobNames = configuration.GetSection("BlobStorage:Blobs:Permissions:Names").Get<List<string>>();
+            _scopesInformation = configuration["BlobStorage:Blobs:Permissions:Descriptions"];
         }
 
         /// <summary>

@@ -18,9 +18,21 @@
     <EmbeddedResource Include="TestFiles\appsettingstest.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="GithubTestFiles\appsettings-test.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="GithubTestFiles\Org\Repo\Branch\sample-queries\sample-queries-test.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GithubTestFiles\Org\Repo\Branch\sample-queries\sample-queries-test_es-ES.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GithubTestFiles\Org\Repo\Branch\sample-queries\sample-queries-test_ja-JP.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="TestFiles\sample-queries-test.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>

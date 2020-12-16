@@ -10,5 +10,9 @@ namespace FileService.Common
     public static class FileServiceConstants
     {
         public const char DirectorySeparator = '\\';
+        public const string ApplicationJsonMediaType = "application/json";
+        public const int EspanolSampleCount = 149;
+        public const int EnglishSampleCount = 151;
+        public const int FrenchSampleCount = 149;
     }
 }

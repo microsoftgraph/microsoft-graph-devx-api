@@ -496,10 +496,15 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         {
                             var objectList = array.Children<JObject>();
 
-                            // add a cast into ICollectionPage if the property is found as navigation property
-                            var cast = typeProperties.IsNavigationProperty ? $"({GetCollectionInterfaceName(pathSegment, path)})" : string.Empty;
+                            if (typeProperties.IsNavigationProperty)
+                            {
+                                stringBuilder.Append($"new {GetCollectionPageClassName(pathSegment, path)}()\r\n{tabSpace}{{\r\n");
+                            }
+                            else
+                            {
+                                stringBuilder.Append($"new List<{typeProperties.ClassName}>()\r\n{tabSpace}{{\r\n");
+                            }
 
-                            stringBuilder.Append($"{cast}new List<{typeProperties.ClassName}>()\r\n{tabSpace}{{\r\n");
                             if (objectList.Any())
                             {
                                 foreach (var item in objectList)
@@ -704,16 +709,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Generates ICollectionPage interface name
+        /// Generates CollectionPage class name
         /// </summary>
         /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">path in edm model</param>
         /// <returns>ICollectionPage Interface name</returns>
-        private string GetCollectionInterfaceName(ODataPathSegment pathSegment, ICollection<string> path)
+        private string GetCollectionPageClassName(ODataPathSegment pathSegment, ICollection<string> path)
         {
             var type = GetCsharpClassName(pathSegment, path.ToList().GetRange(0, path.Count - 1));
             var property = CommonGenerator.UppercaseFirstLetter(path.Last());
-            return $"I{type}{property}CollectionPage";
+            return $"{type}{property}CollectionPage";
         }
 
         /// <summary>

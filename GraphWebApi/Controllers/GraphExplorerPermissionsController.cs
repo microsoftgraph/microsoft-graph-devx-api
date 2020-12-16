@@ -28,9 +28,9 @@ namespace GraphWebApi.Controllers
         // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
-                                                             [FromQuery]string requestUrl = null,
-                                                             [FromQuery]string method = null)
+        public async Task<IActionResult> GetPermissionScopes([FromQuery] string scopeType = "DelegatedWork",
+                                                             [FromQuery] string requestUrl = null,
+                                                             [FromQuery] string method = null)
         {
             try
             {
