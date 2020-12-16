@@ -15,6 +15,11 @@ namespace MockTestUtility
     /// </summary>
     public class FileUtilityMock : IFileUtility
     {
+        /// <summary>
+        /// Gets the file path and parses its contents
+        /// </summary>
+        /// <param name="filePathSource"> The path of the file.</param>
+        /// <returns>A json string of file contents.</returns>
         public async Task<string> ReadFromFile(string filePathSource)
         {
             if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
@@ -32,6 +37,12 @@ namespace MockTestUtility
             }
         }
 
+        /// <summary>
+        /// Allows one to edit the file.
+        /// </summary>
+        /// <param name="fileContents"> Contents of the file.</param>
+        /// <param name="filePathSource"> The path of the file.</param>
+        /// <returns></returns>
         public async Task WriteToFile(string fileContents, string filePathSource)
         {
             // Not implemented
