@@ -667,7 +667,10 @@ namespace CodeSnippetsReflection.Test
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "WorkbookRange workbookRange = graphClient.me().drive().items(\"{id}\").workbook().worksheets(\"{id|name}\")\n" +
-                                           "\t.range(\"A1:B2\")\n" +//parameter has double quotes
+                                           "\t.range(WorkbookRangeRangeParameterSet\n" +
+                                                        "\t\t.newBuilder()\n" +
+                                                        "\t\t.withAddress(\"A1:B2\")\n" + 
+                                                        "\t\t.build())\n" +//parameter has double quotes
                                            "\t.buildRequest()\n" +
                                            "\t.get();";
 
@@ -701,7 +704,11 @@ namespace CodeSnippetsReflection.Test
                                            "Boolean hasHeaders = true;\r\n" +
                                            "\r\n" +
                                            "graphClient.me().drive().items(\"{id}\").workbook().tables()\n" +
-                                                "\t.add(address,hasHeaders)\n" +
+                                                "\t.add(WorkbookTableAddParameterSet\n" +
+                                                        "\t\t.newBuilder()\n" +
+                                                        "\t\t.withAddress(address)\n" +
+                                                        "\t\t.withHasHeaders(hasHeaders)\n" +
+                                                        "\t\t.build())\n" +
                                                 "\t.buildRequest()\n" +
                                                 "\t.post();";
 

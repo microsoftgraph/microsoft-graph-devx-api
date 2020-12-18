@@ -594,8 +594,15 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         break;
                     //handle functions/requestActions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel, "List", false);
-                        resourcesPath.Append($"\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")})");
+                        var paramList = CommonGenerator.GetParameterListFromOperationSegmentWithNames(operationSegment, snippetModel, "List");
+                        var operationBoundTypeName = operationSegment?.EdmType?.FullTypeName() ?? operationSegment?.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.FullName();
+                        var paramSetBuilderName = $"{CommonGenerator.UppercaseFirstLetter(operationBoundTypeName?.Split(".")?.Last())}{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}ParameterSet";
+                        var paramSetBuilder = paramList.Any() ? 
+                                                $"{paramSetBuilderName}\n\t\t.newBuilder()\n\t\t" +
+                                                    paramList.Select(x => $".with{CommonGenerator.UppercaseFirstLetter(x.Key)}({x.Value})").Aggregate((x, y) => $"{x}\n\t\t{y}") +
+                                                    "\n\t\t.build()"
+                                                : string.Empty;
+                        resourcesPath.Append($"\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({paramSetBuilder})");
                         break;
                     case ReferenceSegment _:
                         resourcesPath.Append(".reference()");
