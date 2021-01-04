@@ -1084,5 +1084,30 @@ namespace CodeSnippetsReflection.Test
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
             Assert.Contains("byte[]", result);
         }
+        [Fact]
+        public void NotIncludeParenthesisInIdentifiers()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{" +
+                                    "\"value\":" +
+                                    "[" +
+                                        "{" +
+                                            "\"id\": \"contoso.sharepoint.com,da60e844-ba1d-49bc-b4d4-d5e36bae9019,712a596e-90a1-49e3-9b48-bfa80bee8740\"" +
+                                        "}," +
+                                        "{" +
+                                            "\"id\": \"contoso.sharepoint.com,da60e844-ba1d-49bc-b4d4-d5e36bae9019,0271110f-634f-4300-a841-3a8a2e851851\"" +
+                                        "}" +
+                                    "] " +
+                                "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/users/{user-id}/followedSites/add")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            Assert.DoesNotContain("Site(Add", result);// in case it's a collection we need to trim the ) at the end of the type name
+        }
     }
 }

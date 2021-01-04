@@ -595,8 +595,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //handle functions/requestActions and any parameters present into collections
                     case OperationSegment operationSegment:
                         var paramList = CommonGenerator.GetParameterListFromOperationSegmentWithNames(operationSegment, snippetModel, "List");
-                        var operationBoundTypeName = operationSegment?.EdmType?.FullTypeName() ?? operationSegment?.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.FullName();
-                        var paramSetBuilderName = $"{CommonGenerator.UppercaseFirstLetter(operationBoundTypeName?.Split(".")?.Last())}{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}ParameterSet";
+                        var operationBoundTypeName = (operationSegment?.EdmType?.FullTypeName() ?? 
+                                                    operationSegment?.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.FullName())
+                                                        ?.Split(".")
+                                                        ?.Last()
+                                                        ?.Trim(')'); // in case it's a collection
+                        var paramSetBuilderName = $"{CommonGenerator.UppercaseFirstLetter(CommonGenerator.UppercaseFirstLetter(operationBoundTypeName))}{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}ParameterSet";
                         var paramSetBuilder = paramList.Any() ? 
                                                 $"{paramSetBuilderName}\n\t\t.newBuilder()\n\t\t" +
                                                     paramList.Select(x => $".with{CommonGenerator.UppercaseFirstLetter(x.Key)}({x.Value})").Aggregate((x, y) => $"{x}\n\t\t{y}") +
