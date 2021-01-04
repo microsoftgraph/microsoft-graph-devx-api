@@ -120,7 +120,7 @@ namespace CodeSnippetsReflection.App
                 return;
             }
 
-            File.WriteAllText(file.Replace("-httpSnippet", $"---{language}"), snippet);
+            File.WriteAllText(file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}"), snippet);
         }
     }
 }
