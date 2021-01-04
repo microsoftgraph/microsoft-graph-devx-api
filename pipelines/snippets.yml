@@ -107,6 +107,10 @@ steps:
   displayName: 'Generate snippets'
   workingDirectory: microsoft-graph-docs
 
+- pwsh: $(Build.SourcesDirectory)/microsoft-graph-explorer-api/scripts/cleanupUnusedSnippets.ps1
+  displayName: 'Cleanup unused snippets'
+  workingDirectory: microsoft-graph-docs
+
 - pwsh: |
     Write-Host "About to add files....." -ForegroundColor Green
     git add . | Write-Host
