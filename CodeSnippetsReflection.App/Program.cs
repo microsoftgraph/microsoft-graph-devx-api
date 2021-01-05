@@ -119,8 +119,9 @@ namespace CodeSnippetsReflection.App
                 Console.Error.WriteLine($"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}");
                 return;
             }
-
-            File.WriteAllText(file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}"), snippet);
+            var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
+            Console.WriteLine($"Writing snippet: {filePath}");
+            File.WriteAllText(filePath, snippet);
         }
     }
 }
