@@ -11,8 +11,8 @@ namespace CodeSnippetsReflection.Test
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private const string ServiceRootUrlBeta = "https://graph.microsoft.com/beta";
-        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
-        private readonly IEdmModel _edmModelBeta = CsdlReader.Parse(XmlReader.Create(ServiceRootUrlBeta + "/$metadata"));
+        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata));
+        private readonly IEdmModel _edmModelBeta = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanBetaMetadata));
         private const string AuthProviderPrefix = "GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n";
 
         [Fact]
@@ -955,7 +955,7 @@ namespace CodeSnippetsReflection.Test
                                       "}";
             requestPayload.Content = new StringContent(jsonObject);
             string betaServiceUrl = "https://graph.microsoft.com/beta";
-            IEdmModel betaIeEdmModel = CsdlReader.Parse(XmlReader.Create(betaServiceUrl + "/$metadata"));
+            IEdmModel betaIeEdmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanBetaMetadata));
             var snippetModel = new SnippetModel(requestPayload, betaServiceUrl, betaIeEdmModel);
             
             //Act by generating the code snippet
