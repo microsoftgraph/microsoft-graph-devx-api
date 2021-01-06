@@ -595,8 +595,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //handle functions/requestActions and any parameters present into collections
                     case OperationSegment operationSegment:
                         var paramList = CommonGenerator.GetParameterListFromOperationSegmentWithNames(operationSegment, snippetModel, "List");
-                        var operationBoundTypeName = (operationSegment?.EdmType?.FullTypeName() ?? 
-                                                    operationSegment?.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.FullName())
+                        var operationBoundTypeName = (operationSegment?.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.FullName() ?? 
+                                                    operationSegment?.EdmType?.FullTypeName())
                                                         ?.Split(".")
                                                         ?.Last()
                                                         ?.Trim(')'); // in case it's a collection

@@ -1109,5 +1109,25 @@ namespace CodeSnippetsReflection.Test
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
             Assert.DoesNotContain("Site(Add", result);// in case it's a collection we need to trim the ) at the end of the type name
         }
+        [Fact]
+        public void UseTheRightTypePrefixForParameterSets() {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{" +
+                                        "\"EmailAddresses\": [" +
+                                            "\"danas@contoso.onmicrosoft.com\", " +
+                                            "\"fannyd@contoso.onmicrosoft.com\"" +
+                                        "]," +
+                                        "\"MailTipsOptions\": \"automaticReplies, mailboxFullStatus\"" +
+                                    "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/getMailTips")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            Assert.Contains("UserGetMailTipsParameterSet", result);
+        }
     }
 }
