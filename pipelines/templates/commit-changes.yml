@@ -1,16 +1,23 @@
 steps:
 - pwsh: |
     Write-Host "About to add files....." -ForegroundColor Green
-    git add . | Write-Host
-    if ($env:BUILD_REASON -eq 'Manual') # Skip CI if manually running this pipeline.
-    {
-      git commit -m "Update generated files with build $env:BUILD_BUILDID [skip ci]" | Write-Host
+    $diffResult = & {git diff}
+    if($diffResult -eq $null) {
+      Write-Host "##vso[task.setvariable variable=shouldPushBranch]false"
+      Write-Host "No changes to commit." -ForegroundColor Green
+    } else {
+      git add . | Write-Host
+      if ($env:BUILD_REASON -eq 'Manual') # Skip CI if manually running this pipeline.
+      {
+        git commit -m "Update generated files with build $env:BUILD_BUILDID [skip ci]" | Write-Host
+      }
+      else
+      {
+        git commit -m "Update generated files with build $env:BUILD_BUILDID" | Write-Host
+      }
+      Write-Host "Added and commited generated files." -ForegroundColor Green
+      Write-Host "##vso[task.setvariable variable=shouldPushBranch]true"
     }
-    else
-    {
-      git commit -m "Update generated files with build $env:BUILD_BUILDID" | Write-Host
-    }
-    Write-Host "Added and commited generated files." -ForegroundColor Green
   displayName: 'Git: stage and commit generated files'
   workingDirectory: 'microsoft-graph-docs'
 
@@ -19,3 +26,4 @@ steps:
     Write-Host "Pushed the results of the build to the $env:BRANCHNAME branch." -ForegroundColor Green
   displayName: 'Git: push updates'
   workingDirectory: 'microsoft-graph-docs'
+  condition: and(succeeded(), eq(variables.shouldPushBranch, true))
