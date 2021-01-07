@@ -97,7 +97,7 @@ namespace GraphExplorerSamplesService.Services
 
             // Get the full file path from configuration and query param, then read from the file
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
-            string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
+            string jsonFileContents = await _fileUtility.ReadFromFile(queriesFilePathSource);
 
             return DeserializeSamplesList(jsonFileContents, locale);
         }
