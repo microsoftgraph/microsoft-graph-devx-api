@@ -1,0 +1,44 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline for Snippet injection into docs
+
+trigger: none
+pr: none
+schedules:
+  - cron: "30 12 * * 3"
+    displayName: Weekly Wednesday unused snippets removal
+    branches:
+      include:
+      - master
+    always: true
+
+resources:
+ repositories:
+   - repository: microsoft-graph-docs
+     type: github
+     endpoint: microsoftgraph
+     name: microsoftgraph/microsoft-graph-docs
+     ref: master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- checkout: self
+  displayName: checkout GE api
+  fetchDepth: 1
+  persistCredentials: true
+
+- checkout: microsoft-graph-docs
+  displayName: checkout docs
+  fetchDepth: 1
+  persistCredentials: true
+
+- template: templates/git-config.yml
+
+- pwsh: $(Build.SourcesDirectory)/microsoft-graph-explorer-api/scripts/cleanupUnusedSnippets.ps1
+  displayName: 'Cleanup unused snippets'
+  workingDirectory: microsoft-graph-docs
+
+- template: templates/commit-changes.yml
