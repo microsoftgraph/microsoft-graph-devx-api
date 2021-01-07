@@ -11,10 +11,17 @@ namespace FileService.Interfaces
     /// </summary>
     public interface IFileUtility
     {
-        // Reads file contents from a blob storage account given the source of the path
+        /// <summary>
+        /// Reads file contents from a blob storage account given the source of the path
+        /// </summary>
+        /// <param name="filePathSource"></param>
         Task<string> ReadFromFile(string filePathSource);
 
-        // Allows one to make changes to a file
+        /// <summary>
+        /// Allows one to make changes to a file
+        /// </summary>
+        /// <param name="fileContents"></param>
+        /// <param name="filePathSource"></param>
         Task WriteToFile(string fileContents, string filePathSource);
     }
 }
