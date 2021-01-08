@@ -8,7 +8,7 @@ using Xunit;
 
 namespace ChangesService.Test
 {
-    public class ChangeLogPaginationShould
+    public class ChangeLogPaginationModelShould
     {
         [Fact]
         public void ThrowArgumentExceptionIfPageValueIsZeroOrNegativeInteger()

@@ -64,7 +64,7 @@ namespace ChangesService.Services
 
             if (graphProxyConfigs == null)
             {
-                throw new ArgumentException(nameof(graphProxyConfigs), ChangesServiceConstants.ValueNullError);
+                throw new ArgumentNullException(nameof(graphProxyConfigs), ChangesServiceConstants.ValueNullError);
             }
 
             // Temp. var to hold cascading filtered data

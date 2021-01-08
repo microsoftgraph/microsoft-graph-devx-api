@@ -8,7 +8,7 @@ using Xunit;
 
 namespace ChangesService.Test
 {
-    public class ChangeLogSearchOptionsShould
+    public class ChangeLogSearchOptionsModelShould
     {
         [Fact]
         public void ThrowInvalidOperationExceptionWhenBothRequestUrlAndWorkloadAreSpecifed()

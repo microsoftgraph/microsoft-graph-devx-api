@@ -8,7 +8,7 @@ using Xunit;
 
 namespace ChangesService.Test
 {
-    public class ChangeLogListShould
+    public class ChangeLogListModelShould
     {
         [Fact]
         public void UpdateTotalItemsOnChangeLogsPropertySetter()
