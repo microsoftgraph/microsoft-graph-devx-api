@@ -667,7 +667,10 @@ namespace CodeSnippetsReflection.Test
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "WorkbookRange workbookRange = graphClient.me().drive().items(\"{id}\").workbook().worksheets(\"{id|name}\")\n" +
-                                           "\t.range(\"A1:B2\")\n" +//parameter has double quotes
+                                           "\t.range(WorkbookRangeRangeParameterSet\n" +
+                                                        "\t\t.newBuilder()\n" +
+                                                        "\t\t.withAddress(\"A1:B2\")\n" + 
+                                                        "\t\t.build())\n" +//parameter has double quotes
                                            "\t.buildRequest()\n" +
                                            "\t.get();";
 
@@ -701,7 +704,11 @@ namespace CodeSnippetsReflection.Test
                                            "Boolean hasHeaders = true;\r\n" +
                                            "\r\n" +
                                            "graphClient.me().drive().items(\"{id}\").workbook().tables()\n" +
-                                                "\t.add(address,hasHeaders)\n" +
+                                                "\t.add(WorkbookTableAddParameterSet\n" +
+                                                        "\t\t.newBuilder()\n" +
+                                                        "\t\t.withAddress(address)\n" +
+                                                        "\t\t.withHasHeaders(hasHeaders)\n" +
+                                                        "\t\t.build())\n" +
                                                 "\t.buildRequest()\n" +
                                                 "\t.post();";
 
@@ -1076,6 +1083,51 @@ namespace CodeSnippetsReflection.Test
             //Act by generating the code snippet
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
             Assert.Contains("byte[]", result);
+        }
+        [Fact]
+        public void NotIncludeParenthesisInIdentifiers()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{" +
+                                    "\"value\":" +
+                                    "[" +
+                                        "{" +
+                                            "\"id\": \"contoso.sharepoint.com,da60e844-ba1d-49bc-b4d4-d5e36bae9019,712a596e-90a1-49e3-9b48-bfa80bee8740\"" +
+                                        "}," +
+                                        "{" +
+                                            "\"id\": \"contoso.sharepoint.com,da60e844-ba1d-49bc-b4d4-d5e36bae9019,0271110f-634f-4300-a841-3a8a2e851851\"" +
+                                        "}" +
+                                    "] " +
+                                "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/users/{user-id}/followedSites/add")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            Assert.DoesNotContain("Site(Add", result);// in case it's a collection we need to trim the ) at the end of the type name
+        }
+        [Fact]
+        public void UseTheRightTypePrefixForParameterSets() {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{" +
+                                        "\"EmailAddresses\": [" +
+                                            "\"danas@contoso.onmicrosoft.com\", " +
+                                            "\"fannyd@contoso.onmicrosoft.com\"" +
+                                        "]," +
+                                        "\"MailTipsOptions\": \"automaticReplies, mailboxFullStatus\"" +
+                                    "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/getMailTips")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            Assert.Contains("UserGetMailTipsParameterSet", result);
         }
     }
 }
