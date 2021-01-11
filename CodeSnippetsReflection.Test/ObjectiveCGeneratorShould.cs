@@ -11,7 +11,7 @@ namespace CodeSnippetsReflection.Test
     public class ObjectiveCGeneratorShould
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
+        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata));
         private const string AuthProviderPrefix = "MSHTTPClient *httpClient = [MSClientFactory createHTTPClientWithAuthenticationProvider:authenticationProvider];\r\n\r\n" +
                                                   "NSString *MSGraphBaseURL = @\"https://graph.microsoft.com/v1.0/\";\r\n";
 
@@ -291,7 +291,7 @@ namespace CodeSnippetsReflection.Test
                                       "}";
             requestPayload.Content = new StringContent(jsonObject);
             string betaServiceUrl = "https://graph.microsoft.com/beta";
-            IEdmModel betaIeEdmModel = CsdlReader.Parse(XmlReader.Create(betaServiceUrl + "/$metadata"));
+            IEdmModel betaIeEdmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanBetaMetadata));
             var snippetModel = new SnippetModel(requestPayload, betaServiceUrl, betaIeEdmModel);
 
             //Act by generating the code snippet
