@@ -89,9 +89,14 @@ namespace ChangesService.Test
         /// <summary>
         /// Gets a sample of ChangeLog list
         /// </summary>
-        /// <returns>A <see cref="ChangeLogList"/>.</returns>
-        public static ChangeLogList GetChangeLogList()
+        /// <param name="variableDate">Optional. CreatedDateTime value for Reports
+        /// workload.</param>
+        /// <returns></returns>
+        public static ChangeLogList GetChangeLogList(string variableDate = "2020-12-31T00:00:00.000Z")
         {
+            // variableDate param will be used for specifying custom CreatedDateTime
+            // value for Reports workload 
+
             var changeLogList = @"{
               ""changelog"": [
                  {
@@ -144,12 +149,14 @@ namespace ChangesService.Test
                    ""Id"": ""dca6467b-d026-4316-8353-2c6c02598af3"",
                    ""Cloud"": ""prd"",
                    ""Version"": ""beta"",
-                   ""CreatedDateTime"": ""2020-12-31T00:00:00.000Z"",
+                   ""CreatedDateTime"": ""variableDate"",
                    ""WorkloadArea"": ""Reports"",
                    ""SubArea"": ""Identity and access reports""
                  }
                ]
             }";
+
+            changeLogList = changeLogList.Replace("variableDate", variableDate);
 
             return Services.ChangesService.DeserializeChangeLogList(changeLogList);
         }
