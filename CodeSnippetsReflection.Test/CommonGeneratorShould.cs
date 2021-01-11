@@ -13,7 +13,9 @@ namespace CodeSnippetsReflection.Test
     public class CommonGeneratorShould
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
+        public const string CleanV1Metadata = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_v10_metadata/cleanMetadataWithDescriptionsv1.0.xml";
+        public const string CleanBetaMetadata = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_beta_metadata/cleanMetadataWithDescriptionsbeta.xml";
+        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CleanV1Metadata));
 
         #region Test GenerateQuerySection
         [Fact]

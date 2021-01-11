@@ -10,7 +10,7 @@ namespace CodeSnippetsReflection.Test
     public class SnippetsModelShould
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
+        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata));
 
         [Fact]
         public void PopulateExpandFieldExpression()
