@@ -51,12 +51,13 @@ namespace GraphWebApi
                            ValidIssuer = Configuration["AzureAd:Issuer"]
                        };
                    });
-
+            services.AddMemoryCache();
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.Configure<SamplesAdministrators>(Configuration);
+            services.AddControllers();
 
             #region AppInsights
 
@@ -101,6 +102,12 @@ namespace GraphWebApi
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
         }
     }
 }
