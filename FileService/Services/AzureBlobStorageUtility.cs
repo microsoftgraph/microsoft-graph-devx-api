@@ -65,7 +65,7 @@ namespace FileService.Services
             throw new IOException("Failed to connect to the blob storage account.");
         }
 
-        public async Task WriteToFile(string fileContents, string filePathSource)
+        public Task WriteToFile(string fileContents, string filePathSource)
         {
             throw new NotImplementedException();
         }
