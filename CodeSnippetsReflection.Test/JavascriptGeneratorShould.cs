@@ -10,7 +10,7 @@ namespace CodeSnippetsReflection.Test
     public class JavascriptGeneratorShould
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
+        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata));
         private const string AuthProviderPrefix = "const options = {\n\tauthProvider,\n};\n\nconst client = Client.init(options);\n\n";
 
         [Fact]
