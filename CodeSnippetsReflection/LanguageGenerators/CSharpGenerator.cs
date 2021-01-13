@@ -169,7 +169,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                     var genericType = string.Empty;
                     var objectToBePut = snippetModel.ResponseVariableName;
-                    if (snippetModel.ContentType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
+                    if (snippetModel.ContentType?.Equals("application/json", StringComparison.OrdinalIgnoreCase) ?? false)
                     {
                         if (snippetModel.Segments.Last() is NavigationPropertyLinkSegment)
                         {
