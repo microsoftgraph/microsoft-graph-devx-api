@@ -47,7 +47,7 @@ namespace GraphWebApi.Controllers
                 {
                     var baseUrl = _configuration["GithubBaseUrl"];
                     var samplesStore = new SamplesStore(configuration: _configuration,
-                        fileUtility: new HttpClientUtility(baseUrl));
+                        fileUtility: new HttpClientUtility(baseUrl, _configuration));
 
                     // Fetch samples file from Github
                     sampleQueriesList = await samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
