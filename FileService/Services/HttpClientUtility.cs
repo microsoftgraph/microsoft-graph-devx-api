@@ -5,9 +5,7 @@
 using FileService.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace FileService.Services
@@ -20,36 +18,21 @@ namespace FileService.Services
         private readonly HttpClient _httpClient;
 
         /// <summary>
+        /// The base address of the HttpClient.
+        /// </summary>
+        public string BaseAddress { get; set; }
+
+        /// <summary>
+        /// Dictionary of key value pairs of request header values of the HttpClient.
+        /// </summary>
+        public Dictionary<string, string> RequestHeaderValues { get; set; } = null;
+
+        /// <summary>
         /// Class constructor.
         /// </summary>
-        /// <param name="baseUrl">The base url.</param>
-        /// <param name="requestHeaderValues">Dictionary of key value pairs of request header values.</param>
-        public HttpClientUtility(string baseUrl, Dictionary<string, string> requestHeaderValues = null)
+        public HttpClientUtility(HttpClient httpClient)
         {
-            if (string.IsNullOrEmpty(baseUrl))
-            {
-                throw new ArgumentNullException(nameof(baseUrl), "Value cannot be null or empty.");
-            }
-
-            _httpClient = new HttpClient(new HttpClientHandler()
-            {
-                AutomaticDecompression = DecompressionMethods.GZip
-            })
-            {
-                BaseAddress = new Uri(baseUrl)
-            };
-
-            // Set the Accept-Encoding header
-            _httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
-
-            // Set the request header values
-            if (requestHeaderValues != null)
-            {
-                foreach (var item in requestHeaderValues)
-                {
-                    _httpClient.DefaultRequestHeaders.Add(item.Key, item.Value);
-                }
-            }
+            _httpClient = httpClient;
         }
 
         /// <summary>
@@ -59,6 +42,21 @@ namespace FileService.Services
         /// <returns></returns>
         public async Task<string> ReadFromFile(string filePathSource)
         {
+            if (string.IsNullOrEmpty(BaseAddress))
+            {
+                throw new ArgumentNullException(nameof(BaseAddress), "Property value cannot be null or empty.");
+            }
+
+            _httpClient.BaseAddress = new Uri(BaseAddress);
+
+            if (RequestHeaderValues != null)
+            {
+                foreach (var item in RequestHeaderValues)
+                {
+                    _httpClient.DefaultRequestHeaders.Add(item.Key, item.Value);
+                }
+            }
+
             var httpResponseMessage = await _httpClient.GetAsync(filePathSource);
             var fileContents = await httpResponseMessage.Content.ReadAsStringAsync();
 

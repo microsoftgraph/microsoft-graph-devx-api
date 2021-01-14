@@ -59,6 +59,7 @@ namespace GraphWebApi
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.AddSingleton<IChangesStore, ChangesStore>();
             services.Configure<SamplesAdministrators>(Configuration);
+            services.AddHttpClient<IFileUtility, HttpClientUtility>();
 
             #region AppInsights
 

@@ -5,6 +5,7 @@
 using ChangesService.Common;
 using ChangesService.Models;
 using FileService.Common;
+using FileService.Interfaces;
 using FileService.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -50,7 +51,8 @@ namespace ChangesService.Services
         /// <param name="graphProxyConfigs">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
         /// <returns>A <see cref="ChangeLogList"/> containing the list of filtered and/or paginated <see cref="ChangeLog"/> list.</returns>
         public static ChangeLogList FilterChangeLogList(ChangeLogList changeLogList,
-            ChangeLogSearchOptions searchOptions, MicrosoftGraphProxyConfigs graphProxyConfigs)
+            ChangeLogSearchOptions searchOptions, MicrosoftGraphProxyConfigs graphProxyConfigs,
+            IFileUtility fileUtility = null)
         {
             if (changeLogList == null)
             {
@@ -76,7 +78,8 @@ namespace ChangesService.Services
             if (!string.IsNullOrEmpty(searchOptions.RequestUrl))
             {
                 // Retrieve the workload name from the requestUrl
-                var workload = RetrieveWorkloadNameFromRequestUrl(searchOptions, graphProxyConfigs).GetAwaiter().GetResult();
+                var workload = RetrieveWorkloadNameFromRequestUrl(searchOptions, graphProxyConfigs, fileUtility)
+                                .GetAwaiter().GetResult();
 
                 // Search by the workload name
                 changeLogListByWorkload.ChangeLogs = FilterChangeLogListByWorkload(tempChangeLogList,
@@ -189,7 +192,7 @@ namespace ChangesService.Services
         /// of the target request url.</param>
         /// <returns>The workload name for the target request url.</returns>
         private static async Task<string> RetrieveWorkloadNameFromRequestUrl(ChangeLogSearchOptions searchOptions,
-            MicrosoftGraphProxyConfigs graphProxy)
+            MicrosoftGraphProxyConfigs graphProxy, IFileUtility fileUtility)
         {
             // Pull out the workload name value if it was already cached
             if (UrlWorkloadDict.TryGetValue(searchOptions.RequestUrl, out string workloadValue))
@@ -197,7 +200,12 @@ namespace ChangesService.Services
                 return workloadValue;
             }
 
-            var httpClientUtility = new HttpClientUtility(graphProxy.GraphProxyBaseUrl, new Dictionary<string, string>
+            if (fileUtility == null)
+            {
+                throw new ArgumentNullException("Value cannot be null", nameof(fileUtility));
+            }
+
+            var requestHeaderValues = new Dictionary<string, string>
             {
                 // Authorization
                 { FileServiceConstants.HttpRequest.Headers.Authorization.ToString(),
@@ -210,8 +218,13 @@ namespace ChangesService.Services
                 // User-Agent
                 { FileServiceConstants.HttpRequest.Headers.UserAgent.ToString(),
                     FileServiceConstants.HttpRequest.DevxApiUserAgent }
-            });
+            };
 
+            var httpClientUtility = (HttpClientUtility)fileUtility;
+            httpClientUtility.BaseAddress = graphProxy.GraphProxyBaseUrl;
+            httpClientUtility.RequestHeaderValues = requestHeaderValues;
+
+            // The proxy url helps fetch data from Microsoft Graph anonymously
             var relativeProxyUrl = string.Format(graphProxy.GraphProxyRelativeUrl, graphProxy.GraphVersion,
                                     searchOptions.RequestUrl);
 

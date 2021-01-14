@@ -4,10 +4,12 @@
 
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using ChangesService.Common;
 using ChangesService.Interfaces;
 using ChangesService.Models;
+using FileService.Interfaces;
 using GraphWebApi.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,11 +22,13 @@ namespace GraphWebApi.Controllers
     {
         private readonly IChangesStore _changesStore;
         private readonly IConfiguration _configuration;
+        private readonly IFileUtility _fileUtility;
 
-        public ChangesController(IChangesStore changesStore, IConfiguration configuration)
+        public ChangesController(IChangesStore changesStore, IConfiguration configuration, IFileUtility fileUtility)
         {
             _changesStore = changesStore;
             _configuration = configuration;
+            _fileUtility = fileUtility;
         }
 
         // Gets the list of changelog
@@ -69,7 +73,8 @@ namespace GraphWebApi.Controllers
                 // Filter the changelog list
                 if (changeLog.ChangeLogs.Any())
                 {
-                    changeLog = ChangesService.Services.ChangesService.FilterChangeLogList(changeLog, searchOptions, graphProxyConfigs);
+                    changeLog = ChangesService.Services.ChangesService
+                                    .FilterChangeLogList(changeLog, searchOptions, graphProxyConfigs, _fileUtility);
                 }
                 else
                 {

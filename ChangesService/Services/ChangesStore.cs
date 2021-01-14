@@ -21,19 +21,20 @@ namespace ChangesService.Services
     public class ChangesStore : IChangesStore
     {
         private readonly object _changesLock = new object();
-        private readonly IFileUtility _httpClientUtility;
+        private readonly HttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changeLogCache;
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
 
-        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IFileUtility httpClientUtility = null)
+        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IFileUtility httpClientUtility)
         {
             _changeLogCache = changeLogCache;
             _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath];
-            _httpClientUtility = httpClientUtility ?? new HttpClientUtility(
-                configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]);
+            _httpClientUtility = (HttpClientUtility)httpClientUtility;
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(
                 configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]);
+
+            _httpClientUtility.BaseAddress = configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath];
         }
 
         /// <summary>
