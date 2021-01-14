@@ -13,7 +13,7 @@ namespace CodeSnippetsReflection.Test
     public class JavaGeneratorShould
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
+        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata));
         private const string AuthProviderPrefix = "IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n";
 
         [Fact]
