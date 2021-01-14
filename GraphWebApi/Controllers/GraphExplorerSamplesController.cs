@@ -330,7 +330,7 @@ namespace GraphWebApi.Controllers
         /// <see cref="SampleQueriesPolicies"/> from this.
         /// </summary>
         /// <returns></returns>
-        private async Task<SampleQueriesPolicies> GetSampleQueriesPoliciesAsync()
+        private Task<SampleQueriesPolicies> GetSampleQueriesPoliciesAsync()
         {
             throw new NotImplementedException();
         }
