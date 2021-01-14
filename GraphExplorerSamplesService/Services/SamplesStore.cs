@@ -69,7 +69,9 @@ namespace GraphExplorerSamplesService.Services
                            FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
 
                     // Get the file contents from source
-                    string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
+                    string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource)
+                                                          .GetAwaiter()
+                                                          .GetResult();
 
                     // Return the list of the sample queries from the file contents
                     return DeserializeSamplesList(jsonFileContents, lockedLocale);
@@ -89,7 +91,7 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
         public async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale, string org, string branchName)
         {
-            string host = _configuration["BlobStorage:GithubHost"];
+            string host = _configuration["GithubHost"];
             string repo = _configuration["BlobStorage:RepoName"];
 
             // Fetch the requisite sample path source based on the locale
