@@ -111,7 +111,7 @@ namespace ChangesService.Services
             }
             else if (searchOptions.DaysRange > 0)
             {
-                // Filter by the number of days provided, starting from current date
+                // Filter by the number of days provided, up to the current date
                 DateTime startDate = DateTime.Today.AddDays(-searchOptions.DaysRange);
 
                 changeLogListByDate.ChangeLogs = tempChangeLogList.ChangeLogs
