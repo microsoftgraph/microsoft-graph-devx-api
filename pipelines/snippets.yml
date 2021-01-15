@@ -24,15 +24,15 @@ resources:
      type: github
      endpoint: microsoftgraph
      name: microsoftgraph/apidoctor
-     ref: generate-snippets
+     ref: master
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-latest'
 
 variables:
   buildConfiguration: 'Release'
   apidoctorPath: 'apidoctor'
-  apidoctorSolution: '$(apidoctorPath)/**/*.sln'
+  apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
   snippetLanguages: 'C#,JavaScript,Objective-C,Java'
 
 steps:
@@ -52,94 +52,43 @@ steps:
   submodules: recursive
   persistCredentials: true
 
-- task: PowerShell@2
-  displayName: 'Calculate and set pipeline variables for this job'
-  inputs:
-    targetType: inline
-    script: |
-      $branchName = "snippet-generation/$env:Build_BuildId" # Match the spec in the GH Action
-      Write-Host "Branch path spec for the pull request will be $branchName"
-      Write-Host "##vso[task.setvariable variable=branchName]$branchName"
+- template: templates/git-config.yml
 
-- task: PowerShell@2
-  displayName: 'Git: branch from master named with the build id: $(Build.BuildId)'
+- task: UseDotNet@2
+  displayName: 'Install dotnet core SDK'
   inputs:
-    targetType: inline
-    workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
-    script: |
-      Write-Host "The new branch name will be: $env:branchName"
-      git checkout -B $env:branchName | Write-Host
-
-- task: PowerShell@2
-  displayName: 'Git: set user config'
-  inputs:
-    targetType: inline
-    workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
-    script: |
-      git config user.email "GraphTooling@service.microsoft.com"
-      git config user.name "Microsoft Graph DevX Tooling"
+    version: 5.x
 
 - task: DotNetCoreCLI@2
   displayName: 'Build snippet generator'
   inputs:
     command: 'build'
-    projects: 'microsoft-graph-explorer-api\CodeSnippetsReflection.App\CodeSnippetsReflection.App.csproj'
+    projects: 'microsoft-graph-explorer-api/CodeSnippetsReflection.App/CodeSnippetsReflection.App.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
-- task: NuGetToolInstaller@1
-  displayName: 'Install Nuget.exe'
-
-- task: NuGetCommand@2
-  displayName: 'Restore packages for apidoctor'
+- task: DotNetCoreCLI@2
+  displayName: 'Restore packages for APIDoctor'
   inputs:
-    restoreSolution: '$(apidoctorSolution)'
+    command: 'restore'
+    projects: '$(Build.SourcesDirectory)/$(apidoctorProjects)'
 
-- task: VSBuild@1
-  displayName: 'Build apidoctor'
+- task: DotNetCoreCLI@2
+  displayName: 'Build APIDoctor'
   inputs:
-    solution: '$(apidoctorSolution)'
-    platform: 'Any CPU'
-    configuration: '$(buildConfiguration)'
+    command: 'build'
+    projects: '$(Build.SourcesDirectory)/$(apidoctorProjects)'
+    arguments: '--configuration $(buildConfiguration)'
 
-- task: PowerShell@2
+- pwsh: |
+    # release folder can change based on .NET core version, so search recursively in bin folder
+    $snippetGeneratorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-explorer-api/CodeSnippetsReflection.App/bin/Release *App -Recurse).FullName
+    Write-Host "Path to snippet generator tool: $snippetGeneratorPath"
+
+    $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
+    Write-Host "Path to apidoctor tool: $apidoctorPath"
+
+    . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "/bin/git"
   displayName: 'Generate snippets'
-  inputs:
-    workingDirectory: microsoft-graph-docs
-    targetType: 'inline'
-    script: |
-      # release folder can change based on .NET core version, so search recursively in bin folder
-      $snippetGeneratorPath = (Get-ChildItem $env:Build_SourcesDirectory\microsoft-graph-explorer-api\CodeSnippetsReflection.App\bin\Release *App.exe -Recurse).FullName
-      Write-Host "Path to snippet generator tool: $snippetGeneratorPath"
+  workingDirectory: microsoft-graph-docs
 
-      $apidoctorPath = (Get-ChildItem $env:Build_SourcesDirectory\apidoctor\ApiDoctor.Console\bin\Release apidoc.exe -Recurse).FullName
-      Write-Host "Path to apidoctor tool: $apidoctorPath"
-
-      & $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "C:\Program Files\Git\bin\git.exe"
-
-- task: PowerShell@2
-  displayName: 'Git: stage and commit generated files'
-  inputs:
-    targetType: inline
-    workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
-    script: |
-      Write-Host "About to add files....." -ForegroundColor Green
-      git add . | Write-Host
-      if ($env:Build_Reason -eq 'Manual') # Skip CI if manually running this pipeline.
-      {
-        git commit -m "Update generated files with build $env:Build_BuildId [skip ci]" | Write-Host
-      }
-      else
-      {
-        git commit -m "Update generated files with build $env:Build_BuildId" | Write-Host
-      }
-      Write-Host "Added and commited generated files." -ForegroundColor Green
-
-- task: PowerShell@2
-  displayName: 'Git: push updates'
-  inputs:
-    targetType: inline
-    workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-docs'
-    script: |
-      git push --set-upstream origin $env:branchName | Write-Host
-      Write-Host "Pushed the results of the build to the $env:branchName branch." -ForegroundColor Green
-  enabled: true
+- template: templates/commit-changes.yml

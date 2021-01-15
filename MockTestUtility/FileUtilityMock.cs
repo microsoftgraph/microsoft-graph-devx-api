@@ -31,9 +31,10 @@ namespace MockTestUtility
             }
         }
 
-        public async Task WriteToFile(string fileContents, string filePathSource)
+        public Task WriteToFile(string fileContents, string filePathSource)
         {
             // Not implemented
+            return Task.CompletedTask;
         }
     }
 }

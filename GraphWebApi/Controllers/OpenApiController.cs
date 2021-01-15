@@ -164,7 +164,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-                WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
+                await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                     graphOpenApi, Response.Body, styleOptions.Style);
 
                 return new EmptyResult();
@@ -183,39 +183,36 @@ namespace GraphWebApi.Controllers
             }
         }
 
-        private void WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
+        private async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
                                 OpenApiDocument graphOpenApi, Stream stream, OpenApiStyle style)
 
         {
-            var sw = new StreamWriter(stream);
+            using var sw = new StreamWriter(stream);
             var indexSearch = new OpenApiOperationIndex();
             var walker = new OpenApiWalker(indexSearch);
 
             walker.Walk(graphOpenApi);
 
-            sw.AutoFlush = true;
-
-            sw.WriteLine("<head>");
-            sw.WriteLine("<link rel='stylesheet' href='./stylesheet.css' />");
-            sw.WriteLine("</head>");
-            sw.WriteLine("<h1># OpenAPI Operations for Microsoft Graph</h1>");
-            sw.WriteLine("<b/>");
-            sw.WriteLine("<ul>");
+            await sw.WriteAsync("<head>" + Environment.NewLine +
+                                "<link rel='stylesheet' href='./stylesheet.css' />" + Environment.NewLine +
+                                "</head>" + Environment.NewLine +
+                                "<h1># OpenAPI Operations for Microsoft Graph</h1>" + Environment.NewLine +
+                                "<b/>" + Environment.NewLine +
+                                "<ul>" + Environment.NewLine);
 
             foreach (var item in indexSearch.Index)
             {
                 var target = $"{baseUrl}/openapi?tags={item.Key.Name}&openApiVersion={openApiVersion}&graphVersion={graphVersion}&format={format}&style={style}";
-                sw.WriteLine($"<li>{item.Key.Name} [<a href='{target}'>OpenApi</a>]   [<a href='/swagger/index.html#url={target}'>Swagger UI</a>]</li>");
-                sw.WriteLine("<ul>");
+                await sw.WriteAsync($"<li>{item.Key.Name} [<a href='{target}'>OpenApi</a>]   [<a href='/swagger/index.html#url={target}'>Swagger UI</a>]</li>{Environment.NewLine}<ul>{Environment.NewLine}");
                 foreach (var op in item.Value)
                 {
-                    sw.WriteLine($"<li>{op.OperationId}  [<a href='../../openapi?operationIds={op.OperationId}&openApiVersion={openApiVersion}&graphVersion={graphVersion}" +
+                    await sw.WriteLineAsync($"<li>{op.OperationId}  [<a href='../../openapi?operationIds={op.OperationId}&openApiVersion={openApiVersion}&graphVersion={graphVersion}" +
                         $"&format={format}&style={style}'>OpenAPI</a>]</li>");
                 }
-                sw.WriteLine("</ul>");
+                await sw.WriteLineAsync("</ul>");
             }
-            sw.WriteLine("</ul>");
-            sw.Dispose();
+            await sw.WriteLineAsync("</ul>");
+            await sw.FlushAsync();
         }
 
         private string GetVersionUri(string graphVersion)
