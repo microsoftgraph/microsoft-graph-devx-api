@@ -49,7 +49,9 @@ namespace ChangesService.Services
         /// <param name="searchOptions">The <see cref="ChangeLogSearchOptions"/> containing options for filtering
         /// and paginating the target <see cref="ChangeLog"/> list.</param>
         /// <param name="graphProxyConfigs">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
-        /// <returns>A <see cref="ChangeLogList"/> containing the list of filtered and/or paginated <see cref="ChangeLog"/> list.</returns>
+        /// <param name="fileUtility">Optional. An implementation instance of <see cref="IFileUtility"/>.</param>
+        /// <returns>A <see cref="ChangeLogList"/> containing the list of filtered and/or paginated
+        /// <see cref="ChangeLog"/> list.</returns>
         public static ChangeLogList FilterChangeLogList(ChangeLogList changeLogList,
             ChangeLogSearchOptions searchOptions, MicrosoftGraphProxyConfigs graphProxyConfigs,
             IFileUtility fileUtility = null)
@@ -190,6 +192,8 @@ namespace ChangesService.Services
         /// <param name="searchOptions"><see cref="ChangeLogSearchOptions"/> containing the target request url
         /// and the relevant information required to call Microsoft Graph and retrieve the required workload name
         /// of the target request url.</param>
+        /// <param name="graphProxy">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
+        /// <param name="fileUtility">An implementation instance of <see cref="IFileUtility"/>.</param>
         /// <returns>The workload name for the target request url.</returns>
         private static async Task<string> RetrieveWorkloadNameFromRequestUrl(ChangeLogSearchOptions searchOptions,
             MicrosoftGraphProxyConfigs graphProxy, IFileUtility fileUtility)
