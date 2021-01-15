@@ -320,7 +320,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 switch (className)
                 {
                     case "DateTimeOffset":
-                        return $"CalendarSerializer.deserialize({AddQuotesIfMising(stringParameter)})";
+                        return $"OffsetDateTimeSerializer.deserialize({AddQuotesIfMising(stringParameter)})";
 
                     case "Guid":
                         return $"UUID.fromString({AddQuotesIfMising(stringParameter)})";
@@ -538,7 +538,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "Edm.Guid":
                         return "UUID";
                     case "Edm.DateTimeOffset":
-                        return "Calendar";
+                        return "OffsetDateTime";
                     case "Edm.Date":
                         return "DateOnly";
                     case "Edm.Double":

@@ -116,7 +116,7 @@ namespace CodeSnippetsReflection.Test
             //Act by generating the code snippet
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
-            Assert.Contains(" CalendarSerializer.deserialize(\"datetime-value\")", result);
+            Assert.Contains(" OffsetDateTimeSerializer.deserialize(\"datetime-value\")", result);
         }
         [Fact]
         public void MapCorrectTypeForDoubleProperties()
