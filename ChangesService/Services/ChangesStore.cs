@@ -52,7 +52,7 @@ namespace ChangesService.Services
             }
 
             // Fetch cached changelog list
-            ChangeLogList changeLogList = await _changeLogCache.GetOrCreateAsync(locale, async cacheEntry =>
+            ChangeLogList changeLogList = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>
             {
                 lock (_changesLock)
                 {
@@ -65,7 +65,7 @@ namespace ChangesService.Services
                     if (seededChangeLogList != null)
                     {
                         // Already seeded by another thread
-                        return seededChangeLogList;
+                        return Task.FromResult(seededChangeLogList);
                     }
 
                     // Set cache expiry
@@ -73,16 +73,16 @@ namespace ChangesService.Services
 
                     // Construct the locale-specific relative url
                     string relativeUrl = string.Format(_changeLogRelativeUrl, locale.ToLower());
-                                        
-                    _httpClientUtility.RequestUrl = _configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]
+
+                    _httpClientUtility.RequestUri = _configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]
                                                         + relativeUrl;
 
                     // Get the file contents from source
-                    string jsonFileContents = _httpClientUtility.ReadFromFile(_httpClientUtility.RequestUrl)
+                    string jsonFileContents = _httpClientUtility.ReadFromFile(_httpClientUtility.RequestUri)
                                                 .GetAwaiter().GetResult();
 
                     // Return the changelog list from the file contents
-                    return ChangesService.DeserializeChangeLogList(jsonFileContents);
+                    return Task.FromResult(ChangesService.DeserializeChangeLogList(jsonFileContents));
                 }
             });
 
