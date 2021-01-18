@@ -14,8 +14,8 @@ namespace ChangesService.Test
         public void ThrowInvalidOperationExceptionWhenBothRequestUrlAndWorkloadAreSpecifed()
         {
             // Arrange & Act & Assert
-           Assert.Throws<InvalidOperationException>(() =>
-            new ChangeLogSearchOptions(requestUrl: "/me/", workload: "Extensions"));
+            Assert.Throws<InvalidOperationException>(() =>
+                new ChangeLogSearchOptions(requestUrl: "/me/", workload: "Extensions"));           
         }
 
         [Fact]

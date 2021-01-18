@@ -10,7 +10,7 @@ namespace ChangesService.Test
 {
     public class ChangesServiceShould
     {
-        MicrosoftGraphProxyConfigs _graphProxyConfigs = new MicrosoftGraphProxyConfigs();
+        private readonly MicrosoftGraphProxyConfigs _graphProxyConfigs = new MicrosoftGraphProxyConfigs();
 
         [Fact]
         public void ThrowArgumentNullExceptionOnDeserializeChangeLogListIfJsonStringParameterIsNull()
@@ -166,5 +166,134 @@ namespace ChangesService.Test
                         });
                 });
         }
+
+        [Fact]
+        public void PaginateChangeLogListFirstPage()
+        {
+            // Arrange
+            var changeLogList = new ChangeLogList
+            {
+                ChangeLogs = ChangeLogListModelShould.GetChangeLogList().ChangeLogs
+            };
+
+            var searchOptions = new ChangeLogSearchOptions
+            {
+                Page = 1,
+                PageLimit = 2
+            };
+
+            // Act
+            var changeLog = Services.ChangesService.FilterChangeLogList(changeLogList, searchOptions, _graphProxyConfigs);
+
+            // Assert -- fetch first two items from the changelog sample
+            Assert.NotNull(changeLog);
+            Assert.Collection(changeLog.ChangeLogs,
+                item =>
+                {
+                    Assert.Equal("6a6c7aa0-4b67-4d07-9ebf-c2bc1bcef553", item.Id);
+                    Assert.Equal("Compliance", item.WorkloadArea);
+                    Assert.Equal("eDiscovery", item.SubArea);
+                    Assert.Collection(item.ChangeList,
+                        item =>
+                        {
+                            Assert.Equal("6a6c7aa0-4b67-4d07-9ebf-c2bc1bcef553", item.Id);
+                            Assert.Equal("Resource", item.ApiChange);
+                            Assert.Equal("ediscoveryCase,reviewSet,reviewSetQuery", item.ChangedApiName);
+                            Assert.Equal("Addition", item.ChangeType);
+                            Assert.Equal("ediscoveryCase,reviewSet,reviewSetQuery", item.Target);
+                        });
+                },
+                item =>
+                {
+                    Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
+                    Assert.Equal("Extensions", item.WorkloadArea);
+                    Assert.Equal("Schema extensions", item.SubArea);
+                    Assert.Collection(item.ChangeList,
+                        item =>
+                        {
+                            Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
+                            Assert.Equal("Resource", item.ApiChange);
+                            Assert.Equal("schema extensions,Microsoft Cloud for US Government.", item.ChangedApiName);
+                            Assert.Equal("Addition", item.ChangeType);
+                            Assert.Equal("schema extensions,Microsoft Cloud for US Government", item.Target);
+                        });
+                });
+        }
+
+        [Fact]
+        public void PaginateChangeLogListMiddlePage()
+        {
+            // Arrange
+            var changeLogList = new ChangeLogList
+            {
+                ChangeLogs = ChangeLogListModelShould.GetChangeLogList().ChangeLogs
+            };
+
+            var searchOptions = new ChangeLogSearchOptions
+            {
+                Page = 2,
+                PageLimit = 1
+            };
+
+            // Act
+            var changeLog = Services.ChangesService.FilterChangeLogList(changeLogList, searchOptions, _graphProxyConfigs);
+
+            // Assert -- fetch middle item from the changelog sample
+            Assert.NotNull(changeLog);
+            Assert.Collection(changeLog.ChangeLogs,
+                item =>
+                {
+                    Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
+                    Assert.Equal("Extensions", item.WorkloadArea);
+                    Assert.Equal("Schema extensions", item.SubArea);
+                    Assert.Collection(item.ChangeList,
+                        item =>
+                        {
+                            Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
+                            Assert.Equal("Resource", item.ApiChange);
+                            Assert.Equal("schema extensions,Microsoft Cloud for US Government.", item.ChangedApiName);
+                            Assert.Equal("Addition", item.ChangeType);
+                            Assert.Equal("schema extensions,Microsoft Cloud for US Government", item.Target);
+                        });
+                });
+        }
+
+        [Fact]
+        public void PaginateChangeLogListLastPage()
+        {
+            // Arrange
+            var changeLogList = new ChangeLogList
+            {
+                ChangeLogs = ChangeLogListModelShould.GetChangeLogList().ChangeLogs
+            };
+
+            var searchOptions = new ChangeLogSearchOptions
+            {
+                Page = 2,
+                PageLimit = 2
+            };
+
+            // Act
+            var changeLog = Services.ChangesService.FilterChangeLogList(changeLogList, searchOptions, _graphProxyConfigs);
+
+            // Assert -- fetch last item from the changelog sample
+            Assert.NotNull(changeLog);
+            Assert.Collection(changeLog.ChangeLogs,
+                item =>
+                {
+                    Assert.Equal("dca6467b-d026-4316-8353-2c6c02598af3", item.Id);
+                    Assert.Equal("Reports", item.WorkloadArea);
+                    Assert.Equal("Identity and access reports", item.SubArea);
+                    Assert.Collection(item.ChangeList,
+                        item =>
+                        {
+                            Assert.Equal("dca6467b-d026-4316-8353-2c6c02598af3", item.Id);
+                            Assert.Equal("Resource", item.ApiChange);
+                            Assert.Equal("relyingPartyDetailedSummary,listing", item.ChangedApiName);
+                            Assert.Equal("Addition", item.ChangeType);
+                            Assert.Equal("relyingPartyDetailedSummary,listing", item.Target);
+                        });
+                });
+        }        
     }
 }

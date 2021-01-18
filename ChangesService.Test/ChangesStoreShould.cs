@@ -10,7 +10,6 @@ using MemoryCache.Testing.Moq;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MockTestUtility;
-using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -84,15 +83,15 @@ namespace ChangesService.Test
             /* Assert */
 
             // list 1
-            Assert.Equal(525, englishChangeLogList1.ChangeLogs.Count());
+            Assert.Equal(525, englishChangeLogList1.ChangeLogs.Count);
             Assert.Equal("Compliance", englishChangeLogList1.ChangeLogs[0].WorkloadArea);
 
             // list 2
-            Assert.Equal(525, englishChangeLogList2.ChangeLogs.Count());
+            Assert.Equal(525, englishChangeLogList2.ChangeLogs.Count);
             Assert.Equal("Compliance", englishChangeLogList2.ChangeLogs[0].WorkloadArea);
 
             // list 3
-            Assert.Equal(525, englishChangeLogList3.ChangeLogs.Count());
+            Assert.Equal(525, englishChangeLogList3.ChangeLogs.Count);
             Assert.Equal("Compliance", englishChangeLogList3.ChangeLogs[0].WorkloadArea);
         }
 
