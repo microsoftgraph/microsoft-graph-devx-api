@@ -24,7 +24,7 @@ namespace FileService.Services
             _httpClient = httpClient;
         }
                 
-        public  Task<string> ReadFromFile(string filePathSource)
+        public Task<string> ReadFromFile(string filePathSource)
         {            
             throw new NotImplementedException();
         }
@@ -47,7 +47,7 @@ namespace FileService.Services
             }
 
             requestMessage.Method = requestMessage.Method ?? HttpMethod.Get; // default is GET
-            var httpResponseMessage = await _httpClient.SendAsync(requestMessage);
+            var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
             var fileContents = await httpResponseMessage.Content.ReadAsStringAsync();
 
             if (!httpResponseMessage.IsSuccessStatusCode)

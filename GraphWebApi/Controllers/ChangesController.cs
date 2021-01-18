@@ -54,6 +54,7 @@ namespace GraphWebApi.Controllers
                     Page = page,
                     PageLimit = pageLimit
                 };
+
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
 
                 // Fetch the changelog list
@@ -62,7 +63,7 @@ namespace GraphWebApi.Controllers
                 // Filter the changelog list
                 if (changeLog.ChangeLogs.Any())
                 {
-                    // Configs for fetching workload names from requestUrls
+                    // Configs for fetching workload names from given requestUrl
                     var graphProxyConfigs = new MicrosoftGraphProxyConfigs()
                     {
                         GraphProxyBaseUrl = _configuration[ChangesServiceConstants.GraphProxyBaseUrlConfigPath],

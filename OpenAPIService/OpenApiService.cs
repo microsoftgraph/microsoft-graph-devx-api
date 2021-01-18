@@ -340,7 +340,7 @@ namespace OpenAPIService
             if (subsetOpenApiDocument.Paths == null ||
                 !subsetOpenApiDocument.Paths.Any())
             {
-                throw new ArgumentException ("No paths found for the supplied parameters.");
+                throw new ArgumentException("No paths found for the supplied parameters.");
             }
 
             return subsetOpenApiDocument;

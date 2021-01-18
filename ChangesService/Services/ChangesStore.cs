@@ -51,6 +51,8 @@ namespace ChangesService.Services
                 locale = "en-us";
             }
 
+            locale = locale.ToLower(); // for uniformity; uri path is all lower-cased
+
             // Fetch cached changelog list
             ChangeLogList changeLogList = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>
             {
@@ -72,13 +74,14 @@ namespace ChangesService.Services
                     cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
                     // Construct the locale-specific relative uri
-                    string relativeUrl = string.Format(_changeLogRelativeUrl, locale.ToLower());
+                    string relativeUrl = string.Format(_changeLogRelativeUrl, locale);
+
                     // Append to get the absolute uri
                     string requestUri = _configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]
                                                         + relativeUrl;
 
+                    // Construct the http request message
                     var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                    
 
                     // Get the file contents from source
                     string jsonFileContents = _fileUtility.ReadFromHttpSource(httpRequestMessage)

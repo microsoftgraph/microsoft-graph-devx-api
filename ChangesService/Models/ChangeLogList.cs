@@ -29,7 +29,7 @@ namespace ChangesService.Models
             {
                 _changeLogs = value;
                 UpdateTotalItems();
-                CurrentItems = _changeLogs.Count();
+                CurrentItems = _changeLogs.Count;
             }
         }
 
@@ -95,7 +95,7 @@ namespace ChangesService.Models
             if (TotalItems == 0 && ChangeLogs.Any())
             {
                 // Update once during the lifetime of this instance
-                TotalItems = _changeLogs.Count();
+                TotalItems = _changeLogs.Count;
             }
         }
     }
