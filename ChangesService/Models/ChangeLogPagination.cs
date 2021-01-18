@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using ChangesService.Common;
 using Newtonsoft.Json;
 using System;
 
@@ -26,7 +27,7 @@ namespace ChangesService.Models
             {
                 if (value < 1)
                 {
-                    throw new ArgumentException(nameof(Page), "Value cannot be zero or a negative integer.");
+                    throw new ArgumentException(ChangesServiceConstants.ValueZeroNegativeInteger, nameof(Page));
                 }
                 _page = value;
             }
@@ -47,7 +48,7 @@ namespace ChangesService.Models
             {
                 if (value < 1)
                 {
-                    throw new ArgumentException(nameof(PageLimit), "Value cannot be zero or a negative integer.");
+                    throw new ArgumentException(ChangesServiceConstants.ValueZeroNegativeInteger, nameof(PageLimit));
                 }
                 _pageLimit = value;
             }

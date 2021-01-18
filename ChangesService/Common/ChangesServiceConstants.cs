@@ -10,17 +10,18 @@ namespace ChangesService.Common
     public static class ChangesServiceConstants
     {
         // Changelog configuration paths constants
-        public static string ChangelogRelativeUrlConfigPath = "BlobStorage:Blobs:ChangeLog:RelativeUrl";
-        public static string ChangelogBaseUrlConfigPath = "BlobStorage:Blobs:ChangeLog:BaseUrl";
-        public static string ChangelogRefreshTimeConfigPath = "FileCacheRefreshTimeInHours:ChangeLog";
+        public const string ChangelogRelativeUrlConfigPath = "BlobStorage:Blobs:ChangeLog:RelativeUrl";
+        public const string ChangelogBaseUrlConfigPath = "BlobStorage:Blobs:ChangeLog:BaseUrl";
+        public const string ChangelogRefreshTimeConfigPath = "FileCacheRefreshTimeInHours:ChangeLog";
 
         // Microsoft Graph proxy configuration paths constants
-        public static string GraphProxyBaseUrlConfigPath = "GraphProxy:BaseUrl";
-        public static string GraphProxyRelativeUrlConfigPath = "GraphProxy:RelativeUrl";
-        public static string GraphProxyAuthorization = "GraphProxy:Authorization";
+        public const string GraphProxyBaseUrlConfigPath = "GraphProxy:BaseUrl";
+        public const string GraphProxyRelativeUrlConfigPath = "GraphProxy:RelativeUrl";
+        public const string GraphProxyAuthorization = "GraphProxy:Authorization";
 
         // Error constants
-        public static string ValueNullError = "Value cannot be null.";
-        public static string JsonStringNullOrEmpty = "The JSON string to be deserialized cannot be null or empty.";
+        public const string ValueNullError = "Value cannot be null.";
+        public const string ValueZeroNegativeInteger = "Value cannot be zero or a negative integer.";
+        public const string JsonStringNullOrEmpty = "The JSON string to be deserialized cannot be null or empty.";        
     }
 }

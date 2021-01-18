@@ -161,7 +161,7 @@ namespace ChangesService.Services
 
                     tempChangeLogList.Page = tempChangeLogList.TotalPages;
 
-                    int lastItems = tempChangeLogList.ChangeLogs.Count() % searchOptions.PageLimit.Value;
+                    int lastItems = tempChangeLogList.ChangeLogs.Count % searchOptions.PageLimit.Value;
                     tempChangeLogList.ChangeLogs = tempChangeLogList.ChangeLogs
                                                     .TakeLast(lastItems)
                                                     .ToList();
@@ -204,26 +204,33 @@ namespace ChangesService.Services
                 return workloadValue;
             }
 
+            if (graphProxy == null)
+            {
+                throw new ArgumentNullException(nameof(graphProxy), ChangesServiceConstants.ValueNullError);
+            }
+
             if (fileUtility == null)
             {
-                throw new ArgumentNullException(nameof(fileUtility), "Value cannot be null");
+                throw new ArgumentNullException(nameof(fileUtility), ChangesServiceConstants.ValueNullError);
             }
 
             // The proxy url helps fetch data from Microsoft Graph anonymously
             var relativeProxyUrl = string.Format(graphProxy.GraphProxyRelativeUrl, graphProxy.GraphVersion,
                                     searchOptions.RequestUrl);
 
+            // Get the absolute uri
             string requestUri = graphProxy.GraphProxyBaseUrl + relativeProxyUrl;
                         
+            // Construct the http request message
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
             // Add the request headers
             httpRequestMessage.Headers.Add(FileServiceConstants.HttpRequest.Headers.Authorization.ToString(),
-                        graphProxy.GraphProxyAuthorization);
+                        graphProxy.GraphProxyAuthorization); // Authorization
             httpRequestMessage.Headers.Add(FileServiceConstants.HttpRequest.Headers.Accept.ToString(),
-                    FileServiceConstants.HttpRequest.ApplicationJsonMediaType);
+                    FileServiceConstants.HttpRequest.ApplicationJsonMediaType); // Accept
             httpRequestMessage.Headers.Add(FileServiceConstants.HttpRequest.Headers.UserAgent.ToString(),
-                FileServiceConstants.HttpRequest.DevxApiUserAgent);
+                FileServiceConstants.HttpRequest.DevxApiUserAgent); // User Agent
 
             // Fetch the request url workload info. content from Microsoft Graph
             string workloadInfo = await fileUtility.ReadFromHttpSource(httpRequestMessage);
