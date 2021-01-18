@@ -52,15 +52,15 @@ namespace ChangesService.Test
             /* Assert */
 
             // en-US
-            Assert.Equal(525, englishChangeLogList.ChangeLogs.Count());
+            Assert.Equal(525, englishChangeLogList.ChangeLogs.Count);
             Assert.Equal("Compliance", englishChangeLogList.ChangeLogs[0].WorkloadArea);
 
             // es-ES
-            Assert.Equal(495, espanolChangeLogList.ChangeLogs.Count());
+            Assert.Equal(495, espanolChangeLogList.ChangeLogs.Count);
             Assert.Equal("Cumplimiento", espanolChangeLogList.ChangeLogs[0].WorkloadArea);
 
             // fr-FR
-            Assert.Equal(495, frenchChangeLogList.ChangeLogs.Count());
+            Assert.Equal(495, frenchChangeLogList.ChangeLogs.Count);
             Assert.Equal("Conformité", frenchChangeLogList.ChangeLogs[0].WorkloadArea);
         }
 
@@ -110,7 +110,7 @@ namespace ChangesService.Test
             ChangeLogList englishChangeLogList = await _changesStore.FetchChangeLogListAsync(locale);
 
             // Assert - we have the English translation
-            Assert.Equal(525, englishChangeLogList.ChangeLogs.Count());
+            Assert.Equal(525, englishChangeLogList.ChangeLogs.Count);
             Assert.Equal("Compliance", englishChangeLogList.ChangeLogs[0].WorkloadArea);
         }
     }

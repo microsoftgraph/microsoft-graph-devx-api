@@ -21,7 +21,7 @@ namespace ChangesService.Test
 
             // 1st Assert
             Assert.Equal(3, changeLogList.TotalItems);
-            Assert.Equal(3, changeLogList.ChangeLogs.Count());
+            Assert.Equal(3, changeLogList.ChangeLogs.Count);
 
             /* Take only first two changelog items from list,
              * e.g. in a pagination scenario.
@@ -32,7 +32,7 @@ namespace ChangesService.Test
 
             // 2nd Assert - TotalItems value should not change
             Assert.Equal(3, changeLogList.TotalItems);
-            Assert.Equal(2, changeLogList.ChangeLogs.Count());
+            Assert.Equal(2, changeLogList.ChangeLogs.Count);
         }
 
         [Fact]
@@ -48,7 +48,7 @@ namespace ChangesService.Test
              * to the current count of changelog items in list.
             */
             Assert.Equal(3, changeLogList.CurrentItems);
-            Assert.Equal(changeLogList.CurrentItems, changeLogList.ChangeLogs.Count());
+            Assert.Equal(changeLogList.CurrentItems, changeLogList.ChangeLogs.Count);
 
             /* Take only first two changelog items from list,
              * e.g. in a pagination scenario.
@@ -61,7 +61,7 @@ namespace ChangesService.Test
              * with current count of changelog items in list.
             */
             Assert.Equal(2, changeLogList.CurrentItems);
-            Assert.Equal(changeLogList.CurrentItems, changeLogList.ChangeLogs.Count());
+            Assert.Equal(changeLogList.CurrentItems, changeLogList.ChangeLogs.Count);
         }
 
         [Fact]
