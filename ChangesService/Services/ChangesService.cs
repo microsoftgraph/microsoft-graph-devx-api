@@ -225,7 +225,7 @@ namespace ChangesService.Services
             };
 
             var httpClientUtility = (HttpClientUtility)fileUtility;
-            httpClientUtility.RequestUrl = graphProxy.GraphProxyBaseUrl;
+            httpClientUtility.RequestUri = graphProxy.GraphProxyBaseUrl;
             httpClientUtility.RequestHeaderValues = requestHeaderValues;
 
             // The proxy url helps fetch data from Microsoft Graph anonymously

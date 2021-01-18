@@ -11,19 +11,19 @@ using System.Threading.Tasks;
 namespace FileService.Services
 {
     /// <summary>
-    /// Implements an <see cref="IFileUtility"/> that reads a file from an Http source.
+    /// Implements an <see cref="IFileUtility"/> that reads a file from an HTTP source.
     /// </summary>
     public class HttpClientUtility: IFileUtility
     {
         private readonly HttpClient _httpClient;
 
         /// <summary>
-        /// The base address of the HttpClient.
+        /// The request uri of the HTTP resource.
         /// </summary>
-        public string RequestUrl { get; set; }
+        public string RequestUri { get; set; }
 
         /// <summary>
-        /// Dictionary of key value pairs of request header values of the HttpClient.
+        /// Dictionary of key value pairs of the HTTP request header values.
         /// </summary>
         public Dictionary<string, string> RequestHeaderValues { get; set; } = null;
 
@@ -41,21 +41,27 @@ namespace FileService.Services
         }
 
         /// <summary>
-        /// Reads the contents of a file from an Http source.
+        /// Reads the contents of a file from an HTTP source.
         /// </summary>
         /// <param name="filePathSource">The absolute uri of the file source.</param>
-        /// <returns></returns>
+        /// <returns>The file contents from the HTTP source.</returns>
         public async Task<string> ReadFromFile(string filePathSource)
         {
-            if (string.IsNullOrEmpty(RequestUrl))
+            if (string.IsNullOrEmpty(filePathSource))
             {
-                throw new ArgumentNullException(nameof(RequestUrl), "Property value cannot be null or empty.");
+                throw new ArgumentNullException(nameof(filePathSource), "Value cannot be null or empty.");
             }
 
-            var requestMessage = new HttpRequestMessage(HttpMethod, RequestUrl);
+            if (string.IsNullOrEmpty(RequestUri))
+            {
+                throw new ArgumentNullException(nameof(RequestUri), "Property value cannot be null or empty.");
+            }
+
+            var requestMessage = new HttpRequestMessage(HttpMethod, RequestUri);
 
             if (RequestHeaderValues != null)
             {
+                // Set the request headers
                 foreach (var item in RequestHeaderValues)
                 {
                     requestMessage.Headers.Add(item.Key, item.Value);
@@ -73,7 +79,7 @@ namespace FileService.Services
             return fileContents;
         }
 
-        public async Task WriteToFile(string fileContents, string filePathSource)
+        public Task WriteToFile(string fileContents, string filePathSource)
         {
             throw new NotImplementedException();
         }

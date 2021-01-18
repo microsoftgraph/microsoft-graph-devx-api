@@ -62,7 +62,6 @@ namespace GraphWebApi.Controllers
                 // Filter the changelog list
                 if (changeLog.ChangeLogs.Any())
                 {
-
                     // Configs for fetching workload names from requestUrls
                     var graphProxyConfigs = new MicrosoftGraphProxyConfigs()
                     {
@@ -82,7 +81,7 @@ namespace GraphWebApi.Controllers
 
                 if (!changeLog.ChangeLogs.Any())
                 {
-                    // Filter items yielded no result
+                    // Filtered items yielded no result
                     return NotFound();
                 }
 
