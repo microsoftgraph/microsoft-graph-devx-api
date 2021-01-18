@@ -6,12 +6,12 @@ using ChangesService.Common;
 using ChangesService.Models;
 using FileService.Common;
 using FileService.Interfaces;
-using FileService.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace ChangesService.Services
@@ -206,34 +206,27 @@ namespace ChangesService.Services
 
             if (fileUtility == null)
             {
-                throw new ArgumentNullException("Value cannot be null", nameof(fileUtility));
+                throw new ArgumentNullException(nameof(fileUtility), "Value cannot be null");
             }
-
-            var requestHeaderValues = new Dictionary<string, string>
-            {
-                // Authorization
-                { FileServiceConstants.HttpRequest.Headers.Authorization.ToString(),
-                    graphProxy.GraphProxyAuthorization },
-
-                // Accept
-                { FileServiceConstants.HttpRequest.Headers.Accept.ToString(),
-                    FileServiceConstants.HttpRequest.ApplicationJsonMediaType },
-
-                // User-Agent
-                { FileServiceConstants.HttpRequest.Headers.UserAgent.ToString(),
-                    FileServiceConstants.HttpRequest.DevxApiUserAgent }
-            };
-
-            var httpClientUtility = (HttpClientUtility)fileUtility;
-            httpClientUtility.RequestUri = graphProxy.GraphProxyBaseUrl;
-            httpClientUtility.RequestHeaderValues = requestHeaderValues;
 
             // The proxy url helps fetch data from Microsoft Graph anonymously
             var relativeProxyUrl = string.Format(graphProxy.GraphProxyRelativeUrl, graphProxy.GraphVersion,
                                     searchOptions.RequestUrl);
 
+            string requestUri = graphProxy.GraphProxyBaseUrl + relativeProxyUrl;
+                        
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+            // Add the request headers
+            httpRequestMessage.Headers.Add(FileServiceConstants.HttpRequest.Headers.Authorization.ToString(),
+                        graphProxy.GraphProxyAuthorization);
+            httpRequestMessage.Headers.Add(FileServiceConstants.HttpRequest.Headers.Accept.ToString(),
+                    FileServiceConstants.HttpRequest.ApplicationJsonMediaType);
+            httpRequestMessage.Headers.Add(FileServiceConstants.HttpRequest.Headers.UserAgent.ToString(),
+                FileServiceConstants.HttpRequest.DevxApiUserAgent);
+
             // Fetch the request url workload info. content from Microsoft Graph
-            string workloadInfo = await httpClientUtility.ReadFromFile(relativeProxyUrl);
+            string workloadInfo = await fileUtility.ReadFromHttpSource(httpRequestMessage);
 
             // Extract the workload name from the response content
             JToken workloadInfoToken = JObject.Parse(workloadInfo);

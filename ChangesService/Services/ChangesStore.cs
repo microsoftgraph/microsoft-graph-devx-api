@@ -7,10 +7,10 @@ using ChangesService.Interfaces;
 using ChangesService.Models;
 using FileService.Common;
 using FileService.Interfaces;
-using FileService.Services;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace ChangesService.Services
@@ -21,18 +21,18 @@ namespace ChangesService.Services
     public class ChangesStore : IChangesStore
     {
         private readonly object _changesLock = new object();
-        private readonly HttpClientUtility _httpClientUtility;
+        private readonly IFileUtility _fileUtility;
         private readonly IMemoryCache _changeLogCache;
         private readonly IConfiguration _configuration;
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
 
-        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IFileUtility httpClientUtility)
+        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IFileUtility fileUtility)
         {
             _configuration = configuration;
             _changeLogCache = changeLogCache;
             _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath];
-            _httpClientUtility = (HttpClientUtility)httpClientUtility;
+            _fileUtility = fileUtility;
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(
                 configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]);
         }
@@ -71,14 +71,17 @@ namespace ChangesService.Services
                     // Set cache expiry
                     cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
-                    // Construct the locale-specific relative url
+                    // Construct the locale-specific relative uri
                     string relativeUrl = string.Format(_changeLogRelativeUrl, locale.ToLower());
-
-                    _httpClientUtility.RequestUri = _configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]
+                    // Append to get the absolute uri
+                    string requestUri = _configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]
                                                         + relativeUrl;
 
+                    var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                    
+
                     // Get the file contents from source
-                    string jsonFileContents = _httpClientUtility.ReadFromFile(_httpClientUtility.RequestUri)
+                    string jsonFileContents = _fileUtility.ReadFromHttpSource(httpRequestMessage)
                                                 .GetAwaiter().GetResult();
 
                     // Return the changelog list from the file contents
