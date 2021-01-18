@@ -1,5 +1,6 @@
 ﻿using FileService.Interfaces;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace FileService.Services
@@ -20,6 +21,11 @@ namespace FileService.Services
             {
                 return await streamReader.ReadToEndAsync();
             }
+        }
+
+        public Task<string> ReadFromHttpSource(HttpRequestMessage requestMessage)
+        {
+            throw new System.NotImplementedException();
         }
 
         /// <summary>

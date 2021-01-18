@@ -6,6 +6,7 @@ using FileService.Common;
 using FileService.Interfaces;
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace MockTestUtility
@@ -17,6 +18,11 @@ namespace MockTestUtility
     {
         public async Task<string> ReadFromFile(string filePathSource)
         {
+            if (string.IsNullOrEmpty(filePathSource))
+            {
+                throw new ArgumentNullException(nameof(filePathSource), "Value cannot be null");
+            }
+
             if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
             {
                 throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
@@ -25,10 +31,18 @@ namespace MockTestUtility
             // Prepend the root directory notation since we're reading off of a relative folder location
             filePathSource = $".\\{filePathSource}";
 
-            using (StreamReader streamReader = new StreamReader(filePathSource))
+            using StreamReader streamReader = new StreamReader(filePathSource);
+            return await streamReader.ReadToEndAsync();
+        }
+
+        public async Task<string> ReadFromHttpSource(HttpRequestMessage requestMessage)
+        {
+            if (requestMessage == null)
             {
-                return await streamReader.ReadToEndAsync();
+                throw new ArgumentNullException(nameof(requestMessage), "Value cannot be null");
             }
+            // Mock reading from a HTTP source.
+            return await ReadFromFile(requestMessage.RequestUri.OriginalString);
         }
 
         public Task WriteToFile(string fileContents, string filePathSource)
