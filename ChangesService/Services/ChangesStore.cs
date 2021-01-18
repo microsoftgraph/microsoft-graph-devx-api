@@ -23,18 +23,18 @@ namespace ChangesService.Services
         private readonly object _changesLock = new object();
         private readonly HttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changeLogCache;
+        private readonly IConfiguration _configuration;
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
 
         public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IFileUtility httpClientUtility)
         {
+            _configuration = configuration;
             _changeLogCache = changeLogCache;
             _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath];
             _httpClientUtility = (HttpClientUtility)httpClientUtility;
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(
                 configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]);
-
-            _httpClientUtility.BaseAddress = configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath];
         }
 
         /// <summary>
@@ -72,10 +72,14 @@ namespace ChangesService.Services
                     cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
                     // Construct the locale-specific relative url
-                    string relativeUrl = string.Format(_changeLogRelativeUrl, locale);
+                    string relativeUrl = string.Format(_changeLogRelativeUrl, locale.ToLower());
+                                        
+                    _httpClientUtility.RequestUrl = _configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]
+                                                        + relativeUrl;
 
                     // Get the file contents from source
-                    string jsonFileContents = _httpClientUtility.ReadFromFile(relativeUrl).GetAwaiter().GetResult();
+                    string jsonFileContents = _httpClientUtility.ReadFromFile(_httpClientUtility.RequestUrl)
+                                                .GetAwaiter().GetResult();
 
                     // Return the changelog list from the file contents
                     return ChangesService.DeserializeChangeLogList(jsonFileContents);

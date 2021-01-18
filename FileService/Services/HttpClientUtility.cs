@@ -20,12 +20,17 @@ namespace FileService.Services
         /// <summary>
         /// The base address of the HttpClient.
         /// </summary>
-        public string BaseAddress { get; set; }
+        public string RequestUrl { get; set; }
 
         /// <summary>
         /// Dictionary of key value pairs of request header values of the HttpClient.
         /// </summary>
         public Dictionary<string, string> RequestHeaderValues { get; set; } = null;
+
+        /// <summary>
+        /// The HttpMethod to use when sending requests.
+        /// </summary>
+        public HttpMethod HttpMethod { get; set; } = HttpMethod.Get;
 
         /// <summary>
         /// Class constructor.
@@ -38,26 +43,26 @@ namespace FileService.Services
         /// <summary>
         /// Reads the contents of a file from an Http source.
         /// </summary>
-        /// <param name="filePathSource">The relative uri of the file source.</param>
+        /// <param name="filePathSource">The absolute uri of the file source.</param>
         /// <returns></returns>
         public async Task<string> ReadFromFile(string filePathSource)
         {
-            if (string.IsNullOrEmpty(BaseAddress))
+            if (string.IsNullOrEmpty(RequestUrl))
             {
-                throw new ArgumentNullException(nameof(BaseAddress), "Property value cannot be null or empty.");
+                throw new ArgumentNullException(nameof(RequestUrl), "Property value cannot be null or empty.");
             }
 
-            _httpClient.BaseAddress = new Uri(BaseAddress);
+            var requestMessage = new HttpRequestMessage(HttpMethod, RequestUrl);
 
             if (RequestHeaderValues != null)
             {
                 foreach (var item in RequestHeaderValues)
                 {
-                    _httpClient.DefaultRequestHeaders.Add(item.Key, item.Value);
+                    requestMessage.Headers.Add(item.Key, item.Value);
                 }
             }
 
-            var httpResponseMessage = await _httpClient.GetAsync(filePathSource);
+            var httpResponseMessage = await _httpClient.SendAsync(requestMessage);
             var fileContents = await httpResponseMessage.Content.ReadAsStringAsync();
 
             if (!httpResponseMessage.IsSuccessStatusCode)
