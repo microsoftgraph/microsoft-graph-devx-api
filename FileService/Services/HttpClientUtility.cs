@@ -35,7 +35,7 @@ namespace FileService.Services
         }
 
         /// <summary>
-        /// Reads the contents of a file from an HTTP source.
+        /// Reads the contents of a file from a HTTP source.
         /// </summary>
         /// <param name="requestMessage">The HTTP request mesaage.</param>
         /// <returns>The file contents from the HTTP source.</returns>

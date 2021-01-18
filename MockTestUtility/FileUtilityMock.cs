@@ -41,7 +41,7 @@ namespace MockTestUtility
             {
                 throw new ArgumentNullException(nameof(requestMessage), "Value cannot be null");
             }
-            // Mock reading from a HTTP source.
+            // Mock reading from an HTTP source.
             return await ReadFromFile(requestMessage.RequestUri.OriginalString);
         }
 
