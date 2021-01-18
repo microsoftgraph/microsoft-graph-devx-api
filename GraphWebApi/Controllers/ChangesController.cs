@@ -55,16 +55,6 @@ namespace GraphWebApi.Controllers
                     Page = page,
                     PageLimit = pageLimit
                 };
-
-                // Configs for fetching workload names from requestUrls
-                var graphProxyConfigs = new MicrosoftGraphProxyConfigs()
-                {
-                    GraphProxyBaseUrl = _configuration[ChangesServiceConstants.GraphProxyBaseUrlConfigPath],
-                    GraphProxyRelativeUrl = _configuration[ChangesServiceConstants.GraphProxyRelativeUrlConfigPath],
-                    GraphProxyAuthorization = _configuration[ChangesServiceConstants.GraphProxyAuthorization],
-                    GraphVersion = graphVersion
-                };
-
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
 
                 // Fetch the changelog list
@@ -73,6 +63,15 @@ namespace GraphWebApi.Controllers
                 // Filter the changelog list
                 if (changeLog.ChangeLogs.Any())
                 {
+
+                    // Configs for fetching workload names from requestUrls
+                    var graphProxyConfigs = new MicrosoftGraphProxyConfigs()
+                    {
+                        GraphProxyBaseUrl = _configuration[ChangesServiceConstants.GraphProxyBaseUrlConfigPath],
+                        GraphProxyRelativeUrl = _configuration[ChangesServiceConstants.GraphProxyRelativeUrlConfigPath],
+                        GraphProxyAuthorization = _configuration[ChangesServiceConstants.GraphProxyAuthorization],
+                        GraphVersion = graphVersion
+                    };
                     changeLog = ChangesService.Services.ChangesService
                                     .FilterChangeLogList(changeLog, searchOptions, graphProxyConfigs, _fileUtility);
                 }
