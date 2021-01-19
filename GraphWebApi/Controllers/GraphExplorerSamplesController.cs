@@ -16,6 +16,9 @@ using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
 using Microsoft.Extensions.Configuration;
 using FileService.Services;
+using FileService.Interfaces;
+using FileService.Common;
+using System.Net.Http;
 
 namespace GraphWebApi.Controllers
 {
