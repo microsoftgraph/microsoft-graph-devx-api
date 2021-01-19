@@ -120,36 +120,9 @@ namespace GraphExplorerPermissionsService
                     var seededScopesInfoDictionary = _permissionsCache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
                     if (seededScopesInfoDictionary == null)
                     {
-                        var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
-                        var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
-
                         string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
-                        string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
 
-                        if (string.IsNullOrEmpty(scopesInfoJson))
-                        {
-                            return null;
-                        }
-
-                        ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
-
-                        foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
-                        {
-                            _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
-                        }
-
-                        foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
-                        {
-                            _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
-                        }
-
-                        cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-
-                        return new Dictionary<string, IDictionary<string, ScopeInformation>>
-                        {
-                            { Delegated, _delegatedScopesInfoTable },
-                            { Application, _applicationScopesInfoTable }
-                        };
+                        seededScopesInfoDictionary = CreateScopesInformationTables(relativeScopesInfoPath, cacheEntry).GetAwaiter().GetResult();
                     }
                     /* Fetch the localized cached permissions descriptions
                        already seeded by previous thread. */
@@ -157,6 +130,71 @@ namespace GraphExplorerPermissionsService
                 }
             });
             return scopesInformationDictionary;
+        }
+
+        /// <summary>
+        /// Gets the permissions descriptions and their localized instances from DevX Content Repo.
+        /// </summary>
+        /// <param name="locale">The locale of the permissions descriptions file.</param>
+        /// <param name="org">The org or owner of the repo.</param>
+        /// <param name="branchName">The name of the branch with the file version.</param>
+        /// <returns>The localized instance of permissions descriptions.</returns>
+        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetPermissionsFromGithub(string locale, string org, string branchName)
+        {
+            string host = _configuration["BlobStorage:GithubHost"];
+            string repo = _configuration["BlobStorage:RepoName"];
+
+            string localizedFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
+
+            // Get the full file path from configuration and query param, then read from the file
+            var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
+
+            var scopesInformationDictionary = await CreateScopesInformationTables(queriesFilePathSource);
+            return scopesInformationDictionary;
+        }
+
+        /// <summary>
+        /// Creates a dictionary of scopes information
+        /// </summary>
+        /// <param name="filePath">The path of the file from Github.</param>
+        /// <param name="cacheEntry">An optional cache entry param.</param>
+        /// <returns>A dictionary of scopes information.</returns>
+        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> CreateScopesInformationTables(string filePath, ICacheEntry cacheEntry = null)
+        {
+            var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
+            var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
+
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, filePath);
+
+            string scopesInfoJson = await _fileUtility.ReadFromFile(httpRequestMessage);
+
+            if (string.IsNullOrEmpty(scopesInfoJson))
+            {
+                return null;
+            }
+
+            ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+
+            foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
+            {
+                _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
+            }
+
+            foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
+            {
+                _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
+            }
+
+            if (cacheEntry != null)
+            {
+                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+            }
+
+            return new Dictionary<string, IDictionary<string, ScopeInformation>>
+            {
+                { Delegated, _delegatedScopesInfoTable },
+                { Application, _applicationScopesInfoTable }
+            };
         }
 
         /// <summary>
