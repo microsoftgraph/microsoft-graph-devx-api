@@ -1,0 +1,18 @@
+steps:
+- pwsh: |
+    $branchName = "snippet-generation/$env:BUILD_BUILDID" # Match the spec in the GH Action
+    Write-Host "Branch path spec for the pull request will be $branchName"
+    Write-Host "##vso[task.setvariable variable=branchName]$branchName"
+  displayName: 'Calculate and set pipeline variables for this job'
+
+- pwsh: |
+    Write-Host "The new branch name will be: $env:BRANCHNAME"
+    git checkout -B $env:BRANCHNAME | Write-Host
+  displayName: 'Git: branch from master named with the build id: $(Build.BuildId)'
+  workingDirectory: 'microsoft-graph-docs'
+
+- pwsh: |
+    git config user.email "GraphTooling@service.microsoft.com"
+    git config user.name "Microsoft Graph DevX Tooling"
+  displayName: 'Git: set user config'
+  workingDirectory: 'microsoft-graph-docs'

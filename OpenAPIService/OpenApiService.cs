@@ -198,9 +198,9 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="source">The OpenAPI document.</param>
         /// <returns>A task.</returns>
-        private static async Task PopulateReferenceTablesAync(OpenApiDocument source)
-        {
-            HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
+        private static Task PopulateReferenceTablesAync(OpenApiDocument source)
+		{
+			HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
 
             int count = 0;
 
@@ -217,15 +217,17 @@ namespace OpenAPIService
                     _openApiOperationsTable.Add(count, operations);
                 }
             }
-        }
 
-        /// <summary>
-        /// Create a representation of the OpenApiDocument to return from an API
-        /// </summary>
-        /// <param name="subset">OpenAPI document.</param>
-        /// <param name="styleOptions">The modal object containing the required styling options.</param>
-        /// <returns>A memory stream.</returns>
-        public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
+			return Task.CompletedTask;
+		}
+
+		/// <summary>
+		/// Create a representation of the OpenApiDocument to return from an API
+		/// </summary>
+		/// <param name="subset">OpenAPI document.</param>
+		/// <param name="styleOptions">The modal object containing the required styling options.</param>
+		/// <returns>A memory stream.</returns>
+		public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
             var stream = new MemoryStream();
             var sr = new StreamWriter(stream);

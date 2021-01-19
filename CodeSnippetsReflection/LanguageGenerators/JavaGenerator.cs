@@ -106,7 +106,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (string.IsNullOrEmpty(snippetModel.RequestBody))
                         throw new Exception("No request Body present for Java Put request");
 
-                    if (snippetModel.ContentType.Contains("json"))
+                    if (snippetModel.ContentType?.Contains("json") ?? false)
                         snippetBuilder.Append(JavaGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
                     else
                         snippetBuilder.Append($"byte[] {snippetModel.ResponseVariableName} = Base64.getDecoder().decode({AddQuotesIfMising(snippetModel.RequestBody?.Replace("\n", string.Empty)?.Replace("\r", string.Empty))});\n\t");
