@@ -42,16 +42,31 @@ namespace GraphWebApi.Controllers
         [Produces("application/json")]
         public async Task<IActionResult> GetPermissionScopes([FromQuery] string scopeType = "DelegatedWork",
                                                              [FromQuery] string requestUrl = null,
-                                                             [FromQuery] string method = null)
+                                                             [FromQuery] string method = null,
+                                                             [FromQuery] string org = null,
+                                                             [FromQuery] string branchName = null)
         {
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
-
                 List<ScopeInformation> result = null;
-                result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
+
+                if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
+                {                                       
+                    var permissionsStore = new PermissionsStore(configuration: _configuration,
+                        fileUtility: new HttpClientUtility(_httpClient));
+
+                    // Fetch permissions descriptions file from Github
+                    result = await permissionsStore.GetScopesAsync(org, branchName, localeCode, requestUrl, method);                    
+                }
+                else
+                {
+                    // Fetch the files from Azure Blob
+                    result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
+                }
 
                 return result == null ? NotFound() : (IActionResult)Ok(result);
+
             }
             catch (InvalidOperationException invalidOpsException)
             {
