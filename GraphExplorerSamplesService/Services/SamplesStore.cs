@@ -4,7 +4,6 @@
 
 using FileService.Common;
 using FileService.Interfaces;
-using FileService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Models;
 using Microsoft.Extensions.Caching.Memory;
@@ -26,10 +25,10 @@ namespace GraphExplorerSamplesService.Services
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
 
-        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache, IFileUtility fileUtility = null)
+        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache, IFileUtility fileUtility)
         {
             _samplesCache = samplesCache;
-            _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration["BlobStorage:AzureConnectionString"]);  
+            _fileUtility = fileUtility;  
             _sampleQueriesContainerName = configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = configuration[$"BlobStorage:Blobs:SampleQueries"];
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);

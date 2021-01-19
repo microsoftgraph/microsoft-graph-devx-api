@@ -4,7 +4,6 @@
 
 using FileService.Common;
 using FileService.Interfaces;
-using FileService.Services;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
 using Microsoft.Extensions.Caching.Memory;
@@ -37,11 +36,11 @@ namespace GraphExplorerPermissionsService
         private const string Delegated = "Delegated";
         private const string Application = "Application";
 
-        public PermissionsStore(IConfiguration configuration, IMemoryCache permissionsCache, IFileUtility fileUtility = null)
+        public PermissionsStore(IConfiguration configuration, IMemoryCache permissionsCache, IFileUtility fileUtility)
         {
             _permissionsCache = permissionsCache;
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours:Permissions"]);
-            _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration["BlobStorage:AzureConnectionString"]);
+            _fileUtility = fileUtility;
             _permissionsContainerName = configuration["BlobStorage:Containers:Permissions"];
             _permissionsBlobNames = configuration.GetSection("BlobStorage:Blobs:Permissions:Names").Get<List<string>>();
             _scopesInformation = configuration["BlobStorage:Blobs:Permissions:Descriptions"];

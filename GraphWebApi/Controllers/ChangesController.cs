@@ -21,13 +21,13 @@ namespace GraphWebApi.Controllers
     {
         private readonly IChangesStore _changesStore;
         private readonly IConfiguration _configuration;
-        private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
 
-        public ChangesController(IChangesStore changesStore, IConfiguration configuration, IFileUtility fileUtility)
+        public ChangesController(IChangesStore changesStore, IConfiguration configuration, IHttpClientUtility httpClientUtility)
         {
             _changesStore = changesStore;
             _configuration = configuration;
-            _fileUtility = fileUtility;
+            _httpClientUtility = httpClientUtility;
         }
 
         // Gets the list of changelog
@@ -72,7 +72,7 @@ namespace GraphWebApi.Controllers
                         GraphVersion = graphVersion
                     };
                     changeLog = ChangesService.Services.ChangesService
-                                    .FilterChangeLogList(changeLog, searchOptions, graphProxyConfigs, _fileUtility);
+                                    .FilterChangeLogList(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
                 }
                 else
                 {

@@ -49,12 +49,12 @@ namespace ChangesService.Services
         /// <param name="searchOptions">The <see cref="ChangeLogSearchOptions"/> containing options for filtering
         /// and paginating the target <see cref="ChangeLog"/> list.</param>
         /// <param name="graphProxyConfigs">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
-        /// <param name="fileUtility">Optional. An implementation instance of <see cref="IFileUtility"/>.</param>
+        /// <param name="httpClientUtility">Optional. An implementation instance of <see cref="IHttpClientUtility"/>.</param>
         /// <returns>A <see cref="ChangeLogList"/> containing the list of filtered and/or paginated
         /// <see cref="ChangeLog"/> list.</returns>
         public static ChangeLogList FilterChangeLogList(ChangeLogList changeLogList,
             ChangeLogSearchOptions searchOptions, MicrosoftGraphProxyConfigs graphProxyConfigs,
-            IFileUtility fileUtility = null)
+            IHttpClientUtility httpClientUtility = null)
         {
             if (changeLogList == null)
             {
@@ -80,7 +80,7 @@ namespace ChangesService.Services
             if (!string.IsNullOrEmpty(searchOptions.RequestUrl))
             {
                 // Retrieve the workload name from the requestUrl
-                var workload = RetrieveWorkloadNameFromRequestUrl(searchOptions, graphProxyConfigs, fileUtility)
+                var workload = RetrieveWorkloadNameFromRequestUrl(searchOptions, graphProxyConfigs, httpClientUtility)
                                 .GetAwaiter().GetResult();
 
                 // Search by the workload name
@@ -193,10 +193,10 @@ namespace ChangesService.Services
         /// and the relevant information required to call Microsoft Graph and retrieve the required workload name
         /// of the target request url.</param>
         /// <param name="graphProxy">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
-        /// <param name="fileUtility">An implementation instance of <see cref="IFileUtility"/>.</param>
+        /// <param name="httpClientUtility">An implementation instance of <see cref="IFileUtility"/>.</param>
         /// <returns>The workload name for the target request url.</returns>
         private static async Task<string> RetrieveWorkloadNameFromRequestUrl(ChangeLogSearchOptions searchOptions,
-            MicrosoftGraphProxyConfigs graphProxy, IFileUtility fileUtility)
+            MicrosoftGraphProxyConfigs graphProxy, IHttpClientUtility httpClientUtility)
         {
             // Pull out the workload name value if it was already cached
             if (UrlWorkloadDict.TryGetValue(searchOptions.RequestUrl, out string workloadValue))
@@ -209,9 +209,9 @@ namespace ChangesService.Services
                 throw new ArgumentNullException(nameof(graphProxy), ChangesServiceConstants.ValueNullError);
             }
 
-            if (fileUtility == null)
+            if (httpClientUtility == null)
             {
-                throw new ArgumentNullException(nameof(fileUtility), ChangesServiceConstants.ValueNullError);
+                throw new ArgumentNullException(nameof(httpClientUtility), ChangesServiceConstants.ValueNullError);
             }
 
             // The proxy url helps fetch data from Microsoft Graph anonymously
@@ -233,7 +233,7 @@ namespace ChangesService.Services
                 FileServiceConstants.HttpRequest.DevxApiUserAgent); // User Agent
 
             // Fetch the request url workload info. content from Microsoft Graph
-            string workloadInfo = await fileUtility.ReadFromFile(httpRequestMessage);
+            string workloadInfo = await httpClientUtility.ReadFromFile(httpRequestMessage);
 
             // Extract the workload name from the response content
             JToken workloadInfoToken = JObject.Parse(workloadInfo);

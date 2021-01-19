@@ -21,18 +21,18 @@ namespace ChangesService.Services
     public class ChangesStore : IChangesStore
     {
         private readonly object _changesLock = new object();
-        private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changeLogCache;
         private readonly IConfiguration _configuration;
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
 
-        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IFileUtility fileUtility)
+        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IHttpClientUtility httpClientUtility)
         {
             _configuration = configuration;
             _changeLogCache = changeLogCache;
             _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath];
-            _fileUtility = fileUtility;
+            _httpClientUtility = httpClientUtility;
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(
                 configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]);
         }
@@ -84,7 +84,7 @@ namespace ChangesService.Services
                     var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                     // Get the file contents from source
-                    string jsonFileContents = _fileUtility.ReadFromFile(httpRequestMessage)
+                    string jsonFileContents = _httpClientUtility.ReadFromFile(httpRequestMessage)
                                                 .GetAwaiter().GetResult();
 
                     // Return the changelog list from the file contents

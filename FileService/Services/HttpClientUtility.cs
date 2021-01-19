@@ -12,7 +12,7 @@ namespace FileService.Services
     /// <summary>
     /// Implements an <see cref="IFileUtility"/> that reads a file from an HTTP source.
     /// </summary>
-    public class HttpClientUtility: IFileUtility
+    public class HttpClientUtility: IHttpClientUtility
     {
         private readonly HttpClient _httpClient;
         
