@@ -51,12 +51,12 @@ namespace GraphWebApi
                        };
                    });
 
-            services.AddHttpClient<IFileUtility, HttpClientUtility>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
+            services.AddHttpClient<IFileUtility, HttpClientUtility>();
             services.Configure<SamplesAdministrators>(Configuration);
 
             #region AppInsights
