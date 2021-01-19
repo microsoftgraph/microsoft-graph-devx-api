@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace FileService.Interfaces
@@ -16,6 +17,12 @@ namespace FileService.Interfaces
         /// </summary>
         /// <param name="filePathSource"></param>
         Task<string> ReadFromFile(string filePathSource);
+
+        /// <summary>
+        /// Reads contents of a file from a http source 
+        /// </summary>
+        /// <param name="requestMessage">The Http Request message.</param>
+        Task<string> ReadFromFile(HttpRequestMessage requestMessage);
 
         /// <summary>
         /// Allows one to make changes to a file
