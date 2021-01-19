@@ -116,7 +116,7 @@ namespace CodeSnippetsReflection.Test
             //Act by generating the code snippet
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
-            Assert.Contains(" CalendarSerializer.deserialize(\"datetime-value\")", result);
+            Assert.Contains(" OffsetDateTimeSerializer.deserialize(\"datetime-value\")", result);
         }
         [Fact]
         public void MapCorrectTypeForDoubleProperties()
@@ -667,7 +667,7 @@ namespace CodeSnippetsReflection.Test
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "WorkbookRange workbookRange = graphClient.me().drive().items(\"{id}\").workbook().worksheets(\"{id|name}\")\n" +
-                                           "\t.range(WorkbookRangeRangeParameterSet\n" +
+                                           "\t.range(WorkbookWorksheetRangeParameterSet\n" +
                                                         "\t\t.newBuilder()\n" +
                                                         "\t\t.withAddress(\"A1:B2\")\n" + 
                                                         "\t\t.build())\n" +//parameter has double quotes
