@@ -13,6 +13,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UriMatchingService;
@@ -146,7 +147,7 @@ namespace GraphExplorerPermissionsService
 
             string localizedFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
 
-            // Get the full file path from configuration and query param, then read from the file
+            // Get the absolute url from configuration and query param, then read from the file
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
 
             var scopesInformationDictionary = await CreateScopesInformationTables(queriesFilePathSource);
@@ -164,8 +165,10 @@ namespace GraphExplorerPermissionsService
             var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
             var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
 
+            // Construct the http request message
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, filePath);
 
+            // Get file contents from source
             string scopesInfoJson = await _fileUtility.ReadFromFile(httpRequestMessage);
 
             if (string.IsNullOrEmpty(scopesInfoJson))
@@ -287,11 +290,10 @@ namespace GraphExplorerPermissionsService
         {
             try
             {
-                // Creates a dict of scopes information from github files
-                
-                
+                // Creates a dict of scopes information from github files            
                 var scopesInformationDictionary = await GetPermissionsFromGithub(locale, org, branchName);
 
+                // Creates a list of scope information
                 var scopesList = CreateScopesList(scopesInformationDictionary, scopeType, requestUrl, method);
                 return scopesList;
             }
