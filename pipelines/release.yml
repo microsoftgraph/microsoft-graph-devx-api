@@ -45,11 +45,10 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
     testAssemblyVer2: |
-      **/netcoreapp3.1/**.Test.dll
+      **/net5.0/**.Test.dll
       !**/*TestAdapter.dll
       !**/obj/**
     diagnosticsEnabled: true
-    otherConsoleOptions: '/Framework:.NETCoreApp,Version=v3.1'
 
 - task: VSBuild@1
   inputs:

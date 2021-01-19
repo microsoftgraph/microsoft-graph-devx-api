@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.IO;
 using CodeSnippetsReflection;
 using GraphWebApi.Models;
-using Microsoft.AspNetCore.Http.Internal;
+using Microsoft.AspNetCore.Http;
 
 namespace GraphWebApi.Controllers
 {
@@ -43,17 +43,15 @@ namespace GraphWebApi.Controllers
         [Consumes("application/http")]
         public async Task<IActionResult> PostAsync(string lang = "c#")
         {
-            Request.EnableRewind();
-            var streamContent = new StreamContent(Request.Body);
+            Request.EnableBuffering();
+            using var streamContent = new StreamContent(Request.Body);
             streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
 
             try
             {
-                using (HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false))
-                {
-                    var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
-                    return new StringResult(response);
-                }
+                using HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false);
+                var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
+                return new StringResult(response);
             }
             catch (Exception e)
             {

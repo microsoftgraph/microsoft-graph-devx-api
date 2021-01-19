@@ -107,14 +107,14 @@ namespace GraphExplorerPermissionsService
         /// <returns>The localized instance of permissions descriptions.</returns>
         private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetOrCreatePermissionsDescriptionsAsync(string locale = DefaultLocale)
         {
-            var scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
-            {
-                /* Localized copy of permissions descriptions
+            var scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", cacheEntry =>
+			{
+				/* Localized copy of permissions descriptions
                    is to be seeded by only one executing thread.
                 */
-                lock (_scopesLock)
-                {
-                    /* Check whether a previous thread already seeded an
+				lock (_scopesLock)
+				{
+					/* Check whether a previous thread already seeded an
                      * instance of the localized permissions descriptions
                      * during the lock.
                      */
@@ -127,9 +127,9 @@ namespace GraphExplorerPermissionsService
                     }
                     /* Fetch the localized cached permissions descriptions
                        already seeded by previous thread. */
-                    return seededScopesInfoDictionary;
-                }
-            });
+					return Task.FromResult(seededScopesInfoDictionary);
+				}
+			});
             return scopesInformationDictionary;
         }
 

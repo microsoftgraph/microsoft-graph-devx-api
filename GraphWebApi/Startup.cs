@@ -19,12 +19,13 @@ using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Services;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using Serilog;
+using Microsoft.Extensions.Hosting;
 
 namespace GraphWebApi
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
+        public Startup(IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
         {
             Configuration = configuration;
             _env = hostingEnvironment;
@@ -32,7 +33,7 @@ namespace GraphWebApi
 
         public IConfiguration Configuration { get; }
 
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -50,14 +51,14 @@ namespace GraphWebApi
                            ValidIssuer = Configuration["AzureAd:Issuer"]
                        };
                    });
-
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMemoryCache();
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.AddHttpClient<IFileUtility, HttpClientUtility>();
             services.Configure<SamplesAdministrators>(Configuration);
+            services.AddControllers();
 
             #region AppInsights
 
@@ -83,7 +84,7 @@ namespace GraphWebApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -101,7 +102,13 @@ namespace GraphWebApi
             });
             app.UseHttpsRedirection();
             app.UseAuthentication();
-            app.UseMvc();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
         }
     }
 }

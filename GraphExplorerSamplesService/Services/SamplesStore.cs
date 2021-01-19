@@ -46,35 +46,40 @@ namespace GraphExplorerSamplesService.Services
         public async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale)
         {
             // Fetch cached sample queries
-            SampleQueriesList sampleQueriesList = await _samplesCache?.GetOrCreateAsync(locale, async cacheEntry =>
-            {
-                // Localized copy of samples is to be seeded by only one executing thread.
-                lock (_samplesLock)
-                {
-                    /* Check whether a previous thread already seeded an
+            SampleQueriesList sampleQueriesList = await _samplesCache.GetOrCreateAsync(locale, cacheEntry =>
+			{
+				// Localized copy of samples is to be seeded by only one executing thread.
+				lock (_samplesLock)
+				{
+					/* Check whether a previous thread already seeded an
                      * instance of the localized samples during the lock.
                      */
-                    var lockedLocale = locale;
-                    var seededSampleQueriesList = _samplesCache.Get<SampleQueriesList>(lockedLocale);
+					var lockedLocale = locale;
+					var seededSampleQueriesList = _samplesCache.Get<SampleQueriesList>(lockedLocale);
 
-                    if (seededSampleQueriesList != null)
-                    {
-                        return seededSampleQueriesList;
-                    }
+					if (seededSampleQueriesList != null)
+					{
+						return Task.FromResult(seededSampleQueriesList);
+					}
 
-                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+					cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
-                    // Fetch the requisite sample path source based on the locale
-                    string queriesFilePathSource =
-                           FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
+					// Fetch the requisite sample path source based on the locale
+					string queriesFilePathSource =
+						   FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
 
-                    // Get the file contents from source
-                    string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
+					// Get the file contents from source
+					string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
-                    // Return the list of the sample queries from the file contents
-                    return DeserializeSamplesList(jsonFileContents, lockedLocale);
-                }
-            });
+					/* Current business process only supports ordering of the English
+                       translation of the sample queries.
+                     */
+					bool orderSamples = lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase);
+
+					// Return the list of the sample queries from the file contents
+					return Task.FromResult(SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples));
+				}
+			});
 
             return sampleQueriesList;
         }
