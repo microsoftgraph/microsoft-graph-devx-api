@@ -28,9 +28,9 @@ namespace GraphWebApi.Controllers
         private readonly ISamplesStore _samplesStore;
         private readonly IConfiguration _configuration;
         private readonly IFileUtility _fileUtility;
-        private readonly HttpClient _httpClient;
+        private readonly HttpClientUtility _httpClient;
 
-        public GraphExplorerSamplesController(ISamplesStore samplesStore, IConfiguration configuration, IFileUtility fileUtility, HttpClient httpClient)
+        public GraphExplorerSamplesController(ISamplesStore samplesStore, IConfiguration configuration, IFileUtility fileUtility, HttpClientUtility httpClient)
         {
             _samplesStore = samplesStore;
             _configuration = configuration;
@@ -53,7 +53,7 @@ namespace GraphWebApi.Controllers
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {                   
                     var samplesStore = new SamplesStore(configuration: _configuration,
-                        fileUtility: new HttpClientUtility(_httpClient));
+                        fileUtility: _httpClient);
 
                     // Fetch samples file from Github
                     sampleQueriesList = await samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);

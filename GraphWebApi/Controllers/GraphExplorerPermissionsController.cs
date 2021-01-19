@@ -26,11 +26,11 @@ namespace GraphWebApi.Controllers
     {
         private readonly IPermissionsStore _permissionsStore;
         private readonly IConfiguration _configuration;
-        private readonly HttpClient _httpClient;
+        private readonly HttpClientUtility _httpClient;
         private readonly IFileUtility _fileUtility;
 
 
-        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, IConfiguration configuration, IFileUtility fileUtility, HttpClient httpClient)
+        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, IConfiguration configuration, IFileUtility fileUtility, HttpClientUtility httpClient)
         {
             _permissionsStore = permissionsStore;
             _configuration = configuration;
@@ -55,7 +55,7 @@ namespace GraphWebApi.Controllers
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {                                       
                     var permissionsStore = new PermissionsStore(configuration: _configuration,
-                        fileUtility: new HttpClientUtility(_httpClient));
+                        fileUtility: _httpClient);
 
                     // Fetch permissions descriptions file from Github
                     result = await permissionsStore.GetScopesAsync(org, branchName, localeCode, requestUrl, method);                    
