@@ -217,7 +217,7 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Retrieves permissions scopes.
+        /// Retrieves permissions scopes from the cache.
         /// </summary>
         /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
         /// <param name="locale">The language code for the preferred localized file.</param>
@@ -252,101 +252,11 @@ namespace GraphExplorerPermissionsService
                     }
                 }
 
+                // Creates a dict of scopes information from cached files
                 var scopesInformationDictionary = await GetOrCreatePermissionsDescriptionsAsync(locale);
 
-                if (string.IsNullOrEmpty(requestUrl))  // fetch all permissions
-                {
-                    List<ScopeInformation> scopesListInfo = new List<ScopeInformation>();
-
-                    if (scopeType.Contains(Delegated))
-                    {
-                        if (scopesInformationDictionary.ContainsKey(Delegated))
-                        {
-                            foreach (var scopesInfo in scopesInformationDictionary[Delegated])
-                            {
-                                scopesListInfo.Add(scopesInfo.Value);
-                            }
-                        }
-                    }
-                    else // Application scopes
-                    {
-                        if (scopesInformationDictionary.ContainsKey(Application))
-                        {
-                            foreach (var scopesInfo in scopesInformationDictionary[Application])
-                            {
-                                scopesListInfo.Add(scopesInfo.Value);
-                            }
-                        }
-                    }
-
-                    return scopesListInfo;
-                }
-                else // fetch permissions for a given request url and method
-                {
-                    if (string.IsNullOrEmpty(method))
-                    {
-                        throw new ArgumentNullException(nameof(method), "The HTTP method value cannot be null or empty.");
-                    }
-
-                    requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
-                    requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
-
-                    // Check if requestUrl is contained in our Url Template table
-                    TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl.ToLower(), UriKind.RelativeOrAbsolute));
-
-                    if (resultMatch == null)
-                    {
-                        return null;
-                    }
-
-                    JArray resultValue = new JArray();
-                    resultValue = (JArray)_scopesListTable[int.Parse(resultMatch.Key)];
-
-                    var scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
-                        .SelectToken(scopeType)?
-                        .Select(s => (string)s)
-                        .ToArray();
-
-                    if (scopes == null)
-                    {
-                        return null;
-                    }
-
-                    List<ScopeInformation> scopesList = new List<ScopeInformation>();
-
-                    foreach (string scopeName in scopes)
-                    {
-                        ScopeInformation scopeInfo = null;
-                        if (scopeType.Contains(Delegated))
-                        {
-                            if (scopesInformationDictionary[Delegated].ContainsKey(scopeName))
-                            {
-                                scopeInfo = scopesInformationDictionary[Delegated][scopeName];
-                            }
-                        }
-                        else // Application scopes
-                        {
-                            if (scopesInformationDictionary[Application].ContainsKey(scopeName))
-                            {
-                                scopeInfo = scopesInformationDictionary[Application][scopeName];
-                            }
-                        }
-
-                        if (scopeInfo == null)
-                        {
-                            scopesList.Add(new ScopeInformation
-                            {
-                                ScopeName = scopeName
-                            });
-                        }
-                        else
-                        {
-                            scopesList.Add(scopeInfo);
-                        }
-                    }
-
-                    return scopesList;
-                }
+                var scopesList = CreateScopesList(scopesInformationDictionary, scopeType, requestUrl, method);
+                return scopesList;
             }
             catch (ArgumentNullException exception)
             {
@@ -355,6 +265,150 @@ namespace GraphExplorerPermissionsService
             catch (ArgumentException)
             {
                 return null; // equivalent to no match for the given requestUrl
+            }
+        }
+
+        /// <summary>
+        /// Retrieves permission scopes from DevX Content Repo
+        /// </summary>
+        /// <param name="org">The name of the org/owner of the repo.</param>
+        /// <param name="branchName"> The name of the branch containing the files.</param>
+        /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
+        /// <param name="locale">The language code for the preferred localized file.</param>
+        /// <param name="requestUrl">The target request url whose scopes are to be retrieved.</param>
+        /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
+        /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
+        public async Task<List<ScopeInformation>> GetScopesAsync(string org,
+                                                                 string branchName,
+                                                                 string scopeType = "DelegatedWork",
+                                                                 string locale = DefaultLocale,
+                                                                 string requestUrl = null,
+                                                                 string method = null)
+        {
+            try
+            {
+                // Creates a dict of scopes information from github files
+                
+                
+                var scopesInformationDictionary = await GetPermissionsFromGithub(locale, org, branchName);
+
+                var scopesList = CreateScopesList(scopesInformationDictionary, scopeType, requestUrl, method);
+                return scopesList;
+            }
+            catch (ArgumentNullException exception)
+            {
+                throw exception;
+            }
+            catch (ArgumentException)
+            {
+                return null; // equivalent to no match for the given requestUrl
+            }
+        }
+
+        /// <summary>
+        /// Creates a list of scope information.
+        /// </summary>
+        /// <param name="scopesInformationDictionary">A dictionary of scopes information.</param>
+        /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
+        /// <param name="locale">The language code for the preferred localized file.</param>
+        /// <param name="requestUrl">The target request url whose scopes are to be retrieved.</param>
+        /// <param name="method">The target http verb of the request url whose scopes are to be retrieved.</param>
+        /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
+        private List<ScopeInformation> CreateScopesList(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
+                                                                      string scopeType = "DelegatedWork",
+                                                                      string requestUrl = null,
+                                                                      string method = null)
+        {
+
+            if (string.IsNullOrEmpty(requestUrl))  // fetch all permissions
+            {
+                List<ScopeInformation> scopesListInfo = new List<ScopeInformation>();
+
+                if (scopesInformationDictionary.ContainsKey(Delegated))
+                {
+                    foreach (var scopesInfo in scopesInformationDictionary[Delegated])
+                    {
+                        scopesListInfo.Add(scopesInfo.Value);
+                    }
+                }
+                else // Application scopes
+                {
+                    if (scopesInformationDictionary.ContainsKey(Application))
+                    {
+                        foreach (var scopesInfo in scopesInformationDictionary[Application])
+                        {
+                            scopesListInfo.Add(scopesInfo.Value);
+                        }
+                    }
+                }
+
+                return scopesListInfo;
+            }
+            else // fetch permissions for a given request url and method
+            {
+                if (string.IsNullOrEmpty(method))
+                {
+                    throw new ArgumentNullException(nameof(method), "The HTTP method value cannot be null or empty.");
+                }
+
+                requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
+                requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
+
+                // Check if requestUrl is contained in our Url Template table
+                TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl.ToLower(), UriKind.RelativeOrAbsolute));
+
+                if (resultMatch == null)
+                {
+                    return null;
+                }
+
+                JArray resultValue = new JArray();
+                resultValue = (JArray)_scopesListTable[int.Parse(resultMatch.Key)];
+
+                var scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
+                    .SelectToken(scopeType)?
+                    .Select(s => (string)s)
+                    .ToArray();
+
+                if (scopes == null)
+                {
+                    return null;
+                }
+
+                List<ScopeInformation> scopesList = new List<ScopeInformation>();
+
+                foreach (string scopeName in scopes)
+                {
+                    ScopeInformation scopeInfo = null;
+                    if (scopeType.Contains(Delegated))
+                    {
+                        if (scopesInformationDictionary[Delegated].ContainsKey(scopeName))
+                        {
+                            scopeInfo = scopesInformationDictionary[Delegated][scopeName];
+                        }
+                    }
+                    else // Application scopes
+                    {
+                        if (scopesInformationDictionary[Application].ContainsKey(scopeName))
+                        {
+                            scopeInfo = scopesInformationDictionary[Application][scopeName];
+                        }
+                    }
+
+                    if (scopeInfo == null)
+                    {
+                        scopesList.Add(new ScopeInformation
+                        {
+                            ScopeName = scopeName
+                        });
+                    }
+                    else
+                    {
+                        scopesList.Add(scopeInfo);
+                    }
+                }
+
+                return scopesList;
             }
         }
     }
