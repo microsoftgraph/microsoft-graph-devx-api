@@ -25,10 +25,16 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerPermissionsController : ControllerBase
     {
         private readonly IPermissionsStore _permissionsStore;
+        private readonly IConfiguration _configuration;
+        private readonly HttpClient _httpClient;
+        private readonly IFileUtility _fileUtility;
 
-        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore)
+
+        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, IConfiguration configuration, IFileUtility fileUtility)
         {
             _permissionsStore = permissionsStore;
+            _configuration = configuration;
+            _fileUtility = fileUtility;
         }
 
         // Gets the permissions scopes
