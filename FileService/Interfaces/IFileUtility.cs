@@ -14,7 +14,7 @@ namespace FileService.Interfaces
     {
         Task<string> ReadFromFile(string filePathSource);
 
-        Task<string> ReadFromHttpSource(HttpRequestMessage requestMessage);
+        Task<string> ReadFromFile(HttpRequestMessage requestMessage);
 
         Task WriteToFile(string fileContents, string filePathSource);
     }

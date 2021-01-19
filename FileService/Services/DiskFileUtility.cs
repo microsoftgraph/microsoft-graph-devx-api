@@ -23,7 +23,7 @@ namespace FileService.Services
             }
         }
 
-        public Task<string> ReadFromHttpSource(HttpRequestMessage requestMessage)
+        public Task<string> ReadFromFile(HttpRequestMessage requestMessage)
         {
             throw new System.NotImplementedException();
         }

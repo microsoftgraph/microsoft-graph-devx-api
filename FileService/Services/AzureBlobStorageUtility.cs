@@ -70,7 +70,7 @@ namespace FileService.Services
             throw new IOException("Failed to connect to the blob storage account.");
         }
 
-        public Task<string> ReadFromHttpSource(HttpRequestMessage requestMessage)
+        public Task<string> ReadFromFile(HttpRequestMessage requestMessage)
         {
             throw new NotImplementedException();
         }

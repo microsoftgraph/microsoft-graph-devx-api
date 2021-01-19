@@ -22,24 +22,14 @@ namespace FileService.Services
         public HttpClientUtility(HttpClient httpClient)
         {
             _httpClient = httpClient;
-        }
-                
-        public Task<string> ReadFromFile(string filePathSource)
-        {            
-            throw new NotImplementedException();
-        }
-
-        public Task WriteToFile(string fileContents, string filePathSource)
-        {
-            throw new NotImplementedException();
-        }
+        }                       
 
         /// <summary>
         /// Reads the contents of a file from an HTTP source.
         /// </summary>
-        /// <param name="requestMessage">The HTTP request mesaage.</param>
+        /// <param name="requestMessage">The HTTP request message.</param>
         /// <returns>The file contents from the HTTP source.</returns>
-        public async Task<string> ReadFromHttpSource(HttpRequestMessage requestMessage)
+        public async Task<string> ReadFromFile(HttpRequestMessage requestMessage)
         {
             if (requestMessage == null)
             {
@@ -56,6 +46,16 @@ namespace FileService.Services
             }
 
             return fileContents;
+        }
+
+        public Task<string> ReadFromFile(string filePathSource)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task WriteToFile(string fileContents, string filePathSource)
+        {
+            throw new NotImplementedException();
         }
     }
 }

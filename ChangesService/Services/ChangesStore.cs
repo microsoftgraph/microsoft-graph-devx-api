@@ -84,7 +84,7 @@ namespace ChangesService.Services
                     var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                     // Get the file contents from source
-                    string jsonFileContents = _fileUtility.ReadFromHttpSource(httpRequestMessage)
+                    string jsonFileContents = _fileUtility.ReadFromFile(httpRequestMessage)
                                                 .GetAwaiter().GetResult();
 
                     // Return the changelog list from the file contents
