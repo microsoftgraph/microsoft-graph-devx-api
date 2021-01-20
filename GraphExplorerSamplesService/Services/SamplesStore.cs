@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -10,6 +10,7 @@ using GraphExplorerSamplesService.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace GraphExplorerSamplesService.Services
@@ -21,16 +22,18 @@ namespace GraphExplorerSamplesService.Services
     {
         private readonly object _samplesLock = new object();
         private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _samplesCache;
         private readonly IConfiguration _configuration;
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
 
-        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache = null , IFileUtility fileUtility = null)
+        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache = null , IFileUtility fileUtility = null, IHttpClientUtility httpClientUtility = null)
         {
             _samplesCache = samplesCache;
             _configuration = configuration;
+            _httpClientUtility = httpClientUtility;
             _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration);
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = _configuration["BlobStorage:Blobs:SampleQueries"];
@@ -102,7 +105,11 @@ namespace GraphExplorerSamplesService.Services
 
             // Get the full file path from configuration and query param, then read from the file
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
-            string jsonFileContents = await _fileUtility.ReadFromFile(queriesFilePathSource);
+
+            // Construct the http request message
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
+
+            string jsonFileContents = await _httpClientUtility.ReadFromFile(httpRequestMessage);
 
             return DeserializeSamplesList(jsonFileContents, locale);
         }
