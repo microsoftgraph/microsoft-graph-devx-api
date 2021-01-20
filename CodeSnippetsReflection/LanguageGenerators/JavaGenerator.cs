@@ -43,7 +43,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName, languageExpressions);
 
                 /*Auth provider section*/
-                snippetBuilder.Append("IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n");
+                snippetBuilder.Append("GraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n");
                 //append any request options present
                 snippetBuilder.Append(GenerateRequestOptionsSection(snippetModel, languageExpressions));
                 /*Generate the query section of the request*/
