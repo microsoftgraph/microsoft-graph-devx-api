@@ -4,11 +4,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading.Tasks;
-using FileService.Common;
 using FileService.Interfaces;
-using FileService.Services;
 using GraphExplorerPermissionsService;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
@@ -26,16 +23,13 @@ namespace GraphWebApi.Controllers
     {
         private readonly IPermissionsStore _permissionsStore;
         private readonly IConfiguration _configuration;
-        private readonly HttpClientUtility _httpClient;
-        private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
 
-
-        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, IConfiguration configuration, IFileUtility fileUtility, HttpClientUtility httpClient)
+        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, IConfiguration configuration, IHttpClientUtility httpClientUtility)
         {
             _permissionsStore = permissionsStore;
             _configuration = configuration;
-            _fileUtility = fileUtility;
-            _httpClient = httpClient;
+            _httpClientUtility = httpClientUtility;
         }
 
         // Gets the permissions scopes
@@ -53,12 +47,12 @@ namespace GraphWebApi.Controllers
                 List<ScopeInformation> result = null;
 
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
-                {                                       
+                {
                     var permissionsStore = new PermissionsStore(configuration: _configuration,
-                        fileUtility: _httpClient);
+                     httpClientUtility: _httpClientUtility);
 
                     // Fetch permissions descriptions file from Github
-                    result = await permissionsStore.GetScopesAsync(org, branchName, localeCode, requestUrl, method);                    
+                    result = await _permissionsStore.GetScopesAsync(org, branchName, localeCode, requestUrl, method);
                 }
                 else
                 {

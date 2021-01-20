@@ -27,15 +27,13 @@ namespace GraphWebApi.Controllers
     {
         private readonly ISamplesStore _samplesStore;
         private readonly IConfiguration _configuration;
-        private readonly IFileUtility _fileUtility;
-        private readonly HttpClientUtility _httpClient;
+        private readonly IHttpClientUtility _httpClientUtility;
 
-        public GraphExplorerSamplesController(ISamplesStore samplesStore, IConfiguration configuration, IFileUtility fileUtility, HttpClientUtility httpClient)
+        public GraphExplorerSamplesController(ISamplesStore samplesStore, IConfiguration configuration, IHttpClientUtility httpClientUtility)
         {
             _samplesStore = samplesStore;
             _configuration = configuration;
-            _fileUtility = fileUtility;
-            _httpClient = httpClient;
+            _httpClientUtility = httpClientUtility;
         }
 
         // Gets the list of all sample queries
@@ -53,7 +51,7 @@ namespace GraphWebApi.Controllers
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {                   
                     var samplesStore = new SamplesStore(configuration: _configuration,
-                        fileUtility: _httpClient);
+                        httpClientUtility: _httpClientUtility);
 
                     // Fetch samples file from Github
                     sampleQueriesList = await samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
@@ -184,10 +182,7 @@ namespace GraphWebApi.Controllers
                 SampleQueriesList updatedSampleQueriesList = SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Guid.Parse(id));
 
                 // Get the serialized JSON string of this sample query
-                string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
-
-                // Disabled functionality
-                //  await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
+                string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);                
 
                 // Success; return the sample query model object that was just updated
                 return Ok(sampleQueryModel);
