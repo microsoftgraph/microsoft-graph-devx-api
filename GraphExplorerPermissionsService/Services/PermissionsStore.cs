@@ -298,11 +298,27 @@ namespace GraphExplorerPermissionsService
         {
             try
             {
+                // Seed and populate scopes information
+                if (_scopesListTable == null || !_scopesListTable.Any())
+                {
+                    // Populate the template and scopes table
+                    lock (_permissionsLock)
+                    {
+                        /* Ensure permissions tables are seeded by only one executing thread,
+                           once per refresh cycle. */
+                        if (!_permissionsRefreshed)
+                        {
+                            SeedPermissionsTables();
+                        }
+                    }
+                }
+
                 // Creates a dict of scopes information from github files
                 var scopesInformationDictionary = await GetPermissionsFromGithub(locale, org, branchName);
 
                 // Creates a list of scope information
                 var scopesList = CreateScopesList(scopesInformationDictionary, scopeType, requestUrl, method);
+
                 return scopesList;
             }
             catch (ArgumentNullException exception)
