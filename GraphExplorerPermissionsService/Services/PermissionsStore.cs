@@ -26,6 +26,7 @@ namespace GraphExplorerPermissionsService
         private IDictionary<int, object> _scopesListTable;
         private readonly IMemoryCache _permissionsCache;
         private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
         private readonly IConfiguration _configuration;
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
@@ -38,10 +39,11 @@ namespace GraphExplorerPermissionsService
         private const string Delegated = "Delegated";
         private const string Application = "Application";
 
-        public PermissionsStore(IConfiguration configuration, IFileUtility fileUtility = null, IMemoryCache permissionsCache = null)
+        public PermissionsStore(IConfiguration configuration, IFileUtility fileUtility = null, IMemoryCache permissionsCache = null, IHttpClientUtility httpClientUtility = null)
         {
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
             _permissionsCache = permissionsCache;
+            _httpClientUtility = httpClientUtility;
             _fileUtility = fileUtility;
             _configuration = configuration;
             _permissionsContainerName = configuration["BlobStorage:Containers:Permissions"];
