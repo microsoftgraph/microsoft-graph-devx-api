@@ -157,7 +157,14 @@ namespace GraphExplorerPermissionsService
             // Get the absolute url from configuration and query param, then read from the file
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
 
-            var scopesInformationDictionary = await CreateScopesInformationTables(queriesFilePathSource);
+            // Construct the http request message
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
+
+            // Get file contents from source
+            string scopesInfoJson = await _httpClientUtility.ReadFromFile(httpRequestMessage);
+
+            var scopesInformationDictionary = await CreateScopesInformationTables(scopesInfoJson);
+
             return scopesInformationDictionary;
         }
 
