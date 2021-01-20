@@ -91,7 +91,7 @@ namespace SamplesService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            _samplesStore = new SamplesStore(configuration: configuration, fileUtility: _fileUtility);
+            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _fileUtility);
 
             /* Act */
 
