@@ -125,7 +125,10 @@ namespace GraphExplorerPermissionsService
                     {
                         string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
 
-                        seededScopesInfoDictionary = CreateScopesInformationTables(relativeScopesInfoPath, cacheEntry).GetAwaiter().GetResult();
+                        // Get file contents from source
+                        string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
+
+                        seededScopesInfoDictionary = CreateScopesInformationTables(scopesInfoJson, cacheEntry).GetAwaiter().GetResult();
                     }
                     /* Fetch the localized cached permissions descriptions
                        already seeded by previous thread. */
@@ -142,7 +145,9 @@ namespace GraphExplorerPermissionsService
         /// <param name="org">The org or owner of the repo.</param>
         /// <param name="branchName">The name of the branch with the file version.</param>
         /// <returns>The localized instance of permissions descriptions.</returns>
-        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetPermissionsFromGithub(string locale, string org, string branchName)
+        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetPermissionsFromGithub(string locale,
+                                                                                                                string org,
+                                                                                                                string branchName)
         {
             string host = _configuration["BlobStorage:GithubHost"];
             string repo = _configuration["BlobStorage:RepoName"];
@@ -162,16 +167,10 @@ namespace GraphExplorerPermissionsService
         /// <param name="filePath">The path of the file from Github.</param>
         /// <param name="cacheEntry">An optional cache entry param.</param>
         /// <returns>A dictionary of scopes information.</returns>
-        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> CreateScopesInformationTables(string filePath, ICacheEntry cacheEntry = null)
+        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> CreateScopesInformationTables(string scopesInfoJson, ICacheEntry cacheEntry = null)
         {
             var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
             var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
-
-            // Construct the http request message
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, filePath);
-
-            // Get file contents from source
-            string scopesInfoJson = await _fileUtility.ReadFromFile(httpRequestMessage);
 
             if (string.IsNullOrEmpty(scopesInfoJson))
             {
@@ -292,7 +291,7 @@ namespace GraphExplorerPermissionsService
         {
             try
             {
-                // Creates a dict of scopes information from github files            
+                // Creates a dict of scopes information from github files
                 var scopesInformationDictionary = await GetPermissionsFromGithub(locale, org, branchName);
 
                 // Creates a list of scope information
