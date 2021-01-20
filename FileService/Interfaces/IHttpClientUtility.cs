@@ -13,5 +13,6 @@ namespace FileService.Interfaces
     public interface IHttpClientUtility
     {
         Task<string> ReadFromFile(HttpRequestMessage requestMessage);
+        Task WriteToFile(string fileContents, string filePathSource);
     }
 }

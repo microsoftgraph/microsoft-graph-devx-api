@@ -6,6 +6,7 @@ using FileService.Common;
 using FileService.Interfaces;
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace MockTestUtility
@@ -30,6 +31,11 @@ namespace MockTestUtility
             {
                 return await streamReader.ReadToEndAsync();
             }
+        }
+
+        public Task<string> ReadFromFile(HttpRequestMessage requestMessage)
+        {
+            throw new NotImplementedException();
         }
 
         public Task WriteToFile(string fileContents, string filePathSource)

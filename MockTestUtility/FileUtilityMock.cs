@@ -12,17 +12,17 @@ using System.Threading.Tasks;
 namespace MockTestUtility
 {
     /// <summary>
-    /// Defines a Mock class that simulates retrieving blobs from a remote blob storage container
+    /// Defines a Mock class that retrieves files from a directory path.
     /// </summary>
     public class FileUtilityMock : IFileUtility
     {
-        /// <summary>
-        /// Gets the file path and parses its contents
-        /// </summary>
-        /// <param name="filePathSource"> The path of the file.</param>
-        /// <returns>A json string of file contents.</returns>
         public async Task<string> ReadFromFile(string filePathSource)
         {
+            if (string.IsNullOrEmpty(filePathSource))
+            {
+                throw new ArgumentNullException(nameof(filePathSource), "Value cannot be null");
+            }
+
             if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
             {
                 throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
@@ -31,27 +31,24 @@ namespace MockTestUtility
             // Prepend the root directory notation since we're reading off of a relative folder location
             filePathSource = $".\\{filePathSource}";
 
-            // Mock reading blob source from upstream Azure storage account
-            using (StreamReader streamReader = new StreamReader(filePathSource))
-            {
-                return await streamReader.ReadToEndAsync();
-            }
+            using StreamReader streamReader = new StreamReader(filePathSource);
+            return await streamReader.ReadToEndAsync();
         }
 
-        public Task<string> ReadFromFile(HttpRequestMessage requestMessage)
+        public async Task<string> ReadFromFile(HttpRequestMessage requestMessage)
         {
-            throw new NotImplementedException();
+            if (requestMessage == null)
+            {
+                throw new ArgumentNullException(nameof(requestMessage), "Value cannot be null");
+            }
+            // Mock reading from an HTTP source.
+            return await ReadFromFile(requestMessage.RequestUri.OriginalString);
         }
 
-        /// <summary>
-        /// Allows one to edit the file.
-        /// </summary>
-        /// <param name="fileContents"> Contents of the file.</param>
-        /// <param name="filePathSource"> The path of the file.</param>
-        /// <returns></returns>
         public Task WriteToFile(string fileContents, string filePathSource)
         {
             // Not implemented
+            return Task.CompletedTask;
         }
     }
 }
