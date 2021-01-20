@@ -12,26 +12,16 @@ namespace FileService.Services
     /// <summary>
     /// Implements an <see cref="IFileUtility"/> that reads a file from an HTTP source.
     /// </summary>
-    public class HttpClientUtility: IFileUtility
+    public class HttpClientUtility: IHttpClientUtility
     {
         private readonly HttpClient _httpClient;
-        
+
         /// <summary>
         /// Class constructor.
         /// </summary>
         public HttpClientUtility(HttpClient httpClient)
         {
             _httpClient = httpClient;
-        }
-                
-        public Task<string> ReadFromFile(string filePathSource)
-        {            
-            throw new NotImplementedException();
-        }
-
-        public Task WriteToFile(string fileContents, string filePathSource)
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -56,6 +46,16 @@ namespace FileService.Services
             }
 
             return fileContents;
+        }
+
+        public Task<string> ReadFromFile(string filePathSource)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task WriteToFile(string fileContents, string filePathSource)
+        {
+            throw new NotImplementedException();
         }
     }
 }
