@@ -10,6 +10,7 @@ using GraphExplorerSamplesService.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace GraphExplorerSamplesService.Services
@@ -21,16 +22,18 @@ namespace GraphExplorerSamplesService.Services
     {
         private readonly object _samplesLock = new object();
         private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _samplesCache;
         private readonly IConfiguration _configuration;
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
 
-        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache = null , IFileUtility fileUtility = null)
+        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache = null , IFileUtility fileUtility = null, IHttpClientUtility httpClientUtility = null)
         {
             _samplesCache = samplesCache;
             _configuration = configuration;
+            _httpClientUtility = httpClientUtility;
             _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration);
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = _configuration["BlobStorage:Blobs:SampleQueries"];
@@ -47,11 +50,11 @@ namespace GraphExplorerSamplesService.Services
         {
             // Fetch cached sample queries
             SampleQueriesList sampleQueriesList = await _samplesCache.GetOrCreateAsync(locale, cacheEntry =>
-            {
-                // Localized copy of samples is to be seeded by only one executing thread.
-                lock (_samplesLock)
-                {
-                    /* Check whether a previous thread already seeded an
+			{
+				// Localized copy of samples is to be seeded by only one executing thread.
+				lock (_samplesLock)
+				{
+					/* Check whether a previous thread already seeded an
                      * instance of the localized samples during the lock.
                      */
                     var lockedLocale = locale;
@@ -71,15 +74,15 @@ namespace GraphExplorerSamplesService.Services
                     // Get the file contents from source
                     string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
-                    /* Current business process only supports ordering of the English
+					/* Current business process only supports ordering of the English
                        translation of the sample queries.
                      */
-                    bool orderSamples = lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase);
+					bool orderSamples = lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase);
 
-                    // Return the list of the sample queries from the file contents
-                    return Task.FromResult(SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples));
-                }
-            });
+					// Return the list of the sample queries from the file contents
+					return Task.FromResult(SamplesService.DeserializeSampleQueriesList(jsonFileContents, orderSamples));
+				}
+			});
 
             return sampleQueriesList;
         }
@@ -102,7 +105,11 @@ namespace GraphExplorerSamplesService.Services
 
             // Get the full file path from configuration and query param, then read from the file
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
-            string jsonFileContents = await _fileUtility.ReadFromFile(queriesFilePathSource);
+
+            // Construct the http request message
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
+
+            string jsonFileContents = await _httpClientUtility.ReadFromFile(httpRequestMessage);
 
             return DeserializeSamplesList(jsonFileContents, locale);
         }

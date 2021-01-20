@@ -9,6 +9,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace FileService.Services
@@ -71,12 +72,22 @@ namespace FileService.Services
         }
 
         /// <summary>
+        /// Reads contents of a file from a http source
+        /// </summary>
+        /// <param name="requestMessage">The Http Request message.</param>
+        /// <returns></returns>
+        public Task<string> ReadFromFile(HttpRequestMessage requestMessage)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Allows one to edit the file.
         /// </summary>
         /// <param name="fileContents"> Contents of the file.</param>
         /// <param name="filePathSource"> The path of the file.</param>
         /// <returns></returns>
-        public async Task WriteToFile(string fileContents, string filePathSource)
+        public Task WriteToFile(string fileContents, string filePathSource)
         {
             throw new NotImplementedException();
         }

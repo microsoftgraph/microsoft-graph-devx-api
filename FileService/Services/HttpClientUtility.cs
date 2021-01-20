@@ -2,60 +2,59 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using FileService.Common;
 using FileService.Interfaces;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace FileService.Services
 {
     /// <summary>
-    /// Implements an <see cref="IFileUtility"/> that reads from Github blob storage.
+    /// Implements an <see cref="IFileUtility"/> that reads a file from an HTTP source.
     /// </summary>
-    public class HttpClientUtility : IFileUtility
+    public class HttpClientUtility: IHttpClientUtility
     {
-        // HttpClient is intended to be instantiated once per application, rather than per-use.
-        static readonly HttpClient _httpClient = new HttpClient();
-        private readonly string _mediaType;
+        private readonly HttpClient _httpClient;
 
         /// <summary>
-        /// Instantiates a new HTTP client and configures the default request headers
+        /// Class constructor.
         /// </summary>
-        /// <param name="baseUrl">The host url.</param>
-        /// <param name="mediaType"> Specifies the content type of the response.</param>
-        public HttpClientUtility(string baseUrl, IConfiguration configuration)
+        public HttpClientUtility(HttpClient httpClient)
         {
-            _mediaType = configuration["ApplicationMediaType"];
-            // Configure a Http client instance with the specified baseUrl
-            _httpClient.BaseAddress = new Uri(baseUrl);
-            // GitHub API versioning and add a user agent
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(_mediaType));
+            _httpClient = httpClient;
         }
 
         /// <summary>
-        /// Gets the file path and parses its contents
+        /// Reads the contents of a file from an HTTP source.
         /// </summary>
-        /// <param name="filePathSource"> the path of the file to be parsed.</param>
-        /// <returns> A json string of file contents.</returns>
-        public async Task<string> ReadFromFile(string filePathSource)
+        /// <param name="requestMessage">The HTTP request mesaage.</param>
+        /// <returns>The file contents from the HTTP source.</returns>
+        public async Task<string> ReadFromFile(HttpRequestMessage requestMessage)
         {
-            // Download sample query file contents from github
-            var httpResponseMessage = await _httpClient.GetAsync(filePathSource);
+            if (requestMessage == null)
+            {
+                throw new ArgumentNullException(nameof(requestMessage), "Value cannot be null.");
+            }
+
+            requestMessage.Method = requestMessage.Method ?? HttpMethod.Get; // default is GET
+            var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
             var fileContents = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            if (!httpResponseMessage.IsSuccessStatusCode)
+            {
+                throw new Exception(fileContents);
+            }
 
             return fileContents;
         }
 
-        /// <summary>
-        /// Allows one to edit the file.
-        /// </summary>
-        /// <param name="fileContents"> Contents of the file.</param>
-        /// <param name="filePathSource"> The path of the file.</param>
-        /// <returns></returns>
-        public async Task WriteToFile(string fileContents, string filePathSource)
+        public Task<string> ReadFromFile(string filePathSource)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task WriteToFile(string fileContents, string filePathSource)
         {
             throw new NotImplementedException();
         }
