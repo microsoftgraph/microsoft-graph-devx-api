@@ -49,7 +49,7 @@ namespace MockTestUtility
         /// <param name="fileContents"> Contents of the file.</param>
         /// <param name="filePathSource"> The path of the file.</param>
         /// <returns></returns>
-        public async Task WriteToFile(string fileContents, string filePathSource)
+        public Task WriteToFile(string fileContents, string filePathSource)
         {
             // Not implemented
         }

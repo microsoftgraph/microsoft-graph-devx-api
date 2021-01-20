@@ -72,7 +72,7 @@ namespace FileService.Services
         }
 
         /// <summary>
-        /// Reads contents of a file from a http source 
+        /// Reads contents of a file from a http source
         /// </summary>
         /// <param name="requestMessage">The Http Request message.</param>
         /// <returns></returns>
@@ -87,7 +87,7 @@ namespace FileService.Services
         /// <param name="fileContents"> Contents of the file.</param>
         /// <param name="filePathSource"> The path of the file.</param>
         /// <returns></returns>
-        public async Task WriteToFile(string fileContents, string filePathSource)
+        public Task WriteToFile(string fileContents, string filePathSource)
         {
             throw new NotImplementedException();
         }
