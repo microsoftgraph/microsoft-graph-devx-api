@@ -14,7 +14,7 @@ namespace CodeSnippetsReflection.Test
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata));
-        private const string AuthProviderPrefix = "IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n";
+        private const string AuthProviderPrefix = "GraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n";
 
         [Fact]
         public void MapCorrectTypeForGuidReturnType()
