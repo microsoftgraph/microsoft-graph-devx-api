@@ -122,7 +122,7 @@ namespace SamplesService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            _samplesStore = new SamplesStore(configuration : configuration, fileUtility: _fileUtility);
+            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _fileUtility);
 
             // Act - Fetch ja-JP sample queries which is empty
             SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP", org, branchName);
