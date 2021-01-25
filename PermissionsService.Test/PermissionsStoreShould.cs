@@ -22,11 +22,10 @@ namespace PermissionsService.Test
 
         public PermissionsStoreShould()
         {
+            _fileUtility = new FileUtilityMock();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest-valid.json")
                 .Build();
-
-            _fileUtility = new FileUtilityMock();
         }
 
         [Fact]
@@ -254,15 +253,15 @@ namespace PermissionsService.Test
                 item =>
                 {
                     Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
-                    Assert.Equal("Lea los eventos de seguridad de su organizaci髇.", item.DisplayName);
-                    Assert.Equal("Permite que la aplicaci髇 lea los eventos de seguridad de su organizaci髇 en su nombre.", item.Description);
+                    Assert.Equal("Lea los eventos de seguridad de su organizaci贸n.", item.DisplayName);
+                    Assert.Equal("Permite que la aplicaci贸n lea los eventos de seguridad de su organizaci贸n en su nombre.", item.Description);
                     Assert.True(item.IsAdmin);
                 },
                 item =>
                 {
                     Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
-                    Assert.Equal("Lea y actualice los eventos de seguridad de su organizaci髇.", item.DisplayName);
-                    Assert.Equal("Permite que la aplicaci髇 lea los eventos de seguridad de su organizaci髇 en su nombre. Tambi閚 le permite actualizar propiedades editables en eventos de seguridad.", item.Description);
+                    Assert.Equal("Lea y actualice los eventos de seguridad de su organizaci贸n.", item.DisplayName);
+                    Assert.Equal("Permite que la aplicaci贸n lea los eventos de seguridad de su organizaci贸n en su nombre. Tambi茅n le permite actualizar propiedades editables en eventos de seguridad.", item.Description);
                     Assert.True(item.IsAdmin);
                 });
         }
@@ -277,7 +276,7 @@ namespace PermissionsService.Test
                 .AddJsonFile(".\\TestFiles\\appsettingstest-empty.json")
                 .Build();
 
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration, _fileUtility, _permissionsCache);
 
             // Act and Assert
             Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
