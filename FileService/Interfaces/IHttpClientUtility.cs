@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace FileService.Interfaces
 {
     /// <summary>
-    /// Provides a contract for reading from HTTP file sources.
+    /// Provides a contract for reading documents from HTTP sources.
     /// </summary>
     public interface IHttpClientUtility
     {
