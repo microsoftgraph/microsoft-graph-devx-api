@@ -29,7 +29,7 @@ namespace FileService.Services
         /// </summary>
         /// <param name="requestMessage">The HTTP request message.</param>
         /// <returns>The file contents from the HTTP source.</returns>
-        public async Task<string> ReadFromFile(HttpRequestMessage requestMessage)
+        public async Task<string> ReadFromSource(HttpRequestMessage requestMessage)
         {
             if (requestMessage == null)
             {
@@ -38,7 +38,7 @@ namespace FileService.Services
 
             requestMessage.Method = requestMessage.Method ?? HttpMethod.Get; // default is GET
             var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
-            var fileContents = await httpResponseMessage.Content.ReadAsStringAsync();
+            var fileContents = await httpResponseMessage?.Content.ReadAsStringAsync();
 
             if (!httpResponseMessage.IsSuccessStatusCode)
             {
