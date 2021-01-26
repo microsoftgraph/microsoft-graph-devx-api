@@ -35,7 +35,7 @@ namespace MockTestUtility
             return await streamReader.ReadToEndAsync();
         }
 
-        public async Task<string> ReadFromFile(HttpRequestMessage requestMessage)
+        public async Task<string> ReadFromSource(HttpRequestMessage requestMessage)
         {
             if (requestMessage == null)
             {

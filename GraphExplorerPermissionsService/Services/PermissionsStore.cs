@@ -161,7 +161,7 @@ namespace GraphExplorerPermissionsService
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
 
             // Get file contents from source
-            string scopesInfoJson = await _httpClientUtility.ReadFromFile(httpRequestMessage);
+            string scopesInfoJson = await _httpClientUtility.ReadFromSource(httpRequestMessage);
 
             var scopesInformationDictionary = await CreateScopesInformationTables(scopesInfoJson);
 
