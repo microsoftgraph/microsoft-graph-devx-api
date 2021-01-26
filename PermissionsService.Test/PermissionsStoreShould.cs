@@ -22,11 +22,10 @@ namespace PermissionsService.Test
 
         public PermissionsStoreShould()
         {
+            _fileUtility = new FileUtilityMock();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest-valid.json")
                 .Build();
-
-            _fileUtility = new FileUtilityMock();
         }
 
         [Fact]
@@ -254,15 +253,15 @@ namespace PermissionsService.Test
                 item =>
                 {
                     Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
-                    Assert.Equal("Lea los eventos de seguridad de su organización.", item.DisplayName);
-                    Assert.Equal("Permite que la aplicación lea los eventos de seguridad de su organización en su nombre.", item.Description);
+                    Assert.Equal("Lea los eventos de seguridad de su organizaciï¿½n.", item.DisplayName);
+                    Assert.Equal("Permite que la aplicaciï¿½n lea los eventos de seguridad de su organizaciï¿½n en su nombre.", item.Description);
                     Assert.True(item.IsAdmin);
                 },
                 item =>
                 {
                     Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
-                    Assert.Equal("Lea y actualice los eventos de seguridad de su organización.", item.DisplayName);
-                    Assert.Equal("Permite que la aplicación lea los eventos de seguridad de su organización en su nombre. También le permite actualizar propiedades editables en eventos de seguridad.", item.Description);
+                    Assert.Equal("Lea y actualice los eventos de seguridad de su organizaciï¿½n.", item.DisplayName);
+                    Assert.Equal("Permite que la aplicaciï¿½n lea los eventos de seguridad de su organizaciï¿½n en su nombre. Tambiï¿½n le permite actualizar propiedades editables en eventos de seguridad.", item.Description);
                     Assert.True(item.IsAdmin);
                 });
         }
@@ -294,6 +293,60 @@ namespace PermissionsService.Test
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
                                                                        .GetAwaiter().GetResult());
+        }
+
+        [Fact]
+        public void MockFetchingPermissionsDescriptionsFromGithub()
+        {
+            //Arrange
+            var configuration = new ConfigurationBuilder()
+                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .Build();
+
+            string org = configuration["BlobStorage:Org"];
+            string branchName = configuration["BlobStorage:Branch"];
+
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, httpClientUtility: _fileUtility);
+
+            // Act
+            List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName).GetAwaiter().GetResult();
+
+            // Assert
+            Assert.NotEmpty(result);
+        }
+        [Fact]
+        public void MockFetchingPermissionsDescriptionsFromGithubGivenARequestUrl()
+        {
+            //Arrange
+            var configuration = new ConfigurationBuilder()
+                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .Build();
+
+            string org = configuration["BlobStorage:Org"];
+            string branchName = configuration["BlobStorage:Branch"];
+
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, httpClientUtility: _fileUtility);
+
+            // Act
+            List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName, requestUrl: "/security/alerts/{alert_id}", method: "GET")
+                                                            .GetAwaiter().GetResult();
+
+            // Assert
+            Assert.Collection(result,
+                item =>
+                {
+                    Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
+                    Assert.Equal("Read your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events on your behalf.", item.Description);
+                    Assert.True(item.IsAdmin);
+                },
+                item =>
+                {
+                    Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
+                    Assert.Equal("Read and update your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events on your behalf. Also allows you to update editable properties in security events.", item.Description);
+                    Assert.True(item.IsAdmin);
+                });
         }
     }
 }
