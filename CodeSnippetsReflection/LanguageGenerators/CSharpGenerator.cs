@@ -267,8 +267,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         resourcesPath.Append(".Content");
                         break;
                     case PropertySegment propertySegment:
-                        //don't append anything that is not a stream since this is not accessed directly in C#
-                        if (propertySegment.EdmType.IsStream())
+                        if (propertySegment.EdmType.IsStream() //don't append anything that is not a stream since this is not accessed directly in C#
+                            && snippetModel.Method != HttpMethod.Patch) // while patching we pass the encapsulating object in the request
                         {
                             resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         }
@@ -323,6 +323,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
         private string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path)
         {
+            if (pathSegment.EdmType.FullTypeName() == "Edm.Stream")
+            {
+                var encodedMultilineString = jsonBody.Replace("\"", "\"\"");
+                return $"new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"{encodedMultilineString}\"));\r\n\r\n";
+            }
+
             var stringBuilder = new StringBuilder();
             var jsonObject = JsonConvert.DeserializeObject(jsonBody);
             var tabSpace = new string('\t', path.Count -1);//d
