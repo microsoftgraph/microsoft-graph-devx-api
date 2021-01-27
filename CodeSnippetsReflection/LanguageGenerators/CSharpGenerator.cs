@@ -323,8 +323,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
         private string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path)
         {
-            if (pathSegment.EdmType.FullTypeName() == "Edm.Stream")
+            if (pathSegment is PropertySegment && pathSegment.EdmType?.FullTypeName() == "Edm.Stream")
             {
+                // special case where the full request body should be converted into a stream object
                 var encodedMultilineString = jsonBody.Replace("\"", "\"\"");
                 return $"new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"{encodedMultilineString}\"));\r\n\r\n";
             }
