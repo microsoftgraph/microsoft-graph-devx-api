@@ -107,7 +107,7 @@ namespace GraphExplorerSamplesService.Services
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
 
             // Construct the http request message
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
+            using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
 
             string jsonFileContents = await _httpClientUtility.ReadFromSource(httpRequestMessage);
 
