@@ -299,6 +299,8 @@ namespace PermissionsService.Test
         public void MockFetchingPermissionsDescriptionsFromGithub()
         {
             //Arrange
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
+
             var configuration = new ConfigurationBuilder()
                             .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
                             .Build();
@@ -306,7 +308,7 @@ namespace PermissionsService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, httpClientUtility: _fileUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, permissionsCache: _permissionsCache, httpClientUtility: _fileUtility);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName).GetAwaiter().GetResult();
