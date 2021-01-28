@@ -28,7 +28,7 @@ namespace FileService.Services
         /// </summary>
         /// <param name="requestMessage">The Http Request message.</param>
         /// <returns></returns>
-        public Task<string> ReadFromSource(HttpRequestMessage requestMessage)
+        public Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
         {
             throw new System.NotImplementedException();
         }

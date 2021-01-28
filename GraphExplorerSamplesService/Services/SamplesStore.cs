@@ -109,7 +109,7 @@ namespace GraphExplorerSamplesService.Services
             // Construct the http request message
             using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
 
-            string jsonFileContents = await _httpClientUtility.ReadFromSource(httpRequestMessage);
+            string jsonFileContents = await _httpClientUtility.ReadFromDocument(httpRequestMessage);
 
             return DeserializeSamplesList(jsonFileContents, locale);
         }
