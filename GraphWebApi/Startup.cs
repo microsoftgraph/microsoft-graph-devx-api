@@ -57,7 +57,7 @@ namespace GraphWebApi
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
             services.Configure<SamplesAdministrators>(Configuration);
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson();
 
             #region AppInsights
 
