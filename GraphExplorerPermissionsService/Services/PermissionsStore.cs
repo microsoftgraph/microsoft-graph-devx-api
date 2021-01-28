@@ -36,10 +36,10 @@ namespace GraphExplorerPermissionsService
         private const string Delegated = "Delegated";
         private const string Application = "Application";
 
-        public PermissionsStore(IConfiguration configuration, IMemoryCache permissionsCache, IFileUtility fileUtility)
+        public PermissionsStore(IFileUtility fileUtility, IConfiguration configuration, IMemoryCache permissionsCache)
         {
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
             _permissionsCache = permissionsCache;
-            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours:Permissions"]);
             _fileUtility = fileUtility;
             _permissionsContainerName = configuration["BlobStorage:Containers:Permissions"];
             _permissionsBlobNames = configuration.GetSection("BlobStorage:Blobs:Permissions:Names").Get<List<string>>();
@@ -105,55 +105,55 @@ namespace GraphExplorerPermissionsService
         private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetOrCreatePermissionsDescriptionsAsync(string locale = DefaultLocale)
         {
             var scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", cacheEntry =>
-			{
-				/* Localized copy of permissions descriptions
+            {
+                /* Localized copy of permissions descriptions
                    is to be seeded by only one executing thread.
                 */
-				lock (_scopesLock)
-				{
-					/* Check whether a previous thread already seeded an
+                lock (_scopesLock)
+                {
+                    /* Check whether a previous thread already seeded an
                      * instance of the localized permissions descriptions
                      * during the lock.
                      */
-					var seededScopesInfoDictionary = _permissionsCache.Get<Dictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
-					if (seededScopesInfoDictionary == null)
-					{
-						var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
-						var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
+                    var seededScopesInfoDictionary = _permissionsCache.Get<Dictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
+                    if (seededScopesInfoDictionary == null)
+                    {
+                        var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
+                        var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
 
-						string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
-						string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
+                        string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
+                        string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
 
-						if (string.IsNullOrEmpty(scopesInfoJson))
-						{
-							return Task.FromResult<Dictionary<string, IDictionary<string, ScopeInformation>>>(null);
-						}
+                        if (string.IsNullOrEmpty(scopesInfoJson))
+                        {
+                            return Task.FromResult<Dictionary<string, IDictionary<string, ScopeInformation>>>(null);
+                        }
 
-						ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+                        ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
 
-						foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
-						{
-							_delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
-						}
+                        foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
+                        {
+                            _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
+                        }
 
-						foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
-						{
-							_applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
-						}
+                        foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
+                        {
+                            _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
+                        }
 
-						cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+                        cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
-						return Task.FromResult(new Dictionary<string, IDictionary<string, ScopeInformation>>
-						{
-							{ Delegated, _delegatedScopesInfoTable },
-							{ Application, _applicationScopesInfoTable }
-						});
-					}
-					/* Fetch the localized cached permissions descriptions
+                        return Task.FromResult(new Dictionary<string, IDictionary<string, ScopeInformation>>
+                        {
+                            { Delegated, _delegatedScopesInfoTable },
+                            { Application, _applicationScopesInfoTable }
+                        });
+                    }
+                    /* Fetch the localized cached permissions descriptions
                        already seeded by previous thread. */
-					return Task.FromResult(seededScopesInfoDictionary);
-				}
-			});
+                    return Task.FromResult(seededScopesInfoDictionary);
+                }
+            });
             return scopesInformationDictionary;
         }
 
