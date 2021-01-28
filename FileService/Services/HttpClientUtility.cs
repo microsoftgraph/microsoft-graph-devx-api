@@ -22,7 +22,7 @@ namespace FileService.Services
         /// </summary>
         public HttpClientUtility(HttpClient httpClient)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClient ?? throw new ArgumentNullException("Value cannot be null");
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace FileService.Services
 
             requestMessage.Method = requestMessage.Method ?? HttpMethod.Get; // default is GET
             var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
-            var fileContents = await httpResponseMessage?.Content.ReadAsStringAsync();
+            var fileContents = await httpResponseMessage.Content.ReadAsStringAsync();
 
             if (!httpResponseMessage.IsSuccessStatusCode)
             {
