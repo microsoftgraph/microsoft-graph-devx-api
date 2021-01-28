@@ -14,6 +14,11 @@ using System.Security.Claims;
 using System.Linq;
 using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
+using Microsoft.Extensions.Configuration;
+using FileService.Services;
+using FileService.Interfaces;
+using FileService.Common;
+using System.Net.Http;
 
 namespace GraphWebApi.Controllers
 {
@@ -21,10 +26,14 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSamplesController : ControllerBase
     {
         private readonly ISamplesStore _samplesStore;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientUtility _httpClientUtility;
 
-        public GraphExplorerSamplesController(ISamplesStore samplesStore)
+        public GraphExplorerSamplesController(ISamplesStore samplesStore, IConfiguration configuration, IHttpClientUtility httpClientUtility)
         {
             _samplesStore = samplesStore;
+            _configuration = configuration ?? throw new ArgumentNullException("Value cannot be null");
+            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException("Value cannot be null");
         }
 
         // Gets the list of all sample queries
@@ -32,14 +41,26 @@ namespace GraphWebApi.Controllers
         [Route("samples")]
         [Produces("application/json")]
         [HttpGet]
-        public async Task<IActionResult> GetSampleQueriesListAsync(string search)
+        public async Task<IActionResult> GetSampleQueriesListAsync(string search, string org, string branchName)
         {
             try
             {
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
+                SampleQueriesList sampleQueriesList = null;
 
-                // Fetch sample queries
-                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
+                if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
+                {                   
+                    var samplesStore = new SamplesStore(configuration: _configuration,
+                        httpClientUtility: _httpClientUtility);
+
+                    // Fetch samples file from Github
+                    sampleQueriesList = await samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
+                }
+                else
+                {
+                    // Fetch sample queries from Azure Blob
+                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
+                }
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -161,10 +182,7 @@ namespace GraphWebApi.Controllers
                 SampleQueriesList updatedSampleQueriesList = SamplesService.UpdateSampleQueriesList(sampleQueriesList, sampleQueryModel, Guid.Parse(id));
 
                 // Get the serialized JSON string of this sample query
-                string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
-
-                // Disabled functionality
-                //  await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
+                string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);                
 
                 // Success; return the sample query model object that was just updated
                 return Ok(sampleQueryModel);

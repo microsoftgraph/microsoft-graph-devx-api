@@ -12,12 +12,17 @@ using System.Threading.Tasks;
 namespace MockTestUtility
 {
     /// <summary>
-    /// Defines a Mock class that simulates retrieving blobs from an Azure Blob Storage
+    /// Defines a Mock class that retrieves files from a directory path.
     /// </summary>
-    public class AzureBlobStorageUtilityMock : IFileUtility
+    public class FileUtilityMock : IFileUtility
     {
         public async Task<string> ReadFromFile(string filePathSource)
         {
+            if (string.IsNullOrEmpty(filePathSource))
+            {
+                throw new ArgumentNullException(nameof(filePathSource), "Value cannot be null");
+            }
+
             if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
             {
                 throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
@@ -26,16 +31,18 @@ namespace MockTestUtility
             // Prepend the root directory notation since we're reading off of a relative folder location
             filePathSource = $".\\{filePathSource}";
 
-            // Mock reading blob source from upstream Azure storage account
-            using (StreamReader streamReader = new StreamReader(filePathSource))
-            {
-                return await streamReader.ReadToEndAsync();
-            }
+            using StreamReader streamReader = new StreamReader(filePathSource);
+            return await streamReader.ReadToEndAsync();
         }
 
-        public Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
+        public async Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
         {
-            throw new NotImplementedException();
+            if (requestMessage == null)
+            {
+                throw new ArgumentNullException(nameof(requestMessage), "Value cannot be null");
+            }
+            // Mock reading from an HTTP source.
+            return await ReadFromFile(requestMessage.RequestUri.OriginalString);
         }
 
         public Task WriteToFile(string fileContents, string filePathSource)
