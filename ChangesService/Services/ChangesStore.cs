@@ -31,10 +31,12 @@ namespace ChangesService.Services
         {
             _configuration = configuration;
             _changeLogCache = changeLogCache;
-            _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath];
+            _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath]
+                ?? throw new ArgumentNullException($"Config path missing: {ChangesServiceConstants.ChangelogRelativeUrlConfigPath}");
             _httpClientUtility = httpClientUtility;
-            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(
-                configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]);
+            string refreshTime = configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]
+                ?? ChangesServiceConstants.ChangelogRefreshTimeDefault;
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(refreshTime);
         }
 
         /// <summary>
