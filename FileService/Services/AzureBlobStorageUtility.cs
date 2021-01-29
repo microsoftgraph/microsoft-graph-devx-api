@@ -9,6 +9,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace FileService.Services
@@ -27,6 +28,11 @@ namespace FileService.Services
             _connectionString = configuration["BlobStorage:ConnectionString"];
         }
 
+        /// <summary>
+        /// Gets the file path and parses its contents
+        /// </summary>
+        /// <param name="filePathSource"> The path of the file.</param>
+        /// <returns>A json string of file contents.</returns>
         public async Task<string> ReadFromFile(string filePathSource)
         {
             FileServiceHelper.CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));
@@ -65,6 +71,22 @@ namespace FileService.Services
             throw new IOException("Failed to connect to the blob storage account.");
         }
 
+        /// <summary>
+        /// Reads contents of a file from a http source
+        /// </summary>
+        /// <param name="requestMessage">The Http Request message.</param>
+        /// <returns></returns>
+        public Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Allows one to edit the file.
+        /// </summary>
+        /// <param name="fileContents"> Contents of the file.</param>
+        /// <param name="filePathSource"> The path of the file.</param>
+        /// <returns></returns>
         public Task WriteToFile(string fileContents, string filePathSource)
         {
             throw new NotImplementedException();

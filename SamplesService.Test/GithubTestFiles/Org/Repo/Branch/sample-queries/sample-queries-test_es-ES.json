@@ -1,0 +1,1663 @@
+{
+  "SampleQueries": [
+    {
+      "id": "0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
+      "category": "Introducción",
+      "method": "GET",
+      "humanName": "mi perfil",
+      "requestUrl": "/v1.0/me/",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/users",
+      "skipTest": false
+    },
+    {
+      "id": "fc9c9832-399d-47ef-941c-46ada54e9a49",
+      "category": "Introducción",
+      "method": "GET",
+      "humanName": "mi foto",
+      "requestUrl": "/v1.0/me/photo/$value",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/profilephoto_get",
+      "skipTest": false
+    },
+    {
+      "id": "4f1770a0-b24e-49d6-98b3-df2941de4018",
+      "category": "Introducción",
+      "method": "GET",
+      "humanName": "mi correo",
+      "requestUrl": "/v1.0/me/messages",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_messages",
+      "skipTest": false
+    },
+    {
+      "id": "7867209e-306d-41d2-bce7-30ca56bbab54",
+      "category": "Introducción",
+      "method": "GET",
+      "humanName": "todos los elementos de la unidad",
+      "requestUrl": "/v1.0/me/drive/root/children",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/driveitem-list-children?view=graph-rest-1.0",
+      "skipTest": false
+    },
+    {
+      "id": "4a36b271-6247-4a01-b5ac-7e33aeb42d04",
+      "category": "Introducción",
+      "method": "GET",
+      "humanName": "elementos populares de mi entorno",
+      "requestUrl": "/beta/me/insights/trending",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/insights_list_trending",
+      "skipTest": false
+    },
+    {
+      "id": "fe4a9fe8-c43e-413a-aad8-a842b1308e89",
+      "category": "Introducción",
+      "method": "GET",
+      "humanName": "mi administrador",
+      "requestUrl": "/v1.0/me/manager",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_manager",
+      "skipTest": false
+    },
+    {
+      "id": "6eeef6bc-af51-4c38-b93b-d4deb9287a5b",
+      "category": "Usuarios",
+      "method": "GET",
+      "humanName": "mis informes directos",
+      "requestUrl": "/v1.0/me/directReports",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_directreports",
+      "skipTest": false
+    },
+    {
+      "id": "eb1d2cf9-3878-4795-b660-668d8d8d6b7f",
+      "category": "Usuarios",
+      "method": "GET",
+      "humanName": "todos los usuarios de la organización",
+      "requestUrl": "/v1.0/users",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/users",
+      "skipTest": false
+    },
+    {
+      "id": "136e0fa2-3533-489f-a91d-52005cdb23a0",
+      "category": "Usuarios",
+      "method": "GET",
+      "humanName": "todos los usuarios del departamento de finanzas",
+      "requestUrl": "/v1.0/users?$filter=Department eq 'Finance'",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/users",
+      "skipTest": false
+    },
+    {
+      "id": "cd894894-b427-4394-814c-461d8f93468d",
+      "category": "Usuarios",
+      "method": "GET",
+      "humanName": "mis habilidades",
+      "requestUrl": "/v1.0/me/?$select=displayName,skills",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/user",
+      "skipTest": false
+    },
+    {
+      "id": "1f91b00e-b652-448c-9f11-bb37da67d7f9",
+      "category": "Usuarios",
+      "method": "GET",
+      "humanName": "usuario por correo electrónico",
+      "requestUrl": "/v1.0/users/{user-mail}",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/user",
+      "skipTest": false
+    },
+    {
+      "id": "d87091f9-546a-4e2e-896a-a463c68a7d9e",
+      "category": "Usuarios",
+      "method": "GET",
+      "humanName": "todas mis tareas de Planner",
+      "requestUrl": "/beta/me/planner/tasks",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/resources/planner_overview",
+      "skipTest": false
+    },
+    {
+      "id": "26207bcf-8f4c-4ed4-bfce-55a11d5b647c",
+      "category": "Usuarios",
+      "method": "POST",
+      "humanName": "crear un usuario",
+      "requestUrl": "/v1.0/users",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_post_users",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n        \"accountEnabled\": true,\r\n        \"city\": \"Seattle\",\r\n        \"country\": \"United States\",\r\n        \"department\": \"Sales & Marketing\",\r\n        \"displayName\": \"Melissa Darrow\",\r\n        \"givenName\": \"Melissa\",\r\n        \"jobTitle\": \"Marketing Director\",\r\n        \"mailNickname\": \"MelissaD\",\r\n        \"passwordPolicies\": \"DisablePasswordExpiration\",\r\n        \"passwordProfile\": {\r\n            \"password\": \"{Placeholder Password}\",\r\n            \"forceChangePasswordNextSignIn\": false\r\n        },\r\n        \"officeLocation\": \"131/1105\",\r\n        \"postalCode\": \"98052\",\r\n        \"preferredLanguage\": \"en-US\",\r\n        \"state\": \"WA\",\r\n        \"streetAddress\": \"9256 Towne Center Dr., Suite 400\",\r\n        \"surname\": \"Darrow\",\r\n        \"mobilePhone\": \"+1 206 555 0110\",\r\n        \"usageLocation\": \"US\",\r\n        \"userPrincipalName\": \"MelissaD@{domain}\"\r\n    }",
+      "skipTest": false
+    },
+    {
+      "id": "9cc05df4-13ef-411f-b0af-e91046cceee2",
+      "category": "Usuarios",
+      "method": "GET",
+      "humanName": "hacer un seguimiento de los cambios de los usuarios",
+      "requestUrl": "/v1.0/users/delta?$select=displayName,givenName,surname",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/concepts/delta_query_users",
+      "skipTest": false
+    },
+    {
+      "id": "3d040b26-c26b-411a-9700-7fba8b327954",
+      "category": "Grupos",
+      "method": "GET",
+      "humanName": "todos los grupos de la organización",
+      "requestUrl": "/v1.0/groups",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/group",
+      "skipTest": false
+    },
+    {
+      "id": "1e019c9d-0b90-49e1-bd4c-c587f75b2b45",
+      "category": "Grupos",
+      "method": "GET",
+      "humanName": "todos los grupos a los que pertenezco",
+      "requestUrl": "/v1.0/me/memberOf",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_memberof",
+      "skipTest": false
+    },
+    {
+      "id": "a923ff0c-60ee-4a3b-b54b-d1f913107939",
+      "category": "Grupos",
+      "method": "GET",
+      "humanName": "miembros del grupo",
+      "requestUrl": "/v1.0/groups/{group-id}/members",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/group_list_members",
+      "tip": "Esta consulta necesita un ID. de grupo.  Para buscar el ID. de un grupo al que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/memberOf",
+      "skipTest": false
+    },
+    {
+      "id": "99b14659-3f7a-481f-afa6-c2847cde30a4",
+      "category": "Grupos",
+      "method": "GET",
+      "humanName": "conversaciones del grupo",
+      "requestUrl": "/v1.0/groups/{group-id}/conversations",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/group_list_conversations",
+      "tip": "Esta consulta necesita un ID. de grupo.  Para buscar el ID. de un grupo al que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/memberOf",
+      "skipTest": false
+    },
+    {
+      "id": "bc41adae-59ef-42f5-bc26-f1272b0770b3",
+      "category": "Grupos",
+      "method": "GET",
+      "humanName": "eventos del grupo",
+      "requestUrl": "/v1.0/groups/{group-id}/events",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/group_list_events",
+      "tip": "Esta consulta necesita un ID. de grupo.  Para buscar el ID. de un grupo al que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/memberOf",
+      "skipTest": false
+    },
+    {
+      "id": "188312cf-8d67-4cdb-8951-a95deb2a2f6a",
+      "category": "Grupos",
+      "method": "POST",
+      "humanName": "agregar grupo favorito",
+      "requestUrl": "/v1.0/groups/{group-id}/addFavorite",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/group_addfavorite",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "tip": "Esta consulta necesita un ID. de grupo.  Para buscar el ID. de un grupo al que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/memberOf",
+      "skipTest": false
+    },
+    {
+      "id": "5efc4790-5233-4ce9-ac31-1a6878d5a650",
+      "category": "Grupos",
+      "method": "GET",
+      "humanName": "elementos de una unidad de grupo",
+      "requestUrl": "/v1.0/groups/{group-id}/drive/root/children",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/drive_get",
+      "tip": "Esta consulta necesita un ID. de grupo.  Para buscar el ID. de un grupo al que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/memberOf",
+      "skipTest": false
+    },
+    {
+      "id": "5499b532-b8a6-4ff9-9dc1-ed991880611b",
+      "category": "Grupos",
+      "method": "GET",
+      "humanName": "hacer un seguimientos de los cambios en los grupos",
+      "requestUrl": "/v1.0/groups/delta?$select=displayName,description",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/concepts/delta_query_groups",
+      "skipTest": false
+    },
+    {
+      "id": "b4c08825-fd6f-4987-b3cc-14b16acc84a5",
+      "category": "Correo de Outlook",
+      "method": "GET",
+      "humanName": "mi correo de importancia alta",
+      "requestUrl": "/v1.0/me/messages?$filter=importance eq 'high'",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_messages",
+      "skipTest": false
+    },
+    {
+      "id": "eda383cb-89b5-4684-9a4b-9fd7b6a862d5",
+      "category": "Correo de Outlook",
+      "method": "GET",
+      "humanName": "mis correos desde una dirección",
+      "requestUrl": "/v1.0/me/messages?$filter=(from/emailAddress/address) eq '{user-mail}'",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_messages",
+      "skipTest": false
+    },
+    {
+      "id": "e75e3860-61dc-4e2d-aeed-5b4af01692fa",
+      "category": "Correo de Outlook",
+      "method": "GET",
+      "humanName": "mi correo que contiene \"Hola a todos\"",
+      "requestUrl": "/v1.0/me/messages?$search=\"hello world\"",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_messages",
+      "skipTest": false
+    },
+    {
+      "id": "8b7af79e-0e97-47f4-8735-45c7806b7ef2",
+      "category": "Correo de Outlook",
+      "method": "POST",
+      "humanName": "enviar un correo electrónico",
+      "requestUrl": "/v1.0/me/sendMail",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/user_sendmail",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n        \"message\": {\r\n            \"subject\": \"Meet for lunch?\",\r\n            \"body\": {\r\n                \"contentType\": \"Text\",\r\n                \"content\": \"The new cafeteria is open.\"\r\n            },\r\n            \"toRecipients\": [\r\n                {\r\n                    \"emailAddress\": {\r\n                    \"address\": \"garthf@contoso.com\"\r\n                    }\r\n                }\r\n            ]\r\n        }}",
+      "tip": "Actualice el cuerpo de la solicitud y seleccione Ejecutar consulta.",
+      "skipTest": false
+    },
+    {
+      "id": "7ddf0720-9778-4aac-829a-6d3d6a67c669",
+      "category": "Correo de Outlook",
+      "method": "POST",
+      "humanName": "reenviar correo electrónico",
+      "requestUrl": "/v1.0/me/messages/{message-id}/forward",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/message_forward",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"comment\": \"FYI\",\r\n  \"toRecipients\": [\r\n    {\r\n      \"emailAddress\": {\r\n        \"address\": \"{user-mail}\",\r\n        \"name\": \"Alex Darrow\"\r\n      }\r\n    }\r\n  ]\r\n}",
+      "tip": "Esta consulta requiere un ID. de mensaje. Para obtener el ID., ejecute la siguiente consulta, busque el mensaje en la respuesta y use la propiedad ID: GET https://graph.microsoft.com/v1.0/me/messages",
+      "skipTest": false
+    },
+    {
+      "id": "4f3b9877-5ae8-49e7-a614-679879cfebdb",
+      "category": "Correo de Outlook",
+      "method": "GET",
+      "humanName": "realizar el seguimiento de los cambios del correo electrónico",
+      "requestUrl": "/v1.0/me/mailFolders/Inbox/messages/delta",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/concepts/delta_query_messages",
+      "skipTest": false
+    },
+    {
+      "id": "9a718c8a-588d-4130-8cdf-c47c5a5e77e0",
+      "category": "Correo de Outlook",
+      "method": "GET",
+      "humanName": "mis reglas de la Bandeja de entrada",
+      "requestUrl": "/beta/me/mailFolders/inbox/messagerules",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/resources/messagerule",
+      "skipTest": false
+    },
+    {
+      "id": "41683db9-63a8-4bea-903d-6812535d478f",
+      "category": "Correo de Outlook",
+      "method": "GET",
+      "humanName": "mis categorías de Outlook",
+      "requestUrl": "/beta/me/outlook/masterCategories",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/outlookuser_list_mastercategories",
+      "skipTest": false
+    },
+    {
+      "id": "ba5b9178-8dd6-408d-9fa0-451c555f096b",
+      "category": "Correo de Outlook",
+      "method": "GET",
+      "humanName": "obtener encabezados de correo electrónico",
+      "requestUrl": "/beta/me/messages?$select=internetMessageHeaders&$top=1",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/resources/message",
+      "skipTest": false
+    },
+    {
+      "id": "5375c9af-0c41-40a6-a93d-410403286f5a",
+      "category": "Correo de Outlook",
+      "method": "GET",
+      "humanName": "lista de las salas de conferencias",
+      "requestUrl": "/beta/me/findRooms",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/user_findrooms",
+      "skipTest": false
+    },
+    {
+      "id": "38792887-68ae-493c-b2d5-5deb4febc3aa",
+      "category": "Correo de Outlook (beta)",
+      "method": "GET",
+      "humanName": "correo electrónico en el que se me menciona",
+      "requestUrl": "/beta/me/messages?$filter=mentionsPreview/isMentioned eq true&$select=subject,sender,receivedDateTime",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/user_list_messages#request-2",
+      "skipTest": false
+    },
+    {
+      "id": "ef35ba02-1150-4328-a49b-03f6bbb2f0f5",
+      "category": "Calendario de Outlook",
+      "method": "GET",
+      "humanName": "mis eventos para la próxima semana",
+      "requestUrl": "/v1.0/me/calendarview?startdatetime={today}&enddatetime={next-week}",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_calendarview",
+      "skipTest": false
+    },
+    {
+      "id": "4531983c-850d-47e6-b576-1f0af015fcf7",
+      "category": "Calendario de Outlook",
+      "method": "GET",
+      "humanName": "todos los eventos en mi calendario",
+      "requestUrl": "/v1.0/me/events?$select=subject,body,bodyPreview,organizer,attendees,start,end,location",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_events",
+      "skipTest": false
+    },
+    {
+      "id": "207c3d04-127e-447f-9ba9-fbc36f4fad60",
+      "category": "Calendario de Outlook",
+      "method": "GET",
+      "humanName": "todos mis calendarios",
+      "requestUrl": "/v1.0/me/calendars",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_calendars",
+      "skipTest": false
+    },
+    {
+      "id": "73f6df96-9358-4073-a4f8-3b9dd06ffa68",
+      "category": "Calendario de Outlook",
+      "method": "POST",
+      "humanName": "buscar horas de reunión",
+      "requestUrl": "/v1.0/me/findMeetingTimes",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/user_findmeetingtimes",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n        \"attendees\": [\r\n            {\r\n            \"emailAddress\": {\r\n                \"address\": \"{user-mail}\",\r\n                \"name\": \"Alex Darrow\"\r\n            },\r\n            \"type\": \"Required\"\r\n            }\r\n        ],\r\n        \"timeConstraint\": {\r\n            \"timeslots\": [\r\n            {\r\n            \"start\": {\r\n                \"dateTime\": \"{today}\",\r\n                \"timeZone\": \"Pacific Standard Time\"\r\n                },\r\n                \"end\": {\r\n                \"dateTime\": \"{next-week}\",\r\n                \"timeZone\": \"Pacific Standard Time\"\r\n                }\r\n            }\r\n            ]\r\n        },\r\n        \"locationConstraint\": {\r\n        \"isRequired\": \"false\",\r\n        \"suggestLocation\": \"true\",\r\n        \"locations\": [\r\n            {\r\n            \"displayName\": \"Conf Room 32/1368\",\r\n            \"locationEmailAddress\": \"conf32room1368@imgeek.onmicrosoft.com\"\r\n            }\r\n        ]\r\n        },\r\n        \"meetingDuration\": \"PT1H\"\r\n        }",
+      "tip": "Actualice el cuerpo de la solicitud y seleccione Ejecutar consulta.",
+      "skipTest": false
+    },
+    {
+      "id": "a70bb220-2e59-4309-9f8d-1d5e70ac0bec",
+      "category": "Calendario de Outlook",
+      "method": "POST",
+      "humanName": "programar una reunión",
+      "requestUrl": "/v1.0/me/events",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/user_post_events",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n        \"subject\": \"My event\",\r\n        \"start\": {\r\n            \"dateTime\": \"{today}\",\r\n            \"timeZone\": \"UTC\"\r\n        },\r\n        \"end\": {\r\n            \"dateTime\": \"{next-week}\",\r\n            \"timeZone\": \"UTC\"\r\n        }\r\n    }",
+      "tip": "Actualice el cuerpo de la solicitud y seleccione Ejecutar consulta.",
+      "skipTest": false
+    },
+    {
+      "id": "0ccc92bc-0fb6-4322-bbdf-9489760bf637",
+      "category": "Calendario de Outlook",
+      "method": "POST",
+      "humanName": "agregar llamada de la comunidad de Graph",
+      "requestUrl": "/v1.0/me/events",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/user_post_events",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"subject\": \"Microsoft Graph Community call\",\r\n  \"body\": {\r\n    \"contentType\": \"HTML\",\r\n    \"content\": \"Call link: https://aka.ms/mmkv1b Submit a question: https://aka.ms/ybuw2i\"\r\n  },\r\n  \"start\": {\r\n      \"dateTime\": \"2018-09-04T08:00:00\",\r\n      \"timeZone\": \"Pacific Standard Time\"\r\n  },\r\n  \"end\": {\r\n      \"dateTime\": \"2018-09-04T09:00:00\",\r\n      \"timeZone\": \"Pacific Standard Time\"\r\n  },\r\n  \"location\":{\r\n      \"displayName\":\"Skype for Business\"\r\n  },\r\n    \"recurrence\": {\r\n      \"pattern\": {\r\n      \"type\": \"relativeMonthly\",\r\n      \"interval\": 1,\r\n      \"daysOfWeek\": [ \"Tuesday\" ],\r\n      \"index\": \"first\"\r\n    },\r\n      \"range\": {\r\n        \"type\": \"noEnd\",\r\n        \"startDate\": \"2017-08-29\"\r\n      }\r\n    }\r\n}",
+      "tip": "Crea la llamada de la comunidad de Microsoft Graph mensual en su calendario.",
+      "skipTest": false
+    },
+    {
+      "id": "663d632b-6945-454e-91e9-e8eb65224dc2",
+      "category": "Calendario de Outlook",
+      "method": "GET",
+      "humanName": "hacer un seguimiento de mis eventos para la próxima semana",
+      "requestUrl": "/v1.0/me/calendarView/delta?startDateTime={today}&endDateTime={next-week}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/concepts/delta_query_events",
+      "tip": "Esta consulta usa parámetros de fecha y hora. Use un formato ISO 8601. Por ejemplo, \"2017-04-30T19:00:00.0000000\".",
+      "skipTest": false
+    },
+    {
+      "id": "b9d170f7-29ed-4c0a-bf91-fa64cee75daa",
+      "category": "Contactos personales",
+      "method": "GET",
+      "humanName": "mis contactos",
+      "requestUrl": "/v1.0/me/contacts",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_contacts",
+      "skipTest": false
+    },
+    {
+      "id": "23d459df-1483-4b01-8867-f16596ed856b",
+      "category": "Contactos personales",
+      "method": "POST",
+      "humanName": "agregar contacto",
+      "requestUrl": "/v1.0/me/contacts",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/user_post_contacts",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n    \"givenName\": \"Pavel\",\r\n    \"surname\": \"Bansky\",\r\n    \"emailAddresses\": [\r\n        {\r\n        \"address\": \"pavelb@fabrikam.onmicrosoft.com\",\r\n        \"name\": \"Pavel Bansky\"\r\n        }\r\n    ],\r\n    \"businessPhones\": [\r\n        \"+1 732 555 0102\"\r\n    ]\r\n}",
+      "tip": "Actualice el cuerpo de la solicitud y seleccione Ejecutar consulta.",
+      "skipTest": false
+    },
+    {
+      "id": "308cee8e-cbc8-4d0a-995b-8d6e0fff7b44",
+      "category": "OneDrive",
+      "method": "GET",
+      "humanName": "todos los elementos de la unidad",
+      "requestUrl": "/v1.0/me/drive/root/children",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/driveitem-list-children?view=graph-rest-1.0",
+      "skipTest": false
+    },
+    {
+      "id": "bd7488ba-9e37-41e5-a4c2-6e1ff38246c6",
+      "category": "OneDrive",
+      "method": "GET",
+      "humanName": "mis archivos recientes",
+      "requestUrl": "/v1.0/me/drive/recent",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/drive_recent",
+      "skipTest": false
+    },
+    {
+      "id": "4bdb9748-fbbe-40a0-8a9a-7171c5f23bdc",
+      "category": "OneDrive",
+      "method": "GET",
+      "humanName": "archivos compartidos conmigo",
+      "requestUrl": "/v1.0/me/drive/sharedWithMe",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/drive_sharedwithme",
+      "skipTest": false
+    },
+    {
+      "id": "ec800062-a5a3-416f-b8a8-b658664dc382",
+      "category": "OneDrive",
+      "method": "GET",
+      "humanName": "buscar en mi OneDrive",
+      "requestUrl": "/v1.0/me/drive/root/search(q='finance')?select=name,id,webUrl",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/driveitem-search?view=graph-rest-1.0&tabs=http",
+      "skipTest": false
+    },
+    {
+      "id": "d7e63f8d-7819-4449-8ccc-3f105ec3ab26",
+      "category": "OneDrive",
+      "method": "POST",
+      "humanName": "crear una carpeta",
+      "requestUrl": "/v1.0/me/drive/root/children",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/driveitem-post-children?view=graph-rest-1.0&tabs=http",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"name\": \"New Folder\",\r\n  \"folder\": { }\r\n}",
+      "tip": "Actualice el cuerpo de la solicitud y seleccione Ejecutar consulta.",
+      "skipTest": false
+    },
+    {
+      "id": "c341e213-a2e9-4757-803f-0584fe8f4533",
+      "category": "Excel",
+      "method": "POST",
+      "humanName": "crear una sesión",
+      "requestUrl": "/v1.0/me/drive/items/{drive-item-id}/workbook/createSession",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/resources/excel",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{ \"persistChanges\": true }",
+      "tip": "Esta consulta requiere un identificador de driveItem.  Para buscar el ID. del driveItem que corresponde a un libro de Excel, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')?select=name,id,webUrl.",
+      "skipTest": false
+    },
+    {
+      "id": "8e5e9b86-136b-4297-a167-a779a85fe956",
+      "category": "Excel",
+      "method": "GET",
+      "humanName": "hojas de cálculo de un libro",
+      "requestUrl": "/v1.0/me/drive/items/{drive-item-id}/workbook/worksheets",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/workbook_list_worksheets",
+      "tip": "Esta consulta requiere un identificador de driveItem.  Para buscar el ID. del driveItem que corresponde a un libro de Excel, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')?select=name,id,webUrl.",
+      "skipTest": false
+    },
+    {
+      "id": "7f289a0c-0461-451a-9839-06e37f7ba408",
+      "category": "Excel",
+      "method": "POST",
+      "humanName": "agregar una hoja de cálculo nueva",
+      "requestUrl": "/v1.0/me/drive/items/{drive-item-id}/workbook/worksheets/",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/worksheetcollection_add",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"name\": \"My New Sheet\"\r\n}",
+      "tip": "Esta consulta requiere un identificador de driveItem.  Para buscar el ID. del driveItem que corresponde a un libro de Excel, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')?select=name,id,webUrl.",
+      "skipTest": false
+    },
+    {
+      "id": "a8a1c2b7-5ba8-4956-9bbf-3c62fb8e6611",
+      "category": "Excel",
+      "method": "POST",
+      "humanName": "calcular el pago del préstamo",
+      "requestUrl": "/v1.0/me/drive/items/{drive-item-id}/workbook/functions/pmt",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/resources/workbook#functions",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n \"rate\": 0.035,\r\n \"nper\": 20,\r\n \"pv\": -2000\r\n}",
+      "tip": "Esta consulta requiere un identificador de driveItem.  Para buscar el ID. del driveItem que corresponde a un libro de Excel, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')?select=name,id,webUrl.",
+      "skipTest": false
+    },
+    {
+      "id": "3e90a11e-e6a3-47e9-afe6-8bc7d2cb0e19",
+      "category": "Excel",
+      "method": "GET",
+      "humanName": "rango utilizado en una hoja de cálculo",
+      "requestUrl": "/v1.0/me/drive/items/{drive-item-id}/workbook/worksheets('Sheet1')/usedRange",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/worksheet_usedrange",
+      "tip": "Esta consulta requiere un identificador de driveItem.  Para buscar el ID. del driveItem que corresponde a un libro de Excel, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')?select=name,id,webUrl.",
+      "skipTest": false
+    },
+    {
+      "id": "83a3641e-28ee-409e-9f6d-63b9bd95a374",
+      "category": "Excel",
+      "method": "GET",
+      "humanName": "tablas en una hoja de cálculo",
+      "requestUrl": "/v1.0/me/drive/items/{drive-item-id}/workbook/worksheets/Sheet1/tables",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/worksheet_list_tables",
+      "tip": "Esta consulta requiere un identificador de driveItem.  Para buscar el ID. del driveItem que corresponde a un libro de Excel, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')?select=name,id,webUrl.",
+      "skipTest": false
+    },
+    {
+      "id": "c495ea8e-762e-420d-b1d4-68246323f57e",
+      "category": "Excel",
+      "method": "GET",
+      "humanName": "gráficos en una hoja de cálculo",
+      "requestUrl": "/v1.0/me/drive/items/{drive-item-id}/workbook/worksheets('Sheet1')/charts",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/worksheet_list_charts",
+      "tip": "Esta consulta requiere un identificador de driveItem.  Para buscar el ID. del driveItem que corresponde a un libro de Excel, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')?select=name,id,webUrl.",
+      "skipTest": false
+    },
+    {
+      "id": "eaca56a9-fc76-42ba-9099-212fce2c2018",
+      "category": "Planner",
+      "method": "GET",
+      "humanName": "todos los planes de Planner asociados a un grupo",
+      "requestUrl": "/v1.0/groups/{group-id-with-plan}/planner/plans",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/plannergroup_list_plans",
+      "tip": "Esta consulta necesita un ID. de grupo.  Para buscar el ID. de un grupo al que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/memberOf",
+      "skipTest": false
+    },
+    {
+      "id": "6161a316-8212-4a16-a8f1-e200501a4342",
+      "category": "Planner",
+      "method": "GET",
+      "humanName": "plan de Planner",
+      "requestUrl": "/v1.0/planner/plans/{plan-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/plannerplan_get",
+      "tip": "Esta consulta necesita un ID. de plan.  Para buscar el ID. del plan puede ejecutar: GET https://graph.microsoft.com/v1.0/me/groups/{group-id}/plans.",
+      "skipTest": false
+    },
+    {
+      "id": "4dbeacbb-51d3-46ec-836f-b84cb01ae97a",
+      "category": "Planner",
+      "method": "PATCH",
+      "humanName": "actualizar un plan de Planner",
+      "requestUrl": "/v1.0/planner/plans/{plan-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/plannerplan_update",
+      "headers": [
+        {
+          "name": "If-Match",
+          "value": "{if-match}"
+        }
+      ],
+      "postBody": "{\r\n    \"title\": \"Updated plan title\"\r\n}",
+      "tip": "Esta consulta necesita un identificador de plan y el valor de @odata.etag para una tarea seleccionada. Para buscar el ID. del plan, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/planner/tasks. Para obtener el @odata.etag, ejecute: GET https://graph.microsoft.com/v1.0/planner/plans/{plan-id}",
+      "skipTest": false
+    },
+    {
+      "id": "c594b984-66d2-4f8a-8c6a-cb520cbe471f",
+      "category": "Planner",
+      "method": "GET",
+      "humanName": "todos los depósitos de un plan de Planner",
+      "requestUrl": "/v1.0/planner/plans/{plan-id}/buckets",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/plannerplan_list_buckets",
+      "tip": "Esta consulta necesita un ID. de plan.  Para buscar el ID. del plan puede ejecutar: GET https://graph.microsoft.com/v1.0/me/groups/{group-id}/plans.",
+      "skipTest": false
+    },
+    {
+      "id": "d0834295-25b6-4678-b8a1-fc6d1bb60c49",
+      "category": "Planner",
+      "method": "POST",
+      "humanName": "crear un depósito en un plan de Planner",
+      "requestUrl": "/v1.0/planner/buckets",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/planner_post_buckets",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"name\": \"{bucket-name}\",\r\n  \"planId\": \"{plan-id}\",\r\n  \"orderHint\": \" !\"\r\n}",
+      "tip": "Esta consulta necesita un ID. de plan.  Para buscar el ID. del plan puede ejecutar: GET https://graph.microsoft.com/v1.0/me/planner/plans",
+      "skipTest": false
+    },
+    {
+      "id": "8efc3fd6-cbde-43fb-a0d0-a35f8bddd86b",
+      "category": "Planner",
+      "method": "PATCH",
+      "humanName": "actualizar un depósito en un plan de Planner",
+      "requestUrl": "/v1.0/planner/buckets/{bucket-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/plannerbucket_update",
+      "headers": [
+        {
+          "name": "If-Match",
+          "value": "{if-match}"
+        }
+      ],
+      "postBody": "{\r\n    \"name\": \"Updated bucket name\"\r\n}",
+      "tip": "Esta consulta necesita un identificador de depósito y el valor de @odata.etag para un depósito seleccionado.  Para buscar el ID. de la ejecución del depósito, ejecute: GET https://graph.microsoft.com/v1.0/planner/plans/{plan-id}/buckets and then run: GET https://graph.microsoft.com/v1.0/planner/buckets/{bucket-id} to discover @odata.etag",
+      "skipTest": false
+    },
+    {
+      "id": "3ba300c3-d24d-4bf3-bca3-d0e6f158a9cd",
+      "category": "Planner",
+      "method": "GET",
+      "humanName": "todas las tareas de Planner para un plan",
+      "requestUrl": "/v1.0/planner/plans/{plan-id}/tasks",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/plannerplan_list_tasks",
+      "tip": "Esta consulta necesita un ID. de plan.  Para buscar el ID. del plan puede ejecutar: GET https://graph.microsoft.com/v1.0/me/groups/{group-id}/plans.",
+      "skipTest": false
+    },
+    {
+      "id": "26e73e65-67d7-4cae-81aa-c829bdec0a89",
+      "category": "Planner",
+      "method": "GET",
+      "humanName": "todas mis tareas de Planner",
+      "requestUrl": "/v1.0/me/planner/tasks",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/planner_overview",
+      "skipTest": false
+    },
+    {
+      "id": "b5a9e5f0-d3c5-487b-bb58-cd7ca70bad1b",
+      "category": "Planner",
+      "method": "GET",
+      "humanName": "todas las tareas de Planner de un usuario",
+      "requestUrl": "/v1.0/users/{coworker-mail}/planner/tasks",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/planneruser_list_tasks",
+      "skipTest": false
+    },
+    {
+      "id": "009536f5-9a7d-4de5-ad47-a714d1c3f116",
+      "category": "Planner",
+      "method": "GET",
+      "humanName": "tarea de Planner por id.",
+      "requestUrl": "/v1.0/planner/tasks/{task-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/plannertask_get",
+      "tip": "Esta consulta requiere un identificador de tarea.  Para buscar el ID. de la tarea, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/planner/tasks",
+      "skipTest": false
+    },
+    {
+      "id": "9f0a62e7-f425-4dda-a842-f81397006321",
+      "category": "Planner",
+      "method": "POST",
+      "humanName": "crear una tarea de Planner",
+      "requestUrl": "/v1.0/planner/tasks",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/planner_post_tasks",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"planId\": \"{plan-id}\",\r\n  \"title\": \"{task-title}\",\r\n  \"assignments\": {}\r\n}",
+      "tip": "Esta consulta necesita un ID. de plan.  Para buscar el ID. del plan puede ejecutar: GET https://graph.microsoft.com/v1.0/me/planner/tasks",
+      "skipTest": false
+    },
+    {
+      "id": "50fd36fd-7420-449e-a051-e3c5cd4c68b0",
+      "category": "Planner",
+      "method": "PATCH",
+      "humanName": "actualizar una tarea de Planner",
+      "requestUrl": "/v1.0/planner/tasks/{task-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/plannertask_update",
+      "headers": [
+        {
+          "name": "If-Match",
+          "value": "{if-match}"
+        }
+      ],
+      "postBody": "{\r\n    \"title\": \"Updated task title\"\r\n}",
+      "tip": "Esta consulta requiere un identificador de tarea y un valor de @odata.etag para una tarea seleccionada.  Para buscar el ID. de la tarea y @odata.etag, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/planner/tasks",
+      "skipTest": false
+    },
+    {
+      "id": "f557e60e-64c9-4daf-b93e-34e55f08d787",
+      "category": "Planner",
+      "method": "GET",
+      "humanName": "detalles de una tarea de Planner",
+      "requestUrl": "/v1.0/planner/tasks/{task-id}/details",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/plannertaskdetails_get",
+      "tip": "Esta consulta requiere un identificador de tarea.  Para buscar el ID. de la tarea, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/planner/tasks",
+      "skipTest": false
+    },
+    {
+      "id": "31614af6-3cbb-4991-ab10-1bfcaf3dc37e",
+      "category": "Información",
+      "method": "GET",
+      "humanName": "mis archivos recientes",
+      "requestUrl": "/v1.0/me/drive/recent",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/drive_recent",
+      "skipTest": false
+    },
+    {
+      "id": "cbc7a138-4b3d-41b1-91be-0f52c1aa42d0",
+      "category": "Información (beta)",
+      "method": "GET",
+      "humanName": "elementos populares de mi entorno",
+      "requestUrl": "/beta/me/insights/trending",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/insights_list_trending",
+      "skipTest": false
+    },
+    {
+      "id": "656c104a-9c8d-46a7-98b4-31b09f340601",
+      "category": "Información (beta)",
+      "method": "GET",
+      "humanName": "elementos compartidos conmigo",
+      "requestUrl": "/beta/me/insights/shared",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/insights_list_shared",
+      "skipTest": false
+    },
+    {
+      "id": "8af3e5da-85ef-4051-9ae5-0fde5d2730e3",
+      "category": "Información (beta)",
+      "method": "GET",
+      "humanName": "elementos visualizados y modificados por mí",
+      "requestUrl": "/beta/me/insights/used",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/insights_list_used",
+      "skipTest": false
+    },
+    {
+      "id": "e995de85-f1f2-4438-93a6-c5231b2bb1d4",
+      "category": "Personas",
+      "method": "GET",
+      "humanName": "personas con las que trabajo",
+      "requestUrl": "/v1.0/me/people",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_people",
+      "skipTest": false
+    },
+    {
+      "id": "b6498cca-6b3f-447d-a964-8d25062c2ff0",
+      "category": "Personas",
+      "method": "GET",
+      "humanName": "personas cuyo nombre empiece por J",
+      "requestUrl": "/v1.0/me/people/?$search=j",
+      "docLink": "https://docs.microsoft.com/es-es/graph/people-example",
+      "skipTest": false
+    },
+    {
+      "id": "18268b2f-da49-427d-9407-9f38a1eba347",
+      "category": "Personas",
+      "method": "GET",
+      "humanName": "personas pertinentes para un tema",
+      "requestUrl": "/v1.0/me/people/?$search=\"topic: contoso\"",
+      "docLink": "https://docs.microsoft.com/es-es/graph/people-example",
+      "skipTest": false
+    },
+    {
+      "id": "241fc34f-6089-42ba-9103-2a32941afdc6",
+      "category": "Extensiones",
+      "method": "GET",
+      "humanName": "obtener una extensión abierta",
+      "requestUrl": "/v1.0/me?$select=id,displayName,mail,mobilePhone&$expand=extensions",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/opentypeextension",
+      "skipTest": false
+    },
+    {
+      "id": "53738801-ba3a-4cea-b8e4-90423dc1af56",
+      "category": "Extensiones",
+      "method": "POST",
+      "humanName": "crear una extensión abierta",
+      "requestUrl": "/v1.0/me/extensions",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/opentypeextension_post_opentypeextension",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"@odata.type\":\"microsoft.graph.openTypeExtension\",    \"extensionName\":\"com.contoso.roamingSettings\",\r\n    \"theme\":\"dark\",\r\n    \"color\":\"purple\",\r\n    \"lang\":\"Japanese\"\r\n}",
+      "skipTest": false
+    },
+    {
+      "id": "3a7acec6-bc8e-44f1-927b-53ce81f3f119",
+      "category": "Extensiones",
+      "method": "PATCH",
+      "humanName": "actualizar una extensión abierta",
+      "requestUrl": "/v1.0/me/extensions/{extension-id}",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/opentypeextension_update",
+      "postBody": "{\r\n    \"theme\":\"light\",\r\n    \"color\":\"yellow\",\r\n    \"lang\":\"Swahili\"\r\n}",
+      "skipTest": false
+    },
+    {
+      "id": "76ecc500-897d-4a5e-a15c-0f6702a43d32",
+      "category": "Extensiones",
+      "method": "GET",
+      "humanName": "obtener extensiones de esquema disponibles",
+      "requestUrl": "/v1.0/schemaExtensions",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/schemaextension_post_schemaextensions",
+      "skipTest": false
+    },
+    {
+      "id": "4b52ee0c-7f91-45ce-b124-7f3e2ea26a31",
+      "category": "Extensiones",
+      "method": "GET",
+      "humanName": "filtrar grupos por valor de propiedad de extensión",
+      "requestUrl": "/v1.0/groups?$filter=adatumisv_courses/id eq '123'&$select=id,displayName,adatumisv_courses",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/schemaextension_post_schemaextensions",
+      "skipTest": false
+    },
+    {
+      "id": "709a0cda-871e-4144-8194-bb5b1473a9e9",
+      "category": "Extensiones",
+      "method": "POST",
+      "humanName": "crear un grupo con datos de extensión",
+      "requestUrl": "/v1.0/groups",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/schemaextension_post_schemaextensions",
+      "postBody": "{\r\n    \"displayName\": \"Extensions sample group\",\r\n    \"description\": \"Extensions sample group\",\r\n    \"groupTypes\": [\"Unified\"],\r\n    \"mailEnabled\": true,\r\n    \"mailNickname\": \"extSample123\",\r\n    \"securityEnabled\": false,\r\n    \"adatumisv_courses\": {\r\n        \"id\":\"123\",\r\n        \"name\":\"New Managers\",\r\n        \"type\":\"Online\"\r\n    }\r\n}",
+      "skipTest": false
+    },
+    {
+      "id": "461afad9-9dd1-4942-8124-f82d9f04b98c",
+      "category": "Extensiones",
+      "method": "PATCH",
+      "humanName": "actualizar un grupo con datos de extensión",
+      "requestUrl": "/v1.0/groups/{group-id}",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/schemaextension_post_schemaextensions",
+      "postBody": "{\r\n   \"adatumisv_courses\": {\r\n        \"id\":\"123\",\r\n        \"name\":\"New Managers\",\r\n        \"type\":\"Online\"\r\n    }\r\n}",
+      "skipTest": false
+    },
+    {
+      "id": "e3d3d825-e36c-467f-9526-e59721a303b9",
+      "category": "OneNote",
+      "method": "GET",
+      "humanName": "mis blocs de notas",
+      "requestUrl": "/v1.0/me/onenote/notebooks",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/onenote",
+      "skipTest": false
+    },
+    {
+      "id": "a879fd58-59d4-41b2-b1e7-0c79e17e3088",
+      "category": "OneNote",
+      "method": "GET",
+      "humanName": "mis secciones",
+      "requestUrl": "/v1.0/me/onenote/sections",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/section",
+      "skipTest": false
+    },
+    {
+      "id": "1735509f-4d3f-42ba-8803-f048d03e1de2",
+      "category": "OneNote",
+      "method": "GET",
+      "humanName": "mis páginas",
+      "requestUrl": "/v1.0/me/onenote/pages",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/section_list_pages",
+      "skipTest": false
+    },
+    {
+      "id": "ce0940d9-7991-4758-8d46-a35b4bd4d4b4",
+      "category": "OneNote",
+      "method": "POST",
+      "humanName": "crear bloc de notas",
+      "requestUrl": "/v1.0/me/onenote/notebooks",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/onenote_post_notebooks",
+      "postBody": "{\r\n  \"displayName\": \"My Notebook\"\r\n}",
+      "tip": "Actualice el cuerpo de la solicitud y seleccione Ejecutar consulta.",
+      "skipTest": false
+    },
+    {
+      "id": "9b937d40-885d-4eb1-a36d-9b001ce63d1d",
+      "category": "OneNote",
+      "method": "POST",
+      "humanName": "crear sección",
+      "requestUrl": "/v1.0/me/onenote/notebooks/{notebook-id}/sections",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/notebook_post_sections",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"displayName\": \"Section 1\"\r\n}",
+      "tip": "Esta consulta necesita un identificador de Bloc de notas.  Para buscar el ID., puede ejecutar: GET https://graph.microsoft.com/v1.0/me/onenote/notebooks. ",
+      "skipTest": false
+    },
+    {
+      "id": "4e8ad9b3-01cf-4e65-9514-acd677f55ee5",
+      "category": "OneNote",
+      "method": "POST",
+      "humanName": "crear página",
+      "requestUrl": "/v1.0/me/onenote/sections/{section-id}/pages",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/section_post_pages",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/xhtml+xml"
+        }
+      ],
+      "postBody": "\r\n<!DOCTYPE html>\r\n<html>\r\n  <head>\r\n    <title>A page with a block of HTML</title>\r\n  </head>\r\n  <body>\r\n    <p>This page contains some <i>formatted</i> <b>text</b>.</p>\r\n  </body>\r\n</html>",
+      "tip": "Esta consulta requiere un ID. de sección.  Para buscar el ID., puede ejecutar: GET https://graph.microsoft.com/v1.0/me/onenote/sections.",
+      "skipTest": false
+    },
+    {
+      "id": "03bc7528-425b-4346-80c5-4fe4403622a0",
+      "category": "Sitios de SharePoint",
+      "method": "GET",
+      "humanName": "sitio de SharePoint predeterminado de mi organización",
+      "requestUrl": "/v1.0/sites/root",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/site_get",
+      "skipTest": false
+    },
+    {
+      "id": "3dedf59e-8407-4ba2-a916-e5a40426c214",
+      "category": "Sitios de SharePoint",
+      "method": "GET",
+      "humanName": "Enumerar las bibliotecas de documentos en el sitio raíz",
+      "requestUrl": "/v1.0/sites/root/drives",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/drive_list#list-a-sites-drives",
+      "skipTest": false
+    },
+    {
+      "id": "a696c30e-9d43-4269-8591-5b263833602d",
+      "category": "Sitios de SharePoint",
+      "method": "GET",
+      "humanName": "Sitio de SharePoint basado en la ruta de acceso relativa del sitio",
+      "requestUrl": "/v1.0/sites/{host-name}:/{server-relative-path}",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/site_getbypath",
+      "skipTest": false
+    },
+    {
+      "id": "73fa11fa-e984-444b-94cf-b843141339bd",
+      "category": "Sitios de SharePoint",
+      "method": "GET",
+      "humanName": "Buscar un sitio de SharePoint por palabra clave",
+      "requestUrl": "/v1.0/sites?search=contoso",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/site_search",
+      "skipTest": false
+    },
+    {
+      "id": "1f8dd913-d2d5-4485-aac0-a8acde3dc529",
+      "category": "Sitios de SharePoint",
+      "method": "GET",
+      "humanName": "Enumerar los subsitios del sitio raíz",
+      "requestUrl": "/v1.0/sites/root/sites",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/site_list_subsites",
+      "skipTest": false
+    },
+    {
+      "id": "198473e0-b580-400f-a4a3-a8086e68b51d",
+      "category": "Sitios de SharePoint",
+      "method": "GET",
+      "humanName": "Enumerar las columnas de sitio del sitio raíz",
+      "requestUrl": "/v1.0/sites/root/columns",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/resources/site?view=graph-rest-1.0",
+      "skipTest": false
+    },
+    {
+      "id": "da5a8521-b780-45d4-ab49-fd8f3f71fca9",
+      "category": "Sitios de SharePoint",
+      "method": "GET",
+      "humanName": "Enumerar los tipos de contenido de sitio del sitio raíz",
+      "requestUrl": "/v1.0/sites/root/contentTypes",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/resources/site?view=graph-rest-1.0",
+      "skipTest": false
+    },
+    {
+      "id": "b7d7134b-6509-48c5-8ce6-79d431ac4e98",
+      "category": "Listas de SharePoint",
+      "method": "GET",
+      "humanName": "Enumerar las listas del sitio raíz",
+      "requestUrl": "/v1.0/sites/root/lists",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/list_list",
+      "skipTest": false
+    },
+    {
+      "id": "659659dc-afd0-4ff9-a1fc-06c0f1636d21",
+      "category": "Listas de SharePoint",
+      "method": "GET",
+      "humanName": "Enumerar las columnas de lista",
+      "requestUrl": "/v1.0/sites/root/lists/{list-id}/columns",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/resources/listitem?view=graph-rest-1.0",
+      "skipTest": false
+    },
+    {
+      "id": "898adf6f-7299-4803-b472-30ef7dc843ce",
+      "category": "Listas de SharePoint",
+      "method": "GET",
+      "humanName": "Enumerar los tipos de contenido de lista",
+      "requestUrl": "/v1.0/sites/root/lists/{list-id}/contentTypes",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/resources/listitem?view=graph-rest-1.0",
+      "skipTest": false
+    },
+    {
+      "id": "5df47910-768c-49f4-bf9d-9922e7abfff5",
+      "category": "Listas de SharePoint",
+      "method": "GET",
+      "humanName": "Enumerar los elementos de lista de una lista",
+      "requestUrl": "/v1.0/sites/root/lists/{list-id}/items",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/listitem_list",
+      "skipTest": false
+    },
+    {
+      "id": "ae717dfe-a350-4182-9842-97f60faa77a4",
+      "category": "Listas de SharePoint",
+      "method": "GET",
+      "humanName": "Enumerar los elementos de lista con valores de columna específicos",
+      "requestUrl": "/v1.0/sites/root/lists/{list-id}/items?$filter=fields/Title eq '{list-title}'",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/listitem_list",
+      "headers": [
+        {
+          "name": "Prefer",
+          "value": "allowthrottleablequeries"
+        }
+      ],
+      "skipTest": false
+    },
+    {
+      "id": "3d13b070-b6c1-4739-90a9-6ff3ed68ff93",
+      "category": "Procesamiento por lotes",
+      "method": "POST",
+      "humanName": "Realizar operaciones GET paralelas",
+      "requestUrl": "/v1.0/$batch",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/concepts/json_batching",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\"requests\" : [{\"url\" : \"/me?$select=displayName,jobTitle,userPrincipalName\", \"method\" : \"GET\", \"id\" : \"1\"}, {\"url\" : \"/me/messages?$filter=importance eq 'high'&$select=from,subject,receivedDateTime,bodyPreview\", \"method\" : \"GET\", \"id\" : \"2\"}, {\"url\" : \"/me/events\", \"method\" : \"GET\", \"id\" : \"3\"}]  }",
+      "tip": "En esta consulta se muestra cómo usar el procesamiento por lotes para obtener la información de usuario, los mensajes y los eventos.",
+      "skipTest": false
+    },
+    {
+      "id": "bb6a319a-ac5c-443a-8242-8abee849205a",
+      "category": "Procesamiento por lotes",
+      "method": "POST",
+      "humanName": "Combinar una operación POST con una GET",
+      "requestUrl": "/v1.0/$batch",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/concepts/json_batching",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n \"requests\": [{\r\n   \"url\": \"/me/drive/root/children\",\r\n   \"method\": \"POST\",\r\n   \"id\": \"1\",\r\n   \"body\": {\r\n    \"name\": \"TestBatchingFolder\",\r\n    \"folder\": {}\r\n   },\r\n   \"headers\": {\r\n    \"Content-Type\": \"application/json\"\r\n   }\r\n  }, {\r\n   \"url\": \"/me/drive/root/children/TestBatchingFolder \",\r\n   \"method\": \"GET\",\r\n   \"id\": \"2\",\r\n   \"DependsOn\": [\"1\"]\r\n  }\r\n ]\r\n} ",
+      "tip": "En esta consulta, se creará una carpeta llamada TestBatchingFolder en su OneDrive y se devolverá por un método GET.",
+      "skipTest": false
+    },
+    {
+      "id": "dbfc18b5-5aed-4a99-96df-ba2d1198d000",
+      "category": "Microsoft Teams",
+      "method": "GET",
+      "humanName": "equipos a los que me he unido",
+      "requestUrl": "/v1.0/me/joinedTeams",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/user_list_joinedteams",
+      "skipTest": false
+    },
+    {
+      "id": "ccb5a185-603e-4c0a-8968-5ab47a30306e",
+      "category": "Microsoft Teams",
+      "method": "GET",
+      "humanName": "miembros de un equipo",
+      "requestUrl": "/v1.0/groups/{group-id-for-teams}/members",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/group_list_memberof",
+      "tip": "Esta consulta necesita un ID. de grupo del equipo.  Para buscar el ID. de grupo de equipos a los que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/joinedTeams",
+      "skipTest": false
+    },
+    {
+      "id": "dca29936-83eb-41e5-b8a5-4050bda71165",
+      "category": "Microsoft Teams",
+      "method": "GET",
+      "humanName": "canales de un equipo del que soy miembro",
+      "requestUrl": "/v1.0/teams/{team-id}/channels",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/channel_list",
+      "tip": "Esta consulta requiere un identificador de equipo.  Para buscar el ID. de equipo de equipos a los que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/joinedTeams",
+      "skipTest": false
+    },
+    {
+      "id": "b67340cf-3cae-4c80-a3af-0d6f9c2cd95c",
+      "category": "Microsoft Teams",
+      "method": "GET",
+      "humanName": "información del canal",
+      "requestUrl": "/v1.0/teams/{team-id}/channels/{channel-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/channel_get",
+      "tip": "Esta consulta necesita un identificador de equipo y un ID. de canal de ese equipo. Para buscar el ID. de equipo y de canal, puede ejecutar: 1) GET https://graph.microsoft.com/v1.0/me/joinedTeams 2) GET https://graph.microsoft.com/v1.0/teams/{team-id}/channels",
+      "skipTest": false
+    },
+    {
+      "id": "ae524d36-a540-4c8c-b121-3c91fe7508ad",
+      "category": "Microsoft Teams",
+      "method": "POST",
+      "humanName": "crear un canal",
+      "requestUrl": "/v1.0/teams/{team-id}/channels",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/channel_post",
+      "postBody": "{\r\n   \"displayName\": \"Architecture Discussion\",\r\n   \"description\": \"This channel is where we debate all future architecture plans\"\r\n }",
+      "tip": "Esta consulta requiere un identificador de equipo.  Para buscar el ID. de equipo de equipos a los que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/joinedTeams.",
+      "skipTest": false
+    },
+    {
+      "id": "bca2ef41-399a-4412-859f-ae1403d49d79",
+      "category": "Microsoft Teams",
+      "method": "GET",
+      "humanName": "aplicaciones en un equipo",
+      "requestUrl": "/v1.0/teams/{team-id}/installedApps?$expand=teamsAppDefinition",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/teamsappinstallation_list",
+      "tip": "Esta consulta requiere un identificador de equipo. Para buscar el ID. de equipo, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/joinedTeams",
+      "skipTest": false
+    },
+    {
+      "id": "00b1fc82-0619-4b93-acce-4c3292962388",
+      "category": "Microsoft Teams",
+      "method": "GET",
+      "humanName": "pestañas en un canal ",
+      "requestUrl": "/v1.0/teams/{team-id}/channels/{channel-id}/tabs?$expand=teamsApp",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/teamstab_list",
+      "tip": "Esta consulta necesita un identificador de equipo y un ID. de canal de ese equipo. Para buscar el ID. de equipo y de canal, puede ejecutar: 1) GET https://graph.microsoft.com/v1.0/me/joinedTeams 2) GET https://graph.microsoft.com/v1.0/teams/{team-id}/channels",
+      "skipTest": false
+    },
+    {
+      "id": "859ae3c4-aee0-4b77-a957-358bb75d3159",
+      "category": "Microsoft Teams",
+      "method": "GET",
+      "humanName": "elementos de una unidad de equipo",
+      "requestUrl": "/v1.0/groups/{group-id-for-teams}/drive/root/children",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/driveitem-list-children?view=graph-rest-1.0&tabs=http",
+      "tip": "Esta consulta necesita un ID. de grupo del equipo.  Para buscar el ID. de grupo de equipos a los que pertenece, puede ejecutar: GET https://graph.microsoft.com/v1.0/me/joinedTeams",
+      "skipTest": false
+    },
+    {
+      "id": "d8a3cd75-6ddf-4215-89de-3c2dab6b9585",
+      "category": "Microsoft Teams (beta)",
+      "method": "GET",
+      "humanName": "mensajes (sin respuestas) en un canal",
+      "requestUrl": "/beta/teams/{group-id-for-teams}/channels/{channel-id}/messages",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/beta/api/channel_list_messages",
+      "tip": "Esta consulta necesita un ID. de grupo del equipo y el ID. de canal del canal correspondiente de ese equipo. Para buscar el ID. de grupo y de canal, puede ejecutar: 1) GET https://graph.microsoft.com/beta/me/joinedTeams 2) GET https://graph.microsoft.com/beta/groups/{group-id-for-teams}/channels",
+      "skipTest": false
+    },
+    {
+      "id": "6baa40f3-e5a0-422e-894c-3cb7931e0d30",
+      "category": "Microsoft Teams (beta)",
+      "method": "GET",
+      "humanName": "mensaje en un canal",
+      "requestUrl": "/beta/teams/{group-id-for-teams}/channels/{channel-id}/messages/{message-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/beta/api/channel_get_message",
+      "tip": "Esta consulta necesita un ID. de grupo del equipo, el ID. de canal del canal correspondiente al equipo y el ID. del mensaje que quiere recuperar. Para buscar el ID. de grupo, el ID. de canal y el ID. de mensaje que puede ejecutar: 1) GET https://graph.microsoft.com/beta/me/joinedTeams 2) GET https://graph.microsoft.com/beta/groups/{group-id-for-teams}/channels 3) GET https://graph.microsoft.com/beta/teams/{group-id-for-teams}/channels/{channel-id}/messages",
+      "skipTest": false
+    },
+    {
+      "id": "f94564f3-3026-4ae1-bf8b-22e2d2db4265",
+      "category": "Microsoft Teams (beta)",
+      "method": "GET",
+      "humanName": "respuestas a un mensaje en un canal",
+      "requestUrl": "/beta/teams/{group-id-for-teams}/channels/{channel-id}/messages/{message-id}/replies",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/beta/api/channel_list_messagereplies",
+      "tip": "Esta consulta necesita un ID. de grupo del equipo, el ID. de canal del canal correspondiente a ese equipo y el ID. de mensaje del mensaje del que necesita las respuestas. Para buscar el ID. de grupo, el ID. de canal y el ID. de mensaje que puede ejecutar: 1) GET https://graph.microsoft.com/beta/me/joinedTeams 2) GET https://graph.microsoft.com/beta/groups/{group-id-for-teams}/channels 3) GET https://graph.microsoft.com/beta/teams/{group-id-for-teams}/channels/{channel-id}/messages",
+      "skipTest": false
+    },
+    {
+      "id": "dc0e0bde-2c66-444e-a758-16368e946a0e",
+      "category": "Microsoft Teams (beta)",
+      "method": "GET",
+      "humanName": "respuesta de un mensaje",
+      "requestUrl": "/beta/teams/{group-id-for-teams}/channels/{channel-id}/messages/{message-id}/replies/{reply-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/beta/api/channel_get_messagereply",
+      "tip": "Esta consulta necesita un ID. de grupo del equipo, el ID. de canal del canal correspondiente de ese equipo, el ID. de mensaje del mensaje del que necesita la respuesta y el ID. de la respuesta específica. Para buscar el ID. de grupo, el identificador de canal, el ID. de mensaje y el ID. de respuesta, puede ejecutar: 1) GET https://graph.microsoft.com/beta/me/joinedTeams 2) GET https://graph.microsoft.com/beta/groups/{group-id-for-teams}/channels 3) GET https://graph.microsoft.com/beta/teams/{group-id-for-teams}/channels/{channel-id}/messages 4) GET https://graph.microsoft.com/beta/teams/{group-id-for-teams}/channels/{channel-id}/messages/{message-id}/replies",
+      "skipTest": false
+    },
+    {
+      "id": "f39a37b9-76de-4ead-994d-ee14a3adebf0",
+      "category": "Microsoft Teams (beta)",
+      "method": "POST",
+      "humanName": "crear un subproceso de chat",
+      "requestUrl": "/beta/teams/{team-id}/channels/{channel-id}/chatThreads",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/channel-post-messages?view=graph-rest-beta&tabs=http",
+      "postBody": "{\r\n\"rootMessage\": {\r\n       \"body\": {\r\n         \"contentType\": 2,\r\n         \"content\": \"Hello world\"\r\n       }\r\n   }\r\n }",
+      "tip": "Esta consulta necesita un identificador de equipo y un ID. de canal de ese equipo. Para buscar el ID. de equipo y de canal, puede ejecutar: 1) GET https://graph.microsoft.com/beta/me/joinedTeams 2) GET https://graph.microsoft.com/beta/teams/{team-id}/channels",
+      "skipTest": false
+    },
+    {
+      "id": "9f1cd907-87ed-47dc-b18d-fb19c2d1342f",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "alertas",
+      "requestUrl": "/v1.0/security/alerts?$top=1",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/alert_list",
+      "skipTest": false
+    },
+    {
+      "id": "b46f9400-1558-42bb-8e8d-206267373120",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "alertas con estado de gravedad \"Alto\"",
+      "requestUrl": "/v1.0/security/alerts?$filter=Severity eq 'High'&$top=5",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/alert_list",
+      "skipTest": false
+    },
+    {
+      "id": "cbe4d296-0290-4582-a0b8-e87ff0eda9b3",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "alertas de “Azure Security Center”",
+      "requestUrl": "/v1.0/security/alerts?$filter=vendorInformation/provider eq 'ASC'&$top=5",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/alert_list",
+      "skipTest": false
+    },
+    {
+      "id": "86c06cc5-8136-4ddc-b591-d96305a47846",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "alertas filtradas por \"Categoría\"",
+      "requestUrl": "/v1.0/security/alerts?$filter=Category eq 'ransomware'&$top=5",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/alert_list",
+      "skipTest": false
+    },
+    {
+      "id": "bac0adb1-a991-48b3-af09-743235152521",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "alertas filtradas por dirección de destino",
+      "requestUrl": "/v1.0/security/alerts?$filter=networkConnections/any(d:d/destinationAddress eq '{destination-address}')",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/alert_list",
+      "tip": "Esta consulta requiere una dirección de destino. Ejecute https://graph.microsoft.com/v1.0/security/alerts?$top=1 y busque en los resultados una propiedad destinationAddress.",
+      "skipTest": false
+    },
+    {
+      "id": "e29b3c78-108c-4056-bd55-bad1b1db5df7",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "alertas filtradas por \"Estado\"",
+      "requestUrl": "/v1.0/security/alerts?$filter=Status eq 'NewAlert'&$top=1",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/alert_list",
+      "skipTest": false
+    },
+    {
+      "id": "d649619b-bab1-4c99-a0fa-7a24aeac3087",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "puntuaciones seguras (beta)",
+      "requestUrl": "/beta/security/secureScores?$top=5",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/securescores_list",
+      "skipTest": false
+    },
+    {
+      "id": "6b6bae1d-e82c-4946-81a4-286781e5015a",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "perfiles de control de puntuación segura (beta)",
+      "requestUrl": "/beta/security/secureScoreControlProfiles?$top=5",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/securescorecontrolprofiles_list",
+      "skipTest": false
+    },
+    {
+      "id": "d5418cff-d035-498c-91f3-b9f85b2fb51a",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "indicadores de TI (beta)",
+      "requestUrl": "/beta/security/tiIndicators",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/tiindicators-list",
+      "skipTest": false
+    },
+    {
+      "id": "13c86a6e-7d40-4814-9040-74e5711280c4",
+      "category": "Seguridad",
+      "method": "GET",
+      "humanName": "acciones de seguridad (beta)",
+      "requestUrl": "/beta/security/securityActions",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/securityactions-list",
+      "skipTest": false
+    },
+    {
+      "id": "071c6948-c746-4d75-8ddf-77962908eb89",
+      "category": "Seguridad",
+      "method": "PATCH",
+      "humanName": "actualizar alerta",
+      "requestUrl": "/v1.0/security/alerts/{alert-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/v1.0/api/alert_update",
+      "postBody": "{\r\n  \"assignedTo\": \"test@contoso.com\",\r\n  \"comments\": [\"Comment 0\", \"Comment 1\"],\r\n  \"tags\": [\"Tag 0\", \"Tag 1\"],\r\n  \"feedback\": \"truePositive\",\r\n  \"status\": \"newAlert\",\r\n  \"vendorInformation\": {\r\n    \"provider\": \"provider\",\r\n    \"providerVersion\": \"3.0\",\r\n    \"subProvider\": null,\r\n    \"vendor\": \"vendor\"\r\n  }\r\n}",
+      "tip": "Esta consulta requiere un identificador de alerta. Para buscar el ID. de la alerta, puede ejecutar: GET https://graph.microsoft.com/v1.0/security/alerts?$top=1",
+      "skipTest": false
+    },
+    {
+      "id": "2592c4ed-2947-41ae-9659-371cf65beef6",
+      "category": "Seguridad",
+      "method": "POST",
+      "humanName": "crear indicador de TI (beta)",
+      "requestUrl": "/beta/security/tiIndicators",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/tiindicators-post",
+      "postBody": "{\r\n  \"activityGroupNames\": [\r\n      \"activityGroupNames-value\"\r\n    ],\r\n  \"confidence\": 90,\r\n  \"description\": \"This is a test indicator for demo purpose.\",\r\n  \"expirationDateTime\": \"{next-week}\",\r\n  \"externalId\": \"Test-8586502158541347997MS342\",\r\n  \"fileHashType\": \"sha256\",\r\n  \"fileHashValue\": \"289a8e8c330c27ab893fb769db38046feaca9d0b11e0aaa416ba70b0a51d58a4\",\r\n  \"targetProduct\": \"Azure ATP\",\r\n  \"threatType\": \"WatchList\",\r\n  \"tlpLevel\": \"green\"\r\n}",
+      "skipTest": false
+    },
+    {
+      "id": "82496f48-8c86-4fd4-926a-15a043c2e443",
+      "category": "Seguridad",
+      "method": "POST",
+      "humanName": "crear múltiples indicadores de TI (beta)",
+      "requestUrl": "/beta/security/tiIndicators/microsoft.graph.submitTiIndicators",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/tiindicator-submittiindicators",
+      "postBody": "{\r\n  \"value\": [\r\n    {\r\n      \"activityGroupNames\": [],\r\n      \"confidence\": 0,\r\n      \"description\": \"This is a test indicator for demo purpose. Take no action on any observables set in this indicator.\",\r\n      \"externalId\": \"Test-8586502120486653922MS812-0\",\r\n      \"fileHashType\": \"sha256\",\r\n      \"fileHashValue\": \"0c0ebb4c90fa39785745bcc5e5cb40e3db7791be030061e2818684bc128b8f97\",\r\n      \"killChain\": [],\r\n      \"malwareFamilyNames\": [],\r\n      \"severity\": 0,\r\n      \"tags\": [],\r\n      \"targetProduct\": \"Azure ATP\",\r\n      \"threatType\": \"WatchList\",\r\n      \"tlpLevel\": \"green\"\r\n    },\r\n    {\r\n      \"activityGroupNames\": [],\r\n      \"confidence\": 0,\r\n      \"description\": \"This is a test indicator for demo purpose. Take no action on any observables set in this indicator.\",\r\n      \"externalId\": \"Test-8586502120486653922MS812-1\",\r\n      \"fileHashType\": \"sha256\",\r\n      \"fileHashValue\": \"86267de22dbad234ecf97870fdcf1a0e31149ee7a5fb595c050f69ca00f3529e\",\r\n      \"killChain\": [],\r\n      \"malwareFamilyNames\": [],\r\n      \"severity\": 0,\r\n      \"tags\": [],\r\n      \"targetProduct\": \"Azure ATP\",\r\n      \"threatType\": \"WatchList\",\r\n      \"tlpLevel\": \"green\"\r\n    }\r\n  ]\r\n}",
+      "skipTest": false
+    },
+    {
+      "id": "39fb7c6b-9df5-4674-8919-84a39bff3149",
+      "category": "Seguridad",
+      "method": "PATCH",
+      "humanName": "actualizar un indicador de TI (beta)",
+      "requestUrl": "/beta/security/tiIndicators/{id}",
+      "docLink": "https://docs.microsoft.com/es-ES/graph/api/tiindicator-update",
+      "postBody": " {\r\n      \"additionalInformation\": \"Testing\"\r\n    }",
+      "tip": "Esta consulta requiere el ID. de indicador de TI. Para buscar el ID., puede ejecutar: GET https://graph.microsoft.com/beta/security/tiIndicators?$top=1",
+      "skipTest": false
+    },
+    {
+      "id": "96bb2192-d2a5-470a-9e60-17d626e51afe",
+      "category": "Seguridad",
+      "method": "POST",
+      "humanName": "actualizar múltiples indicadores de TI (beta)",
+      "requestUrl": "/beta/security/tiIndicators/microsoft.graph.updateTiIndicators",
+      "docLink": "https://docs.microsoft.com/es-ES/graph/api/tiindicator-updatetiindicators",
+      "postBody": "{\r\n  \"value\": [\r\n    {\r\n      \"id\": \"tiindicator-id-1\",\r\n      \"additionalInformation\": \"Testing\"\r\n    },\r\n    {\r\n      \"id\": \"tiindicator-id-2\",\r\n      \"additionalInformation\": \"Testing 2\"\r\n    }\r\n  ]\r\n}",
+      "tip": "Esta consulta requiere el ID. de indicador de TI. Para buscar el ID., puede ejecutar: GET https://graph.microsoft.com/beta/security/tiIndicators?$top=5\r\n\r\n ",
+      "skipTest": false
+    },
+    {
+      "id": "b44cc42b-3828-4ea2-9a20-0e29a04a052e",
+      "category": "Seguridad",
+      "method": "POST",
+      "humanName": "crear una acción de seguridad (beta)",
+      "requestUrl": "/beta/security/securityActions",
+      "docLink": "https://docs.microsoft.com/es-ES/graph/api/securityactions-post",
+      "postBody": "{\r\n    \"name\": \"blockIp\",\r\n     \"vendorInformation\" :\r\n     {  \"provider\": \"Windows Defender ATP\",\r\n          \"vendor\": \"Microsoft\"\r\n      },\r\n    \"parameters\" : [\r\n      {\"name\": \"IP\", \"value\":\"1.2.3.4\" }\r\n    ]\r\n}",
+      "tip": "Cambiar el proveedor y los parámetros necesarios",
+      "skipTest": false
+    },
+    {
+      "id": "144ce88f-a0e4-457c-915d-f2f2d4d7f1e0",
+      "category": "Seguridad",
+      "method": "DELETE",
+      "humanName": "eliminar indicador de TI (beta)",
+      "requestUrl": "/beta/security/tiIndicators/{id}",
+      "docLink": "https://docs.microsoft.com/es-ES/graph/api/tiindicator-delete",
+      "tip": "Esta consulta requiere el ID. de indicador de TI. Para buscar el ID., puede ejecutar: GET https://graph.microsoft.com/beta/security/tiIndicators?$top=1",
+      "skipTest": false
+    },
+    {
+      "id": "273dc18d-4f21-4625-b0c6-f124632e32bd",
+      "category": "Seguridad",
+      "method": "POST",
+      "humanName": "eliminar múltiples indicadores de TI (beta)",
+      "requestUrl": "/beta/security/tiIndicators/microsoft.graph.deleteTiIndicators",
+      "docLink": "https://docs.microsoft.com/es-ES/graph/api/tiindicator-deletetiindicators",
+      "postBody": "{\r\n  \"value\": [\r\n    \"tiindicatorid-value1\",\r\n    \"tiindicatorid-value2\"\r\n  ]\r\n}",
+      "tip": "Esta consulta requiere el ID. de indicador de TI. Para buscar el ID., puede ejecutar: GET https://graph.microsoft.com/beta/security/tiIndicators?$top=5",
+      "skipTest": false
+    },
+    {
+      "id": "8be120b8-f852-4b9f-872d-9e1b84cafd1d",
+      "category": "Seguridad",
+      "method": "POST",
+      "humanName": "eliminar múltiples indicadores de TI por id. externo (beta)",
+      "requestUrl": "/beta/security/tiIndicators/microsoft.graph.deleteTiIndicatorsByExternalId",
+      "docLink": "https://docs.microsoft.com/es-ES/graph/api/tiindicator-deletetiindicatorsbyexternalid",
+      "postBody": "{\r\n  \"value\": [\r\n    \"tiindicator-externalId-value1\",\r\n     \"tiindicator-externalId-value2\"\r\n  ]\r\n}",
+      "tip": "Esta consulta requiere el identificador externo del indicador de TI. Para buscar el ID., puede ejecutar: GET https://graph.microsoft.com/beta/security/tiIndicators?$top=5",
+      "skipTest": false
+    },
+    {
+      "id": "c14e95e1-718f-4984-b8b6-7d7f1279d621",
+      "category": "Actividades de usuario",
+      "method": "PUT",
+      "humanName": "crear actividad de usuario y elemento de historial",
+      "requestUrl": "/v1.0/me/activities/uniqueIdInAppContext",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/projectrome_put_activity#example-2---deep-insert",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n    \"appActivityId\": \"uniqueIdInAppContext\",\r\n    \"activitySourceHost\": \"https://graphexplorer.blob.core.windows.net\",\r\n    \"userTimezone\": \"America/Los Angeles\",\r\n    \"appDisplayName\": \"Graph Explorer\",\r\n    \"activationUrl\": \"https://developer.microsoft.com/es-ES/graph/graph-explorer\",\r\n    \"fallbackUrl\": \"https://developer.microsoft.com/es-ES/graph/graph-explorer\",\r\n    \"contentInfo\": {\r\n        \"@context\": \"http://schema.org\",\r\n        \"@type\": \"CreativeWork\",\r\n        \"author\": \"Jennifer Booth\",\r\n        \"name\": \"Graph Explorer User Activity\"\r\n    },\r\n    \"visualElements\": {\r\n        \"attribution\": {\r\n            \"iconUrl\": \"https://graphexplorer.blob.core.windows.net/explorerIcon.png\",\r\n            \"alternateText\": \"Microsoft Graph Explorer\",\r\n            \"addImageQuery\": \"false\"\r\n        },\r\n        \"description\": \"A user activity made through the Microsoft Graph Explorer\",\r\n        \"backgroundColor\": \"#008272\",\r\n        \"displayText\": \"Graph Explorer Sample User Activity\",\r\n        \"content\": {\r\n            \"$schema\": \"http://adaptivecards.io/schemas/adaptive-card.json\",\r\n            \"type\": \"AdaptiveCard\",\r\n            \"body\":\r\n            [{\r\n                \"type\": \"TextBlock\",\r\n                \"text\": \"With activities, developers have a way to capture the unique tasks for users of their app which flow seamlessly across any platform and device, allowing them to quickly resume working on their preferred screen. Using the Activity Feed, developers can create a human-centric view of the tasks most important to users helping reduce friction when switching from web to mobile to PC and beyond.\"\r\n            }]\r\n        }\r\n    },\r\n    \"historyItems\":[\r\n        {\r\n            \"userTimezone\": \"America/Los Angeles\",\r\n            \"startedDateTime\": \"{todayMinusHour}\",\r\n            \"lastActiveDateTime\": \"{today}\"\r\n        }\r\n    ]\r\n}",
+      "skipTest": false
+    },
+    {
+      "id": "7ac1ad54-2cb2-4b9e-b6dd-31d5cebf195b",
+      "category": "Actividades de usuario",
+      "method": "GET",
+      "humanName": "obtener actividades de usuario recientes",
+      "requestUrl": "/v1.0/me/activities/recent",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/api/projectrome_get_recent_activities",
+      "skipTest": false
+    },
+    {
+      "id": "c6f11ce0-7bf6-4fc9-9e56-a2472f91be2e",
+      "category": "Aplicaciones (beta)",
+      "method": "GET",
+      "humanName": "recuperar la lista de aplicaciones",
+      "requestUrl": "/beta/applications",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/application_list",
+      "skipTest": false
+    },
+    {
+      "id": "50887d50-2f03-4cdb-8fe2-76b1366ae6ca",
+      "category": "Aplicaciones (beta)",
+      "method": "POST",
+      "humanName": "crear una aplicación",
+      "requestUrl": "/beta/applications",
+      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/beta/api/application_post_applications",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n        \"displayName\": \"My App\"\r\n    }",
+      "skipTest": false
+    },
+    {
+      "id": "b4fbcb7a-b80e-4254-b37c-224b8513badb",
+      "category": "Aplicaciones (beta)",
+      "method": "GET",
+      "humanName": "recuperar las propiedades de la aplicación",
+      "requestUrl": "/beta/applications/{application-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/beta/api/application_get",
+      "tip": "Esta consulta necesita un identificador de aplicación. Para buscar el ID. de una aplicación&#44; puede ejecutar: GET https://graph.microsoft.com/beta/applications",
+      "skipTest": false
+    },
+    {
+      "id": "34bf8e06-aa71-4156-87a5-da8cb48bcb21",
+      "category": "Aplicaciones (beta)",
+      "method": "PATCH",
+      "humanName": "actualizar las propiedades de la aplicación",
+      "requestUrl": "/beta/applications/{application-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/beta/api/application_update",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n        \"signInAudience\": \"AzureADMyOrg\"\r\n    }",
+      "tip": "Esta consulta necesita un identificador de aplicación. Para buscar el ID. de una aplicación&#44; puede ejecutar: GET https://graph.microsoft.com/beta/applications",
+      "skipTest": false
+    },
+    {
+      "id": "a6d6708b-2cc1-4dfb-a5c3-b404aea3f511",
+      "category": "Aplicaciones (beta)",
+      "method": "DELETE",
+      "humanName": "eliminar una aplicación",
+      "requestUrl": "/beta/applications/{application-id}",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/beta/api/application_delete",
+      "tip": "Esta consulta necesita un identificador de aplicación. Para buscar el ID. de una aplicación&#44; puede ejecutar: GET https://graph.microsoft.com/beta/applications",
+      "skipTest": false
+    },
+    {
+      "id": "85a99374-8d40-4b61-9969-0792853b18f3",
+      "category": "Aplicaciones (beta)",
+      "method": "GET",
+      "humanName": "recuperar una lista de propietarios",
+      "requestUrl": "/beta/applications/{application-id}/owners",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/beta/api/application_list_owners",
+      "tip": "Esta consulta necesita un identificador de aplicación. Para buscar el ID. de una aplicación&#44; puede ejecutar: GET https://graph.microsoft.com/beta/applications",
+      "skipTest": false
+    },
+    {
+      "id": "450cc1d6-d3d1-4240-82ad-03a42fead0ec",
+      "category": "Aplicaciones (beta)",
+      "method": "POST",
+      "humanName": "crear un propietario",
+      "requestUrl": "/beta/applications/{application-id}/owners",
+      "docLink": "https://developer.microsoft.com/es-ES/graph/docs/api-reference/beta/api/application_post_owners",
+      "headers": [
+        {
+          "name": "Content-type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n        \"directoryObject\": {\r\n        }\r\n    }",
+      "tip": "Esta consulta necesita un identificador de aplicación. Para buscar el ID. de una aplicación&#44; puede ejecutar: GET https://graph.microsoft.com/beta/applications. En el cuerpo de la solicitud, proporcione una representación JSON del objeto directoryObject",
+      "skipTest": false
+    },
+    {
+      "id": "608f0f12-a2f1-4f59-b6ea-8819f192b825",
+      "category": "Notificaciones (beta)",
+      "method": "POST",
+      "humanName": "crear una notificación sin procesar",
+      "requestUrl": "/beta/me/notifications",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/user-post-notifications?view=graph-rest-beta",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"targetHostName\": \"graphnotifications.sample.windows.com\",\r\n  \"appNotificationId\": \"sampleRawNotification\",\r\n  \"payload\": {\r\n    \"rawContent\": \"Hello World!\"\r\n  },\r\n  \"targetPolicy\": {\r\n    \"platformTypes\": [\r\n      \"windows\",\r\n      \"ios\",\r\n      \"android\"\r\n    ]\r\n  },\r\n  \"priority\": \"High\",\r\n  \"displayTimeToLive\": \"60\"\r\n}",
+      "tip": "Habilite el permiso Notifications.ReadWrite.CreatedByApp para poder usar esta consulta.  Una notificación sin procesar es una notificación que se recibe por la aplicación y se procesa de una manera específica de la aplicación.  Las notificaciones sin procesar pueden o no incluir la interfaz de usuario o UX para el usuario. Nota: esta consulta solo funcionará con una aplicación de muestra de forma predeterminada. Vea https://aka.ms/projectRomeSamples/ para obtener información adicional.",
+      "skipTest": false
+    },
+    {
+      "id": "db8c8f57-f5e6-447a-b1de-7af804f8965e",
+      "category": "Notificaciones (beta)",
+      "method": "POST",
+      "humanName": "crear una notificación visual",
+      "requestUrl": "/beta/me/notifications",
+      "docLink": "https://docs.microsoft.com/es-es/graph/api/user-post-notifications?view=graph-rest-beta",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"targetHostName\": \"graphnotifications.sample.windows.com\",\r\n  \"appNotificationId\": \"sampleDirectToastNotification\",\r\n  \"payload\": {\r\n    \"visualContent\": {\r\n      \"title\": \"Hello World!\",\r\n      \"body\": \"Notifications are Great!\"\r\n    }\r\n  },\r\n  \"targetPolicy\": {\r\n    \"platformTypes\": [\r\n      \"windows\",\r\n      \"ios\",\r\n      \"android\"\r\n    ]\r\n  },\r\n  \"priority\": \"High\",\r\n  \"displayTimeToLive\": \"60\"\r\n}",
+      "tip": "Habilite el permiso Notifications.ReadWrite.CreatedByApp para poder usar esta consulta.  Una notificación visual es una notificación que un usuario puede ver de forma predeterminada en el centro de notificaciones de la plataforma de destino. Nota: esta consulta solo funcionará con una aplicación de muestra de forma predeterminada. Vea https://aka.ms/projectRomeSamples/ para obtener información adicional.",
+      "skipTest": false
+    },
+    {
+      "id": "ae8adc92-9f78-4065-b4b9-22572bc98492",
+      "category": "Búsqueda (beta)",
+      "method": "POST",
+      "humanName": "buscar mensajes",
+      "requestUrl": "/beta/search/query",
+      "docLink": "https://aka.ms/mssearchapi",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n    \"requests\": [\r\n      {\r\n        \"entityTypes\": [\"microsoft.graph.message\"],\r\n        \"query\": {\r\n          \"query_string\": {\r\n            \"query\": \"test\"\r\n          }\r\n        },\r\n        \"from\": 0,\r\n        \"size\" : 5\r\n     }\r\n    ]\r\n  }",
+      "tip": "habilitar Mail.Read",
+      "skipTest": false
+    },
+    {
+      "id": "a90002df-c4f8-4764-a55f-d25f9e2e1b77",
+      "category": "Búsqueda (beta)",
+      "method": "POST",
+      "humanName": "buscar eventos",
+      "requestUrl": "/beta/search/query",
+      "docLink": "https://aka.ms/mssearchapi",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"requests\": [\r\n    {\r\n      \"entityTypes\": [\"microsoft.graph.event\"],\r\n      \"query\": {\r\n          \"query_string\": {\r\n              \"query\": \"test\"\r\n          }\r\n      },\r\n      \"from\": 0,\r\n      \"size\": 5\r\n  }]\r\n}",
+      "tip": "habilitar Calendars.Read",
+      "skipTest": false
+    },
+    {
+      "id": "1c82a761-980c-4966-8bde-f35a96dc163e",
+      "category": "Búsqueda (beta)",
+      "method": "POST",
+      "humanName": "buscar driveitems",
+      "requestUrl": "/beta/search/query",
+      "docLink": "https://aka.ms/mssearchapi",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"requests\": [\r\n    {\r\n      \"entityTypes\": [\"microsoft.graph.driveItem\"],\r\n      \"query\": {\r\n        \"query_string\": {\r\n          \"query\": \"test\"\r\n        }\r\n      },\r\n      \"from\": 0,\r\n      \"size\": 25\r\n    }\r\n  ]\r\n}",
+      "tip": "habilitar Files.Read.All",
+      "skipTest": false
+    },
+    {
+      "id": "27e73cb0-6584-457d-af0d-f775fbe18605",
+      "category": "Búsqueda (beta)",
+      "method": "POST",
+      "humanName": "buscar archivos externos",
+      "requestUrl": "/beta/search/query",
+      "docLink": "https://aka.ms/mssearchapi",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"requests\": [{    \r\n    \"entityTypes\": [\"microsoft.graph.externalFile\"],    \r\n    \"query\": {\r\n      \"query_string\": {\r\n        \"query\": \"test\"\r\n      }\r\n    },\r\n    \"from\": 0,\r\n    \"size\": 25\r\n  }]\r\n}",
+      "tip": "habilitar ExternalItem.Read.All",
+      "skipTest": false
+    },
+    {
+      "id": "b4d2041e-376e-41db-85a9-d03afcf14e84",
+      "category": "Búsqueda (beta)",
+      "method": "POST",
+      "humanName": "buscar elementos externos",
+      "requestUrl": "/beta/search/query",
+      "docLink": "https://aka.ms/mssearchapi",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "postBody": "{\r\n  \"requests\": [{\r\n    \"entityTypes\": [\"microsoft.graph.externalItem\"],\r\n    \"contentSources\": [\"/external/connections/connection_friendly_name\"],\r\n    \"query\": {\r\n      \"query_string\": {\r\n        \"query\": \"test\"\r\n      }\r\n    },\r\n    \"from\": 0,\r\n    \"size\": 25,\r\n    \"stored_fields\": [\r\n      \t\"number\",\r\n      \t\"shortdescription\"\r\n       ]\r\n  }]\r\n}",
+      "tip": "habilitar ExternalItem.Read.All",
+      "skipTest": false
+    }
+  ]
+}

@@ -18,8 +18,8 @@ namespace SamplesService.Test
     public class SamplesStoreShould
     {
         private readonly IConfigurationRoot _configuration;
-        private readonly IFileUtility _fileUtility;
         private readonly IMemoryCache _samplesCache;
+        private readonly IFileUtility _fileUtility;
         private ISamplesStore _samplesStore;
 
         public SamplesStoreShould()
@@ -77,6 +77,58 @@ namespace SamplesService.Test
 
             // Assert
             Assert.Null(japaneseSampleQueriesList);
+        }
+
+        [Fact]
+        public async Task FetchSamplesFromGithub()
+        {
+            //Arrange
+            var configuration = new ConfigurationBuilder()
+                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .Build();
+
+            string org = configuration["BlobStorage:Org"];
+            string branchName = configuration["BlobStorage:Branch"];
+
+            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _fileUtility);
+
+            /* Act */
+
+            // Fetch en-US sample queries
+            SampleQueriesList englishSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("en-US", org, branchName);
+
+            // Fetch es-ES sample queries
+            SampleQueriesList espanolSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("es-ES", org, branchName);
+
+            /* Assert */
+
+            // en-US
+            Assert.NotNull(englishSampleQueriesList);
+            Assert.Equal(151, englishSampleQueriesList.SampleQueries.Count);
+
+            // es-ES
+            Assert.NotNull(espanolSampleQueriesList);
+            Assert.Equal(149, espanolSampleQueriesList.SampleQueries.Count);
+        }
+
+        [Fact]
+        public async Task ReturnNotNullIfSampleQueriesFileHasEmptyJsonObject()
+        {
+            //Arrange
+            var configuration = new ConfigurationBuilder()
+                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .Build();
+
+            string org = configuration["BlobStorage:Org"];
+            string branchName = configuration["BlobStorage:Branch"];
+
+            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _fileUtility);
+
+            // Act - Fetch ja-JP sample queries which is empty
+            SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP", org, branchName);
+
+            // Assert
+            Assert.NotNull(japaneseSampleQueriesList);
         }
     }
 }

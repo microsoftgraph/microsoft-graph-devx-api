@@ -57,10 +57,9 @@ namespace GraphWebApi
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.AddSingleton<IChangesStore, ChangesStore>();
-            services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
-            services.Configure<SamplesAdministrators>(Configuration);            
-            services.AddControllers();
+            services.Configure<SamplesAdministrators>(Configuration);
+            services.AddControllers().AddNewtonsoftJson();
 
             #region AppInsights
 
