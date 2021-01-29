@@ -242,7 +242,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration, permissionsCache: _permissionsCache, fileUtility: _fileUtility);
 
             // Act
             List<ScopeInformation> result =
@@ -255,15 +255,15 @@ namespace PermissionsService.Test
                 item =>
                 {
                     Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
-                    Assert.Equal("Lea los eventos de seguridad de su organizaci�n.", item.DisplayName);
-                    Assert.Equal("Permite que la aplicaci�n lea los eventos de seguridad de su organizaci�n en su nombre.", item.Description);
+                    Assert.Equal("Lea los eventos de seguridad de su organización.", item.DisplayName);
+                    Assert.Equal("Permite que la aplicación lea los eventos de seguridad de su organización en su nombre.", item.Description);
                     Assert.True(item.IsAdmin);
                 },
                 item =>
                 {
                     Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
-                    Assert.Equal("Lea y actualice los eventos de seguridad de su organizaci�n.", item.DisplayName);
-                    Assert.Equal("Permite que la aplicaci�n lea los eventos de seguridad de su organizaci�n en su nombre. Tambi�n le permite actualizar propiedades editables en eventos de seguridad.", item.Description);
+                    Assert.Equal("Lea y actualice los eventos de seguridad de su organización.", item.DisplayName);
+                    Assert.Equal("Permite que la aplicación lea los eventos de seguridad de su organización en su nombre. También le permite actualizar propiedades editables en eventos de seguridad.", item.Description);
                     Assert.True(item.IsAdmin);
                 });
         }
@@ -278,7 +278,7 @@ namespace PermissionsService.Test
                 .AddJsonFile(".\\TestFiles\\appsettingstest-empty.json")
                 .Build();
 
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, permissionsCache:_permissionsCache, fileUtility: _fileUtility);
 
             // Act and Assert
             Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
@@ -303,14 +303,10 @@ namespace PermissionsService.Test
             //Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
 
-            var configuration = new ConfigurationBuilder()
-                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
-                            .Build();
+            string org = "\\Org";
+            string branchName = "Branch";
 
-            string org = configuration["BlobStorage:Org"];
-            string branchName = configuration["BlobStorage:Branch"];
-
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, permissionsCache: _permissionsCache, httpClientUtility: _httpClientUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration, permissionsCache: _permissionsCache, httpClientUtility: _httpClientUtility,  fileUtility: _fileUtility); ;
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName).GetAwaiter().GetResult();
@@ -318,18 +314,17 @@ namespace PermissionsService.Test
             // Assert
             Assert.NotEmpty(result);
         }
+
         [Fact]
         public void MockFetchingPermissionsDescriptionsFromGithubGivenARequestUrl()
         {
             //Arrange
-            var configuration = new ConfigurationBuilder()
-                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
-                            .Build();
+            IMemoryCache _permissionsCache = Create.MockedMemoryCache();
 
-            string org = configuration["BlobStorage:Org"];
-            string branchName = configuration["BlobStorage:Branch"];
+            string org = "\\Org";
+            string branchName = "Branch";
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, httpClientUtility: _httpClientUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration, permissionsCache:_permissionsCache, fileUtility: _fileUtility, httpClientUtility: _httpClientUtility);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName, requestUrl: "/security/alerts/{alert_id}", method: "GET")
