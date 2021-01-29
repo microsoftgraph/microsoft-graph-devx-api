@@ -1,8 +1,9 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using FileService.Interfaces;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -21,7 +22,7 @@ namespace FileService.Services
         /// </summary>
         public HttpClientUtility(HttpClient httpClient)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClient ?? throw new ArgumentNullException("Value cannot be null");
         }
 
         /// <summary>
@@ -29,7 +30,7 @@ namespace FileService.Services
         /// </summary>
         /// <param name="requestMessage">The HTTP request mesaage.</param>
         /// <returns>The file contents from the HTTP source.</returns>
-        public async Task<string> ReadFromFile(HttpRequestMessage requestMessage)
+        public async Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
         {
             if (requestMessage == null)
             {

@@ -32,8 +32,8 @@ namespace GraphWebApi.Controllers
         public GraphExplorerSamplesController(ISamplesStore samplesStore, IConfiguration configuration, IHttpClientUtility httpClientUtility)
         {
             _samplesStore = samplesStore;
-            _configuration = configuration;
-            _httpClientUtility = httpClientUtility;
+            _configuration = configuration ?? throw new ArgumentNullException("Value cannot be null");
+            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException("Value cannot be null");
         }
 
         // Gets the list of all sample queries

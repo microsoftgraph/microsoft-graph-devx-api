@@ -33,7 +33,7 @@ namespace MockTestUtility
             }
         }
 
-        public Task<string> ReadFromFile(HttpRequestMessage requestMessage)
+        public Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
         {
             throw new NotImplementedException();
         }
