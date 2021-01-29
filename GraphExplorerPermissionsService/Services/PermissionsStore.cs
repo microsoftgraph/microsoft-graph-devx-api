@@ -185,7 +185,7 @@ namespace GraphExplorerPermissionsService
         private async Task<string> FetchHttpSourceDocument(string sourceUri)
         {
             // Construct the http request message
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, sourceUri);
+            using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, sourceUri);
 
             return await _httpClientUtility.ReadFromDocument(httpRequestMessage);
         }
@@ -321,7 +321,7 @@ namespace GraphExplorerPermissionsService
                     requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
 
                     // Check if requestUrl is contained in our Url Template table
-                    TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl.ToLower(), UriKind.RelativeOrAbsolute));
+                    TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
 
                     if (resultMatch == null)
                     {
