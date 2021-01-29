@@ -20,11 +20,13 @@ namespace SamplesService.Test
         private readonly IConfigurationRoot _configuration;
         private readonly IMemoryCache _samplesCache;
         private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
         private ISamplesStore _samplesStore;
 
         public SamplesStoreShould()
         {
             _fileUtility = new FileUtilityMock();
+            _httpClientUtility = new FileUtilityMock();
             _samplesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest.json")
@@ -90,7 +92,7 @@ namespace SamplesService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _fileUtility);
+            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _httpClientUtility);
 
             /* Act */
 
@@ -122,7 +124,7 @@ namespace SamplesService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _fileUtility);
+            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _httpClientUtility);
 
             // Act - Fetch ja-JP sample queries which is empty
             SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP", org, branchName);
