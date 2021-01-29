@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -15,26 +15,15 @@
     <None Remove="TestFiles\permissions-test-file-v1.0_ver2.json" />
     <None Remove="TestFiles\ScopesInformationList-test-file.json" />
     <None Remove="TestFiles\ScopesInformationList-test-file_es-ES.json" />
-    <None Remove="GithubTestFiles\Org\Repo\Branch\permissions-files\permissions-test-file-v1.0_ver1.json" />
-    <None Remove="GithubTestFiles\Org\Repo\Branch\permissions-files\permissions-test-file-v1.0_ver2.json" />
-    <None Remove="GithubTestFiles\Org\Repo\Branch\permissions-files\ScopesInformationList-test-file_es-ES.json" />
-    <None Remove="GithubTestFiles\Org\Repo\Branch\permissions-files\ScopesInformationList-test-file.json" />
+    <None Remove="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file_es-ES.json" />
+    <None Remove="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="GithubTestFiles\appsettings-test.json">
+    <Content Include="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file_es-ES.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="GithubTestFiles\Org\Repo\Branch\permissions-files\permissions-test-file-v1.0_ver1.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="GithubTestFiles\Org\Repo\Branch\permissions-files\permissions-test-file-v1.0_ver2.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="GithubTestFiles\Org\Repo\Branch\permissions-files\ScopesInformationList-test-file_es-ES.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="GithubTestFiles\Org\Repo\Branch\permissions-files\ScopesInformationList-test-file.json">
+    <Content Include="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="TestFiles\appsettingstest-empty.json">
