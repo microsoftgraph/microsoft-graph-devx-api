@@ -57,22 +57,22 @@ namespace GraphExplorerSamplesService.Services
 					/* Check whether a previous thread already seeded an
                      * instance of the localized samples during the lock.
                      */
-                    var lockedLocale = locale;
-                    var seededSampleQueriesList = _samplesCache?.Get<SampleQueriesList>(lockedLocale);
+					var lockedLocale = locale;
+					var seededSampleQueriesList = _samplesCache.Get<SampleQueriesList>(lockedLocale);
 
-                    if (seededSampleQueriesList != null)
-                    {
-                        return Task.FromResult(seededSampleQueriesList);
-                    }
+					if (seededSampleQueriesList != null)
+					{
+						return Task.FromResult(seededSampleQueriesList);
+					}
 
-                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+					cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
-                    // Fetch the requisite sample path source based on the locale
-                    string queriesFilePathSource =
-                           FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
+					// Fetch the requisite sample path source based on the locale
+					string queriesFilePathSource =
+						   FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
 
-                    // Get the file contents from source
-                    string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
+					// Get the file contents from source
+					string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
 					/* Current business process only supports ordering of the English
                        translation of the sample queries.
@@ -97,7 +97,7 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
         public async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale, string org, string branchName)
         {
-            string host = _configuration["GithubHost"];
+            string host = _configuration["BlobStorage:GithubHost"];
             string repo = _configuration["BlobStorage:RepoName"];
 
             // Fetch the requisite sample path source based on the locale
@@ -107,9 +107,9 @@ namespace GraphExplorerSamplesService.Services
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
 
             // Construct the http request message
-            using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
 
-            string jsonFileContents = await _httpClientUtility.ReadFromDocument(httpRequestMessage);
+            string jsonFileContents = await _httpClientUtility.ReadFromFile(httpRequestMessage);
 
             return DeserializeSamplesList(jsonFileContents, locale);
         }

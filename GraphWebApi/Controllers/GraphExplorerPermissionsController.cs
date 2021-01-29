@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FileService.Interfaces;
+using GraphExplorerPermissionsService;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
 using GraphWebApi.Common;
@@ -23,20 +25,22 @@ namespace GraphWebApi.Controllers
         public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, IConfiguration configuration, IHttpClientUtility httpClientUtility)
         {
             _permissionsStore = permissionsStore;
+            _configuration = configuration;
+            _httpClientUtility = httpClientUtility;
         }
         // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
-                                                             [FromQuery]string requestUrl = null,
-                                                             [FromQuery]string method = null)
+        public async Task<IActionResult> GetPermissionScopes([FromQuery] string scopeType = "DelegatedWork",
+                                                             [FromQuery] string requestUrl = null,
+                                                             [FromQuery] string method = null,
+                                                             [FromQuery] string org = null,
+                                                             [FromQuery] string branchName = null)
         {
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
-
                 List<ScopeInformation> result = null;
-                result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
 
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {

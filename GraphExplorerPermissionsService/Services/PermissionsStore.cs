@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UriMatchingService;
@@ -23,6 +24,8 @@ namespace GraphExplorerPermissionsService
         private IDictionary<int, object> _scopesListTable;
         private readonly IMemoryCache _permissionsCache;
         private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
+        private readonly IConfiguration _configuration;
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
@@ -37,7 +40,9 @@ namespace GraphExplorerPermissionsService
         {
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
             _permissionsCache = permissionsCache;
+            _httpClientUtility = httpClientUtility;
             _fileUtility = fileUtility;
+            _configuration = configuration;
             _permissionsContainerName = configuration["BlobStorage:Containers:Permissions"];
             _permissionsBlobNames = configuration.GetSection("BlobStorage:Blobs:Permissions:Names").Get<List<string>>();
             _scopesInformation = configuration["BlobStorage:Blobs:Permissions:Descriptions"];
@@ -121,7 +126,7 @@ namespace GraphExplorerPermissionsService
                      * instance of the localized permissions descriptions
                      * during the lock.
                      */
-                    var seededScopesInfoDictionary = _permissionsCache.Get<Dictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
+                    var seededScopesInfoDictionary = _permissionsCache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
                     if (seededScopesInfoDictionary == null)
                     {
                         string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
@@ -151,10 +156,8 @@ namespace GraphExplorerPermissionsService
             string repo = _configuration["BlobStorage:RepoName"];
             string localizedFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
 
-                        foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
-                        {
-                            _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
-                        }
+            // Get the absolute url from configuration and query param, then read from the file
+            var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
 
             // Get file contents from source
             string scopesInfoJson = await FetchHttpSourceDocument(queriesFilePathSource);
@@ -284,22 +287,17 @@ namespace GraphExplorerPermissionsService
                 {
                     foreach (var scopesInfo in scopesInformationDictionary[Delegated])
                     {
-                        if (scopesInformationDictionary.ContainsKey(Application))
-                        {
-                            foreach (var scopesInfo in scopesInformationDictionary[Application])
-                            {
-                                scopesListInfo.Add(scopesInfo.Value);
-                            }
-                        }
+                        scopesListInfo.Add(scopesInfo.Value);
                     }
-
-                    return scopesListInfo;
                 }
-                else // fetch permissions for a given request url and method
+                else // Application scopes
                 {
-                    if (string.IsNullOrEmpty(method))
+                    if (scopesInformationDictionary.ContainsKey(Application))
                     {
-                        throw new ArgumentNullException(nameof(method), "The HTTP method value cannot be null or empty.");
+                        foreach (var scopesInfo in scopesInformationDictionary[Application])
+                        {
+                            scopesListInfo.Add(scopesInfo.Value);
+                        }
                     }
                 }
                 return scopesListInfo;
@@ -334,35 +332,24 @@ namespace GraphExplorerPermissionsService
                     ScopeInformation scopeInfo = null;
                     if (scopeType.Contains(Delegated))
                     {
-                        ScopeInformation scopeInfo = null;
-                        if (scopeType.Contains(Delegated))
+                        if (scopesInformationDictionary[Delegated].ContainsKey(scopeName))
                         {
-                            if (scopesInformationDictionary[Delegated].ContainsKey(scopeName))
-                            {
-                                scopeInfo = scopesInformationDictionary[Delegated][scopeName];
-                            }
+                            scopeInfo = scopesInformationDictionary[Delegated][scopeName];
                         }
-                        else // Application scopes
+                    }
+                    else // Application scopes
+                    {
+                        if (scopesInformationDictionary[Application].ContainsKey(scopeName))
                         {
-                            if (scopesInformationDictionary[Application].ContainsKey(scopeName))
-                            {
-                                scopeInfo = scopesInformationDictionary[Application][scopeName];
-                            }
+                            scopeInfo = scopesInformationDictionary[Application][scopeName];
                         }
                     }
                     if (scopeInfo == null)
                     {
                         scopesList.Add(new ScopeInformation
                         {
-                            scopesList.Add(new ScopeInformation
-                            {
-                                ScopeName = scopeName
-                            });
-                        }
-                        else
-                        {
-                            scopesList.Add(scopeInfo);
-                        }
+                            ScopeName = scopeName
+                        });
                     }
                     else
                     {
@@ -370,14 +357,6 @@ namespace GraphExplorerPermissionsService
                     }
                 }
                 return scopesList;
-            }
-            catch (ArgumentNullException exception)
-            {
-                throw exception;
-            }
-            catch (ArgumentException)
-            {
-                return null; // equivalent to no match for the given requestUrl
             }
         }
         private void InitializePermissions(string org = null,

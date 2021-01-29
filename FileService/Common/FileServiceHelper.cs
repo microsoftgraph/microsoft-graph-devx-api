@@ -89,10 +89,10 @@ namespace FileService.Common
                     defaultBlobName = $"{blobNameParts[0]}_{localeCode}.{blobNameParts[1]}";
                 }
             }
-
+            
             // File path source format --> directoryName\\fileName
             return $"{containerName}{FileServiceConstants.DirectorySeparator}{defaultBlobName}";
-        }
+        }       
 
         /// <summary>
         /// Check whether the input string is null or empty.
