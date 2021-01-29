@@ -15,14 +15,12 @@ namespace FileService.Services
     public class HttpClientUtility: IHttpClientUtility
     {
         private readonly HttpClient _httpClient;
-        
+
         /// <summary>
         /// Class constructor.
         /// </summary>
         public HttpClientUtility(HttpClient httpClient)
-        {
-            _httpClient = httpClient ?? throw new ArgumentNullException("Value cannot be null");
-        }
+            => _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient), "Value cannot be null");
 
         /// <summary>
         /// Reads the contents of a document from an HTTP source.
@@ -40,12 +38,7 @@ namespace FileService.Services
             var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
             var fileContents = await httpResponseMessage?.Content.ReadAsStringAsync();
 
-            if (!httpResponseMessage.IsSuccessStatusCode)
-            {
-                throw new Exception(fileContents);
-            }
-
+            return !httpResponseMessage.IsSuccessStatusCode ? throw new Exception(fileContents) : fileContents;
         }
-            return fileContents;
     }
 }
