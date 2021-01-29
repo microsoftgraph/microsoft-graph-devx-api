@@ -18,7 +18,7 @@ namespace ChangesService.Test
     public class ChangesStoreShould
     {
         private readonly IConfigurationRoot _configuration;
-        private readonly IFileUtility _httpClientUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changessCache;
         private IChangesStore _changesStore;
 

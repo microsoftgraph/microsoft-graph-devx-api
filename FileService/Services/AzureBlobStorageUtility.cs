@@ -9,7 +9,6 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace FileService.Services
@@ -25,7 +24,7 @@ namespace FileService.Services
 
         public AzureBlobStorageUtility(IConfiguration configuration)
         {
-            _connectionString = configuration["BlobStorage:ConnectionString"];
+            _connectionString = configuration["BlobStorage:AzureConnectionString"];
         }
 
         /// <summary>
@@ -69,16 +68,6 @@ namespace FileService.Services
             }
 
             throw new IOException("Failed to connect to the blob storage account.");
-        }
-
-        /// <summary>
-        /// Reads contents of a file from a http source
-        /// </summary>
-        /// <param name="requestMessage">The Http Request message.</param>
-        /// <returns></returns>
-        public Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>
