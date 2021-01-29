@@ -29,7 +29,7 @@ namespace FileService.Services
         /// </summary>
         /// <param name="requestMessage">The HTTP request message.</param>
         /// <returns>The document contents from the HTTP source.</returns>
-        public async Task<string> ReadFromSource(HttpRequestMessage requestMessage)
+        public async Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
         {
             if (requestMessage == null)
             {

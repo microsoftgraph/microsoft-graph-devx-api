@@ -233,7 +233,7 @@ namespace ChangesService.Services
                 FileServiceConstants.HttpRequest.DevxApiUserAgent); // User Agent
 
             // Fetch the request url workload info. content from Microsoft Graph
-            string workloadInfo = await httpClientUtility.ReadFromSource(httpRequestMessage);
+            string workloadInfo = await httpClientUtility.ReadFromDocument(httpRequestMessage);
 
             // Extract the workload name from the response content
             JToken workloadInfoToken = JObject.Parse(workloadInfo);
