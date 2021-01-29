@@ -19,10 +19,12 @@ namespace PermissionsService.Test
     {
         private readonly IConfigurationRoot _configuration;
         private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
 
         public PermissionsStoreShould()
         {
             _fileUtility = new FileUtilityMock();
+            _httpClientUtility = new FileUtilityMock();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest-valid.json")
                 .Build();
@@ -308,7 +310,7 @@ namespace PermissionsService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, permissionsCache: _permissionsCache, httpClientUtility: _fileUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, permissionsCache: _permissionsCache, httpClientUtility: _httpClientUtility);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName).GetAwaiter().GetResult();
@@ -327,7 +329,7 @@ namespace PermissionsService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, httpClientUtility: _fileUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, fileUtility: _fileUtility, httpClientUtility: _httpClientUtility);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName, requestUrl: "/security/alerts/{alert_id}", method: "GET")

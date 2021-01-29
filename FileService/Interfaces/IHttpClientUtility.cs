@@ -12,7 +12,6 @@ namespace FileService.Interfaces
     /// </summary>
     public interface IHttpClientUtility
     {
-        Task<string> ReadFromFile(HttpRequestMessage requestMessage);
-        Task WriteToFile(string fileContents, string filePathSource);
+        Task<string> ReadFromDocument(HttpRequestMessage requestMessage);
     }
 }

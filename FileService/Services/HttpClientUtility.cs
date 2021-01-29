@@ -47,15 +47,5 @@ namespace FileService.Services
 
             return fileContents;
         }
-
-        public Task<string> ReadFromFile(string filePathSource)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task WriteToFile(string fileContents, string filePathSource)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
