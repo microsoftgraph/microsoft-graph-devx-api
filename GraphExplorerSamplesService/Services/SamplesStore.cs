@@ -24,6 +24,7 @@ namespace GraphExplorerSamplesService.Services
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _samplesCache;
+        private readonly IConfiguration _configuration;
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
