@@ -31,9 +31,9 @@ namespace ChangesService.Services
         {
             _configuration = configuration;
             _changeLogCache = changeLogCache;
+            _httpClientUtility = httpClientUtility;
             _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath]
                 ?? throw new ArgumentNullException($"Config path missing: {ChangesServiceConstants.ChangelogRelativeUrlConfigPath}");
-            _httpClientUtility = httpClientUtility;
             string refreshTime = configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]
                 ?? ChangesServiceConstants.ChangelogRefreshTimeDefault;
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(refreshTime);
@@ -53,7 +53,7 @@ namespace ChangesService.Services
                 locale = "en-us";
             }
 
-            locale = locale.ToLower(); // for uniformity; uri path is all lower-cased
+            locale = locale.ToLowerInvariant(); // for uniformity; uri path is all lower-cased
 
             // Fetch cached changelog list
             ChangeLogList changeLogList = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>

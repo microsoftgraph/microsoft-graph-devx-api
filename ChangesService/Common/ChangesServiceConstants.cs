@@ -23,6 +23,6 @@ namespace ChangesService.Common
         // Error constants
         public const string ValueNullError = "Value cannot be null.";
         public const string ValueZeroNegativeInteger = "Value cannot be zero or a negative integer.";
-        public const string JsonStringNullOrEmpty = "The JSON string to be deserialized cannot be null or empty.";        
+        public const string JsonStringNullOrEmpty = "The JSON string to be deserialized cannot be null or empty.";
     }
 }

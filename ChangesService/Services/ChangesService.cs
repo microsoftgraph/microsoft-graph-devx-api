@@ -21,6 +21,7 @@ namespace ChangesService.Services
     /// </summary>
     public static class ChangesService
     {
+        // Field to hold key-value pairs of url and workload names
         private static readonly IDictionary<string, string> UrlWorkloadDict = new Dictionary<string, string>();
 
         /// <summary>
@@ -74,7 +75,7 @@ namespace ChangesService.Services
             // Temp. var to hold cascading filtered data
             ChangeLogList tempChangeLogList = changeLogList;
 
-            // Search the changelog list by workload
+            // Search the changelog list by workload name
             ChangeLogList changeLogListByWorkload = new ChangeLogList();
 
             if (!string.IsNullOrEmpty(searchOptions.RequestUrl))
@@ -83,7 +84,7 @@ namespace ChangesService.Services
                 var workload = RetrieveWorkloadNameFromRequestUrl(searchOptions, graphProxyConfigs, httpClientUtility)
                                 .GetAwaiter().GetResult();
 
-                // Search by the workload name
+                // Search by retrieved workload name
                 changeLogListByWorkload.ChangeLogs = FilterChangeLogListByWorkload(tempChangeLogList,
                                                                       workload).ToList();
 
@@ -91,7 +92,7 @@ namespace ChangesService.Services
             }
             else if (!string.IsNullOrEmpty(searchOptions.Workload))
             {
-                // Search by the workload name
+                // Search by the provided workload name
                 changeLogListByWorkload.ChangeLogs = FilterChangeLogListByWorkload(tempChangeLogList,
                                                                       searchOptions.Workload).ToList();
 
@@ -142,7 +143,7 @@ namespace ChangesService.Services
                 }
                 else if (searchOptions.Page < tempChangeLogList.TotalPages)
                 {
-                    // Any of the pages between first and last
+                    // Any of the pages between first page and last page
 
                     tempChangeLogList.Page = searchOptions.Page;
 
@@ -220,7 +221,7 @@ namespace ChangesService.Services
 
             // Get the absolute uri
             string requestUri = graphProxy.GraphProxyBaseUrl + relativeProxyUrl;
-                        
+
             // Construct the http request message
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
@@ -240,7 +241,7 @@ namespace ChangesService.Services
             var targetWorkloadId = (string)workloadInfoToken["TargetWorkloadId"];
             var workloadName = targetWorkloadId.Split('.').Last();
 
-            // Cache this value
+            // Cache the retrieved workload name
             UrlWorkloadDict.Add(searchOptions.RequestUrl, workloadName);
 
             return workloadName;
