@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Kiota\src\kiota.core\kiota.core.csproj" />
     <ProjectReference Include="..\Submodules\OpenAPI.NET.OData\src\Microsoft.OpenApi.OData.Reader\Microsoft.OpenAPI.OData.Reader.csproj" />
     <ProjectReference Include="..\UriMatchService\UriMatchingService.csproj" />
   </ItemGroup>
