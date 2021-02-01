@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using OpenAPIService.Common;
 using UriMatchingService;
+using kiota.core;
 
 namespace OpenAPIService
 {
@@ -37,6 +38,7 @@ namespace OpenAPIService
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
         private static UriTemplateMatcher _uriTemplateTable = new UriTemplateMatcher();
         private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+        private static OpenApiUrlSpaceNode _openApiRootNode;
 
         /// <summary>
         /// Create partial document based on provided predicate
@@ -158,28 +160,20 @@ namespace OpenAPIService
             }
             else if (url != null)
             {
-                /* Extract the respective Operation Id(s) that match the provided url path */
+                /* Extract the corresponding Operation Id(s) for the provided url path */
 
-                if (!_openApiOperationsTable.Any() || forceRefresh)
+                if (_openApiRootNode == null || forceRefresh)
                 {
-                    _uriTemplateTable = new UriTemplateMatcher();
-                    _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
-
-                    await PopulateReferenceTablesAync(source);
+                    _openApiRootNode = CreateOpenApiUrlSpaceNode(source);
                 }
 
-                url = url.Replace('-', '_');
+                OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url);
 
-                TemplateMatch resultMatch = _uriTemplateTable.Match(new Uri(url.ToLower(), UriKind.RelativeOrAbsolute));
-
-                if (resultMatch == null)
+                if (openApiOps == null)
                 {
                     throw new ArgumentException("The url supplied could not be found.");
                 }
 
-                /* Fetch the corresponding Operations Id(s) for the matched url */
-
-                OpenApiOperation[] openApiOps = _openApiOperationsTable[int.Parse(resultMatch.Key)];
                 string[] operationIdsArray = openApiOps.Select(x => x.OperationId).ToArray();
 
                 predicate = (o) => operationIdsArray.Contains(o.OperationId);
@@ -193,41 +187,77 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Populates the _uriTemplateTable with the Graph url paths and the _openApiOperationsTable
-        /// with the respective OpenApiOperations for these urls paths.
+        /// Creates an <see cref="OpenApiUrlSpaceNode"/> from an <see cref="OpenApiDocument"/>.
         /// </summary>
-        /// <param name="source">The OpenAPI document.</param>
-        /// <returns>A task.</returns>
-        private static Task PopulateReferenceTablesAync(OpenApiDocument source)
-		{
-			HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
-
-            int count = 0;
-
-            foreach (var path in source.Paths)
+        /// <param name="source">The <see cref="OpenApiDocument"/>.</param>
+        /// <returns>The created <see cref="OpenApiUrlSpaceNode"/>.</returns>
+        private static OpenApiUrlSpaceNode CreateOpenApiUrlSpaceNode(OpenApiDocument source)
+        {
+            if (source == null)
             {
-                if (uniqueUrlsTable.Add(path.Key))
+                throw new ArgumentNullException(nameof(source), "Value cannot be null.");
+            }
+
+            return OpenApiUrlSpaceNode.Create(source);
+        }
+
+        /// <summary>
+        /// Retrieves an array of <see cref="OpenApiOperation"/> for a given url path from an
+        /// <see cref="OpenApiUrlSpaceNode"/>.
+        /// </summary>
+        /// <param name="rootNode">The target <see cref="OpenApiUrlSpaceNode"/> root node.</param>
+        /// <param name="relativeUrl">The relative url path to retrieve
+        /// the array of <see cref="OpenApiOperation"/> from.</param>
+        /// <returns>The array of <see cref="OpenApiOperation"/> for a given url path.</returns>
+        private static OpenApiOperation[] GetOpenApiOperations(OpenApiUrlSpaceNode rootNode, string relativeUrl)
+        {
+            if (string.IsNullOrEmpty(relativeUrl))
+            {
+                throw new ArgumentNullException(nameof(relativeUrl), "Value cannot be null or empty.");
+            }
+
+            if (rootNode == null)
+            {
+                throw new ArgumentNullException(nameof(rootNode), "Value cannot be null.");
+            }
+
+            if (relativeUrl.Equals("/", StringComparison.Ordinal))
+            {
+                // root path
+                return rootNode.PathItem?.Operations.Values.ToArray();
+            }
+
+            var urlSegments = relativeUrl.Split("/", StringSplitOptions.RemoveEmptyEntries);
+
+            OpenApiOperation[] operations = null;
+            var targetChild = rootNode;
+
+            for (int i = 0; i < urlSegments.Length; i++)
+            {
+                targetChild = targetChild?.Children
+                                          .FirstOrDefault(x => x.Key.Equals(urlSegments[i], StringComparison.Ordinal)).Value;
+
+                if (targetChild == null)
                 {
-                    count++;
+                    break;
+                }
 
-                    string urlPath = path.Key.Replace('-', '_');
-                    _uriTemplateTable.Add(count.ToString(), urlPath.ToLower());
-
-                    OpenApiOperation[] operations = path.Value.Operations.Values.ToArray();
-                    _openApiOperationsTable.Add(count, operations);
+                if (i == urlSegments.Length - 1)
+                {
+                    operations = targetChild.PathItem.Operations.Values.ToArray();
                 }
             }
 
-			return Task.CompletedTask;
-		}
+            return operations;
+        }
 
-		/// <summary>
-		/// Create a representation of the OpenApiDocument to return from an API
-		/// </summary>
-		/// <param name="subset">OpenAPI document.</param>
-		/// <param name="styleOptions">The modal object containing the required styling options.</param>
-		/// <returns>A memory stream.</returns>
-		public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
+        /// <summary>
+        /// Create a representation of the OpenApiDocument to return from an API
+        /// </summary>
+        /// <param name="subset">OpenAPI document.</param>
+        /// <param name="styleOptions">The modal object containing the required styling options.</param>
+        /// <returns>A memory stream.</returns>
+        public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
             var stream = new MemoryStream();
             var sr = new StreamWriter(stream);

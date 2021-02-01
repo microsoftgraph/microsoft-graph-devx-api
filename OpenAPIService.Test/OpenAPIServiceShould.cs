@@ -75,7 +75,7 @@ namespace OpenAPIService.Test
         [InlineData("users.user.ListUser", "users.user", null)]
         [InlineData("users.user.ListUser", null, "/users")]
         [InlineData(null, "users.user", "/users")]
-        public void ThrowsInvalidOperationExceptionInCreatePredicateWhenInvalidNumberOfArgumentsAreSpecified(string operationIds, string tags, string url)
+        public void ThrowInvalidOperationExceptionInCreatePredicateWhenInvalidNumberOfArgumentsAreSpecified(string operationIds, string tags, string url)
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
@@ -106,7 +106,7 @@ namespace OpenAPIService.Test
         }
 
         [Fact]
-        public void ThrowsArgumentExceptionInCreatePredicateWhenNonExistentUrlArgumentIsSpecified()
+        public void ThrowArgumentExceptionInCreatePredicateWhenNonExistentUrlArgumentIsSpecified()
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
@@ -118,7 +118,7 @@ namespace OpenAPIService.Test
         }
 
         [Fact]
-        public void ThrowsArgumentExceptionInApplyStyleWhenNoPathsAreReturned()
+        public void ThrowArgumentExceptionInApplyStyleWhenNoPathsAreReturned()
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
@@ -136,7 +136,7 @@ namespace OpenAPIService.Test
         [Theory]
         [InlineData("foo.bar", null)]
         [InlineData(null, "bar.foo")]
-        public void ThrowsArgumentExceptionInCreateFilteredDocumentWhenNonExistentOperationIdsAndTagsAreSupplied(string operationIds, string tags)
+        public void ThrowArgumentExceptionInCreateFilteredDocumentWhenNonExistentOperationIdsAndTagsAreSupplied(string operationIds, string tags)
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
