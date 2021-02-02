@@ -169,6 +169,7 @@ namespace OpenAPIService
 
                 OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url);
 
+
                 if (openApiOps == null)
                 {
                     throw new ArgumentException("The url supplied could not be found.");
@@ -193,12 +194,7 @@ namespace OpenAPIService
         /// <returns>The created <see cref="OpenApiUrlSpaceNode"/>.</returns>
         private static OpenApiUrlSpaceNode CreateOpenApiUrlSpaceNode(OpenApiDocument source)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source), "Value cannot be null.");
-            }
-
-            return OpenApiUrlSpaceNode.Create(source);
+            return source == null ? null : OpenApiUrlSpaceNode.Create(source);
         }
 
         /// <summary>
@@ -211,20 +207,13 @@ namespace OpenAPIService
         /// <returns>The array of <see cref="OpenApiOperation"/> for a given url path.</returns>
         private static OpenApiOperation[] GetOpenApiOperations(OpenApiUrlSpaceNode rootNode, string relativeUrl)
         {
-            if (string.IsNullOrEmpty(relativeUrl))
-            {
-                throw new ArgumentNullException(nameof(relativeUrl), "Value cannot be null or empty.");
-            }
-
-            if (rootNode == null)
-            {
-                throw new ArgumentNullException(nameof(rootNode), "Value cannot be null.");
-            }
-
             if (relativeUrl.Equals("/", StringComparison.Ordinal))
             {
                 // root path
-                return rootNode.PathItem?.Operations.Values.ToArray();
+                if (rootNode.HasOperations())
+                {
+                    return rootNode.PathItem.Operations.Values.ToArray();
+                }
             }
 
             var urlSegments = relativeUrl.Split("/", StringSplitOptions.RemoveEmptyEntries);
@@ -232,7 +221,7 @@ namespace OpenAPIService
             OpenApiOperation[] operations = null;
             var targetChild = rootNode;
 
-            for (int i = 0; i < urlSegments.Length; i++)
+            for (int i = 0; i < urlSegments?.Length; i++)
             {
                 targetChild = targetChild?.Children
                                           .FirstOrDefault(x => x.Key.Equals(urlSegments[i], StringComparison.Ordinal)).Value;
@@ -244,7 +233,10 @@ namespace OpenAPIService
 
                 if (i == urlSegments.Length - 1)
                 {
-                    operations = targetChild.PathItem.Operations.Values.ToArray();
+                    if (targetChild.HasOperations())
+                    {
+                        operations = targetChild.PathItem.Operations.Values.ToArray();
+                    }
                 }
             }
 
