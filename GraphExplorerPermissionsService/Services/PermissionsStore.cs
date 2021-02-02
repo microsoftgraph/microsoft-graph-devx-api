@@ -141,7 +141,9 @@ namespace GraphExplorerPermissionsService
                         // Get file contents from source
                         string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
 
-                        seededScopesInfoDictionary = CreateScopesInformationTables(scopesInfoJson, cacheEntry);
+                        seededScopesInfoDictionary = CreateScopesInformationTables(scopesInfoJson);
+
+                        cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
                     }
 
                     /* Fetch the localized cached permissions descriptions
@@ -194,12 +196,12 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Creates a dictionary of scopes information
+        /// Creates a dictionary of scopes information.
         /// </summary>
         /// <param name="filePath">The path of the file from Github.</param>
         /// <param name="cacheEntry">An optional cache entry param.</param>
         /// <returns>A dictionary of scopes information.</returns>
-        private IDictionary<string, IDictionary<string, ScopeInformation>> CreateScopesInformationTables(string scopesInfoJson, ICacheEntry cacheEntry = null)
+        private IDictionary<string, IDictionary<string, ScopeInformation>> CreateScopesInformationTables(string scopesInfoJson)
         {
             if (string.IsNullOrEmpty(scopesInfoJson))
             {
@@ -219,11 +221,6 @@ namespace GraphExplorerPermissionsService
             foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
             {
                 _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
-            }
-
-            if (cacheEntry != null)
-            {
-                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
             }
 
             return new Dictionary<string, IDictionary<string, ScopeInformation>>
@@ -300,7 +297,7 @@ namespace GraphExplorerPermissionsService
                                 scopesListInfo.Add(scopesInfo.Value);
                             }
                         }
-                    }                    
+                    }
                     else // Application scopes
                     {
                         if (scopesInformationDictionary.ContainsKey(Application))
@@ -392,7 +389,7 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Initializes Permissions
+        /// Initializes Permissions.
         /// </summary>
         private void InitializePermissions()
         {
