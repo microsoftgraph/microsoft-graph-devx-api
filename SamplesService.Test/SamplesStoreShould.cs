@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ namespace SamplesService.Test
             /* Assert */
 
             // en-US
-            Assert.Equal(149, englishSampleQueriesList.SampleQueries.Count);
+            Assert.Equal(151, englishSampleQueriesList.SampleQueries.Count);
             Assert.Equal("Getting Started", englishSampleQueriesList.SampleQueries[0].Category);
             Assert.Equal("my profile", englishSampleQueriesList.SampleQueries[0].HumanName);
 
