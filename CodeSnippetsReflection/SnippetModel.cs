@@ -146,11 +146,14 @@ namespace CodeSnippetsReflection
             var queryStrings = System.Web.HttpUtility.ParseQueryString(queryString);
             foreach (var key in queryStrings.AllKeys)
             {
-                if (key == "$filter")
+                // in beta, $ is optional for OData queries.
+                // https://docs.microsoft.com/en-us/graph/query-parameters
+                var optionalKey = key.StartsWith("$") ? key.Substring(1) : key;
+                if (optionalKey == "filter")
                 {
                     FilterFieldList = queryStrings[key].Replace('=', ' ').Split("&").ToList();
                 }
-                else if (key == "$orderby")
+                else if (optionalKey == "orderby")
                 {
                     OrderByFieldList = queryStrings[key].Replace('=', ' ').Split("&").ToList();
                 }
