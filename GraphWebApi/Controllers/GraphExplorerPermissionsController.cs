@@ -1,6 +1,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using GraphWebApi.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+
 namespace GraphWebApi.Controllers
 {
     [Route("api/[controller]")]
@@ -22,12 +24,14 @@ namespace GraphWebApi.Controllers
         private readonly IPermissionsStore _permissionsStore;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientUtility _httpClientUtility;
+
         public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, IConfiguration configuration, IHttpClientUtility httpClientUtility)
         {
             _permissionsStore = permissionsStore;
             _configuration = configuration;
             _httpClientUtility = httpClientUtility;
         }
+
         // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
@@ -40,21 +44,24 @@ namespace GraphWebApi.Controllers
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
+
                 List<ScopeInformation> result = null;
 
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {
                     var permissionsStore = new PermissionsStore(configuration: _configuration,
-                     httpClientUtility: _httpClientUtility);
+                        httpClientUtility: _httpClientUtility);
 
                     // Fetch permissions descriptions file from Github
-                    result = await _permissionsStore.GetScopesAsync(scopeType: scopeType, locale: localeCode, requestUrl: requestUrl, method: method, org: org, branchName: branchName);
+                    result = await _permissionsStore.GetScopesAsync(scopeType: scopeType, locale: localeCode, requestUrl: requestUrl,
+                        method: method, org: org, branchName: branchName);
                 }
                 else
                 {
                     // Fetch the files from Azure Blob
                     result = await _permissionsStore.GetScopesAsync(scopeType: scopeType, locale: localeCode, requestUrl: requestUrl, method: method);
                 }
+
                 return result == null ? NotFound() : (IActionResult)Ok(result);
             }
             catch (InvalidOperationException invalidOpsException)

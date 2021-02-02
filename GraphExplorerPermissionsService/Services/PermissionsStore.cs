@@ -41,24 +41,26 @@ namespace GraphExplorerPermissionsService
         private const string PermissionsNamesBlobConfig = "BlobStorage:Blobs:Permissions:Names";
         private const string PermissionsContainerBlobConfig = "BlobStorage:Containers:Permissions";
 
-        public PermissionsStore(IConfiguration configuration, IFileUtility fileUtility = null, IMemoryCache permissionsCache = null, IHttpClientUtility httpClientUtility = null)
+        public PermissionsStore(IConfiguration configuration, IFileUtility fileUtility = null,
+                                IMemoryCache permissionsCache = null, IHttpClientUtility httpClientUtility = null)
         {
+            _configuration = configuration ?? throw new ArgumentNullException("Value cannot be null");
+
             string refreshTime = configuration[CacheRefreshTimeConfig] ?? throw new ArgumentNullException($"Config path missing: {CacheRefreshTimeConfig}");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(refreshTime);
 
             _httpClientUtility = httpClientUtility;
             _fileUtility = fileUtility ;
             _permissionsCache = permissionsCache;
-            _configuration = configuration ?? throw new ArgumentNullException("Value cannot be null");
 
             _permissionsContainerName = configuration[PermissionsContainerBlobConfig]
-            ?? throw new ArgumentNullException($"Config path is missing:{ _permissionsContainerName }");
+                ?? throw new ArgumentNullException($"Config path is missing:{ _permissionsContainerName }");
 
             _permissionsBlobNames = configuration.GetSection(PermissionsNamesBlobConfig).Get<List<string>>()
-            ?? throw new ArgumentNullException($"Config path is missing:{ _permissionsBlobNames }");
+                ?? throw new ArgumentNullException($"Config path is missing:{ _permissionsBlobNames }");
 
             _scopesInformation = configuration[ScopesInfoBlobConfig]
-            ?? throw new ArgumentNullException($"Config path is missing:{ _scopesInformation }");
+                ?? throw new ArgumentNullException($"Config path is missing:{ _scopesInformation }");
         }
 
         /// <summary>
@@ -135,6 +137,7 @@ namespace GraphExplorerPermissionsService
                     if (seededScopesInfoDictionary == null)
                     {
                         string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
+
                         // Get file contents from source
                         string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
 
@@ -157,9 +160,9 @@ namespace GraphExplorerPermissionsService
         /// <param name="org">The org or owner of the repo.</param>
         /// <param name="branchName">The name of the branch with the file version.</param>
         /// <returns>The localized instance of permissions descriptions.</returns>
-        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetPermissionsFromGithub(string locale,
-                                                                                                                string org,
-                                                                                                                string branchName)
+        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetPermissionsDescriptionsFromGithub(string org,
+                                                                                                                            string branchName,
+                                                                                                                            string locale = DefaultLocale)
         {
             string host = _configuration["BlobStorage:GithubHost"];
             string repo = _configuration["BlobStorage:RepoName"];
@@ -178,10 +181,10 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Fetches the Github files and parses them
+        /// Fetches document from a Http source.
         /// </summary>
-        /// <param name="sourceUri"></param>
-        /// <returns>A string of document content.</returns>
+        /// <param name="sourceUri">The relative file path.</param>
+        /// <returns>A document retrieved from the Http source.</returns>
         private async Task<string> FetchHttpSourceDocument(string sourceUri)
         {
             // Construct the http request message
@@ -240,7 +243,7 @@ namespace GraphExplorerPermissionsService
         {
             bool refresh = false;
 
-            bool cacheState = (bool)(_permissionsCache?.GetOrCreate("PermissionsTablesState", entry =>
+            bool cacheState = (_permissionsCache.GetOrCreate("PermissionsTablesState", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
                 _permissionsRefreshed = false;
@@ -257,7 +260,7 @@ namespace GraphExplorerPermissionsService
         /// <param name="locale">The language code for the preferred localized file.</param>
         /// <param name="requestUrl">Optional: The target request url whose scopes are to be retrieved.</param>
         /// <param name="method">Optional: The target http verb of the request url whose scopes are to be retrieved.</param>
-        /// /// <param name="org">Optional: The name of the org/owner of the repo.</param>
+        /// <param name="org">Optional: The name of the org/owner of the repo.</param>
         /// <param name="branchName">Optional: The name of the branch containing the files.</param>
         /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
         public async Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
@@ -271,17 +274,15 @@ namespace GraphExplorerPermissionsService
             {
                 IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary;
 
+                InitializePermissions();
+
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {
-                    InitializePermissions();
-
                     // Creates a dict of scopes information from GitHub files
-                    scopesInformationDictionary = await GetPermissionsFromGithub(locale, org, branchName);
+                    scopesInformationDictionary = await GetPermissionsDescriptionsFromGithub(org, branchName, locale);
                 }
                 else
                 {
-                    InitializePermissions();
-
                     // Creates a dict of scopes information from cached files
                     scopesInformationDictionary = await GetOrCreatePermissionsDescriptionsAsync(locale);
                 }
@@ -290,13 +291,16 @@ namespace GraphExplorerPermissionsService
                 {
                     List<ScopeInformation> scopesListInfo = new List<ScopeInformation>();
 
-                    if (scopesInformationDictionary.ContainsKey(Delegated))
+                    if (scopeType.Contains(Delegated))
                     {
-                        foreach (var scopesInfo in scopesInformationDictionary[Delegated])
+                        if (scopesInformationDictionary.ContainsKey(Delegated))
                         {
-                            scopesListInfo.Add(scopesInfo.Value);
+                            foreach (var scopesInfo in scopesInformationDictionary[Delegated])
+                            {
+                                scopesListInfo.Add(scopesInfo.Value);
+                            }
                         }
-                    }
+                    }                    
                     else // Application scopes
                     {
                         if (scopesInformationDictionary.ContainsKey(Application))
@@ -388,12 +392,12 @@ namespace GraphExplorerPermissionsService
         }
 
         /// <summary>
-        /// Initializes the state of Permissions before seeding
+        /// Initializes Permissions
         /// </summary>
         private void InitializePermissions()
         {
             /* Add multiple checks to ensure thread that
-             * populated scopes information successfully
+             * populated scopes list information successfully
              * completed seeding.
             */
             if (RefreshPermissionsTables() ||

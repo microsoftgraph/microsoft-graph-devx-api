@@ -12,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using MockTestUtility;
 using Xunit;
-using FileService.Common;
 
 namespace SamplesService.Test
 {
@@ -54,17 +53,17 @@ namespace SamplesService.Test
             /* Assert */
 
             // en-US
-            Assert.Equal(FileServiceConstants.EnglishSampleCount, englishSampleQueriesList.SampleQueries.Count);
+            Assert.Equal(149, englishSampleQueriesList.SampleQueries.Count);
             Assert.Equal("Getting Started", englishSampleQueriesList.SampleQueries[0].Category);
             Assert.Equal("my profile", englishSampleQueriesList.SampleQueries[0].HumanName);
 
             // es-ES
-            Assert.Equal(FileServiceConstants.EspanolSampleCount, espanolSampleQueriesList.SampleQueries.Count);
+            Assert.Equal(149, espanolSampleQueriesList.SampleQueries.Count);
             Assert.Equal("Introducción", espanolSampleQueriesList.SampleQueries[0].Category);
             Assert.Equal("mi perfil", espanolSampleQueriesList.SampleQueries[0].HumanName);
 
             // fr-FR
-            Assert.Equal(FileServiceConstants.FrenchSampleCount, frenchSampleQueriesList.SampleQueries.Count);
+            Assert.Equal(149, frenchSampleQueriesList.SampleQueries.Count);
             Assert.Equal("Requêtes de base", frenchSampleQueriesList.SampleQueries[0].Category);
             Assert.Equal("mon profil", frenchSampleQueriesList.SampleQueries[0].HumanName);
         }
