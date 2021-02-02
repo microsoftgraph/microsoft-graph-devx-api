@@ -37,6 +37,10 @@ namespace GraphWebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder => builder.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
+            });
             services.AddAuthentication(option =>
             {
                 option.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -57,7 +61,7 @@ namespace GraphWebApi
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
             services.Configure<SamplesAdministrators>(Configuration);
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson();
 
             #region AppInsights
 
@@ -102,6 +106,7 @@ namespace GraphWebApi
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseRouting();
+            app.UseCors();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
