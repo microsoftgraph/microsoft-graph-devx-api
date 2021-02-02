@@ -167,7 +167,8 @@ namespace OpenAPIService.Test
         }
 
         [Theory]
-        [InlineData(null, null, "/users")]
+        [InlineData(null, null, "/applications/123/synchronization/jobs/321/schema/microsoft.graph.filterOperators()")]
+        [InlineData(null, null, "/users/123")]
         [InlineData(null, "users.user", null)]
         [InlineData("users.user.ListUser", null, null)]
         public void ReturnOpenApiDocumentInCreateFilteredDocumentWhenValidArgumentsAreSpecified(string operationIds, string tags, string url)

@@ -207,6 +207,11 @@ namespace OpenAPIService
         /// <returns>The array of <see cref="OpenApiOperation"/> for a given url path.</returns>
         private static OpenApiOperation[] GetOpenApiOperations(OpenApiUrlSpaceNode rootNode, string relativeUrl)
         {
+            if (rootNode == null || string.IsNullOrEmpty(relativeUrl))
+            {
+                return null;
+            }
+
             if (relativeUrl.Equals("/", StringComparison.Ordinal))
             {
                 // root path
@@ -221,15 +226,42 @@ namespace OpenAPIService
             OpenApiOperation[] operations = null;
             var targetChild = rootNode;
 
+            // This will help keep track of whether we've skipped
+            // a corresponding segment in the relative url
+            // due to a possible parameter naming mismatch
+            // with the target child segment.
+            int parameterNameOffset = 0;
+
             for (int i = 0; i < urlSegments?.Length; i++)
             {
-                targetChild = targetChild?.Children
+
+                var tempTargetChild = targetChild?.Children
                                           .FirstOrDefault(x => x.Key.Equals(urlSegments[i], StringComparison.Ordinal)).Value;
 
-                if (targetChild == null)
+                if (tempTargetChild == null)
                 {
-                    break;
+                    // Attempt to get the parameter segment from the children of the current node
+                    // We are assuming a failed match because of different parameter namings
+                    // between the relative url segment and the OpenApi path corresponding segments
+                    tempTargetChild = targetChild.Children.FirstOrDefault(x => x.Value.IsParameter == true).Value;
+
+                    // If no parameter segment exists in the children of the
+                    // current node or we've already skipped a corresponding
+                    // segment in the relative url from the last pass then exit;
+                    // there's no match
+                    if (tempTargetChild == null || parameterNameOffset > 0)
+                    {
+                        break;
+                    }
+
+                    parameterNameOffset++; // to help us know we've skipped a corresponding segment in the relative url
                 }
+                else
+                {
+                    parameterNameOffset = 0; // reset the parameter naming offset check
+                }
+
+                targetChild = tempTargetChild;
 
                 if (i == urlSegments.Length - 1)
                 {
@@ -403,7 +435,7 @@ namespace OpenAPIService
             {
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
-                PrefixEntityTypeNameBeforeKey = true,
+                PrefixEntityTypeNameBeforeKey = false,
                 TagDepth = 2,
                 EnablePagination = true,
                 EnableDiscriminatorValue = false,
