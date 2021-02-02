@@ -21,7 +21,7 @@ namespace FileService.Services
         /// </summary>
         public HttpClientUtility(HttpClient httpClient)
         {
-            _httpClient = httpClient;
+            _httpClient = httpClient ?? throw new ArgumentNullException("Value cannot be null");
         }
 
         /// <summary>
