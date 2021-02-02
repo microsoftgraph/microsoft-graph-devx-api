@@ -855,7 +855,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
 
                 //return the enum type "ORed" together
-                return CommonGenerator.GetListAsStringForSnippet(enumStringList, " | ");
+                return string.Join(" | ", enumStringList);
             }
 
             return string.Empty;

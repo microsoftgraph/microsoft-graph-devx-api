@@ -148,14 +148,14 @@ namespace CodeSnippetsReflection
             {
                 // in beta, $ is optional for OData queries.
                 // https://docs.microsoft.com/en-us/graph/query-parameters
-                var optionalKey = key.StartsWith("$") ? key.Substring(1) : key;
-                if (optionalKey == "filter")
+                var optionalKey = key.StartsWith("$") ? key[1..] : key;
+                if (optionalKey.ToLowerInvariant() == "filter")
                 {
-                    FilterFieldList = queryStrings[key].Replace('=', ' ').Split("&").ToList();
+                    FilterFieldList = new List<string> { queryStrings[key] };
                 }
-                else if (optionalKey == "orderby")
+                else if (optionalKey.ToLowerInvariant() == "orderby")
                 {
-                    OrderByFieldList = queryStrings[key].Replace('=', ' ').Split("&").ToList();
+                    OrderByFieldList = new List<string> { queryStrings[key] };
                 }
             }
 
