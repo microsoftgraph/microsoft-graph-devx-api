@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ namespace GraphExplorerSamplesService.Services
                      * instance of the localized samples during the lock.
                      */
 					var lockedLocale = locale;
-					var seededSampleQueriesList = _samplesCache.Get<SampleQueriesList>(lockedLocale);
+					var seededSampleQueriesList = _samplesCache?.Get<SampleQueriesList>(lockedLocale);
 
 					if (seededSampleQueriesList != null)
 					{
