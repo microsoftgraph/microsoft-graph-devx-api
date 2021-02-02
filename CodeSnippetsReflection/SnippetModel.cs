@@ -143,21 +143,16 @@ namespace CodeSnippetsReflection
         /// <param name="queryString">Query section of url as a string</param>
         private void PopulateQueryFieldLists(string queryString)
         {
-            var querySegmentList = GetODataQuerySegments(queryString);
-
-            foreach (var queryOption in querySegmentList)
+            var queryStrings = System.Web.HttpUtility.ParseQueryString(queryString);
+            foreach (var key in queryStrings.AllKeys)
             {
-                //split the string and get the second half with the fields
-                var filterQueryOption = queryOption.Split('=').Last();
-                //split the string with the & character and get the list of params
-                var queryParams = filterQueryOption.Replace('=', ' ').Split("&").ToList();
-                if (queryOption.ToLower().Contains("filter"))
+                if (key == "$filter")
                 {
-                    FilterFieldList = queryParams;
+                    FilterFieldList = queryStrings[key].Replace('=', ' ').Split("&").ToList();
                 }
-                else if (queryOption.ToLower().Contains("orderby"))
+                else if (key == "$orderby")
                 {
-                    OrderByFieldList = queryParams;
+                    OrderByFieldList = queryStrings[key].Replace('=', ' ').Split("&").ToList();
                 }
             }
 
@@ -172,21 +167,6 @@ namespace CodeSnippetsReflection
                 PopulateSelectAndExpandQueryFields(queryString);
             }
 
-        }
-
-        /// <summary>
-        /// Splits the Query part of a full uri into different query segments i.e. select, expand etc
-        /// </summary>
-        /// <param name="queryString">Query section of url as a string</param>
-        /// <returns>A string collection with the query segments</returns>
-        private IEnumerable<string> GetODataQuerySegments(string queryString)
-        {
-            //Escape all special characters in the uri
-            var fullUriQuerySegment = Uri.UnescapeDataString(queryString);
-            //split by the $ symbol to get each OData Query Parser
-            var querySegmentList = fullUriQuerySegment.Split('$');
-
-            return querySegmentList;
         }
 
         /// <summary>
