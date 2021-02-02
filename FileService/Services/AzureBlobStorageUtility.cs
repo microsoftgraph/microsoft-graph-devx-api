@@ -72,16 +72,6 @@ namespace FileService.Services
         }
 
         /// <summary>
-        /// Reads contents of a file from a http source
-        /// </summary>
-        /// <param name="requestMessage">The Http Request message.</param>
-        /// <returns></returns>
-        public Task<string> ReadFromFile(HttpRequestMessage requestMessage)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
         /// Allows one to edit the file.
         /// </summary>
         /// <param name="fileContents"> Contents of the file.</param>
