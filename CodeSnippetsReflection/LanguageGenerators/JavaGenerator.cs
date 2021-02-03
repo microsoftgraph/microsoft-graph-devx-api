@@ -595,7 +595,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     //handle functions/requestActions and any parameters present into collections
                     case OperationSegment operationSegment:
                         var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel, "List", false);
-                        resourcesPath.Append($"\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({CommonGenerator.GetListAsStringForSnippet(paramList, ",")})");
+                        resourcesPath.Append($"\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({string.Join(",", paramList)})");
                         break;
                     case ReferenceSegment _:
                         resourcesPath.Append(".reference()");
