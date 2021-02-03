@@ -1,6 +1,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
+
 using FileService.Common;
 using FileService.Interfaces;
 using GraphExplorerPermissionsService.Interfaces;
@@ -16,6 +17,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UriMatchingService;
+
 namespace GraphExplorerPermissionsService
 {
     public class PermissionsStore : IPermissionsStore
@@ -44,7 +46,7 @@ namespace GraphExplorerPermissionsService
         public PermissionsStore(IConfiguration configuration, IFileUtility fileUtility = null,
                                 IMemoryCache permissionsCache = null, IHttpClientUtility httpClientUtility = null)
         {
-            _configuration = configuration ?? throw new ArgumentNullException("Value cannot be null");
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "Value cannot be null");
 
             string refreshTime = configuration[CacheRefreshTimeConfig] ?? throw new ArgumentNullException($"Config path missing: {CacheRefreshTimeConfig}");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(refreshTime);
@@ -240,12 +242,12 @@ namespace GraphExplorerPermissionsService
         {
             bool refresh = false;
 
-            bool cacheState = (_permissionsCache.GetOrCreate("PermissionsTablesState", entry =>
+            bool cacheState = _permissionsCache.GetOrCreate("PermissionsTablesState", entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
                 _permissionsRefreshed = false;
                 return refresh = true;
-            }));
+            });
 
             return refresh;
         }
@@ -269,9 +271,9 @@ namespace GraphExplorerPermissionsService
         {
             try
             {
-                IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary;
-
                 InitializePermissions();
+
+                IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary;
 
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {

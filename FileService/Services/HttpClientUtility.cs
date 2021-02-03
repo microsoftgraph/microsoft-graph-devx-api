@@ -37,6 +37,7 @@ namespace FileService.Services
             }
 
             requestMessage.Method = requestMessage.Method ?? HttpMethod.Get; // default is GET
+
             var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
             var fileContents = await httpResponseMessage.Content.ReadAsStringAsync();
 
