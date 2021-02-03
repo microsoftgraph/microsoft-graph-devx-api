@@ -48,7 +48,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any filter queries
             if (snippetModel.FilterFieldList.Any())
             {
-                var filterResult = GetListAsStringForSnippet(snippetModel.FilterFieldList, languageExpressions.FilterExpressionDelimiter);
+                var filterResult = string.Join(languageExpressions.FilterExpressionDelimiter, snippetModel.FilterFieldList);
                 //append the filter to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.FilterExpression, filterResult));
             }
@@ -69,7 +69,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any select queries
             if (snippetModel.SelectFieldList.Any())
             {
-                var selectResult = GetListAsStringForSnippet(snippetModel.SelectFieldList, languageExpressions.SelectExpressionDelimiter);
+                var selectResult = string.Join(languageExpressions.SelectExpressionDelimiter, snippetModel.SelectFieldList);
                 //append the select result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.SelectExpression, selectResult));
             }
@@ -77,7 +77,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any orderby queries
             if (snippetModel.OrderByFieldList.Any())
             {
-                var orderByResult = GetListAsStringForSnippet(snippetModel.OrderByFieldList, languageExpressions.OrderByExpressionDelimiter);
+                var orderByResult = string.Join(languageExpressions.OrderByExpressionDelimiter, snippetModel.OrderByFieldList);
                 //append the orderby result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.OrderByExpression, orderByResult));
             }
@@ -255,28 +255,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
             //just return the same value
             return edmType;
-        }
-
-
-        /// <summary>
-        /// Helper function to join string list into one string delimited with a desired character
-        /// </summary>
-        /// <param name="fieldList">List of strings that are to be concatenated to a string </param>
-        /// <param name="delimiter">Delimiter to be used to join the string elements</param>
-        public static string GetListAsStringForSnippet(IEnumerable<string> fieldList, string delimiter)
-        {
-            var result = new StringBuilder();
-            foreach (var queryOption in fieldList)
-            {
-                result.Append(queryOption + delimiter);
-            }
-            if (!string.IsNullOrEmpty(delimiter) && !string.IsNullOrEmpty(result.ToString()))
-            {
-                result.Remove(result.Length - delimiter.Length, delimiter.Length);
-            }
-
-            return result.ToString();
-
         }
 
         /// <summary>
