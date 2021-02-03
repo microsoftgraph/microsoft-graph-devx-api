@@ -13,7 +13,7 @@ namespace ChangesService.Test
         private readonly MicrosoftGraphProxyConfigs _graphProxyConfigs = new MicrosoftGraphProxyConfigs();
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnDeserializeChangeLogListIfJsonStringParameterIsNull()
+        public void ThrowArgumentNullExceptionOnDeserializeChangeLogListIfJsonStringArgumentIsNull()
         {
             // Arrange
             string nullArgument = "";
@@ -24,7 +24,7 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogListIfChangeLogListParameterIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogListIfChangeLogListArgumentIsNull()
         {
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
@@ -32,7 +32,7 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogListIfSearchOptionsParameterIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogListIfSearchOptionsArgumentIsNull()
         {
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
@@ -40,7 +40,7 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogListIfGraphProxyConfigsParameterIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogListIfGraphProxyConfigsArgumentIsNull()
         {
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>

@@ -10,6 +10,7 @@ using MemoryCache.Testing.Moq;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MockTestUtility;
+using System;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -19,23 +20,34 @@ namespace ChangesService.Test
     {
         private readonly IConfigurationRoot _configuration;
         private readonly IHttpClientUtility _httpClientUtility;
-        private readonly IMemoryCache _changessCache;
+        private readonly IMemoryCache _changesCache;
         private IChangesStore _changesStore;
 
         public ChangesStoreShould()
         {
             _httpClientUtility = new FileUtilityMock();
-            _changessCache = Create.MockedMemoryCache();
+            _changesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest.json")
                 .Build();
+        }
+
+
+        [Fact]
+        public void ThrowArgumentNullExceptionOnConstructorIfArgumentsAreNull()
+        {
+            /* Act and Assert */
+
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(null, _changesCache, _httpClientUtility)); // null configuration
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, null, _httpClientUtility)); // null changesCache
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, _changesCache, null)); // null httpClientUtility
         }
 
         [Fact]
         public async Task CorrectlySeedLocaleCachesOfChangeLogListsWhenMultipleRequestsMultipleLocaleReceived()
         {
             // Arrange
-            _changesStore = new ChangesStore(_configuration, _changessCache, _httpClientUtility);
+            _changesStore = new ChangesStore(_configuration, _changesCache, _httpClientUtility);
 
             /* Act */
 
@@ -67,7 +79,7 @@ namespace ChangesService.Test
         public async Task CorrectlySeedLocaleCachesOfChangeLogListsWhenMultipleRequestsSingleLocaleReceived()
         {
             // Arrange
-            _changesStore = new ChangesStore(_configuration, _changessCache, _httpClientUtility);
+            _changesStore = new ChangesStore(_configuration, _changesCache, _httpClientUtility);
 
             /* Act */
 
@@ -101,7 +113,7 @@ namespace ChangesService.Test
         public async Task SetDefaultLocaleInFetchChangeLogList(string locale)
         {
             // Arrange
-            _changesStore = new ChangesStore(_configuration, _changessCache, _httpClientUtility);
+            _changesStore = new ChangesStore(_configuration, _changesCache, _httpClientUtility);
 
             /* Act */
 

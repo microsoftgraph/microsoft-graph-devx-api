@@ -29,14 +29,12 @@ namespace ChangesService.Services
 
         public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IHttpClientUtility httpClientUtility)
         {
-            _configuration = configuration;
-            _changeLogCache = changeLogCache;
-            _httpClientUtility = httpClientUtility;
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), ChangesServiceConstants.ValueNullError);
+            _changeLogCache = changeLogCache ?? throw new ArgumentNullException(nameof(changeLogCache), ChangesServiceConstants.ValueNullError);
+            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), ChangesServiceConstants.ValueNullError);
             _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath]
-                ?? throw new ArgumentNullException($"Config path missing: {ChangesServiceConstants.ChangelogRelativeUrlConfigPath}");
-            string refreshTime = configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]
-                ?? ChangesServiceConstants.ChangelogRefreshTimeDefault;
-            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(refreshTime);
+                ?? throw new ArgumentNullException(nameof(ChangesServiceConstants.ChangelogRelativeUrlConfigPath), "Config path missing");
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(ChangesServiceConstants.ChangelogRefreshTimeConfigPath);
         }
 
         /// <summary>
