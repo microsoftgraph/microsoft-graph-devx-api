@@ -242,7 +242,9 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration, permissionsCache: _permissionsCache, fileUtility: _fileUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration,
+                                                                     permissionsCache: _permissionsCache,
+                                                                     fileUtility: _fileUtility);
 
             // Act
             List<ScopeInformation> result =
@@ -278,7 +280,9 @@ namespace PermissionsService.Test
                 .AddJsonFile(".\\TestFiles\\appsettingstest-empty.json")
                 .Build();
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration, permissionsCache:_permissionsCache, fileUtility: _fileUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration,
+                                                                     permissionsCache:_permissionsCache,
+                                                                     fileUtility: _fileUtility);
 
             // Act and Assert
             Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
@@ -306,7 +310,10 @@ namespace PermissionsService.Test
             string org = "\\Org";
             string branchName = "Branch";
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration, permissionsCache: _permissionsCache, httpClientUtility: _httpClientUtility,  fileUtility: _fileUtility); ;
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration,
+                                                                     permissionsCache: _permissionsCache,
+                                                                     httpClientUtility: _httpClientUtility,
+                                                                     fileUtility: _fileUtility);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName).GetAwaiter().GetResult();
@@ -324,7 +331,10 @@ namespace PermissionsService.Test
             string org = "\\Org";
             string branchName = "Branch";
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration, permissionsCache:_permissionsCache, fileUtility: _fileUtility, httpClientUtility: _httpClientUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration,
+                                                                     permissionsCache:_permissionsCache,
+                                                                     fileUtility: _fileUtility,
+                                                                     httpClientUtility: _httpClientUtility);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName, requestUrl: "/security/alerts/{alert_id}", method: "GET")
