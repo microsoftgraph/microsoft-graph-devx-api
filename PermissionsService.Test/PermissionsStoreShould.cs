@@ -302,7 +302,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public void MockFetchingPermissionsDescriptionsFromGithub()
+        public void FetchPermissionsDescriptionsFromGithub()
         {
             //Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
@@ -323,7 +323,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public void MockFetchingPermissionsDescriptionsFromGithubGivenARequestUrl()
+        public void FetchPermissionsDescriptionsFromGithubGivenARequestUrl()
         {
             //Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
