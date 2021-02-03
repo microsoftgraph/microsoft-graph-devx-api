@@ -213,6 +213,40 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
+        public void DoesNotFlattenNestedODataQueries()
+        {
+            // Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/messages/{id}?$expand=singleValueExtendedProperties($filter=id eq '{id_value}')");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+
+            // Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains(".Expand(\"singleValueExtendedProperties($filter=id%20eq%20'%7Bid_value%7D')\")", result);
+            Assert.DoesNotContain(".Filter(", result);
+        }
+
+        [Fact]
+        public void GeneratesTopLevelExpandAndFilterTogether()
+        {
+            // Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/messages/{id}?$expand=singleValueExtendedProperties($filter=id eq '{id_value1}')&$filter=id eq '{id_value2}'");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+
+            // Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains(".Expand(\"singleValueExtendedProperties($filter=id%20eq%20'%7Bid_value1%7D')\")", result);
+            Assert.Contains(".Filter(\"id eq '{id_value2}'\")", result);
+        }
+
+        [Fact]
         //This tests asserts that we can generate snippets from json objects with nested object lists(JArray) inside them.
         public void RecursivelyGeneratesNestedRecipientListObjectsFromJson()
         {
