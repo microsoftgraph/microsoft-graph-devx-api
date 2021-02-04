@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ namespace SamplesService.Test
         public async Task CorrectlySeedLocaleCachesOfSampleQueriesWhenMultipleRequestsReceived()
         {
             // Arrange
-            _samplesStore = new SamplesStore(_configuration, _samplesCache, _fileUtility);
+            _samplesStore = new SamplesStore(_configuration, _samplesCache, _fileUtility, _httpClientUtility);
 
             /* Act */
 
@@ -72,7 +72,7 @@ namespace SamplesService.Test
         public async Task ReturnNullIfSampleQueryFileIsEmpty()
         {
             // Arrange
-            _samplesStore = new SamplesStore(_configuration, _samplesCache, _fileUtility);
+            _samplesStore = new SamplesStore(_configuration, _samplesCache, _fileUtility, _httpClientUtility);
 
             // Act - Fetch ja-JP sample queries which is empty
             SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP");
