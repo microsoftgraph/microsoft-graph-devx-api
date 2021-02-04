@@ -47,10 +47,10 @@ namespace GraphExplorerPermissionsService
                                 IFileUtility fileUtility, IMemoryCache permissionsCache)
         {
             _permissionsCache = permissionsCache;
-            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "Value cannot be null");
             _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), "Value cannot be null");
             _fileUtility = fileUtility ?? throw new ArgumentNullException(nameof(fileUtility), "Value cannot be null");
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
 
             _permissionsContainerName = configuration[PermissionsContainerBlobConfig]
                 ?? throw new ArgumentNullException($"Config path is missing:{ _permissionsContainerName }");
