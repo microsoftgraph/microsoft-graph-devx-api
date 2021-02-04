@@ -5,14 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using FileService.Interfaces;
-using GraphExplorerPermissionsService;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
 using GraphWebApi.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 
 namespace GraphWebApi.Controllers
 {
@@ -22,14 +19,10 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerPermissionsController : ControllerBase
     {
         private readonly IPermissionsStore _permissionsStore;
-        private readonly IConfiguration _configuration;
-        private readonly IHttpClientUtility _httpClientUtility;
 
-        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, IConfiguration configuration, IHttpClientUtility httpClientUtility)
+        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore)
         {
             _permissionsStore = permissionsStore;
-            _configuration = configuration;
-            _httpClientUtility = httpClientUtility;
         }
 
         // Gets the permissions scopes
@@ -49,8 +42,6 @@ namespace GraphWebApi.Controllers
 
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {
-                    var permissionsStore = new PermissionsStore(configuration: _configuration, httpClientUtility: _httpClientUtility);
-
                     // Fetch permissions descriptions file from Github
                     result = await _permissionsStore.GetScopesAsync(scopeType: scopeType,
                                                                     locale: localeCode,
