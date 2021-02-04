@@ -299,5 +299,14 @@ namespace PermissionsService.Test
                     Assert.True(item.IsAdmin);
                 });
         }
+
+        [Fact]
+        public void ThrowArgumentNullExceptionOnConstructorIfArgumentsAreNull()
+        {
+            // Act and Assert
+            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(null, _httpClientUtility, _fileUtility,_permissionsCache)); // null config
+            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, null, _fileUtility, _permissionsCache)); // null httpClientUtility
+            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, _httpClientUtility, null, _permissionsCache)); // null fileUtility
+        }
     }
 }
