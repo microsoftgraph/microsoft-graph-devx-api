@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -32,11 +32,11 @@ namespace GraphExplorerSamplesService.Services
         public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache = null , IFileUtility fileUtility = null, IHttpClientUtility httpClientUtility = null)
         {
             _samplesCache = samplesCache;
-            _configuration = configuration;
-            _httpClientUtility = httpClientUtility;
             _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration);
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = _configuration["BlobStorage:Blobs:SampleQueries"];
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "Value cannot be null");
+            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), "Value cannot be null");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
         }
 
