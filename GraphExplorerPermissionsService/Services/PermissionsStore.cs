@@ -43,24 +43,19 @@ namespace GraphExplorerPermissionsService
         private const string PermissionsNamesBlobConfig = "BlobStorage:Blobs:Permissions:Names";
         private const string PermissionsContainerBlobConfig = "BlobStorage:Containers:Permissions";
 
-        public PermissionsStore(IConfiguration configuration, IFileUtility fileUtility = null,
-                                IMemoryCache permissionsCache = null, IHttpClientUtility httpClientUtility = null)
+        public PermissionsStore(IConfiguration configuration, IHttpClientUtility httpClientUtility,
+                                IFileUtility fileUtility, IMemoryCache permissionsCache)
         {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "Value cannot be null");
-
-            string refreshTime = configuration[CacheRefreshTimeConfig] ?? throw new ArgumentNullException($"Config path missing: {CacheRefreshTimeConfig}");
-            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(refreshTime);
-
-            _httpClientUtility = httpClientUtility;
-            _fileUtility = fileUtility ;
             _permissionsCache = permissionsCache;
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "Value cannot be null");
+            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), "Value cannot be null");
+            _fileUtility = fileUtility ?? throw new ArgumentNullException(nameof(fileUtility), "Value cannot be null");
 
             _permissionsContainerName = configuration[PermissionsContainerBlobConfig]
                 ?? throw new ArgumentNullException($"Config path is missing:{ _permissionsContainerName }");
-
             _permissionsBlobNames = configuration.GetSection(PermissionsNamesBlobConfig).Get<List<string>>()
                 ?? throw new ArgumentNullException($"Config path is missing:{ _permissionsBlobNames }");
-
             _scopesInformation = configuration[ScopesInfoBlobConfig]
                 ?? throw new ArgumentNullException($"Config path is missing:{ _scopesInformation }");
         }
