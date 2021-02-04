@@ -23,6 +23,7 @@ steps:
 - checkout: self
   clean: true
   fetchDepth: 1
+  submodules: true
   
 - task: NuGetToolInstaller@1
 
