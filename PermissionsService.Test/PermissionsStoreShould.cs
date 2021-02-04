@@ -35,7 +35,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}", method: "GET")
@@ -64,7 +64,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync().GetAwaiter().GetResult();
@@ -78,7 +78,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(requestUrl: "/foo/bar/{alert_id}", method: "GET") // non-existent request url
@@ -93,7 +93,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}", method: "Foobar") // non-existent http verb
@@ -108,7 +108,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             List<ScopeInformation> result =
@@ -125,7 +125,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act by requesting scopes for the 'DelegatedPersonal' scope type
             List<ScopeInformation> result =
@@ -140,7 +140,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             /* Act */
 
@@ -186,7 +186,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             // RequestUrl in permission file: "/workbook/worksheets/{id}/charts/{id}/image(width=640)"
@@ -212,7 +212,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             List<ScopeInformation> result =
@@ -242,9 +242,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration,
-                                                                     permissionsCache: _permissionsCache,
-                                                                     fileUtility: _fileUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             List<ScopeInformation> result =
@@ -280,9 +278,7 @@ namespace PermissionsService.Test
                 .AddJsonFile(".\\TestFiles\\appsettingstest-empty.json")
                 .Build();
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: configuration,
-                                                                     permissionsCache:_permissionsCache,
-                                                                     fileUtility: _fileUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act and Assert
             Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
@@ -294,7 +290,7 @@ namespace PermissionsService.Test
         {
             // Arrange
             IMemoryCache _permissionsCache = Create.MockedMemoryCache();
-            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _fileUtility, _permissionsCache);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() => permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
@@ -310,10 +306,7 @@ namespace PermissionsService.Test
             string org = "\\Org";
             string branchName = "Branch";
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration,
-                                                                     permissionsCache: _permissionsCache,
-                                                                     httpClientUtility: _httpClientUtility,
-                                                                     fileUtility: _fileUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName).GetAwaiter().GetResult();
@@ -331,10 +324,7 @@ namespace PermissionsService.Test
             string org = "\\Org";
             string branchName = "Branch";
 
-            PermissionsStore permissionsStore = new PermissionsStore(configuration: _configuration,
-                                                                     permissionsCache:_permissionsCache,
-                                                                     fileUtility: _fileUtility,
-                                                                     httpClientUtility: _httpClientUtility);
+            PermissionsStore permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
 
             // Act
             List<ScopeInformation> result = permissionsStore.GetScopesAsync(org: org, branchName: branchName, requestUrl: "/security/alerts/{alert_id}", method: "GET")
