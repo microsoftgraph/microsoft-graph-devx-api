@@ -14,8 +14,6 @@ using System.Security.Claims;
 using System.Linq;
 using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
-using Microsoft.Extensions.Configuration;
-using FileService.Interfaces;
 
 namespace GraphWebApi.Controllers
 {
@@ -23,14 +21,10 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSamplesController : ControllerBase
     {
         private readonly ISamplesStore _samplesStore;
-        private readonly IConfiguration _configuration;
-        private readonly IHttpClientUtility _httpClientUtility;
 
-        public GraphExplorerSamplesController(ISamplesStore samplesStore, IConfiguration configuration, IHttpClientUtility httpClientUtility)
+        public GraphExplorerSamplesController(ISamplesStore samplesStore)
         {
             _samplesStore = samplesStore;
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "Value cannot be null");
-            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), "Value cannot be null");
         }
 
         // Gets the list of all sample queries
@@ -47,10 +41,8 @@ namespace GraphWebApi.Controllers
 
                 if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
                 {
-                    var samplesStore = new SamplesStore(configuration: _configuration, httpClientUtility: _httpClientUtility);
-
                     // Fetch samples file from Github
-                    sampleQueriesList = await samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
+                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
                 }
                 else
                 {
