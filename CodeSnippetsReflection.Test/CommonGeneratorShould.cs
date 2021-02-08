@@ -267,57 +267,6 @@ namespace CodeSnippetsReflection.Test
         }
         #endregion
 
-        #region Test GetListAsStringForSnippet
-        [Fact]
-        public void GetListAsStringForSnippet_ShouldReturnEmptyStringIfFieldListEmpty()
-        {
-            //Arrange
-            var fieldList = new List<string>();
-
-            //Act
-            var result = CommonGenerator.GetListAsStringForSnippet(fieldList,",");
-
-            //Assert
-            Assert.Equal("",result);
-        }
-
-        [Fact]
-        public void GetListAsStringForSnippet_ShouldReturnCommaSeparatedStringWithCommaDelimiter()
-        {
-            //Arrange
-            var fieldList = new List<string>
-            {
-                "Test",
-                "Test2",
-                "Test3"
-            };
-
-            //Act
-            var result = CommonGenerator.GetListAsStringForSnippet(fieldList, ",");
-
-            //Assert
-            Assert.Equal("Test,Test2,Test3", result);
-        }
-
-        [Fact]
-        public void GetListAsStringForSnippet_ShouldReturnUnDelimitedStringWithEmptyDelimiter()
-        {
-            //Arrange
-            var fieldList = new List<string>
-            {
-                "Test",
-                "Test2",
-                "Test3"
-            };
-
-            //Act
-            var result = CommonGenerator.GetListAsStringForSnippet(fieldList, "");
-
-            //Assert
-            Assert.Equal("TestTest2Test3", result);
-        }
-        #endregion
-
         #region Test GetEdmTypeFromIdentifier
         [Fact]
         public void GetClassNameFromIdentifier_ShouldReturnRootIdentifierOnFirstSearch()
