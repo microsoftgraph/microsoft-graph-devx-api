@@ -48,19 +48,19 @@ namespace GraphExplorerPermissionsService
                                 IFileUtility fileUtility, IMemoryCache permissionsCache)
         {
             _configuration = configuration
-               ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }:{ configuration }");
+               ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }: { nameof(configuration) }");
             _permissionsCache = permissionsCache
-                ?? throw new ArgumentNullException(nameof(permissionsCache), $"{ NullValueError }:{ permissionsCache }");
+                ?? throw new ArgumentNullException(nameof(permissionsCache), $"{ NullValueError }: { nameof(permissionsCache) }");
             _httpClientUtility = httpClientUtility
-                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }:{ httpClientUtility }");
+                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }: { nameof(httpClientUtility) }");
             _fileUtility = fileUtility
-                ?? throw new ArgumentNullException(nameof(fileUtility), $"{ NullValueError }:{ fileUtility }");
+                ?? throw new ArgumentNullException(nameof(fileUtility), $"{ NullValueError }: { nameof(fileUtility) }");
             _permissionsContainerName = configuration[PermissionsContainerBlobConfig]
-                ?? throw new ArgumentNullException(nameof(PermissionsContainerBlobConfig), $"Config path missing:{ PermissionsContainerBlobConfig }");
+                ?? throw new ArgumentNullException(nameof(PermissionsContainerBlobConfig), $"Config path missing: { nameof(PermissionsContainerBlobConfig) }");
             _permissionsBlobNames = configuration.GetSection(PermissionsNamesBlobConfig).Get<List<string>>()
-                ?? throw new ArgumentNullException(nameof(PermissionsNamesBlobConfig), $"Config path missing:{ PermissionsNamesBlobConfig }");
+                ?? throw new ArgumentNullException(nameof(PermissionsNamesBlobConfig), $"Config path missing: { nameof(PermissionsNamesBlobConfig) }");
             _scopesInformation = configuration[ScopesInfoBlobConfig]
-                ?? throw new ArgumentNullException(nameof(ScopesInfoBlobConfig), $"Config path missing:{ ScopesInfoBlobConfig }");
+                ?? throw new ArgumentNullException(nameof(ScopesInfoBlobConfig), $"Config path missing: { nameof(ScopesInfoBlobConfig) }");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
         }
 

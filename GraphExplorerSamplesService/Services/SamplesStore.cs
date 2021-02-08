@@ -33,13 +33,13 @@ namespace GraphExplorerSamplesService.Services
                             IFileUtility fileUtility, IMemoryCache samplesCache)
         {
             _configuration = configuration
-                ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }:{ configuration }");
+                ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }: { nameof(configuration) }");
             _httpClientUtility = httpClientUtility
-                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }:{ httpClientUtility }");
+                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }: { nameof(httpClientUtility) }");
             _fileUtility = fileUtility
-                ?? throw new ArgumentNullException(nameof(fileUtility), $"{ NullValueError }:{ fileUtility }");
+                ?? throw new ArgumentNullException(nameof(fileUtility), $"{ NullValueError }: { nameof(fileUtility) }");
             _samplesCache = samplesCache
-                ?? throw new ArgumentNullException(nameof(samplesCache), $"{ NullValueError }:{ samplesCache }"); ;
+                ?? throw new ArgumentNullException(nameof(samplesCache), $"{ NullValueError }: { nameof(samplesCache) }"); ;
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = _configuration["BlobStorage:Blobs:SampleQueries"];
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
