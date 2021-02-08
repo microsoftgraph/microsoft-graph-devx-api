@@ -56,11 +56,11 @@ namespace GraphExplorerPermissionsService
             _fileUtility = fileUtility
                 ?? throw new ArgumentNullException(nameof(fileUtility), $"{ NullValueError }: { nameof(fileUtility) }");
             _permissionsContainerName = configuration[PermissionsContainerBlobConfig]
-                ?? throw new ArgumentNullException(nameof(PermissionsContainerBlobConfig), $"Config path missing: { nameof(PermissionsContainerBlobConfig) }");
+                ?? throw new ArgumentNullException(nameof(PermissionsContainerBlobConfig), $"Config path missing: { PermissionsContainerBlobConfig }");
             _permissionsBlobNames = configuration.GetSection(PermissionsNamesBlobConfig).Get<List<string>>()
-                ?? throw new ArgumentNullException(nameof(PermissionsNamesBlobConfig), $"Config path missing: { nameof(PermissionsNamesBlobConfig) }");
+                ?? throw new ArgumentNullException(nameof(PermissionsNamesBlobConfig), $"Config path missing: { PermissionsNamesBlobConfig }");
             _scopesInformation = configuration[ScopesInfoBlobConfig]
-                ?? throw new ArgumentNullException(nameof(ScopesInfoBlobConfig), $"Config path missing: { nameof(ScopesInfoBlobConfig) }");
+                ?? throw new ArgumentNullException(nameof(ScopesInfoBlobConfig), $"Config path missing: { ScopesInfoBlobConfig }");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
         }
 
