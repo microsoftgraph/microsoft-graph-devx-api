@@ -1,10 +1,9 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using FileService.Common;
 using FileService.Interfaces;
-using FileService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Models;
 using Microsoft.Extensions.Caching.Memory;
