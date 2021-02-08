@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -29,13 +29,17 @@ namespace GraphExplorerSamplesService.Services
         private readonly int _defaultRefreshTimeInHours;
         private const string NullValueError = "Value cannot be null";
 
-        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache = null,
-                            IFileUtility fileUtility = null, IHttpClientUtility httpClientUtility = null)
+        public SamplesStore(IConfiguration configuration, IHttpClientUtility httpClientUtility,
+                            IFileUtility fileUtility, IMemoryCache samplesCache)
         {
-            _samplesCache = samplesCache;
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }:{ configuration }");
-            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }:{ httpClientUtility }");
-            _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration);
+            _configuration = configuration
+                ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }:{ configuration }");
+            _httpClientUtility = httpClientUtility
+                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }:{ httpClientUtility }");
+            _fileUtility = fileUtility
+                ?? throw new ArgumentNullException(nameof(fileUtility), $"{ NullValueError }:{ fileUtility }");
+            _samplesCache = samplesCache
+                ?? throw new ArgumentNullException(nameof(samplesCache), $"{ NullValueError }:{ samplesCache }"); ;
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = _configuration["BlobStorage:Blobs:SampleQueries"];
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
