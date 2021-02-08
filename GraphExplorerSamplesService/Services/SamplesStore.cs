@@ -28,15 +28,17 @@ namespace GraphExplorerSamplesService.Services
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
+        private const string NullValueError = "Value cannot be null";
 
-        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache = null , IFileUtility fileUtility = null, IHttpClientUtility httpClientUtility = null)
+        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache = null,
+                            IFileUtility fileUtility = null, IHttpClientUtility httpClientUtility = null)
         {
             _samplesCache = samplesCache;
             _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration);
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "Value cannot be null");
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }:{ configuration }");
+            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }:{ httpClientUtility }");
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = _configuration["BlobStorage:Blobs:SampleQueries"];
-            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), "Value cannot be null");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
         }
 
