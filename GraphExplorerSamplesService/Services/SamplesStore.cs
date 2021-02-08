@@ -34,9 +34,9 @@ namespace GraphExplorerSamplesService.Services
                             IFileUtility fileUtility = null, IHttpClientUtility httpClientUtility = null)
         {
             _samplesCache = samplesCache;
-            _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration);
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }:{ configuration }");
             _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }:{ httpClientUtility }");
+            _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration);
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = _configuration["BlobStorage:Blobs:SampleQueries"];
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
