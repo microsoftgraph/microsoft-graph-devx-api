@@ -304,9 +304,10 @@ namespace PermissionsService.Test
         public void ThrowArgumentNullExceptionOnConstructorIfArgumentsAreNull()
         {
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(null, _httpClientUtility, _fileUtility,_permissionsCache)); // null config
-            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, null, _fileUtility, _permissionsCache)); // null httpClientUtility
-            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, _httpClientUtility, null, _permissionsCache)); // null fileUtility
+            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(null, _httpClientUtility, _fileUtility,_permissionsCache)); // null config object
+            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, null, _fileUtility, _permissionsCache)); // null httpClientUtility object
+            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, _httpClientUtility, null, _permissionsCache)); // null fileUtility object
+            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, null)); // null permissionsCache object
         }
     }
 }
