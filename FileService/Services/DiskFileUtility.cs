@@ -1,6 +1,9 @@
-﻿using FileService.Interfaces;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using FileService.Interfaces;
 using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace FileService.Services
@@ -21,16 +24,6 @@ namespace FileService.Services
             {
                 return await streamReader.ReadToEndAsync();
             }
-        }
-
-        /// <summary>
-        /// Reads contents of a file from a http source 
-        /// </summary>
-        /// <param name="requestMessage">The Http Request message.</param>
-        /// <returns></returns>
-        public Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
-        {
-            throw new System.NotImplementedException();
         }
 
         /// <summary>

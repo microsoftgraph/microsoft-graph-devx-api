@@ -1,9 +1,8 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using FileService.Interfaces;
-using Microsoft.Extensions.Configuration;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -22,7 +21,7 @@ namespace FileService.Services
         /// </summary>
         public HttpClientUtility(HttpClient httpClient)
         {
-            _httpClient = httpClient ?? throw new ArgumentNullException("Value cannot be null");
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient), $"Value cannot be null: { nameof(httpClient) }");
         }
 
         /// <summary>
@@ -38,6 +37,7 @@ namespace FileService.Services
             }
 
             requestMessage.Method = requestMessage.Method ?? HttpMethod.Get; // default is GET
+
             var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
             var fileContents = await httpResponseMessage.Content.ReadAsStringAsync();
 
@@ -47,16 +47,6 @@ namespace FileService.Services
             }
 
             return fileContents;
-        }
-
-        public Task<string> ReadFromFile(string filePathSource)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task WriteToFile(string fileContents, string filePathSource)
-        {
-            throw new NotImplementedException();
         }
     }
 }

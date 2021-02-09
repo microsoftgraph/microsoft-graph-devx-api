@@ -179,18 +179,18 @@ namespace CodeSnippetsReflection.Test
             LanguageExpressions expressions = new CSharpExpressions();
 
             const string jsonObject = @"[
-   {
-    'target':'#para-id',
-    'action':'insert',
-    'position':'before',
-    'content':'<img src=""image-url-or-part-name"" alt=""image-alt-text"" />'
-  }, 
-  {
-    'target':'#list-id',
-    'action':'append',
-    'content':'<li>new-page-content</li>'
-  }
-]";
+                                           {
+                                            'target':'#para-id',
+                                            'action':'insert',
+                                            'position':'before',
+                                            'content':'<img src=""image-url-or-part-name"" alt=""image-alt-text"" />'
+                                          }, 
+                                          {
+                                            'target':'#list-id',
+                                            'action':'append',
+                                            'content':'<li>new-page-content</li>'
+                                          }
+                                        ]";
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/me/onenote/pages/{id}/content")
             {
