@@ -29,12 +29,15 @@ namespace ChangesService.Services
 
         public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IHttpClientUtility httpClientUtility)
         {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), ChangesServiceConstants.ValueNullError);
-            _changeLogCache = changeLogCache ?? throw new ArgumentNullException(nameof(changeLogCache), ChangesServiceConstants.ValueNullError);
-            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility), ChangesServiceConstants.ValueNullError);
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
+                $"{ ChangesServiceConstants.ValueNullError }: { nameof(configuration) }");
+            _changeLogCache = changeLogCache ?? throw new ArgumentNullException(nameof(changeLogCache),
+                $"{ ChangesServiceConstants.ValueNullError }: { nameof(changeLogCache) }");
+            _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility),
+                $"{ChangesServiceConstants.ValueNullError}: { nameof(httpClientUtility) }");
             _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath]
                 ?? throw new ArgumentNullException(nameof(ChangesServiceConstants.ChangelogRelativeUrlConfigPath), "Config path missing");
-            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(ChangesServiceConstants.ChangelogRefreshTimeConfigPath);
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]);
         }
 
         /// <summary>
