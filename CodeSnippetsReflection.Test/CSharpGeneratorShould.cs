@@ -172,6 +172,79 @@ namespace CodeSnippetsReflection.Test
             Assert.Contains("String physicalDeviceId = null;", result);
         }
 
+        [Fact]
+        public void RequestBodyIsConvertedIntoStreamForStreamObjects()
+        {
+            // Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+
+            const string jsonObject = @"[
+                                           {
+                                            'target':'#para-id',
+                                            'action':'insert',
+                                            'position':'before',
+                                            'content':'<img src=""image-url-or-part-name"" alt=""image-alt-text"" />'
+                                          }, 
+                                          {
+                                            'target':'#list-id',
+                                            'action':'append',
+                                            'content':'<li>new-page-content</li>'
+                                          }
+                                        ]";
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/me/onenote/pages/{id}/content")
+            {
+                Content = new StringContent(jsonObject)
+            };
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+
+            // Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            // Assert that a stream object is created
+            Assert.Contains("var stream = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"[", result);
+
+            // Assert that stream is set as a property of a full object and full object is passed in in the PATCH request.
+            Assert.Contains("pages.Content = stream;", result);
+            Assert.Contains("await graphClient.Me.Onenote.Pages[\"{id}\"]", result);
+            Assert.DoesNotContain("await graphClient.Me.Onenote.Pages[\"{id}\"].Content", result);
+            Assert.Contains("UpdateAsync(pages)", result);
+        }
+
+        [Fact]
+        public void DoesNotFlattenNestedODataQueries()
+        {
+            // Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/messages/{id}?$expand=singleValueExtendedProperties($filter=id eq '{id_value}')");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+
+            // Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains(".Expand(\"singleValueExtendedProperties($filter=id%20eq%20'%7Bid_value%7D')\")", result);
+            Assert.DoesNotContain(".Filter(", result);
+        }
+
+        [Fact]
+        public void GeneratesTopLevelExpandAndFilterTogether()
+        {
+            // Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/messages/{id}?$expand=singleValueExtendedProperties($filter=id eq '{id_value1}')&$filter=id eq '{id_value2}'");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+
+            // Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains(".Expand(\"singleValueExtendedProperties($filter=id%20eq%20'%7Bid_value1%7D')\")", result);
+            Assert.Contains(".Filter(\"id eq '{id_value2}'\")", result);
+        }
 
         [Fact]
         //This tests asserts that we can generate snippets from json objects with nested object lists(JArray) inside them.
