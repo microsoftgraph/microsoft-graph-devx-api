@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace ChangesService.Interfaces
 {
     /// <summary>
-    /// Defines a contract for fetching changelog data.
+    /// A contract for fetching changelog data.
     /// </summary>
     public interface IChangesStore
     {

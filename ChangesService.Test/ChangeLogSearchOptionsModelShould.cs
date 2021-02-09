@@ -15,7 +15,7 @@ namespace ChangesService.Test
         {
             // Arrange & Act & Assert
             Assert.Throws<InvalidOperationException>(() =>
-                new ChangeLogSearchOptions(requestUrl: "/me/", workload: "Extensions"));           
+                new ChangeLogSearchOptions(requestUrl: "/me/", workload: "Extensions"));
         }
 
         [Fact]

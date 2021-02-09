@@ -7,7 +7,7 @@ using System;
 namespace ChangesService.Models
 {
     /// <summary>
-    /// Provides options for searching and filtering changelog data.
+    /// Options for searching and filtering changelog data.
     /// </summary>
     public class ChangeLogSearchOptions : ChangeLogPagination
     {
@@ -23,12 +23,12 @@ namespace ChangesService.Models
 
             if (!string.IsNullOrEmpty(requestUrl) && !string.IsNullOrEmpty(workload))
             {
-                throw new InvalidOperationException($"Cannot search by both {nameof(requestUrl)} and {nameof(workload)}.");
+                throw new InvalidOperationException($"Cannot search by both { nameof(requestUrl)} and {nameof(workload) }.");
             }
 
             if ((startDate != null || endDate != null) && daysRange > 0)
             {
-                throw new InvalidOperationException($"Cannot filter by both {nameof(startDate)} and {nameof(endDate)} " +
+                throw new InvalidOperationException($"Cannot filter by both { nameof(startDate) } and { nameof(endDate) } " +
                     $"together with {nameof(daysRange)}.");
             }
 

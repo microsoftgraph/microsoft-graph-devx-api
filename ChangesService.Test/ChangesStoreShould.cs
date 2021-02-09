@@ -32,7 +32,6 @@ namespace ChangesService.Test
                 .Build();
         }
 
-
         [Fact]
         public void ThrowArgumentNullExceptionOnConstructorIfArgumentsAreNull()
         {

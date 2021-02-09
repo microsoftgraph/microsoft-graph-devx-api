@@ -9,7 +9,7 @@ using System;
 namespace ChangesService.Models
 {
     /// <summary>
-    /// Provides options for paging changelog data.
+    /// Options for paging changelog data.
     /// </summary>
     public class ChangeLogPagination
     {

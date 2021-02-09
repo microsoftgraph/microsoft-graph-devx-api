@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace ChangesService.Models
 {
     /// <summary>
-    /// Defines the structure of a changelog model.
+    /// Changelog model structure.
     /// </summary>
     public class ChangeLog
     {
@@ -21,7 +21,7 @@ namespace ChangesService.Models
         public string SubArea { get; set; }
 
         /// <summary>
-        /// Defines the structure of a single change model.
+        /// A single change model structure.
         /// </summary>
         public class Change
         {

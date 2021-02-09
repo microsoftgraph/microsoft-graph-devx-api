@@ -47,8 +47,10 @@ namespace GraphWebApi.Controllers
             try
             {
                 // Options for searching, filtering and paging the changelog data
-                var searchOptions = new ChangeLogSearchOptions(requestUrl: requestUrl, workload: workload,
-                                                               daysRange: daysRange, startDate: startDate,
+                var searchOptions = new ChangeLogSearchOptions(requestUrl: requestUrl,
+                                                               workload: workload,
+                                                               daysRange: daysRange,
+                                                               startDate: startDate,
                                                                endDate: endDate)
                 {
                     Page = page,
@@ -71,6 +73,7 @@ namespace GraphWebApi.Controllers
                         GraphProxyAuthorization = _configuration[ChangesServiceConstants.GraphProxyAuthorization],
                         GraphVersion = graphVersion
                     };
+
                     changeLog = ChangesService.Services.ChangesService
                                     .FilterChangeLogList(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
                 }

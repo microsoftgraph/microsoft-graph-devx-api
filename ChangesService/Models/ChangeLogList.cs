@@ -9,7 +9,7 @@ using System.Linq;
 namespace ChangesService.Models
 {
     /// <summary>
-    /// Defines a <see cref="ChangeLog"/> list.
+    /// A <see cref="ChangeLog"/> list.
     /// </summary>
     public class ChangeLogList : ChangeLogPagination
     {

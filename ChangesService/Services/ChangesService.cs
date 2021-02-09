@@ -17,12 +17,12 @@ using System.Threading.Tasks;
 namespace ChangesService.Services
 {
     /// <summary>
-    /// Provides utility functions for transforming and filtering <see cref="ChangeLogList"/> and <see cref="ChangeLog"/> objects.
+    /// Utility functions for transforming and filtering <see cref="ChangeLogList"/> and <see cref="ChangeLog"/> objects.
     /// </summary>
     public static class ChangesService
     {
         // Field to hold key-value pairs of url and workload names
-        private static readonly IDictionary<string, string> UrlWorkloadDict = new Dictionary<string, string>();
+        private static readonly IDictionary<string, string> _urlWorkloadDict = new Dictionary<string, string>();
 
         /// <summary>
         /// Deserializes a <see cref="ChangeLogList"/> from a json string.
@@ -54,8 +54,9 @@ namespace ChangesService.Services
         /// <returns>A <see cref="ChangeLogList"/> containing the list of filtered and/or paginated
         /// <see cref="ChangeLog"/> list.</returns>
         public static ChangeLogList FilterChangeLogList(ChangeLogList changeLogList,
-            ChangeLogSearchOptions searchOptions, MicrosoftGraphProxyConfigs graphProxyConfigs,
-            IHttpClientUtility httpClientUtility = null)
+                                                        ChangeLogSearchOptions searchOptions,
+                                                        MicrosoftGraphProxyConfigs graphProxyConfigs,
+                                                        IHttpClientUtility httpClientUtility = null)
         {
             if (changeLogList == null)
             {
@@ -179,8 +180,7 @@ namespace ChangesService.Services
         /// <see cref="ChangeLog"/> list.</param>
         /// <param name="workloadName">Name of the target worload.</param>
         /// <returns>The <see cref="ChangeLog"/> list filtered by the provided workload name.</returns>
-        private static IEnumerable<ChangeLog>FilterChangeLogListByWorkload(ChangeLogList changeLogList,
-            string workloadName)
+        private static IEnumerable<ChangeLog>FilterChangeLogListByWorkload(ChangeLogList changeLogList, string workloadName)
         {
             return changeLogList.ChangeLogs
                                 .Where(x => x.WorkloadArea.Equals(workloadName,
@@ -197,10 +197,11 @@ namespace ChangesService.Services
         /// <param name="httpClientUtility">An implementation instance of <see cref="IFileUtility"/>.</param>
         /// <returns>The workload name for the target request url.</returns>
         private static async Task<string> RetrieveWorkloadNameFromRequestUrl(ChangeLogSearchOptions searchOptions,
-            MicrosoftGraphProxyConfigs graphProxy, IHttpClientUtility httpClientUtility)
+                                                                             MicrosoftGraphProxyConfigs graphProxy,
+                                                                             IHttpClientUtility httpClientUtility)
         {
             // Pull out the workload name value if it was already cached
-            if (UrlWorkloadDict.TryGetValue(searchOptions.RequestUrl, out string workloadValue))
+            if (_urlWorkloadDict.TryGetValue(searchOptions.RequestUrl, out string workloadValue))
             {
                 return workloadValue;
             }
@@ -242,7 +243,7 @@ namespace ChangesService.Services
             var workloadName = targetWorkloadId.Split('.').Last();
 
             // Cache the retrieved workload name
-            UrlWorkloadDict.Add(searchOptions.RequestUrl, workloadName);
+            _urlWorkloadDict.Add(searchOptions.RequestUrl, workloadName);
 
             return workloadName;
         }

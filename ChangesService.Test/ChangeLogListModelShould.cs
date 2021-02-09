@@ -95,7 +95,7 @@ namespace ChangesService.Test
         public static ChangeLogList GetChangeLogList(string variableDate = "2020-12-31T00:00:00.000Z")
         {
             // variableDate param will be used for specifying custom CreatedDateTime
-            // value for Reports workload 
+            // value for Reports workload
 
             var changeLogList = @"{
               ""changelog"": [

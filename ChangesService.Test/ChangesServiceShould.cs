@@ -135,7 +135,7 @@ namespace ChangesService.Test
         public void FilterChangeLogListByDaysRange()
         {
             // Arrange
-            
+
             DateTime varDate = DateTime.Today.AddDays(-30);
             var changeLogList = new ChangeLogList
             {
@@ -294,6 +294,6 @@ namespace ChangesService.Test
                             Assert.Equal("relyingPartyDetailedSummary,listing", item.Target);
                         });
                 });
-        }        
+        }
     }
 }
