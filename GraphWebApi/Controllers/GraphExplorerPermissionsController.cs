@@ -30,14 +30,34 @@ namespace GraphWebApi.Controllers
         [Produces("application/json")]
         public async Task<IActionResult> GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
                                                              [FromQuery]string requestUrl = null,
-                                                             [FromQuery]string method = null)
+                                                             [FromQuery]string method = null,
+                                                             [FromQuery]string org = null,
+                                                             [FromQuery]string branchName = null)
         {
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
 
                 List<ScopeInformation> result = null;
-                result = await _permissionsStore.GetScopesAsync(scopeType, localeCode, requestUrl, method);
+
+                if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
+                {
+                    // Fetch permissions descriptions file from Github
+                    result = await _permissionsStore.GetScopesAsync(scopeType: scopeType,
+                                                                    locale: localeCode,
+                                                                    requestUrl: requestUrl,
+                                                                    method: method,
+                                                                    org: org,
+                                                                    branchName: branchName);
+                }
+                else
+                {
+                    // Fetch the files from Azure Blob
+                    result = await _permissionsStore.GetScopesAsync(scopeType: scopeType,
+                                                                    locale: localeCode,
+                                                                    requestUrl: requestUrl,
+                                                                    method: method);
+                }
 
                 return result == null ? NotFound() : (IActionResult)Ok(result);
             }

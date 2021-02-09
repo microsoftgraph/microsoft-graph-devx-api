@@ -20,7 +20,9 @@ namespace FileService.Services
         /// Class constructor.
         /// </summary>
         public HttpClientUtility(HttpClient httpClient)
-            => _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient), "Value cannot be null");
+        {
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient), $"Value cannot be null: { nameof(httpClient) }");
+        }
 
         /// <summary>
         /// Reads the contents of a document from an HTTP source.
@@ -35,6 +37,7 @@ namespace FileService.Services
             }
 
             requestMessage.Method = requestMessage.Method ?? HttpMethod.Get; // default is GET
+
             var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
             var fileContents = await httpResponseMessage?.Content.ReadAsStringAsync();
 

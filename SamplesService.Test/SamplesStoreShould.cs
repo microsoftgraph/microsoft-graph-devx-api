@@ -37,7 +37,7 @@ namespace SamplesService.Test
         public async Task CorrectlySeedLocaleCachesOfSampleQueriesWhenMultipleRequestsReceived()
         {
             // Arrange
-            _samplesStore = new SamplesStore(_configuration, _samplesCache, _fileUtility);
+            _samplesStore = new SamplesStore(_configuration, _httpClientUtility, _fileUtility, _samplesCache);
 
             /* Act */
 
@@ -72,7 +72,7 @@ namespace SamplesService.Test
         public async Task ReturnNullIfSampleQueryFileIsEmpty()
         {
             // Arrange
-            _samplesStore = new SamplesStore(_configuration, _samplesCache, _fileUtility);
+            _samplesStore = new SamplesStore(_configuration, _httpClientUtility, _fileUtility, _samplesCache);
 
             // Act - Fetch ja-JP sample queries which is empty
             SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP");
@@ -92,7 +92,7 @@ namespace SamplesService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _httpClientUtility);
+            _samplesStore = new SamplesStore(configuration, _httpClientUtility, _fileUtility, _samplesCache);
 
             /* Act */
 
@@ -124,7 +124,7 @@ namespace SamplesService.Test
             string org = configuration["BlobStorage:Org"];
             string branchName = configuration["BlobStorage:Branch"];
 
-            _samplesStore = new SamplesStore(configuration: configuration, httpClientUtility: _httpClientUtility);
+            _samplesStore = new SamplesStore(configuration, _httpClientUtility, _fileUtility, _samplesCache);
 
             // Act - Fetch ja-JP sample queries which is empty
             SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP", org, branchName);

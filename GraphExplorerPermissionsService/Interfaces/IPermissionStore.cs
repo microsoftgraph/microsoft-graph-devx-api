@@ -16,6 +16,8 @@ namespace GraphExplorerPermissionsService.Interfaces
         Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
                                                     string locale = null,
                                                     string requestUrl = null,
-                                                    string method = null);
+                                                    string method = null,
+                                                    string org = null,
+                                                    string branchName = null);
     }
 }

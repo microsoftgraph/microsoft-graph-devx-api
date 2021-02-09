@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -15,9 +15,17 @@
     <None Remove="TestFiles\permissions-test-file-v1.0_ver2.json" />
     <None Remove="TestFiles\ScopesInformationList-test-file.json" />
     <None Remove="TestFiles\ScopesInformationList-test-file_es-ES.json" />
+    <None Remove="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file_es-ES.json" />
+    <None Remove="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file_es-ES.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="TestFiles\appsettingstest-empty.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

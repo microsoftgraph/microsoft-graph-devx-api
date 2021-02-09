@@ -268,7 +268,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         break;
                     case PropertySegment propertySegment:
                         if (propertySegment.EdmType.IsStream() //don't append anything that is not a stream since this is not accessed directly in C#
-                            && snippetModel.Method != HttpMethod.Patch) // while patching we pass the encapsulating object in the request
+                           && snippetModel.Method != HttpMethod.Patch) // while patching we pass the encapsulating object in the request
                         {
                             resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         }
@@ -325,7 +325,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         {
             if (pathSegment is PropertySegment && pathSegment.EdmType?.FullTypeName() == "Edm.Stream")
             {
-                // special case where the full request body should be converted into a stream object
+                // special case where the full request body should be converted into a stream object	
                 var encodedMultilineString = jsonBody.Replace("\"", "\"\"");
                 return $"new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"{encodedMultilineString}\"));\r\n\r\n";
             }

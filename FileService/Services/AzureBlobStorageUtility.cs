@@ -18,13 +18,16 @@ namespace FileService.Services
     /// </summary>
     public class AzureBlobStorageUtility : IFileUtility
     {
+        private readonly IConfiguration _configuration;
         private readonly string _connectionString;
         private string _containerName;
         private string _blobName;
 
         public AzureBlobStorageUtility(IConfiguration configuration)
         {
-            _connectionString = configuration["BlobStorage:AzureConnectionString"];
+            _configuration = configuration
+               ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: { nameof(configuration) }");
+            _connectionString = _configuration["BlobStorage:ConnectionString"];
         }
 
         /// <summary>
