@@ -163,7 +163,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Select(\"displayName,givenName,postalCode\")", result);
+            Assert.Equal("\r\n\t.Select(\"displayName,givenName,postalCode\")", result);
         }
 
         [Fact]
@@ -179,7 +179,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Filter(\"startswith(givenName, 'J')\")", result);
+            Assert.Equal("\r\n\t.Filter(\"startswith(givenName, 'J')\")", result);
         }
 
         [Fact]
@@ -195,7 +195,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Search(\"Irene McGowen\")", result);
+            Assert.Equal("\r\n\t.Search(\"Irene McGowen\")", result);
         }
 
         [Fact]
@@ -211,7 +211,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Skip(20)", result);
+            Assert.Equal("\r\n\t.Skip(20)", result);
         }
 
         [Fact]
@@ -227,7 +227,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Top(5)", result);
+            Assert.Equal("\r\n\t.Top(5)", result);
         }
 
         [Fact]
@@ -245,7 +245,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Header(\"Prefer\",\"kenya-timezone\")", result);
+            Assert.Equal("\r\n\t.Header(\"Prefer\",\"kenya-timezone\")", result);
         }
 
         [Fact]
@@ -263,7 +263,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Header(\"Prefer\",\"outlook.timezone=\\\"Pacific Standard Time\\\"\")", result);
+            Assert.Equal("\r\n\t.Header(\"Prefer\",\"outlook.timezone=\\\"Pacific Standard Time\\\"\")", result);
         }
         #endregion
 
