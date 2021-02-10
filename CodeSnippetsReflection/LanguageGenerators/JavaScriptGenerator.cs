@@ -101,7 +101,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             if (snippetModel.CustomQueryOptions.Any())
             {
                 //just append the query string since its a custom query
-                path += snippetModel.QueryString;
+                path += snippetModel.QueryString.Replace("'", "\\'");
             }
             stringBuilder.Append($"let res = await client.api('{path}')");
             //append beta
@@ -164,5 +164,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string ReservedNameEscapeSequence => "_";
 
         public override string DoubleQuotesEscapeSequence => "\"";
+
+        public override string SingleQuotesEscapeSequence => "\\'";
     }
 }
