@@ -371,5 +371,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string ReservedNameEscapeSequence => "_";
 
         public override string DoubleQuotesEscapeSequence => "\\\"";
+
+        public override string SingleQuotesEscapeSequence => "'";
     }
 }

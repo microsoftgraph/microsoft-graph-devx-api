@@ -17,5 +17,6 @@
         public abstract string[] ReservedNames { get; }
         public abstract string ReservedNameEscapeSequence { get; }
         public abstract string DoubleQuotesEscapeSequence { get; }
+        public abstract string SingleQuotesEscapeSequence { get; }
     }
 }

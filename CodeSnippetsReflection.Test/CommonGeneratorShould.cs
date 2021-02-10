@@ -63,7 +63,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\r\n\t.filter('startswith(givenName, 'J')')", result);
+            Assert.Equal("\r\n\t.filter('startswith(givenName, \\'J\\')')", result);
         }
 
         [Fact]
