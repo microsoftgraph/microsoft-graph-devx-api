@@ -54,6 +54,7 @@ namespace GraphWebApi
                    });
             services.AddMemoryCache();
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
+            services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.AddSingleton<IChangesStore, ChangesStore>();
