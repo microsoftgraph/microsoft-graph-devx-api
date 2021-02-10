@@ -729,5 +729,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             "transient","try","void","volatile","while","true","false","null"   };
         public override string ReservedNameEscapeSequence => "_";
         public override string DoubleQuotesEscapeSequence => "\\\"";
+        public override string SingleQuotesEscapeSequence => "'";
     }
 }
