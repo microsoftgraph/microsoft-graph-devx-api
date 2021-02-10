@@ -72,7 +72,7 @@ namespace GraphWebApi.Controllers
         {
             context.HttpContext.Response.ContentType = "text/plain";
             using var streamWriter = new StreamWriter(context.HttpContext.Response.Body);
-            await streamWriter.WriteAsync(this._value);
+            streamWriter.Write(this._value);
             await streamWriter.FlushAsync().ConfigureAwait(false);
         }
     }
