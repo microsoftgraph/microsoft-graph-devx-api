@@ -71,7 +71,7 @@ namespace GraphWebApi.Controllers
         public async Task ExecuteResultAsync(ActionContext context)
         {
             context.HttpContext.Response.ContentType = "text/plain";
-            using var streamWriter = new StreamWriter(context.HttpContext.Response.Body);
+            var streamWriter = new StreamWriter(context.HttpContext.Response.Body);
             streamWriter.Write(this._value);
             await streamWriter.FlushAsync().ConfigureAwait(false);
         }
