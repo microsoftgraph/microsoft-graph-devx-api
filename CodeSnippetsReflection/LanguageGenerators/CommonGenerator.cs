@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using CodeSnippetsReflection.StringExtensions;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
@@ -43,15 +44,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     continue;
                 //append the header to the snippet
                 var valueString = value.First()
-                    .Replace("\"", languageExpressions.DoubleQuotesEscapeSequence)
-                    .Replace("'", languageExpressions.SingleQuotesEscapeSequence);
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 snippetBuilder.Append(string.Format(languageExpressions.HeaderExpression, key, valueString));
             }
             //Append any filter queries
             if (snippetModel.FilterFieldList.Any())
             {
                 var filterResult = string.Join(languageExpressions.FilterExpressionDelimiter, snippetModel.FilterFieldList)
-                    .Replace("'", languageExpressions.SingleQuotesEscapeSequence);
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 //append the filter to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.FilterExpression, filterResult));
             }
@@ -60,7 +60,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
             {
                 snippetBuilder.Append(string.Format(languageExpressions.SearchExpression, 
-                    snippetModel.SearchExpression.Replace("'", languageExpressions.SingleQuotesEscapeSequence)));
+                    snippetModel.SearchExpression
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append the expand section
@@ -68,14 +69,15 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 //append the expand result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, 
-                    snippetModel.ExpandFieldExpression.Replace("'", languageExpressions.SingleQuotesEscapeSequence)));
+                    snippetModel.ExpandFieldExpression
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append any select queries
             if (snippetModel.SelectFieldList.Any())
             {
                 var selectResult = string.Join(languageExpressions.SelectExpressionDelimiter, snippetModel.SelectFieldList)
-                    .Replace("'", languageExpressions.SingleQuotesEscapeSequence);
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 //append the select result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.SelectExpression, selectResult));
             }
@@ -84,7 +86,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             if (snippetModel.OrderByFieldList.Any())
             {
                 var orderByResult = string.Join(languageExpressions.OrderByExpressionDelimiter, snippetModel.OrderByFieldList)
-                    .Replace("'", languageExpressions.SingleQuotesEscapeSequence);
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 //append the orderby result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.OrderByExpression, orderByResult));
             }
@@ -99,7 +101,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
             {
                 snippetBuilder.Append(string.Format(languageExpressions.SkipTokenExpression, 
-                    snippetModel.ODataUri.SkipToken.Replace("'", languageExpressions.SingleQuotesEscapeSequence)));
+                    snippetModel.ODataUri.SkipToken
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append any top queries

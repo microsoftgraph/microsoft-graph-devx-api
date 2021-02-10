@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using CodeSnippetsReflection.StringExtensions;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
@@ -101,7 +102,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             if (snippetModel.CustomQueryOptions.Any())
             {
                 //just append the query string since its a custom query
-                path += snippetModel.QueryString.Replace("'", "\\'");
+                path += snippetModel.QueryString.EscapeQuotesInLiteral("\"", "\\'");
             }
             stringBuilder.Append($"let res = await client.api('{path}')");
             //append beta
