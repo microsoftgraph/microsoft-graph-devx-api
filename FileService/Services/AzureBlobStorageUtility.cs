@@ -27,7 +27,7 @@ namespace FileService.Services
         {
             _configuration = configuration
                ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: { nameof(configuration) }");
-            _connectionString = _configuration["BlobStorage:ConnectionString"];
+            _connectionString = _configuration["BlobStorage:AzureConnectionString"];
         }
 
         /// <summary>
