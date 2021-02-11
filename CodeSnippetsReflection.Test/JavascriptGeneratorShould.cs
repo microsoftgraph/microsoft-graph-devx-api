@@ -11,7 +11,7 @@ namespace CodeSnippetsReflection.Test
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata));
-        private const string AuthProviderPrefix = "const options = {\n\tauthProvider,\n};\n\nconst client = Client.init(options);\n\n";
+        private const string AuthProviderPrefix = "const options = {\r\n\tauthProvider,\r\n};\r\n\r\nconst client = Client.init(options);\r\n\r\n";
 
         [Fact]
         //This tests asserts that we can generate snippets from json objects with nested objects inside them.
@@ -85,7 +85,7 @@ namespace CodeSnippetsReflection.Test
                                            "  ]\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
-                                           "let res = await client.api('/users')\n" +
+                                           "let res = await client.api('/users')\r\n" +
                                            "\t.post(user);";
 
             //Assert the snippet generated is as expected
@@ -126,7 +126,7 @@ namespace CodeSnippetsReflection.Test
                                            "  }\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
-                                           "let res = await client.api('/users')\n" +
+                                           "let res = await client.api('/users')\r\n" +
                                            "\t.post(user);";
 
             //Assert the snippet generated is as expected
@@ -162,7 +162,7 @@ namespace CodeSnippetsReflection.Test
                                                "city: \"city-value\"\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
-                                           "let res = await client.api('/me')\n\t.update(user);";
+                                           "let res = await client.api('/me')\r\n\t.update(user);";
 
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
@@ -183,7 +183,7 @@ namespace CodeSnippetsReflection.Test
             var result = JavaScriptGenerator.GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
-            const string expectedSnippet = "let res = await client.api('/me/calendar/calendarView?startDateTime=2017-01-01T19:00:00.0000000&endDateTime=2017-01-07T19:00:00.0000000')\n\t.get();";
+            const string expectedSnippet = "let res = await client.api('/me/calendar/calendarView?startDateTime=2017-01-01T19:00:00.0000000&endDateTime=2017-01-07T19:00:00.0000000')\r\n\t.get();";
 
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
