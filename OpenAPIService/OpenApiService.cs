@@ -375,29 +375,27 @@ namespace OpenAPIService
         /// <returns>An OpenAPI document.</returns>
         public static async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl)
         {
-            using (var reader = new StreamReader(csdl))
+            using var reader = new StreamReader(csdl);
+            var csdlTxt = await reader.ReadToEndAsync();
+            var edmModel = CsdlReader.Parse(XElement.Parse(csdlTxt).CreateReader());
+
+            var settings = new OpenApiConvertSettings()
             {
-                var csdlTxt = await reader.ReadToEndAsync();
-                var edmModel = CsdlReader.Parse(XElement.Parse(csdlTxt).CreateReader());
+                EnableKeyAsSegment = true,
+                EnableOperationId = true,
+                PrefixEntityTypeNameBeforeKey = true,
+                TagDepth = 2,
+                EnablePagination = true,
+                EnableDiscriminatorValue = false,
+                EnableDerivedTypesReferencesForRequestBody = false,
+                EnableDerivedTypesReferencesForResponses = false,
+                ShowRootPath = true,
+                ShowLinks = true
+            };
+            OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
-                var settings = new OpenApiConvertSettings()
-                {
-                    EnableKeyAsSegment = true,
-                    EnableOperationId = true,
-                    PrefixEntityTypeNameBeforeKey = true,
-                    TagDepth = 2,
-                    EnablePagination = true,
-                    EnableDiscriminatorValue = false,
-                    EnableDerivedTypesReferencesForRequestBody = false,
-                    EnableDerivedTypesReferencesForResponses = false,
-                    ShowRootPath = true,
-                    ShowLinks = true
-                };
-                OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
-
-                document = FixReferences(document);
-                return document;
-            }
+            document = FixReferences(document);
+            return document;
         }
 
         private static OpenApiDocument FixReferences(OpenApiDocument document)
