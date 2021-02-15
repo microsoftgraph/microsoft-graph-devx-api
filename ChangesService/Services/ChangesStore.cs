@@ -10,6 +10,7 @@ using FileService.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Globalization;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -47,14 +48,21 @@ namespace ChangesService.Services
         /// <returns>A <see cref="ChangeLogList"/> containing the list of <see cref="ChangeLog"/>.</returns>
         public async Task<ChangeLogList> FetchChangeLogListAsync(string locale)
         {
-            if (string.IsNullOrEmpty(locale) || locale.Equals("en-gb", StringComparison.OrdinalIgnoreCase))
+            var englishId = "en-us"; // default locale
+            if (string.IsNullOrEmpty(locale))
             {
-                // Default file locale is en-us
-                // en-gb is not supported and should default to en-us
-                locale = "en-us";
+                locale = englishId;
             }
 
-            locale = locale.ToLowerInvariant(); // for uniformity; uri path is all lower-cased
+            // Check for English CultureInfo variants
+            if (new CultureInfo(locale).TwoLetterISOLanguageName.Equals("en", StringComparison.OrdinalIgnoreCase))
+            {
+                // All English CultureInfo variants
+                // should default to 'en-us'
+                locale = englishId;
+            }
+
+            locale = locale.ToLowerInvariant(); // for uniformity when used as cache keys;
 
             // Fetch cached changelog list
             ChangeLogList changeLogList = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>
@@ -77,17 +85,17 @@ namespace ChangesService.Services
                     cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
                     // Construct the locale-specific relative uri
-                    string relativeUrl = string.Format(_changeLogRelativeUrl, locale);
+                    var relativeUrl = string.Format(_changeLogRelativeUrl, locale);
 
                     // Append to get the absolute uri
-                    string requestUri = _configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]
+                    var requestUri = _configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]
                                                         + relativeUrl;
 
                     // Construct the http request message
                     var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                     // Get the file contents from source
-                    string jsonFileContents = _httpClientUtility.ReadFromDocument(httpRequestMessage)
+                    var jsonFileContents = _httpClientUtility.ReadFromDocument(httpRequestMessage)
                                                 .GetAwaiter().GetResult();
 
                     // Return the changelog list from the file contents
