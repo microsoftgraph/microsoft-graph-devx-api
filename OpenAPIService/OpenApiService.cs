@@ -363,7 +363,7 @@ namespace OpenAPIService
 
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
 
-            OpenApiDocument document = ConvertCsdlToOpenApi(csdl);
+            OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
 
             return document;
         }
@@ -373,27 +373,31 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="csdl">The CSDL stream.</param>
         /// <returns>An OpenAPI document.</returns>
-        public static OpenApiDocument ConvertCsdlToOpenApi(Stream csdl)
+        public static async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl)
         {
-            var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader());
-
-            var settings = new OpenApiConvertSettings()
+            using (var reader = new StreamReader(csdl))
             {
-                EnableKeyAsSegment = true,
-                EnableOperationId = true,
-                PrefixEntityTypeNameBeforeKey = true,
-                TagDepth = 2,
-                EnablePagination = true,
-                EnableDiscriminatorValue = false,
-                EnableDerivedTypesReferencesForRequestBody = false,
-                EnableDerivedTypesReferencesForResponses = false,
-                ShowRootPath = true,
-                ShowLinks = true
-            };
-            OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
+                var csdlTxt = await reader.ReadToEndAsync();
+                var edmModel = CsdlReader.Parse(XElement.Parse(csdlTxt).CreateReader());
 
-            document = FixReferences(document);
-            return document;
+                var settings = new OpenApiConvertSettings()
+                {
+                    EnableKeyAsSegment = true,
+                    EnableOperationId = true,
+                    PrefixEntityTypeNameBeforeKey = true,
+                    TagDepth = 2,
+                    EnablePagination = true,
+                    EnableDiscriminatorValue = false,
+                    EnableDerivedTypesReferencesForRequestBody = false,
+                    EnableDerivedTypesReferencesForResponses = false,
+                    ShowRootPath = true,
+                    ShowLinks = true
+                };
+                OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
+
+                document = FixReferences(document);
+                return document;
+            }
         }
 
         private static OpenApiDocument FixReferences(OpenApiDocument document)
