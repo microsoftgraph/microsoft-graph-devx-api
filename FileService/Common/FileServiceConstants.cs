@@ -23,8 +23,8 @@ namespace FileService.Common
                 UserAgent
             }
 
-            public static string ApplicationJsonMediaType = "application/json";
-            public static string DevxApiUserAgent = "DevX-API-v1.0";
+            public const string ApplicationJsonMediaType = "application/json";
+            public const string DevxApiUserAgent = "DevX-API-v1.0";
         }
     }
 }

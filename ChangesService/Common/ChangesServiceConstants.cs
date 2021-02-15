@@ -13,7 +13,6 @@ namespace ChangesService.Common
         public const string ChangelogRelativeUrlConfigPath = "BlobStorage:Blobs:ChangeLog:RelativeUrl";
         public const string ChangelogBaseUrlConfigPath = "BlobStorage:Blobs:ChangeLog:BaseUrl";
         public const string ChangelogRefreshTimeConfigPath = "FileCacheRefreshTimeInHours:ChangeLog";
-        public const string ChangelogRefreshTimeDefault = "24";
 
         // Microsoft Graph proxy configuration paths constants
         public const string GraphProxyBaseUrlConfigPath = "GraphProxy:BaseUrl";
