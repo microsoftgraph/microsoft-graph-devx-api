@@ -20,7 +20,7 @@ namespace OpenAPIService.Test
         /// from a dictionary cache or gets a new instance.
         /// </summary>
         /// <param name="key">The key for the OpenAPI document dictionary.</param>
-        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
+        /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>Instance of an OpenApiDocument</returns>
         public static OpenApiDocument GetGraphOpenApiDocument(string key, bool forceRefresh)
         {
