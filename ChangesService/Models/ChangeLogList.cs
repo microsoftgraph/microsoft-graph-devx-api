@@ -21,10 +21,7 @@ namespace ChangesService.Models
         [JsonProperty(PropertyName = "ChangeLog")]
         public List<ChangeLog> ChangeLogs
         {
-            get
-            {
-                return _changeLogs;
-            }
+            get => _changeLogs;
             set
             {
                 _changeLogs = value;
