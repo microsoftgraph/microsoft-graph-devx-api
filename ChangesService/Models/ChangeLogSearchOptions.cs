@@ -26,10 +26,10 @@ namespace ChangesService.Models
                 throw new InvalidOperationException($"Cannot search by both { nameof(requestUrl)} and {nameof(workload) }.");
             }
 
-            if ((startDate != null || endDate != null) && daysRange > 0)
+            if (startDate != null && endDate != null && daysRange > 0)
             {
-                throw new InvalidOperationException($"Cannot filter by both { nameof(startDate) } and { nameof(endDate) } " +
-                    $"together with {nameof(daysRange)}.");
+                throw new InvalidOperationException($"Cannot filter by { nameof(startDate) }, { nameof(endDate) } " +
+                    $"and {nameof(daysRange)} at the same time.");
             }
 
             RequestUrl = requestUrl;
