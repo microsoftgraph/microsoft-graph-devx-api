@@ -10,9 +10,9 @@ namespace ChangesService.Models
     /// </summary>
     public class MicrosoftGraphProxyConfigs
     {
-        public string GraphVersion { get; set; } = "v1.0";
-        public string GraphProxyBaseUrl { get; set; } = "https://proxy.apisandbox.msdn.microsoft.com/";
-        public string GraphProxyRelativeUrl { get; set; } = "svc?url=https://graph.microsoft.com/{0}{1}?$whatif";
-        public string GraphProxyAuthorization { get; set; }
+        public string GraphVersion { get; init; } = "v1.0";
+        public string GraphProxyBaseUrl { get; init; } = "https://proxy.apisandbox.msdn.microsoft.com/";
+        public string GraphProxyRelativeUrl { get; init; } = "svc?url=https://graph.microsoft.com/{0}{1}?$whatif";
+        public string GraphProxyAuthorization { get; init; }
     }
 }
