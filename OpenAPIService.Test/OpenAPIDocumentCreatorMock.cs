@@ -51,7 +51,7 @@ namespace OpenAPIService.Test
             using StreamReader streamReader = new StreamReader(graphDocPath);
             Stream csdl = streamReader.BaseStream;
 
-            OpenApiDocument document = OpenApiService.ConvertCsdlToOpenApi(csdl);
+            OpenApiDocument document = OpenApiService.ConvertCsdlToOpenApiAsync(csdl).GetAwaiter().GetResult();
 
             return document;
         }
