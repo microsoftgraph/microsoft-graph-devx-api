@@ -38,8 +38,8 @@ namespace FileService.Services
 
             requestMessage.Method = requestMessage.Method ?? HttpMethod.Get; // default is GET
 
-            var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
-            var fileContents = await httpResponseMessage?.Content.ReadAsStringAsync();
+            using var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
+            var fileContents = await httpResponseMessage?.Content?.ReadAsStringAsync();
 
             return !httpResponseMessage.IsSuccessStatusCode ? throw new Exception(fileContents) : fileContents;
         }

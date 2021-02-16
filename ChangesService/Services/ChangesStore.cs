@@ -92,7 +92,7 @@ namespace ChangesService.Services
                                                         + relativeUrl;
 
                     // Construct the http request message
-                    var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                    using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
                     // Get the file contents from source
                     var jsonFileContents = _httpClientUtility.ReadFromDocument(httpRequestMessage)
