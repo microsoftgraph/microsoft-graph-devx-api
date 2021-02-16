@@ -19,23 +19,15 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void ThrowInvalidOperationExceptionWhenEitherStartDateOrEndDateAndDaysRangeAreSpecified()
+        public void ThrowInvalidOperationExceptionWhenStartDateAndEndDateAndDaysRangeAreSpecified()
         {
             // Arrange
             var startDate = DateTime.Parse("2020-06-01");
             var endDate = DateTime.Parse("2020-12-31");
 
-            // Act & Assert -> both startDate and endDate specified + daysRange
+            // Act & Assert -> startDate and endDate and daysRange are specified
             Assert.Throws<InvalidOperationException>(() =>
                 new ChangeLogSearchOptions(startDate: startDate, endDate: endDate, daysRange: 90));
-
-            // Act & Assert -> just startDate specified + daysRange
-            Assert.Throws<InvalidOperationException>(() =>
-                new ChangeLogSearchOptions(startDate: startDate, daysRange: 90));
-
-            // Act & Assert -> just endDate specified + daysRange
-            Assert.Throws<InvalidOperationException>(() =>
-                new ChangeLogSearchOptions(endDate: endDate, daysRange: 90));
         }
     }
 }
