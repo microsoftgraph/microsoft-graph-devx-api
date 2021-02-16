@@ -10,7 +10,6 @@ namespace OpenAPIService.Test
 {
     public class OpenAPIServiceShould
     {
-        private const string GraphBetaCsdl = ".\\TestFiles\\Graph.Beta.OData.xml";
         private const string Title = "Partial Graph API";
         private const string GraphVersion = "beta";
         private readonly OpenApiDocument _graphBetaSource = null;
@@ -18,24 +17,7 @@ namespace OpenAPIService.Test
         public OpenAPIServiceShould()
         {
             // Create OpenAPI document with default OpenApiStyle = Plain
-            _graphBetaSource = OpenAPIDocumentCreatorMock.GetGraphOpenApiDocument(GraphBetaCsdl, false);
-        }
-
-        [Fact]
-        public void ReturnAllPathsInConvertCsdlToOpenApi()
-        {
-            // Arrange
-            var rootPath = "/";
-            var pathsCount = 4545;
-            var linksCount = _graphBetaSource.Paths[rootPath]
-                                .Operations[OperationType.Get]
-                                .Responses["200"]
-                                .Links.Count;
-
-            // Assert
-            Assert.Equal(pathsCount, _graphBetaSource.Paths.Count);
-            Assert.NotNull(_graphBetaSource.Paths["/"]);
-            Assert.Equal(62, linksCount);
+            _graphBetaSource = OpenAPIDocumentCreatorMock.GetGraphOpenApiDocument("Beta", false);
         }
 
         [Fact]
@@ -297,7 +279,6 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = OpenApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(4544, subsetOpenApiDocument.Paths.Count);
             Assert.False(subsetOpenApiDocument.Paths.ContainsKey("/")); // root path
         }
     }

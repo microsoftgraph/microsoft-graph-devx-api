@@ -115,7 +115,7 @@ namespace OpenAPIService
         /// <param name="tags">Comma delimited list of tags or a single regex.</param>
         /// <param name="url">Url path to match with Operation Ids.</param>
         /// <param name="graphVersion">Version of Microsoft Graph.</param>
-        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
+        /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A predicate</returns>
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
             OpenApiDocument source, bool forceRefresh = false)
@@ -276,7 +276,7 @@ namespace OpenAPIService
         /// from a dictionary cache or gets a new instance.
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
-        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
+        /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
         public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
         {

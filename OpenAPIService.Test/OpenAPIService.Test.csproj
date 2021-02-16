@@ -19,10 +19,4 @@
     <ProjectReference Include="..\OpenAPIService\OpenAPIService.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="TestFiles\Graph.Beta.OData.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
