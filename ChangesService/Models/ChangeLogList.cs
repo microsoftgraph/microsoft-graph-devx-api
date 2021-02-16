@@ -26,7 +26,6 @@ namespace ChangesService.Models
             {
                 _changeLogs = value;
                 UpdateTotalItems();
-                CurrentItems = _changeLogs.Count;
             }
         }
 
