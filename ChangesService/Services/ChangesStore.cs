@@ -49,18 +49,25 @@ namespace ChangesService.Services
         public async Task<ChangeLogList> FetchChangeLogListAsync(string locale)
         {
             var englishId = "en-us"; // default locale
+
             if (string.IsNullOrEmpty(locale))
             {
                 locale = englishId;
             }
 
-            // Check for English CultureInfo variants
-            if (new CultureInfo(locale).TwoLetterISOLanguageName.Equals("en", StringComparison.OrdinalIgnoreCase))
+            // Variants of a CultureInfo should default to the main variant
+            // These are the supported variants.
+            locale = new CultureInfo(locale).TwoLetterISOLanguageName switch
             {
-                // All English CultureInfo variants
-                // should default to 'en-us'
-                locale = englishId;
-            }
+                "es" => "es-es",
+                "fr" => "fr-fr",
+                "de" => "de-de",
+                "ja" => "ja-jp",
+                "pt" => "pt-br",
+                "ru" => "ru-ru",
+                "zh" => "zh-cn",
+                _ => englishId,
+            };
 
             locale = locale.ToLowerInvariant(); // for uniformity when used as cache keys;
 
