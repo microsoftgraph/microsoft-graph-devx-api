@@ -36,7 +36,7 @@ namespace ChangesService.Models
         /// <summary>
         /// The number of changelog items in the current view of the changelog list.
         /// </summary>
-        public int CurrentItems { get; private set; } = 0;
+        public int CurrentItems { get => _changeLogs?.Count ?? 0; }
 
         /// <summary>
         /// The total number of changelog items in the changelog list.
