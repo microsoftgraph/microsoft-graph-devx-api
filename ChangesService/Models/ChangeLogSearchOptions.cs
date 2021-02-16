@@ -23,7 +23,7 @@ namespace ChangesService.Models
 
             if (!string.IsNullOrEmpty(requestUrl) && !string.IsNullOrEmpty(workload))
             {
-                throw new InvalidOperationException($"Cannot search by both { nameof(requestUrl)} and {nameof(workload) }.");
+                throw new InvalidOperationException($"Cannot search by both { nameof(requestUrl)} and {nameof(workload) } at the same time.");
             }
 
             if (startDate != null && endDate != null && daysRange > 0)
