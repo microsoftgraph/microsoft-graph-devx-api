@@ -363,7 +363,7 @@ namespace OpenAPIService
 
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
 
-            OpenApiDocument document = ConvertCsdlToOpenApi(csdl);
+            OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
 
             return document;
         }
@@ -373,9 +373,11 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="csdl">The CSDL stream.</param>
         /// <returns>An OpenAPI document.</returns>
-        public static OpenApiDocument ConvertCsdlToOpenApi(Stream csdl)
+        public static async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl)
         {
-            var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader());
+            using var reader = new StreamReader(csdl);
+            var csdlTxt = await reader.ReadToEndAsync();
+            var edmModel = CsdlReader.Parse(XElement.Parse(csdlTxt).CreateReader());
 
             var settings = new OpenApiConvertSettings()
             {
