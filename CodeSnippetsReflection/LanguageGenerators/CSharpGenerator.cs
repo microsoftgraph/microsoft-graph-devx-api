@@ -67,7 +67,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
                     }
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.GetAsync();"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.GetAsync();"));
                     snippetBuilder.Append(extraSnippet);
 
                 }
@@ -83,7 +83,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                             snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
                             snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
-                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
 
                             break;
 
@@ -137,7 +137,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     snippetBuilder.Append($"{typeHintOnTheLeftHandSide} {parameter} = {value}");
                                 }
                             }
-                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PostAsync();"));
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.PostAsync();"));
                             break;
                         default:
                             throw new Exception("Unknown Segment Type in URI for method POST");
@@ -156,11 +156,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         snippetBuilder.Append(GeneratePropertySectionSnippet(snippetModel));
                     }
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.UpdateAsync({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.UpdateAsync({snippetModel.ResponseVariableName});"));
                 }
                 else if (snippetModel.Method == HttpMethod.Delete)
                 {
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.DeleteAsync();"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.DeleteAsync();"));
                 }
                 else if (snippetModel.Method == HttpMethod.Put)
                 {
@@ -190,7 +190,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     }
                     else
                     {
-                        snippetBuilder.Append($"using var {snippetModel.ResponseVariableName} = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(\"{snippetModel.RequestBody.Trim()}\"));\n\n");
+                        snippetBuilder.Append($"using var {snippetModel.ResponseVariableName} = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(\"{snippetModel.RequestBody.Trim()}\"));\r\n\r\n");
 
                         // resolve type for PutAsync<T>
                         var genericEdmType = snippetModel.Segments[snippetModel.Segments.Count - 2].EdmType;
@@ -200,7 +200,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                     }
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PutAsync{genericType}({objectToBePut});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.PutAsync{genericType}({objectToBePut});"));
 
                 }
                 else
@@ -261,7 +261,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 return x;
                             }
                         }));
-                        resourcesPath.Append($"\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({parameters})");
+                        resourcesPath.Append($"\r\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({parameters})");
                         break;
                     case ValueSegment _:
                         resourcesPath.Append(".Content");
@@ -685,7 +685,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Generate the Resources path for Csharp
             stringBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
             //check if there are any custom query options appended
-            stringBuilder.Append(snippetModel.CustomQueryOptions.Any() ? "\n\t.Request( queryOptions )" : "\n\t.Request()");
+            stringBuilder.Append(snippetModel.CustomQueryOptions.Any() ? "\r\n\t.Request( queryOptions )" : "\r\n\t.Request()");
             //Append footers
             stringBuilder.Append(actions);
 
@@ -768,13 +768,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 //we are retrieving the value
                 snippetModel.SelectFieldList.Add(selectField);
-                stringBuilder.Append($"\n\nvar {variableName} = {snippetModel.ResponseVariableName}{properties};");
+                stringBuilder.Append($"\r\n\r\nvar {variableName} = {snippetModel.ResponseVariableName}{properties};");
             }
             else
             {
                 //we are modifying the value
                 stringBuilder.Append($"var {snippetModel.ResponseVariableName} = new {parentClassName}();");//initialise the classname
-                stringBuilder.Append($"\n{snippetModel.ResponseVariableName}{properties} = {propertyName};\n\n");
+                stringBuilder.Append($"\r\n{snippetModel.ResponseVariableName}{properties} = {propertyName};\r\n\r\n");
             }
 
             return stringBuilder.ToString();
@@ -865,18 +865,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
     internal class CSharpExpressions : LanguageExpressions
     {
-        public override string FilterExpression => "\n\t.Filter(\"{0}\")";
-        public override string SearchExpression => "\n\t.Search(\"{0}\")";
-        public override string ExpandExpression => "\n\t.Expand(\"{0}\")";
-        public override string SelectExpression => "\n\t.Select(\"{0}\")";
-        public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")";
-        public override string SkipExpression => "\n\t.Skip({0})";
+        public override string FilterExpression => "\r\n\t.Filter(\"{0}\")";
+        public override string SearchExpression => "\r\n\t.Search(\"{0}\")";
+        public override string ExpandExpression => "\r\n\t.Expand(\"{0}\")";
+        public override string SelectExpression => "\r\n\t.Select(\"{0}\")";
+        public override string OrderByExpression => "\r\n\t.OrderBy(\"{0}\")";
+        public override string SkipExpression => "\r\n\t.Skip({0})";
         public override string SkipTokenExpression => "";
-        public override string TopExpression => "\n\t.Top({0})";
+        public override string TopExpression => "\r\n\t.Top({0})";
         public override string FilterExpressionDelimiter => ",";
         public override string SelectExpressionDelimiter => ",";
         public override string OrderByExpressionDelimiter => " ";
-        public override string HeaderExpression => "\n\t.Header(\"{0}\",\"{1}\")";
+        public override string HeaderExpression => "\r\n\t.Header(\"{0}\",\"{1}\")";
 
         public override string[] ReservedNames => new string[] {
             "abstract","as","base","bool","break","byte","case","catch","char",
@@ -893,5 +893,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string ReservedNameEscapeSequence => "@";
 
         public override string DoubleQuotesEscapeSequence => "\\\"";
+
+        public override string SingleQuotesEscapeSequence => "'";
     }
 }
