@@ -229,7 +229,7 @@ namespace ChangesService.Services
                                     searchOptions.RequestUrl);
 
             // Get the absolute uri
-            string requestUri = graphProxy.GraphProxyBaseUrl + relativeProxyUrl;
+            var requestUri = graphProxy.GraphProxyBaseUrl + relativeProxyUrl;
 
             // Construct the http request message
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
