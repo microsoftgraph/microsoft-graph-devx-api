@@ -73,49 +73,46 @@ namespace ChangesService.Services
                 throw new ArgumentNullException(nameof(graphProxyConfigs), ChangesServiceConstants.ValueNullError);
             }
 
-            // Temp. var to hold cascading filtered data
+            // Temp. var to hold cascading filtered results
             IEnumerable<ChangeLog> enumerableChangeLog = changeLogList.ChangeLogs;
 
-            if (!string.IsNullOrEmpty(searchOptions.RequestUrl))
+            if (!string.IsNullOrEmpty(searchOptions.RequestUrl)) // filter by RequestUrl
             {
                 // Retrieve the workload name from the requestUrl
                 var workload = RetrieveWorkloadNameFromRequestUrl(searchOptions, graphProxyConfigs, httpClientUtility)
                                 .GetAwaiter().GetResult();
 
-                // Search by retrieved workload name
+                // Search by the retrieved workload name
                 enumerableChangeLog = FilterChangeLogListByWorkload(changeLogList,
                                                                       workload);
             }
-            else if (!string.IsNullOrEmpty(searchOptions.Workload))
+            else if (!string.IsNullOrEmpty(searchOptions.Workload)) // filter by Workload
             {
                 // Search by the provided workload name
                 enumerableChangeLog = FilterChangeLogListByWorkload(changeLogList,
                                                                       searchOptions.Workload);
             }
 
-            // Filter the search result by CreatedDate
-            ChangeLogList changeLogListByDate = new ChangeLogList();
-
-            if (searchOptions.StartDate != null && searchOptions.EndDate != null) // StartDate & EndDate
+            if (searchOptions.StartDate != null && searchOptions.EndDate != null)
             {
-                // Filter by start date and end date
+                // Filter by StartDate & EndDate
                 enumerableChangeLog = FilterChangeLogListByDates(changeLogList, searchOptions.StartDate.Value, searchOptions.EndDate.Value);
             }
-            else if (searchOptions.StartDate != null && searchOptions.DaysRange > 0) // StartDate & DaysRange
+            else if (searchOptions.StartDate != null && searchOptions.DaysRange > 0)
             {
                 var endDate = searchOptions.StartDate.Value.AddDays(searchOptions.DaysRange);
 
-                // Filter by start date and end date
+                // Filter by StartDate & DaysRange
                 enumerableChangeLog = FilterChangeLogListByDates(changeLogList, searchOptions.StartDate.Value, endDate);
             }
-            else if (searchOptions.EndDate != null && searchOptions.DaysRange > 0) // EndDate & DaysRange
+            else if (searchOptions.EndDate != null && searchOptions.DaysRange > 0)
             {
                 var startDate = searchOptions.EndDate.Value.AddDays(searchOptions.DaysRange);
 
-                // Filter by start date and end date
+                // Filter by EndDate & DaysRange
                 enumerableChangeLog = FilterChangeLogListByDates(changeLogList, startDate, searchOptions.EndDate.Value);
             }
-            else if (searchOptions.DaysRange > 0) // DaysRange only
+            else if (searchOptions.DaysRange > 0)
             {
                 // Filter by the number of days provided, up to the current date
                 var startDate = DateTime.Today.AddDays(-searchOptions.DaysRange);
@@ -125,6 +122,7 @@ namespace ChangesService.Services
                                             x.CreatedDateTime <= DateTime.Today);
             }
 
+            // Create the new filtered result
             ChangeLogList filteredChangeLogList = new()
             {
                 ChangeLogs = enumerableChangeLog.ToList()
@@ -168,6 +166,7 @@ namespace ChangesService.Services
                     enumerableChangeLog = enumerableChangeLog.TakeLast(lastItems);
                 }
 
+                // Update with the paginated result
                 filteredChangeLogList.ChangeLogs = enumerableChangeLog.ToList();
             }
 
@@ -188,6 +187,14 @@ namespace ChangesService.Services
                                         StringComparison.OrdinalIgnoreCase));
         }
 
+        /// <summary>
+        /// Filters a <see cref="ChangeLog"/> list by workload name
+        /// </summary>
+        /// <param name="changeLogList">The <see cref="ChangeLogList"/> with the target
+        /// <see cref="ChangeLog"/> list.</param>
+        /// <param name="startDate">The start date for the changelog data.</param>
+        /// <param name="endDate">The end date for the changelog data.</param>
+        /// <returns>The <see cref="ChangeLog"/> list filtered by the provided dates.</returns>
         private static IEnumerable<ChangeLog> FilterChangeLogListByDates(ChangeLogList changeLogList, DateTime startDate, DateTime endDate)
         {
             return changeLogList.ChangeLogs
@@ -232,7 +239,7 @@ namespace ChangesService.Services
             var requestUri = graphProxy.GraphProxyBaseUrl + relativeProxyUrl;
 
             // Construct the http request message
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
             // Add the request headers
             httpRequestMessage.Headers.Add(FileServiceConstants.HttpRequest.Headers.Authorization.ToString(),
@@ -243,7 +250,7 @@ namespace ChangesService.Services
                 FileServiceConstants.HttpRequest.DevxApiUserAgent); // User Agent
 
             // Fetch the request url workload info. content from Microsoft Graph
-            string workloadInfo = await httpClientUtility.ReadFromDocument(httpRequestMessage);
+            string workloadInfo = await httpClientUtility.ReadFromDocumentAsync(httpRequestMessage);
 
             // Extract the workload name from the response content
             JToken workloadInfoToken = JObject.Parse(workloadInfo);
