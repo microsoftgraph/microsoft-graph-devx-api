@@ -193,7 +193,7 @@ namespace GraphExplorerPermissionsService
             // Construct the http request message
             using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, sourceUri);
 
-            return await _httpClientUtility.ReadFromDocument(httpRequestMessage);
+            return await _httpClientUtility.ReadFromDocumentAsync(httpRequestMessage);
         }
 
         /// <summary>

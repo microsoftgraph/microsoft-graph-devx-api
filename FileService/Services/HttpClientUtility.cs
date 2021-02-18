@@ -29,14 +29,14 @@ namespace FileService.Services
         /// </summary>
         /// <param name="requestMessage">The HTTP request message.</param>
         /// <returns>The document contents from the HTTP source.</returns>
-        public async Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
+        public async Task<string> ReadFromDocumentAsync(HttpRequestMessage requestMessage)
         {
             if (requestMessage == null)
             {
                 throw new ArgumentNullException(nameof(requestMessage), "Value cannot be null.");
             }
 
-            requestMessage.Method = requestMessage.Method ?? HttpMethod.Get; // default is GET
+            requestMessage.Method ??= HttpMethod.Get; // default is GET
 
             using var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
             var fileContents = await httpResponseMessage?.Content?.ReadAsStringAsync();
