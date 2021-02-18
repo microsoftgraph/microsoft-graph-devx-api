@@ -27,7 +27,7 @@ namespace ChangesService.Models
                 _changeLogs = value;
                 UpdateTotalItems();
             }
-        } = new List<ChangeLog>();
+        }
 
         /// <summary>
         /// The number of changelog items in the current view of the changelog list.
