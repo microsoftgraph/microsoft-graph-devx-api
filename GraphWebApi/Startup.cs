@@ -16,9 +16,9 @@ using FileService.Interfaces;
 using FileService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Services;
-using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using Serilog;
 using Microsoft.Extensions.Hosting;
+using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 
 namespace GraphWebApi
 {
@@ -63,14 +63,14 @@ namespace GraphWebApi
 
             services.AddApplicationInsightsTelemetry(options =>
             {
-               // options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
-                options.RequestCollectionOptions.InjectResponseHeaders = false;
-                options.RequestCollectionOptions.TrackExceptions = false;
-                options.EnableAuthenticationTrackingJavaScript = false;
-                options.EnableHeartbeat = false;
-                options.EnableAdaptiveSampling = false;
-                options.EnableQuickPulseMetricStream = false;
-                options.EnableDebugLogger = false;
+                options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
+                options.RequestCollectionOptions.InjectResponseHeaders = true;
+                options.RequestCollectionOptions.TrackExceptions = true;
+                options.EnableAuthenticationTrackingJavaScript = true;
+                options.EnableHeartbeat = true;
+                options.EnableAdaptiveSampling = true;    // Enable adaptive sampling
+                options.EnableQuickPulseMetricStream = true;   // Enable QuickPulse (Live Metrics stream)
+                options.EnableDebugLogger = true;
             });
 
             if (!_env.IsDevelopment())
