@@ -194,7 +194,7 @@ namespace CodeSnippetsReflection.Test
         public void GenerateSnippetsWithOdataProperties()
         {
             //Arrange
-            LanguageExpressions expressions = new JavascriptExpressions();C:\Source\Repos\microsoft-graph-recipes\SnippetGen\Generation\JavaScriptCodeGenerator.cs
+            LanguageExpressions expressions = new JavascriptExpressions();
 
             const string directoryObj = "{\r\n  \"@odata.id\": \"https://graph.microsoft.com/v1.0/users/{id}\"\r\n}";
 
