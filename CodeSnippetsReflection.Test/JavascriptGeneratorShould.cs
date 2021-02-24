@@ -58,7 +58,7 @@ namespace CodeSnippetsReflection.Test
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "const user = {\r\n" +
-                                           "  subject: 'Let's go for lunch',\r\n" +
+                                           "  subject: 'Let\\'s go for lunch',\r\n" +
                                            "  body: {\r\n" +
                                            "    contentType: 'HTML',\r\n" +
                                            "    content: 'Does mid month work for you?'\r\n" +
@@ -72,7 +72,7 @@ namespace CodeSnippetsReflection.Test
                                            "      timeZone: 'Pacific Standard Time'\r\n" +
                                            "  },\r\n" +
                                            "  location: {\r\n" +
-                                           "      displayName: 'Harry's Bar'\r\n" +
+                                           "      displayName: 'Harry\\'s Bar'\r\n" +
                                            "  },\r\n" +
                                            "  attendees: [\r\n" +
                                            "    {\r\n" +
@@ -216,6 +216,68 @@ namespace CodeSnippetsReflection.Test
                 "\r\n" +
                 "let res = await client.api('/users/{id}/manager/$ref')\r\n" +
                 "\t.put(directoryObject);";
+
+            //Assert the snippet generated is as expected
+            Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
+        }
+
+        [Fact]
+        // This test asserts that single quotes inside strings are escaped
+        public void GenerateSnippetsWithSingleQuotesInsideString()
+        {
+            //Arrange
+            LanguageExpressions expressions = new JavascriptExpressions();
+
+            const string actionResultParts = 
+                "{\r\n" +
+                "  \"values\": [\r\n" +
+                "    {\r\n" +
+                "      \"@odata.type\": \"microsoft.graph.aadUserConversationMember\",\r\n" +
+                "      \"roles\":[],\r\n" +
+                "      \"user@odata.bind\": \"https://graph.microsoft.com/beta/users('18a80140-b0fb-4489-b360-2f6efaf225a0')\"\r\n" +
+                "    },\r\n" +
+                "    {\r\n" +
+                "      \"@odata.type\": \"microsoft.graph.aadUserConversationMember\",\r\n" +
+                "      \"roles\":[\"owner\"],\r\n" +
+                "      \"user@odata.bind\": \"https://graph.microsoft.com/beta/users('86503198-b81b-43fe-81ee-ad45b8848ac9')\"\r\n" +
+                "    }\r\n" +
+                "  ]\r\n" +
+                "}";
+
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post,
+                "https://graph.microsoft.com/beta/teams/e4183b04-c9a2-417c-bde4-70e3ee46a6dc/members/add")
+            {
+                Content = new StringContent(actionResultParts)
+            };
+
+            var betaServiceRootUrl = "https://graph.microsoft.com/beta";
+            var betaEdmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanBetaMetadata));
+            var snippetModel = new SnippetModel(requestPayload, betaServiceRootUrl, betaEdmModel);
+
+            //Act by generating the code snippet
+            var result = JavaScriptGenerator.GenerateCodeSnippet(snippetModel, expressions);
+
+            //Assert code snippet string matches expectation
+            const string expectedSnippet =
+                "const actionResultPart = {\r\n" +
+                "  values: [\r\n" +
+                "    {\r\n" +
+                "      '@odata.type': 'microsoft.graph.aadUserConversationMember',\r\n" +
+                "      roles: [],\r\n" +
+                "      'user@odata.bind': 'https://graph.microsoft.com/beta/users(\\'18a80140-b0fb-4489-b360-2f6efaf225a0\\')'\r\n" +
+                "    },\r\n" +
+                "    {\r\n" +
+                "      '@odata.type': 'microsoft.graph.aadUserConversationMember',\r\n" +
+                "      roles: ['owner'],\r\n" +
+                "      'user@odata.bind': 'https://graph.microsoft.com/beta/users(\\'86503198-b81b-43fe-81ee-ad45b8848ac9\\')'\r\n" +
+                "    }\r\n" +
+                "  ]\r\n" +
+                "};\r\n" +
+                "\r\n" +
+                "let res = await client.api('/teams/e4183b04-c9a2-417c-bde4-70e3ee46a6dc/members/add')\r\n" +
+                "\t.version('beta')\r\n" +
+                "\t.post(actionResultPart);";
 
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);

@@ -124,15 +124,19 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 return "";//nothing to generate with no body
 
             var stringBuilder = new StringBuilder();
+
+            // Escape any single-quotes in values
+            var javascriptObject = jsonBody.Trim().Replace("'", "\\'");
+
             // Remove the quotation marks from the JSON keys
             // EXCEPT ones with punctuation in them (like @odata.id)
-            var javascriptObject = Regex.Replace(jsonBody.Trim(), @"""(\w*?)"" *: *", "$1: ");
+            javascriptObject = Regex.Replace(javascriptObject, @"""(\w*?)"" *: *", "$1: ");
 
             // Replace double-quotes in any remaining keys with
             // single quotes
             javascriptObject = Regex.Replace(javascriptObject, @"""(.*?)"" *:", "'$1':");
 
-            // Replace double quotes in all values with single-quotes (`)
+            // Replace double quotes in all values with single-quotes (')
             // Yes this Regex looks insane - it's there to weed out any escaped double-quotes
             // (like in the value "Bob says \"Hello!\""
             javascriptObject = Regex.Replace(javascriptObject,
