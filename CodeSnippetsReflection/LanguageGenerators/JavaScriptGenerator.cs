@@ -32,6 +32,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 if (snippetModel.Method == HttpMethod.Get)
                 {
                     //append any queries with the actions
+                    snippetBuilder.Append($"let {snippetModel.ResponseVariableName} = ");
                     var getActions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions) + "\r\n\t.get();";
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, getActions));
                 }
@@ -104,7 +105,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 //just append the query string since its a custom query
                 path += snippetModel.QueryString.EscapeQuotesInLiteral("\"", "\\'");
             }
-            stringBuilder.Append($"let res = await client.api('{path}')");
+            stringBuilder.Append($"await client.api('{path}')");
             //append beta
             stringBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
             stringBuilder.Append(actions);
