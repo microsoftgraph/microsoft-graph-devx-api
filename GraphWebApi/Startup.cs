@@ -19,6 +19,7 @@ using GraphExplorerSamplesService.Services;
 using Serilog;
 using Microsoft.Extensions.Hosting;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
+using Microsoft.ApplicationInsights.Extensibility;
 
 namespace GraphWebApi
 {
@@ -72,6 +73,7 @@ namespace GraphWebApi
                 options.EnableQuickPulseMetricStream = true;   // Enable QuickPulse (Live Metrics stream)
                 options.EnableDebugLogger = true;
             });
+            services.AddApplicationInsightsTelemetryProcessor<RequestUrlFilter>();
 
             if (!_env.IsDevelopment())
             {
