@@ -85,7 +85,7 @@ namespace CodeSnippetsReflection.Test
                                            "  ]\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
-                                           "let res = await client.api('/users')\r\n" +
+                                           "await client.api('/users')\r\n" +
                                            "\t.post(user);";
 
             //Assert the snippet generated is as expected
@@ -126,7 +126,7 @@ namespace CodeSnippetsReflection.Test
                                            "  }\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
-                                           "let res = await client.api('/users')\r\n" +
+                                           "await client.api('/users')\r\n" +
                                            "\t.post(user);";
 
             //Assert the snippet generated is as expected
@@ -162,7 +162,7 @@ namespace CodeSnippetsReflection.Test
                                                "city: 'city-value'\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
-                                           "let res = await client.api('/me')\r\n\t.update(user);";
+                                           "await client.api('/me')\r\n\t.update(user);";
 
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
@@ -183,7 +183,7 @@ namespace CodeSnippetsReflection.Test
             var result = JavaScriptGenerator.GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
-            const string expectedSnippet = "let res = await client.api('/me/calendar/calendarView?startDateTime=2017-01-01T19:00:00.0000000&endDateTime=2017-01-07T19:00:00.0000000')\r\n\t.get();";
+            const string expectedSnippet = "let calendarView = await client.api('/me/calendar/calendarView?startDateTime=2017-01-01T19:00:00.0000000&endDateTime=2017-01-07T19:00:00.0000000')\r\n\t.get();";
 
             //Assert the snippet generated is as expected
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
@@ -214,7 +214,7 @@ namespace CodeSnippetsReflection.Test
                 "  '@odata.id': 'https://graph.microsoft.com/v1.0/users/{id}'\r\n" + 
                 "};\r\n" +
                 "\r\n" +
-                "let res = await client.api('/users/{id}/manager/$ref')\r\n" +
+                "await client.api('/users/{id}/manager/$ref')\r\n" +
                 "\t.put(directoryObject);";
 
             //Assert the snippet generated is as expected
@@ -275,7 +275,7 @@ namespace CodeSnippetsReflection.Test
                 "  ]\r\n" +
                 "};\r\n" +
                 "\r\n" +
-                "let res = await client.api('/teams/e4183b04-c9a2-417c-bde4-70e3ee46a6dc/members/add')\r\n" +
+                "await client.api('/teams/e4183b04-c9a2-417c-bde4-70e3ee46a6dc/members/add')\r\n" +
                 "\t.version('beta')\r\n" +
                 "\t.post(actionResultPart);";
 
