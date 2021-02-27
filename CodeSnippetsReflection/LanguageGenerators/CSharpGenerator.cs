@@ -235,7 +235,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     //handle indexing into collections
                     case KeySegment keySegment:
-                        resourcesPath.Append($"[\"{keySegment.Keys.FirstOrDefault().Value}\"]");
+                        var id = previousSegment == null ? "UNKNOWN-ID" : previousSegment + "-id";
+                        resourcesPath.Append($"[\"{id}\"]");
                         break;
                     // handle special case of indexing on a property through extensions, e.g.
                     // IThumbnailSetRequestBuilder has a manually written extension which allows indexing on {size}
