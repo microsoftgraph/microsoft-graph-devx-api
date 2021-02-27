@@ -226,6 +226,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         {
             var resourcesPath = new StringBuilder();
             var resourcesPathSuffix = string.Empty;
+            string previousSegment = null;
 
             // lets append all resources
             foreach (var item in snippetModel.Segments)
@@ -240,7 +241,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     // IThumbnailSetRequestBuilder has a manually written extension which allows indexing on {size}
                     // https://github.com/microsoftgraph/msgraph-sdk-dotnet/blob/dev/src/Microsoft.Graph/Requests/Extensions/IThumbnailSetRequestBuilderExtensions.cs
                     case DynamicPathSegment pathSegment when pathSegment.Identifier.Contains("{"):
-                        resourcesPath.Append($"[\"{pathSegment.Identifier}\"]");
+                        var id = previousSegment == null ? "UNKNOWN-ID" : previousSegment + "-id";
+                        resourcesPath.Append($"[\"{id}\"]");
                         break;
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
@@ -304,6 +306,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         break;
                 }
+
+                previousSegment = item.EdmType?.ToString();
             }
 
             if (!string.IsNullOrEmpty(resourcesPathSuffix))
