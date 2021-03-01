@@ -222,11 +222,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
         /// <returns>String of the resources in Csharp code</returns>
-        private static string CSharpGenerateResourcesPath(SnippetModel snippetModel)
+        private string CSharpGenerateResourcesPath(SnippetModel snippetModel)
         {
             var resourcesPath = new StringBuilder();
             var resourcesPathSuffix = string.Empty;
-            string previousSegment = null;
+            string nextId = null;
+            List<string> paths = new List<string>();
 
             // lets append all resources
             foreach (var item in snippetModel.Segments)
@@ -235,15 +236,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     //handle indexing into collections
                     case KeySegment keySegment:
-                        var id = previousSegment == null ? "UNKNOWN-ID" : previousSegment + "-id";
-                        resourcesPath.Append($"[\"{id}\"]");
+                        resourcesPath.Append($"[\"{nextId}\"]");
                         break;
                     // handle special case of indexing on a property through extensions, e.g.
                     // IThumbnailSetRequestBuilder has a manually written extension which allows indexing on {size}
                     // https://github.com/microsoftgraph/msgraph-sdk-dotnet/blob/dev/src/Microsoft.Graph/Requests/Extensions/IThumbnailSetRequestBuilderExtensions.cs
                     case DynamicPathSegment pathSegment when pathSegment.Identifier.Contains("{"):
-                        var id = previousSegment == null ? "UNKNOWN-ID" : previousSegment + "-id";
-                        resourcesPath.Append($"[\"{id}\"]");
+                        resourcesPath.Append($"[\"{nextId}\"]");
                         break;
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
@@ -308,7 +307,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         break;
                 }
 
-                previousSegment = item.EdmType?.ToString();
+                paths.Add(item.Identifier);
+                nextId = GetCsharpClassName(item, paths) + "-id";
             }
 
             if (!string.IsNullOrEmpty(resourcesPathSuffix))
@@ -682,7 +682,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="snippetModel">Snippet model built from the request</param>
         /// <param name="actions">String of actions to be done inside the code block</param>
-        private static string GenerateRequestSection(SnippetModel snippetModel, string actions)
+        private string GenerateRequestSection(SnippetModel snippetModel, string actions)
         {
             var stringBuilder = new StringBuilder();
 
