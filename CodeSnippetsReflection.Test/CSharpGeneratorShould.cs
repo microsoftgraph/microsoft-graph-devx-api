@@ -207,8 +207,8 @@ namespace CodeSnippetsReflection.Test
 
             // Assert that stream is set as a property of a full object and full object is passed in in the PATCH request.
             Assert.Contains("pages.Content = stream;", result);
-            Assert.Contains("await graphClient.Me.Onenote.Pages[\"{id}\"]", result);
-            Assert.DoesNotContain("await graphClient.Me.Onenote.Pages[\"{id}\"].Content", result);
+            Assert.Contains("await graphClient.Me.Onenote.Pages[\"{onenotePage-id}\"]", result);
+            Assert.DoesNotContain("await graphClient.Me.Onenote.Pages[\"{onenotePage-id}\"].Content", result);
             Assert.Contains("UpdateAsync(pages)", result);
         }
 
@@ -405,7 +405,7 @@ namespace CodeSnippetsReflection.Test
             var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
-            const string expectedSnippet = "await graphClient.Groups[\"{id}\"].Owners[\"{id}\"].Reference\r\n" +
+            const string expectedSnippet = "await graphClient.Groups[\"{group-id}\"].Owners[\"{directoryObject-id}\"].Reference\r\n" +
                                         "\t.Request()\r\n" +
                                         "\t.DeleteAsync();";
 
@@ -438,7 +438,7 @@ namespace CodeSnippetsReflection.Test
                                            "};\r\n" +
                                            "\r\n" +
 
-                                           "await graphClient.Groups[\"{id}\"].Owners.References" +
+                                           "await graphClient.Groups[\"{group-id}\"].Owners.References" +
                                                 "\r\n\t.Request()" +
                                                 "\r\n\t.AddAsync(directoryObject);";
 
@@ -471,7 +471,7 @@ namespace CodeSnippetsReflection.Test
                                            "};\r\n" +
                                            "\r\n" +
 
-                                           "await graphClient.Groups[\"{id}\"].Owners.References" +
+                                           "await graphClient.Groups[\"{group-id}\"].Owners.References" +
                                            "\r\n\t.Request()" +
                                            "\r\n\t.AddAsync(directoryObject);";
 
@@ -510,7 +510,7 @@ namespace CodeSnippetsReflection.Test
                                            "};\r\n" +
                                            "\r\n" +
 
-                                           "await graphClient.Groups[\"{id}\"].Owners.References" +
+                                           "await graphClient.Groups[\"{group-id}\"].Owners.References" +
                                            "\r\n\t.Request()" +
                                            "\r\n\t.AddAsync(directoryObject);";
 
@@ -533,7 +533,7 @@ namespace CodeSnippetsReflection.Test
             var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
-            const string expectedSnippet = "var workbookRange = await graphClient.Me.Drive.Items[\"{id}\"].Workbook.Worksheets[\"{id|name}\"]\r\n" +
+            const string expectedSnippet = "var workbookRange = await graphClient.Me.Drive.Items[\"{driveItem-id}\"].Workbook.Worksheets[\"{workbookWorksheet-id}\"]\r\n" +
                                                "\t.Range(\"A1:B2\")\r\n" +//parameter has double quotes
                                                "\t.Request()\r\n" +
                                                "\t.GetAsync();";
@@ -585,7 +585,7 @@ namespace CodeSnippetsReflection.Test
                                                "\tBodyPreview = \"bodyPreview-value\"\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
-                                           "await graphClient.Me.MailFolders[\"{id}\"].Messages\r\n" +
+                                           "await graphClient.Me.MailFolders[\"{mailFolder-id}\"].Messages\r\n" +
                                                "\t.Request()\r\n" +
                                                "\t.AddAsync(message);";
 
@@ -735,7 +735,7 @@ namespace CodeSnippetsReflection.Test
                                            "\tIsReminderOn = true\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
-                                           "await graphClient.Me.Events[\"{id}\"]\r\n" +
+                                           "await graphClient.Me.Events[\"{event-id}\"]\r\n" +
                                            "\t.Request()\r\n" +
                                            "\t.UpdateAsync(@event);";
 
@@ -854,7 +854,7 @@ namespace CodeSnippetsReflection.Test
                                                    "\t\t}\r\n" +
                                                "\t}\r\n};\r\n" +
                                            "\r\n" +
-                                           "await graphClient.Me.Events[\"{id}\"]\r\n" +
+                                           "await graphClient.Me.Events[\"{event-id}\"]\r\n" +
                                                "\t.Request()\r\n" +
                                                "\t.UpdateAsync(@event);";
 
@@ -886,7 +886,7 @@ namespace CodeSnippetsReflection.Test
                                            "\r\n" +
                                            "var hasHeaders = true;\r\n" +
                                            "\r\n" +
-                                           "await graphClient.Me.Drive.Items[\"{id}\"].Workbook.Tables\r\n" +
+                                           "await graphClient.Me.Drive.Items[\"{driveItem-id}\"].Workbook.Tables\r\n" +
                                            "\t.Add(hasHeaders,address)\r\n" +
                                            "\t.Request()\r\n" +
                                            "\t.PostAsync();";
@@ -909,7 +909,7 @@ namespace CodeSnippetsReflection.Test
             var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
-            const string expectedSnippet = "var stream = await graphClient.Me.Drive.Items[\"{item-id}\"].Content\r\n" +
+            const string expectedSnippet = "var stream = await graphClient.Me.Drive.Items[\"{driveItem-id}\"].Content\r\n" +
                                            "\t.Request()\r\n" +
                                            "\t.GetAsync();";
 
@@ -943,7 +943,7 @@ namespace CodeSnippetsReflection.Test
                                            "\tContentBytes = Encoding.ASCII.GetBytes(\"R0lGODdhEAYEAA7\")\r\n" +
                                            "};\r\n" +
 
-                                           "\r\nawait graphClient.Me.Messages[\"AAMkpsDRVK\"].Attachments\r\n" +
+                                           "\r\nawait graphClient.Me.Messages[\"{message-id}\"].Attachments\r\n" +
                                            "\t.Request()\r\n" +
                                            "\t.AddAsync(attachment);";
 
@@ -1041,7 +1041,7 @@ namespace CodeSnippetsReflection.Test
                                                 "\tDescription = \"mySet\"\r\n" +
                                            "};\r\n" +
                                            "\r\n" +
-                                           "await graphClient.TermStore.Sets[\"{setId}\"]\r\n" +
+                                           "await graphClient.TermStore.Sets[\"{termStore.set-id}\"]\r\n" +
                                                 "\t.Request()\r\n" +
                                                 "\t.UpdateAsync(set);";
 
