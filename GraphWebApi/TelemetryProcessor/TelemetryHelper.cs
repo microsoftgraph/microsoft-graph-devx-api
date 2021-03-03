@@ -2,26 +2,33 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.AspNetCore.Http;
 using System;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 /// <summary>
-/// Initialize a telemetry processor to sanitize http request urls to remove sensitive data
+/// Initializes a telemetry processor to sanitize http request urls to remove sensitive data.
 /// </summary>
-public class RequestUrlFilter : ITelemetryProcessor
+public class TelemetryHelper : ITelemetryProcessor
 {
     private readonly ITelemetryProcessor _next;
+    private readonly TelemetryClient _telemetryClient;
 
     private static Regex _guidRegex = new Regex(
         @"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    public RequestUrlFilter(ITelemetryProcessor next)
+    public TelemetryHelper(ITelemetryProcessor next, TelemetryClient telemetryClient)
     {
         _next = next;
+        _telemetryClient = telemetryClient;
     }
 
     /// <summary>
@@ -39,5 +46,30 @@ public class RequestUrlFilter : ITelemetryProcessor
         }
 
         _next.Process(item);
+    }
+
+    public void BeginRequest(HttpContext context)
+    {
+        // start a stopwatch to process the request
+        var stopWatch = Stopwatch.StartNew();
+        context.Items["request-tracking-watch"] = stopWatch;
+    }
+
+    public void EndRequest(HttpContext context)
+    {
+        var stopWatch = (Stopwatch)context.Items["request-tracking-watch"];
+        stopWatch.Stop();
+
+        RequestTelemetry requestTelemetry = new RequestTelemetry(
+            name: context.Request.Method + " " + context.Request.Path.Value,
+            startTime: DateTimeOffset.Now,
+            duration: stopWatch.Elapsed,
+            responseCode: context.Response.StatusCode.ToString(),
+            success: 200 == context.Response.StatusCode
+        );
+        requestTelemetry.Url = context.Request.GetUri();
+        //requestTelemetry.HttpMethod = context.Request.Htt;
+
+        _telemetryClient.TrackRequest(requestTelemetry);
     }
 }
