@@ -222,7 +222,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
         /// <returns>String of the resources in Csharp code</returns>
-        private string CSharpGenerateResourcesPath(SnippetModel snippetModel)
+        private static string CSharpGenerateResourcesPath(SnippetModel snippetModel)
         {
             var resourcesPath = new StringBuilder();
             var resourcesPathSuffix = string.Empty;
@@ -317,6 +317,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
             return resourcesPath.ToString();
         }
 
+        /// <summary>
+        /// constructs a string {type-id} if given segment has a type.
+        /// </summary>
+        /// <param name="segment">odata path segment</param>
+        /// <returns>{UNKNOWN-id} if segment doesn't have a type, {segmentType-id} if segment's type is segmentType.</returns>
         private static string NextId(ODataPathSegment segment)
         {
             const string unknownId = "{UNKNOWN-id}";
@@ -696,7 +701,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="snippetModel">Snippet model built from the request</param>
         /// <param name="actions">String of actions to be done inside the code block</param>
-        private string GenerateRequestSection(SnippetModel snippetModel, string actions)
+        private static string GenerateRequestSection(SnippetModel snippetModel, string actions)
         {
             var stringBuilder = new StringBuilder();
 
