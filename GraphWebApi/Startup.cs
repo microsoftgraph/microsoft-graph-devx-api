@@ -73,7 +73,7 @@ namespace GraphWebApi
                 options.EnableQuickPulseMetricStream = true;   // Enable QuickPulse (Live Metrics stream)
                 options.EnableDebugLogger = true;
             });
-            services.AddApplicationInsightsTelemetryProcessor<RequestUrlFilter>();
+            services.AddApplicationInsightsTelemetryProcessor<TelemetryHelper>();
 
             if (!_env.IsDevelopment())
             {
