@@ -229,19 +229,19 @@ namespace CodeSnippetsReflection.LanguageGenerators
             ODataPathSegment previousSegment = null;
 
             // lets append all resources
-            foreach (var segment in snippetModel.Segments)
+            foreach (var item in snippetModel.Segments)
             {
-                switch (segment)
+                switch (item)
                 {
                     //handle indexing into collections
                     case KeySegment keySegment:
-                        resourcesPath.Append($"[\"{NextId(previousSegment)}\"]");
+                        resourcesPath.Append($"[\"{GetIDPlaceholder(previousSegment)}\"]");
                         break;
                     // handle special case of indexing on a property through extensions, e.g.
                     // IThumbnailSetRequestBuilder has a manually written extension which allows indexing on {size}
                     // https://github.com/microsoftgraph/msgraph-sdk-dotnet/blob/dev/src/Microsoft.Graph/Requests/Extensions/IThumbnailSetRequestBuilderExtensions.cs
                     case DynamicPathSegment pathSegment when pathSegment.Identifier.Contains("{"):
-                        resourcesPath.Append($"[\"{NextId(previousSegment)}\"]");
+                        resourcesPath.Append($"[\"{GetIDPlaceholder(previousSegment)}\"]");
                         break;
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
@@ -271,7 +271,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         if (propertySegment.EdmType.IsStream() //don't append anything that is not a stream since this is not accessed directly in C#
                            && snippetModel.Method != HttpMethod.Patch) // while patching we pass the encapsulating object in the request
                         {
-                            resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(segment.Identifier)}");
+                            resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         }
                         break;
                     case ReferenceSegment _:
@@ -288,25 +288,25 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         if (snippetModel.Path.Contains("$ref") && !(snippetModel.Segments.Last() is ReferenceSegment))
                         {
 
-                            var nextSegmentIndex = snippetModel.Segments.IndexOf(segment) + 1;
+                            var nextSegmentIndex = snippetModel.Segments.IndexOf(item) + 1;
                             if (nextSegmentIndex >= snippetModel.Segments.Count)
                                 nextSegmentIndex = snippetModel.Segments.Count-1;
 
                             var nextSegment = snippetModel.Segments[nextSegmentIndex];
                             //check if the next segment is a KeySegment to know if we will be accessing a single entity of a collection.
-                            resourcesPathSuffix = (segment.EdmType is IEdmCollectionType) && !(nextSegment is KeySegment) ? ".References" : ".Reference";
+                            resourcesPathSuffix = (item.EdmType is IEdmCollectionType) && !(nextSegment is KeySegment) ? ".References" : ".Reference";
                         }
-                        resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(segment.Identifier)}");
+                        resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         break;
                     case TypeSegment _:
                         break; // type segment is not part of the resource path.
                     default:
                         //its most likely just a resource so append it
-                        resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(segment.Identifier)}");
+                        resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         break;
                 }
 
-                previousSegment = segment;
+                previousSegment = item;
             }
 
             if (!string.IsNullOrEmpty(resourcesPathSuffix))
@@ -322,7 +322,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="segment">odata path segment</param>
         /// <returns>{UNKNOWN-id} if segment doesn't have a type, {segmentType-id} if segment's type is segmentType.</returns>
-        private static string NextId(ODataPathSegment segment)
+        private static string GetIDPlaceholder(ODataPathSegment segment)
         {
             const string unknownId = "{UNKNOWN-id}";
             if (segment is null || segment.EdmType is null)
