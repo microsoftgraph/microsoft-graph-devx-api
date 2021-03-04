@@ -8,96 +8,96 @@ using Xunit;
 
 namespace ChangesService.Test
 {
-    public class ChangeLogListModelShould
+    public class ChangeLogRecordsModelShould
     {
         [Fact]
         public void UpdateTotalItemsOnChangeLogsPropertySetter()
         {
             // Arrange & Act
-            var changeLogList = new ChangeLogList
+            var changeLogRecords = new ChangeLogRecords
             {
-                ChangeLogs = GetChangeLogList().ChangeLogs
+                ChangeLogs = GetChangeLogRecords().ChangeLogs
             };
 
             // 1st Assert
-            Assert.Equal(3, changeLogList.TotalItems);
-            Assert.Equal(3, changeLogList.ChangeLogs.Count);
+            Assert.Equal(3, changeLogRecords.TotalItems);
+            Assert.Equal(3, changeLogRecords.ChangeLogs.Count());
 
             /* Take only first two changelog items from list,
              * e.g. in a pagination scenario.
              */
-            changeLogList.ChangeLogs = changeLogList.ChangeLogs
+            changeLogRecords.ChangeLogs = changeLogRecords.ChangeLogs
                                        .Take(2)
                                        .ToList();
 
             // 2nd Assert - TotalItems value should not change
-            Assert.Equal(3, changeLogList.TotalItems);
-            Assert.Equal(2, changeLogList.ChangeLogs.Count);
+            Assert.Equal(3, changeLogRecords.TotalItems);
+            Assert.Equal(2, changeLogRecords.ChangeLogs.Count());
         }
 
         [Fact]
         public void UpdateCurrentItemsOnChangeLogsPropertySetter()
         {
             // Arrange & Act
-            var changeLogList = new ChangeLogList
+            var changeLogRecords = new ChangeLogRecords
             {
-                ChangeLogs = GetChangeLogList().ChangeLogs
+                ChangeLogs = GetChangeLogRecords().ChangeLogs
             };
 
             /* 1st Assert - CurrentItems should always be equal
              * to the current count of changelog items in list.
             */
-            Assert.Equal(3, changeLogList.CurrentItems);
-            Assert.Equal(changeLogList.CurrentItems, changeLogList.ChangeLogs.Count);
+            Assert.Equal(3, changeLogRecords.CurrentItems);
+            Assert.Equal(changeLogRecords.CurrentItems, changeLogRecords.ChangeLogs.Count());
 
             /* Take only first two changelog items from list,
              * e.g. in a pagination scenario.
              */
-            changeLogList.ChangeLogs = changeLogList.ChangeLogs
+            changeLogRecords.ChangeLogs = changeLogRecords.ChangeLogs
                                        .Take(2)
                                        .ToList();
 
             /* 2nd Assert - CurrentItems value should always change
              * with current count of changelog items in list.
             */
-            Assert.Equal(2, changeLogList.CurrentItems);
-            Assert.Equal(changeLogList.CurrentItems, changeLogList.ChangeLogs.Count);
+            Assert.Equal(2, changeLogRecords.CurrentItems);
+            Assert.Equal(changeLogRecords.CurrentItems, changeLogRecords.ChangeLogs.Count());
         }
 
         [Fact]
         public void UpdateTotalPagesOnPageLimitPropertySetter()
         {
             // Arrange & Act
-            var changeLogList = new ChangeLogList
+            var changeLogRecords = new ChangeLogRecords
             {
-                ChangeLogs = GetChangeLogList().ChangeLogs
+                ChangeLogs = GetChangeLogRecords().ChangeLogs
             };
 
             // Act
-            changeLogList.PageLimit = 1;
+            changeLogRecords.PageLimit = 1;
 
             // Assert
-            Assert.Equal(3, changeLogList.TotalPages);
+            Assert.Equal(3, changeLogRecords.TotalPages);
 
             // Act
-            changeLogList.PageLimit = 2;
+            changeLogRecords.PageLimit = 2;
 
             // Assert
-            Assert.Equal(2, changeLogList.TotalPages);
+            Assert.Equal(2, changeLogRecords.TotalPages);
         }
 
         /// <summary>
-        /// Gets a sample of ChangeLog list
+        /// Gets a sample of <see cref="ChangeLogRecords"/>
         /// </summary>
         /// <param name="variableDate">Optional. CreatedDateTime value for Reports
         /// workload.</param>
-        /// <returns></returns>
-        public static ChangeLogList GetChangeLogList(string variableDate = "2020-12-31T00:00:00.000Z")
+        /// <returns>Sample <see cref="ChangeLogRecords"/></returns>
+        public static ChangeLogRecords GetChangeLogRecords(string variableDate = "2020-12-31T00:00:00.000Z")
         {
             // variableDate param will be used for specifying custom CreatedDateTime
             // value for Reports workload
 
-            var changeLogList = @"{
+            var changeLogRecords = @"{
               ""changelog"": [
                  {
                    ""ChangeList"": [
@@ -156,9 +156,9 @@ namespace ChangesService.Test
                ]
             }";
 
-            changeLogList = changeLogList.Replace("variableDate", variableDate);
+            changeLogRecords = changeLogRecords.Replace("variableDate", variableDate);
 
-            return Services.ChangesService.DeserializeChangeLogList(changeLogList);
+            return Services.ChangesService.DeserializeChangeLogRecords(changeLogRecords);
         }
     }
 }

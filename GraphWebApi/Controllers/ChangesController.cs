@@ -30,7 +30,7 @@ namespace GraphWebApi.Controllers
             _httpClientUtility = httpClientUtility;
         }
 
-        // Gets the list of changelog
+        // Gets the changelog records
         [Route("changes")]
         [Produces("application/json")]
         [HttpGet]
@@ -59,10 +59,10 @@ namespace GraphWebApi.Controllers
 
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
 
-                // Fetch the changelog list
-                var changeLog = await _changesStore.FetchChangeLogListAsync(locale);
+                // Fetch the changelog records
+                var changeLog = await _changesStore.FetchChangeLogRecordsAsync(locale);
 
-                // Filter the changelog list
+                // Filter the changelog records
                 if (changeLog.ChangeLogs.Any())
                 {
                     // Configs for fetching workload names from given requestUrl
@@ -75,11 +75,11 @@ namespace GraphWebApi.Controllers
                     };
 
                     changeLog = ChangesService.Services.ChangesService
-                                    .FilterChangeLogList(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
+                                    .FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
                 }
                 else
                 {
-                    // Source list is empty
+                    // No records
                     return NoContent();
                 }
 

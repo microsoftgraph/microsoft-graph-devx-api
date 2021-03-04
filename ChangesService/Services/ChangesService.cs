@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 namespace ChangesService.Services
 {
     /// <summary>
-    /// Utility functions for transforming and filtering <see cref="ChangeLogList"/> and <see cref="ChangeLog"/> objects.
+    /// Utility functions for transforming and filtering <see cref="ChangeLogRecords"/> and <see cref="ChangeLog"/> objects.
     /// </summary>
     public static class ChangesService
     {
@@ -25,42 +25,42 @@ namespace ChangesService.Services
         private static readonly Dictionary<string, string> _urlWorkloadDict = new();
 
         /// <summary>
-        /// Deserializes a <see cref="ChangeLogList"/> from a json string.
+        /// Deserializes a <see cref="ChangeLogRecords"/> from a json string.
         /// </summary>
         /// <param name="jsonString">The json string to deserialize</param>
-        /// <returns>The deserialized <see cref="ChangeLogList"/>.</returns>
-        public static ChangeLogList DeserializeChangeLogList(string jsonString)
+        /// <returns>The deserialized <see cref="ChangeLogRecords"/>.</returns>
+        public static ChangeLogRecords DeserializeChangeLogRecords(string jsonString)
         {
             if (string.IsNullOrEmpty(jsonString))
             {
                 throw new ArgumentNullException(nameof(jsonString), ChangesServiceConstants.JsonStringNullOrEmpty);
             }
 
-            ChangeLogList changeLogList = JsonConvert.DeserializeObject<ChangeLogList>(jsonString);
+            ChangeLogRecords changeLogRecords = JsonConvert.DeserializeObject<ChangeLogRecords>(jsonString);
 
-            return changeLogList;
+            return changeLogRecords;
         }
 
         /// <summary>
-        /// Filters a <see cref="ChangeLog"/> list by the specified filter options in the
+        /// Filters <see cref="ChangeLogRecods"/> by the specified filter options in the
         /// <see cref="ChangeLogSearchOptions"/>
         /// </summary>
-        /// <param name="changeLogList">The <see cref="ChangeLogList"/> with the target
-        /// <see cref="ChangeLog"/> list.</param>
+        /// <param name="changeLogRecords">The <see cref="ChangeLogRecords"/> with the target
+        /// <see cref="ChangeLog"/> entries.</param>
         /// <param name="searchOptions">The <see cref="ChangeLogSearchOptions"/> containing options for filtering
-        /// and paginating the target <see cref="ChangeLog"/> list.</param>
+        /// and paginating the target <see cref="ChangeLog"/> entries.</param>
         /// <param name="graphProxyConfigs">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
         /// <param name="httpClientUtility">Optional. An implementation instance of <see cref="IHttpClientUtility"/>.</param>
-        /// <returns>A <see cref="ChangeLogList"/> containing the list of filtered and/or paginated
-        /// <see cref="ChangeLog"/> list.</returns>
-        public static ChangeLogList FilterChangeLogList(ChangeLogList changeLogList,
-                                                        ChangeLogSearchOptions searchOptions,
-                                                        MicrosoftGraphProxyConfigs graphProxyConfigs,
-                                                        IHttpClientUtility httpClientUtility = null)
+        /// <returns><see cref="ChangeLogRecords"/> containing the filtered and/or paginated
+        /// <see cref="ChangeLog"/> entries.</returns>
+        public static ChangeLogRecords FilterChangeLogRecords(ChangeLogRecords changeLogRecords,
+                                                              ChangeLogSearchOptions searchOptions,
+                                                              MicrosoftGraphProxyConfigs graphProxyConfigs,
+                                                              IHttpClientUtility httpClientUtility = null)
         {
-            if (changeLogList == null)
+            if (changeLogRecords == null)
             {
-                throw new ArgumentNullException(nameof(changeLogList), ChangesServiceConstants.ValueNullError);
+                throw new ArgumentNullException(nameof(changeLogRecords), ChangesServiceConstants.ValueNullError);
             }
 
             if (searchOptions == null)
@@ -74,7 +74,7 @@ namespace ChangesService.Services
             }
 
             // Temp. var to hold cascading filtered results
-            IEnumerable<ChangeLog> enumerableChangeLog = changeLogList.ChangeLogs;
+            IEnumerable<ChangeLog> enumerableChangeLog = changeLogRecords.ChangeLogs;
 
             if (!string.IsNullOrEmpty(searchOptions.RequestUrl)) // filter by RequestUrl
             {
@@ -83,38 +83,38 @@ namespace ChangesService.Services
                                 .GetAwaiter().GetResult();
 
                 // Search by the retrieved workload name
-                enumerableChangeLog = FilterChangeLogListByWorkload(changeLogList,
+                enumerableChangeLog = FilterChangeLogRecordsByWorkload(changeLogRecords,
                                                                       workload);
             }
             else if (!string.IsNullOrEmpty(searchOptions.Workload)) // filter by Workload
             {
                 // Search by the provided workload name
-                enumerableChangeLog = FilterChangeLogListByWorkload(changeLogList,
+                enumerableChangeLog = FilterChangeLogRecordsByWorkload(changeLogRecords,
                                                                       searchOptions.Workload);
             }
 
             if (searchOptions.StartDate != null && searchOptions.EndDate != null)
             {
                 // Filter by StartDate & EndDate
-                enumerableChangeLog = FilterChangeLogListByDates(changeLogList, searchOptions.StartDate.Value, searchOptions.EndDate.Value);
+                enumerableChangeLog = FilterChangeLogRecordsByDates(changeLogRecords, searchOptions.StartDate.Value, searchOptions.EndDate.Value);
             }
             else if (searchOptions.StartDate != null && searchOptions.DaysRange > 0)
             {
+                // Filter by StartDate & DaysRange (lookahead: Given StartDate, look ahead {DaysRange} days)
                 var endDate = searchOptions.StartDate.Value.AddDays(searchOptions.DaysRange);
 
-                // Filter by StartDate & DaysRange
-                enumerableChangeLog = FilterChangeLogListByDates(changeLogList, searchOptions.StartDate.Value, endDate);
+                enumerableChangeLog = FilterChangeLogRecordsByDates(changeLogRecords, searchOptions.StartDate.Value, endDate);
             }
             else if (searchOptions.EndDate != null && searchOptions.DaysRange > 0)
             {
-                var startDate = searchOptions.EndDate.Value.AddDays(searchOptions.DaysRange);
+                // Filter by EndDate & DaysRange (lookbehind: Given EndDate, look back {DaysRange} days)
+                var startDate = searchOptions.EndDate.Value.AddDays(-searchOptions.DaysRange);
 
-                // Filter by EndDate & DaysRange
-                enumerableChangeLog = FilterChangeLogListByDates(changeLogList, startDate, searchOptions.EndDate.Value);
+                enumerableChangeLog = FilterChangeLogRecordsByDates(changeLogRecords, startDate, searchOptions.EndDate.Value);
             }
             else if (searchOptions.DaysRange > 0)
             {
-                // Filter by the number of days provided, up to the current date
+                // Filter by the number of days provided, up to the current date (negative lookahead: Given DaysRange, go back {DaysRange} days and find the StartDate)
                 var startDate = DateTime.Today.AddDays(-searchOptions.DaysRange);
 
                 enumerableChangeLog = enumerableChangeLog
@@ -123,30 +123,30 @@ namespace ChangesService.Services
             }
 
             // Create the new filtered result
-            ChangeLogList filteredChangeLogList = new()
+            ChangeLogRecords filteredChangeLogRecords = new()
             {
                 ChangeLogs = enumerableChangeLog.ToList()
             };
 
             // Paginate the filtered result
-            if (filteredChangeLogList.ChangeLogs.Any() && searchOptions.PageLimit != null)
+            if (filteredChangeLogRecords.ChangeLogs.Any() && searchOptions.PageLimit != null)
             {
-                filteredChangeLogList.PageLimit = searchOptions.PageLimit;
+                filteredChangeLogRecords.PageLimit = searchOptions.PageLimit;
 
-                if (searchOptions.Page == 1 || filteredChangeLogList.TotalPages == 1)
+                if (searchOptions.Page == 1 || filteredChangeLogRecords.TotalPages == 1)
                 {
                     /* The first page of several pages or
                      * the first page of only one page
                      */
 
-                    filteredChangeLogList.Page = 1;
+                    filteredChangeLogRecords.Page = 1;
                     enumerableChangeLog = enumerableChangeLog.Take(searchOptions.PageLimit.Value);
                 }
-                else if (searchOptions.Page < filteredChangeLogList.TotalPages)
+                else if (searchOptions.Page < filteredChangeLogRecords.TotalPages)
                 {
                     // Any of the pages between first page and last page
 
-                    filteredChangeLogList.Page = searchOptions.Page;
+                    filteredChangeLogRecords.Page = searchOptions.Page;
 
                     // Skip the previous' pages data
                     int skipItems = (searchOptions.Page - 1) * searchOptions.PageLimit.Value;
@@ -160,44 +160,44 @@ namespace ChangesService.Services
                      * greater than the total page count.
                      */
 
-                    filteredChangeLogList.Page = filteredChangeLogList.TotalPages;
+                    filteredChangeLogRecords.Page = filteredChangeLogRecords.TotalPages;
 
-                    int lastItems = filteredChangeLogList.ChangeLogs.Count % searchOptions.PageLimit.Value;
+                    int lastItems = filteredChangeLogRecords.ChangeLogs.Count() % searchOptions.PageLimit.Value;
                     enumerableChangeLog = enumerableChangeLog.TakeLast(lastItems);
                 }
 
                 // Update with the paginated result
-                filteredChangeLogList.ChangeLogs = enumerableChangeLog.ToList();
+                filteredChangeLogRecords.ChangeLogs = enumerableChangeLog.ToList();
             }
 
-            return filteredChangeLogList;
+            return filteredChangeLogRecords;
         }
 
         /// <summary>
-        /// Filters a <see cref="ChangeLog"/> list by workload name.
+        /// Filters <see cref="ChangeLogRecords"/> by workload name.
         /// </summary>
-        /// <param name="changeLogList">The <see cref="ChangeLogList"/> with the target
-        /// <see cref="ChangeLog"/> list.</param>
+        /// <param name="changeLogRecords">The <see cref="ChangeLogRecords"/> with the target
+        /// <see cref="ChangeLog"/> entries.</param>
         /// <param name="workloadName">Name of the target worload.</param>
-        /// <returns>The <see cref="ChangeLog"/> list filtered by the provided workload name.</returns>
-        private static IEnumerable<ChangeLog> FilterChangeLogListByWorkload(ChangeLogList changeLogList, string workloadName)
+        /// <returns>The <see cref="ChangeLog"/> entries filtered by the provided workload name.</returns>
+        private static IEnumerable<ChangeLog> FilterChangeLogRecordsByWorkload(ChangeLogRecords changeLogRecords, string workloadName)
         {
-            return changeLogList.ChangeLogs
+            return changeLogRecords.ChangeLogs
                                 .Where(x => x.WorkloadArea.Equals(workloadName,
                                         StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>
-        /// Filters a <see cref="ChangeLog"/> list by workload name
+        /// Filters <see cref="ChangeLogRecords"/> by workload name
         /// </summary>
-        /// <param name="changeLogList">The <see cref="ChangeLogList"/> with the target
-        /// <see cref="ChangeLog"/> list.</param>
+        /// <param name="changeLogRecords">The <see cref="ChangeLogRecords"/> with the target
+        /// <see cref="ChangeLog"/> entries.</param>
         /// <param name="startDate">The start date for the changelog data.</param>
         /// <param name="endDate">The end date for the changelog data.</param>
-        /// <returns>The <see cref="ChangeLog"/> list filtered by the provided dates.</returns>
-        private static IEnumerable<ChangeLog> FilterChangeLogListByDates(ChangeLogList changeLogList, DateTime startDate, DateTime endDate)
+        /// <returns>The <see cref="ChangeLog"/> entries filtered by the provided dates.</returns>
+        private static IEnumerable<ChangeLog> FilterChangeLogRecordsByDates(ChangeLogRecords changeLogRecords, DateTime startDate, DateTime endDate)
         {
-            return changeLogList.ChangeLogs
+            return changeLogRecords.ChangeLogs
                                 .Where(x => x.CreatedDateTime >= startDate &&
                                     x.CreatedDateTime <= endDate);
         }
@@ -261,6 +261,7 @@ namespace ChangesService.Services
             _urlWorkloadDict.Add(searchOptions.RequestUrl, workloadName);
 
             return workloadName;
+            // NB: No test coverage for this currently; requires a service call to the Graph proxy url
         }
     }
 }

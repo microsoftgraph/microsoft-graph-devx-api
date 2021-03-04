@@ -9,17 +9,17 @@ using System.Linq;
 namespace ChangesService.Models
 {
     /// <summary>
-    /// A <see cref="ChangeLog"/> list.
+    /// Holds the <see cref="ChangeLog"/> records.
     /// </summary>
-    public class ChangeLogList : ChangeLogPagination
+    public record ChangeLogRecords : ChangeLogPagination
     {
-        private List<ChangeLog> _changeLogs;
+        private IEnumerable<ChangeLog> _changeLogs = new List<ChangeLog>();
 
         /// <summary>
-        /// The list of changelogs.
+        /// Changelogs entries.
         /// </summary>
         [JsonProperty(PropertyName = "ChangeLog")]
-        public List<ChangeLog> ChangeLogs
+        public IEnumerable<ChangeLog> ChangeLogs
         {
             get => _changeLogs;
             set
@@ -30,14 +30,14 @@ namespace ChangesService.Models
         }
 
         /// <summary>
-        /// The number of changelog items in the current view of the changelog list.
+        /// The number of changelog items in the current view of the <see cref="ChangeLogRecords"/>.
         /// </summary>
-        public int CurrentItems { get => _changeLogs?.Count ?? 0; }
+        public int CurrentItems => _changeLogs?.Count() ?? 0;
 
         /// <summary>
-        /// The total number of changelog items in the changelog list.
+        /// The total number of changelog items in the <see cref="ChangeLogRecords"/>.
         /// </summary>
-        public int TotalItems { get; private set; } = 0;
+        public int TotalItems { get; private set; }
 
         /// <summary>
         /// The maximum number of items in a page.
@@ -56,14 +56,6 @@ namespace ChangesService.Models
                 // new PageLimit count
                 UpdateTotalPages();
             }
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public ChangeLogList()
-        {
-            ChangeLogs = new List<ChangeLog>();
         }
 
         /// <summary>
@@ -91,7 +83,7 @@ namespace ChangesService.Models
             if (TotalItems == 0 && ChangeLogs.Any())
             {
                 // Update once during the lifetime of this instance
-                TotalItems = _changeLogs.Count;
+                TotalItems = _changeLogs.Count();
             }
         }
     }

@@ -10,9 +10,9 @@ namespace ChangesService.Models
     /// <summary>
     /// Changelog model structure.
     /// </summary>
-    public class ChangeLog
+    public record ChangeLog
     {
-        public List<Change> ChangeList { get; set; }
+        public IEnumerable<Change> ChangeList { get; set; }
         public string Id { get; set; }
         public string Cloud { get; set; }
         public string Version { get; set; }
@@ -23,7 +23,7 @@ namespace ChangesService.Models
         /// <summary>
         /// A single change model structure.
         /// </summary>
-        public class Change
+        public record Change
         {
             public string Id { get; set; }
             public string ApiChange { get; set; }

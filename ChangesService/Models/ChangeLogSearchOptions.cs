@@ -9,7 +9,7 @@ namespace ChangesService.Models
     /// <summary>
     /// Options for searching and filtering changelog data.
     /// </summary>
-    public class ChangeLogSearchOptions : ChangeLogPagination
+    public record ChangeLogSearchOptions : ChangeLogPagination
     {
         public string RequestUrl { get; }
         public string Workload { get; }

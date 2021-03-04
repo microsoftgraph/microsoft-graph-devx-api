@@ -8,7 +8,7 @@ namespace ChangesService.Models
     /// Configs for connecting to the Microsoft Graph Proxy to
     /// fetch workload names from Graph urls.
     /// </summary>
-    public class MicrosoftGraphProxyConfigs
+    public record MicrosoftGraphProxyConfigs
     {
         public string GraphVersion { get; init; } = "v1.0";
         public string GraphProxyBaseUrl { get; init; } = "https://proxy.apisandbox.msdn.microsoft.com/";

@@ -11,6 +11,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MockTestUtility;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -43,85 +45,85 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public async Task CorrectlySeedLocaleCachesOfChangeLogListsWhenMultipleRequestsMultipleLocaleReceived()
+        public async Task CorrectlySeedLocaleCachesOfChangeLogRecordsWhenMultipleRequestsMultipleLocaleReceived()
         {
             // Arrange
             _changesStore = new ChangesStore(_configuration, _changesCache, _httpClientUtility);
 
             /* Act */
 
-            // Fetch en-US changelog list
-            ChangeLogList englishChangeLogList = await _changesStore.FetchChangeLogListAsync("en-US");
+            // Fetch en-US changelog records
+            ChangeLogRecords englishChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync("en-US");
 
-            // Fetch es-ES changelog list
-            ChangeLogList espanolChangeLogList = await _changesStore.FetchChangeLogListAsync("es-ES");
+            // Fetch es-ES changelog records
+            ChangeLogRecords espanolChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync("es-ES");
 
-            // Fetch fr-FR changelog list
-            ChangeLogList frenchChangeLogList = await _changesStore.FetchChangeLogListAsync("fr-FR");
+            // Fetch fr-FR changelog records
+            ChangeLogRecords frenchChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync("fr-FR");
 
             /* Assert */
 
             // en-US
-            Assert.Equal(525, englishChangeLogList.ChangeLogs.Count);
-            Assert.Equal("Compliance", englishChangeLogList.ChangeLogs[0].WorkloadArea);
+            Assert.Equal(525, englishChangeLogRecords.ChangeLogs.Count());
+            Assert.Equal("Compliance", englishChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
 
             // es-ES
-            Assert.Equal(495, espanolChangeLogList.ChangeLogs.Count);
-            Assert.Equal("Cumplimiento", espanolChangeLogList.ChangeLogs[0].WorkloadArea);
+            Assert.Equal(495, espanolChangeLogRecords.ChangeLogs.Count());
+            Assert.Equal("Cumplimiento", espanolChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
 
             // fr-FR
-            Assert.Equal(495, frenchChangeLogList.ChangeLogs.Count);
-            Assert.Equal("Conformité", frenchChangeLogList.ChangeLogs[0].WorkloadArea);
+            Assert.Equal(495, frenchChangeLogRecords.ChangeLogs.Count());
+            Assert.Equal("Conformité", frenchChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
         }
 
         [Fact]
-        public async Task CorrectlySeedLocaleCachesOfChangeLogListsWhenMultipleRequestsSingleLocaleReceived()
+        public async Task CorrectlySeedLocaleCachesOfChangeLogRecordsWhenMultipleRequestsSingleLocaleReceived()
         {
             // Arrange
             _changesStore = new ChangesStore(_configuration, _changesCache, _httpClientUtility);
 
             /* Act */
 
-            // Fetch en-US changelog list
-            ChangeLogList englishChangeLogList1 = await _changesStore.FetchChangeLogListAsync("en-US");
+            // Fetch en-US changelog records
+            ChangeLogRecords englishChangeLogRecords1 = await _changesStore.FetchChangeLogRecordsAsync("en-US");
 
-            // Fetch es-ES changelog list
-            ChangeLogList englishChangeLogList2 = await _changesStore.FetchChangeLogListAsync("en-US");
+            // Fetch es-ES changelog records
+            ChangeLogRecords englishChangeLogRecords2 = await _changesStore.FetchChangeLogRecordsAsync("en-US");
 
-            // Fetch fr-FR changelog list
-            ChangeLogList englishChangeLogList3 = await _changesStore.FetchChangeLogListAsync("en-US");
+            // Fetch fr-FR changelog records
+            ChangeLogRecords englishChangeLogRecords3 = await _changesStore.FetchChangeLogRecordsAsync("en-US");
 
             /* Assert */
 
-            // list 1
-            Assert.Equal(525, englishChangeLogList1.ChangeLogs.Count);
-            Assert.Equal("Compliance", englishChangeLogList1.ChangeLogs[0].WorkloadArea);
+            // records 1
+            Assert.Equal(525, englishChangeLogRecords1.ChangeLogs.Count());
+            Assert.Equal("Compliance", englishChangeLogRecords1.ChangeLogs.FirstOrDefault().WorkloadArea);
 
-            // list 2
-            Assert.Equal(525, englishChangeLogList2.ChangeLogs.Count);
-            Assert.Equal("Compliance", englishChangeLogList2.ChangeLogs[0].WorkloadArea);
+            // records 2
+            Assert.Equal(525, englishChangeLogRecords2.ChangeLogs.Count());
+            Assert.Equal("Compliance", englishChangeLogRecords2.ChangeLogs.FirstOrDefault().WorkloadArea);
 
-            // list 3
-            Assert.Equal(525, englishChangeLogList3.ChangeLogs.Count);
-            Assert.Equal("Compliance", englishChangeLogList3.ChangeLogs[0].WorkloadArea);
+            // records 3
+            Assert.Equal(525, englishChangeLogRecords3.ChangeLogs.Count());
+            Assert.Equal("Compliance", englishChangeLogRecords3.ChangeLogs.FirstOrDefault().WorkloadArea);
         }
 
         [Theory]
         [InlineData("")]
         [InlineData("en-GB")]
-        public async Task SetDefaultLocaleInFetchChangeLogList(string locale)
+        public async Task SetDefaultLocaleInFetchChangeLogRecords(string locale)
         {
             // Arrange
             _changesStore = new ChangesStore(_configuration, _changesCache, _httpClientUtility);
 
             /* Act */
 
-            // Fetch default changelog list
-            ChangeLogList englishChangeLogList = await _changesStore.FetchChangeLogListAsync(locale);
+            // Fetch default changelog records
+            ChangeLogRecords englishChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(locale);
 
             // Assert - we have the English translation
-            Assert.Equal(525, englishChangeLogList.ChangeLogs.Count);
-            Assert.Equal("Compliance", englishChangeLogList.ChangeLogs[0].WorkloadArea);
+            Assert.Equal(525, englishChangeLogRecords.ChangeLogs.Count());
+            Assert.Equal("Compliance", englishChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
         }
     }
 }

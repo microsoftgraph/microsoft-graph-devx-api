@@ -11,10 +11,10 @@ namespace ChangesService.Models
     /// <summary>
     /// Options for paging changelog data.
     /// </summary>
-    public class ChangeLogPagination
+    public record ChangeLogPagination
     {
         private int _page = 1;
-        private int? _pageLimit = null;
+        private int? _pageLimit;
 
         /// <summary>
         /// The current page.

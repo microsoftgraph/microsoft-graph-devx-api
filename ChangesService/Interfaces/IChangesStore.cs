@@ -12,6 +12,6 @@ namespace ChangesService.Interfaces
     /// </summary>
     public interface IChangesStore
     {
-        Task<ChangeLogList> FetchChangeLogListAsync(string locale);
+        Task<ChangeLogRecords> FetchChangeLogRecordsAsync(string locale);
     }
 }

@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 namespace ChangesService.Services
 {
     /// <summary>
-    /// Provides a <see cref="ChangeLog"/> list from cache or uri source.
+    /// Provides <see cref="ChangeLogRecords"/> from cache or uri source.
     /// </summary>
     public class ChangesStore : IChangesStore
     {
@@ -42,11 +42,11 @@ namespace ChangesService.Services
         }
 
         /// <summary>
-        /// Fetches a <see cref="ChangeLog"/> list from a uri source or an in-memory cache.
+        /// Fetches <see cref="ChangeLogRecords"/> from a uri source or an in-memory cache.
         /// </summary>
         /// <param name="locale">The language code for the preferred localized file.</param>
-        /// <returns>A <see cref="ChangeLogList"/> containing the list of <see cref="ChangeLog"/>.</returns>
-        public async Task<ChangeLogList> FetchChangeLogListAsync(string locale)
+        /// <returns><see cref="ChangeLogRecords"/> containing entries of <see cref="ChangeLog"/>.</returns>
+        public async Task<ChangeLogRecords> FetchChangeLogRecordsAsync(string locale)
         {
             var englishId = "en-us"; // default locale
 
@@ -71,21 +71,21 @@ namespace ChangesService.Services
 
             locale = locale.ToLowerInvariant(); // for uniformity when used as cache keys;
 
-            // Fetch cached changelog list
-            ChangeLogList changeLogList = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>
+            // Fetch cached changelog records
+            ChangeLogRecords changeLogRecords = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>
             {
                 lock (_changesLock)
                 {
                     /* Check whether a previous thread already seeded an
-                     * instance of the localized changelog list during the lock.
+                     * instance of the localized changelog records during the lock.
                      */
                     var lockedLocale = locale;
-                    var seededChangeLogList = _changeLogCache.Get<ChangeLogList>(lockedLocale);
+                    var seededChangeLogRecords = _changeLogCache.Get<ChangeLogRecords>(lockedLocale);
 
-                    if (seededChangeLogList != null)
+                    if (seededChangeLogRecords != null)
                     {
                         // Already seeded by another thread
-                        return Task.FromResult(seededChangeLogList);
+                        return Task.FromResult(seededChangeLogRecords);
                     }
 
                     // Set cache expiry
@@ -105,12 +105,12 @@ namespace ChangesService.Services
                     var jsonFileContents = _httpClientUtility.ReadFromDocumentAsync(httpRequestMessage)
                                                 .GetAwaiter().GetResult();
 
-                    // Return the changelog list from the file contents
-                    return Task.FromResult(ChangesService.DeserializeChangeLogList(jsonFileContents));
+                    // Return the changelog records from the file contents
+                    return Task.FromResult(ChangesService.DeserializeChangeLogRecords(jsonFileContents));
                 }
             });
 
-            return changeLogList;
+            return changeLogRecords;
         }
     }
 }
