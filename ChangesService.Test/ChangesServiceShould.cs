@@ -13,53 +13,53 @@ namespace ChangesService.Test
         private readonly MicrosoftGraphProxyConfigs _graphProxyConfigs = new MicrosoftGraphProxyConfigs();
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnDeserializeChangeLogListIfJsonStringArgumentIsNull()
+        public void ThrowArgumentNullExceptionOnDeserializeChangeLogRecordsIfJsonStringArgumentIsNull()
         {
             // Arrange
             string nullArgument = "";
 
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
-                Services.ChangesService.DeserializeChangeLogList(nullArgument));
+                Services.ChangesService.DeserializeChangeLogRecords(nullArgument));
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogListIfChangeLogListArgumentIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsIfChangeLogRecordsArgumentIsNull()
         {
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
-                Services.ChangesService.FilterChangeLogList(null, new ChangeLogSearchOptions(), new MicrosoftGraphProxyConfigs()));
+                Services.ChangesService.FilterChangeLogRecords(null, new ChangeLogSearchOptions(), new MicrosoftGraphProxyConfigs()));
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogListIfSearchOptionsArgumentIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsIfSearchOptionsArgumentIsNull()
         {
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
-                Services.ChangesService.FilterChangeLogList(new ChangeLogList(), null, new MicrosoftGraphProxyConfigs()));
+                Services.ChangesService.FilterChangeLogRecords(new ChangeLogRecords(), null, new MicrosoftGraphProxyConfigs()));
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogListIfGraphProxyConfigsArgumentIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsIfGraphProxyConfigsArgumentIsNull()
         {
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
-                Services.ChangesService.FilterChangeLogList(new ChangeLogList(), new ChangeLogSearchOptions(), null));
+                Services.ChangesService.FilterChangeLogRecords(new ChangeLogRecords(), new ChangeLogSearchOptions(), null));
         }
 
         [Fact]
-        public void FilterChangeLogListByWorkload()
+        public void FilterChangeLogRecordsByWorkload()
         {
             // Arrange
-            var changeLogList = new ChangeLogList
+            var changeLogRecords = new ChangeLogRecords
             {
-                ChangeLogs = ChangeLogListModelShould.GetChangeLogList().ChangeLogs
+                ChangeLogs = ChangeLogRecordsModelShould.GetChangeLogRecords().ChangeLogs
             };
 
             var searchOptions = new ChangeLogSearchOptions(workload: "Compliance");
 
             // Act
-            var changeLog = Services.ChangesService.FilterChangeLogList(changeLogList, searchOptions, _graphProxyConfigs);
+            var changeLog = Services.ChangesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs);
 
             // Assert
             Assert.NotNull(changeLog);
@@ -82,19 +82,19 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void FilterChangeLogListByDates()
+        public void FilterChangeLogRecordsByDates()
         {
             // Arrange
-            var changeLogList = new ChangeLogList
+            var changeLogRecords = new ChangeLogRecords
             {
-                ChangeLogs = ChangeLogListModelShould.GetChangeLogList().ChangeLogs
+                ChangeLogs = ChangeLogRecordsModelShould.GetChangeLogRecords().ChangeLogs
             };
             var startDate = DateTime.Parse("2020-01-01");
             var endDate = DateTime.Parse("2020-10-01");
             var searchOptions = new ChangeLogSearchOptions(startDate: startDate, endDate: endDate);
 
             // Act
-            var changeLog = Services.ChangesService.FilterChangeLogList(changeLogList, searchOptions, _graphProxyConfigs);
+            var changeLog = Services.ChangesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs);
 
             // Assert
             Assert.NotNull(changeLog);
@@ -132,20 +132,106 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void FilterChangeLogListByDaysRange()
+        public void FilterChangeLogRecordsByDaysRange()
         {
             // Arrange
 
             DateTime varDate = DateTime.Today.AddDays(-30);
-            var changeLogList = new ChangeLogList
+            var changeLogRecords = new ChangeLogRecords
             {
-                ChangeLogs = ChangeLogListModelShould.GetChangeLogList(varDate.ToString("yyyy-MM-ddTHH:mm:ss")).ChangeLogs
+                ChangeLogs = ChangeLogRecordsModelShould.GetChangeLogRecords(varDate.ToString("yyyy-MM-ddTHH:mm:ss")).ChangeLogs
             };
 
             var searchOptions = new ChangeLogSearchOptions(daysRange: 60);
 
             // Act
-            var changeLog = Services.ChangesService.FilterChangeLogList(changeLogList, searchOptions, _graphProxyConfigs);
+            var changeLog = Services.ChangesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs);
+
+            // Assert
+            Assert.NotNull(changeLog);
+            Assert.Collection(changeLog.ChangeLogs,
+                item =>
+                {
+                    Assert.Equal("dca6467b-d026-4316-8353-2c6c02598af3", item.Id);
+                    Assert.Equal("Reports", item.WorkloadArea);
+                    Assert.Equal("Identity and access reports", item.SubArea);
+                    Assert.Collection(item.ChangeList,
+                        item =>
+                        {
+                            Assert.Equal("dca6467b-d026-4316-8353-2c6c02598af3", item.Id);
+                            Assert.Equal("Resource", item.ApiChange);
+                            Assert.Equal("relyingPartyDetailedSummary,listing", item.ChangedApiName);
+                            Assert.Equal("Addition", item.ChangeType);
+                            Assert.Equal("relyingPartyDetailedSummary,listing", item.Target);
+                        });
+                });
+        }
+
+        // Filter by StartDate & DaysRange
+        [Fact]
+        public void FilterChangeLogRecordsByStartDateAndDaysRange()
+        {
+            // Arrange
+            var changeLogRecords = new ChangeLogRecords
+            {
+                ChangeLogs = ChangeLogRecordsModelShould.GetChangeLogRecords().ChangeLogs
+            };
+            var startDate = DateTime.Parse("2020-06-01");
+
+            var searchOptions = new ChangeLogSearchOptions(startDate: startDate, daysRange: 120);
+
+            // Act
+            var changeLog = Services.ChangesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs);
+
+            // Assert
+            Assert.NotNull(changeLog);
+            Assert.Collection(changeLog.ChangeLogs,
+                item =>
+                {
+                    Assert.Equal("6a6c7aa0-4b67-4d07-9ebf-c2bc1bcef553", item.Id);
+                    Assert.Equal("Compliance", item.WorkloadArea);
+                    Assert.Equal("eDiscovery", item.SubArea);
+                    Assert.Collection(item.ChangeList,
+                        item =>
+                        {
+                            Assert.Equal("6a6c7aa0-4b67-4d07-9ebf-c2bc1bcef553", item.Id);
+                            Assert.Equal("Resource", item.ApiChange);
+                            Assert.Equal("ediscoveryCase,reviewSet,reviewSetQuery", item.ChangedApiName);
+                            Assert.Equal("Addition", item.ChangeType);
+                            Assert.Equal("ediscoveryCase,reviewSet,reviewSetQuery", item.Target);
+                        });
+                },
+                item =>
+                {
+                    Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
+                    Assert.Equal("Extensions", item.WorkloadArea);
+                    Assert.Equal("Schema extensions", item.SubArea);
+                    Assert.Collection(item.ChangeList,
+                        item =>
+                        {
+                            Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
+                            Assert.Equal("Resource", item.ApiChange);
+                            Assert.Equal("schema extensions,Microsoft Cloud for US Government.", item.ChangedApiName);
+                            Assert.Equal("Addition", item.ChangeType);
+                            Assert.Equal("schema extensions,Microsoft Cloud for US Government", item.Target);
+                        });
+                });
+        }
+
+        [Fact]
+        public void FilterChangeLogRecordsByEndDateAndDaysRange()
+        {
+            // Arrange
+            var changeLogRecords = new ChangeLogRecords
+            {
+                ChangeLogs = ChangeLogRecordsModelShould.GetChangeLogRecords().ChangeLogs
+            };
+            var endDate = DateTime.Parse("2021-01-01");
+
+            var searchOptions = new ChangeLogSearchOptions(endDate: endDate, daysRange: 30);
+
+            // Act
+            var changeLog = Services.ChangesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs);
 
             // Assert
             Assert.NotNull(changeLog);
@@ -168,12 +254,12 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void PaginateChangeLogListFirstPage()
+        public void PaginateChangeLogRecordsFirstPage()
         {
             // Arrange
-            var changeLogList = new ChangeLogList
+            var changeLogRecords = new ChangeLogRecords
             {
-                ChangeLogs = ChangeLogListModelShould.GetChangeLogList().ChangeLogs
+                ChangeLogs = ChangeLogRecordsModelShould.GetChangeLogRecords().ChangeLogs
             };
 
             var searchOptions = new ChangeLogSearchOptions
@@ -183,7 +269,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            var changeLog = Services.ChangesService.FilterChangeLogList(changeLogList, searchOptions, _graphProxyConfigs);
+            var changeLog = Services.ChangesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs);
 
             // Assert -- fetch first two items from the changelog sample
             Assert.NotNull(changeLog);
@@ -221,12 +307,12 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void PaginateChangeLogListMiddlePage()
+        public void PaginateChangeLogRecordsMiddlePage()
         {
             // Arrange
-            var changeLogList = new ChangeLogList
+            var changeLogRecords = new ChangeLogRecords
             {
-                ChangeLogs = ChangeLogListModelShould.GetChangeLogList().ChangeLogs
+                ChangeLogs = ChangeLogRecordsModelShould.GetChangeLogRecords().ChangeLogs
             };
 
             var searchOptions = new ChangeLogSearchOptions
@@ -236,7 +322,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            var changeLog = Services.ChangesService.FilterChangeLogList(changeLogList, searchOptions, _graphProxyConfigs);
+            var changeLog = Services.ChangesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs);
 
             // Assert -- fetch middle item from the changelog sample
             Assert.NotNull(changeLog);
@@ -259,12 +345,12 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void PaginateChangeLogListLastPage()
+        public void PaginateChangeLogRecordsLastPage()
         {
             // Arrange
-            var changeLogList = new ChangeLogList
+            var changeLogRecords = new ChangeLogRecords
             {
-                ChangeLogs = ChangeLogListModelShould.GetChangeLogList().ChangeLogs
+                ChangeLogs = ChangeLogRecordsModelShould.GetChangeLogRecords().ChangeLogs
             };
 
             var searchOptions = new ChangeLogSearchOptions
@@ -274,7 +360,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            var changeLog = Services.ChangesService.FilterChangeLogList(changeLogList, searchOptions, _graphProxyConfigs);
+            var changeLog = Services.ChangesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs);
 
             // Assert -- fetch last item from the changelog sample
             Assert.NotNull(changeLog);
