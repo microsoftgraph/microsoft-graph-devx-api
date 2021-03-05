@@ -1049,5 +1049,40 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
 
+        [Fact]
+        public void CreatesPlaceHolderIDForCommandLineCaller()
+        {
+            const bool isCommandLine = true; // Command line caller (e.g. generation pipeline for the docs)
+
+            const string itemIdFromOriginalSnippet = "{item-id-from-original-snippet}";
+            const string itemIdBasedOnTypeInformation = "{driveItem-id}";
+
+            var expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"https://graph.microsoft.com/v1.0/me/drive/items/{itemIdFromOriginalSnippet}/content");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+
+            var result = new CSharpGenerator(_edmModel.Value, isCommandLine).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains(itemIdBasedOnTypeInformation, result);
+            Assert.DoesNotContain(itemIdFromOriginalSnippet, result);
+        }
+
+        [Fact]
+        public void UsesIDFromHTTPSnippetForDevXAPICallers()
+        {
+            const bool isCommandLine = false; // DevX API caller (e.g. Graph Explorer "Code Snippets" tab)
+
+            const string itemIdFromDevXApiSnippet = "e56b1746-25a4-4a4e-86cf-a7223fa1fee1";
+            const string itemIdBasedOnTypeInformation = "{driveItem-id}";
+
+            var expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"https://graph.microsoft.com/v1.0/me/drive/items/{itemIdFromDevXApiSnippet}/content");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+
+            var result = new CSharpGenerator(_edmModel.Value, isCommandLine).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.DoesNotContain(itemIdBasedOnTypeInformation, result);
+            Assert.Contains(itemIdFromDevXApiSnippet, result);
+        }
     }
 }
