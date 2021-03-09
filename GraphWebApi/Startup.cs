@@ -20,6 +20,8 @@ using Serilog;
 using Microsoft.Extensions.Hosting;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using Microsoft.ApplicationInsights.Extensibility;
+using GraphWebApi.Telemetry;
+using GraphWebApi.Telemetry.Interfaces;
 
 namespace GraphWebApi
 {
