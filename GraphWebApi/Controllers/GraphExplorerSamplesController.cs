@@ -14,6 +14,9 @@ using System.Security.Claims;
 using System.Linq;
 using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
+using Microsoft.ApplicationInsights;
+using System.Diagnostics;
+using GraphWebApi.Telemetry.Interfaces;
 
 namespace GraphWebApi.Controllers
 {
@@ -21,10 +24,14 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSamplesController : ControllerBase
     {
         private readonly ISamplesStore _samplesStore;
+        private readonly TelemetryClient _telemetryClient;
+        private readonly ITelemetryHelper _telemetryHelper;
 
-        public GraphExplorerSamplesController(ISamplesStore samplesStore)
+        public GraphExplorerSamplesController(ISamplesStore samplesStore, TelemetryClient telemetryClient, ITelemetryHelper telemetryHelper)
         {
             _samplesStore = samplesStore;
+            _telemetryClient = telemetryClient;
+            _telemetryHelper = telemetryHelper;
         }
 
         // Gets the list of all sample queries
@@ -34,6 +41,9 @@ namespace GraphWebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSampleQueriesListAsync(string search, string org, string branchName)
         {
+            // start a stopwatch to process the request
+            Stopwatch stopwatch = _telemetryHelper.BeginRequest();
+
             try
             {
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
@@ -79,7 +89,15 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception exception)
             {
+                _telemetryClient.TrackException(exception);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+            }
+            finally
+            {
+                var eventName = "GET_ALL_SAMPLEQUERIES_EVENT";
+
+                // send the event to AppInsights
+                _telemetryHelper.EndRequest(stopwatch, HttpContext, eventName);
             }
         }
 
@@ -90,6 +108,8 @@ namespace GraphWebApi.Controllers
        [HttpGet]
         public async Task<IActionResult> GetSampleQueryByIdAsync(string id)
         {
+            Stopwatch stopwatch = _telemetryHelper.BeginRequest();
+
             try
             {
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
@@ -117,6 +137,13 @@ namespace GraphWebApi.Controllers
             {
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
+            finally
+            {
+                var eventName = "GET_SAMPLEQUERIES_BY_ID_EVENT";
+
+                // send the event to AppInsights
+                _telemetryHelper.EndRequest(stopwatch, HttpContext, eventName);
+            }
         }
 
         // Updates a sample query given its id value
@@ -127,6 +154,8 @@ namespace GraphWebApi.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateSampleQueryAsync(string id, [FromBody]SampleQueryModel sampleQueryModel)
         {
+            Stopwatch stopwatch = _telemetryHelper.BeginRequest();
+
             try
             {
                 // Get the list of policies
@@ -184,6 +213,14 @@ namespace GraphWebApi.Controllers
             {
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
+            finally
+            {
+                var eventName = "UPDATE_SAMPLEQUERIES_EVENT";
+
+                // send the event to AppInsights
+                _telemetryHelper.EndRequest(stopwatch, HttpContext, eventName);
+            }
+
         }
 
         // Adds a new sample query to the list of sample queries
@@ -194,6 +231,8 @@ namespace GraphWebApi.Controllers
         [Authorize]
         public async Task<IActionResult> CreateSampleQueryAsync([FromBody]SampleQueryModel sampleQueryModel)
         {
+            Stopwatch stopwatch = _telemetryHelper.BeginRequest();
+
             try
             {
                 // Get the list of policies
@@ -242,6 +281,13 @@ namespace GraphWebApi.Controllers
             {
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
+            finally
+            {
+                var eventName = "CREATE_SAMPLEQUERIES_EVENT";
+
+                // send the event to AppInsights
+                _telemetryHelper.EndRequest(stopwatch, HttpContext, eventName);
+            }
         }
 
         // Deletes a sample query of the provided id from the list of sample queries
@@ -252,6 +298,8 @@ namespace GraphWebApi.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteSampleQueryAsync(string id)
         {
+            Stopwatch stopwatch = _telemetryHelper.BeginRequest();
+
             try
             {
                 // Get the list of sample queries
@@ -311,6 +359,13 @@ namespace GraphWebApi.Controllers
             catch (Exception exception)
             {
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+            }
+            finally
+            {
+                var eventName = "DELETE_SAMPLEQUERIES_EVENT";
+
+                // send the event to AppInsights
+                _telemetryHelper.EndRequest(stopwatch, HttpContext, eventName);
             }
         }
 

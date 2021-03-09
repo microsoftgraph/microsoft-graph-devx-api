@@ -4,10 +4,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
 using GraphWebApi.Common;
+using GraphWebApi.Telemetry.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,10 +21,12 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerPermissionsController : ControllerBase
     {
         private readonly IPermissionsStore _permissionsStore;
+        private readonly ITelemetryHelper _telemetryHelper;
 
-        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore)
+        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, ITelemetryHelper telemetryHelper)
         {
             _permissionsStore = permissionsStore;
+            _telemetryHelper = telemetryHelper;
         }
 
         // Gets the permissions scopes
@@ -34,6 +38,8 @@ namespace GraphWebApi.Controllers
                                                              [FromQuery]string org = null,
                                                              [FromQuery]string branchName = null)
         {
+            Stopwatch stopwatch = _telemetryHelper.BeginRequest();
+
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
@@ -72,6 +78,13 @@ namespace GraphWebApi.Controllers
             catch (Exception exception)
             {
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+            }
+            finally
+            {
+                var eventName = "GET_PERMISSION_SCOPES_EVENT";
+
+                // send the event to AppInsights
+                _telemetryHelper.EndRequest(stopwatch, HttpContext, eventName);
             }
         }
     }
