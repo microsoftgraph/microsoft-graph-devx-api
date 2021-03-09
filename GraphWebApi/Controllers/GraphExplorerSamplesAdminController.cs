@@ -107,7 +107,7 @@ namespace GraphWebApi.Controllers
 
                 // Add the new user claim in the given category policy
                 SampleQueriesPolicies updatedPoliciesList = SamplesPolicyService.ModifyUserClaim(policies, categoryPolicy);
-                                
+
                 string updatedPoliciesJson = SamplesPolicyService.SerializeSampleQueriesPolicies(updatedPoliciesList);
 
                 await _fileUtility.WriteToFile(updatedPoliciesJson, _policiesFilePathSource);
