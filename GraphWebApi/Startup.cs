@@ -69,14 +69,16 @@ namespace GraphWebApi
             {
                 options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
                 options.RequestCollectionOptions.InjectResponseHeaders = true;
-                options.RequestCollectionOptions.TrackExceptions = true;
-                options.EnableAuthenticationTrackingJavaScript = true;
+                options.RequestCollectionOptions.TrackExceptions = false;
+                options.EnableAuthenticationTrackingJavaScript = false;
                 options.EnableHeartbeat = true;
                 options.EnableAdaptiveSampling = true;    // Enable adaptive sampling
                 options.EnableQuickPulseMetricStream = true;   // Enable QuickPulse (Live Metrics stream)
                 options.EnableDebugLogger = true;
             });
-            services.AddApplicationInsightsTelemetryProcessor<TelemetryHelper>();
+            //services.AddSingleton<ITelemetryInitializer, TelemetryInitializer>();
+
+            services.AddApplicationInsightsTelemetryProcessor<TelemetryProcessor>();
 
             if (!_env.IsDevelopment())
             {
