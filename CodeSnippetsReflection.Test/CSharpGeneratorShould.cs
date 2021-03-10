@@ -952,6 +952,63 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
+        //This test asserts that a request with multiline string is escaped correctly
+        public void GeneratesSnippetsWithMultilineStringEscaped()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string jsonObject = @"{
+                ""id"": ""60860cdd-fb4d-4054-91ba-f75e04444aa6"",
+                ""displayName"": ""Test world UPDATED NAME!"",
+                ""descriptionForAdmins"": ""Test world"",
+                ""descriptionForReviewers"": ""Test world"",
+                ""scope"": {
+                    ""query"": ""/groups/b7a059cb-038a-4802-8fc9-b9d1ed0cf11f/transitiveMembers"",
+                    ""queryType"": ""MicrosoftGraph""
+                },
+                ""instanceEnumerationScope"": {
+                    ""query"": ""/groups/b7a059cb-038a-4802-8fc9-b9d1ed0cf11f"",
+                    ""queryType"": ""MicrosoftGraph""
+                },
+                ""reviewers"": [],
+                ""settings"": {
+                    ""mailNotificationsEnabled"": true,
+                    ""reminderNotificationsEnabled"": true,
+                    ""justificationRequiredOnApproval"": true,
+                    ""defaultDecisionEnabled"": false,
+                    ""defaultDecision"": ""None"",
+                    ""instanceDurationInDays"": 3,
+                    ""autoApplyDecisionsEnabled"": false,
+                    ""recommendationsEnabled"": true,
+                    ""recurrence"": {
+                    ""pattern"": {
+                        ""type"": ""weekly"",
+                        ""interval"": 1
+                    },
+                    ""range"": {
+                        ""type"": ""noEnd"",
+                        ""startDate"": ""2020-09-15""
+                    }
+                    }
+                }
+            }";
+            var url = "https://graph.microsoft.com/beta/identityGovernance/accessReviews/definitions/60860cdd-fb4d-4054-91ba-f75e04444aa6";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Put, url)
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+            //Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            const string doubleDoubleQuotedString = "\"\"id\"\": \"\"60860cdd-fb4d-4054-91ba-f75e04444aa6\"\"";
+            const string stream = "new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"{";
+            //Assert the snippet generated is as expected
+            Assert.Contains(doubleDoubleQuotedString, result);
+            Assert.Contains(stream, result);
+        }
+
+        [Fact]
         // This tests asserts that a type beginning with "@" character is also added to the AdditionalData bag
         public void GeneratesSnippetsWithTypesStartingWithTheAtSymbol()
         {
@@ -1049,5 +1106,40 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal(AuthProviderPrefix + expectedSnippet, result);
         }
 
+        [Fact]
+        public void CreatesPlaceHolderIDForCommandLineCaller()
+        {
+            const bool isCommandLine = true; // Command line caller (e.g. generation pipeline for the docs)
+
+            const string itemIdFromOriginalSnippet = "{item-id-from-original-snippet}";
+            const string itemIdBasedOnTypeInformation = "{driveItem-id}";
+
+            var expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"https://graph.microsoft.com/v1.0/me/drive/items/{itemIdFromOriginalSnippet}/content");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+
+            var result = new CSharpGenerator(_edmModel.Value, isCommandLine).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.Contains(itemIdBasedOnTypeInformation, result);
+            Assert.DoesNotContain(itemIdFromOriginalSnippet, result);
+        }
+
+        [Fact]
+        public void UsesIDFromHTTPSnippetForDevXAPICallers()
+        {
+            const bool isCommandLine = false; // DevX API caller (e.g. Graph Explorer "Code Snippets" tab)
+
+            const string itemIdFromDevXApiSnippet = "e56b1746-25a4-4a4e-86cf-a7223fa1fee1";
+            const string itemIdBasedOnTypeInformation = "{driveItem-id}";
+
+            var expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"https://graph.microsoft.com/v1.0/me/drive/items/{itemIdFromDevXApiSnippet}/content");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+
+            var result = new CSharpGenerator(_edmModel.Value, isCommandLine).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.DoesNotContain(itemIdBasedOnTypeInformation, result);
+            Assert.Contains(itemIdFromDevXApiSnippet, result);
+        }
     }
 }
