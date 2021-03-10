@@ -197,7 +197,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     }
                     else
                     {
-                        snippetBuilder.Append($"using var {snippetModel.ResponseVariableName} = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(\"{snippetModel.RequestBody.Trim()}\"));\r\n\r\n");
+                        snippetBuilder.Append($"using var {snippetModel.ResponseVariableName} = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"{snippetModel.RequestBody.Replace("\"", "\"\"").Trim()}\"));\r\n\r\n");
 
                         // resolve type for PutAsync<T>
                         var genericEdmType = snippetModel.Segments[snippetModel.Segments.Count - 2].EdmType;
