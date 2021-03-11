@@ -375,8 +375,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 break;
                             }
                         case ConstantNode constantNode:
-                            paramList.Add(constantNode.LiteralText);
-                            break;
+                            if (constantNode.TypeReference.Definition.TypeKind == EdmTypeKind.Enum)
+                            {
+                                var enumType =  constantNode.TypeReference.FullName();
+                                paramList.Add($"{enumType}{constantNode.LiteralText}");
+                                break;
+                            }
+                            else
+                            {
+                                paramList.Add($"{constantNode.LiteralText}");
+                                break;
+                            }
                     }
                 }
             }

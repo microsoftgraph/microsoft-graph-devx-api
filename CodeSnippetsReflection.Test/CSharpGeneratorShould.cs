@@ -1009,6 +1009,29 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
+        //This test asserts that Enums are displayed Correctly in Csharp Snippets
+        public void GeneratesSnippetsWithEnumsCorrectlyDisplayed()
+        {
+            //Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            var url = "https://graph.microsoft.com/beta/reports/authenticationMethods/usersRegisteredByMethod(includedUserTypes='all',includedUserRoles='all')";
+
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+            //Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+           
+            //Assert the snippet generated is as expected
+            var expected = "GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n" +
+                        "var userRegistrationMethodSummary = await graphClient.Reports.AuthenticationMethods\r\n" +
+                        "\t.UsersRegisteredByMethod(IncludedUserTypes.All,IncludedUserRoles.All)\r\n" +
+                        "\t.Request()\r\n" +
+                        "\t.GetAsync();";
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
         // This tests asserts that a type beginning with "@" character is also added to the AdditionalData bag
         public void GeneratesSnippetsWithTypesStartingWithTheAtSymbol()
         {

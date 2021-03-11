@@ -261,7 +261,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 // do we have other special types that show up in URLs?
                                 var split = x.Split("'");
                                 var enumType = CommonGenerator.UppercaseFirstLetter(split[0].Split(".").Last()); // TimeZoneStandard
-                                var enumValue = split[1];
+                                var enumValue = CommonGenerator.UppercaseFirstLetter(split[1]);
                                 return $"{enumType}.{enumValue}";
                             }
                             else
