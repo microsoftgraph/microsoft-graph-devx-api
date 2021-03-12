@@ -252,7 +252,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         break;
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel);
+                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(
+                            operationSegment, snippetModel, returnEnumTypeIfEnum:true);
                         var parameters = string.Join(",", paramList.Select(x =>
                         {
                             if (x.Contains("'"))
