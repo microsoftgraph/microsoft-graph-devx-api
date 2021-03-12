@@ -326,7 +326,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="collectionSuffix">Suffix to be added to elements that are proved to be members collections</param>
         /// <param name="isOrderedByOptionalParameters">Flag to show whether the parameters are ordered by the the metadata or optionality of params</param>
         /// <returns></returns>
-        public static IEnumerable<string> GetParameterListFromOperationSegment(OperationSegment operationSegment, SnippetModel snippetModel, string collectionSuffix = "", bool isOrderedByOptionalParameters = true)
+        public static IEnumerable<string> GetParameterListFromOperationSegment(
+            OperationSegment operationSegment, SnippetModel snippetModel, string collectionSuffix = "",
+            bool isOrderedByOptionalParameters = true, bool returnEnumTypeIfEnum = false)
         {
             var paramList = new List<string>();
 
@@ -375,8 +377,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 break;
                             }
                         case ConstantNode constantNode:
-                            paramList.Add(constantNode.LiteralText);
-                            break;
+                            if (constantNode.TypeReference.Definition.TypeKind == EdmTypeKind.Enum && returnEnumTypeIfEnum)
+                            {
+                                var enumType = parameter.Name;
+                                paramList.Add($"{enumType}{constantNode.LiteralText}");
+                                break;
+                            }
+                            else
+                            {
+                                paramList.Add($"{constantNode.LiteralText}");
+                                break;
+                            }
                     }
                 }
             }
