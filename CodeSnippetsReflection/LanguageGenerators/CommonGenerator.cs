@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using CodeSnippetsReflection.StringExtensions;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
@@ -42,13 +43,15 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 if (key.ToLower().Equals("host",StringComparison.Ordinal))
                     continue;
                 //append the header to the snippet
-                var valueString = value.First().Replace("\"", languageExpressions.DoubleQuotesEscapeSequence);
+                var valueString = value.First()
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 snippetBuilder.Append(string.Format(languageExpressions.HeaderExpression, key, valueString));
             }
             //Append any filter queries
             if (snippetModel.FilterFieldList.Any())
             {
-                var filterResult = string.Join(languageExpressions.FilterExpressionDelimiter, snippetModel.FilterFieldList);
+                var filterResult = string.Join(languageExpressions.FilterExpressionDelimiter, snippetModel.FilterFieldList)
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 //append the filter to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.FilterExpression, filterResult));
             }
@@ -56,20 +59,25 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any search queries
             if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
             {
-                snippetBuilder.Append(string.Format(languageExpressions.SearchExpression, snippetModel.SearchExpression));
+                snippetBuilder.Append(string.Format(languageExpressions.SearchExpression, 
+                    snippetModel.SearchExpression
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append the expand section
             if (!string.IsNullOrEmpty(snippetModel.ExpandFieldExpression))
             {
                 //append the expand result to the snippet
-                snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, snippetModel.ExpandFieldExpression));
+                snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, 
+                    snippetModel.ExpandFieldExpression
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append any select queries
             if (snippetModel.SelectFieldList.Any())
             {
-                var selectResult = string.Join(languageExpressions.SelectExpressionDelimiter, snippetModel.SelectFieldList);
+                var selectResult = string.Join(languageExpressions.SelectExpressionDelimiter, snippetModel.SelectFieldList)
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 //append the select result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.SelectExpression, selectResult));
             }
@@ -77,7 +85,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any orderby queries
             if (snippetModel.OrderByFieldList.Any())
             {
-                var orderByResult = string.Join(languageExpressions.OrderByExpressionDelimiter, snippetModel.OrderByFieldList);
+                var orderByResult = string.Join(languageExpressions.OrderByExpressionDelimiter, snippetModel.OrderByFieldList)
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 //append the orderby result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.OrderByExpression, orderByResult));
             }
@@ -91,7 +100,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any skip token queries
             if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
             {
-                snippetBuilder.Append(string.Format(languageExpressions.SkipTokenExpression, snippetModel.ODataUri.SkipToken));
+                snippetBuilder.Append(string.Format(languageExpressions.SkipTokenExpression, 
+                    snippetModel.ODataUri.SkipToken
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append any top queries

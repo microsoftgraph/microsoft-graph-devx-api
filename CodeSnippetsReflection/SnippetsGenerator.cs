@@ -38,11 +38,19 @@ namespace CodeSnippetsReflection
         private JavaExpressions JavaExpressions { get; }
 
         /// <summary>
+        /// Determines whether the snippet generation is running through the command line interface
+        /// (as opposed to DevX HTTP API)
+        /// </summary>
+        private readonly bool IsCommandLine;
+
+        /// <summary>
         /// Class holding the Edm model and request processing for snippet generations
         /// </summary>
+        /// <param name="isCommandLine">Determines whether we are running the snippet generation in command line</param>
         /// <param name="customMetadataPath">Full file path to the metadata</param>
-        public SnippetsGenerator(string customMetadataPath = null)
+        public SnippetsGenerator(bool isCommandLine = false, string customMetadataPath = null)
         {
+            IsCommandLine = isCommandLine;
             LoadGraphMetadata(customMetadataPath);
             JavascriptExpressions = new JavascriptExpressions();
             CSharpExpressions = new CSharpExpressions();
@@ -96,7 +104,7 @@ namespace CodeSnippetsReflection
             switch (language.ToLower())
             {
                 case "c#":
-                    var csharpGenerator = new CSharpGenerator(edmModel);
+                    var csharpGenerator = new CSharpGenerator(edmModel, IsCommandLine);
                     return csharpGenerator.GenerateCodeSnippet(snippetModel, CSharpExpressions);
 
                 case "javascript":

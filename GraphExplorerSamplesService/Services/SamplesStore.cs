@@ -4,7 +4,6 @@
 
 using FileService.Common;
 using FileService.Interfaces;
-using FileService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Models;
 using Microsoft.Extensions.Caching.Memory;
@@ -28,13 +27,19 @@ namespace GraphExplorerSamplesService.Services
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
+        private const string NullValueError = "Value cannot be null";
 
-        public SamplesStore(IConfiguration configuration, IMemoryCache samplesCache = null , IFileUtility fileUtility = null, IHttpClientUtility httpClientUtility = null)
+        public SamplesStore(IConfiguration configuration, IHttpClientUtility httpClientUtility,
+                            IFileUtility fileUtility, IMemoryCache samplesCache)
         {
-            _samplesCache = samplesCache;
-            _configuration = configuration;
-            _httpClientUtility = httpClientUtility;
-            _fileUtility = fileUtility ?? new AzureBlobStorageUtility(configuration);
+            _configuration = configuration
+                ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }: { nameof(configuration) }");
+            _httpClientUtility = httpClientUtility
+                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }: { nameof(httpClientUtility) }");
+            _fileUtility = fileUtility
+                ?? throw new ArgumentNullException(nameof(fileUtility), $"{ NullValueError }: { nameof(fileUtility) }");
+            _samplesCache = samplesCache
+                ?? throw new ArgumentNullException(nameof(samplesCache), $"{ NullValueError }: { nameof(samplesCache) }"); ;
             _sampleQueriesContainerName = _configuration["BlobStorage:Containers:SampleQueries"];
             _sampleQueriesBlobName = _configuration["BlobStorage:Blobs:SampleQueries"];
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours"]);
@@ -57,22 +62,22 @@ namespace GraphExplorerSamplesService.Services
 					/* Check whether a previous thread already seeded an
                      * instance of the localized samples during the lock.
                      */
-                    var lockedLocale = locale;
-                    var seededSampleQueriesList = _samplesCache?.Get<SampleQueriesList>(lockedLocale);
+					var lockedLocale = locale;
+					var seededSampleQueriesList = _samplesCache?.Get<SampleQueriesList>(lockedLocale);
 
-                    if (seededSampleQueriesList != null)
-                    {
-                        return Task.FromResult(seededSampleQueriesList);
-                    }
+					if (seededSampleQueriesList != null)
+					{
+						return Task.FromResult(seededSampleQueriesList);
+					}
 
-                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+					cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
-                    // Fetch the requisite sample path source based on the locale
-                    string queriesFilePathSource =
-                           FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
+					// Fetch the requisite sample path source based on the locale
+					string queriesFilePathSource =
+						   FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
 
-                    // Get the file contents from source
-                    string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
+					// Get the file contents from source
+					string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
 					/* Current business process only supports ordering of the English
                        translation of the sample queries.
@@ -97,7 +102,7 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
         public async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale, string org, string branchName)
         {
-            string host = _configuration["GithubHost"];
+            string host = _configuration["BlobStorage:GithubHost"];
             string repo = _configuration["BlobStorage:RepoName"];
 
             // Fetch the requisite sample path source based on the locale
