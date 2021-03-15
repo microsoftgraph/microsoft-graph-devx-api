@@ -15,21 +15,17 @@ namespace GraphWebApi.Telemetry
     /// </summary>
     public class TelemetryProcessor : ITelemetryProcessor
     {
-        private readonly ITelemetryProcessor _next;
-
         private static Regex _guidRegex = new Regex(
-            @"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+           @"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
+           RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private readonly ITelemetryProcessor _next;
 
         public TelemetryProcessor(ITelemetryProcessor next)
         {
             _next = next;
         }
 
-        /// <summary>
-        /// Gets a request telemetry item, checks the request name property for any guids and replaces them.
-        /// </summary>
-        /// <param name="item">A telemetry item.</param>
         public void Process(ITelemetry item)
         {
             var request = item as RequestTelemetry;
@@ -39,7 +35,6 @@ namespace GraphWebApi.Telemetry
                 request.Name = _guidRegex.Replace(request.Name, "*****");
                 request.Url = new Uri(_guidRegex.Replace(request.Url.ToString(), "*****"));
             }
-
             _next.Process(item);
         }
     }
