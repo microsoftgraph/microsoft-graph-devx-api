@@ -43,7 +43,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName, languageExpressions);
 
                 /*Auth provider section*/
-                snippetBuilder.Append("IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n");
+                snippetBuilder.Append("GraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n");
                 //append any request options present
                 snippetBuilder.Append(GenerateRequestOptionsSection(snippetModel, languageExpressions));
                 /*Generate the query section of the request*/
@@ -320,7 +320,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 switch (className)
                 {
                     case "DateTimeOffset":
-                        return $"CalendarSerializer.deserialize({AddQuotesIfMising(stringParameter)})";
+                        return $"OffsetDateTimeSerializer.deserialize({AddQuotesIfMising(stringParameter)})";
 
                     case "Guid":
                         return $"UUID.fromString({AddQuotesIfMising(stringParameter)})";
@@ -524,12 +524,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 if (pathSegment is OperationSegment opSegment)
                 {
                     var typeName = opSegment.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.Definition?.FullTypeName()?.Split(".")?.LastOrDefault()?.Replace(")", string.Empty); //last replace is for the case we have collections
-                    return $"I{CommonGenerator.UppercaseFirstLetter(typeName)}{CommonGenerator.UppercaseFirstLetter(opSegment.Identifier)}Collection{page}";
+                    return $"{CommonGenerator.UppercaseFirstLetter(typeName)}{CommonGenerator.UppercaseFirstLetter(opSegment.Identifier)}Collection{page}";
                 }
                 else if (collectionType.ElementType.Definition is IEdmNamedElement edmNamedElement)
-                    return $"I{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}Collection{(pathSegment is NavigationPropertySegment navPropPathSeg && !navPropPathSeg.NavigationProperty.ContainsTarget ? "WithReferences" : string.Empty)}{page}";
+                    return $"{CommonGenerator.UppercaseFirstLetter(edmNamedElement.Name)}Collection{(pathSegment is NavigationPropertySegment navPropPathSeg && !navPropPathSeg.NavigationProperty.ContainsTarget ? "WithReferences" : string.Empty)}{page}";
                 else
-                    return $"I{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}Collection{page}";
+                    return $"{CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last())}Collection{page}";
             else
                 switch (edmType?.FullTypeName())
                 {
@@ -538,7 +538,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     case "Edm.Guid":
                         return "UUID";
                     case "Edm.DateTimeOffset":
-                        return "Calendar";
+                        return "OffsetDateTime";
                     case "Edm.Date":
                         return "DateOnly";
                     case "Edm.Double":
@@ -594,8 +594,19 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         break;
                     //handle functions/requestActions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel, "List", false);
-                        resourcesPath.Append($"\r\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({string.Join(",", paramList)})");
+                        var paramList = CommonGenerator.GetParameterListFromOperationSegmentWithNames(operationSegment, snippetModel, false, "List");
+                        var operationBoundTypeName = (operationSegment?.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.FullName() ?? 
+                                                    operationSegment?.EdmType?.FullTypeName())
+                                                        ?.Split(".")
+                                                        ?.Last()
+                                                        ?.Trim(')'); // in case it's a collection
+                        var paramSetBuilderName = $"{CommonGenerator.UppercaseFirstLetter(CommonGenerator.UppercaseFirstLetter(operationBoundTypeName))}{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}ParameterSet";
+                        var paramSetBuilder = paramList.Any() ? 
+                                                $"{paramSetBuilderName}\r\n\t\t.newBuilder()\r\n\t\t" +
+                                                    paramList.Select(x => $".with{CommonGenerator.UppercaseFirstLetter(x.Key)}({x.Value})").Aggregate((x, y) => $"{x}\r\n\t\t{y}") +
+                                                    "\r\n\t\t.build()"
+                                                : string.Empty;
+                        resourcesPath.Append($"\r\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({paramSetBuilder})");
                         break;
                     case ReferenceSegment _:
                         resourcesPath.Append(".reference()");
