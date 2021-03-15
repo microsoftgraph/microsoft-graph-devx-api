@@ -90,6 +90,7 @@ namespace FileService.Common
                 }
             }
 
+            // File path source format --> directoryName\\fileName
             return $"{containerName}{FileServiceConstants.DirectorySeparator}{defaultBlobName}";
         }
 

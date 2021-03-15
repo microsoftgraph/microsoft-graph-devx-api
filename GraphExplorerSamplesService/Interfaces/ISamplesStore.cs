@@ -10,5 +10,6 @@ namespace GraphExplorerSamplesService.Interfaces
     public interface ISamplesStore
     {
         Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale);
+        Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale, string org, string branchName);
     }
 }

@@ -4,7 +4,6 @@
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using CodeSnippetsReflection;
@@ -56,8 +55,9 @@ namespace GraphWebApi
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
+            services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
+            services.AddControllers().AddNewtonsoftJson();
             services.Configure<SamplesAdministrators>(Configuration);
-            services.AddControllers();
 
             #region AppInsights
 

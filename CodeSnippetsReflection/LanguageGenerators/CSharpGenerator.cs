@@ -29,11 +29,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private static readonly HashSet<string> EdmTypesNonNullableByDefault = new HashSet<string>{ "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
 
         /// <summary>
+        /// Determines whether the snippet generation is running through the command line interface
+        /// (as opposed to in DevX HTTP API)
+        /// </summary>
+        private readonly bool IsCommandLine;
+
+        /// <summary>
         /// CSharpGenerator constructor
         /// </summary>
         /// <param name="model">Model representing metadata</param>
-        public CSharpGenerator(IEdmModel model)
+        public CSharpGenerator(IEdmModel model, bool isCommandLine = false)
         {
+            IsCommandLine = isCommandLine;
             CommonGenerator = new CommonGenerator(model);
         }
 
@@ -67,7 +74,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
                     }
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.GetAsync();"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.GetAsync();"));
                     snippetBuilder.Append(extraSnippet);
 
                 }
@@ -83,7 +90,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                             snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
                             snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
-                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
 
                             break;
 
@@ -137,7 +144,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     snippetBuilder.Append($"{typeHintOnTheLeftHandSide} {parameter} = {value}");
                                 }
                             }
-                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PostAsync();"));
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.PostAsync();"));
                             break;
                         default:
                             throw new Exception("Unknown Segment Type in URI for method POST");
@@ -156,11 +163,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         snippetBuilder.Append(GeneratePropertySectionSnippet(snippetModel));
                     }
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.UpdateAsync({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.UpdateAsync({snippetModel.ResponseVariableName});"));
                 }
                 else if (snippetModel.Method == HttpMethod.Delete)
                 {
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.DeleteAsync();"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.DeleteAsync();"));
                 }
                 else if (snippetModel.Method == HttpMethod.Put)
                 {
@@ -190,7 +197,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     }
                     else
                     {
-                        snippetBuilder.Append($"using var {snippetModel.ResponseVariableName} = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(\"{snippetModel.RequestBody.Trim()}\"));\n\n");
+                        snippetBuilder.Append($"using var {snippetModel.ResponseVariableName} = new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"{snippetModel.RequestBody.Replace("\"", "\"\"").Trim()}\"));\r\n\r\n");
 
                         // resolve type for PutAsync<T>
                         var genericEdmType = snippetModel.Segments[snippetModel.Segments.Count - 2].EdmType;
@@ -200,7 +207,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         }
                     }
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\n\t.PutAsync{genericType}({objectToBePut});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.PutAsync{genericType}({objectToBePut});"));
 
                 }
                 else
@@ -222,10 +229,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
         /// <returns>String of the resources in Csharp code</returns>
-        private static string CSharpGenerateResourcesPath(SnippetModel snippetModel)
+        private string CSharpGenerateResourcesPath(SnippetModel snippetModel)
         {
             var resourcesPath = new StringBuilder();
             var resourcesPathSuffix = string.Empty;
+            ODataPathSegment previousSegment = null;
 
             // lets append all resources
             foreach (var item in snippetModel.Segments)
@@ -234,17 +242,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 {
                     //handle indexing into collections
                     case KeySegment keySegment:
-                        resourcesPath.Append($"[\"{keySegment.Keys.FirstOrDefault().Value}\"]");
+                        resourcesPath.Append($"[\"{GetIDPlaceholder(keySegment, previousSegment)}\"]");
                         break;
                     // handle special case of indexing on a property through extensions, e.g.
                     // IThumbnailSetRequestBuilder has a manually written extension which allows indexing on {size}
                     // https://github.com/microsoftgraph/msgraph-sdk-dotnet/blob/dev/src/Microsoft.Graph/Requests/Extensions/IThumbnailSetRequestBuilderExtensions.cs
                     case DynamicPathSegment pathSegment when pathSegment.Identifier.Contains("{"):
-                        resourcesPath.Append($"[\"{pathSegment.Identifier}\"]");
+                        resourcesPath.Append($"[\"{GetIDPlaceholder(pathSegment, previousSegment)}\"]");
                         break;
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(operationSegment, snippetModel);
+                        var paramList = CommonGenerator.GetParameterListFromOperationSegment(
+                            operationSegment, snippetModel, returnEnumTypeIfEnum:true);
                         var parameters = string.Join(",", paramList.Select(x =>
                         {
                             if (x.Contains("'"))
@@ -253,7 +262,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 // do we have other special types that show up in URLs?
                                 var split = x.Split("'");
                                 var enumType = CommonGenerator.UppercaseFirstLetter(split[0].Split(".").Last()); // TimeZoneStandard
-                                var enumValue = split[1];
+                                var enumValue = CommonGenerator.UppercaseFirstLetter(split[1]);
                                 return $"{enumType}.{enumValue}";
                             }
                             else
@@ -261,14 +270,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 return x;
                             }
                         }));
-                        resourcesPath.Append($"\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({parameters})");
+                        resourcesPath.Append($"\r\n\t.{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}({parameters})");
                         break;
                     case ValueSegment _:
                         resourcesPath.Append(".Content");
                         break;
                     case PropertySegment propertySegment:
-                        //don't append anything that is not a stream since this is not accessed directly in C#
-                        if (propertySegment.EdmType.IsStream())
+                        if (propertySegment.EdmType.IsStream() //don't append anything that is not a stream since this is not accessed directly in C#
+                           && snippetModel.Method != HttpMethod.Patch) // while patching we pass the encapsulating object in the request
                         {
                             resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         }
@@ -304,6 +313,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         resourcesPath.Append($".{CommonGenerator.UppercaseFirstLetter(item.Identifier)}");
                         break;
                 }
+
+                previousSegment = item;
             }
 
             if (!string.IsNullOrEmpty(resourcesPathSuffix))
@@ -315,6 +326,47 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
+        /// For command line callers: constructs a string {type-id} if previous segment has a type.
+        /// For DevX API callers: uses ID from the original http snippet
+        /// </summary>
+        /// <param name="currentSegment">current odata path segment</param>
+        /// <param name="previousSegment">previous odata path segment</param>
+        /// <returns>
+        /// For command line callers:
+        ///   {UNKNOWN-id} if previous segment doesn't have type information
+        ///   {segmentType-id} if previous segment's type is segmentType.
+        /// For DevX API callers:
+        ///   ID value from the given HTTP snippet
+        /// </returns>
+        private string GetIDPlaceholder(ODataPathSegment currentSegment, ODataPathSegment previousSegment)
+        {
+            if (IsCommandLine)
+            {
+                const string unknownId = "{UNKNOWN-id}";
+                if (previousSegment is null || previousSegment.EdmType is null)
+                {
+                    return unknownId;
+                }
+
+                var currentType = previousSegment.EdmType.FullTypeName()
+                    .Replace("Collection(", string.Empty)           // remove collection wrapper
+                    .Replace("microsoft.graph.", string.Empty)      // assumption is that all namespaces are under microsoft.graph
+                    .Replace(")", string.Empty);                    // remove collection wrapper
+
+                return $"{{{currentType}-id}}";
+            }
+            else // HTTP API calls should preserve the ID from original snippet
+            {
+                return currentSegment switch
+                {
+                    KeySegment keySegment => keySegment.Keys.FirstOrDefault().Value.ToString(),
+                    DynamicPathSegment pathSegment => pathSegment.Identifier,
+                    _ => throw new ArgumentException("currentSegment is expected to be either a key or dynamic path segment!", nameof(currentSegment)),
+                };
+            }
+        }
+
+        /// <summary>
         /// Csharp function to generate Object constructor section of a code snippet. In the event that another object is needed in the middle of generation,
         /// a recursive call is made to sort out the needed object.
         /// </summary>
@@ -323,6 +375,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
         private string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path)
         {
+            if (pathSegment is PropertySegment && pathSegment.EdmType?.FullTypeName() == "Edm.Stream")
+            {
+                // special case where the full request body should be converted into a stream object	
+                var encodedMultilineString = jsonBody.Replace("\"", "\"\"");
+                return $"new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"{encodedMultilineString}\"));\r\n\r\n";
+            }
+
             var stringBuilder = new StringBuilder();
             var jsonObject = JsonConvert.DeserializeObject(jsonBody);
             var tabSpace = new string('\t', path.Count -1);//d
@@ -670,7 +729,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// </summary>
         /// <param name="snippetModel">Snippet model built from the request</param>
         /// <param name="actions">String of actions to be done inside the code block</param>
-        private static string GenerateRequestSection(SnippetModel snippetModel, string actions)
+        private string GenerateRequestSection(SnippetModel snippetModel, string actions)
         {
             var stringBuilder = new StringBuilder();
 
@@ -678,7 +737,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Generate the Resources path for Csharp
             stringBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
             //check if there are any custom query options appended
-            stringBuilder.Append(snippetModel.CustomQueryOptions.Any() ? "\n\t.Request( queryOptions )" : "\n\t.Request()");
+            stringBuilder.Append(snippetModel.CustomQueryOptions.Any() ? "\r\n\t.Request( queryOptions )" : "\r\n\t.Request()");
             //Append footers
             stringBuilder.Append(actions);
 
@@ -761,13 +820,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 //we are retrieving the value
                 snippetModel.SelectFieldList.Add(selectField);
-                stringBuilder.Append($"\n\nvar {variableName} = {snippetModel.ResponseVariableName}{properties};");
+                stringBuilder.Append($"\r\n\r\nvar {variableName} = {snippetModel.ResponseVariableName}{properties};");
             }
             else
             {
                 //we are modifying the value
                 stringBuilder.Append($"var {snippetModel.ResponseVariableName} = new {parentClassName}();");//initialise the classname
-                stringBuilder.Append($"\n{snippetModel.ResponseVariableName}{properties} = {propertyName};\n\n");
+                stringBuilder.Append($"\r\n{snippetModel.ResponseVariableName}{properties} = {propertyName};\r\n\r\n");
             }
 
             return stringBuilder.ToString();
@@ -848,7 +907,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 }
 
                 //return the enum type "ORed" together
-                return CommonGenerator.GetListAsStringForSnippet(enumStringList, " | ");
+                return string.Join(" | ", enumStringList);
             }
 
             return string.Empty;
@@ -858,18 +917,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
     internal class CSharpExpressions : LanguageExpressions
     {
-        public override string FilterExpression => "\n\t.Filter(\"{0}\")";
-        public override string SearchExpression => "\n\t.Search(\"{0}\")";
-        public override string ExpandExpression => "\n\t.Expand(\"{0}\")";
-        public override string SelectExpression => "\n\t.Select(\"{0}\")";
-        public override string OrderByExpression => "\n\t.OrderBy(\"{0}\")";
-        public override string SkipExpression => "\n\t.Skip({0})";
+        public override string FilterExpression => "\r\n\t.Filter(\"{0}\")";
+        public override string SearchExpression => "\r\n\t.Search(\"{0}\")";
+        public override string ExpandExpression => "\r\n\t.Expand(\"{0}\")";
+        public override string SelectExpression => "\r\n\t.Select(\"{0}\")";
+        public override string OrderByExpression => "\r\n\t.OrderBy(\"{0}\")";
+        public override string SkipExpression => "\r\n\t.Skip({0})";
         public override string SkipTokenExpression => "";
-        public override string TopExpression => "\n\t.Top({0})";
+        public override string TopExpression => "\r\n\t.Top({0})";
         public override string FilterExpressionDelimiter => ",";
         public override string SelectExpressionDelimiter => ",";
         public override string OrderByExpressionDelimiter => " ";
-        public override string HeaderExpression => "\n\t.Header(\"{0}\",\"{1}\")";
+        public override string HeaderExpression => "\r\n\t.Header(\"{0}\",\"{1}\")";
 
         public override string[] ReservedNames => new string[] {
             "abstract","as","base","bool","break","byte","case","catch","char",
@@ -886,5 +945,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string ReservedNameEscapeSequence => "@";
 
         public override string DoubleQuotesEscapeSequence => "\\\"";
+
+        public override string SingleQuotesEscapeSequence => "'";
     }
 }

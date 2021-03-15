@@ -57,7 +57,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (segment is PropertySegment)
                         return GenerateCustomRequestForPropertySegment(snippetBuilder, snippetModel);
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\n\t.get();"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\r\n\t.get();"));
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
@@ -70,7 +70,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                 throw new Exception("No request Body present for Java POST request");
 
                             snippetBuilder.Append(JavaGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
-                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\n\t.post({snippetModel.ResponseVariableName});"));
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\r\n\t.post({snippetModel.ResponseVariableName});"));
                             break;
 
                         case OperationSegment _:
@@ -83,7 +83,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                     snippetBuilder.Append(JavaGenerateObjectFromJson(segment, jsonString, new List<string> { CommonGenerator.LowerCaseFirstLetter(key) }));
                                 }
                             }
-                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\n\t.post();"));
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\r\n\t.post();"));
                             break;
                         default:
                             throw new Exception("Unknown Segment Type in URI for method POST");
@@ -99,7 +99,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (segment is PropertySegment)
                         return GenerateCustomRequestForPropertySegment(snippetBuilder, snippetModel);
 
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\n\t.patch({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\r\n\t.patch({snippetModel.ResponseVariableName});"));
                 }
                 else if (snippetModel.Method == HttpMethod.Put)
                 {
@@ -109,12 +109,12 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (snippetModel.ContentType?.Contains("json") ?? false)
                         snippetBuilder.Append(JavaGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
                     else
-                        snippetBuilder.Append($"byte[] {snippetModel.ResponseVariableName} = Base64.getDecoder().decode({AddQuotesIfMising(snippetModel.RequestBody?.Replace("\n", string.Empty)?.Replace("\r", string.Empty))});\n\t");
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\n\t.put({snippetModel.ResponseVariableName});"));
+                        snippetBuilder.Append($"byte[] {snippetModel.ResponseVariableName} = Base64.getDecoder().decode({AddQuotesIfMising(snippetModel.RequestBody?.Replace("\n", string.Empty)?.Replace("\r", string.Empty))});\r\n\t");
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\r\n\t.put({snippetModel.ResponseVariableName});"));
                 }
                 else if (snippetModel.Method == HttpMethod.Delete)
                 {
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\n\t.delete();"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\r\n\t.delete();"));
                 }
                 else
                 {
@@ -139,10 +139,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
         private string GenerateCustomRequestForPropertySegment(StringBuilder stringBuilder, SnippetModel snippetModel)
         {
             stringBuilder.Append($"graphClient.customRequest(\"{snippetModel.Path}\", { GetJavaReturnTypeName(snippetModel.Segments.Last()) }.class)");
-            stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
+            stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\r\n\t.buildRequest( requestOptions )" : "\r\n\t.buildRequest()");
             stringBuilder.Append(snippetModel.Method == HttpMethod.Get
-                ? "\n\t.get();"
-                : $"\n\t.patch({snippetModel.ResponseVariableName});");
+                ? "\r\n\t.get();"
+                : $"\r\n\t.patch({snippetModel.ResponseVariableName});");
 
             return stringBuilder.ToString();
         }
@@ -567,7 +567,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             stringBuilder.Append("graphClient");
             stringBuilder.Append(JavaGenerateResourcesPath(snippetModel));//Generate the Resources path for Csharp
             //check if there are any custom query options appended
-            stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\n\t.buildRequest( requestOptions )" : "\n\t.buildRequest()");
+            stringBuilder.Append(JavaModelHasRequestOptionsParameters(snippetModel) ? "\r\n\t.buildRequest( requestOptions )" : "\r\n\t.buildRequest()");
             stringBuilder.Append(requestActions);//Append footers
             return stringBuilder.ToString();
         }
@@ -594,7 +594,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         break;
                     //handle functions/requestActions and any parameters present into collections
                     case OperationSegment operationSegment:
-                        var paramList = CommonGenerator.GetParameterListFromOperationSegmentWithNames(operationSegment, snippetModel, "List");
+                        var paramList = CommonGenerator.GetParameterListFromOperationSegmentWithNames(operationSegment, snippetModel, false, "List");
                         var operationBoundTypeName = (operationSegment?.Operations?.FirstOrDefault()?.Parameters?.FirstOrDefault()?.Type?.FullName() ?? 
                                                     operationSegment?.EdmType?.FullTypeName())
                                                         ?.Split(".")
@@ -602,11 +602,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                                                         ?.Trim(')'); // in case it's a collection
                         var paramSetBuilderName = $"{CommonGenerator.UppercaseFirstLetter(CommonGenerator.UppercaseFirstLetter(operationBoundTypeName))}{CommonGenerator.UppercaseFirstLetter(operationSegment.Identifier)}ParameterSet";
                         var paramSetBuilder = paramList.Any() ? 
-                                                $"{paramSetBuilderName}\n\t\t.newBuilder()\n\t\t" +
-                                                    paramList.Select(x => $".with{CommonGenerator.UppercaseFirstLetter(x.Key)}({x.Value})").Aggregate((x, y) => $"{x}\n\t\t{y}") +
-                                                    "\n\t\t.build()"
+                                                $"{paramSetBuilderName}\r\n\t\t.newBuilder()\r\n\t\t" +
+                                                    paramList.Select(x => $".with{CommonGenerator.UppercaseFirstLetter(x.Key)}({x.Value})").Aggregate((x, y) => $"{x}\r\n\t\t{y}") +
+                                                    "\r\n\t\t.build()"
                                                 : string.Empty;
-                        resourcesPath.Append($"\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({paramSetBuilder})");
+                        resourcesPath.Append($"\r\n\t.{CommonGenerator.LowerCaseFirstLetter(operationSegment.Identifier)}({paramSetBuilder})");
                         break;
                     case ReferenceSegment _:
                         resourcesPath.Append(".reference()");
@@ -718,17 +718,17 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
     internal class JavaExpressions : LanguageExpressions
     {
-        public override string ExpandExpression => "\n\t.expand(\"{0}\")";
-        public override string SelectExpression => "\n\t.select(\"{0}\")";
+        public override string ExpandExpression => "\r\n\t.expand(\"{0}\")";
+        public override string SelectExpression => "\r\n\t.select(\"{0}\")";
         public override string SelectExpressionDelimiter => ",";
-        public override string TopExpression => "\n\t.top({0})";
-        public override string FilterExpression => "\n\t.filter(\"{0}\")";
+        public override string TopExpression => "\r\n\t.top({0})";
+        public override string FilterExpression => "\r\n\t.filter(\"{0}\")";
         public override string FilterExpressionDelimiter => ",";
         public override string SearchExpression => string.Empty;
-        public override string SkipExpression => "\n\t.skip({0})";
+        public override string SkipExpression => "\r\n\t.skip({0})";
         public override string HeaderExpression => string.Empty;
-        public override string SkipTokenExpression => "\n\t.skipToken(\"{0}\")";
-        public override string OrderByExpression => "\n\t.orderBy(\"{0}\")";
+        public override string SkipTokenExpression => "\r\n\t.skipToken(\"{0}\")";
+        public override string OrderByExpression => "\r\n\t.orderBy(\"{0}\")";
         public override string OrderByExpressionDelimiter => " ";
         public override string[] ReservedNames => new[] {
             "abstract","assert","boolean","break","byte","case","catch","char",
@@ -740,5 +740,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             "transient","try","void","volatile","while","true","false","null"   };
         public override string ReservedNameEscapeSequence => "_";
         public override string DoubleQuotesEscapeSequence => "\\\"";
+        public override string SingleQuotesEscapeSequence => "'";
     }
 }
