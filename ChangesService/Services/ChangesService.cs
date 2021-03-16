@@ -140,7 +140,7 @@ namespace ChangesService.Services
         /// and paginating the target <see cref="ChangeLog"/> entries.</param>
         /// <returns>The paginated <see cref="ChangeLogRecords"/>.</returns>
         private static ChangeLogRecords PaginateChangeLogRecords(ChangeLogRecords changeLogRecords,
-                                                                  ChangeLogSearchOptions searchOptions)
+                                                                 ChangeLogSearchOptions searchOptions)
         {
             if (!changeLogRecords.ChangeLogs.Any() || searchOptions.PageLimit == null)
             {
