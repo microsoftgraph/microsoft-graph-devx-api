@@ -11,7 +11,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MockTestUtility;
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -53,13 +53,13 @@ namespace ChangesService.Test
             /* Act */
 
             // Fetch en-US changelog records
-            ChangeLogRecords englishChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync("en-US");
+            ChangeLogRecords englishChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
 
             // Fetch es-ES changelog records
-            ChangeLogRecords espanolChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync("es-ES");
+            ChangeLogRecords espanolChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("es"));
 
             // Fetch fr-FR changelog records
-            ChangeLogRecords frenchChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync("fr-FR");
+            ChangeLogRecords frenchChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("fr-CA"));
 
             /* Assert */
 
@@ -85,13 +85,13 @@ namespace ChangesService.Test
             /* Act */
 
             // Fetch en-US changelog records
-            ChangeLogRecords englishChangeLogRecords1 = await _changesStore.FetchChangeLogRecordsAsync("en-US");
+            ChangeLogRecords englishChangeLogRecords1 = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
 
             // Fetch es-ES changelog records
-            ChangeLogRecords englishChangeLogRecords2 = await _changesStore.FetchChangeLogRecordsAsync("en-US");
+            ChangeLogRecords englishChangeLogRecords2 = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en"));
 
             // Fetch fr-FR changelog records
-            ChangeLogRecords englishChangeLogRecords3 = await _changesStore.FetchChangeLogRecordsAsync("en-US");
+            ChangeLogRecords englishChangeLogRecords3 = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-us"));
 
             /* Assert */
 
@@ -119,11 +119,15 @@ namespace ChangesService.Test
             /* Act */
 
             // Fetch default changelog records
-            ChangeLogRecords englishChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(locale);
+            ChangeLogRecords englishChangeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo(locale));
+            ChangeLogRecords englishChangeLogRecords1 = await _changesStore.FetchChangeLogRecordsAsync(null);
 
             // Assert - we have the English translation
             Assert.Equal(525, englishChangeLogRecords.ChangeLogs.Count());
+            Assert.Equal(525, englishChangeLogRecords1.ChangeLogs.Count());
+
             Assert.Equal("Compliance", englishChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
+            Assert.Equal("Compliance", englishChangeLogRecords1.ChangeLogs.FirstOrDefault().WorkloadArea);
         }
     }
 }

@@ -6,6 +6,7 @@ using ChangesService.Common;
 using ChangesService.Interfaces;
 using ChangesService.Models;
 using FileService.Common;
+using FileService.Extensions;
 using FileService.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -44,32 +45,11 @@ namespace ChangesService.Services
         /// <summary>
         /// Fetches <see cref="ChangeLogRecords"/> from a uri source or an in-memory cache.
         /// </summary>
-        /// <param name="locale">The language code for the preferred localized file.</param>
+        /// <param name="cultureInfo">The culture of the localized file to be retrieved.</param>
         /// <returns><see cref="ChangeLogRecords"/> containing entries of <see cref="ChangeLog"/>.</returns>
-        public async Task<ChangeLogRecords> FetchChangeLogRecordsAsync(string locale)
+        public async Task<ChangeLogRecords> FetchChangeLogRecordsAsync(CultureInfo cultureInfo)
         {
-            var englishId = "en-us"; // default locale
-
-            if (string.IsNullOrEmpty(locale))
-            {
-                locale = englishId;
-            }
-
-            // Variants of a CultureInfo should default to the main variant
-            // These are the supported variants.
-            locale = new CultureInfo(locale).TwoLetterISOLanguageName switch
-            {
-                "es" => "es-es",
-                "fr" => "fr-fr",
-                "de" => "de-de",
-                "ja" => "ja-jp",
-                "pt" => "pt-br",
-                "ru" => "ru-ru",
-                "zh" => "zh-cn",
-                _ => englishId,
-            };
-
-            locale = locale.ToLowerInvariant(); // for uniformity when used as cache keys;
+            var locale = cultureInfo.GetSupportedLocaleVariant().ToLower(); // lowercased in line with source files
 
             // Fetch cached changelog records
             ChangeLogRecords changeLogRecords = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>
@@ -92,7 +72,7 @@ namespace ChangesService.Services
                     cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
                     // Construct the locale-specific relative uri
-                    var relativeUrl = string.Format(_changeLogRelativeUrl, locale);
+                    var relativeUrl = string.Format(_changeLogRelativeUrl, lockedLocale);
 
                     // Append to get the absolute uri
                     var requestUri = _configuration[ChangesServiceConstants.ChangelogBaseUrlConfigPath]

@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using ChangesService.Models;
+using System.Globalization;
 using System.Threading.Tasks;
 
 namespace ChangesService.Interfaces
@@ -12,6 +13,6 @@ namespace ChangesService.Interfaces
     /// </summary>
     public interface IChangesStore
     {
-        Task<ChangeLogRecords> FetchChangeLogRecordsAsync(string locale);
+        Task<ChangeLogRecords> FetchChangeLogRecordsAsync(CultureInfo cultureInfo);
     }
 }

@@ -9,8 +9,8 @@ using ChangesService.Common;
 using ChangesService.Interfaces;
 using ChangesService.Models;
 using FileService.Interfaces;
-using GraphWebApi.Common;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
@@ -57,10 +57,12 @@ namespace GraphWebApi.Controllers
                     PageLimit = pageLimit
                 };
 
-                string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
+                // Get the requested culture info.
+                var cultureFeature = HttpContext.Features.Get<IRequestCultureFeature>();
+                var cultureInfo = cultureFeature.RequestCulture.Culture;
 
                 // Fetch the changelog records
-                var changeLog = await _changesStore.FetchChangeLogRecordsAsync(locale);
+                var changeLog = await _changesStore.FetchChangeLogRecordsAsync(cultureInfo);
 
                 // Filter the changelog records
                 if (changeLog.ChangeLogs.Any())
