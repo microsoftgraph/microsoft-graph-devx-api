@@ -4,6 +4,7 @@
 
 using System;
 using System.Globalization;
+using FileService.Extensions;
 
 namespace FileService.Common
 {
@@ -51,34 +52,7 @@ namespace FileService.Common
 
             if (!string.IsNullOrEmpty(localeCode))
             {
-                // This switch statement helps filter for only the supported locale languages
-                switch (localeCode.ToLower(CultureInfo.InvariantCulture))
-                {
-                    case "fr-fr":
-                        localeCode = "fr-FR";
-                        break;
-                    case "es-es":
-                        localeCode = "es-ES";
-                        break;
-                    case "de-de":
-                        localeCode = "de-DE";
-                        break;
-                    case "ja-jp":
-                        localeCode = "ja-JP";
-                        break;
-                    case "pt-br":
-                        localeCode = "pt-BR";
-                        break;
-                    case "ru-ru":
-                        localeCode = "ru-RU";
-                        break;
-                    case "zh-cn":
-                        localeCode = "zh-CN";
-                        break;
-                    default:
-                        localeCode = "en-US";
-                        break;
-                }
+                localeCode = localeCode.GetSupportedLocaleVariant();
 
                 if (defaultBlobName.IndexOf('.') > 0 && localeCode != "en-US")
                 {
@@ -92,6 +66,29 @@ namespace FileService.Common
 
             // File path source format --> directoryName\\fileName
             return $"{containerName}{FileServiceConstants.DirectorySeparator}{defaultBlobName}";
+        }
+
+        /// <summary>
+        /// Gets the locale name of the supported <see cref="CultureInfo"/> variants.
+        /// </summary>
+        /// <param name="cultureInfo">The <see cref="CultureInfo"/> object to retrieve supported variant from.</param>
+        /// <returns>The locale name of the supported <see cref="CultureInfo"/> variant.</returns>
+        public static string GetSupportedLocaleVariant(CultureInfo cultureInfo)
+        {
+            var langName = cultureInfo?.TwoLetterISOLanguageName ?? "en"; // english is the default
+
+            // Supported localized file variants.
+            return langName switch
+            {
+                "es" => "es-es",
+                "fr" => "fr-fr",
+                "de" => "de-de",
+                "ja" => "ja-jp",
+                "pt" => "pt-br",
+                "ru" => "ru-ru",
+                "zh" => "zh-cn",
+                _ => "en-us",
+            };
         }
 
         /// <summary>
