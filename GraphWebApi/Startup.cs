@@ -21,6 +21,9 @@ using Serilog;
 using ChangesService.Services;
 using ChangesService.Interfaces;
 using Microsoft.Extensions.Hosting;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
 
 namespace GraphWebApi
 {
@@ -62,6 +65,24 @@ namespace GraphWebApi
             services.Configure<SamplesAdministrators>(Configuration);
             services.AddControllers().AddNewtonsoftJson();
 
+            // Localization
+            services.Configure<RequestLocalizationOptions>(options =>
+            {
+                var supportedCultures = new[]
+                {
+                    new CultureInfo("en"),
+                    new CultureInfo("de"),
+                    new CultureInfo("fr"),
+                    new CultureInfo("es"),
+                    new CultureInfo("ru"),
+                    new CultureInfo("ja"),
+                    new CultureInfo("pt"),
+                    new CultureInfo("zh")
+                };
+                options.DefaultRequestCulture = new RequestCulture("en");
+                options.SupportedCultures = supportedCultures;
+            });
+
             #region AppInsights
 
             services.AddApplicationInsightsTelemetry(options =>
@@ -96,6 +117,7 @@ namespace GraphWebApi
             {
                 app.UseHsts();
             }
+
             app.UseSerilogRequestLogging();
             app.UseStaticFiles(new StaticFileOptions
             {
@@ -105,6 +127,11 @@ namespace GraphWebApi
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseRouting();
+
+            // Localization
+            var localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value;
+            app.UseRequestLocalization(localizationOptions);
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
