@@ -142,54 +142,50 @@ namespace ChangesService.Services
         private static ChangeLogRecords PaginateChangeLogRecords(ChangeLogRecords changeLogRecords,
                                                                  ChangeLogSearchOptions searchOptions)
         {
-            if (!changeLogRecords.ChangeLogs.Any() || searchOptions.PageLimit == null)
+            if (changeLogRecords.ChangeLogs.Any() && searchOptions.PageLimit != null)
             {
-                return changeLogRecords;
+                IEnumerable<ChangeLog> enumerableChangeLogs;
+                changeLogRecords.PageLimit = searchOptions.PageLimit;
+
+                if (searchOptions.Page == 1 || changeLogRecords.TotalPages == 1)
+                {
+                    /* The first page of several pages or
+                     * the first page of only one page
+                     */
+
+                    changeLogRecords.Page = 1;
+                    enumerableChangeLogs = changeLogRecords.ChangeLogs
+                                                            .Take(searchOptions.PageLimit.Value);
+                }
+                else if (searchOptions.Page < changeLogRecords.TotalPages)
+                {
+                    // Any of the pages between first page and last page
+
+                    changeLogRecords.Page = searchOptions.Page;
+
+                    // Skip the previous' pages data
+                    int skipItems = (searchOptions.Page - 1) * searchOptions.PageLimit.Value;
+                    enumerableChangeLogs = changeLogRecords.ChangeLogs
+                                                            .Skip(skipItems)
+                                                            .Take(searchOptions.PageLimit.Value);
+                }
+                else
+                {
+                    /* The last page or any page specified
+                     * greater than the total page count.
+                     */
+
+                    changeLogRecords.Page = changeLogRecords.TotalPages;
+
+                    int lastItems = changeLogRecords.ChangeLogs.Count() % searchOptions.PageLimit.Value;
+                    enumerableChangeLogs = changeLogRecords.ChangeLogs
+                                                            .TakeLast(lastItems);
+                }
+
+                changeLogRecords.ChangeLogs = enumerableChangeLogs.ToList();
             }
 
-            IEnumerable<ChangeLog> enumerableChangeLogs;
-            changeLogRecords.PageLimit = searchOptions.PageLimit;
-
-            if (searchOptions.Page == 1 || changeLogRecords.TotalPages == 1)
-            {
-                /* The first page of several pages or
-                 * the first page of only one page
-                 */
-
-                changeLogRecords.Page = 1;
-                enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                        .Take(searchOptions.PageLimit.Value);
-            }
-            else if (searchOptions.Page < changeLogRecords.TotalPages)
-            {
-                // Any of the pages between first page and last page
-
-                changeLogRecords.Page = searchOptions.Page;
-
-                // Skip the previous' pages data
-                int skipItems = (searchOptions.Page - 1) * searchOptions.PageLimit.Value;
-                enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                        .Skip(skipItems)
-                                                        .Take(searchOptions.PageLimit.Value);
-            }
-            else
-            {
-                /* The last page or any page specified
-                 * greater than the total page count.
-                 */
-
-                changeLogRecords.Page = changeLogRecords.TotalPages;
-
-                int lastItems = changeLogRecords.ChangeLogs.Count() % searchOptions.PageLimit.Value;
-                enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                        .TakeLast(lastItems);
-            }
-
-            // Return paginated result
-            return new ChangeLogRecords
-            {
-                ChangeLogs = enumerableChangeLogs.ToList()
-            };
+            return changeLogRecords;
         }
 
         /// <summary>
