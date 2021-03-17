@@ -40,38 +40,24 @@ namespace ChangesService.Models
         public int TotalItems { get; private set; }
 
         /// <summary>
-        /// The maximum number of items in a page.
+        /// The total page count.
         /// </summary>
-        public new int? PageLimit
+        public new int TotalPages
         {
             get
             {
-                return base.PageLimit;
-            }
-            set
-            {
-                base.PageLimit = value;
-
-                // Update the total pages to reflect
-                // new PageLimit count
-                UpdateTotalPages();
-            }
-        }
-
-        /// <summary>
-        /// Updates the TotalPages property.
-        /// </summary>
-        private void UpdateTotalPages()
-        {
-            if (TotalItems > 0 && PageLimit.HasValue)
-            {
-                int extraPage = 0;
-                if (TotalItems % PageLimit > 0)
+                if (TotalItems > 0 && PageLimit.HasValue)
                 {
-                    extraPage++;
+                    int extraPage = 0;
+                    if (TotalItems % PageLimit > 0)
+                    {
+                        extraPage++;
+                    }
+
+                    return (TotalItems / PageLimit.Value) + extraPage;
                 }
 
-                TotalPages = (TotalItems / PageLimit.Value) + extraPage;
+                return 1;
             }
         }
 

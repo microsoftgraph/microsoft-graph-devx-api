@@ -36,7 +36,7 @@ namespace ChangesService.Models
         /// <summary>
         /// The total page count.
         /// </summary>
-        public int TotalPages { get; protected set; } = 1;
+        public int TotalPages { get; } = 1;
 
         /// <summary>
         /// The maximum number of items in a page.
