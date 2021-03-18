@@ -41,7 +41,7 @@ namespace FileService.Extensions
         /// <returns>The locale name of the supported <see cref="CultureInfo"/> variant. The default locale is en-US.</returns>
         public static string GetSupportedLocaleVariant(this string cultureInfoName)
         {
-            var langName = new CultureInfo(cultureInfoName).TwoLetterISOLanguageName ?? "en"; // english is the default
+            return new CultureInfo(cultureInfoName).GetSupportedLocaleVariant();
 
             // Supported localized file variants.
             return langName switch
