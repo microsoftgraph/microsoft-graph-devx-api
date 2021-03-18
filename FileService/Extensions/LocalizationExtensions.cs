@@ -42,19 +42,6 @@ namespace FileService.Extensions
         public static string GetSupportedLocaleVariant(this string cultureInfoName)
         {
             return new CultureInfo(cultureInfoName).GetSupportedLocaleVariant();
-
-            // Supported localized file variants.
-            return langName switch
-            {
-                "es" => "es-ES",
-                "fr" => "fr-FR",
-                "de" => "de-DE",
-                "ja" => "ja-JP",
-                "pt" => "pt-BR",
-                "ru" => "ru-RU",
-                "zh" => "zh-CN",
-                _ => "en-US",
-            };
         }
     }
 }

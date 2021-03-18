@@ -69,29 +69,6 @@ namespace FileService.Common
         }
 
         /// <summary>
-        /// Gets the locale name of the supported <see cref="CultureInfo"/> variants.
-        /// </summary>
-        /// <param name="cultureInfo">The <see cref="CultureInfo"/> object to retrieve supported variant from.</param>
-        /// <returns>The locale name of the supported <see cref="CultureInfo"/> variant.</returns>
-        public static string GetSupportedLocaleVariant(CultureInfo cultureInfo)
-        {
-            var langName = cultureInfo?.TwoLetterISOLanguageName ?? "en"; // english is the default
-
-            // Supported localized file variants.
-            return langName switch
-            {
-                "es" => "es-es",
-                "fr" => "fr-fr",
-                "de" => "de-de",
-                "ja" => "ja-jp",
-                "pt" => "pt-br",
-                "ru" => "ru-ru",
-                "zh" => "zh-cn",
-                _ => "en-us",
-            };
-        }
-
-        /// <summary>
         /// Check whether the input string is null or empty.
         /// </summary>
         /// <param name="value">The input string.</param>
