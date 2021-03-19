@@ -2,17 +2,17 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-namespace GraphWebApi.Common
-{
-    internal static class Constants
-    {
-        public const string DefaultLocale = "en-US"; // default locale language
+using ChangesService.Models;
+using System.Globalization;
+using System.Threading.Tasks;
 
-        internal static class ClaimTypes
-        {
-            // User Principal Name
-            public const string UpnJwt = "preferred_username";
-            public const string UpnUriSchema = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn";            
-        }
+namespace ChangesService.Interfaces
+{
+    /// <summary>
+    /// A contract for fetching changelog data.
+    /// </summary>
+    public interface IChangesStore
+    {
+        Task<ChangeLogRecords> FetchChangeLogRecordsAsync(CultureInfo cultureInfo);
     }
 }
