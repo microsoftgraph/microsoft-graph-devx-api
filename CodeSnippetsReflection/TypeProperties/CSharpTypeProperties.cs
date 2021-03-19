@@ -1,5 +1,6 @@
 ﻿using CodeSnippetsReflection.LanguageGenerators;
 using Microsoft.OData.Edm;
+using System;
 using System.Linq;
 using System.Text;
 
@@ -32,20 +33,8 @@ namespace CodeSnippetsReflection.TypeProperties
                 if (namespaceString.Equals(DefaultNamespace) || namespaceString == "Edm") 
                     return className;
 
-                // Otherwise modify the classname by concatenating with the Namespace prefix.
-                // Join any parts by uppercase first letter and dots.
-                var segments = namespaceString.Split(".");
-                var stringBuilder = new StringBuilder();
-                foreach (var segment in segments)
-                {
-                    // prepend the uppercase of each segment and form the classname
-                    var uppercaseSegment = CommonGenerator.UppercaseFirstLetter(segment);
-                    stringBuilder.Append("." + uppercaseSegment);
-                }
-                // append the classname
-                stringBuilder.Append("." + className);
-                // remove starting dot
-                return stringBuilder.ToString().Substring(1);
+                // Otherwise use fully qualified name
+                return GetFullyQualifiedName($"{namespaceString}.{className}");
             }
         }
 
@@ -74,6 +63,20 @@ namespace CodeSnippetsReflection.TypeProperties
         {
             EdmType = edmType;
             IsNavigationProperty = isNavigationProperty;
+        }
+
+        /// <summary>
+        /// converts fully qualified name from OData metadata to .NET SDK fully qualified name
+        /// </summary>
+        /// <param name="metadataTypeName">metadata fully qualified type name, e.g.:  microsoft.graph.ediscovery.legalHold</param>
+        /// <returns>.NET SDK fully qualified name, e.g. Microsoft.Graph.Ediscovery.LegalHold</returns>
+        public static string GetFullyQualifiedName(string metadataTypeName)
+        {
+            return metadataTypeName switch
+            {
+                null => throw new ArgumentNullException(nameof(metadataTypeName)),
+                _ => string.Join(".", metadataTypeName.Split(".").Select(CommonGenerator.UppercaseFirstLetter))
+            };
         }
     }
 }

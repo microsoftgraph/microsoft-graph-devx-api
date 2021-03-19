@@ -1130,6 +1130,40 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
+        public void GeneratesSnippetsInOtherNamespaceWhenTypeIsSpecifiedInRequestBody()
+        {
+            // Arrange
+            LanguageExpressions expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/beta/compliance/ediscovery/cases/{caseId}/legalHolds");
+            const string jsonObject = @"
+                {
+                  ""@odata.type"": ""#microsoft.graph.ediscovery.legalHold"",
+                  ""description"": ""String"",
+                  ""createdBy"": {
+                                ""@odata.type"": ""microsoft.graph.identitySet""
+                  },
+                  ""isEnabled"": ""Boolean"",
+                  ""status"": ""String"",
+                  ""contentQuery"": ""String"",
+                  ""errors"": [
+                    ""String""
+                  ],
+                  ""displayName"": ""String""
+                }";
+            requestPayload.Content = new StringContent(jsonObject);
+            string betaServiceUrl = "https://graph.microsoft.com/beta";
+            IEdmModel betaIeEdmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanBetaMetadata));
+            var snippetModel = new SnippetModel(requestPayload, betaServiceUrl, betaIeEdmModel);
+
+            // Act by generating the code snippet
+            var result = new CSharpGenerator(betaIeEdmModel).GenerateCodeSnippet(snippetModel, expressions);
+
+            // Assert the snippet generated with fully qualified name
+            Assert.Contains("new Microsoft.Graph.Ediscovery.LegalHold", result);
+            Assert.DoesNotContain("new LegalHold", result);
+        }
+
+        [Fact]
         public void CreatesPlaceHolderIDForCommandLineCaller()
         {
             const bool isCommandLine = true; // Command line caller (e.g. generation pipeline for the docs)

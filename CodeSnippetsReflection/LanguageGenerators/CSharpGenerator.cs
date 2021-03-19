@@ -651,7 +651,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
 
                 case "@odata.type":
-                    var proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
+                    string proposedType;
+                    if (value.Substring(0, value.LastIndexOf(".")) == "#microsoft.graph")
+                    {
+                        // type from default namespace
+                        proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
+                    }
+                    else
+                    {
+                        // type from a subnamespace e.g. #microsoft.graph.ediscovery.legalHold
+                        proposedType = CSharpTypeProperties.GetFullyQualifiedName(value[1..]); // remove # and uppercase first letters
+                    }
+
                     proposedType = proposedType.EndsWith("Request") ? proposedType + "Object" : proposedType; // disambiguate class names that end with Request
                     //check if the odata type specified is different
                     // maybe due to the declaration of a subclass of the type specified from the url.
