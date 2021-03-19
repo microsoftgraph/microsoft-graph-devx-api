@@ -651,6 +651,13 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
 
                 case "@odata.type":
+                    if (!value.ToLowerInvariant().Contains("microsoft.graph."))
+                    {
+                        // if non-graph type is specified, do not override the value that was acquired from url
+                        // non-graph @odata.type example: Microsoft.Teams.GraphSvc.AadUserNotificationRecipient
+                        break;
+                    }
+
                     string proposedType;
                     var @namespace = value
                         .Substring(0, value.LastIndexOf("."))
