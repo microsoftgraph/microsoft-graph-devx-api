@@ -1108,10 +1108,10 @@ namespace CodeSnippetsReflection.Test
                                       "  \"description\": \"mySet\",\r\n" +
                                       "}";
             requestPayload.Content = new StringContent(jsonObject);
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta);
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
             
             //Act by generating the code snippet
-            var result = new CSharpGenerator(betaIeEdmModel).GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
             const string expectedSnippet = "var set = new Microsoft.Graph.TermStore.Set\r\n" +
@@ -1152,7 +1152,7 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
 
             // Act by generating the code snippet
-            var result = new CSharpGenerator(betaIeEdmModel).GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
 
             // Assert the snippet generated with fully qualified name
             Assert.Contains("new Microsoft.Graph.Ediscovery.LegalHold", result);
