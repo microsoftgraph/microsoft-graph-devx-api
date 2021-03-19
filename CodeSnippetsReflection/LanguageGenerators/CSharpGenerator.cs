@@ -652,15 +652,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
                 case "@odata.type":
                     string proposedType;
-                    if (value.Substring(0, value.LastIndexOf(".")) == "#microsoft.graph")
+                    var @namespace = value
+                        .Substring(0, value.LastIndexOf("."))
+                        .Replace("#", string.Empty); // fully qualified name of the type may or may not have a leading #
+                    if (@namespace == "microsoft.graph")
                     {
                         // type from default namespace
                         proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
                     }
                     else
                     {
-                        // type from a subnamespace e.g. #microsoft.graph.ediscovery.legalHold
-                        proposedType = CSharpTypeProperties.GetFullyQualifiedName(value[1..]); // remove # and uppercase first letters
+                        // type from a subnamespace e.g. microsoft.graph.ediscovery.legalHold
+                        proposedType = CSharpTypeProperties.GetFullyQualifiedName(value.Replace("#", ""));
                     }
 
                     proposedType = proposedType.EndsWith("Request") ? proposedType + "Object" : proposedType; // disambiguate class names that end with Request
