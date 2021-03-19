@@ -1108,9 +1108,7 @@ namespace CodeSnippetsReflection.Test
                                       "  \"description\": \"mySet\",\r\n" +
                                       "}";
             requestPayload.Content = new StringContent(jsonObject);
-            string betaServiceUrl = "https://graph.microsoft.com/beta";
-            IEdmModel betaIeEdmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanBetaMetadata));
-            var snippetModel = new SnippetModel(requestPayload, betaServiceUrl, betaIeEdmModel);
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta);
             
             //Act by generating the code snippet
             var result = new CSharpGenerator(betaIeEdmModel).GenerateCodeSnippet(snippetModel, expressions);
@@ -1151,9 +1149,7 @@ namespace CodeSnippetsReflection.Test
                   ""displayName"": ""String""
                 }";
             requestPayload.Content = new StringContent(jsonObject);
-            string betaServiceUrl = "https://graph.microsoft.com/beta";
-            IEdmModel betaIeEdmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanBetaMetadata));
-            var snippetModel = new SnippetModel(requestPayload, betaServiceUrl, betaIeEdmModel);
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
 
             // Act by generating the code snippet
             var result = new CSharpGenerator(betaIeEdmModel).GenerateCodeSnippet(snippetModel, expressions);
