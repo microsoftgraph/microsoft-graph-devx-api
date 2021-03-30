@@ -6,6 +6,8 @@ namespace GraphWebApi.Common
 {
     internal static class Constants
     {
+        public const string DefaultLocale = "en-US"; // default locale language
+
         internal static class ClaimTypes
         {
             // User Principal Name
