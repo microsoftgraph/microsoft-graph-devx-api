@@ -20,6 +20,7 @@ namespace GraphWebApi.Controllers
     /// <summary>
     /// Controller that enables querying over an OpenAPI document
     /// </summary>
+    [ApiController]
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;

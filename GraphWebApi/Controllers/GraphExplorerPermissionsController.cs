@@ -36,7 +36,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request);
+                string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
 
                 List<ScopeInformation> result = null;
 

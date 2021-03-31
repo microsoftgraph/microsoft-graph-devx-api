@@ -38,7 +38,7 @@ namespace GraphExplorerPermissionsService
         private static bool _permissionsRefreshed = false;
         private const string Delegated = "Delegated";
         private const string Application = "Application";
-        private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInHours";
+        private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInHours:Permissions";
         private const string ScopesInfoBlobConfig = "BlobStorage:Blobs:Permissions:Descriptions";
         private const string PermissionsNamesBlobConfig = "BlobStorage:Blobs:Permissions:Names";
         private const string PermissionsContainerBlobConfig = "BlobStorage:Containers:Permissions";
@@ -193,7 +193,7 @@ namespace GraphExplorerPermissionsService
             // Construct the http request message
             using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, sourceUri);
 
-            return await _httpClientUtility.ReadFromDocument(httpRequestMessage);
+            return await _httpClientUtility.ReadFromDocumentAsync(httpRequestMessage);
         }
 
         /// <summary>
