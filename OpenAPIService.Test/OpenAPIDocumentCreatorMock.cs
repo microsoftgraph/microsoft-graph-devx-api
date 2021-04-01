@@ -418,11 +418,98 @@ namespace OpenAPIService.Test
                                 }
                             }
                         }
+                    },
+                    ["/security/hostSecurityProfiles"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        {
+                                            new OpenApiTag()
+                                            {
+                                                Name = "security.hostSecurityProfile"
+                                            }
+                                        }
+                                    },
+                                    OperationId = "security.ListHostSecurityProfiles",
+                                    Summary = "Get hostSecurityProfiles from security",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200", new OpenApiResponse()
+                                            {
+                                                Description = "Retrieved navigation property",
+                                                Content = new Dictionary<string, OpenApiMediaType>
+                                                {
+                                                    {
+                                                        applicationJsonMediaType,
+                                                        new OpenApiMediaType
+                                                        {
+                                                            Schema = new OpenApiSchema
+                                                            {
+                                                                Title = "Collection of hostSecurityProfile",
+                                                                Type = "object",
+                                                                Properties = new Dictionary<string, OpenApiSchema>
+                                                                {
+                                                                    {
+                                                                        "value",
+                                                                        new OpenApiSchema
+                                                                        {
+                                                                            Type = "array",
+                                                                            Items = new OpenApiSchema
+                                                                            {
+                                                                                Reference = new OpenApiReference
+                                                                                {
+                                                                                    Type = ReferenceType.Schema,
+                                                                                    Id = "microsoft.graph.networkInterface"
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                Components = new OpenApiComponents
+                {
+                    Schemas = new Dictionary<string, OpenApiSchema>
+                    {
+                        {
+                            "microsoft.graph.networkInterface", new OpenApiSchema
+                            {
+                                Title = "networkInterface",
+                                Type = "object",
+                                Properties = new Dictionary<string, OpenApiSchema>
+                                {
+                                    {
+                                        "description", new OpenApiSchema
+                                        {
+                                            Type = "string",
+                                            Description = "Description of the NIC (e.g. Ethernet adapter, Wireless LAN adapter Local Area Connection <#>, etc.).",
+                                            Nullable = true
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             };
 
-            return document;
+            return OpenApiService.FixReferences(document);
         }
     }
 }
