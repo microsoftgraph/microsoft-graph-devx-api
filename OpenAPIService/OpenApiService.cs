@@ -334,6 +334,10 @@ namespace OpenAPIService
 
                     // Remove the root path to make AutoREST happy
                     subsetOpenApiDocument.Paths.Remove("/");
+
+                    // Temp. fix - Escape the # character from description in
+                    // 'microsoft.graph.networkInterface' schema
+                    EscapePoundCharacter(subsetOpenApiDocument.Components);
                 }
             }
 
@@ -398,7 +402,7 @@ namespace OpenAPIService
             return document;
         }
 
-        private static OpenApiDocument FixReferences(OpenApiDocument document)
+        public static OpenApiDocument FixReferences(OpenApiDocument document)
         {
             // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
             // So we write it out, and read it back in again to fix it up.
@@ -528,6 +532,27 @@ namespace OpenAPIService
                 return output;
             }
             return Regex.Replace(pathKey, pattern, evaluator);
+        }
+
+        /// <summary>
+        /// Escapes the # character from the description of the 'microsoft.graph.networkInterface' schema.
+        /// </summary>
+        /// <remarks>
+        /// This particular schema has a '#' character within the description of one of
+        /// its schema definitions that breaks the PowerShell client code gen.
+        /// Below is a temporary fix awaiting a permanent solution from AutoRest
+        /// </remarks>
+        /// <param name="components">The <see cref="OpenApiComponents"/> object with the target schema.</param>
+        private static void EscapePoundCharacter(OpenApiComponents components)
+        {
+            if (components.Schemas.TryGetValue("microsoft.graph.networkInterface", out OpenApiSchema parentSchema))
+            {
+                if (parentSchema.Properties.TryGetValue("description", out OpenApiSchema descriptionSchema))
+                {
+                    // PowerShell uses ` to escape special characters
+                    descriptionSchema.Description = descriptionSchema.Description.Replace("#", "`#");
+                }
+            }
         }
     }
 }
