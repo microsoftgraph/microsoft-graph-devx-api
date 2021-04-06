@@ -19,9 +19,7 @@ using GraphExplorerSamplesService.Services;
 using Serilog;
 using Microsoft.Extensions.Hosting;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
-using Microsoft.ApplicationInsights.Extensibility;
 using GraphWebApi.Telemetry;
-using GraphWebApi.Telemetry.Interfaces;
 
 namespace GraphWebApi
 {
@@ -58,7 +56,6 @@ namespace GraphWebApi
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
-            services.AddSingleton<ITelemetryHelper, TelemetryHelper>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
             services.Configure<SamplesAdministrators>(Configuration);
             services.AddControllers().AddNewtonsoftJson();
@@ -76,7 +73,6 @@ namespace GraphWebApi
                 options.EnableQuickPulseMetricStream = true;   // Enable QuickPulse (Live Metrics stream)
                 options.EnableDebugLogger = true;
             });
-
             services.AddApplicationInsightsTelemetryProcessor<TelemetryProcessor>();
 
             if (!_env.IsDevelopment())
