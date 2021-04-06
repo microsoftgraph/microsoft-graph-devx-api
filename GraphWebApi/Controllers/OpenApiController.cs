@@ -3,7 +3,6 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using GraphWebApi.Models;
-using GraphWebApi.Telemetry.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -12,7 +11,6 @@ using Microsoft.OpenApi.Services;
 using OpenAPIService;
 using OpenAPIService.Common;
 using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -25,12 +23,10 @@ namespace GraphWebApi.Controllers
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly ITelemetryHelper _telemetryHelper;
 
-        public OpenApiController(IConfiguration configuration, ITelemetryHelper telemetryHelper)
+        public OpenApiController(IConfiguration configuration)
         {
             _configuration = configuration;
-            _telemetryHelper = telemetryHelper;
         }
 
         [Route("openapi")]
@@ -47,8 +43,6 @@ namespace GraphWebApi.Controllers
                                     [FromQuery]string graphVersion = null,
                                     [FromQuery]bool forceRefresh = false)
         {
-            Stopwatch stopwatch = _telemetryHelper.BeginRequest();
-
             try
             {
                 OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
@@ -91,13 +85,6 @@ namespace GraphWebApi.Controllers
             {
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
-            finally
-            {
-                var eventName = "GET_OPENAPI_EVENT";
-
-                // send the event to AppInsights
-                _telemetryHelper.EndRequest(stopwatch, HttpContext, eventName);
-            }
         }
 
         [Route("openapi")]
@@ -113,8 +100,6 @@ namespace GraphWebApi.Controllers
                             [FromQuery] string graphVersion = null,
                             [FromQuery] bool forceRefresh = false)
         {
-            Stopwatch stopwatch = _telemetryHelper.BeginRequest();
-
             try
             {
                 OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
@@ -157,13 +142,6 @@ namespace GraphWebApi.Controllers
             {
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
-            finally
-            {
-                var eventName = "POST_OPENAPI_EVENT";
-
-                // send the event to AppInsights
-                _telemetryHelper.EndRequest(stopwatch, HttpContext, eventName);
-            }
         }
 
         [Route("openapi/operations")]
@@ -174,8 +152,6 @@ namespace GraphWebApi.Controllers
                                              [FromQuery]string format = null,
                                              [FromQuery]bool forceRefresh = false)
         {
-            Stopwatch stopwatch = _telemetryHelper.BeginRequest();
-
             try
             {
                 OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
@@ -204,13 +180,6 @@ namespace GraphWebApi.Controllers
             catch (Exception ex)
             {
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
-            }
-            finally
-            {
-                var eventName = "GET_OPENAPI_OPERATIONS_EVENT";
-
-                // send the event to AppInsights
-                _telemetryHelper.EndRequest(stopwatch, HttpContext, eventName);
             }
         }
 
