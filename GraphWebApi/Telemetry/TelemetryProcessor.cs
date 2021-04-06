@@ -50,7 +50,11 @@ namespace GraphWebApi.Telemetry
                 }
                 else if(_emailRegex.IsMatch(request.Url.AbsoluteUri))
                 {
-                    request.Url = new Uri(_emailRegex.Replace(request.Url.ToString(), "{customerID}"));
+                    request.Url = new Uri(_emailRegex.Replace(request.Url.ToString(), "{redacted-email}"));
+                }
+                else if (_username.IsMatch(request.Url.AbsoluteUri))
+                {
+                    request.Url = new Uri(_username.Replace(request.Url.ToString(), "{username}"));
                 }
             }
 
