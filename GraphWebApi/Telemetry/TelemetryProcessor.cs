@@ -34,10 +34,22 @@ namespace GraphWebApi.Telemetry
             var request = item as RequestTelemetry;
             if (request != null)
             {
-                // Regex-replace anythign that looks like a GUID
-                request.Name = _guidRegex.Replace(request.Name, "*****");
-                request.Url = new Uri(_guidRegex.Replace(request.Url.ToString(), "*****"));
+                var builder = new UriBuilder(request.Url);
+                request.Url = builder.Uri;
+
+                // Regex-replace anything that looks like a GUID or email
+                request.Name = _guidRegex.Replace(request.Name, "{customerID}");
+
+                if (_guidRegex.IsMatch(request.Url.AbsoluteUri))
+                {
+                    request.Url = new Uri(_guidRegex.Replace(request.Url.ToString(), "{customerID}"));
+                }
+                else if(_emailRegex.IsMatch(request.Url.AbsoluteUri))
+                {
+                    request.Url = new Uri(_emailRegex.Replace(request.Url.ToString(), "{customerID}"));
+                }
             }
+
             _next.Process(item);
         }
     }
