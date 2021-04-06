@@ -15,6 +15,8 @@ namespace GraphWebApi.Telemetry
     /// </summary>
     public class TelemetryProcessor : ITelemetryProcessor
     {
+        private readonly ITelemetryProcessor _next;
+
         private static Regex _guidRegex = new Regex(@"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -22,21 +24,23 @@ namespace GraphWebApi.Telemetry
         private static Regex _emailRegex = new Regex(@"([a-zA-Z0-9_\.-]+)@([\da-zA-Z\.-]+)\.([a-zA-Z\.]{2,6})",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private readonly ITelemetryProcessor _next;
+        // Matches usernames with firstname or lastname labels
+        private static Regex _username = new Regex("(fn|ln|lastname|firstname|name|fullname)");
 
         public TelemetryProcessor(ITelemetryProcessor next)
         {
             _next = next;
         }
 
+        /// <summary>
+        /// Filters request data and calls the next ITelemetryProcessor in the chain
+        /// </summary>
+        /// <param name="item"></param>
         public void Process(ITelemetry item)
         {
             var request = item as RequestTelemetry;
             if (request != null)
             {
-                var builder = new UriBuilder(request.Url);
-                request.Url = builder.Uri;
-
                 // Regex-replace anything that looks like a GUID or email
                 request.Name = _guidRegex.Replace(request.Name, "{customerID}");
 
