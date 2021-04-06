@@ -287,7 +287,7 @@ namespace OpenAPIService.Test
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
-            var expectedDescription = "Description of the NIC (e.g. Ethernet adapter, Wireless LAN adapter Local Area Connection <`#>, etc.).";
+            var expectedDescription = "Description of the NIC (e.g. Ethernet adapter, Wireless LAN adapter Local Area Connection <#/>, etc.).";
 
             // Act
             var predicate = OpenApiService.CreatePredicate(operationIds: null, tags: null, url: "/security/hostSecurityProfiles", source: source)
