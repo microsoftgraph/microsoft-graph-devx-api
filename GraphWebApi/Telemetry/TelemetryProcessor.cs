@@ -15,9 +15,12 @@ namespace GraphWebApi.Telemetry
     /// </summary>
     public class TelemetryProcessor : ITelemetryProcessor
     {
-        private static Regex _guidRegex = new Regex(
-           @"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
-           RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static Regex _guidRegex = new Regex(@"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        // Matches patterns like users('MeganB@M365x214355.onmicrosoft.com')
+        private static Regex _emailRegex = new Regex(@"([a-zA-Z0-9_\.-]+)@([\da-zA-Z\.-]+)\.([a-zA-Z\.]{2,6})",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private readonly ITelemetryProcessor _next;
 
