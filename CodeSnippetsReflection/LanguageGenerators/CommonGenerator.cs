@@ -422,7 +422,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case ConvertNode convertNode when convertNode.Source is ConstantNode cNode:
                     return $"\"{cNode.Value}\"";
                 case ConstantNode constantNode when constantNode.TypeReference.Definition.TypeKind == EdmTypeKind.Enum && returnEnumTypeIfEnum:
-                    return $"{parameter.Name}{constantNode.LiteralText}";
+                    return $"{constantNode.TypeReference.Definition.FullTypeName()}{constantNode.LiteralText}";
                 case ConstantNode constantNode:
                     return constantNode.LiteralText;
                 default:
