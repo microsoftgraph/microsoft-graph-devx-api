@@ -17,9 +17,14 @@ using FileService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Services;
 using Serilog;
+using ChangesService.Services;
+using ChangesService.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using GraphWebApi.Telemetry;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
 
 namespace GraphWebApi
 {
@@ -56,9 +61,28 @@ namespace GraphWebApi
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
+            services.AddSingleton<IChangesStore, ChangesStore>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
-            services.Configure<SamplesAdministrators>(Configuration);
             services.AddControllers().AddNewtonsoftJson();
+            services.Configure<SamplesAdministrators>(Configuration);
+
+            // Localization
+            services.Configure<RequestLocalizationOptions>(options =>
+            {
+                var supportedCultures = new[]
+                {
+                    new CultureInfo("en"),
+                    new CultureInfo("de"),
+                    new CultureInfo("fr"),
+                    new CultureInfo("es"),
+                    new CultureInfo("ru"),
+                    new CultureInfo("ja"),
+                    new CultureInfo("pt"),
+                    new CultureInfo("zh")
+                };
+                options.DefaultRequestCulture = new RequestCulture("en");
+                options.SupportedCultures = supportedCultures;
+            });
 
             #region AppInsights
 
@@ -106,6 +130,11 @@ namespace GraphWebApi
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseRouting();
+
+            // Localization
+            var localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value;
+            app.UseRequestLocalization(localizationOptions);
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(

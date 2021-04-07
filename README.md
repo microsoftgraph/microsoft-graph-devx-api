@@ -1,8 +1,8 @@
-# microsoft-graph-explorer-api
+# microsoft-graph-devx-api
 
-## Graph Explorer API Endpoints
+## Graph DevX API Endpoints
 
-The Graph Explorer API is a RESTful API that exposes resources that are used by Microsoft Graph docs, Graph Explorer, Graph samples workload teams and are managed by the Graph PM team. Below is a brief description of each of the various endpoints under the Graph Explorer API.
+The Graph DevX API is a RESTful API that exposes resources that are used by Microsoft Graph docs, Graph Explorer, Graph samples workload teams and are managed by the Graph PM team. Below is a brief description of each of the various endpoints under the Graph Explorer API.
 
 ### 1. Snippet Generator
 This endpoint provides a means of getting a code snippet on how to perform a certain action on Microsoft Graph.

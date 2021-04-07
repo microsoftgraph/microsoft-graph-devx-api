@@ -40,7 +40,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             foreach (var (key, value) in snippetModel.RequestHeaders)
             {
                 //no need to generate source for the host header
-                if (key.ToLower().Equals("host",StringComparison.Ordinal))
+                if (key.ToLower().Equals("host", StringComparison.Ordinal))
                     continue;
                 //append the header to the snippet
                 var valueString = value.First()
@@ -159,7 +159,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case OperationSegment operationSegment:
                     foreach (var parameters in operationSegment.Operations.First().Parameters)
                     {
-                        if (!parameters.Name.Equals(path.FirstOrDefault(),StringComparison.OrdinalIgnoreCase))
+                        if (!parameters.Name.Equals(path.FirstOrDefault(), StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         (type, isNavigationProperty) = SearchForEdmType(parameters.Type.Definition, path);
@@ -214,7 +214,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 foreach (var property in structuredType.DeclaredProperties)
                 {
-                    if (property.Name.Equals(searchIdentifier,StringComparison.OrdinalIgnoreCase))
+                    if (property.Name.Equals(searchIdentifier, StringComparison.OrdinalIgnoreCase))
                     {
                         elementDefinition = GetEdmElementType(property.Type.Definition);
 
@@ -275,7 +275,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="variableName">variable name to check for uniqueness</param>
         /// <param name="languageExpressions">Language expressions that holds list of reserved words for filtering</param>
         /// <returns>Modified variable name that is not a keyword</returns>
-        public static string EnsureVariableNameIsNotReserved(string variableName , LanguageExpressions languageExpressions)
+        public static string EnsureVariableNameIsNotReserved(string variableName, LanguageExpressions languageExpressions)
         {
             if (languageExpressions.ReservedNames.Contains(variableName))
             {
@@ -316,7 +316,43 @@ namespace CodeSnippetsReflection.LanguageGenerators
             a[0] = char.ToLower(a[0]);
             return new string(a);
         }
+        /// <summary>
+        /// This is a language agnostic function that looks at a operationSegment and returns a list of parameters with their names and values needed by the operation.
+        /// If the method is a post, the parameters are sought for in the request body. Otherwise they are sort for in the request url
+        /// </summary>
+        /// <param name="operationSegment">OData OperationSegment representing a Function or action</param>
+        /// <param name="snippetModel">Snippet Model to obtain useful data from</param>
+        /// <param name="collectionSuffix">Suffix to be added to elements that are proved to be members collections</param>
+        /// <returns></returns>
+        public static IEnumerable<KeyValuePair<string, string>> GetParameterListFromOperationSegmentWithNames(OperationSegment operationSegment, SnippetModel snippetModel, bool returnEnumTypeIfEnum, string collectionSuffix = "")
+        {
+            var parametersProvided = new List<string>();
+            if (!string.IsNullOrEmpty(snippetModel.RequestBody)
+                && JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
+            {
+                foreach (var (key, _) in testObj)
+                {
+                    parametersProvided.Add(key);
+                }
+            }
 
+
+            if (snippetModel.Method == HttpMethod.Post)
+            {
+                //use the order from the metadata
+                var parameters = operationSegment
+                    .Operations
+                    .First()
+                    .Parameters
+                    .Skip(1) // the first parameter is always the binding one
+                    .ToList();
+                return AddValidParameterItemsFromIEdmOperationParameterList(new List<string>(), parameters, parametersProvided, collectionSuffix)
+                .Select((x, idx) => new KeyValuePair<string, string>(parameters[idx].Name, x));
+            }
+            else
+                return operationSegment.Parameters.Select(x => new KeyValuePair<string, string>(x.Name, GetParameterValueFromOperationUrlSegement(x, returnEnumTypeIfEnum)));
+
+        }
         /// <summary>
         /// This is a language agnostic function that looks at a operationSegment and returns a list of parameters needed by the operation.
         /// If the method is a post, the parameters are sought for in the request body. Otherwise they are sort for in the request url
@@ -326,7 +362,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="collectionSuffix">Suffix to be added to elements that are proved to be members collections</param>
         /// <param name="isOrderedByOptionalParameters">Flag to show whether the parameters are ordered by the the metadata or optionality of params</param>
         /// <returns></returns>
-        public static IEnumerable<string> GetParameterListFromOperationSegment(OperationSegment operationSegment, SnippetModel snippetModel, string collectionSuffix = "", bool isOrderedByOptionalParameters = true)
+        public static IEnumerable<string> GetParameterListFromOperationSegment(
+            OperationSegment operationSegment, SnippetModel snippetModel, string collectionSuffix = "",
+            bool isOrderedByOptionalParameters = true, bool returnEnumTypeIfEnum = false)
         {
             var paramList = new List<string>();
 
@@ -364,24 +402,32 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 //read parameters from url since this is an odata function
                 foreach (var parameter in operationSegment.Parameters)
                 {
-                    switch (parameter.Value)
-                    {
-                        case ConvertNode convertNode:
-                            {
-                                if (convertNode.Source is ConstantNode constantNode)
-                                {
-                                    paramList.Add($"\"{constantNode.Value}\"");
-                                }
-                                break;
-                            }
-                        case ConstantNode constantNode:
-                            paramList.Add(constantNode.LiteralText);
-                            break;
-                    }
+                    var value = GetParameterValueFromOperationUrlSegement(parameter, returnEnumTypeIfEnum);
+                    if (!string.IsNullOrEmpty(value))
+                        paramList.Add(value);
                 }
             }
 
             return paramList;
+        }
+        /// <summary>
+        /// Gets the value of an operation from the URL segments when available
+        /// </summary>
+        /// <param name="parameter">Parameter to look for</param>
+        /// <returns>Value provided by the HTTP snippet</returns>
+        private static string GetParameterValueFromOperationUrlSegement(OperationSegmentParameter parameter, bool returnEnumTypeIfEnum)
+        {
+            switch (parameter.Value)
+            {
+                case ConvertNode convertNode when convertNode.Source is ConstantNode cNode:
+                    return $"\"{cNode.Value}\"";
+                case ConstantNode constantNode when constantNode.TypeReference.Definition.TypeKind == EdmTypeKind.Enum && returnEnumTypeIfEnum:
+                    return $"{constantNode.TypeReference.Definition.FullTypeName()}{constantNode.LiteralText}";
+                case ConstantNode constantNode:
+                    return constantNode.LiteralText;
+                default:
+                    return null;
+            }
         }
 
         /// <summary>
