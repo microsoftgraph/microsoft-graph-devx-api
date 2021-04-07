@@ -5,6 +5,7 @@
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
+using Serilog.Events;
 using System;
 using System.Text.RegularExpressions;
 
@@ -38,27 +39,35 @@ namespace GraphWebApi.Telemetry
         /// <param name="item"></param>
         public void Process(ITelemetry item)
         {
-            var request = item as RequestTelemetry;
-            if (request != null)
+            try
             {
-                // Regex-replace anything that looks like a GUID or email
-                request.Name = _guidRegex.Replace(request.Name, "{customerID}");
+                var request = item as RequestTelemetry;
+                if (request != null)
+                {
+                    // Regex-replace anything that looks like a GUID or email
+                    request.Name = _guidRegex.Replace(request.Name, "{customerID}");
 
-                if (_guidRegex.IsMatch(request.Url.AbsoluteUri))
-                {
-                    request.Url = new Uri(_guidRegex.Replace(request.Url.ToString(), "{customerID}"));
-                }
-                else if(_emailRegex.IsMatch(request.Url.AbsoluteUri))
-                {
-                    request.Url = new Uri(_emailRegex.Replace(request.Url.ToString(), "{redacted-email}"));
-                }
-                else if (_username.IsMatch(request.Url.AbsoluteUri))
-                {
-                    request.Url = new Uri(_username.Replace(request.Url.ToString(), "{username}"));
+                    if (request.Url != null)
+                    {
+                        if (_guidRegex.IsMatch(request.Url?.AbsoluteUri))
+                        {
+                            request.Url = new Uri(_guidRegex.Replace(request.Url.ToString(), "{customerID}"));
+                        }
+                        else if (_emailRegex.IsMatch(request.Url?.AbsoluteUri))
+                        {
+                            request.Url = new Uri(_emailRegex.Replace(request.Url.ToString(), "{redacted-email}"));
+                        }
+                        else if (_username.IsMatch(request.Url?.AbsoluteUri))
+                        {
+                            request.Url = new Uri(_username.Replace(request.Url.ToString(), "{username}"));
+                        }
+                    }
                 }
             }
-
-            _next.Process(item);
+            finally
+            {
+                _next.Process(item);
+            }
         }
     }
 }
