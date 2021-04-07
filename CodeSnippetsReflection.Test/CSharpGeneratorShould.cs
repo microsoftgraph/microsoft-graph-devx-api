@@ -1159,5 +1159,39 @@ namespace CodeSnippetsReflection.Test
             Assert.DoesNotContain(itemIdBasedOnTypeInformation, result);
             Assert.Contains(itemIdFromDevXApiSnippet, result);
         }
+
+        [Fact]
+        public void TestInvitationParticipantInfo_UsesAdditionalDataProperties()
+        {
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string targetJsonObject = @"
+                {
+                    ""transferTarget"": {
+                        ""endpointType"": ""default"",
+                        ""identity"": {
+                        ""user"": {
+                            ""id"": ""550fae72-d251-43ec-868c-373732c2704f"",
+                            ""tenantId"": ""72f988bf-86f1-41af-91ab-2d7cd011db47"",
+                            ""displayName"": ""Heidi Steen""
+                        }
+                        },
+                        ""languageId"": ""languageId-value"",
+                        ""region"": ""region-value"",
+                        ""ReplacesCallId"": ""replacesCallId-value""
+                    },
+                }
+            ";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/beta/communications/calls/{id}/transfer")
+            {
+                Content = new StringContent(targetJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+            //Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.DoesNotContain("LanguageId = ", result); // LanguageId as a property
+            Assert.Contains("AdditionalData", result);
+            Assert.Contains("\"languageId\", \"languageId-value\"", result);    // LanguageId as part of AdditionalData
+        } 
     }
 }

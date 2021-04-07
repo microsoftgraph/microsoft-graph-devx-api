@@ -281,5 +281,26 @@ namespace OpenAPIService.Test
             // Assert
             Assert.False(subsetOpenApiDocument.Paths.ContainsKey("/")); // root path
         }
+
+        [Fact]
+        public void EscapePoundCharacterFromNetworkInterfaceSchemaDescription()
+        {
+            // Arrange
+            OpenApiDocument source = _graphBetaSource;
+            var expectedDescription = "Description of the NIC (e.g. Ethernet adapter, Wireless LAN adapter Local Area Connection <#/>, etc.).";
+
+            // Act
+            var predicate = OpenApiService.CreatePredicate(operationIds: null, tags: null, url: "/security/hostSecurityProfiles", source: source)
+                                .GetAwaiter().GetResult();
+
+            var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = OpenApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+
+            var parentSchema = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"];
+            var descriptionSchema = parentSchema.Properties["description"];
+
+            // Assert
+            Assert.Equal(expectedDescription, descriptionSchema.Description);
+        }
     }
 }
