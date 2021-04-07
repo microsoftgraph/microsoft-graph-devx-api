@@ -79,8 +79,8 @@ namespace CodeSnippetsReflection.App
             }
 
             var generator = customMetadataPathArg.Exists()
-                ? new SnippetsGenerator(customMetadataPathArg.Value)
-                : new SnippetsGenerator();
+                ? new SnippetsGenerator(isCommandLine: true, customMetadataPathArg.Value)
+                : new SnippetsGenerator(isCommandLine: true);
             var files = Directory.EnumerateFiles(httpSnippetsDir, "*-httpSnippet");
 
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");

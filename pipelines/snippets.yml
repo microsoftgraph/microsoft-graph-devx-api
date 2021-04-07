@@ -19,7 +19,7 @@ resources:
      type: github
      endpoint: microsoftgraph
      name: microsoftgraph/microsoft-graph-docs
-     ref: master
+     ref: main
    - repository: apidoctor
      type: github
      endpoint: microsoftgraph
