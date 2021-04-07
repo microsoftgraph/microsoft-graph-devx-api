@@ -29,44 +29,59 @@ namespace GraphWebApi.Telemetry
 
         public TelemetryProcessor(ITelemetryProcessor next)
         {
-            _next = next;
+            _next = next
+                ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
         }
 
         /// <summary>
         /// Filters request data and calls the next ITelemetryProcessor in the chain
         /// </summary>
-        /// <param name="item"></param>
+        /// <param name="item"> A telemetry Item.</param>
         public void Process(ITelemetry item)
         {
             try
             {
-                var request = item as RequestTelemetry;
-                if (request != null)
+                if (item is RequestTelemetry request)
                 {
-                    // Regex-replace anything that looks like a GUID or email
-                    request.Name = _guidRegex.Replace(request.Name, "{customerID}");
-
-                    if (request.Url != null)
+                    if(request.Name != null)
                     {
-                        if (_guidRegex.IsMatch(request.Url?.AbsoluteUri))
-                        {
-                            request.Url = new Uri(_guidRegex.Replace(request.Url.ToString(), "{customerID}"));
-                        }
-                        else if (_emailRegex.IsMatch(request.Url?.AbsoluteUri))
-                        {
-                            request.Url = new Uri(_emailRegex.Replace(request.Url.ToString(), "{redacted-email}"));
-                        }
-                        else if (_username.IsMatch(request.Url?.AbsoluteUri))
-                        {
-                            request.Url = new Uri(_username.Replace(request.Url.ToString(), "{username}"));
-                        }
+                        // Regex-replace anything that looks like a GUID or email
+                        request.Name = _guidRegex.Replace(request.Name, "{customerID}");
                     }
+                    
+                    request.Url = SanitizeUrl(request.Url);
                 }
             }
             finally
             {
                 _next.Process(item);
             }
+        }
+
+        /// <summary>
+        /// Takes in a requestUrl param and returns a sanitized url.
+        /// </summary>
+        /// <param name="requestUrl"> The request url.</param>
+        /// <returns> A sanitized url.</returns>
+        public Uri SanitizeUrl(Uri requestUrl)
+        {
+            if (requestUrl != null)
+            {
+                if (_guidRegex.IsMatch(requestUrl.AbsoluteUri))
+                {
+                    requestUrl = new Uri(_guidRegex.Replace(requestUrl.ToString(), "{customerID}"));
+                }
+                else if (_emailRegex.IsMatch(requestUrl.AbsoluteUri))
+                {
+                    requestUrl = new Uri(_emailRegex.Replace(requestUrl.ToString(), "{redacted-email}"));
+                }
+                else if (_username.IsMatch(requestUrl.AbsoluteUri))
+                {
+                    requestUrl = new Uri(_username.Replace(requestUrl.ToString(), "{username}"));
+                }
+            }
+
+            return requestUrl;
         }
     }
 }
