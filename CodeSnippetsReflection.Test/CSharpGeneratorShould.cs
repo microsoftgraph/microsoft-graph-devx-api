@@ -1014,21 +1014,16 @@ namespace CodeSnippetsReflection.Test
         {
             //Arrange
             LanguageExpressions expressions = new CSharpExpressions();
-            var url = "https://graph.microsoft.com/beta/reports/authenticationMethods/usersRegisteredByMethod(includedUserTypes='all',includedUserRoles='all')";
+            var url = "https://graph.microsoft.com/v1.0/identityGovernance/appConsent/appConsentRequests/ee245379-e3bb-4944-a997-24115f0b8b5e/userConsentRequests/filterByCurrentUser(on='reviewer')?$filter= (status eq 'Completed')";
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
             //Act by generating the code snippet
-            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+            var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
 
-           
             //Assert the snippet generated is as expected
-            var expected = "GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n" +
-                        "var userRegistrationMethodSummary = await graphClient.Reports.AuthenticationMethods\r\n" +
-                        "\t.UsersRegisteredByMethod(IncludedUserTypes.All,IncludedUserRoles.All)\r\n" +
-                        "\t.Request()\r\n" +
-                        "\t.GetAsync();";
-            Assert.Equal(expected, result);
+            Assert.Contains("ConsentRequestFilterByCurrentUserOptions.Reviewer", result);
+            Assert.DoesNotContain("On.Reviewer", result);
         }
 
         [Fact]
@@ -1164,5 +1159,39 @@ namespace CodeSnippetsReflection.Test
             Assert.DoesNotContain(itemIdBasedOnTypeInformation, result);
             Assert.Contains(itemIdFromDevXApiSnippet, result);
         }
+
+        [Fact]
+        public void TestInvitationParticipantInfo_UsesAdditionalDataProperties()
+        {
+            LanguageExpressions expressions = new CSharpExpressions();
+            const string targetJsonObject = @"
+                {
+                    ""transferTarget"": {
+                        ""endpointType"": ""default"",
+                        ""identity"": {
+                        ""user"": {
+                            ""id"": ""550fae72-d251-43ec-868c-373732c2704f"",
+                            ""tenantId"": ""72f988bf-86f1-41af-91ab-2d7cd011db47"",
+                            ""displayName"": ""Heidi Steen""
+                        }
+                        },
+                        ""languageId"": ""languageId-value"",
+                        ""region"": ""region-value"",
+                        ""ReplacesCallId"": ""replacesCallId-value""
+                    },
+                }
+            ";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/beta/communications/calls/{id}/transfer")
+            {
+                Content = new StringContent(targetJsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+            //Act by generating the code snippet
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            Assert.DoesNotContain("LanguageId = ", result); // LanguageId as a property
+            Assert.Contains("AdditionalData", result);
+            Assert.Contains("\"languageId\", \"languageId-value\"", result);    // LanguageId as part of AdditionalData
+        } 
     }
 }
