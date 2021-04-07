@@ -95,12 +95,14 @@ namespace GraphWebApi
             {
                 app.UseHsts();
             }
+            app.UseMiddleware<TelemetryMiddleware>();
             app.UseSerilogRequestLogging();
             app.UseStaticFiles(new StaticFileOptions
             {
                 DefaultContentType = "text/plain",
                 ServeUnknownFileTypes = true
             });
+
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseRouting();
