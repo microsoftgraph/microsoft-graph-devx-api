@@ -62,21 +62,57 @@ namespace GraphWebApi.Telemetry
         /// </summary>
         /// <param name="requestUrl"> The request url.</param>
         /// <returns> A sanitized url.</returns>
-        public Uri SanitizeUrl(Uri requestUrl)
+        private static Uri SanitizeUrl(Uri requestUrl)
         {
             if (requestUrl != null)
             {
                 if (_guidRegex.IsMatch(requestUrl.AbsoluteUri))
                 {
-                    requestUrl = new Uri(_guidRegex.Replace(requestUrl.ToString(), "{customerID}"));
+                    requestUrl = new Uri(_guidRegex.Replace(requestUrl.ToString(), "{ID}"));
                 }
                 else if (_emailRegex.IsMatch(requestUrl.AbsoluteUri))
                 {
                     requestUrl = new Uri(_emailRegex.Replace(requestUrl.ToString(), "{redacted-email}"));
                 }
-                else if (_username.IsMatch(requestUrl.AbsoluteUri))
+                else if (_usernameRegex.IsMatch(requestUrl.AbsoluteUri))
                 {
-                    requestUrl = new Uri(_username.Replace(requestUrl.ToString(), "{username}"));
+                    var sanitizedQueryUrl = ParseQueryString(requestUrl.AbsoluteUri);
+                    requestUrl = new Uri(sanitizedQueryUrl);
+                }
+            }
+
+            return requestUrl;
+        }
+
+        /// <summary>
+        /// Parses the query string in a request url and sanitizes it.
+        /// </summary>
+        /// <param name="requestUrl"> The url of the Http request.</param>
+        /// <returns>A sanitized request url.</returns>
+        private static string ParseQueryString(string requestUrl)
+        {
+            if (requestUrl != null)
+            {
+                if (requestUrl.Contains("filter") && requestUrl.Contains("displayname"))
+                {
+                    // fetch query string segment
+                    var queryString = requestUrl.Split("$filter");
+
+                    string[] separators = { "(", "eq", ")" };
+                    string[] textInBrackets = queryString[1].Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+                    // Get the property name and sanitize it
+                    var propertyName = textInBrackets[1];
+                    if (_usernameRegex.IsMatch(queryString[1]))
+                    {
+                        propertyName = propertyName.Replace(propertyName, " '{username}'");
+                    }
+
+                    // Append sanitized property name to query string
+                    var newQueryString = "$filter(" + textInBrackets[0] + "eq" + propertyName;
+
+                    // Modify requestUrl by appending newQueryString to request url
+                    requestUrl = queryString[0] + newQueryString;
                 }
             }
 
