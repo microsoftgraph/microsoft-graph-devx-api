@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -6,7 +6,6 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Http;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace GraphWebApi.Telemetry
@@ -16,9 +15,6 @@ namespace GraphWebApi.Telemetry
     /// </summary>
     public class TelemetryMiddleware
     {
-        /* you may create a new TelemetryConfiguration instance, reuse one you already have 
-         * or fetch the instance created by Application Insights SDK.
-        */
         private readonly RequestDelegate _next;
 
         public TelemetryMiddleware(RequestDelegate next)
@@ -46,15 +42,15 @@ namespace GraphWebApi.Telemetry
                 {
                     var requestId = requestHeaders["Request-Id"];
 
-                    // Get the operation ID from the Request-Id (if you follow the HTTP Protocol for Correlation).
+                    // Get the operation ID from the Request-Id
                     requestTelemetry.Context.Operation.Id = GetOperationId(requestId);
                     requestTelemetry.Context.Operation.ParentId = requestId;
                 }
 
-                // StartOperation is a helper method that allows correlation of 
+                // StartOperation is a helper method that allows correlation of
                 // current operations with nested operations/telemetry
                 // and initializes start time and duration on telemetry items.
-                using (var operation = client.StartOperation(requestTelemetry))
+                using var operation = client?.StartOperation(requestTelemetry);
                 {
                     // Process the request.
                     try
@@ -74,28 +70,30 @@ namespace GraphWebApi.Telemetry
                         if (context.Response != null)
                         {
                             requestTelemetry.ResponseCode = context.Response.StatusCode.ToString();
-                            requestTelemetry.Success = context.Response.StatusCode >= 200 && context.Response.StatusCode <= 299;
+                            requestTelemetry.Success = context.Response.StatusCode is >= 200 and <= 299;
                         }
                         else
                         {
                             requestTelemetry.Success = false;
                         }
-                        // Now it's time to stop the operation (and track telemetry).
+                        // Stop the operation (and track telemetry)
                         client.StopOperation(operation);
                     }
                 }
-            }            
-        }       
+            }
+        }
 
-        //GetOperationId method
-        public static string GetOperationId(string id)
+        private static string GetOperationId(string id)
         {
+            if (string.IsNullOrEmpty(id))
+                return string.Empty;
+
             // Returns the root ID from the '|' to the first '.' if any.
-            int rootEnd = (int)(id?.IndexOf('.'));
+            var rootEnd = id.IndexOf('.');
             if (rootEnd < 0)
                 rootEnd = id.Length;
 
-            int rootStart = id[0] == '|' ? 1 : 0;
+            var rootStart = id[0] == '|' ? 1 : 0;
             return id.Substring(rootStart, rootEnd - rootStart);
         }
     }
