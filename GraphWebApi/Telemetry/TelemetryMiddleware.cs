@@ -23,14 +23,19 @@ namespace GraphWebApi.Telemetry
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
         }
 
+        /// <summary>
+        /// Creates request telemetry, sets properties and tracks telemetry.
+        /// </summary>
+        /// <param name="context"> The HttpContext object.</param>
+        /// <param name="client"> A telemetry client.</param>
+        /// <returns>A request delegate.</returns>
         public async Task Invoke(HttpContext context, TelemetryClient client)
         {
             if(context != null)
             {
-                // Let's create and start RequestTelemetry.
+                // Create and start RequestTelemetry.
                 var requestTelemetry = new RequestTelemetry
                 {
-                    // "Request {method} {url} => {statusCode}" format
                     Name = $"{context.Request.Method + " " + context.Request.Path.Value}"
                 };
                 requestTelemetry.Properties.Add("HttpMethod", context.Request.Method);
