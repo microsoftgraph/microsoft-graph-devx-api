@@ -10,11 +10,11 @@ using Xunit;
 
 namespace Telemetry.Test
 {
-    public class TelemetryShould
+    public class TelemetryProcessorShould
     {
         private readonly TelemetryProcessor _telemetryProcessor;
 
-        public TelemetryShould()
+        public TelemetryProcessorShould()
         {
             _telemetryProcessor = new TelemetryProcessor(new TestProcessorNext());
         }

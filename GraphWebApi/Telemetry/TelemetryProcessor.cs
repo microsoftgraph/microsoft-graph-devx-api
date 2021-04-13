@@ -76,7 +76,7 @@ namespace GraphWebApi.Telemetry
                 }
                 else if (_usernameRegex.IsMatch(requestUrl.AbsoluteUri))
                 {
-                    var sanitizedQueryUrl = ParseQueryString(requestUrl.AbsoluteUri);
+                    var sanitizedQueryUrl = SanitizeQueryString(requestUrl.AbsoluteUri);
                     requestUrl = new Uri(sanitizedQueryUrl);
                 }
             }
@@ -89,7 +89,7 @@ namespace GraphWebApi.Telemetry
         /// </summary>
         /// <param name="requestUrl"> The url of the Http request.</param>
         /// <returns>A sanitized request url.</returns>
-        private static string ParseQueryString(string requestUrl)
+        private static string SanitizeQueryString(string requestUrl)
         {
             if (requestUrl != null)
             {
