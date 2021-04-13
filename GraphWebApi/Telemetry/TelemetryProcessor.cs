@@ -62,7 +62,7 @@ namespace GraphWebApi.Telemetry
         /// </summary>
         /// <param name="requestUrl"> The request url.</param>
         /// <returns> A sanitized url.</returns>
-        private static Uri SanitizeUrl(Uri requestUrl)
+        public Uri SanitizeUrl(Uri requestUrl)
         {
             if (requestUrl != null)
             {
