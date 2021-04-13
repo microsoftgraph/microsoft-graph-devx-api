@@ -42,12 +42,12 @@ namespace GraphWebApi.Telemetry
             {
                 if (item is RequestTelemetry request)
                 {
-                    if(request.Name != null)
+                    if (!string.IsNullOrEmpty(request.Name))
                     {
-                        // Regex-replace anything that looks like a GUID or email
-                        request.Name = _guidRegex.Replace(request.Name, "{customerID}");
+                        // Regex-replace anything that looks like a GUID
+                        request.Name = _guidRegex.Replace(request.Name, "{ID}");
                     }
-                    
+
                     request.Url = SanitizeUrl(request.Url);
                 }
             }
