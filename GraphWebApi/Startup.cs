@@ -89,12 +89,12 @@ namespace GraphWebApi
             services.AddApplicationInsightsTelemetry(options =>
             {
                 options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
-                options.RequestCollectionOptions.InjectResponseHeaders = true;
-                options.RequestCollectionOptions.TrackExceptions = false;
+                options.RequestCollectionOptions.InjectResponseHeaders = false;
+                options.RequestCollectionOptions.TrackExceptions = true;
                 options.EnableAuthenticationTrackingJavaScript = false;
                 options.EnableHeartbeat = true;
-                options.EnableAdaptiveSampling = true;    // Enable adaptive sampling
-                options.EnableQuickPulseMetricStream = true;   // Enable QuickPulse (Live Metrics stream)
+                options.EnableAdaptiveSampling = true;    // Control volume of telemetry sent to AppInsights
+                options.EnableQuickPulseMetricStream = true;   // Enable Live Metrics stream
                 options.EnableDebugLogger = true;
             });
             services.AddApplicationInsightsTelemetryProcessor<TelemetryProcessor>();

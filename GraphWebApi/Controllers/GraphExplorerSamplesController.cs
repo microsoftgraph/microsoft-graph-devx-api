@@ -14,7 +14,6 @@ using System.Security.Claims;
 using System.Linq;
 using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
-using Microsoft.ApplicationInsights;
 
 namespace GraphWebApi.Controllers
 {
