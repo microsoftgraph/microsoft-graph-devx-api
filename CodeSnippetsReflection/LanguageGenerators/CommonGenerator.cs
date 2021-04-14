@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using CodeSnippetsReflection.StringExtensions;
 
 namespace CodeSnippetsReflection.LanguageGenerators
 {
@@ -39,16 +40,18 @@ namespace CodeSnippetsReflection.LanguageGenerators
             foreach (var (key, value) in snippetModel.RequestHeaders)
             {
                 //no need to generate source for the host header
-                if (key.ToLower().Equals("host",StringComparison.Ordinal))
+                if (key.ToLower().Equals("host", StringComparison.Ordinal))
                     continue;
                 //append the header to the snippet
-                var valueString = value.First().Replace("\"", languageExpressions.DoubleQuotesEscapeSequence);
+                var valueString = value.First()
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 snippetBuilder.Append(string.Format(languageExpressions.HeaderExpression, key, valueString));
             }
             //Append any filter queries
             if (snippetModel.FilterFieldList.Any())
             {
-                var filterResult = GetListAsStringForSnippet(snippetModel.FilterFieldList, languageExpressions.FilterExpressionDelimiter);
+                var filterResult = string.Join(languageExpressions.FilterExpressionDelimiter, snippetModel.FilterFieldList)
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 //append the filter to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.FilterExpression, filterResult));
             }
@@ -56,20 +59,25 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any search queries
             if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
             {
-                snippetBuilder.Append(string.Format(languageExpressions.SearchExpression, snippetModel.SearchExpression));
+                snippetBuilder.Append(string.Format(languageExpressions.SearchExpression, 
+                    snippetModel.SearchExpression
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append the expand section
             if (!string.IsNullOrEmpty(snippetModel.ExpandFieldExpression))
             {
                 //append the expand result to the snippet
-                snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, snippetModel.ExpandFieldExpression));
+                snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, 
+                    snippetModel.ExpandFieldExpression
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append any select queries
             if (snippetModel.SelectFieldList.Any())
             {
-                var selectResult = GetListAsStringForSnippet(snippetModel.SelectFieldList, languageExpressions.SelectExpressionDelimiter);
+                var selectResult = string.Join(languageExpressions.SelectExpressionDelimiter, snippetModel.SelectFieldList)
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 //append the select result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.SelectExpression, selectResult));
             }
@@ -77,7 +85,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any orderby queries
             if (snippetModel.OrderByFieldList.Any())
             {
-                var orderByResult = GetListAsStringForSnippet(snippetModel.OrderByFieldList, languageExpressions.OrderByExpressionDelimiter);
+                var orderByResult = string.Join(languageExpressions.OrderByExpressionDelimiter, snippetModel.OrderByFieldList)
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
                 //append the orderby result to the snippet
                 snippetBuilder.Append(string.Format(languageExpressions.OrderByExpression, orderByResult));
             }
@@ -91,7 +100,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
             //Append any skip token queries
             if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
             {
-                snippetBuilder.Append(string.Format(languageExpressions.SkipTokenExpression, snippetModel.ODataUri.SkipToken));
+                snippetBuilder.Append(string.Format(languageExpressions.SkipTokenExpression, 
+                    snippetModel.ODataUri.SkipToken
+                    .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append any top queries
@@ -148,7 +159,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 case OperationSegment operationSegment:
                     foreach (var parameters in operationSegment.Operations.First().Parameters)
                     {
-                        if (!parameters.Name.Equals(path.FirstOrDefault(),StringComparison.OrdinalIgnoreCase))
+                        if (!parameters.Name.Equals(path.FirstOrDefault(), StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         (type, isNavigationProperty) = SearchForEdmType(parameters.Type.Definition, path);
@@ -203,7 +214,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             {
                 foreach (var property in structuredType.DeclaredProperties)
                 {
-                    if (property.Name.Equals(searchIdentifier,StringComparison.OrdinalIgnoreCase))
+                    if (property.Name.Equals(searchIdentifier, StringComparison.OrdinalIgnoreCase))
                     {
                         elementDefinition = GetEdmElementType(property.Type.Definition);
 
@@ -257,28 +268,6 @@ namespace CodeSnippetsReflection.LanguageGenerators
             return edmType;
         }
 
-
-        /// <summary>
-        /// Helper function to join string list into one string delimited with a desired character
-        /// </summary>
-        /// <param name="fieldList">List of strings that are to be concatenated to a string </param>
-        /// <param name="delimiter">Delimiter to be used to join the string elements</param>
-        public static string GetListAsStringForSnippet(IEnumerable<string> fieldList, string delimiter)
-        {
-            var result = new StringBuilder();
-            foreach (var queryOption in fieldList)
-            {
-                result.Append(queryOption + delimiter);
-            }
-            if (!string.IsNullOrEmpty(delimiter) && !string.IsNullOrEmpty(result.ToString()))
-            {
-                result.Remove(result.Length - delimiter.Length, delimiter.Length);
-            }
-
-            return result.ToString();
-
-        }
-
         /// <summary>
         /// Helper function to make check and ensure that a variable name is not a reserved keyword for the language in use.
         /// If it is reserved, return an appropiate transformation of the variale name
@@ -286,7 +275,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="variableName">variable name to check for uniqueness</param>
         /// <param name="languageExpressions">Language expressions that holds list of reserved words for filtering</param>
         /// <returns>Modified variable name that is not a keyword</returns>
-        public static string EnsureVariableNameIsNotReserved(string variableName , LanguageExpressions languageExpressions)
+        public static string EnsureVariableNameIsNotReserved(string variableName, LanguageExpressions languageExpressions)
         {
             if (languageExpressions.ReservedNames.Contains(variableName))
             {
@@ -327,7 +316,43 @@ namespace CodeSnippetsReflection.LanguageGenerators
             a[0] = char.ToLower(a[0]);
             return new string(a);
         }
+        /// <summary>
+        /// This is a language agnostic function that looks at a operationSegment and returns a list of parameters with their names and values needed by the operation.
+        /// If the method is a post, the parameters are sought for in the request body. Otherwise they are sort for in the request url
+        /// </summary>
+        /// <param name="operationSegment">OData OperationSegment representing a Function or action</param>
+        /// <param name="snippetModel">Snippet Model to obtain useful data from</param>
+        /// <param name="collectionSuffix">Suffix to be added to elements that are proved to be members collections</param>
+        /// <returns></returns>
+        public static IEnumerable<KeyValuePair<string, string>> GetParameterListFromOperationSegmentWithNames(OperationSegment operationSegment, SnippetModel snippetModel, bool returnEnumTypeIfEnum, string collectionSuffix = "")
+        {
+            var parametersProvided = new List<string>();
+            if (!string.IsNullOrEmpty(snippetModel.RequestBody)
+                && JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
+            {
+                foreach (var (key, _) in testObj)
+                {
+                    parametersProvided.Add(key);
+                }
+            }
 
+
+            if (snippetModel.Method == HttpMethod.Post)
+            {
+                //use the order from the metadata
+                var parameters = operationSegment
+                    .Operations
+                    .First()
+                    .Parameters
+                    .Skip(1) // the first parameter is always the binding one
+                    .ToList();
+                return AddValidParameterItemsFromIEdmOperationParameterList(new List<string>(), parameters, parametersProvided, collectionSuffix)
+                .Select((x, idx) => new KeyValuePair<string, string>(parameters[idx].Name, x));
+            }
+            else
+                return operationSegment.Parameters.Select(x => new KeyValuePair<string, string>(x.Name, GetParameterValueFromOperationUrlSegement(x, returnEnumTypeIfEnum)));
+
+        }
         /// <summary>
         /// This is a language agnostic function that looks at a operationSegment and returns a list of parameters needed by the operation.
         /// If the method is a post, the parameters are sought for in the request body. Otherwise they are sort for in the request url
@@ -337,7 +362,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <param name="collectionSuffix">Suffix to be added to elements that are proved to be members collections</param>
         /// <param name="isOrderedByOptionalParameters">Flag to show whether the parameters are ordered by the the metadata or optionality of params</param>
         /// <returns></returns>
-        public static IEnumerable<string> GetParameterListFromOperationSegment(OperationSegment operationSegment, SnippetModel snippetModel, string collectionSuffix = "", bool isOrderedByOptionalParameters = true)
+        public static IEnumerable<string> GetParameterListFromOperationSegment(
+            OperationSegment operationSegment, SnippetModel snippetModel, string collectionSuffix = "",
+            bool isOrderedByOptionalParameters = true, bool returnEnumTypeIfEnum = false)
         {
             var paramList = new List<string>();
 
@@ -375,24 +402,32 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 //read parameters from url since this is an odata function
                 foreach (var parameter in operationSegment.Parameters)
                 {
-                    switch (parameter.Value)
-                    {
-                        case ConvertNode convertNode:
-                            {
-                                if (convertNode.Source is ConstantNode constantNode)
-                                {
-                                    paramList.Add($"\"{constantNode.Value}\"");
-                                }
-                                break;
-                            }
-                        case ConstantNode constantNode:
-                            paramList.Add(constantNode.LiteralText);
-                            break;
-                    }
+                    var value = GetParameterValueFromOperationUrlSegement(parameter, returnEnumTypeIfEnum);
+                    if (!string.IsNullOrEmpty(value))
+                        paramList.Add(value);
                 }
             }
 
             return paramList;
+        }
+        /// <summary>
+        /// Gets the value of an operation from the URL segments when available
+        /// </summary>
+        /// <param name="parameter">Parameter to look for</param>
+        /// <returns>Value provided by the HTTP snippet</returns>
+        private static string GetParameterValueFromOperationUrlSegement(OperationSegmentParameter parameter, bool returnEnumTypeIfEnum)
+        {
+            switch (parameter.Value)
+            {
+                case ConvertNode convertNode when convertNode.Source is ConstantNode cNode:
+                    return $"\"{cNode.Value}\"";
+                case ConstantNode constantNode when constantNode.TypeReference.Definition.TypeKind == EdmTypeKind.Enum && returnEnumTypeIfEnum:
+                    return $"{parameter.Name}{constantNode.LiteralText}";
+                case ConstantNode constantNode:
+                    return constantNode.LiteralText;
+                default:
+                    return null;
+            }
         }
 
         /// <summary>

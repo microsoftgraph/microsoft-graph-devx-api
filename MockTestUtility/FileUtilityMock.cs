@@ -14,7 +14,7 @@ namespace MockTestUtility
     /// <summary>
     /// Defines a Mock class that retrieves files from a directory path.
     /// </summary>
-    public class FileUtilityMock : IFileUtility
+    public class FileUtilityMock : IFileUtility, IHttpClientUtility
     {
         public async Task<string> ReadFromFile(string filePathSource)
         {
@@ -35,7 +35,7 @@ namespace MockTestUtility
             return await streamReader.ReadToEndAsync();
         }
 
-        public async Task<string> ReadFromDocument(HttpRequestMessage requestMessage)
+        public async Task<string> ReadFromDocumentAsync(HttpRequestMessage requestMessage)
         {
             if (requestMessage == null)
             {

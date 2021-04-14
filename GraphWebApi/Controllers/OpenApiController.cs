@@ -20,6 +20,7 @@ namespace GraphWebApi.Controllers
     /// <summary>
     /// Controller that enables querying over an OpenAPI document
     /// </summary>
+    [ApiController]
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
@@ -110,7 +111,7 @@ namespace GraphWebApi.Controllers
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                OpenApiDocument source = OpenApiService.ConvertCsdlToOpenApi(Request.Body);
+                OpenApiDocument source = await OpenApiService.ConvertCsdlToOpenApiAsync(Request.Body);
 
                 var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
 
