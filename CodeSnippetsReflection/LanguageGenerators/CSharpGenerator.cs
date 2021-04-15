@@ -768,16 +768,24 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
 
         /// <summary>
-        /// Generates CollectionPage class name
+        /// Generates CollectionPage and CollectionWithReferencesPage class name
         /// </summary>
         /// <param name="pathSegment">The OdataPathSegment in use</param>
         /// <param name="path">path in edm model</param>
         /// <returns>ICollectionPage Interface name</returns>
         private string GetCollectionPageClassName(ODataPathSegment pathSegment, ICollection<string> path)
         {
-            var type = GetCsharpClassName(pathSegment, path.ToList().GetRange(0, path.Count - 1));
-            var property = CommonGenerator.UppercaseFirstLetter(path.Last());
-            return $"{type}{property}CollectionPage";
+            var type = GetCsharpClassName(pathSegment, path.Take(path.Count-1).ToList());
+            var property = path.Last();
+            var uppercasedProperty = CommonGenerator.UppercaseFirstLetter(property);
+
+            var structuredType = (pathSegment.EdmType as IEdmCollectionType)?.ElementType?.Definition as IEdmStructuredType;
+            var containsTarget = (structuredType?.FindProperty(property) as IEdmNavigationProperty)?.ContainsTarget
+                ?? throw new InvalidOperationException("Path doesn't match with the metadata property description!" +
+                    $"path: { string.Join(' ', path) }");
+
+            var navCollectionType = containsTarget ? "CollectionPage" : "CollectionWithReferencesPage";
+            return $"{type}{uppercasedProperty}{navCollectionType}";
         }
 
         /// <summary>

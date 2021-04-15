@@ -1193,5 +1193,69 @@ namespace CodeSnippetsReflection.Test
             Assert.Contains("AdditionalData", result);
             Assert.Contains("\"languageId\", \"languageId-value\"", result);    // LanguageId as part of AdditionalData
         } 
+
+        [Fact]
+        public void ShouldSupportCastingToCollectionWithReferencesPage()
+        {
+            var expressions = new CSharpExpressions();
+            const string jsonObject = @"{
+                ""id"": ""Customer"",
+                ""userFlowType"": ""signUpOrSignIn"",
+                ""userFlowTypeVersion"": 3,
+                ""identityProviders"": [
+                    {
+                        ""id"": ""Facebook-OAuth"",
+                        ""type"": ""Facebook"",
+                        ""Name"": ""Facebook""
+                    }
+                ]
+            }";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/beta/identity/b2cUserFlows")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            var replacedType = "IdentityProviders = new B2cIdentityUserFlowIdentityProvidersCollectionPage()";
+            var expectedReplacement = "IdentityProviders = new B2cIdentityUserFlowIdentityProvidersCollectionWithReferencesPage";
+            Assert.DoesNotContain(replacedType, result);
+            Assert.Contains(expectedReplacement, result);
+        }
+
+        [Fact]
+        public void ShouldSupportCastingToCollectionPage()
+        {
+            var expressions = new CSharpExpressions();
+            const string jsonObject = @"{
+                ""displayName"": ""Books"",
+                ""columns"": [
+                    {
+                    ""name"": ""Author"",
+                    ""text"": { }
+                    },
+                    {
+                    ""name"": ""PageCount"",
+                    ""number"": { }
+                    }
+                ],
+                ""list"": {
+                    ""template"": ""genericList""
+                }
+            }";
+            var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/beta/sites/{site-id}/lists")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+
+            var wrongType = "Columns = new ListColumnsCollectionWithReferencesPage()";
+            var expectedType = "Columns = new ListColumnsCollectionPage()";
+            Assert.DoesNotContain(wrongType, result);
+            Assert.Contains(expectedType, result);
+        }
     }
 }
