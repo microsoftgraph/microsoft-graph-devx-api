@@ -33,11 +33,14 @@ namespace Telemetry.Test
             requestTelemetry.Url = new Uri("https://graphexplorerapi.azurewebsites.net/openapi?url=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&style=GEAutocomplete");
 
             // Act
+            _telemetryProcessor.Process(requestTelemetry);
             var expected = "https://graphexplorerapi.azurewebsites.net/openapi?url=/users/{ID}&style=GEAutocomplete";
-            var sanitizedUrl = _telemetryProcessor.SanitizeUrl(requestTelemetry.Url);
 
             // Assert
-            Assert.Equal(expected, sanitizedUrl.ToString());
+            var containsID = requestTelemetry.Url.ToString().Contains("{ID}");
+            
+            Assert.True(containsID);
+            Assert.Equal(expected, requestTelemetry.Url.ToString());
         }
 
         [Fact]
@@ -48,11 +51,12 @@ namespace Telemetry.Test
             requestTelemetry.Url = new Uri("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')");
 
             // Act
+            _telemetryProcessor.Process(requestTelemetry);
             var expected = "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(emailAddress eq '{redacted-email}')";
-            var sanitizedUrl = _telemetryProcessor.SanitizeUrl(requestTelemetry.Url);
+            
 
             // Assert
-            Assert.Equal(expected, sanitizedUrl.ToString());
+            Assert.Equal(expected, requestTelemetry.Url.ToString());
         }
 
         [Fact]
@@ -63,11 +67,11 @@ namespace Telemetry.Test
             requestTelemetry.Url = new Uri("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(displayname eq 'Megan Bowen'");
 
             // Act
+            _telemetryProcessor.Process(requestTelemetry);
             var expected = "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(displayname eq '{username}'";
-            var sanitizedUrl = _telemetryProcessor.SanitizeUrl(requestTelemetry.Url);
 
             // Assert
-            Assert.Equal(expected, sanitizedUrl.ToString());
+            Assert.Equal(expected, requestTelemetry.Url.ToString());
         }
     }
 }
