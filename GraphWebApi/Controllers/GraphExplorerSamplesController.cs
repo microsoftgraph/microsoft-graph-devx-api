@@ -36,7 +36,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                SampleQueriesList sampleQueriesList = await FetchSampleQueries(org, branchName);
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -80,7 +80,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                SampleQueriesList sampleQueriesList = await FetchSampleQueries(org, branchName);
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -305,12 +305,11 @@ namespace GraphWebApi.Controllers
         /// <param name="org">The name of the organisation i.e microsoftgraph or a member's username in the case of a forked repo.</param>
         /// <param name="branchName">The name of the branch.</param>
         /// <returns>A list of Sample Queries.</returns>
-        private async Task<SampleQueriesList> FetchSampleQueries(string org, string branchName)
+        private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string org, string branchName)
         {
             string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
 
-            SampleQueriesList sampleQueriesList = null;
-
+            SampleQueriesList sampleQueriesList;
             if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
             {
                 // Fetch samples file from Github
