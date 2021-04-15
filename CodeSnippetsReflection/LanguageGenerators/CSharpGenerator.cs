@@ -775,7 +775,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>ICollectionPage Interface name</returns>
         private string GetCollectionPageClassName(ODataPathSegment pathSegment, ICollection<string> path)
         {
-            var type = GetCsharpClassName(pathSegment, path.ToList().GetRange(0, path.Count - 1));
+            var type = GetCsharpClassName(pathSegment, path.Take(path.Count-1).ToList());
             var property = path.Last();
             var uppercasedProperty = CommonGenerator.UppercaseFirstLetter(property);
 
