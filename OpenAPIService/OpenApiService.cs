@@ -21,7 +21,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using OpenAPIService.Common;
 using UriMatchingService;
-using kiota.core;
+using Newtonsoft.Json;
 
 namespace OpenAPIService
 {
@@ -38,7 +38,7 @@ namespace OpenAPIService
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
         private static UriTemplateMatcher _uriTemplateTable = new UriTemplateMatcher();
         private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
-        private static OpenApiUrlSpaceNode _openApiRootNode;
+        private static OpenApiUrlTreeNode _openApiRootNode;
 
         /// <summary>
         /// Create partial document based on provided predicate
@@ -165,6 +165,8 @@ namespace OpenAPIService
                 if (_openApiRootNode == null || forceRefresh)
                 {
                     _openApiRootNode = CreateOpenApiUrlSpaceNode(source);
+                    var str = _openApiRootNode.ToString();
+                    var jsonDoc = JsonConvert.SerializeObject(_openApiRootNode, Formatting.Indented);
                 }
 
                 OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url);
@@ -192,9 +194,9 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="source">The <see cref="OpenApiDocument"/>.</param>
         /// <returns>The created <see cref="OpenApiUrlSpaceNode"/>.</returns>
-        private static OpenApiUrlSpaceNode CreateOpenApiUrlSpaceNode(OpenApiDocument source)
+        private static OpenApiUrlTreeNode CreateOpenApiUrlSpaceNode(OpenApiDocument source)
         {
-            return source == null ? null : OpenApiUrlSpaceNode.Create(source);
+            return source == null ? null : OpenApiUrlTreeNode.Create(source);
         }
 
         /// <summary>
@@ -205,7 +207,7 @@ namespace OpenAPIService
         /// <param name="relativeUrl">The relative url path to retrieve
         /// the array of <see cref="OpenApiOperation"/> from.</param>
         /// <returns>The array of <see cref="OpenApiOperation"/> for a given url path.</returns>
-        private static OpenApiOperation[] GetOpenApiOperations(OpenApiUrlSpaceNode rootNode, string relativeUrl)
+        private static OpenApiOperation[] GetOpenApiOperations(OpenApiUrlTreeNode rootNode, string relativeUrl)
         {
             if (rootNode == null || string.IsNullOrEmpty(relativeUrl))
             {
@@ -221,7 +223,7 @@ namespace OpenAPIService
                 }
             }
 
-            var urlSegments = relativeUrl.Split("/", StringSplitOptions.RemoveEmptyEntries);
+            var urlSegments = relativeUrl.Split('/', (char)StringSplitOptions.RemoveEmptyEntries);
 
             OpenApiOperation[] operations = null;
             var targetChild = rootNode;
@@ -242,23 +244,26 @@ namespace OpenAPIService
                 {
                     // Attempt to get the parameter segment from the children of the current node
                     // We are assuming a failed match because of different parameter namings
-                    // between the relative url segment and the OpenApi path corresponding segments
+                    // between the relative url segment and the OpenAPI path corresponding segments
                     tempTargetChild = targetChild.Children.FirstOrDefault(x => x.Value.IsParameter == true).Value;
 
                     // If no parameter segment exists in the children of the
                     // current node or we've already skipped a corresponding
-                    // segment in the relative url from the last pass then exit;
+                    // segment in the relative url from the last pass, then exit;
                     // there's no match
                     if (tempTargetChild == null || parameterNameOffset > 0)
                     {
                         break;
                     }
 
-                    parameterNameOffset++; // to help us know we've skipped a corresponding segment in the relative url
+                    // To help us know we've skipped a
+                    // corresponding segment in the relative url
+                    parameterNameOffset++;
                 }
                 else
                 {
-                    parameterNameOffset = 0; // reset the parameter naming offset check
+                    // Reset the parameter naming offset check
+                    parameterNameOffset = 0;
                 }
 
                 targetChild = tempTargetChild;

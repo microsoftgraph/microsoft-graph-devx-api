@@ -9,6 +9,7 @@
     <PackageReference Include="Microsoft.OData.Edm" Version="7.8.3" />
     <PackageReference Include="Microsoft.OpenApi.OData" Version="1.0.6" />
     <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.2.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup>
