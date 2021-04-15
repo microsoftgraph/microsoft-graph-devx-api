@@ -36,7 +36,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                var sampleQueriesList = await FetchSampleQueries(org, branchName);
+                SampleQueriesList sampleQueriesList = await FetchSampleQueries(org, branchName);
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -80,7 +80,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                var sampleQueriesList = await FetchSampleQueries(org, branchName);
+                SampleQueriesList sampleQueriesList = await FetchSampleQueries(org, branchName);
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
