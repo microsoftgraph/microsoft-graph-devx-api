@@ -36,19 +36,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
-                SampleQueriesList sampleQueriesList = null;
-
-                if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
-                {
-                    // Fetch samples file from Github
-                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
-                }
-                else
-                {
-                    // Fetch sample queries from Azure Blob
-                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
-                }
+                var sampleQueriesList = await FetchSampleQueries(org, branchName);
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -88,14 +76,11 @@ namespace GraphWebApi.Controllers
        [Route("samples/{id}")]
        [Produces("application/json")]
        [HttpGet]
-        public async Task<IActionResult> GetSampleQueryByIdAsync(string id)
+        public async Task<IActionResult> GetSampleQueryByIdAsync(string id, string org, string branchName)
         {
             try
             {
-                string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
-
-                // Fetch sample queries
-                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
+                var sampleQueriesList = await FetchSampleQueries(org, branchName);
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
