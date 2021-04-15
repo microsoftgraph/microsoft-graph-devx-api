@@ -6,9 +6,9 @@ servers:
   - url: https://graphexplorerapi.azurewebsites.net/
     description: Main server
   - url: https://localhost:44399/
-    description: Test server
+    description: Local test server
   - url: https://localhost:5001/
-    description: Test server
+    description: Local test server
 
 paths:
   /snippetgenerator:
@@ -148,6 +148,18 @@ paths:
           schema:
             type: string
           description: Sample query id
+        - name: org
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Organization that a GitHub repo belongs to.
+        - name: branchName
+          in: query
+          schema:
+            type: string
+          required: false
+          description: The target branch in the target GitHub repo.
       responses:
         "200":
           description: OK
