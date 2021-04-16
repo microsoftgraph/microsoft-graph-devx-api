@@ -651,10 +651,19 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
 
                 case "@odata.type":
-                    // Remove the prefixed #, then uppercase the individual strings in the odata path to make the proposedType
-                    var proposedType = String.Join(".", value.Split("#").Last().Split(".").Select(
-                        (item, _) => CommonGenerator.UppercaseFirstLetter(item))
-                    );
+                    string proposedType;
+                    // If type contains subnamespace of Microsoft.Graph e.g Microsoft.Graph.Ediscovery.LegalHold, prefix the namespace to the typeName
+                    // else if type not in graph namespace e.g Microsoft.OutlookServices or is a type directly within the graph subnamespace e.g Microsoft.Graph.IdentitySet
+                    // then proposedType is the <typeName> without prefix 
+                    var graphSubspaces = value.StartsWith("#microsoft.graph.") ? value.Substring("#microsoft.graph.".Length).Split(".".ToCharArray()) : new List<string>().ToArray() ; 
+                    if (graphSubspaces.Length > 1) {
+                        // Remove the prefixed `#`, then uppercase the individual strings in the odata path
+                        var namespacedTypeName = value.Split("#").Last().Split(".").Select((item, _) => CommonGenerator.UppercaseFirstLetter(item));
+                        proposedType = String.Join(".", namespacedTypeName);
+                    }
+                    else{
+                        proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
+                    }
                     proposedType = proposedType.EndsWith("Request") ? proposedType + "Object" : proposedType; // disambiguate class names that end with Request
                     //check if the odata type specified is different
                     // maybe due to the declaration of a subclass of the type specified from the url.
