@@ -1257,5 +1257,36 @@ namespace CodeSnippetsReflection.Test
             Assert.DoesNotContain(wrongType, result);
             Assert.Contains(expectedType, result);
         }
+
+        [Fact]
+        public void ShouldHaveOdataTypeInferencesRespectingSubnamespaces()
+        {
+            var expressions = new CSharpExpressions();
+            const string jsonObject = @"{
+                ""@odata.type"": ""#microsoft.graph.ediscovery.legalHold"",
+                ""description"": ""String"",
+                ""createdBy"": {
+                    ""@odata.type"": ""microsoft.graph.identitySet""
+                },
+                ""isEnabled"": ""Boolean"",
+                ""status"": ""String"",
+                ""contentQuery"": ""String"",
+                ""errors"": [
+                    ""String""
+                ],
+                ""displayName"": ""String""
+            }";
+            var requestPayload = new HttpRequestMessage(
+                HttpMethod.Post,
+                "https://graph.microsoft.com/beta/compliance/ediscovery/cases/{caseId}/legalHolds")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+            var expectedType = "var legalHold = new Microsoft.Graph.Ediscovery.LegalHold";
+            Assert.Contains(expectedType, result);
+        }
     }
 }

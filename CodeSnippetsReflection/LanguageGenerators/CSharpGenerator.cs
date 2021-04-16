@@ -651,7 +651,10 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
 
                 case "@odata.type":
-                    var proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
+                    // Remove the prefixed #, then uppercase the individual strings in the odata path to make the proposedType
+                    var proposedType = String.Join(".", value.Split("#").Last().Split(".").Select(
+                        (item, _) => CommonGenerator.UppercaseFirstLetter(item))
+                    );
                     proposedType = proposedType.EndsWith("Request") ? proposedType + "Object" : proposedType; // disambiguate class names that end with Request
                     //check if the odata type specified is different
                     // maybe due to the declaration of a subclass of the type specified from the url.
