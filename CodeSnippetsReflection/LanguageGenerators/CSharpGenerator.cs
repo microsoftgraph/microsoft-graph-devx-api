@@ -637,7 +637,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         {
             if(String.IsNullOrEmpty(value))
             {
-                throw new ArgumentException(nameof(value), "Value for @odata.type cannot be empty");
+                throw new ArgumentNullException(nameof(value), "Value for @odata.type cannot be empty");
             }
 
             switch (key)
