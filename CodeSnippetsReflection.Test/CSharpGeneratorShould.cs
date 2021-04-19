@@ -1285,8 +1285,11 @@ namespace CodeSnippetsReflection.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
 
             var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
-            var expectedType = "var legalHold = new Microsoft.Graph.Ediscovery.LegalHold";
+            var expectedType = "var legalHold = new Microsoft.Graph.Ediscovery.LegalHold";  // namespaced 
+            var controltype = "CreatedBy = new IdentitySet";  // Not namespaced since it's within graph namespace
             Assert.Contains(expectedType, result);
+            Assert.Contains(controltype, result);
+
         }
     }
 }
