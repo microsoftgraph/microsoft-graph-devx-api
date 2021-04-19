@@ -13,8 +13,8 @@ namespace CodeSnippetsReflection.Test
     public class JavaGeneratorShould
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
-        private const string AuthProviderPrefix = "IGraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n";
+        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata));
+        private const string AuthProviderPrefix = "GraphServiceClient graphClient = GraphServiceClient.builder().authenticationProvider( authProvider ).buildClient();\r\n\r\n";
 
         [Fact]
         public void MapCorrectTypeForGuidReturnType()
@@ -116,7 +116,7 @@ namespace CodeSnippetsReflection.Test
             //Act by generating the code snippet
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
-            Assert.Contains(" CalendarSerializer.deserialize(\"datetime-value\")", result);
+            Assert.Contains(" OffsetDateTimeSerializer.deserialize(\"datetime-value\")", result);
         }
         [Fact]
         public void MapCorrectTypeForDoubleProperties()
@@ -362,8 +362,8 @@ namespace CodeSnippetsReflection.Test
                                            "passwordProfile.password = \"password-value\";\r\n" +
                                            "user.passwordProfile = passwordProfile;\r\n" +
                                            "\r\n" +
-                                           "graphClient.users()\n" +
-                                                "\t.buildRequest()\n" +
+                                           "graphClient.users()\r\n" +
+                                                "\t.buildRequest()\r\n" +
                                                 "\t.post(user);";
 
             //Assert the snippet generated is as expected
@@ -400,8 +400,8 @@ namespace CodeSnippetsReflection.Test
                                            "user.businessPhones = businessPhonesList;\r\n" +
                                            "user.city = \"city-value\";\r\n" +
                                            "\r\n" +
-                                           "graphClient.me()\n" +
-                                                "\t.buildRequest()\n" +
+                                           "graphClient.me()\r\n" +
+                                                "\t.buildRequest()\r\n" +
                                                 "\t.patch(user);";
 
             //Assert the snippet generated is as expected
@@ -468,8 +468,8 @@ namespace CodeSnippetsReflection.Test
                                            "toRecipientsList.add(toRecipients1);\r\n" +
                                            "message.toRecipients = toRecipientsList;\r\n" +
                                            "\r\n" +
-                                           "graphClient.me().messages()\n" +
-                                                "\t.buildRequest()\n" +
+                                           "graphClient.me().messages()\r\n" +
+                                                "\t.buildRequest()\r\n" +
                                                 "\t.post(message);";
 
             //Assert the snippet generated is as expected
@@ -495,8 +495,8 @@ namespace CodeSnippetsReflection.Test
                                            "requestOptions.add(new QueryOption(\"startDateTime\", \"2017-01-01T19:00:00.0000000\"));\r\n" + //Query Options present
                                            "requestOptions.add(new QueryOption(\"endDateTime\", \"2017-01-07T19:00:00.0000000\"));\r\n" + //Query Options present
                                            "\r\n" +
-                                           "IEventCollectionPage calendarView = graphClient.me().calendar().calendarView()\n" +
-                                                "\t.buildRequest( requestOptions )\n" +
+                                           "EventCollectionPage calendarView = graphClient.me().calendar().calendarView()\r\n" +
+                                                "\t.buildRequest( requestOptions )\r\n" +
                                                 "\t.get();";
 
             //Assert the snippet generated is as expected
@@ -523,9 +523,9 @@ namespace CodeSnippetsReflection.Test
             const string expectedSnippet = "LinkedList<Option> requestOptions = new LinkedList<Option>();\r\n" +
                                            "requestOptions.add(new HeaderOption(\"Prefer\", \"outlook.timezone=\\\"Pacific Standard Time\\\"\"));\r\n" + //Header Options present
                                            "\r\n" +
-                                           "Event event = graphClient.me().events(\"AAMkAGIAAAoZDOFAAA=\")\n" +
-                                                "\t.buildRequest( requestOptions )\n" +
-                                                "\t.select(\"subject,body,bodyPreview,organizer,attendees,start,end,location\")\n" +
+                                           "Event event = graphClient.me().events(\"AAMkAGIAAAoZDOFAAA=\")\r\n" +
+                                                "\t.buildRequest( requestOptions )\r\n" +
+                                                "\t.select(\"subject,body,bodyPreview,organizer,attendees,start,end,location\")\r\n" +
                                                 "\t.get();";
 
             //Assert the snippet generated is as expected
@@ -546,8 +546,8 @@ namespace CodeSnippetsReflection.Test
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
-            const string expectedSnippet = "graphClient.groups(\"{id}\").owners(\"{id}\").reference()\n" +
-                                                "\t.buildRequest()\n" +
+            const string expectedSnippet = "graphClient.groups(\"{id}\").owners(\"{id}\").reference()\r\n" +
+                                                "\t.buildRequest()\r\n" +
                                                 "\t.delete();";
 
             //Assert the snippet generated is as expected
@@ -578,8 +578,8 @@ namespace CodeSnippetsReflection.Test
                                            "directoryObject.id = \"{id}\";\r\n" +
 
                                            "\r\n" +
-                                           "graphClient.groups(\"{id}\").owners().references()\n" +
-                                               "\t.buildRequest()\n" +
+                                           "graphClient.groups(\"{id}\").owners().references()\r\n" +
+                                               "\t.buildRequest()\r\n" +
                                                "\t.post(directoryObject);";
 
             //Assert the snippet generated is as expected
@@ -611,8 +611,8 @@ namespace CodeSnippetsReflection.Test
                                            "directoryObject.id = \"{id}\";\r\n" +
                                            "directoryObject.additionalDataManager().put(\"@odata.context\", new JsonPrimitive(\"https://graph.microsoft.com/v1.0/$metadata#users/$entity\"));\r\n" +
                                            "\r\n" +
-                                           "graphClient.groups(\"{id}\").owners().references()\n" +
-                                           "\t.buildRequest()\n" +
+                                           "graphClient.groups(\"{id}\").owners().references()\r\n" +
+                                           "\t.buildRequest()\r\n" +
                                            "\t.post(directoryObject);";
 
             //Assert the snippet generated is as expected
@@ -643,8 +643,8 @@ namespace CodeSnippetsReflection.Test
                                            "directoryObject.id = \"ExampleID\";\r\n" +
 
                                            "\r\n" +
-                                           "graphClient.groups(\"{id}\").owners().references()\n" +
-                                           "\t.buildRequest()\n" +
+                                           "graphClient.groups(\"{id}\").owners().references()\r\n" +
+                                           "\t.buildRequest()\r\n" +
                                            "\t.post(directoryObject);";
 
             //Assert the snippet generated is as expected
@@ -666,9 +666,12 @@ namespace CodeSnippetsReflection.Test
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
 
             //Assert code snippet string matches expectation
-            const string expectedSnippet = "WorkbookRange workbookRange = graphClient.me().drive().items(\"{id}\").workbook().worksheets(\"{id|name}\")\n" +
-                                           "\t.range(\"A1:B2\")\n" +//parameter has double quotes
-                                           "\t.buildRequest()\n" +
+            const string expectedSnippet = "WorkbookRange workbookRange = graphClient.me().drive().items(\"{id}\").workbook().worksheets(\"{id|name}\")\r\n" +
+                                           "\t.range(WorkbookWorksheetRangeParameterSet\r\n" +
+                                                        "\t\t.newBuilder()\r\n" +
+                                                        "\t\t.withAddress(\"A1:B2\")\r\n" + 
+                                                        "\t\t.build())\r\n" +//parameter has double quotes
+                                           "\t.buildRequest()\r\n" +
                                            "\t.get();";
 
             //Assert the snippet generated is as expected
@@ -700,9 +703,13 @@ namespace CodeSnippetsReflection.Test
                                            "\r\n" +
                                            "Boolean hasHeaders = true;\r\n" +
                                            "\r\n" +
-                                           "graphClient.me().drive().items(\"{id}\").workbook().tables()\n" +
-                                                "\t.add(address,hasHeaders)\n" +
-                                                "\t.buildRequest()\n" +
+                                           "graphClient.me().drive().items(\"{id}\").workbook().tables()\r\n" +
+                                                "\t.add(WorkbookTableAddParameterSet\r\n" +
+                                                        "\t\t.newBuilder()\r\n" +
+                                                        "\t\t.withAddress(address)\r\n" +
+                                                        "\t\t.withHasHeaders(hasHeaders)\r\n" +
+                                                        "\t\t.build())\r\n" +
+                                                "\t.buildRequest()\r\n" +
                                                 "\t.post();";
 
             //Assert the snippet generated is as expected
@@ -733,8 +740,8 @@ namespace CodeSnippetsReflection.Test
                                            "attachment.name = \"smile\";\r\n" +
                                            "attachment.contentBytes = Base64.getDecoder().decode(\"R0lGODdhEAYEAA7\");\r\n" +
                                            "\r\n" +
-                                           "graphClient.me().messages(\"AAMkpsDRVK\").attachments()\n" +
-                                           "\t.buildRequest()\n" +
+                                           "graphClient.me().messages(\"AAMkpsDRVK\").attachments()\r\n" +
+                                           "\t.buildRequest()\r\n" +
                                            "\t.post(attachment);";
 
             //Assert the snippet generated is as expected
@@ -768,8 +775,8 @@ namespace CodeSnippetsReflection.Test
                                            "driveItem.folder = folder;\r\n" +
                                            "driveItem.additionalDataManager().put(\"@microsoft.graph.conflictBehavior\", new JsonPrimitive(\"rename\"));\r\n" +
                                            "\r\n" +
-                                           "graphClient.me().drive().root().children()\n" +
-                                                "\t.buildRequest()\n" +
+                                           "graphClient.me().drive().root().children()\r\n" +
+                                                "\t.buildRequest()\r\n" +
                                                 "\t.post(driveItem);";
 
             //Assert the snippet generated is as expected
@@ -1076,6 +1083,51 @@ namespace CodeSnippetsReflection.Test
             //Act by generating the code snippet
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
             Assert.Contains("byte[]", result);
+        }
+        [Fact]
+        public void NotIncludeParenthesisInIdentifiers()
+        {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{" +
+                                    "\"value\":" +
+                                    "[" +
+                                        "{" +
+                                            "\"id\": \"contoso.sharepoint.com,da60e844-ba1d-49bc-b4d4-d5e36bae9019,712a596e-90a1-49e3-9b48-bfa80bee8740\"" +
+                                        "}," +
+                                        "{" +
+                                            "\"id\": \"contoso.sharepoint.com,da60e844-ba1d-49bc-b4d4-d5e36bae9019,0271110f-634f-4300-a841-3a8a2e851851\"" +
+                                        "}" +
+                                    "] " +
+                                "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/users/{user-id}/followedSites/add")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            Assert.DoesNotContain("Site(Add", result);// in case it's a collection we need to trim the ) at the end of the type name
+        }
+        [Fact]
+        public void UseTheRightTypePrefixForParameterSets() {
+            LanguageExpressions expressions = new JavaExpressions();
+            const string jsonObject = "{" +
+                                        "\"EmailAddresses\": [" +
+                                            "\"danas@contoso.onmicrosoft.com\", " +
+                                            "\"fannyd@contoso.onmicrosoft.com\"" +
+                                        "]," +
+                                        "\"MailTipsOptions\": \"automaticReplies, mailboxFullStatus\"" +
+                                    "}";
+
+            var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/getMailTips")
+                {
+                    Content = new StringContent(jsonObject)
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            Assert.Contains("UserGetMailTipsParameterSet", result);
         }
     }
 }

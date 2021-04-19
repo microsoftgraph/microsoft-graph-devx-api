@@ -23,7 +23,7 @@ namespace GraphWebApi.Common
             string localeLanguage = null;
             string acceptLanguageHeader = request.Headers.FirstOrDefault(x => x.Key == "Accept-Language").Value.ToString();
 
-            if (acceptLanguageHeader != null)
+            if (!string.IsNullOrEmpty(acceptLanguageHeader))
             {
                 var languages = acceptLanguageHeader.Split(',')
                .Select(StringWithQualityHeaderValue.Parse)

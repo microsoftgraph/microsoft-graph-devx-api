@@ -4,7 +4,6 @@
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using CodeSnippetsReflection;
@@ -19,12 +18,18 @@ using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Services;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using Serilog;
+using ChangesService.Services;
+using ChangesService.Interfaces;
+using Microsoft.Extensions.Hosting;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
 
 namespace GraphWebApi
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
+        public Startup(IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
         {
             Configuration = configuration;
             _env = hostingEnvironment;
@@ -32,7 +37,7 @@ namespace GraphWebApi
 
         public IConfiguration Configuration { get; }
 
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -50,13 +55,33 @@ namespace GraphWebApi
                            ValidIssuer = Configuration["AzureAd:Issuer"]
                        };
                    });
-
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMemoryCache();
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
+            services.AddSingleton<IChangesStore, ChangesStore>();
+            services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
+            services.AddControllers().AddNewtonsoftJson();
             services.Configure<SamplesAdministrators>(Configuration);
+
+            // Localization
+            services.Configure<RequestLocalizationOptions>(options =>
+            {
+                var supportedCultures = new[]
+                {
+                    new CultureInfo("en"),
+                    new CultureInfo("de"),
+                    new CultureInfo("fr"),
+                    new CultureInfo("es"),
+                    new CultureInfo("ru"),
+                    new CultureInfo("ja"),
+                    new CultureInfo("pt"),
+                    new CultureInfo("zh")
+                };
+                options.DefaultRequestCulture = new RequestCulture("en");
+                options.SupportedCultures = supportedCultures;
+            });
 
             #region AppInsights
 
@@ -82,7 +107,7 @@ namespace GraphWebApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -92,6 +117,7 @@ namespace GraphWebApi
             {
                 app.UseHsts();
             }
+
             app.UseSerilogRequestLogging();
             app.UseStaticFiles(new StaticFileOptions
             {
@@ -100,7 +126,18 @@ namespace GraphWebApi
             });
             app.UseHttpsRedirection();
             app.UseAuthentication();
-            app.UseMvc();
+            app.UseRouting();
+
+            // Localization
+            var localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value;
+            app.UseRequestLocalization(localizationOptions);
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
         }
     }
 }

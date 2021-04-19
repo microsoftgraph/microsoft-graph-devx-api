@@ -79,8 +79,8 @@ namespace CodeSnippetsReflection.App
             }
 
             var generator = customMetadataPathArg.Exists()
-                ? new SnippetsGenerator(customMetadataPathArg.Value)
-                : new SnippetsGenerator();
+                ? new SnippetsGenerator(isCommandLine: true, customMetadataPathArg.Value)
+                : new SnippetsGenerator(isCommandLine: true);
             var files = Directory.EnumerateFiles(httpSnippetsDir, "*-httpSnippet");
 
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
@@ -119,8 +119,9 @@ namespace CodeSnippetsReflection.App
                 Console.Error.WriteLine($"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}");
                 return;
             }
-
-            File.WriteAllText(file.Replace("-httpSnippet", $"---{language}"), snippet);
+            var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
+            Console.WriteLine($"Writing snippet: {filePath}");
+            File.WriteAllText(filePath, snippet);
         }
     }
 }

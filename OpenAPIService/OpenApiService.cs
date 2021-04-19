@@ -115,7 +115,7 @@ namespace OpenAPIService
         /// <param name="tags">Comma delimited list of tags or a single regex.</param>
         /// <param name="url">Url path to match with Operation Ids.</param>
         /// <param name="graphVersion">Version of Microsoft Graph.</param>
-        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
+        /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A predicate</returns>
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
             OpenApiDocument source, bool forceRefresh = false)
@@ -198,9 +198,9 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="source">The OpenAPI document.</param>
         /// <returns>A task.</returns>
-        private static async Task PopulateReferenceTablesAync(OpenApiDocument source)
-        {
-            HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
+        private static Task PopulateReferenceTablesAync(OpenApiDocument source)
+		{
+			HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
 
             int count = 0;
 
@@ -217,15 +217,17 @@ namespace OpenAPIService
                     _openApiOperationsTable.Add(count, operations);
                 }
             }
-        }
 
-        /// <summary>
-        /// Create a representation of the OpenApiDocument to return from an API
-        /// </summary>
-        /// <param name="subset">OpenAPI document.</param>
-        /// <param name="styleOptions">The modal object containing the required styling options.</param>
-        /// <returns>A memory stream.</returns>
-        public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
+			return Task.CompletedTask;
+		}
+
+		/// <summary>
+		/// Create a representation of the OpenApiDocument to return from an API
+		/// </summary>
+		/// <param name="subset">OpenAPI document.</param>
+		/// <param name="styleOptions">The modal object containing the required styling options.</param>
+		/// <returns>A memory stream.</returns>
+		public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
             var stream = new MemoryStream();
             var sr = new StreamWriter(stream);
@@ -274,7 +276,7 @@ namespace OpenAPIService
         /// from a dictionary cache or gets a new instance.
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
-        /// <param name="forceRefresh">Don't read from in-memory cache.</param>
+        /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
         public static async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
         {
@@ -332,13 +334,17 @@ namespace OpenAPIService
 
                     // Remove the root path to make AutoREST happy
                     subsetOpenApiDocument.Paths.Remove("/");
+
+                    // Temp. fix - Escape the # character from description in
+                    // 'microsoft.graph.networkInterface' schema
+                    EscapePoundCharacter(subsetOpenApiDocument.Components);
                 }
             }
 
             if (subsetOpenApiDocument.Paths == null ||
                 !subsetOpenApiDocument.Paths.Any())
             {
-                throw new ArgumentException ("No paths found for the supplied parameters.");
+                throw new ArgumentException("No paths found for the supplied parameters.");
             }
 
             return subsetOpenApiDocument;
@@ -361,7 +367,7 @@ namespace OpenAPIService
 
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
 
-            OpenApiDocument document = ConvertCsdlToOpenApi(csdl);
+            OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
 
             return document;
         }
@@ -371,9 +377,11 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="csdl">The CSDL stream.</param>
         /// <returns>An OpenAPI document.</returns>
-        public static OpenApiDocument ConvertCsdlToOpenApi(Stream csdl)
+        public static async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl)
         {
-            var edmModel = CsdlReader.Parse(XElement.Load(csdl).CreateReader());
+            using var reader = new StreamReader(csdl);
+            var csdlTxt = await reader.ReadToEndAsync();
+            var edmModel = CsdlReader.Parse(XElement.Parse(csdlTxt).CreateReader());
 
             var settings = new OpenApiConvertSettings()
             {
@@ -394,7 +402,7 @@ namespace OpenAPIService
             return document;
         }
 
-        private static OpenApiDocument FixReferences(OpenApiDocument document)
+        public static OpenApiDocument FixReferences(OpenApiDocument document)
         {
             // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
             // So we write it out, and read it back in again to fix it up.
@@ -524,6 +532,27 @@ namespace OpenAPIService
                 return output;
             }
             return Regex.Replace(pathKey, pattern, evaluator);
+        }
+
+        /// <summary>
+        /// Escapes the # character from the description of the 'microsoft.graph.networkInterface' schema.
+        /// </summary>
+        /// <remarks>
+        /// This particular schema has a '#' character within the description of one of
+        /// its schema definitions that breaks the PowerShell client code gen.
+        /// Below is a temporary fix awaiting a permanent solution from AutoRest
+        /// </remarks>
+        /// <param name="components">The <see cref="OpenApiComponents"/> object with the target schema.</param>
+        private static void EscapePoundCharacter(OpenApiComponents components)
+        {
+            if (components.Schemas.TryGetValue("microsoft.graph.networkInterface", out OpenApiSchema parentSchema))
+            {
+                if (parentSchema.Properties.TryGetValue("description", out OpenApiSchema descriptionSchema))
+                {
+                    // PowerShell uses ` to escape special characters
+                    descriptionSchema.Description = descriptionSchema.Description.Replace("<#>", "<#/>");
+                }
+            }
         }
     }
 }

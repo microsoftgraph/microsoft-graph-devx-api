@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using CodeSnippetsReflection.StringExtensions;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
 namespace CodeSnippetsReflection.LanguageGenerators
@@ -23,15 +24,16 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 var snippetBuilder = new StringBuilder();
                 snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName,languageExpressions);
                 //setup the auth snippet section
-                snippetBuilder.Append("const options = {\n");
-                snippetBuilder.Append("\tauthProvider,\n};\n\n");
+                snippetBuilder.Append("const options = {\r\n");
+                snippetBuilder.Append("\tauthProvider,\r\n};\r\n\r\n");
                 //init the client
-                snippetBuilder.Append("const client = Client.init(options);\n\n");
+                snippetBuilder.Append("const client = Client.init(options);\r\n\r\n");
 
                 if (snippetModel.Method == HttpMethod.Get)
                 {
                     //append any queries with the actions
-                    var getActions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions) + "\n\t.get();";
+                    snippetBuilder.Append($"let {snippetModel.ResponseVariableName} = ");
+                    var getActions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions) + "\r\n\t.get();";
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, getActions));
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
@@ -39,11 +41,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     if (!string.IsNullOrEmpty(snippetModel.RequestBody))
                     {
                         snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
-                        snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.post({snippetModel.ResponseVariableName});"));
+                        snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\r\n\t.post({snippetModel.ResponseVariableName});"));
                     }
                     else
                     {
-                        snippetBuilder.Append(GenerateRequestSection(snippetModel, "\n\t.post();"));
+                        snippetBuilder.Append(GenerateRequestSection(snippetModel, "\r\n\t.post();"));
                     }
                 }
                 else if (snippetModel.Method == HttpMethod.Patch)
@@ -52,11 +54,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         throw new Exception("No body present for PATCH method in Javascript");
 
                     snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.update({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\r\n\t.update({snippetModel.ResponseVariableName});"));
                 }
                 else if (snippetModel.Method == HttpMethod.Delete)
                 {
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, "\n\t.delete();"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, "\r\n\t.delete();"));
                 }
                 else if (snippetModel.Method == HttpMethod.Put)
                 {
@@ -64,7 +66,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
                         throw new Exception("No body present for PUT method in Javascript");
 
                     snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
-                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\n\t.put({snippetModel.ResponseVariableName});"));
+                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\r\n\t.put({snippetModel.ResponseVariableName});"));
                 }
                 else
                 {
@@ -86,7 +88,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>String of the snippet in JS code</returns>
         private static string BetaSectionString(string apiVersion)
         {
-            return apiVersion.Equals("beta",StringComparison.Ordinal) ? "\n\t.version('beta')" : "";
+            return apiVersion.Equals("beta",StringComparison.Ordinal) ? "\r\n\t.version('beta')" : "";
         }
 
         /// <summary>
@@ -101,9 +103,9 @@ namespace CodeSnippetsReflection.LanguageGenerators
             if (snippetModel.CustomQueryOptions.Any())
             {
                 //just append the query string since its a custom query
-                path += snippetModel.QueryString;
+                path += snippetModel.QueryString.EscapeQuotesInLiteral("\"", "\\'");
             }
-            stringBuilder.Append($"let res = await client.api('{path}')");
+            stringBuilder.Append($"await client.api('{path}')");
             //append beta
             stringBuilder.Append(BetaSectionString(snippetModel.ApiVersion));
             stringBuilder.Append(actions);
@@ -123,9 +125,24 @@ namespace CodeSnippetsReflection.LanguageGenerators
                 return "";//nothing to generate with no body
 
             var stringBuilder = new StringBuilder();
-            //remove the quotation marks from the JSON keys
-            const string pattern = "\"(.*?) *\":";
-            var javascriptObject = Regex.Replace(jsonBody.Trim(), pattern, "$1:");
+
+            // Escape any single-quotes in values
+            var javascriptObject = jsonBody.Trim().Replace("'", "\\'");
+
+            // Remove the quotation marks from the JSON keys
+            // EXCEPT ones with punctuation in them (like @odata.id)
+            javascriptObject = Regex.Replace(javascriptObject, @"""(\w*?)"" *: *", "$1: ");
+
+            // Replace double-quotes in any remaining keys with
+            // single quotes
+            javascriptObject = Regex.Replace(javascriptObject, @"""(.*?)"" *:", "'$1':");
+
+            // Replace double quotes in all values with single-quotes (')
+            // Yes this Regex looks insane - it's there to weed out any escaped double-quotes
+            // (like in the value "Bob says \"Hello!\""
+            javascriptObject = Regex.Replace(javascriptObject,
+                @"(?<!\\)(?:\\\\)*""(.*?)(?<!\\)(?:\\\\)*""", "'$1'");
+
             stringBuilder.Append($"const {variableName} = {javascriptObject};");
             stringBuilder.Append("\r\n\r\n");
             return stringBuilder.ToString();
@@ -134,14 +151,14 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
     internal class JavascriptExpressions : LanguageExpressions
     {
-        public override string FilterExpression => "\n\t.filter('{0}')"; 
-        public override string SearchExpression => "\n\t.search('{0}')"; 
-        public override string ExpandExpression => "\n\t.expand('{0}')"; 
-        public override string SelectExpression => "\n\t.select('{0}')"; 
-        public override string OrderByExpression => "\n\t.orderby('{0}')"; 
-        public override string SkipExpression => "\n\t.skip({0})"; 
-        public override string SkipTokenExpression  => "\n\t.skiptoken('{0}')"; 
-        public override string TopExpression => "\n\t.top({0})"; 
+        public override string FilterExpression => "\r\n\t.filter('{0}')"; 
+        public override string SearchExpression => "\r\n\t.search('{0}')"; 
+        public override string ExpandExpression => "\r\n\t.expand('{0}')"; 
+        public override string SelectExpression => "\r\n\t.select('{0}')"; 
+        public override string OrderByExpression => "\r\n\t.orderby('{0}')"; 
+        public override string SkipExpression => "\r\n\t.skip({0})"; 
+        public override string SkipTokenExpression  => "\r\n\t.skiptoken('{0}')"; 
+        public override string TopExpression => "\r\n\t.top({0})"; 
 
         public override string FilterExpressionDelimiter => ",";
 
@@ -149,7 +166,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
         public override string OrderByExpressionDelimiter => " ";
 
-        public override string HeaderExpression => "\n\t.header('{0}','{1}')";
+        public override string HeaderExpression => "\r\n\t.header('{0}','{1}')";
 
         public override string[] ReservedNames => new string [] {
             "await","abstract", "arguments", "boolean", "break", "byte", "case",
@@ -164,5 +181,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         public override string ReservedNameEscapeSequence => "_";
 
         public override string DoubleQuotesEscapeSequence => "\"";
+
+        public override string SingleQuotesEscapeSequence => "\\'";
     }
 }

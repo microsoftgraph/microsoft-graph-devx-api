@@ -13,7 +13,9 @@ namespace CodeSnippetsReflection.Test
     public class CommonGeneratorShould
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(ServiceRootUrl + "/$metadata"));
+        public const string CleanV1Metadata = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_v10_metadata/cleanMetadataWithDescriptionsv1.0.xml";
+        public const string CleanBetaMetadata = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_beta_metadata/cleanMetadataWithDescriptionsbeta.xml";
+        private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CleanV1Metadata));
 
         #region Test GenerateQuerySection
         [Fact]
@@ -45,7 +47,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.select('displayName,givenName,postalCode')", result);
+            Assert.Equal("\r\n\t.select('displayName,givenName,postalCode')", result);
         }
 
         [Fact]
@@ -61,7 +63,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.filter('startswith(givenName, 'J')')", result);
+            Assert.Equal("\r\n\t.filter('startswith(givenName, \\'J\\')')", result);
         }
 
         [Fact]
@@ -77,7 +79,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.search('Irene McGowen')", result);
+            Assert.Equal("\r\n\t.search('Irene McGowen')", result);
         }
 
         [Fact]
@@ -93,7 +95,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.skip(20)", result);
+            Assert.Equal("\r\n\t.skip(20)", result);
         }
 
         [Fact]
@@ -109,7 +111,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.top(5)", result);
+            Assert.Equal("\r\n\t.top(5)", result);
         }
 
         [Fact]
@@ -127,7 +129,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.header('Prefer','kenya-timezone')", result);
+            Assert.Equal("\r\n\t.header('Prefer','kenya-timezone')", result);
         }
 
         [Fact]
@@ -145,7 +147,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.header('Prefer','outlook.timezone=\"Pacific Standard Time\"')", result);
+            Assert.Equal("\r\n\t.header('Prefer','outlook.timezone=\"Pacific Standard Time\"')", result);
         }
 
         [Fact]
@@ -161,7 +163,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Select(\"displayName,givenName,postalCode\")", result);
+            Assert.Equal("\r\n\t.Select(\"displayName,givenName,postalCode\")", result);
         }
 
         [Fact]
@@ -177,7 +179,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Filter(\"startswith(givenName, 'J')\")", result);
+            Assert.Equal("\r\n\t.Filter(\"startswith(givenName, 'J')\")", result);
         }
 
         [Fact]
@@ -193,7 +195,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Search(\"Irene McGowen\")", result);
+            Assert.Equal("\r\n\t.Search(\"Irene McGowen\")", result);
         }
 
         [Fact]
@@ -209,7 +211,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Skip(20)", result);
+            Assert.Equal("\r\n\t.Skip(20)", result);
         }
 
         [Fact]
@@ -225,7 +227,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Top(5)", result);
+            Assert.Equal("\r\n\t.Top(5)", result);
         }
 
         [Fact]
@@ -243,7 +245,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Header(\"Prefer\",\"kenya-timezone\")", result);
+            Assert.Equal("\r\n\t.Header(\"Prefer\",\"kenya-timezone\")", result);
         }
 
         [Fact]
@@ -261,58 +263,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\n\t.Header(\"Prefer\",\"outlook.timezone=\\\"Pacific Standard Time\\\"\")", result);
-        }
-        #endregion
-
-        #region Test GetListAsStringForSnippet
-        [Fact]
-        public void GetListAsStringForSnippet_ShouldReturnEmptyStringIfFieldListEmpty()
-        {
-            //Arrange
-            var fieldList = new List<string>();
-
-            //Act
-            var result = CommonGenerator.GetListAsStringForSnippet(fieldList,",");
-
-            //Assert
-            Assert.Equal("",result);
-        }
-
-        [Fact]
-        public void GetListAsStringForSnippet_ShouldReturnCommaSeparatedStringWithCommaDelimiter()
-        {
-            //Arrange
-            var fieldList = new List<string>
-            {
-                "Test",
-                "Test2",
-                "Test3"
-            };
-
-            //Act
-            var result = CommonGenerator.GetListAsStringForSnippet(fieldList, ",");
-
-            //Assert
-            Assert.Equal("Test,Test2,Test3", result);
-        }
-
-        [Fact]
-        public void GetListAsStringForSnippet_ShouldReturnUnDelimitedStringWithEmptyDelimiter()
-        {
-            //Arrange
-            var fieldList = new List<string>
-            {
-                "Test",
-                "Test2",
-                "Test3"
-            };
-
-            //Act
-            var result = CommonGenerator.GetListAsStringForSnippet(fieldList, "");
-
-            //Assert
-            Assert.Equal("TestTest2Test3", result);
+            Assert.Equal("\r\n\t.Header(\"Prefer\",\"outlook.timezone=\\\"Pacific Standard Time\\\"\")", result);
         }
         #endregion
 

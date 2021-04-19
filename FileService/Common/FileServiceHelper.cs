@@ -4,6 +4,7 @@
 
 using System;
 using System.Globalization;
+using FileService.Extensions;
 
 namespace FileService.Common
 {
@@ -51,34 +52,7 @@ namespace FileService.Common
 
             if (!string.IsNullOrEmpty(localeCode))
             {
-                // This switch statement helps filter for only the supported locale languages
-                switch (localeCode.ToLower(CultureInfo.InvariantCulture))
-                {
-                    case "fr-fr":
-                        localeCode = "fr-FR";
-                        break;
-                    case "es-es":
-                        localeCode = "es-ES";
-                        break;
-                    case "de-de":
-                        localeCode = "de-DE";
-                        break;
-                    case "ja-jp":
-                        localeCode = "ja-JP";
-                        break;
-                    case "pt-br":
-                        localeCode = "pt-BR";
-                        break;
-                    case "ru-ru":
-                        localeCode = "ru-RU";
-                        break;
-                    case "zh-cn":
-                        localeCode = "zh-CN";
-                        break;
-                    default:
-                        localeCode = "en-US";
-                        break;
-                }
+                localeCode = localeCode.GetSupportedLocaleVariant();
 
                 if (defaultBlobName.IndexOf('.') > 0 && localeCode != "en-US")
                 {
@@ -90,6 +64,7 @@ namespace FileService.Common
                 }
             }
 
+            // File path source format --> directoryName\\fileName
             return $"{containerName}{FileServiceConstants.DirectorySeparator}{defaultBlobName}";
         }
 

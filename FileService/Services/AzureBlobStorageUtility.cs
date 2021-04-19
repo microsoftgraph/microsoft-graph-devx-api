@@ -18,15 +18,23 @@ namespace FileService.Services
     /// </summary>
     public class AzureBlobStorageUtility : IFileUtility
     {
+        private readonly IConfiguration _configuration;
         private readonly string _connectionString;
         private string _containerName;
         private string _blobName;
 
         public AzureBlobStorageUtility(IConfiguration configuration)
         {
-            _connectionString = configuration["AzureBlobStorage:ConnectionString"];
+            _configuration = configuration
+               ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: { nameof(configuration) }");
+            _connectionString = _configuration["BlobStorage:AzureConnectionString"];
         }
 
+        /// <summary>
+        /// Gets the file path and parses its contents
+        /// </summary>
+        /// <param name="filePathSource"> The path of the file.</param>
+        /// <returns>A json string of file contents.</returns>
         public async Task<string> ReadFromFile(string filePathSource)
         {
             FileServiceHelper.CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));
@@ -65,7 +73,13 @@ namespace FileService.Services
             throw new IOException("Failed to connect to the blob storage account.");
         }
 
-        public async Task WriteToFile(string fileContents, string filePathSource)
+        /// <summary>
+        /// Allows one to edit the file.
+        /// </summary>
+        /// <param name="fileContents"> Contents of the file.</param>
+        /// <param name="filePathSource"> The path of the file.</param>
+        /// <returns></returns>
+        public Task WriteToFile(string fileContents, string filePathSource)
         {
             throw new NotImplementedException();
         }

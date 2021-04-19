@@ -18,13 +18,15 @@ namespace SamplesService.Test
     public class SamplesStoreShould
     {
         private readonly IConfigurationRoot _configuration;
-        private readonly IFileUtility _fileUtility;
         private readonly IMemoryCache _samplesCache;
+        private readonly IFileUtility _fileUtility;
+        private readonly IHttpClientUtility _httpClientUtility;
         private ISamplesStore _samplesStore;
 
         public SamplesStoreShould()
         {
-            _fileUtility = new AzureBlobStorageUtilityMock();
+            _fileUtility = new FileUtilityMock();
+            _httpClientUtility = new FileUtilityMock();
             _samplesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(".\\TestFiles\\appsettingstest.json")
@@ -35,7 +37,7 @@ namespace SamplesService.Test
         public async Task CorrectlySeedLocaleCachesOfSampleQueriesWhenMultipleRequestsReceived()
         {
             // Arrange
-            _samplesStore = new SamplesStore(_fileUtility, _configuration, _samplesCache);
+            _samplesStore = new SamplesStore(_configuration, _httpClientUtility, _fileUtility, _samplesCache);
 
             /* Act */
 
@@ -70,13 +72,65 @@ namespace SamplesService.Test
         public async Task ReturnNullIfSampleQueryFileIsEmpty()
         {
             // Arrange
-            _samplesStore = new SamplesStore(_fileUtility, _configuration, _samplesCache);
+            _samplesStore = new SamplesStore(_configuration, _httpClientUtility, _fileUtility, _samplesCache);
 
             // Act - Fetch ja-JP sample queries which is empty
             SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP");
 
             // Assert
             Assert.Null(japaneseSampleQueriesList);
+        }
+
+        [Fact]
+        public async Task FetchSamplesFromGithub()
+        {
+            //Arrange
+            var configuration = new ConfigurationBuilder()
+                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .Build();
+
+            string org = configuration["BlobStorage:Org"];
+            string branchName = configuration["BlobStorage:Branch"];
+
+            _samplesStore = new SamplesStore(configuration, _httpClientUtility, _fileUtility, _samplesCache);
+
+            /* Act */
+
+            // Fetch en-US sample queries
+            SampleQueriesList englishSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("en-US", org, branchName);
+
+            // Fetch es-ES sample queries
+            SampleQueriesList espanolSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("es-ES", org, branchName);
+
+            /* Assert */
+
+            // en-US
+            Assert.NotNull(englishSampleQueriesList);
+            Assert.Equal(151, englishSampleQueriesList.SampleQueries.Count);
+
+            // es-ES
+            Assert.NotNull(espanolSampleQueriesList);
+            Assert.Equal(149, espanolSampleQueriesList.SampleQueries.Count);
+        }
+
+        [Fact]
+        public async Task ReturnNotNullIfSampleQueriesFileHasEmptyJsonObject()
+        {
+            //Arrange
+            var configuration = new ConfigurationBuilder()
+                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .Build();
+
+            string org = configuration["BlobStorage:Org"];
+            string branchName = configuration["BlobStorage:Branch"];
+
+            _samplesStore = new SamplesStore(configuration, _httpClientUtility, _fileUtility, _samplesCache);
+
+            // Act - Fetch ja-JP sample queries which is empty
+            SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP", org, branchName);
+
+            // Assert
+            Assert.NotNull(japaneseSampleQueriesList);
         }
     }
 }

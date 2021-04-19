@@ -32,14 +32,23 @@ namespace GraphWebApi.Controllers
         [Route("samples")]
         [Produces("application/json")]
         [HttpGet]
-        public async Task<IActionResult> GetSampleQueriesListAsync(string search)
+        public async Task<IActionResult> GetSampleQueriesListAsync(string search, string org, string branchName)
         {
             try
             {
                 string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
+                SampleQueriesList sampleQueriesList = null;
 
-                // Fetch sample queries
-                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
+                if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
+                {
+                    // Fetch samples file from Github
+                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
+                }
+                else
+                {
+                    // Fetch sample queries from Azure Blob
+                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
+                }
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -162,9 +171,6 @@ namespace GraphWebApi.Controllers
 
                 // Get the serialized JSON string of this sample query
                 string updatedSampleQueriesJson = SamplesService.SerializeSampleQueriesList(updatedSampleQueriesList);
-
-                // Disabled functionality
-                //  await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
 
                 // Success; return the sample query model object that was just updated
                 return Ok(sampleQueryModel);
@@ -313,7 +319,7 @@ namespace GraphWebApi.Controllers
         /// <see cref="SampleQueriesPolicies"/> from this.
         /// </summary>
         /// <returns></returns>
-        private async Task<SampleQueriesPolicies> GetSampleQueriesPoliciesAsync()
+        private Task<SampleQueriesPolicies> GetSampleQueriesPoliciesAsync()
         {
             throw new NotImplementedException();
         }
