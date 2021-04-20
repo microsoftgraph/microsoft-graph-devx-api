@@ -89,7 +89,7 @@ namespace GraphWebApi
             services.AddApplicationInsightsTelemetry(options =>
             {
                 options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
-                options.RequestCollectionOptions.InjectResponseHeaders = false;
+                options.RequestCollectionOptions.InjectResponseHeaders = true;
                 options.RequestCollectionOptions.TrackExceptions = true;
                 options.EnableAuthenticationTrackingJavaScript = false;
                 options.EnableHeartbeat = true;
@@ -97,7 +97,7 @@ namespace GraphWebApi
                 options.EnableQuickPulseMetricStream = true;   // Enable Live Metrics stream
                 options.EnableDebugLogger = true;
             });
-            services.AddApplicationInsightsTelemetryProcessor<TelemetryProcessor>();
+            services.AddApplicationInsightsTelemetryProcessor<CustomPIIFilter>();
 
             if (!_env.IsDevelopment())
             {
@@ -119,7 +119,6 @@ namespace GraphWebApi
             {
                 app.UseHsts();
             }
-            app.UseMiddleware<TelemetryMiddleware>();
             app.UseSerilogRequestLogging();
             app.UseStaticFiles(new StaticFileOptions
             {
