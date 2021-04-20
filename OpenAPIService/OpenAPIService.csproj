@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Submodules\OpenAPI.NET.OData\src\Microsoft.OpenApi.OData.Reader\Microsoft.OpenAPI.OData.Reader.csproj" />
+    <ProjectReference Include="..\OpenAPI.NET.OData\src\Microsoft.OpenApi.OData.Reader\Microsoft.OpenAPI.OData.Reader.csproj" />
     <ProjectReference Include="..\UriMatchService\UriMatchingService.csproj" />
   </ItemGroup>
 

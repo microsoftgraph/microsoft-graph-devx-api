@@ -23,8 +23,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAPIService", "OpenAPISe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAPIService.Test", "OpenAPIService.Test\OpenAPIService.Test.csproj", "{B9FE6D79-3835-4A18-8FEE-551703838510}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.OpenAPI.OData.Reader", "Submodules\OpenAPI.NET.OData\src\Microsoft.OpenApi.OData.Reader\Microsoft.OpenAPI.OData.Reader.csproj", "{5E40F938-160A-4904-B256-946020B01042}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MockTestUtility", "MockTestUtility\MockTestUtility.csproj", "{DA2AA6C8-63EC-401C-AE30-4E06DDDFFD11}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeSnippetsReflection.App", "CodeSnippetsReflection.App\CodeSnippetsReflection.App.csproj", "{3BEB31A0-ABFB-46E7-985B-98C38F6AF5A3}"
@@ -36,6 +34,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChangesService", "ChangesService\ChangesService.csproj", "{1D2888F4-B0DB-4C9D-BFBD-3D448E75D85C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChangesService.Test", "ChangesService.Test\ChangesService.Test.csproj", "{500E95CE-5D90-4197-B4BD-0545F6DCD08F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.OpenAPI.OData.Reader", "OpenAPI.NET.OData\src\Microsoft.OpenApi.OData.Reader\Microsoft.OpenAPI.OData.Reader.csproj", "{78455137-6116-4C49-8C27-5FF0DEABE1B1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,10 +83,6 @@ Global
 		{B9FE6D79-3835-4A18-8FEE-551703838510}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9FE6D79-3835-4A18-8FEE-551703838510}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9FE6D79-3835-4A18-8FEE-551703838510}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5E40F938-160A-4904-B256-946020B01042}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5E40F938-160A-4904-B256-946020B01042}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5E40F938-160A-4904-B256-946020B01042}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5E40F938-160A-4904-B256-946020B01042}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DA2AA6C8-63EC-401C-AE30-4E06DDDFFD11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DA2AA6C8-63EC-401C-AE30-4E06DDDFFD11}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA2AA6C8-63EC-401C-AE30-4E06DDDFFD11}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -111,6 +107,10 @@ Global
 		{500E95CE-5D90-4197-B4BD-0545F6DCD08F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{500E95CE-5D90-4197-B4BD-0545F6DCD08F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{500E95CE-5D90-4197-B4BD-0545F6DCD08F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78455137-6116-4C49-8C27-5FF0DEABE1B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78455137-6116-4C49-8C27-5FF0DEABE1B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78455137-6116-4C49-8C27-5FF0DEABE1B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78455137-6116-4C49-8C27-5FF0DEABE1B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
