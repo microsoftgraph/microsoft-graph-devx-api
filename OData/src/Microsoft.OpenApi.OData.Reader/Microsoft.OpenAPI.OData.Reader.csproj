@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>Microsoft.OpenApi.OData.Reader</AssemblyName>
+    <RootNamespace>Microsoft.OpenApi.OData</RootNamespace>
+    <TargetFrameworks>net472; netstandard2.0</TargetFrameworks>
+    <PackageId>Microsoft.OpenApi.OData.Reader</PackageId>
+    <LangVersion Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">latest</LangVersion>
+    <LangVersion Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">latest</LangVersion>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\tool\35MSSharedLib1024.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>true</DelaySign>
+    <OutputPath Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">..\..\bin\Debug\</OutputPath>
+    <OutputPath Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">..\..\bin\Release\</OutputPath>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <DocumentationFile>..\..\bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+
+  <Import Project="..\Build.props" />
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.OData.Edm" Version="7.6.1" />
+    <PackageReference Include="Microsoft.OpenApi" Version="1.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\SRResource.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SRResource.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\SRResource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SRResource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>
