@@ -60,7 +60,7 @@ namespace GraphWebApi.Telemetry
         /// <param name="request"> An event telemetry item.</param>
         public void SanitizeEventTelemetry(EventTelemetry customEvent)
         {
-            var piiRegex = new Dictionary<string, Regex>
+            var piiRegexes = new Dictionary<string, Regex>
             {
                 {"guidRegex", _guidRegex},
                 {"emailRegex", _emailRegex},
@@ -69,12 +69,12 @@ namespace GraphWebApi.Telemetry
             var requestPath = customEvent.Properties["RequestPath"];
             var renderedMessage = customEvent.Properties["RenderedMessage"];
 
-            foreach (var value in piiRegex.Values)
+            foreach (var piiRegex in piiRegexes.Values)
             {
-                if (value.IsMatch(requestPath) && value.IsMatch(renderedMessage))
+                if (piiRegex.IsMatch(requestPath) && piiRegex.IsMatch(renderedMessage))
                 {
-                    customEvent.Properties["RequestPath"] = value.Replace(customEvent.Properties["RequestPath"], "****");
-                    customEvent.Properties["RenderedMessage"] = value.Replace(customEvent.Properties["RenderedMessage"], "****");
+                    customEvent.Properties["RequestPath"] = piiRegex.Replace(customEvent.Properties["RequestPath"], "****");
+                    customEvent.Properties["RenderedMessage"] = piiRegex.Replace(customEvent.Properties["RenderedMessage"], "****");
                 }
             }
 
