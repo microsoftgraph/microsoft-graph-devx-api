@@ -90,28 +90,36 @@ namespace GraphWebApi.Telemetry
         {
             if (customEvent != null)
             {
+                var propertyNames = new List<string>
+                {
+                    "displayname",
+                    "firstName",
+                    "lastName"
+                };
+
                 var requestPath = customEvent.Properties["RequestPath"];
                 var renderedMessage = customEvent.Properties["RenderedMessage"];
-
-                if (requestPath.Contains("filter") && requestPath.Contains("displayname"))
+                foreach(var propertyName in propertyNames)
                 {
-                    var newQueryString = FormatString(requestPath);
-                    customEvent.Properties["RequestPath"] = newQueryString;
-                }
+                    if (requestPath.Contains("filter") && requestPath.Contains(propertyName))
+                    {
+                        var newQueryString = FormatString(requestPath);
+                        customEvent.Properties["RequestPath"] = newQueryString;
+                    }
+                    if (renderedMessage.Contains("filter") && renderedMessage.Contains(propertyName))
+                    {
+                        // Fetch the request path
+                        string[] separators = { "GET", "responded" };
+                        var text = renderedMessage.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                        requestPath = text[1];
 
-                if(renderedMessage.Contains("filter") && renderedMessage.Contains("displayname"))
-                {
-                    // Fetch the request path
-                    string[] separators = { "GET","responded"};
-                    var text = renderedMessage.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-                    requestPath = text[1];
+                        var newQueryString = FormatString(requestPath);
 
-                    var newQueryString = FormatString(requestPath);
+                        // Append sanitized property name to query string
+                        newQueryString = $"{text[0]}GET{newQueryString} responded{text[2]}";
 
-                    // Append sanitized property name to query string
-                    newQueryString = $"{text[0]}GET{newQueryString} responded{text[2]}";
-
-                    customEvent.Properties["RenderedMessage"] = newQueryString;
+                        customEvent.Properties["RenderedMessage"] = newQueryString;
+                    }
                 }
             }
         }
