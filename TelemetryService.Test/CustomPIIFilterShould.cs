@@ -114,5 +114,35 @@ namespace Telemetry.Test
             Assert.Equal(expectedPath, eventTelemetry.Properties["RequestPath"]);
             Assert.Equal(expectedMessage, eventTelemetry.Properties["RenderedMessage"]);
         }
+
+        [Fact]
+        public void RedactFirstNameFromRequestUrl()
+        {
+            // Arrange
+            var httpMethod = "GET";
+            var statusCode = "200";
+            var elapsed = "5000";
+            var requestPath = "/openapi?url=/users?$filter(firstName eq 'Megan')";
+            var renderedMessage = $"HTTP {httpMethod + requestPath} responded {statusCode} in {elapsed} ms";
+
+            var eventTelemetry = new EventTelemetry();
+            eventTelemetry.Properties.Add("RequestPath", requestPath);
+            eventTelemetry.Properties.Add("RequestMethod", httpMethod);
+            eventTelemetry.Properties.Add("StatusCode", statusCode);
+            eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
+
+            // Act
+            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
+            {
+                _telemetryProcessor.Process(eventTelemetry);
+            }
+
+            var expectedPath = "/openapi?url=/users?$filter(firstName eq '****')";
+            var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
+
+            // Assert
+            Assert.Equal(expectedPath, eventTelemetry.Properties["RequestPath"]);
+            Assert.Equal(expectedMessage, eventTelemetry.Properties["RenderedMessage"]);
+        }
     }
 }
