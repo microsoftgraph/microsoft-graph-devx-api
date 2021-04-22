@@ -36,19 +36,7 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
-                SampleQueriesList sampleQueriesList = null;
-
-                if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
-                {
-                    // Fetch samples file from Github
-                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
-                }
-                else
-                {
-                    // Fetch sample queries from Azure Blob
-                    sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
-                }
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -88,14 +76,11 @@ namespace GraphWebApi.Controllers
        [Route("samples/{id}")]
        [Produces("application/json")]
        [HttpGet]
-        public async Task<IActionResult> GetSampleQueryByIdAsync(string id)
+        public async Task<IActionResult> GetSampleQueryByIdAsync(string id, string org, string branchName)
         {
             try
             {
-                string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
-
-                // Fetch sample queries
-                SampleQueriesList sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
+                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
 
                 if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
                 {
@@ -312,6 +297,31 @@ namespace GraphWebApi.Controllers
             {
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
+        }
+
+        /// <summary>
+        /// Fetches a list of Sample Queries from Github or blob storage
+        /// </summary>
+        /// <param name="org">The name of the organisation i.e microsoftgraph or a member's username in the case of a forked repo.</param>
+        /// <param name="branchName">The name of the branch.</param>
+        /// <returns>A list of Sample Queries.</returns>
+        private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string org, string branchName)
+        {
+            string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
+
+            SampleQueriesList sampleQueriesList;
+            if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
+            {
+                // Fetch samples file from Github
+                sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
+            }
+            else
+            {
+                // Fetch sample queries from Azure Blob
+                sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
+            }
+
+            return sampleQueriesList;
         }
 
         /// <summary>
