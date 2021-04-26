@@ -26,7 +26,7 @@ namespace Telemetry.Test
         }
 
         [Fact]
-        public void SanitizeGUIDFromRequestUrl()
+        public void SanitizeGUIDFromEventTelemetry()
         {
             // Arrange
             var httpMethod = "GET";
@@ -56,7 +56,23 @@ namespace Telemetry.Test
         }
 
         [Fact]
-        public void RedactEmailFromRequestUrl()
+        public void SanitizeGUIDFromRequestUrl()
+        {
+            // Arrange
+            var request = new RequestTelemetry();
+            request.Url = new Uri("https://localhost:44399/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&method=GET");
+
+            // Act
+            _telemetryProcessor.Process(request);
+
+            var expectedUrl = "https://localhost:44399/permissions?requestUrl=/users/****&method=GET";
+
+            // Assert
+            Assert.Equal(expectedUrl, request.Url.ToString());
+        }
+
+        [Fact]
+        public void RedactEmailFromEventTelemetry()
         {
             // Arrange
             var httpMethod = "GET";
@@ -86,13 +102,29 @@ namespace Telemetry.Test
         }
 
         [Fact]
-        public void RedactUsernameFromRequestUrl()
+        public void RedactEmailFromRequestUrl()
+        {
+            // Arrange
+            var request = new RequestTelemetry();
+            request.Url = new Uri("https://localhost:44399/openapi?url=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')");
+
+            // Act
+            _telemetryProcessor.Process(request);
+
+            var expectedUrl = "https://localhost:44399/openapi?url=/users?$filter(emailAddress eq '****')";
+
+            // Assert
+            Assert.Equal(expectedUrl, request.Url.ToString());
+        }
+
+        [Fact]
+        public void RedactUsernameFromEventTelemetry()
         {
             // Arrange
             var httpMethod = "GET";
             var statusCode = "200";
             var elapsed = "5000";
-            var requestPath = "/openapi?url=/users?$filter(displayname eq 'Megan Bowen')";
+            var requestPath = "/openapi?url=/users?$filter(displayName eq 'Megan Bowen')";
             var renderedMessage = $"HTTP {httpMethod + requestPath} responded {statusCode} in {elapsed} ms";
 
             var eventTelemetry = new EventTelemetry();
@@ -107,7 +139,7 @@ namespace Telemetry.Test
                 _telemetryProcessor.Process(eventTelemetry);
             }
 
-            var expectedPath = "/openapi?url=/users?$filter(displayname eq '****')";
+            var expectedPath = "/openapi?url=/users?$filter(displayName eq '****')";
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -116,7 +148,22 @@ namespace Telemetry.Test
         }
 
         [Fact]
-        public void RedactFirstNameFromRequestUrl()
+        public void RedactUsernameFromRequestTelemetry()
+        {
+            // Arrange
+            var request = new RequestTelemetry();
+            request.Url = new Uri("https://localhost:44399/openapi?url=/users?$filter(displayName eq 'Megan Bowen')");
+
+            // Act
+            _telemetryProcessor.Process(request);
+            var expectedUrl = "https://localhost:44399/openapi?url=/users?$filter(displayName eq '****')";
+
+            // Assert
+            Assert.Equal(expectedUrl, request.Url.ToString());
+        }
+
+        [Fact]
+        public void RedactFirstNameFromEventTelemetry()
         {
             // Arrange
             var httpMethod = "GET";
@@ -143,6 +190,22 @@ namespace Telemetry.Test
             // Assert
             Assert.Equal(expectedPath, eventTelemetry.Properties["RequestPath"]);
             Assert.Equal(expectedMessage, eventTelemetry.Properties["RenderedMessage"]);
+        }
+
+        [Fact]
+        public void RedactFirstNameFromRequestUrl()
+        {
+            // Arrange
+            var request = new RequestTelemetry();
+            request.Url = new Uri("https://localhost:44399/openapi?url=/users?$filter(firstName eq 'Megan')");
+
+            // Act
+            _telemetryProcessor.Process(request);
+
+            var expectedUrl = "https://localhost:44399/openapi?url=/users?$filter(firstName eq '****')";
+
+            // Assert
+            Assert.Equal(expectedUrl, request.Url.ToString());
         }
     }
 }
