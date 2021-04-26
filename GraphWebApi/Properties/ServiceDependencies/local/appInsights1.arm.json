@@ -53,14 +53,15 @@
               "type": "microsoft.insights/components",
               "location": "[parameters('resourceLocation')]",
               "kind": "web",
-              "properties": {
-                "Application_Type": "web"
-              },
+              "properties": {}
               "apiVersion": "2015-05-01"
             }
           ]
         }
       }
     }
-  ]
+  ],
+  "metadata": {
+    "_dependencyType": "appInsights.azure"
+  }
 }
