@@ -127,6 +127,7 @@ namespace GraphWebApi.Telemetry
                 "firstName",
                 "lastName",
                 "givenName",
+                "preferredName",
                 "surname"
             };
 
