@@ -31,11 +31,15 @@ namespace GraphWebApi.Telemetry
         private static readonly Regex _mobilePhoneRegex = new(@"^(\+\d{1,2}\s?)?1?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+        private static readonly Regex _employeeIdRegex = new(@"[0-9]{7}",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
         private readonly List<Regex> piiRegexes = new List<Regex>
             {
                 _guidRegex,
                 _emailRegex,
                 _mobilePhoneRegex,
+                _employeeIdRegex
             };
 
         public CustomPIIFilter(ITelemetryProcessor next)
