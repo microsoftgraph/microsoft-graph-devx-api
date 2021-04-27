@@ -42,6 +42,16 @@ namespace GraphWebApi.Telemetry
                 _employeeIdRegex
             };
 
+        private static readonly List<string> propertyNames = new List<string>
+            {
+                "displayName",
+                "firstName",
+                "lastName",
+                "givenName",
+                "preferredName",
+                "surname"
+            };
+
         public CustomPIIFilter(ITelemetryProcessor next)
         {
             _next = next
@@ -121,16 +131,6 @@ namespace GraphWebApi.Telemetry
         /// <returns>A sanitized request url.</returns>
         private void SanitizeQueryString(EventTelemetry customEvent = null, RequestTelemetry request = null)
         {
-            var propertyNames = new List<string>
-            {
-                "displayName",
-                "firstName",
-                "lastName",
-                "givenName",
-                "preferredName",
-                "surname"
-            };
-
             foreach (var propertyName in propertyNames)
             {
                 if (customEvent != null)
