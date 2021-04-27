@@ -1,6 +1,9 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_dependencyType": "appInsights.azure"
+  },
   "parameters": {
     "resourceGroupName": {
       "type": "string",
@@ -53,15 +56,12 @@
               "type": "microsoft.insights/components",
               "location": "[parameters('resourceLocation')]",
               "kind": "web",
-              "properties": {}
+              "properties": {},
               "apiVersion": "2015-05-01"
             }
           ]
         }
       }
     }
-  ],
-  "metadata": {
-    "_dependencyType": "appInsights.azure"
-  }
+  ]
 }
