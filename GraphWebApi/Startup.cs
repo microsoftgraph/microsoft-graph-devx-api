@@ -119,13 +119,12 @@ namespace GraphWebApi
             {
                 app.UseHsts();
             }
-            app.UseSerilogRequestLogging();
             app.UseStaticFiles(new StaticFileOptions
             {
                 DefaultContentType = "text/plain",
                 ServeUnknownFileTypes = true
             });
-
+            app.UseSerilogRequestLogging();
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseRouting();
