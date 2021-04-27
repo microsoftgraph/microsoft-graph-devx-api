@@ -148,12 +148,14 @@ namespace GraphWebApi.Telemetry
                         // Fetch the request path
                         string[] separators = { "GET", "responded" };
                         var text = renderedMessage.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                        var scheme = text[0];
                         requestPath = text[1];
+                        var finalMessageSegment = text[2];
 
                         var newQueryString = RedactUserName(requestPath);
 
                         // Append sanitized property name to query string
-                        newQueryString = $"{text[0]}GET{newQueryString}responded{text[2]}";
+                        newQueryString = $"{scheme}GET{newQueryString}responded{finalMessageSegment}";
 
                         customEvent.Properties["RenderedMessage"] = newQueryString;
                     }
@@ -182,6 +184,8 @@ namespace GraphWebApi.Telemetry
 
             // Get the property name and sanitize it
             var propertyName = queryString[1];
+            var urlSegment = queryString[0];
+            var closingBracket = queryString[2];
 
             if (_usernameRegex.IsMatch(propertyName))
             {
@@ -189,7 +193,7 @@ namespace GraphWebApi.Telemetry
             }
 
             // Append sanitized property name to query string
-            var newQueryString = $"{queryString[0] + propertyName + queryString[2]}";
+            var newQueryString = $"{urlSegment + propertyName + closingBracket}";
 
             return newQueryString;
         }
