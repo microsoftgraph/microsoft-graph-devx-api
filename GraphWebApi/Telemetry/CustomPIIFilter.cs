@@ -71,7 +71,10 @@ namespace GraphWebApi.Telemetry
                 {
                     if (customEvent.Properties.ContainsKey("RequestPath") && customEvent.Properties.ContainsKey("RenderedMessage"))
                     {
-                        SanitizeEventTelemetry(customEvent);
+                        var requestPath = customEvent.Properties["RequestPath"];
+                        var renderedMessage = customEvent.Properties["RenderedMessage"];
+
+                        SanitizeEventTelemetry(customEvent: customEvent, requestPath: requestPath, renderedMessage: renderedMessage);
                     }
                 }
             }
@@ -91,22 +94,22 @@ namespace GraphWebApi.Telemetry
         /// Sanitizes a custom event telemetry's request path and the rendered message properties
         /// </summary>
         /// <param name="request"> An event telemetry item.</param>
-        public void SanitizeEventTelemetry(EventTelemetry customEvent = null, RequestTelemetry request = null)
+        public void SanitizeEventTelemetry(EventTelemetry customEvent = null,
+                                           RequestTelemetry request = null,
+                                           string requestPath = null,
+                                           string renderedMessage = null)
         {
             if(customEvent != null)
             {
-                var requestPath = customEvent.Properties["RequestPath"];
-                var renderedMessage = customEvent.Properties["RenderedMessage"];
-
                 foreach (var piiRegex in piiRegexes)
                 {
                     if (piiRegex.IsMatch(requestPath) && piiRegex.IsMatch(renderedMessage))
                     {
-                        customEvent.Properties["RequestPath"] = piiRegex.Replace(customEvent.Properties["RequestPath"], "****");
-                        customEvent.Properties["RenderedMessage"] = piiRegex.Replace(customEvent.Properties["RenderedMessage"], "****");
+                        customEvent.Properties["RequestPath"] = piiRegex.Replace(requestPath, "****");
+                        customEvent.Properties["RenderedMessage"] = piiRegex.Replace(renderedMessage, "****");
                     }
                 }
-                SanitizeQueryString(customEvent);
+                SanitizeQueryString(customEvent: customEvent, requestPath: requestPath, renderedMessage: renderedMessage);
             }
             if(request != null)
             {
@@ -129,15 +132,15 @@ namespace GraphWebApi.Telemetry
         /// </summary>
         /// <param name="requestUrl"> The url of the Http request.</param>
         /// <returns>A sanitized request url.</returns>
-        private void SanitizeQueryString(EventTelemetry customEvent = null, RequestTelemetry request = null)
+        private void SanitizeQueryString(EventTelemetry customEvent = null,
+                                         RequestTelemetry request = null,
+                                         string requestPath = null,
+                                         string renderedMessage = null)
         {
             foreach (var propertyName in propertyNames)
             {
                 if (customEvent != null)
                 {
-                    var requestPath = customEvent.Properties["RequestPath"];
-                    var renderedMessage = customEvent.Properties["RenderedMessage"];
-
                     if (requestPath.Contains("filter") && requestPath.Contains(propertyName))
                     {
                         var newQueryString = RedactUserName(requestPath);
