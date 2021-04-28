@@ -52,6 +52,9 @@ namespace GraphWebApi.Telemetry
                 "surname"
             };
 
+        private const string requestPath = "RequestPath";
+        private const string renderedMessage = "RenderedMessage";
+
         public CustomPIIFilter(ITelemetryProcessor next)
         {
             _next = next
@@ -69,12 +72,9 @@ namespace GraphWebApi.Telemetry
                 var customEvent = item as EventTelemetry;
                 if (customEvent != null)
                 {
-                    if (customEvent.Properties.ContainsKey("RequestPath") && customEvent.Properties.ContainsKey("RenderedMessage"))
+                    if (customEvent.Properties.ContainsKey(requestPath) && customEvent.Properties.ContainsKey(renderedMessage))
                     {
-                        var requestPath = customEvent.Properties["RequestPath"];
-                        var renderedMessage = customEvent.Properties["RenderedMessage"];
-
-                        SanitizeEventTelemetry(customEvent: customEvent, requestPath: requestPath, renderedMessage: renderedMessage);
+                        SanitizeEventTelemetry(customEvent: customEvent);
                     }
                 }
             }
@@ -95,21 +95,22 @@ namespace GraphWebApi.Telemetry
         /// </summary>
         /// <param name="request"> An event telemetry item.</param>
         public void SanitizeEventTelemetry(EventTelemetry customEvent = null,
-                                           RequestTelemetry request = null,
-                                           string requestPath = null,
-                                           string renderedMessage = null)
+                                           RequestTelemetry request = null)
         {
             if(customEvent != null)
             {
                 foreach (var piiRegex in piiRegexes)
                 {
-                    if (piiRegex.IsMatch(requestPath) && piiRegex.IsMatch(renderedMessage))
+                    var requestPathValue = customEvent.Properties[requestPath];
+                    var renderedMessageValue = customEvent.Properties[renderedMessage];
+
+                    if (piiRegex.IsMatch(requestPathValue) && piiRegex.IsMatch(renderedMessageValue))
                     {
-                        customEvent.Properties["RequestPath"] = piiRegex.Replace(requestPath, "****");
-                        customEvent.Properties["RenderedMessage"] = piiRegex.Replace(renderedMessage, "****");
+                        customEvent.Properties[requestPath] = piiRegex.Replace(requestPathValue, "****");
+                        customEvent.Properties[renderedMessage] = piiRegex.Replace(renderedMessageValue, "****");
                     }
                 }
-                SanitizeQueryString(customEvent: customEvent, requestPath: requestPath, renderedMessage: renderedMessage);
+                SanitizeQueryString(customEvent: customEvent);
             }
             if(request != null)
             {
@@ -133,34 +134,35 @@ namespace GraphWebApi.Telemetry
         /// <param name="requestUrl"> The url of the Http request.</param>
         /// <returns>A sanitized request url.</returns>
         private void SanitizeQueryString(EventTelemetry customEvent = null,
-                                         RequestTelemetry request = null,
-                                         string requestPath = null,
-                                         string renderedMessage = null)
+                                         RequestTelemetry request = null)
         {
             foreach (var propertyName in propertyNames)
             {
                 if (customEvent != null)
                 {
-                    if (requestPath.Contains("filter") && requestPath.Contains(propertyName))
+                    var requestPathValue = customEvent.Properties[requestPath];
+                    var renderedMessageValue = customEvent.Properties[renderedMessage];
+
+                    if (requestPathValue.Contains("filter") && requestPathValue.Contains(propertyName))
                     {
-                        var newQueryString = RedactUserName(requestPath);
-                        customEvent.Properties["RequestPath"] = newQueryString;
+                        var newQueryString = RedactUserName(requestPathValue);
+                        customEvent.Properties[requestPath] = newQueryString;
                     }
-                    if (renderedMessage.Contains("filter") && renderedMessage.Contains(propertyName))
+                    if (renderedMessageValue.Contains("filter") && renderedMessageValue.Contains(propertyName))
                     {
                         // Fetch the request path
                         string[] separators = { "GET", "responded" };
-                        var text = renderedMessage.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+                        var text = renderedMessageValue.Split(separators, StringSplitOptions.RemoveEmptyEntries);
                         var scheme = text[0];
-                        requestPath = text[1];
+                        requestPathValue = text[1];
                         var finalMessageSegment = text[2];
 
-                        var newQueryString = RedactUserName(requestPath);
+                        var newQueryString = RedactUserName(requestPathValue);
 
                         // Append sanitized property name to query string
                         newQueryString = $"{scheme}GET{newQueryString}responded{finalMessageSegment}";
 
-                        customEvent.Properties["RenderedMessage"] = newQueryString;
+                        customEvent.Properties[renderedMessage] = newQueryString;
                     }
                 }
                 if (request != null)
@@ -179,11 +181,11 @@ namespace GraphWebApi.Telemetry
         /// <summary>
         /// Takes in the request path of a custom event telemetry item, parses and sanitizes it.
         /// </summary>
-        /// <param name="requestPath"> The request path of a custom event.</param>
+        /// <param name="requestPathValue"> The request path of a custom event.</param>
         /// <returns>A sanitized request path string.</returns>
-        private string RedactUserName(string requestPath)
+        private string RedactUserName(string requestPathValue)
         {
-            var queryString = requestPath.Split("\'");
+            var queryString = requestPathValue.Split("\'");
 
             // Get the property name and sanitize it
             var propertyName = queryString[1];
