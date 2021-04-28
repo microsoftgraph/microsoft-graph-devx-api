@@ -53,10 +53,10 @@ namespace OpenAPIService
             if (operation.Extensions.TryGetValue("x-ms-docs-operation-type",
                                                   out var value) && value != null)
             {
-                var strValue = ((OpenApiString)value).Value;
+                var operationType = ((OpenApiString)value).Value;
 
-                if (strValue.Equals("action", StringComparison.OrdinalIgnoreCase) ||
-                    strValue.Equals("function", StringComparison.OrdinalIgnoreCase))
+                if (operationType.Equals("action", StringComparison.OrdinalIgnoreCase) ||
+                    operationType.Equals("function", StringComparison.OrdinalIgnoreCase))
                 {
                     // Only valid if Microsoft.OpenApi.OData package ver. 1.0.7 and greater is used.
                     // This fix: https://github.com/microsoft/OpenAPI.NET.OData/pull/98
@@ -110,17 +110,15 @@ namespace OpenAPIService
             {
                 // Get the ODataKeySegment value.
                 // Paths containing the above segment are
-                // the ones needing to be resolved
+                // the ones needing to be resolved.
                 if (parameter.Extensions.TryGetValue("x-ms-docs-key-type",
                                                      out var value) && value != null)
                 {
-                    var strValue = ((OpenApiString)value).Value;
+                    var keyType = ((OpenApiString)value).Value;
 
-                    // This is the EntityType string representation of the ODataKeySegment,
-                    // remove from the operation id
-                    if (operationId.Contains(strValue))
+                    if (operationId.Contains(keyType))
                     {
-                        segments.Remove(strValue);
+                        segments.Remove(keyType);
                     }
                 }
             }
