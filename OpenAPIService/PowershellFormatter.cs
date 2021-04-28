@@ -114,7 +114,7 @@ namespace OpenAPIService
                 if (parameter.Extensions.TryGetValue("x-ms-docs-key-type",
                                                      out var value) && value != null)
                 {
-                    var keyType = ((OpenApiString)value).Value;
+                    var keyType = (value as OpenApiString)?.Value;
 
                     if (operationId.Contains(keyType))
                     {
