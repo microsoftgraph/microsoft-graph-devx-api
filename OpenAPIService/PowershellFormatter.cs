@@ -55,7 +55,7 @@ namespace OpenAPIService
             {
                 var operationType = (value as OpenApiString)?.Value;
 
-                if (operationType.Equals("action", StringComparison.OrdinalIgnoreCase) ||
+                if ("action".Equals(operationType, StringComparison.OrdinalIgnoreCase) ||
                     operationType.Equals("function", StringComparison.OrdinalIgnoreCase))
                 {
                     // Only valid if Microsoft.OpenApi.OData package ver. 1.0.7 and greater is used.
