@@ -53,7 +53,7 @@ namespace OpenAPIService
             if (operation.Extensions.TryGetValue("x-ms-docs-operation-type",
                                                   out var value) && value != null)
             {
-                var operationType = ((OpenApiString)value).Value;
+                var operationType = (value as OpenApiString)?.Value;
 
                 if (operationType.Equals("action", StringComparison.OrdinalIgnoreCase) ||
                     operationType.Equals("function", StringComparison.OrdinalIgnoreCase))
