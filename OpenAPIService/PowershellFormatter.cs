@@ -116,7 +116,7 @@ namespace OpenAPIService
                 {
                     var keyType = (value as OpenApiString)?.Value;
 
-                    if (operationId.Contains(keyType))
+                    if (!string.IsNullOrEmpty(keyType) && operationId.Contains(keyType))
                     {
                         segments.Remove(keyType);
                     }
