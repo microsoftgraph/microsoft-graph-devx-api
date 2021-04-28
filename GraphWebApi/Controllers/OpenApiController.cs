@@ -24,6 +24,7 @@ namespace GraphWebApi.Controllers
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+
         public OpenApiController(IConfiguration configuration)
         {
             _configuration = configuration;

@@ -4,9 +4,9 @@
       "type": "secrets.user"
     },
     "appInsights1": {
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroup')]/providers/microsoft.insights/components/Graph-Explorer-API-Insights",
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/microsoft.insights/components/DevX-API-AppInsights-Testing",
       "type": "appInsights.azure",
-      "connectionId": "APPINSIGHTS_INSTRUMENTATIONKEY",
+      "connectionId": "APPINSIGHTS_CONNECTIONSTRING",
       "secretStore": "LocalSecretsFile"
     }
   }

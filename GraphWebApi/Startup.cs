@@ -16,11 +16,12 @@ using FileService.Interfaces;
 using FileService.Services;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Services;
-using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using Serilog;
 using ChangesService.Services;
 using ChangesService.Interfaces;
 using Microsoft.Extensions.Hosting;
+using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
+using GraphWebApi.Telemetry;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
@@ -87,15 +88,16 @@ namespace GraphWebApi
 
             services.AddApplicationInsightsTelemetry(options =>
             {
-               // options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
-                options.RequestCollectionOptions.InjectResponseHeaders = false;
-                options.RequestCollectionOptions.TrackExceptions = false;
+                options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
+                options.RequestCollectionOptions.InjectResponseHeaders = true;
+                options.RequestCollectionOptions.TrackExceptions = true;
                 options.EnableAuthenticationTrackingJavaScript = false;
-                options.EnableHeartbeat = false;
-                options.EnableAdaptiveSampling = false;
-                options.EnableQuickPulseMetricStream = false;
-                options.EnableDebugLogger = false;
+                options.EnableHeartbeat = true;
+                options.EnableAdaptiveSampling = true;    // Control volume of telemetry sent to AppInsights
+                options.EnableQuickPulseMetricStream = true;   // Enable Live Metrics stream
+                options.EnableDebugLogger = true;
             });
+            services.AddApplicationInsightsTelemetryProcessor<CustomPIIFilter>();
 
             if (!_env.IsDevelopment())
             {
@@ -117,13 +119,12 @@ namespace GraphWebApi
             {
                 app.UseHsts();
             }
-
-            app.UseSerilogRequestLogging();
             app.UseStaticFiles(new StaticFileOptions
             {
                 DefaultContentType = "text/plain",
                 ServeUnknownFileTypes = true
             });
+            app.UseSerilogRequestLogging();
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseRouting();
