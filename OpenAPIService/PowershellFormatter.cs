@@ -104,7 +104,7 @@ namespace OpenAPIService
         private string ResolveActionFunctionOperationId(OpenApiOperation operation)
         {
             var operationId = operation.OperationId;
-            var segments = operationId.Split('.', (char)StringSplitOptions.RemoveEmptyEntries).ToList();
+            var segments = operationId.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries).ToList();
 
             foreach (var parameter in operation.Parameters)
             {
