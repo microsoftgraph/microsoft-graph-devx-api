@@ -8,6 +8,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace GraphWebApi.Telemetry
 {
@@ -185,7 +186,8 @@ namespace GraphWebApi.Telemetry
         /// <returns>A sanitized request path string.</returns>
         private string RedactUserName(string requestPathValue)
         {
-            var queryString = requestPathValue.Split("\'");
+            var decodedUrl = HttpUtility.UrlDecode(requestPathValue);
+            var queryString = decodedUrl.Split("\'");
 
             // Get the property name and sanitize it
             var propertyName = queryString[1];
