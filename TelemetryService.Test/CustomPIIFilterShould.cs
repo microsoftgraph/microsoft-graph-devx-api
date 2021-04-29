@@ -148,36 +148,6 @@ namespace Telemetry.Test
         }
 
         [Fact]
-        public void RedactUsernameFromRequestTelemetry()
-        {
-            // Arrange
-            var request = new RequestTelemetry();
-            request.Url = new Uri("https://localhost:44399/openapi?url=/users?$filter(displayName eq 'Megan Bowen')");
-
-            // Act
-            _telemetryProcessor.Process(request);
-            var expectedUrl = "https://localhost:44399/openapi?url=/users?$filter(displayName eq '****')";
-
-            // Assert
-            Assert.Equal(expectedUrl, request.Url.ToString());
-        }
-
-        [Fact]
-        public void RedactUsernameFromEncodedUrl()
-        {
-            // Arrange
-            var request = new RequestTelemetry();
-            request.Url = new Uri("https://localhost:44399/permissions?requestUrl=/users?$filter(displayName%20eq%20%27Meghan%27)&method=GET");
-
-            // Act
-            _telemetryProcessor.Process(request);
-            var expectedUrl = "https://localhost:44399/permissions?requestUrl=/users?$filter(displayName eq '****')&method=GET";
-
-            // Assert
-            Assert.Equal(expectedUrl, request.Url.ToString());
-        }
-
-        [Fact]
         public void RedactFirstNameFromEventTelemetry()
         {
             // Arrange
@@ -218,6 +188,25 @@ namespace Telemetry.Test
             _telemetryProcessor.Process(request);
 
             var expectedUrl = "https://localhost:44399/openapi?url=/users?$filter(firstName eq '****')";
+
+            // Assert
+            Assert.Equal(expectedUrl, request.Url.ToString());
+        }
+
+        [Theory]
+        [InlineData("https://localhost:44399/permissions?requestUrl=/users?$filter(displayName eq 'Megan Bowen')",
+                    "https://localhost:44399/permissions?requestUrl=/users?$filter(displayName eq '****')")]
+
+        [InlineData("https://localhost:44399/openapi?url=/users?$filter(displayName%20eq%20%27Meghan%27)",
+                    "https://localhost:44399/openapi?url=/users?$filter(displayName eq '****')")]
+        public void RedactUsernameFromRequestTelemetry(string incomingUrl, string expectedUrl)
+        {
+            // Arrange
+            var request = new RequestTelemetry();
+            request.Url = new Uri(incomingUrl);
+
+            // Act
+            _telemetryProcessor.Process(request);
 
             // Assert
             Assert.Equal(expectedUrl, request.Url.ToString());
