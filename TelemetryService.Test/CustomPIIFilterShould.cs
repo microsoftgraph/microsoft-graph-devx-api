@@ -163,6 +163,21 @@ namespace Telemetry.Test
         }
 
         [Fact]
+        public void RedactUsernameFromEncodedUrl()
+        {
+            // Arrange
+            var request = new RequestTelemetry();
+            request.Url = new Uri("https://localhost:44399/permissions?requestUrl=/users?$filter(displayName%20eq%20%27Meghan%27)&method=GET");
+
+            // Act
+            _telemetryProcessor.Process(request);
+            var expectedUrl = "https://localhost:44399/permissions?requestUrl=/users?$filter(displayName eq '****')&method=GET";
+
+            // Assert
+            Assert.Equal(expectedUrl, request.Url.ToString());
+        }
+
+        [Fact]
         public void RedactFirstNameFromEventTelemetry()
         {
             // Arrange
@@ -207,5 +222,7 @@ namespace Telemetry.Test
             // Assert
             Assert.Equal(expectedUrl, request.Url.ToString());
         }
+
+
     }
 }
