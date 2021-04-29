@@ -222,7 +222,5 @@ namespace Telemetry.Test
             // Assert
             Assert.Equal(expectedUrl, request.Url.ToString());
         }
-
-
     }
 }
