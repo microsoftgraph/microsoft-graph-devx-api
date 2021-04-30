@@ -21,10 +21,10 @@ using ChangesService.Services;
 using ChangesService.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
-using GraphWebApi.Telemetry;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
+using TelemetryService;
 
 namespace GraphWebApi
 {
