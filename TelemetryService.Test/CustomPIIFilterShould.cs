@@ -160,7 +160,7 @@ namespace Telemetry.Test
 
         [InlineData("https://localhost:44399/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&method=GET",
                     "https://localhost:44399/permissions?requestUrl=/users/****&method=GET")]
-        public void RedactUsernameFromRequestTelemetry(string incomingUrl, string expectedUrl)
+        public void RedactUserPropertyFromRequestTelemetry(string incomingUrl, string expectedUrl)
         {
             // Arrange
             var request = new RequestTelemetry();
