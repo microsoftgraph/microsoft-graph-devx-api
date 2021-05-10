@@ -22,6 +22,7 @@ using System.Text;
 using OpenAPIService.Common;
 using UriMatchingService;
 using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace OpenAPIService
 {
@@ -120,7 +121,7 @@ namespace OpenAPIService
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A predicate</returns>
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
-            OpenApiDocument source, bool forceRefresh = false)
+            OpenApiDocument source, bool forceRefresh = false, string graphVersion = "v1.0")
         {
             if (url != null && (operationIds != null || tags != null))
             {
@@ -164,13 +165,26 @@ namespace OpenAPIService
 
                 if (_openApiRootNode == null || forceRefresh)
                 {
-                    _openApiRootNode = CreateOpenApiUrlSpaceNode(source);
-                    var str = _openApiRootNode.ToString();
-                    var jsonDoc = JsonConvert.SerializeObject(_openApiRootNode, Formatting.Indented);
+                    _openApiRootNode = CreateOpenApiUrlSpaceNode(source, graphVersion);
+
+                    // TESTING GROUNDS
+                    var betaSource = GetOpenApiDocumentFromFile(@"C:\Users\v-irsund\Microsoft\Projects\GraphOpenApiDescriptions_beta (Expanded).yaml");
+                    _openApiRootNode.Attach(betaSource, "extended");
+
+                    //using var stream = new MemoryStream();
+                    //RenderJSON(_openApiRootNode, stream);
+                    //var json = Encoding.ASCII.GetString(stream.ToArray());
+
+                    using (var output = new FileStream("output.yaml", FileMode.Create))
+                    {
+                        var writer = new StreamWriter(output);
+                        RenderTree(writer, _openApiRootNode);
+                        await output.FlushAsync();
+                    }
+
                 }
 
-                OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url);
-
+                OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url, graphVersion);
 
                 if (openApiOps == null)
                 {
@@ -189,14 +203,25 @@ namespace OpenAPIService
             return predicate;
         }
 
+        private static void RenderTree(StreamWriter writer, OpenApiUrlTreeNode tree, string indent = "")
+        {
+            var pathItem = tree.PathItems.FirstOrDefault();
+            writer.WriteLine(indent + tree.Segment + "-[" + pathItem.Key + "]:");
+
+            foreach (var child in tree.Children)
+            {
+                RenderTree(writer, child.Value, indent + "  ");
+            }
+        }
+
         /// <summary>
         /// Creates an <see cref="OpenApiUrlSpaceNode"/> from an <see cref="OpenApiDocument"/>.
         /// </summary>
         /// <param name="source">The <see cref="OpenApiDocument"/>.</param>
         /// <returns>The created <see cref="OpenApiUrlSpaceNode"/>.</returns>
-        private static OpenApiUrlTreeNode CreateOpenApiUrlSpaceNode(OpenApiDocument source)
+        private static OpenApiUrlTreeNode CreateOpenApiUrlSpaceNode(OpenApiDocument source, string label)
         {
-            return source == null ? null : OpenApiUrlTreeNode.Create(source);
+            return source == null ? null : OpenApiUrlTreeNode.Create(source, label);
         }
 
         /// <summary>
@@ -207,7 +232,7 @@ namespace OpenAPIService
         /// <param name="relativeUrl">The relative url path to retrieve
         /// the array of <see cref="OpenApiOperation"/> from.</param>
         /// <returns>The array of <see cref="OpenApiOperation"/> for a given url path.</returns>
-        private static OpenApiOperation[] GetOpenApiOperations(OpenApiUrlTreeNode rootNode, string relativeUrl)
+        private static OpenApiOperation[] GetOpenApiOperations(OpenApiUrlTreeNode rootNode, string relativeUrl, string label)
         {
             if (rootNode == null || string.IsNullOrEmpty(relativeUrl))
             {
@@ -217,13 +242,13 @@ namespace OpenAPIService
             if (relativeUrl.Equals("/", StringComparison.Ordinal))
             {
                 // root path
-                if (rootNode.HasOperations())
+                if (rootNode.HasOperations(label))
                 {
-                    return rootNode.PathItem.Operations.Values.ToArray();
+                    return rootNode.PathItems[label].Operations.Values.ToArray();
                 }
             }
 
-            var urlSegments = relativeUrl.Split('/', (char)StringSplitOptions.RemoveEmptyEntries);
+            var urlSegments = relativeUrl.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
 
             OpenApiOperation[] operations = null;
             var targetChild = rootNode;
@@ -270,14 +295,31 @@ namespace OpenAPIService
 
                 if (i == urlSegments.Length - 1)
                 {
-                    if (targetChild.HasOperations())
+                    if (targetChild.HasOperations(label))
                     {
-                        operations = targetChild.PathItem.Operations.Values.ToArray();
+                        operations = targetChild.PathItems[label].Operations.Values.ToArray();
                     }
                 }
             }
 
             return operations;
+        }
+
+        private static OpenApiDocument GetOpenApiDocumentFromFile(string path)
+        {
+            try
+            {
+                var filePathSource = path; // @"C:\Users\v-irsund\Microsoft\Projects\GraphMetadataBeta-Complete.yaml";
+                TextReader txtReader = new StreamReader(filePathSource);
+
+                var openApiReader = new OpenApiTextReaderReader();
+
+                return openApiReader.Read(txtReader, out var _diag);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
         /// <summary>
@@ -345,7 +387,7 @@ namespace OpenAPIService
                 return doc;
             }
 
-            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
+            OpenApiDocument source = GetOpenApiDocumentFromFile(@"C:\Users\v-irsund\Microsoft\Projects\GraphOpenApiDescriptions_beta.yaml"); // await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
@@ -587,6 +629,35 @@ namespace OpenAPIService
                 return output;
             }
             return Regex.Replace(pathKey, pattern, evaluator);
+        }
+
+        private static void RenderJSON(OpenApiUrlTreeNode urlspace, Stream outfile)
+        {
+            var writer = new Utf8JsonWriter(outfile);
+            RenderJSON(writer, urlspace);
+            writer.FlushAsync();
+        }
+
+        static void RenderJSON(Utf8JsonWriter writer, OpenApiUrlTreeNode node)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("segment", node.Segment);
+            writer.WriteString("path", node.Path.Replace("\\", "/"));
+            foreach (var item in node.PathItems)
+            {
+                writer.WriteString("layer", item.Key);
+            }
+
+            if (node.Children.Count() > 0)
+            {
+                writer.WriteStartArray("children");
+                foreach (var child in node.Children.Values)
+                {
+                    RenderJSON(writer, child);
+                }
+                writer.WriteEndArray();
+            }
+            writer.WriteEndObject();
         }
     }
 }

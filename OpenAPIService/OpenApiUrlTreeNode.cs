@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.OpenApi.Models;
@@ -12,25 +13,28 @@ namespace OpenAPIService
     /// </summary>
     public class OpenApiUrlTreeNode
     {
+        private const string RootPathSegment = "/";
+        private const string PathSeparator = "\\";
+
         /// <summary>
         /// All the subdirectories of a node.
         /// </summary>
         public IDictionary<string, OpenApiUrlTreeNode> Children { get; } = new Dictionary<string, OpenApiUrlTreeNode>();
 
         /// <summary>
-        /// The name tag for a group of nodes.
-        /// </summary>
-        public string Label { get; private set; }
-
-        /// <summary>
-        /// Path Item object that describes the operations available on a node.
-        /// </summary>
-        public OpenApiPathItem PathItem { get; private set; }
-
-        /// <summary>
         /// The relative directory path of the current node from the root node.
         /// </summary>
         public string Path { get; private set; } = "";
+
+        /// <summary>
+        /// Dictionary of labels and Path Item objects that describe the operations available on a node.
+        /// </summary>
+        public IDictionary<string, OpenApiPathItem> PathItems { get; } = new Dictionary<string, OpenApiPathItem>();
+
+        /// <summary>
+        /// A dictionary of key value pairs that contain information about a node.
+        /// </summary>
+        public IDictionary<string, List<string>> AdditionalData { get; set; } = new Dictionary<string, List<string>>();
 
         /// <summary>
         /// Flag indicating whether a node segment is a path parameter.
@@ -43,12 +47,17 @@ namespace OpenAPIService
         public string Segment { get; private set; }
 
         /// <summary>
-        /// Flag indicating whether a PathItem has operations.
+        /// Flag indicating whether the node's PathItems has operations.
         /// </summary>
         /// <returns>true or false.</returns>
-        public bool HasOperations()
+        public bool HasOperations(string label)
         {
-            return PathItem?.Operations != null && PathItem.Operations.Count > 0;
+            if (!(PathItems?.ContainsKey(label) ?? false))
+            {
+                return false;
+            }
+
+            return PathItems[label].Operations?.Any() ?? false;
         }
 
         /// <summary>
@@ -61,22 +70,35 @@ namespace OpenAPIService
         }
 
         /// <summary>
+        /// Creates an empty structured directory of <see cref="OpenApiUrlTreeNode"/> node.
+        /// </summary>
+        /// <returns>The root node of the created <see cref="OpenApiUrlTreeNode"/> directory structure.</returns>
+        public static OpenApiUrlTreeNode Create()
+        {
+            return new OpenApiUrlTreeNode(RootPathSegment);
+        }
+
+        /// <summary>
         /// Creates a structured directory of <see cref="OpenApiUrlTreeNode"/> nodes from the paths of an OpenAPI document.
         /// </summary>
-        /// <param name="doc">Optional. The OpenAPI document.</param>
-        /// <param name="label">Optional. Name tag for labelling the <see cref="OpenApiUrlTreeNode"/> nodes
-        /// in the directory structure.</param>
+        /// <param name="doc">The OpenAPI document.</param>
+        /// <param name="label">Name tag for labelling the <see cref="OpenApiUrlTreeNode"/> nodes in the directory structure.</param>
         /// <returns>The root node of the created <see cref="OpenApiUrlTreeNode"/> directory structure.</returns>
-        public static OpenApiUrlTreeNode Create(OpenApiDocument doc = null, string label = "")
+        public static OpenApiUrlTreeNode Create(OpenApiDocument doc, string label)
         {
-            OpenApiUrlTreeNode root = new OpenApiUrlTreeNode(string.Empty);
+            Utils.CheckArgumentNull(doc, nameof(doc));
+            Utils.CheckArgumentNullOrEmpty(label, nameof(label));
 
-            var paths = doc?.Paths;
+            var root = Create();
+
+            var paths = doc.Paths;
             if (paths != null)
             {
                 foreach (var path in paths)
                 {
-                    root.Attach(path.Key, path.Value, label);
+                    root.Attach(path: path.Key,
+                                pathItem: path.Value,
+                                label: label);
                 }
             }
 
@@ -87,36 +109,49 @@ namespace OpenAPIService
         /// Retrieves the paths from an OpenAPI document and appends the items to an <see cref="OpenApiUrlTreeNode"/> node.
         /// </summary>
         /// <param name="doc">The OpenAPI document.</param>
-        /// <param name="label">Name tag for labelling related <see cref="OpenApiUrlTreeNode"/>
-        /// nodes in the directory structure.</param>
+        /// <param name="label">Name tag for labelling related <see cref="OpenApiUrlTreeNode"/> nodes in the directory structure.</param>
         public void Attach(OpenApiDocument doc, string label)
         {
-            var paths = doc?.Paths;
+            Utils.CheckArgumentNull(doc, nameof(doc));
+            Utils.CheckArgumentNullOrEmpty(label, nameof(label));
+
+            var paths = doc.Paths;
             if (paths != null)
             {
                 foreach (var path in paths)
                 {
-                    Attach(path.Key, path.Value, label);
+                    Attach(path: path.Key,
+                           pathItem: path.Value,
+                           label: label);
                 }
             }
         }
 
         /// <summary>
-        /// Appends an OpenAPI path and the PathItems to an <see cref="OpenApiUrlTreeNode"/> node.
+        /// Appends a path and the PathItem to an <see cref="OpenApiUrlTreeNode"/> node.
         /// </summary>
         /// <param name="path">An OpenAPI path.</param>
         /// <param name="pathItem">Path Item object that describes the operations available on an OpenAPI path.</param>
         /// <param name="label">A name tag for labelling the <see cref="OpenApiUrlTreeNode"/> node.</param>
         /// <returns>An <see cref="OpenApiUrlTreeNode"/> node describing an OpenAPI path.</returns>
-        public OpenApiUrlTreeNode Attach(string path, OpenApiPathItem pathItem, string label)
+        public OpenApiUrlTreeNode Attach(string path,
+                                         OpenApiPathItem pathItem,
+                                         string label)
         {
-            if (path.StartsWith("/"))
+            Utils.CheckArgumentNullOrEmpty(label, nameof(label));
+
+            if (path.StartsWith(RootPathSegment))
             {
                 // Remove leading slash
                 path = path.Substring(1);
             }
+
             var segments = path.Split('/');
-            return Attach(segments, pathItem, label, "");
+
+            return Attach(segments: segments,
+                          pathItem: pathItem,
+                          label: label,
+                          currentPath: "");
         }
 
         /// <summary>
@@ -127,34 +162,96 @@ namespace OpenAPIService
         /// <param name="label">A name tag for labelling the <see cref="OpenApiUrlTreeNode"/> node.</param>
         /// <param name="currentPath">The relative path of a node.</param>
         /// <returns>An <see cref="OpenApiUrlTreeNode"/> node with all constituent properties assembled.</returns>
-        private OpenApiUrlTreeNode Attach(IEnumerable<string> segments, OpenApiPathItem pathItem, string label, string currentPath)
+        private OpenApiUrlTreeNode Attach(IEnumerable<string> segments,
+                                          OpenApiPathItem pathItem,
+                                          string label,
+                                          string currentPath)
         {
             var segment = segments.FirstOrDefault();
             if (string.IsNullOrEmpty(segment))
             {
-                if (PathItem == null)
+                if (PathItems.ContainsKey(label))
                 {
-                    PathItem = pathItem;
-                    Path = currentPath;
-                    Label = label;
+                    throw new ArgumentException("A duplicate label already exists for this node.", nameof(label));
                 }
+
+                Path = currentPath;
+                PathItems.Add(label, pathItem);
                 return this;
             }
 
             // If the child segment has already been defined, then insert into it
             if (Children.ContainsKey(segment))
             {
-                return Children[segment].Attach(segments.Skip(1), pathItem, label, currentPath + "\\" + segment);
+                var newPath = currentPath + PathSeparator + segment;
+
+                return Children[segment].Attach(segments: segments.Skip(1),
+                                                pathItem: pathItem,
+                                                label: label,
+                                                currentPath: newPath);
             }
             else
             {
+                var newPath = currentPath + PathSeparator + segment;
+
                 var node = new OpenApiUrlTreeNode(segment)
                 {
-                    Path = currentPath + "\\" + segment
+                    Path = newPath
                 };
 
                 Children[segment] = node;
-                return node.Attach(segments.Skip(1), pathItem, label, currentPath + "\\" + segment);
+
+                return node.Attach(segments: segments.Skip(1),
+                                   pathItem: pathItem,
+                                   label: label,
+                                   currentPath: newPath);
+            }
+        }
+
+        /// <summary>
+        /// Adds additional data information to the AdditionalData property of the node.
+        /// </summary>
+        /// <param name="additionalData">A dictionary of key value pairs that contain information about a node.</param>
+        public void AddAdditionalData(Dictionary<string, List<string>> additionalData)
+        {
+            Utils.CheckArgumentNull(additionalData, nameof(additionalData));
+
+            foreach (var item in additionalData)
+            {
+                if (AdditionalData.ContainsKey(item.Key))
+                {
+                    AdditionalData[item.Key] = item.Value;
+                }
+                else
+                {
+                    AdditionalData.Add(item.Key, item.Value);
+                }
+            }
+        }
+
+        internal static class Utils
+        {
+            /// <summary>
+            /// Check whether the input argument value is null or not.
+            /// </summary>
+            /// <typeparam name="T">The input value type.</typeparam>
+            /// <param name="value">The input value.</param>
+            /// <param name="parameterName">The input parameter name.</param>
+            /// <returns>The input value.</returns>
+            internal static T CheckArgumentNull<T>(T value, string parameterName) where T : class
+            {
+                return value ?? throw new ArgumentNullException(parameterName, $"Value cannot be null: {parameterName}");
+            }
+
+            /// <summary>
+            /// Check whether the input string value is null or empty.
+            /// </summary>
+            /// <param name="value">The input string value.</param>
+            /// <param name="parameterName">The input parameter name.</param>
+            /// <returns>The input value.</returns>
+            internal static string CheckArgumentNullOrEmpty(string value, string parameterName)
+            {
+                return string.IsNullOrEmpty(value) ? throw new ArgumentNullException(parameterName, $"Value cannot be null or empty: {parameterName}") : value;
             }
         }
     }

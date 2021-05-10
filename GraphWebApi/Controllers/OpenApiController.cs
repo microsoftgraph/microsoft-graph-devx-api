@@ -56,7 +56,7 @@ namespace GraphWebApi.Controllers
 
                 OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
+                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh, graphVersion);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
