@@ -160,6 +160,19 @@ namespace Telemetry.Test
 
         [InlineData("https://localhost:44399/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&method=GET",
                     "https://localhost:44399/permissions?requestUrl=/users/****&method=GET")]
+
+        [InlineData("https://localhost:44399/openapi?url=/users?$orderby=from/emailAddress/MiriamG@M365x214355.onmicrosoft.com",
+                    "https://localhost:44399/openapi?url=/users?$orderby=from/emailAddress/****")]
+
+        [InlineData("https://localhost:44399/openapi?url=/users?$expand=directreports($filter=firstName eq 'mary')",
+                    "https://localhost:44399/openapi?url=/users?$expand=directreports($filter=firstName eq '****')")]
+
+        [InlineData("https://localhost:44399/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
+                    "https://localhost:44399/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]
+
+        [InlineData("https://localhost:44399/openapi?url=/users?$search='displayName:Meghan'",
+                    "https://localhost:44399/openapi?url=/users?$search='displayName:'****''")]
+
         public void RedactUserPropertyFromRequestTelemetry(string incomingUrl, string expectedUrl)
         {
             // Arrange
