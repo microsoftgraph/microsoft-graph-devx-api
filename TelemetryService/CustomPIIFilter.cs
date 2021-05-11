@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -106,10 +106,13 @@ namespace TelemetryService
                     var requestPathValue = customEvent.Properties[requestPath];
                     var renderedMessageValue = customEvent.Properties[renderedMessage];
 
-                    if (piiRegex.IsMatch(requestPathValue) && piiRegex.IsMatch(renderedMessageValue))
+                    if(requestPathValue.Contains("users") && renderedMessageValue.Contains("users"))
                     {
-                        customEvent.Properties[requestPath] = piiRegex.Replace(requestPathValue, "****");
-                        customEvent.Properties[renderedMessage] = piiRegex.Replace(renderedMessageValue, "****");
+                        if (piiRegex.IsMatch(requestPathValue) && piiRegex.IsMatch(renderedMessageValue))
+                        {
+                            customEvent.Properties[requestPath] = piiRegex.Replace(requestPathValue, "****");
+                            customEvent.Properties[renderedMessage] = piiRegex.Replace(renderedMessageValue, "****");
+                        }
                     }
                 }
                 SanitizeQueryString(customEvent: customEvent);
@@ -117,12 +120,14 @@ namespace TelemetryService
             if(request != null)
             {
                 var requestUrl = request.Url.ToString();
-
-                foreach (var piiRegex in piiRegexes)
+                if (requestUrl.Contains("users"))
                 {
-                    if (piiRegex.IsMatch(requestUrl))
+                    foreach (var piiRegex in piiRegexes)
                     {
-                        request.Url = new Uri(piiRegex.Replace(requestUrl, "****"));
+                        if (piiRegex.IsMatch(requestUrl))
+                        {
+                            request.Url = new Uri(piiRegex.Replace(requestUrl, "****"));
+                        }
                     }
                 }
 
