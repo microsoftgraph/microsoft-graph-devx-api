@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -175,10 +175,16 @@ namespace TelemetryService
                 if (request != null)
                 {
                     var requestUrl = request.Url.ToString();
+                    string newQueryString;
 
                     if (requestUrl.Contains("filter") && requestUrl.Contains(propertyName))
                     {
-                        var newQueryString = RedactUserName(requestUrl);
+                        newQueryString = RedactUserName(requestUrl);
+                        request.Url = new Uri(newQueryString);
+                    }
+                    if(requestUrl.Contains("search") && requestUrl.Contains(propertyName))
+                    {
+                        newQueryString = SanitizeSearchQueryOption(requestUrl);
                         request.Url = new Uri(newQueryString);
                     }
                 }
@@ -209,6 +215,33 @@ namespace TelemetryService
             var newQueryString = $"{urlSegment + propertyName + closingBracket}";
 
             return newQueryString;
+        }
+
+        private string SanitizeSearchQueryOption(string requestUrl)
+        {
+            var queryString = requestUrl.Split("\'");
+            var urlSegment = queryString[0];
+
+            var querySegment = queryString[1];
+            string propertyName;
+
+            if (querySegment.Contains(":"))
+            {
+                var searchSegments = querySegment.Split(":");
+                var property = searchSegments[0];
+                propertyName = searchSegments[1];
+
+                if (_usernameRegex.IsMatch(propertyName))
+                {
+                    propertyName = propertyName.Replace(propertyName, "'****'");
+                }
+
+                querySegment = $"'{ property}:{ propertyName}'";
+            }
+
+            string sanitizedUrl = $"{urlSegment + querySegment}";
+
+            return sanitizedUrl;
         }
     }
 }
