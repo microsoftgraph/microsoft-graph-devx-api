@@ -54,8 +54,11 @@ namespace TelemetryService
                 "surname"
             };
 
+        private static readonly string[] operators = new string[] { ":", "=", "<", ">", "<=", ">=", "<>", ".." };
+
         private const string requestPath = "RequestPath";
         private const string renderedMessage = "RenderedMessage";
+        private const string users = "users";        
 
         public CustomPIIFilter(ITelemetryProcessor next)
         {
@@ -105,8 +108,7 @@ namespace TelemetryService
                 {
                     var requestPathValue = customEvent.Properties[requestPath];
                     var renderedMessageValue = customEvent.Properties[renderedMessage];
-
-                    if(requestPathValue.Contains("users") && renderedMessageValue.Contains("users"))
+                    if(requestPathValue.Contains(users) && renderedMessageValue.Contains(users))
                     {
                         if (piiRegex.IsMatch(requestPathValue) && piiRegex.IsMatch(renderedMessageValue))
                         {
@@ -115,12 +117,13 @@ namespace TelemetryService
                         }
                     }
                 }
+
                 SanitizeQueryString(customEvent: customEvent);
             }
             if(request != null)
             {
                 var requestUrl = request.Url.ToString();
-                if (requestUrl.Contains("users"))
+                if (requestUrl.Contains(users))
                 {
                     foreach (var piiRegex in piiRegexes)
                     {
@@ -143,6 +146,9 @@ namespace TelemetryService
         private void SanitizeQueryString(EventTelemetry customEvent = null,
                                          RequestTelemetry request = null)
         {
+            var requestUrl = request.Url.ToString();
+            string newQueryString;
+
             foreach (var propertyName in propertyNames)
             {
                 if (customEvent != null)
@@ -152,7 +158,7 @@ namespace TelemetryService
 
                     if (requestPathValue.Contains("filter") && requestPathValue.Contains(propertyName))
                     {
-                        var newQueryString = RedactUserName(requestPathValue);
+                        newQueryString = RedactUserName(requestPathValue);
                         customEvent.Properties[requestPath] = newQueryString;
                     }
                     if (renderedMessageValue.Contains("filter") && renderedMessageValue.Contains(propertyName))
@@ -164,7 +170,7 @@ namespace TelemetryService
                         requestPathValue = text[1];
                         var finalMessageSegment = text[2];
 
-                        var newQueryString = RedactUserName(requestPathValue);
+                        newQueryString = RedactUserName(requestPathValue);
 
                         // Append sanitized property name to query string
                         newQueryString = $"{scheme}GET{newQueryString}responded{finalMessageSegment}";
@@ -174,20 +180,17 @@ namespace TelemetryService
                 }
                 if (request != null)
                 {
-                    var requestUrl = request.Url.ToString();
-                    string newQueryString;
-
                     if (requestUrl.Contains("filter") && requestUrl.Contains(propertyName))
                     {
                         newQueryString = RedactUserName(requestUrl);
                         request.Url = new Uri(newQueryString);
                     }
-                    if(requestUrl.Contains("search") && requestUrl.Contains(propertyName))
-                    {
-                        newQueryString = SanitizeSearchQueryOption(requestUrl);
-                        request.Url = new Uri(newQueryString);
-                    }
                 }
+            }
+            if (requestUrl.Contains("search"))
+            {
+                newQueryString = SanitizeSearchQueryOption(requestUrl);
+                request.Url = new Uri(newQueryString);
             }
         }
 
@@ -219,27 +222,43 @@ namespace TelemetryService
 
         private string SanitizeSearchQueryOption(string requestUrl)
         {
-            var queryString = requestUrl.Split("\'");
+            var equalOperator = "search=";
+            var queryString = requestUrl.Split(equalOperator);
+
             var urlSegment = queryString[0];
 
             var querySegment = queryString[1];
-            string propertyName;
-
-            if (querySegment.Contains(":"))
+            string propertyValue;
+            foreach(var propertyName in propertyNames)
             {
-                var searchSegments = querySegment.Split(":");
-                var property = searchSegments[0];
-                propertyName = searchSegments[1];
-
-                if (_usernameRegex.IsMatch(propertyName))
+                if (querySegment.Contains(propertyName))
                 {
-                    propertyName = propertyName.Replace(propertyName, "'****'");
+                    foreach (var character in operators)
+                    {
+                        if (querySegment.Contains(character))
+                        {
+                            var searchSegments = querySegment.Split(character);
+                            var property = searchSegments[0];
+                            propertyValue = searchSegments[1];
+
+                            if (_usernameRegex.IsMatch(propertyName))
+                            {
+                                propertyValue = propertyValue.Replace(propertyValue, "****");
+                            }
+
+                            querySegment = $"{property + character + propertyValue}";
+                        }
+                    }
                 }
 
-                querySegment = $"'{ property}:{ propertyName}'";
+                else
+                {
+                    querySegment = querySegment.Replace(querySegment, "'****'");
+                }
+                break;
             }
 
-            string sanitizedUrl = $"{urlSegment + querySegment}";
+            string sanitizedUrl = $"{urlSegment + equalOperator + querySegment}";
 
             return sanitizedUrl;
         }
