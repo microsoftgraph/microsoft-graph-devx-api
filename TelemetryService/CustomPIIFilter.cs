@@ -146,7 +146,6 @@ namespace TelemetryService
         private void SanitizeQueryString(EventTelemetry customEvent = null,
                                          RequestTelemetry request = null)
         {
-            var requestUrl = request.Url.ToString();
             string newQueryString;
 
             foreach (var propertyName in propertyNames)
@@ -180,18 +179,20 @@ namespace TelemetryService
                 }
                 if (request != null)
                 {
+                    var requestUrl = request.Url.ToString();
+
                     if (requestUrl.Contains("filter") && requestUrl.Contains(propertyName))
                     {
                         newQueryString = RedactUserName(requestUrl);
                         request.Url = new Uri(newQueryString);
                     }
+                    if (requestUrl.Contains("search"))
+                    {
+                        newQueryString = SanitizeSearchQueryOption(requestUrl);
+                        request.Url = new Uri(newQueryString);
+                    }
                 }
-            }
-            if (requestUrl.Contains("search"))
-            {
-                newQueryString = SanitizeSearchQueryOption(requestUrl);
-                request.Url = new Uri(newQueryString);
-            }
+            }            
         }
 
         /// <summary>
