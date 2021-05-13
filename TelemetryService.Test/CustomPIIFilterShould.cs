@@ -146,38 +146,41 @@ namespace Telemetry.Test
         }
 
         [Theory]
-        [InlineData("https://localhost:44399/permissions?requestUrl=/users?$filter(displayName eq 'Megan Bowen')",
-                    "https://localhost:44399/permissions?requestUrl=/users?$filter(displayName eq '****')")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eq 'Megan Bowen')",
+                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eq '****')")]
 
-        [InlineData("https://localhost:44399/openapi?url=/users?$filter(displayName%20eq%20%27Meghan%27)",
-                    "https://localhost:44399/openapi?url=/users?$filter(displayName eq '****')")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(displayName%20eq%20%27Meghan%27)",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(displayName eq '****')")]
 
-        [InlineData("https://localhost:44399/openapi?url=/users?$filter(firstName eq 'Megan')",
-                    "https://localhost:44399/openapi?url=/users?$filter(firstName eq '****')")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(firstName eq 'Megan')",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(firstName eq '****')")]
 
-        [InlineData("https://localhost:44399/openapi?url=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')",
-                    "https://localhost:44399/openapi?url=/users?$filter(emailAddress eq '****')")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(emailAddress eq '****')")]
 
-        [InlineData("https://localhost:44399/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&method=GET",
-                    "https://localhost:44399/permissions?requestUrl=/users/****&method=GET")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&method=GET",
+                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/****&method=GET")]
 
-        [InlineData("https://localhost:44399/openapi?url=/users?$orderby=from/emailAddress/MiriamG@M365x214355.onmicrosoft.com",
-                    "https://localhost:44399/openapi?url=/users?$orderby=from/emailAddress/****")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$orderby=from/emailAddress/MiriamG@M365x214355.onmicrosoft.com",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$orderby=from/emailAddress/****")]
 
-        [InlineData("https://localhost:44399/openapi?url=/users?$expand=directreports($filter=firstName eq 'mary')",
-                    "https://localhost:44399/openapi?url=/users?$expand=directreports($filter=firstName eq '****')")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$expand=directreports($filter=firstName eq 'mary')",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$expand=directreports($filter=firstName eq '****')")]
 
-        [InlineData("https://localhost:44399/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
-                    "https://localhost:44399/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
+                    "https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]
 
-        [InlineData("https://localhost:44399/openapi?url=/users?$search='displayName:Meghan'",
-                    "https://localhost:44399/openapi?url=/users?$search='****'")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='displayName:Meghan'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='****'")]
 
-        [InlineData("https://localhost:44399/openapi?url=/users?$search='Meghan'",
-                    "https://localhost:44399/openapi?url=/users?$search='****'")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='Meghan'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='****'")]
 
-        [InlineData("https://localhost:44399/openapi?url=/users?$search='5555551212'",
-                    "https://localhost:44399/openapi?url=/users?$search='****'")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='5555551212'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='****'")]
+
+        [InlineData("https://localhost:44399/samples?search='hello world'",
+                    "https://localhost:44399/samples?search='hello world'")]
 
         public void RedactUserPropertyFromRequestTelemetry(string incomingUrl, string expectedUrl)
         {

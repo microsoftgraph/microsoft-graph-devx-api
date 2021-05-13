@@ -36,7 +36,7 @@ namespace TelemetryService
         private static readonly Regex _employeeIdRegex = new(@"[0-9]{7}",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private readonly List<Regex> piiRegexes = new List<Regex>
+        private readonly List<Regex> _piiRegexes = new List<Regex>
             {
                 _guidRegex,
                 _emailRegex,
@@ -44,7 +44,7 @@ namespace TelemetryService
                 _employeeIdRegex
             };
 
-        private static readonly List<string> propertyNames = new List<string>
+        private static readonly List<string> _propertyNames = new List<string>
             {
                 "displayName",
                 "firstName",
@@ -54,7 +54,7 @@ namespace TelemetryService
                 "surname"
             };
 
-        private static readonly List<string> userKeywords = new List<string> { "users", "people" };
+        private static readonly List<string> _userKeywords = new List<string> { "users", "people" };
         private const string RequestPath = "RequestPath";
         private const string RenderedMessage = "RenderedMessage";
 
@@ -102,13 +102,14 @@ namespace TelemetryService
         {
             if(customEvent != null)
             {
-                foreach (var piiRegex in piiRegexes)
+                var requestPathValue = customEvent.Properties[RequestPath];
+                var renderedMessageValue = customEvent.Properties[RenderedMessage];
+
+                foreach (var keyword in _userKeywords)
                 {
-                    var requestPathValue = customEvent.Properties[RequestPath];
-                    var renderedMessageValue = customEvent.Properties[RenderedMessage];
-                    foreach(string keyword in userKeywords)
+                    if (requestPathValue.Contains(keyword) && renderedMessageValue.Contains(keyword))
                     {
-                        if (requestPathValue.Contains(keyword) && renderedMessageValue.Contains(keyword))
+                        foreach (var piiRegex in _piiRegexes)
                         {
                             if (piiRegex.IsMatch(requestPathValue) && piiRegex.IsMatch(renderedMessageValue))
                             {
@@ -116,29 +117,31 @@ namespace TelemetryService
                                 customEvent.Properties[RenderedMessage] = piiRegex.Replace(renderedMessageValue, "****");
                             }
                         }
+
+                        SanitizeQueryString(customEvent: customEvent);
                     }
                 }
-
-                SanitizeQueryString(customEvent: customEvent);
             }
             if(request != null)
             {
                 var requestUrl = request.Url.ToString();
-                foreach(string keyword in userKeywords)
+
+                foreach(string keyword in _userKeywords)
                 {
                     if (requestUrl.Contains(keyword))
                     {
-                        foreach (var piiRegex in piiRegexes)
+                        foreach (var piiRegex in _piiRegexes)
                         {
                             if (piiRegex.IsMatch(requestUrl))
                             {
                                 request.Url = new Uri(piiRegex.Replace(requestUrl, "****"));
                             }
                         }
+
+                        SanitizeQueryString(request: request);
                     }
                 }
 
-                SanitizeQueryString(request: request);
             }
         }
 
@@ -152,7 +155,7 @@ namespace TelemetryService
         {
             string newQueryString;
 
-            foreach (var propertyName in propertyNames)
+            foreach (var propertyName in _propertyNames)
             {
                 if (customEvent != null)
                 {
@@ -190,7 +193,7 @@ namespace TelemetryService
                         newQueryString = RedactUserName(requestUrl);
                         request.Url = new Uri(newQueryString);
                     }
-                    if (requestUrl.Contains("search"))
+                    if (requestUrl.Contains("$search"))
                     {
                         newQueryString = SanitizeSearchQueryOption(requestUrl);
                         request.Url = new Uri(newQueryString);
