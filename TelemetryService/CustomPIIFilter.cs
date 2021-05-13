@@ -57,7 +57,8 @@ namespace TelemetryService
         private static readonly List<string> _userKeywords = new List<string> { "users", "people" };
         private const string RequestPath = "RequestPath";
         private const string RenderedMessage = "RenderedMessage";
-        private static string SearchOperator = "$search";
+        private const string SearchOperator = "$search=";
+
 
         public CustomPIIFilter(ITelemetryProcessor next)
         {
