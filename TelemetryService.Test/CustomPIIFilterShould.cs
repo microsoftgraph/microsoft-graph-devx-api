@@ -176,6 +176,12 @@ namespace Telemetry.Test
         [InlineData("https://localhost:44399/openapi?url=/users?$search='displayName=Meghan'",
                     "https://localhost:44399/openapi?url=/users?$search='displayName=****")]
 
+        [InlineData("https://localhost:44399/openapi?url=/users?$search='Meghan'",
+                    "https://localhost:44399/openapi?url=/users?$search='****'")]
+
+        [InlineData("https://localhost:44399/openapi?url=/users?$search='5555551212'",
+                    "https://localhost:44399/openapi?url=/users?$search='****'")]
+
         public void RedactUserPropertyFromRequestTelemetry(string incomingUrl, string expectedUrl)
         {
             // Arrange
