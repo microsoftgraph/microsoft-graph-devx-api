@@ -168,7 +168,7 @@ namespace OpenAPIService
                     _openApiRootNode = CreateOpenApiUrlSpaceNode(source, graphVersion);
 
                     // TESTING GROUNDS
-                    var betaSource = GetOpenApiDocumentFromFile(@"C:\Users\v-irsund\Microsoft\Projects\GraphOpenApiDescriptions_beta (Expanded).yaml");
+                    var betaSource = GetOpenApiDocumentFromFile(@"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Expanded\GraphOpenApiDescriptions_v1 (Expanded).yaml");
                     _openApiRootNode.Attach(betaSource, "extended");
 
                     //using var stream = new MemoryStream();
@@ -387,7 +387,7 @@ namespace OpenAPIService
                 return doc;
             }
 
-            OpenApiDocument source = GetOpenApiDocumentFromFile(@"C:\Users\v-irsund\Microsoft\Projects\GraphOpenApiDescriptions_beta.yaml"); // await CreateOpenApiDocumentAsync(csdlHref);
+            OpenApiDocument source = GetOpenApiDocumentFromFile(@"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Original\GraphOpenApiDescriptions_v1.yaml"); // await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
