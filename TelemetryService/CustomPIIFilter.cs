@@ -251,7 +251,6 @@ namespace TelemetryService
                         }
                     }
                 }
-
                 else
                 {
                     querySegment = querySegment.Replace(querySegment, "'****'");
