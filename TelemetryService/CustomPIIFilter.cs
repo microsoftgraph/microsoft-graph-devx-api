@@ -79,7 +79,7 @@ namespace TelemetryService
                 {
                     if (customEvent.Properties.ContainsKey(RequestPath) && customEvent.Properties.ContainsKey(RenderedMessage))
                     {
-                        SanitizeEventTelemetry(customEvent: customEvent);
+                        SanitizeTelemetry(customEvent: customEvent);
                     }
                 }
             }
@@ -88,7 +88,7 @@ namespace TelemetryService
                 var request = item as RequestTelemetry;
                 if(request != null)
                 {
-                    SanitizeEventTelemetry(request: request);
+                    SanitizeTelemetry(request: request);
                 }
             }
 
@@ -99,7 +99,7 @@ namespace TelemetryService
         /// Sanitizes a custom event telemetry's request path and the rendered message properties
         /// </summary>
         /// <param name="request"> An event telemetry item.</param>
-        public void SanitizeEventTelemetry(EventTelemetry customEvent = null,
+        public void SanitizeTelemetry(EventTelemetry customEvent = null,
                                            RequestTelemetry request = null)
         {
             if(customEvent != null)
