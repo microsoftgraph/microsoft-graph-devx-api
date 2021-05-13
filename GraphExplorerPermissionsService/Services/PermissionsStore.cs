@@ -6,6 +6,8 @@ using FileService.Common;
 using FileService.Interfaces;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -28,6 +30,8 @@ namespace GraphExplorerPermissionsService
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IConfiguration _configuration;
+        private readonly TelemetryClient _telemetry;
+        private readonly IDictionary<string, string> PermissionsTraceProperties = new Dictionary<string, string> { { "Permissions", "Fetch" } };
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
@@ -45,7 +49,8 @@ namespace GraphExplorerPermissionsService
         private const string NullValueError = "Value cannot be null";
 
         public PermissionsStore(IConfiguration configuration, IHttpClientUtility httpClientUtility,
-                                IFileUtility fileUtility, IMemoryCache permissionsCache)
+                                IFileUtility fileUtility, IMemoryCache permissionsCache,
+                                TelemetryClient telemetry = null)
         {
             _configuration = configuration
                ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }: { nameof(configuration) }");
@@ -69,6 +74,10 @@ namespace GraphExplorerPermissionsService
         /// </summary>
         private void SeedPermissionsTables()
         {
+            _telemetry.TrackTrace($"Seeding permissions tables",
+                                  SeverityLevel.Information,
+                                  PermissionsTraceProperties);
+
             _urlTemplateMatcher = new UriTemplateMatcher();
             _scopesListTable = new Dictionary<int, object>();
 
@@ -109,10 +118,13 @@ namespace GraphExplorerPermissionsService
                             _scopesListTable.Add(count, property.Value);
                         }
                     }
-
-                    _permissionsRefreshed = true;
                 }
             }
+
+            _permissionsRefreshed = true;
+            _telemetry.TrackTrace($"Finished seeding permissions tables",
+                                  SeverityLevel.Information,
+                                  PermissionsTraceProperties);
         }
 
         /// <summary>

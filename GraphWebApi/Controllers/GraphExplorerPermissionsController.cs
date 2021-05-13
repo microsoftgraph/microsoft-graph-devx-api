@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
 using GraphWebApi.Common;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,10 +21,13 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerPermissionsController : ControllerBase
     {
         private readonly IPermissionsStore _permissionsStore;
+        private readonly TelemetryClient _telemetry;
+        private readonly IDictionary<string, string> PermissionsTraceProperties = new Dictionary<string, string> { { "Permissions", "Fetch" } };
 
-        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore)
+        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, TelemetryClient telemetry)
         {
             _permissionsStore = permissionsStore;
+            _telemetry = telemetry;
         }
 
         // Gets the permissions scopes
@@ -37,6 +42,9 @@ namespace GraphWebApi.Controllers
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
+                _telemetry.TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
+                                  SeverityLevel.Information,
+                                  PermissionsTraceProperties);
 
                 List<ScopeInformation> result = null;
 
@@ -58,19 +66,28 @@ namespace GraphWebApi.Controllers
                                                                     requestUrl: requestUrl,
                                                                     method: method);
                 }
+                _telemetry.TrackTrace($"Fetched {result.Count} permissions",
+                                  SeverityLevel.Information,
+                                  PermissionsTraceProperties);
 
-                return result == null ? NotFound() : (IActionResult)Ok(result);
+                return result == null ? NotFound() : Ok(result);
             }
             catch (InvalidOperationException invalidOpsException)
             {
+                _telemetry.TrackException(invalidOpsException,
+                                          PermissionsTraceProperties);
                 return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
             catch (ArgumentNullException argNullException)
             {
+                _telemetry.TrackException(argNullException,
+                                          PermissionsTraceProperties);
                 return new JsonResult(argNullException.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (Exception exception)
             {
+                _telemetry.TrackException(exception,
+                                          PermissionsTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
