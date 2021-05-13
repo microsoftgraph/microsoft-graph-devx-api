@@ -179,8 +179,11 @@ namespace Telemetry.Test
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='5555551212'",
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='****'")]
 
-        [InlineData("https://localhost:44399/samples?search='hello world'",
-                    "https://localhost:44399/samples?search='hello world'")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/samples?search='hello world'",
+                    "https://graphexplorerapi.azurewebsites.net/samples?search='hello world'")]
+
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/me/people/e3d0513b-449e-4198-ba6f-bd97ae7cae85",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/me/people/****")]
 
         public void RedactUserPropertyFromRequestTelemetry(string incomingUrl, string expectedUrl)
         {
