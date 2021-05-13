@@ -223,42 +223,15 @@ namespace TelemetryService
 
         private string SanitizeSearchQueryOption(string requestUrl)
         {
-            var equalOperator = "search=";
-            var queryString = requestUrl.Split(equalOperator);
+            var searchOperator = "search=";
+            var queryString = requestUrl.Split(searchOperator);
 
             var urlSegment = queryString[0];
-
             var querySegment = queryString[1];
-            string propertyValue;
-            foreach(var propertyName in propertyNames)
-            {
-                if (querySegment.Contains(propertyName))
-                {
-                    foreach (var character in operators)
-                    {
-                        if (querySegment.Contains(character))
-                        {
-                            var searchSegments = querySegment.Split(character);
-                            var property = searchSegments[0];
-                            propertyValue = searchSegments[1];
+            
+            querySegment = querySegment.Replace(querySegment, "'****'");            
 
-                            if (_usernameRegex.IsMatch(propertyName))
-                            {
-                                propertyValue = propertyValue.Replace(propertyValue, "****");
-                            }
-
-                            querySegment = $"{property + character + propertyValue}";
-                        }
-                    }
-                }
-                else
-                {
-                    querySegment = querySegment.Replace(querySegment, "'****'");
-                }
-                break;
-            }
-
-            string sanitizedUrl = $"{urlSegment + equalOperator + querySegment}";
+            string sanitizedUrl = $"{urlSegment + searchOperator + querySegment}";
 
             return sanitizedUrl;
         }
