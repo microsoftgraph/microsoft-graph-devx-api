@@ -36,7 +36,7 @@ namespace TelemetryService
         private static readonly Regex _employeeIdRegex = new(@"[0-9]{7}",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private readonly List<Regex> piiRegexes = new List<Regex>
+        private readonly List<Regex> _piiRegexes = new List<Regex>
             {
                 _guidRegex,
                 _emailRegex,
@@ -44,7 +44,7 @@ namespace TelemetryService
                 _employeeIdRegex
             };
 
-        private static readonly List<string> propertyNames = new List<string>
+        private static readonly List<string> _propertyNames = new List<string>
             {
                 "displayName",
                 "firstName",
@@ -54,8 +54,11 @@ namespace TelemetryService
                 "surname"
             };
 
-        private const string requestPath = "RequestPath";
-        private const string renderedMessage = "RenderedMessage";
+        private static readonly List<string> _userKeywords = new List<string> { "users", "people" };
+        private const string RequestPath = "RequestPath";
+        private const string RenderedMessage = "RenderedMessage";
+        private const string SearchOperator = "$search=";
+
 
         public CustomPIIFilter(ITelemetryProcessor next)
         {
@@ -74,9 +77,9 @@ namespace TelemetryService
                 var customEvent = item as EventTelemetry;
                 if (customEvent != null)
                 {
-                    if (customEvent.Properties.ContainsKey(requestPath) && customEvent.Properties.ContainsKey(renderedMessage))
+                    if (customEvent.Properties.ContainsKey(RequestPath) && customEvent.Properties.ContainsKey(RenderedMessage))
                     {
-                        SanitizeEventTelemetry(customEvent: customEvent);
+                        SanitizeTelemetry(customEvent: customEvent);
                     }
                 }
             }
@@ -85,7 +88,7 @@ namespace TelemetryService
                 var request = item as RequestTelemetry;
                 if(request != null)
                 {
-                    SanitizeEventTelemetry(request: request);
+                    SanitizeTelemetry(request: request);
                 }
             }
 
@@ -96,37 +99,51 @@ namespace TelemetryService
         /// Sanitizes a custom event telemetry's request path and the rendered message properties
         /// </summary>
         /// <param name="request"> An event telemetry item.</param>
-        public void SanitizeEventTelemetry(EventTelemetry customEvent = null,
+        public void SanitizeTelemetry(EventTelemetry customEvent = null,
                                            RequestTelemetry request = null)
         {
             if(customEvent != null)
             {
-                foreach (var piiRegex in piiRegexes)
-                {
-                    var requestPathValue = customEvent.Properties[requestPath];
-                    var renderedMessageValue = customEvent.Properties[renderedMessage];
+                var requestPathValue = customEvent.Properties[RequestPath];
+                var renderedMessageValue = customEvent.Properties[RenderedMessage];
 
-                    if (piiRegex.IsMatch(requestPathValue) && piiRegex.IsMatch(renderedMessageValue))
+                foreach (var keyword in _userKeywords)
+                {
+                    if (requestPathValue.Contains(keyword) && renderedMessageValue.Contains(keyword))
                     {
-                        customEvent.Properties[requestPath] = piiRegex.Replace(requestPathValue, "****");
-                        customEvent.Properties[renderedMessage] = piiRegex.Replace(renderedMessageValue, "****");
+                        foreach (var piiRegex in _piiRegexes)
+                        {
+                            if (piiRegex.IsMatch(requestPathValue) && piiRegex.IsMatch(renderedMessageValue))
+                            {
+                                customEvent.Properties[RequestPath] = piiRegex.Replace(requestPathValue, "****");
+                                customEvent.Properties[RenderedMessage] = piiRegex.Replace(renderedMessageValue, "****");
+                            }
+                        }
+
+                        SanitizeQueryString(customEvent: customEvent);
                     }
                 }
-                SanitizeQueryString(customEvent: customEvent);
             }
             if(request != null)
             {
                 var requestUrl = request.Url.ToString();
 
-                foreach (var piiRegex in piiRegexes)
+                foreach(string keyword in _userKeywords)
                 {
-                    if (piiRegex.IsMatch(requestUrl))
+                    if (requestUrl.Contains(keyword))
                     {
-                        request.Url = new Uri(piiRegex.Replace(requestUrl, "****"));
+                        foreach (var piiRegex in _piiRegexes)
+                        {
+                            if (piiRegex.IsMatch(requestUrl))
+                            {
+                                request.Url = new Uri(piiRegex.Replace(requestUrl, "****"));
+                            }
+                        }
+
+                        SanitizeQueryString(request: request);
                     }
                 }
 
-                SanitizeQueryString(request: request);
             }
         }
 
@@ -138,17 +155,19 @@ namespace TelemetryService
         private void SanitizeQueryString(EventTelemetry customEvent = null,
                                          RequestTelemetry request = null)
         {
-            foreach (var propertyName in propertyNames)
+            string newQueryString;
+
+            foreach (var propertyName in _propertyNames)
             {
                 if (customEvent != null)
                 {
-                    var requestPathValue = customEvent.Properties[requestPath];
-                    var renderedMessageValue = customEvent.Properties[renderedMessage];
+                    var requestPathValue = customEvent.Properties[RequestPath];
+                    var renderedMessageValue = customEvent.Properties[RenderedMessage];
 
                     if (requestPathValue.Contains("filter") && requestPathValue.Contains(propertyName))
                     {
-                        var newQueryString = RedactUserName(requestPathValue);
-                        customEvent.Properties[requestPath] = newQueryString;
+                        newQueryString = RedactUserName(requestPathValue);
+                        customEvent.Properties[RequestPath] = newQueryString;
                     }
                     if (renderedMessageValue.Contains("filter") && renderedMessageValue.Contains(propertyName))
                     {
@@ -159,12 +178,12 @@ namespace TelemetryService
                         requestPathValue = text[1];
                         var finalMessageSegment = text[2];
 
-                        var newQueryString = RedactUserName(requestPathValue);
+                        newQueryString = RedactUserName(requestPathValue);
 
                         // Append sanitized property name to query string
                         newQueryString = $"{scheme}GET{newQueryString}responded{finalMessageSegment}";
 
-                        customEvent.Properties[renderedMessage] = newQueryString;
+                        customEvent.Properties[RenderedMessage] = newQueryString;
                     }
                 }
                 if (request != null)
@@ -173,7 +192,12 @@ namespace TelemetryService
 
                     if (requestUrl.Contains("filter") && requestUrl.Contains(propertyName))
                     {
-                        var newQueryString = RedactUserName(requestUrl);
+                        newQueryString = RedactUserName(requestUrl);
+                        request.Url = new Uri(newQueryString);
+                    }
+                    if (requestUrl.Contains(SearchOperator))
+                    {
+                        newQueryString = SanitizeSearchQueryOption(requestUrl);
                         request.Url = new Uri(newQueryString);
                     }
                 }
@@ -204,6 +228,20 @@ namespace TelemetryService
             var newQueryString = $"{urlSegment + propertyName + closingBracket}";
 
             return newQueryString;
+        }
+
+        private string SanitizeSearchQueryOption(string requestUrl)
+        {
+            var queryString = requestUrl.Split(SearchOperator);
+
+            var urlSegment = queryString[0];
+            var querySegment = queryString[1];
+
+            querySegment = querySegment.Replace(querySegment, "'****'");
+
+            string sanitizedUrl = $"{urlSegment + SearchOperator + querySegment}";
+
+            return sanitizedUrl;
         }
     }
 }
