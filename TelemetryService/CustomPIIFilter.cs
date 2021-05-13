@@ -57,6 +57,7 @@ namespace TelemetryService
         private static readonly List<string> _userKeywords = new List<string> { "users", "people" };
         private const string RequestPath = "RequestPath";
         private const string RenderedMessage = "RenderedMessage";
+        private static string SearchOperator = "$search";
 
         public CustomPIIFilter(ITelemetryProcessor next)
         {
@@ -193,7 +194,7 @@ namespace TelemetryService
                         newQueryString = RedactUserName(requestUrl);
                         request.Url = new Uri(newQueryString);
                     }
-                    if (requestUrl.Contains("$search"))
+                    if (requestUrl.Contains(SearchOperator))
                     {
                         newQueryString = SanitizeSearchQueryOption(requestUrl);
                         request.Url = new Uri(newQueryString);
@@ -230,15 +231,14 @@ namespace TelemetryService
 
         private string SanitizeSearchQueryOption(string requestUrl)
         {
-            var searchOperator = "search=";
-            var queryString = requestUrl.Split(searchOperator);
+            var queryString = requestUrl.Split(SearchOperator);
 
             var urlSegment = queryString[0];
             var querySegment = queryString[1];
 
             querySegment = querySegment.Replace(querySegment, "'****'");
 
-            string sanitizedUrl = $"{urlSegment + searchOperator + querySegment}";
+            string sanitizedUrl = $"{urlSegment + SearchOperator + querySegment}";
 
             return sanitizedUrl;
         }
