@@ -60,11 +60,11 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
         public async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale)
         {
-            _telemetry?.TrackTrace($"Retrieving sample queries list from in-memory cache '{locale}'",
-                                  SeverityLevel.Information,
-                                  SamplesTraceProperties);
+            _telemetry?.TrackTrace($"Retrieving sample queries list for locale '{locale}' from in-memory cache '{locale}'",
+                                   SeverityLevel.Information,
+                                   SamplesTraceProperties);
 
-            var sourceMsg = $"Return sample queries list from in-memory cache '{locale}'";
+            string sourceMsg = $"Return sample queries list for locale '{locale}' from in-memory cache '{locale}'";
 
             // Fetch cached sample queries
             SampleQueriesList sampleQueriesList = await _samplesCache.GetOrCreateAsync(locale, cacheEntry =>
@@ -85,10 +85,11 @@ namespace GraphExplorerSamplesService.Services
 
                     if (seededSampleQueriesList != null)
                     {
-                        _telemetry?.TrackTrace($"In-memory cache '{locale}' of sample queries list " +
+                        _telemetry?.TrackTrace($"In-memory cache '{lockedLocale}' of sample queries list " +
                                                $"already seeded by a concurrently running thread",
                                                SeverityLevel.Information,
                                                SamplesTraceProperties);
+                        sourceMsg = $"Return sample queries list for locale '{lockedLocale}' from in-memory cache '{lockedLocale}'";
 
                         return Task.FromResult(seededSampleQueriesList);
                     }
@@ -102,7 +103,7 @@ namespace GraphExplorerSamplesService.Services
                     // Get the file contents from source
                     string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
-                    _telemetry?.TrackTrace("Successfully seeded sample queries list from Azure Blob resource",
+                    _telemetry?.TrackTrace($"Successfully seeded sample queries list for locale '{lockedLocale}' from Azure Blob resource",
                                            SeverityLevel.Information,
                                            SamplesTraceProperties);
 
@@ -111,7 +112,8 @@ namespace GraphExplorerSamplesService.Services
                      */
                     bool orderSamples = lockedLocale.Equals("en-us", StringComparison.OrdinalIgnoreCase);
 
-                    sourceMsg = "Return sample queries from Azure Blob resource";
+                    sourceMsg = $"Return sample queries list for locale '{lockedLocale}' from Azure Blob resource";
+
                     return Task.FromResult(DeserializeSamplesList(jsonFileContents, locale));
                 }
             });

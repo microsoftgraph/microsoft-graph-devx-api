@@ -42,7 +42,7 @@ namespace GraphWebApi.Controllers
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
-                _telemetry.TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
+                _telemetry?.TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
                                   SeverityLevel.Information,
                                   PermissionsTraceProperties);
 
@@ -66,27 +66,28 @@ namespace GraphWebApi.Controllers
                                                                     requestUrl: requestUrl,
                                                                     method: method);
                 }
-                _telemetry.TrackTrace($"Fetched {result.Count} permissions",
-                                  SeverityLevel.Information,
-                                  PermissionsTraceProperties);
+
+                _telemetry?.TrackTrace($"Fetched {result.Count} permissions",
+                                      SeverityLevel.Information,
+                                      PermissionsTraceProperties);
 
                 return result == null ? NotFound() : Ok(result);
             }
             catch (InvalidOperationException invalidOpsException)
             {
-                _telemetry.TrackException(invalidOpsException,
+                _telemetry?.TrackException(invalidOpsException,
                                           PermissionsTraceProperties);
                 return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
             catch (ArgumentNullException argNullException)
             {
-                _telemetry.TrackException(argNullException,
+                _telemetry?.TrackException(argNullException,
                                           PermissionsTraceProperties);
                 return new JsonResult(argNullException.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (Exception exception)
             {
-                _telemetry.TrackException(exception,
+                _telemetry?.TrackException(exception,
                                           PermissionsTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }

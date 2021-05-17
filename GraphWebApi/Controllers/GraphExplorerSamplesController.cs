@@ -63,20 +63,20 @@ namespace GraphWebApi.Controllers
 
                 if (filteredSampleQueries.Count == 0)
                 {
-                    _telemetry.TrackTrace($"Search value: '{search}' not found in: category, humanName or tip properties of sample queries",
+                    _telemetry?.TrackTrace($"Search value: '{search}' not found in: category, humanName or tip properties of sample queries",
                                           SeverityLevel.Error,
                                           SamplesTraceProperties);
                     return NotFound();
                 }
 
-                _telemetry.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
+                _telemetry?.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
                                       SeverityLevel.Information,
                                       SamplesTraceProperties);
                 return Ok(filteredSampleQueries);
             }
             catch (Exception exception)
             {
-                _telemetry.TrackException(exception,
+                _telemetry?.TrackException(exception,
                                           SamplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
@@ -103,7 +103,7 @@ namespace GraphWebApi.Controllers
 
                 if (sampleQueryById == null)
                 {
-                    _telemetry.TrackTrace($"Sample query with id: {id} doesn't exist in the list of sample queries",
+                    _telemetry?.TrackTrace($"Sample query with id: {id} doesn't exist in the list of sample queries",
                                           SeverityLevel.Error,
                                           SamplesTraceProperties);
                     return NotFound();
@@ -114,7 +114,7 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception exception)
             {
-                _telemetry.TrackException(exception,
+                _telemetry?.TrackException(exception,
                                           SamplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
@@ -324,7 +324,7 @@ namespace GraphWebApi.Controllers
         private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string org, string branchName)
         {
             string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
-            _telemetry.TrackTrace($"Request to fetch samples for locale '{locale}'",
+            _telemetry?.TrackTrace($"Request to fetch samples for locale '{locale}'",
                                   SeverityLevel.Information,
                                   SamplesTraceProperties);
 
@@ -338,7 +338,7 @@ namespace GraphWebApi.Controllers
                 sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
             }
 
-            _telemetry.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
+            _telemetry?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
                                   SeverityLevel.Information,
                                   SamplesTraceProperties);
 
