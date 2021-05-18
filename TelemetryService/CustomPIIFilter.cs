@@ -258,7 +258,7 @@ namespace TelemetryService
             // e.g /openapi?url=/users?$search='displayName:Meghan' --> 'displayName:Meghan'
             var searchableContent = contents[1];
 
-            searchableContent = searchableContent.Replace(searchableContent, "'****'");
+            searchableContent = searchableContent.Replace(searchableContent, "****");
 
             return contents[0] + ODataSearchOperator + searchableContent;
         }

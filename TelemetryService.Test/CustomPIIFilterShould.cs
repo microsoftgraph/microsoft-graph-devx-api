@@ -180,13 +180,13 @@ namespace Telemetry.Test
                     "https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='displayName:Meghan'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='****'")]
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search=****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='Meghan'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='****'")]
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search=****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='5555551212'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='****'")]
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search=****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/samples?search='hello world'",
                     "https://graphexplorerapi.azurewebsites.net/samples?search='hello world'")]
