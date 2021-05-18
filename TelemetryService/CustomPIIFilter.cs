@@ -37,28 +37,42 @@ namespace TelemetryService
         private static readonly Regex _employeeIdRegex = new(@"[0-9]{7}",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private readonly List<Regex> _piiRegexes = new List<Regex>
-            {
-                _guidRegex,
-                _emailRegex,
-                _mobilePhoneRegex,
-                _employeeIdRegex
-            };
+        private readonly List<Regex> _piiRegexes = new()
+        {
+            _guidRegex,
+            _emailRegex,
+            _mobilePhoneRegex,
+            _employeeIdRegex
+        };
 
-        private static readonly List<string> _propertyNames = new List<string>
-            {
+        private static readonly List<string> _propertyNames = new()
+        {
                 "displayName",
                 "firstName",
                 "lastName",
                 "givenName",
                 "preferredName",
                 "surname"
-            };
+        };
 
-        private static readonly List<string> _userKeywords = new List<string> { "users", "people" };
+        private static readonly List<string> _odataFilterOptions = new()
+        {
+            "eq",
+            "ne",
+            "gt",
+            "ge",
+            "le",
+            "lt",
+            "in",
+            "has",
+            "endswith",
+            "startswith",
+            "substringof"
+        };
+        private static readonly List<string> _userKeywords = new() { "users", "people" };
         private const string RequestPath = "RequestPath";
         private const string RenderedMessage = "RenderedMessage";
-        private const string SearchOperator = "$search=";
+        private const string ODataSearchOperator = "$search=";
 
 
         public CustomPIIFilter(ITelemetryProcessor next)
@@ -173,7 +187,7 @@ namespace TelemetryService
                     sanitizedContent = RedactFilterableValues(content);
                 }
 
-                if (sanitizedContent.Contains(SearchOperator))
+                if (sanitizedContent.Contains(ODataSearchOperator))
                 {
                     sanitizedContent = RedactSearchableValues(sanitizedContent);
                 }
@@ -189,28 +203,42 @@ namespace TelemetryService
         /// <returns>The string content with all filterable values redacted.</returns>
         private static string RedactFilterableValues(string content)
         {
-            if (!(bool)(content?.Contains("$filter")))
+            const string ODataFilterOperator = "$filter";
+
+            if (!(bool)(content?.Contains(ODataFilterOperator)))
             {
                 return content;
             }
 
             var decodedContent = HttpUtility.UrlDecode(content);
-            var contents = decodedContent.Split("\'");
+            var contents = decodedContent.Split(ODataFilterOperator);
 
             if ((bool)!contents?.Any())
             {
                 return content;
             }
 
-            // e.g. "openapi?url=/users?$filter=displayName eq 'John Doe'&method=GET" => John Doe
-            var filterableValue = contents[1];
+            // e.g. "openapi?url=/users?$filter=displayName eq 'John Doe'&method=GET" --> =displayName eq 'John Doe'&method=GET
+            var filterableContent = contents[1];
 
-            if (_usernameRegex.IsMatch(filterableValue))
+            foreach (var option in _odataFilterOptions)
             {
-                filterableValue = filterableValue.Replace(filterableValue, "'****'");
+                var pattern_1 = @$"(?<=\b{option}\s*)('(.*?)')"; // will match ex: /Products?$filter=Name eq 'Milk'
+                var pattern_2 = @$"(?<=\b{option}\s*)(\((.*?)\))"; // will match ex: /Products?$filter=Name in ('Milk', 'Cheese')
+                var regex_1 = new Regex(pattern_1);
+                var regex_2 = new Regex(pattern_2);
+
+                if (regex_1.IsMatch(filterableContent))
+                {
+                    filterableContent = Regex.Replace(filterableContent, pattern_1, "****");
+                }
+                else if (regex_2.IsMatch(filterableContent))
+                {
+                    filterableContent = Regex.Replace(filterableContent, pattern_2, "****");
+                }
             }
 
-            return $"{contents[0] + filterableValue + contents?[2]}";
+            return contents[0] + ODataFilterOperator + filterableContent;
         }
 
         /// <summary>
@@ -220,19 +248,19 @@ namespace TelemetryService
         /// <returns>The string content with all searchable values redacted.</returns>
         private static string RedactSearchableValues(string content)
         {
-            var contents = content.Split(SearchOperator);
+            var contents = content.Split(ODataSearchOperator);
 
             if (!(bool)contents?.Any())
             {
                 return content;
             }
 
-            // e.g /openapi?url=/users?$search='displayName:Meghan' => 'displayName:Meghan'
-            var searchableValue = contents[1];
+            // e.g /openapi?url=/users?$search='displayName:Meghan' --> 'displayName:Meghan'
+            var searchableContent = contents[1];
 
-            searchableValue = searchableValue.Replace(searchableValue, "'****'");
+            searchableContent = searchableContent.Replace(searchableContent, "'****'");
 
-            return $"{contents[0] + SearchOperator + searchableValue}";
+            return contents[0] + ODataSearchOperator + searchableContent;
         }
     }
 }
