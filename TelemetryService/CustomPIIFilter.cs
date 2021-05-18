@@ -223,8 +223,8 @@ namespace TelemetryService
 
             foreach (var option in _odataFilterOptions)
             {
-                var pattern_1 = @$"(?<=\b{option}\s*)('(.*?)')"; // will match ex: /Products?$filter=Name eq 'Milk'
-                var pattern_2 = @$"(?<=\b{option}\s*)(\((.*?)\))"; // will match ex: /Products?$filter=Name in ('Milk', 'Cheese')
+                var pattern_1 = @$"(?<=\b{option}\s*)('(.*?)')"; // will match 'Milk' in example: /Products?$filter=Name eq 'Milk'
+                var pattern_2 = @$"(?<=\b{option}\s*)(\((.*?)\))"; // will match ('Milk', 'Cheese') in example: /Products?$filter=Name in ('Milk', 'Cheese')
                 var regex_1 = new Regex(pattern_1);
                 var regex_2 = new Regex(pattern_2);
 
