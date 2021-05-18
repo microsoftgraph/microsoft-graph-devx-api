@@ -50,7 +50,6 @@ namespace Telemetry.Test
                 _telemetryProcessor.Process(eventTelemetry);
             }
 
-            //var expectedPath = "/permissions?requestUrl=/users/****&method=GET";
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
