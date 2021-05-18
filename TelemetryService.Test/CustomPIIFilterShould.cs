@@ -79,7 +79,7 @@ namespace Telemetry.Test
                 _telemetryProcessor.Process(eventTelemetry);
             }
 
-            var expectedPath = "openapi?url=/users?$filter(emailAddress eq '****')";
+            var expectedPath = "openapi?url=/users?$filter(emailAddress eq ****)";
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -158,7 +158,7 @@ namespace Telemetry.Test
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=firstName eq ****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq '****'")]
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq ****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&method=GET",
                     "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/****&method=GET")]
@@ -175,6 +175,9 @@ namespace Telemetry.Test
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=startswith(givenName,'Alex')",
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=startswith****")]
 
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=testProperty eq 'arbitraryPropertyData'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=testProperty eq ****")]
+
         [InlineData("https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
                     "https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]
 
@@ -189,11 +192,7 @@ namespace Telemetry.Test
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/samples?search='hello world'",
                     "https://graphexplorerapi.azurewebsites.net/samples?search='hello world'")]
-
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/me/people/e3d0513b-449e-4198-ba6f-bd97ae7cae85",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/me/people/****")]
-
-        public void RedactUserPropertyFromRequestTelemetry(string incomingUrl, string expectedUrl)
+        public void SanitizeODataQueryOptionsFromTelemetry(string incomingUrl, string expectedUrl)
         {
             // Arrange
             var request = new RequestTelemetry
