@@ -110,7 +110,7 @@ namespace Telemetry.Test
                 _telemetryProcessor.Process(eventTelemetry);
             }
 
-            var expectedPath = "/openapi?url=/users?$filter(displayName eq '****')";
+            var expectedPath = "/openapi?url=/users?$filter(displayName eq ****)";
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -140,7 +140,7 @@ namespace Telemetry.Test
                 _telemetryProcessor.Process(eventTelemetry);
             }
 
-            var expectedPath = "/openapi?url=/users?$filter(firstName eq '****')";
+            var expectedPath = "/openapi?url=/users?$filter(firstName eq ****)";
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -150,16 +150,16 @@ namespace Telemetry.Test
 
         [Theory]
         [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eq 'Megan Bowen')",
-                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eq '****')")]
+                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eq ****)")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(displayName%20eq%20%27Meghan%27)",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(displayName eq '****')")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=displayName%20eq%20%27Meghan%27",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=displayName eq ****")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(firstName eq 'Megan')",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(firstName eq '****')")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=firstName eq 'Megan'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=firstName eq ****")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter(emailAddress eq '****')")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq '****'")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&method=GET",
                     "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/****&method=GET")]
@@ -168,7 +168,13 @@ namespace Telemetry.Test
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$orderby=from/emailAddress/****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$expand=directreports($filter=firstName eq 'mary')",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$expand=directreports($filter=firstName eq '****')")]
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$expand=directreports($filter=firstName eq ****)")]
+
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=givenName in ('Adele', 'Alex')",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=givenName in ****")]
+
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=startswith(givenName,'Alex')",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=startswith****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
                     "https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]
@@ -191,14 +197,36 @@ namespace Telemetry.Test
         public void RedactUserPropertyFromRequestTelemetry(string incomingUrl, string expectedUrl)
         {
             // Arrange
-            var request = new RequestTelemetry();
-            request.Url = new Uri(incomingUrl);
+            var request = new RequestTelemetry
+            {
+                Url = new Uri(incomingUrl)
+            };
 
             // Act
             _telemetryProcessor.Process(request);
 
             // Assert
             Assert.Equal(expectedUrl, request.Url.ToString());
+        }
+
+        [Theory]
+        [InlineData("Fetching 'DelegatedWork' permissions for url '/users/9f376303-1936-44a9-b4fd-7271483525bb/drives' and method 'GET'",
+            "Fetching 'DelegatedWork' permissions for url '/users/****/drives' and method 'GET'")]
+        [InlineData("Fetching 'DelegatedWork' permissions for url '/users?$expand=directreports($filter=firstName eq 'mary')' and method 'GET'",
+            "Fetching 'DelegatedWork' permissions for url '/users?$expand=directreports($filter=firstName eq ****)' and method 'GET'")]
+        public void RedactPIIFromTraceTelemetry(string incomingMsg, string expectedMsg)
+        {
+            // Arrange
+            var trace = new TraceTelemetry
+            {
+                Message = incomingMsg
+            };
+
+            // Act
+            _telemetryProcessor.Process(trace);
+
+            // Assert
+            Assert.Equal(expectedMsg, trace.Message);
         }
     }
 }
