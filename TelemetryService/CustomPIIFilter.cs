@@ -28,9 +28,6 @@ namespace TelemetryService
         private static readonly Regex _emailRegex = new(@"([a-zA-Z0-9_\.-]+)@([\da-zA-Z\.-]+)\.([a-zA-Z\.]{2,6})",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex _usernameRegex = new(@"[A-Za-z][A-Za-z0-9._]",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
         private static readonly Regex _mobilePhoneRegex = new(@"^(\+\d{1,2}\s?)?1?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -43,16 +40,6 @@ namespace TelemetryService
             _emailRegex,
             _mobilePhoneRegex,
             _employeeIdRegex
-        };
-
-        private static readonly List<string> _propertyNames = new()
-        {
-                "displayName",
-                "firstName",
-                "lastName",
-                "givenName",
-                "preferredName",
-                "surname"
         };
 
         private static readonly List<string> _odataFilterOptions = new()
@@ -69,10 +56,12 @@ namespace TelemetryService
             "startswith",
             "substringof"
         };
+
         private static readonly List<string> _userKeywords = new() { "users", "people" };
         private const string RequestPath = "RequestPath";
         private const string RenderedMessage = "RenderedMessage";
         private const string ODataSearchOperator = "$search=";
+        private const string ODataFilterOperator = "$filter";
 
 
         public CustomPIIFilter(ITelemetryProcessor next)
@@ -164,7 +153,7 @@ namespace TelemetryService
                         }
                     }
 
-                    sanitizedContent = SanitizeQueryOptions(sanitizedContent);
+                    sanitizedContent = SanitizeODataQueryOptions(sanitizedContent);
                 }
             }
 
@@ -172,25 +161,22 @@ namespace TelemetryService
         }
 
         /// <summary>
-        /// Sanitizes any PII present in a query option of a string content.
+        /// Sanitizes any PII present in an OData query option of a string content.
         /// </summary>
         /// <param name="content">The target string content.</param>
         /// <returns>The string content with all PII in the query option sanitized.</returns>
-        private static string SanitizeQueryOptions(string content)
+        private static string SanitizeODataQueryOptions(string content)
         {
             string sanitizedContent = content;
 
-            foreach (var propertyName in _propertyNames)
+            if (sanitizedContent.Contains(ODataFilterOperator))
             {
-                if (sanitizedContent.Contains(propertyName))
-                {
-                    sanitizedContent = RedactFilterableValues(content);
-                }
+                sanitizedContent = RedactFilterableValues(content);
+            }
 
-                if (sanitizedContent.Contains(ODataSearchOperator))
-                {
-                    sanitizedContent = RedactSearchableValues(sanitizedContent);
-                }
+            if (sanitizedContent.Contains(ODataSearchOperator))
+            {
+                sanitizedContent = RedactSearchableValues(sanitizedContent);
             }
 
             return sanitizedContent;
@@ -203,8 +189,6 @@ namespace TelemetryService
         /// <returns>The string content with all filterable values redacted.</returns>
         private static string RedactFilterableValues(string content)
         {
-            const string ODataFilterOperator = "$filter";
-
             if (!(bool)(content?.Contains(ODataFilterOperator)))
             {
                 return content;
@@ -213,7 +197,7 @@ namespace TelemetryService
             var decodedContent = HttpUtility.UrlDecode(content);
             var contents = decodedContent.Split(ODataFilterOperator);
 
-            if ((bool)!contents?.Any())
+            if (!(bool)contents?.Any())
             {
                 return content;
             }
