@@ -57,12 +57,11 @@ namespace TelemetryService
             "substringof"
         };
 
-        private static readonly List<string> _userKeywords = new() { "users", "people" };
         private const string RequestPath = "RequestPath";
         private const string RenderedMessage = "RenderedMessage";
         private const string ODataSearchOperator = "$search=";
         private const string ODataFilterOperator = "$filter";
-
+        private const string SecurityMask = "****";
 
         public CustomPIIFilter(ITelemetryProcessor next)
         {
@@ -71,7 +70,7 @@ namespace TelemetryService
         }
 
         /// <summary>
-        /// Filters telemetry data and calls the next ITelemetryProcessor in the chain
+        /// Filters telemetry data and calls the next ITelemetryProcessor in the chain.
         /// </summary>
         /// <param name="item">A telemetry Item.</param>
         public void Process(ITelemetry item)
@@ -98,7 +97,7 @@ namespace TelemetryService
         }
 
         /// <summary>
-        /// Sanitizes telemetry data for any PII
+        /// Sanitizes telemetry data for any PII.
         /// </summary>
         /// <param name="customEvent">Optional: A custom event telemetry.</param>
         /// <param name="request">Optional: A request telemetry.</param>
@@ -113,7 +112,7 @@ namespace TelemetryService
                 var pathValueLength = requestPathValue.Length;
                 var pathValueIndex = customEvent.Properties[RenderedMessage].IndexOf(requestPathValue);
 
-                requestPathValue = SanitizeContent(requestPathValue);
+                requestPathValue = SanitizeUrlQueryPath(requestPathValue);
                 customEvent.Properties[RequestPath] = requestPathValue;
                 customEvent.Properties[RenderedMessage] = customEvent.Properties[RenderedMessage]
                     .Remove(pathValueIndex, pathValueLength)
@@ -123,7 +122,7 @@ namespace TelemetryService
             if (request != null)
             {
                 var requestUrl = request.Url.ToString();
-                request.Url = new Uri(SanitizeContent(requestUrl));
+                request.Url = new Uri(SanitizeUrlQueryPath(requestUrl));
             }
 
             if (trace != null)
@@ -133,31 +132,44 @@ namespace TelemetryService
         }
 
         /// <summary>
+        /// Sanitizes any PII present in the query path of a url string.
+        /// </summary>
+        /// <remarks>In the context of DevX API requests,
+        /// only the query path requires sanitization.</remarks>
+        /// <param name="url">The target url string. Can be of relative or absolute uri.</param>
+        /// <returns>The string url with PII sanitized from its query path.</returns>
+        private string SanitizeUrlQueryPath(string url)
+        {
+            var queryIndex = url?.IndexOf('?');
+
+            if (queryIndex is null or < 0)
+            {
+                return url;
+            }
+
+            var queryPath = url[(int)queryIndex..];
+            queryPath = SanitizeContent(queryPath);
+            return url[0..(int)queryIndex] + queryPath;
+        }
+
+        /// <summary>
         /// Sanitizes any PII present in a string content.
         /// </summary>
         /// <param name="content">The target string content.</param>
         /// <returns>The string content with all PII sanitized.</returns>
         private string SanitizeContent(string content)
         {
-            var sanitizedContent = content;
+            var sanitizedContent = HttpUtility.UrlDecode(content);
 
-            foreach (var keyword in _userKeywords)
+            foreach (var piiRegex in _piiRegexes)
             {
-                if (sanitizedContent.Contains(keyword))
+                if (piiRegex.IsMatch(sanitizedContent))
                 {
-                    foreach (var piiRegex in _piiRegexes)
-                    {
-                        if (piiRegex.IsMatch(sanitizedContent))
-                        {
-                            sanitizedContent = piiRegex.Replace(sanitizedContent, "****");
-                        }
-                    }
-
-                    sanitizedContent = SanitizeODataQueryOptions(sanitizedContent);
+                    sanitizedContent = piiRegex.Replace(sanitizedContent, SecurityMask);
                 }
             }
 
-            return sanitizedContent;
+            return SanitizeODataQueryOptions(sanitizedContent);
         }
 
         /// <summary>
@@ -194,8 +206,7 @@ namespace TelemetryService
                 return content;
             }
 
-            var decodedContent = HttpUtility.UrlDecode(content);
-            var contents = decodedContent.Split(ODataFilterOperator);
+            var contents = content.Split(ODataFilterOperator);
 
             if (!(bool)contents?.Any())
             {
@@ -207,18 +218,19 @@ namespace TelemetryService
 
             foreach (var option in _odataFilterOptions)
             {
-                var pattern_1 = @$"(?<=\b{option}\s*)('(.*?)')"; // will match 'Milk' in example: /Products?$filter=Name eq 'Milk'
-                var pattern_2 = @$"(?<=\b{option}\s*)(\((.*?)\))"; // will match ('Milk', 'Cheese') in example: /Products?$filter=Name in ('Milk', 'Cheese')
-                var regex_1 = new Regex(pattern_1);
-                var regex_2 = new Regex(pattern_2);
+                // Matches 'Milk' in example: /Products?$filter=Name eq 'Milk'
+                var regex_1 = new Regex(@$"(?<=\b{option}\s*)('(.*?)')");
+
+                // Matches ('Milk', 'Cheese') in example: /Products?$filter=Name in ('Milk', 'Cheese')
+                var regex_2 = new Regex(@$"(?<=\b{option}\s*)(\((.*?)\))");
 
                 if (regex_1.IsMatch(filterableContent))
                 {
-                    filterableContent = Regex.Replace(filterableContent, pattern_1, "****");
+                    filterableContent = regex_1.Replace(filterableContent, SecurityMask);
                 }
                 else if (regex_2.IsMatch(filterableContent))
                 {
-                    filterableContent = Regex.Replace(filterableContent, pattern_2, "****");
+                    filterableContent = regex_2.Replace(filterableContent, SecurityMask);
                 }
             }
 
@@ -242,7 +254,7 @@ namespace TelemetryService
             // e.g /openapi?url=/users?$search='displayName:Meghan' --> 'displayName:Meghan'
             var searchableContent = contents[1];
 
-            searchableContent = searchableContent.Replace(searchableContent, "****");
+            searchableContent = searchableContent.Replace(searchableContent, SecurityMask);
 
             return contents[0] + ODataSearchOperator + searchableContent;
         }
