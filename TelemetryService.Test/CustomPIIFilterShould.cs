@@ -26,8 +26,8 @@ namespace Telemetry.Test
         }
 
         [Theory]
-        [InlineData("/permissions?requestUrl=/users/20463493-79c2-4116-b87b-a20d06242e6a&method=GET",
-                    "/permissions?requestUrl=/users/****&method=GET")]
+        [InlineData("/permissions?requestUrl=/groups/20463493-79c2-4116-b87b-a20d06242e6a&method=GET",
+                    "/permissions?requestUrl=/groups/****&method=GET")]
         [InlineData("/permissions?requestUrl=/me/people/9f376303-1936-44a9-b4fd-7271483525bb/drives&method=GET",
                     "/permissions?requestUrl=/me/people/****/drives&method=GET")]
         public void SanitizeGUIDFromEventTelemetry(string requestPath, string expectedPath)
@@ -175,8 +175,11 @@ namespace Telemetry.Test
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=startswith(givenName,'Alex')",
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=startswith****")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=testProperty eq 'arbitraryPropertyData'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=testProperty eq ****")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=startswith(displayName, 'a')&$count=true&$top=1&$orderby=displayName",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=startswith****&$count=true&$top=1&$orderby=displayName")]
+
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=testProperty eq 'arbitraryPropertyData'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=testProperty eq ****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
                     "https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]
@@ -187,8 +190,8 @@ namespace Telemetry.Test
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='Meghan'",
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search=****")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='5555551212'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search=****")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/me/messages?$search='5555551212'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/me/messages?$search=****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/samples?search='hello world'",
                     "https://graphexplorerapi.azurewebsites.net/samples?search='hello world'")]
