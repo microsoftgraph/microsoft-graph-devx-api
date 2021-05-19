@@ -201,7 +201,7 @@ namespace TelemetryService
         /// <returns>The string content with all filterable values redacted.</returns>
         private static string RedactFilterableValues(string content)
         {
-            if (!(bool)(content?.Contains(ODataFilterOperator)))
+            if (!(content?.Contains(ODataFilterOperator) ?? false))
             {
                 return content;
             }
