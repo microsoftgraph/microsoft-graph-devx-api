@@ -7,7 +7,6 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
 
@@ -54,7 +53,10 @@ namespace TelemetryService
             "has",
             "endswith",
             "startswith",
-            "substringof"
+            "substringof",
+            "contains",
+            "indexof",
+            "substring"
         };
 
         private const string RequestPath = "RequestPath";
@@ -75,20 +77,19 @@ namespace TelemetryService
         /// <param name="item">A telemetry Item.</param>
         public void Process(ITelemetry item)
         {
-            if (item is EventTelemetry and EventTelemetry customEvent)
+            if (item is EventTelemetry customEvent &&
+                customEvent.Properties.ContainsKey(RequestPath) &&
+                customEvent.Properties.ContainsKey(RenderedMessage))
             {
-                if (customEvent.Properties.ContainsKey(RequestPath) && customEvent.Properties.ContainsKey(RenderedMessage))
-                {
-                    SanitizeTelemetry(customEvent: customEvent);
-                }
+                SanitizeTelemetry(customEvent: customEvent);
             }
 
-            if (item is RequestTelemetry and RequestTelemetry request)
+            if (item is RequestTelemetry request)
             {
                 SanitizeTelemetry(request: request);
             }
 
-            if (item is TraceTelemetry and TraceTelemetry trace)
+            if (item is TraceTelemetry trace)
             {
                 SanitizeTelemetry(trace: trace);
             }
@@ -127,7 +128,7 @@ namespace TelemetryService
 
             if (trace != null)
             {
-                trace.Message = SanitizeContent(trace.Message);
+                trace.Message = SanitizeContent(trace?.Message);
             }
         }
 
@@ -140,16 +141,16 @@ namespace TelemetryService
         /// <returns>The string url with PII sanitized from its query path.</returns>
         private string SanitizeUrlQueryPath(string url)
         {
-            var queryIndex = url?.IndexOf('?');
+            var queryIndex = url?.IndexOf('?') ?? -1;
 
-            if (queryIndex is null or < 0)
+            if (queryIndex is < 0)
             {
                 return url;
             }
 
-            var queryPath = url[(int)queryIndex..];
+            var queryPath = url[queryIndex..];
             queryPath = SanitizeContent(queryPath);
-            return url[0..(int)queryIndex] + queryPath;
+            return url[0..queryIndex] + queryPath;
         }
 
         /// <summary>
@@ -159,6 +160,11 @@ namespace TelemetryService
         /// <returns>The string content with all PII sanitized.</returns>
         private string SanitizeContent(string content)
         {
+            if (string.IsNullOrEmpty(content))
+            {
+                return content;
+            }
+
             var sanitizedContent = HttpUtility.UrlDecode(content);
 
             foreach (var piiRegex in _piiRegexes)
@@ -179,7 +185,12 @@ namespace TelemetryService
         /// <returns>The string content with all PII in the query option sanitized.</returns>
         private static string SanitizeODataQueryOptions(string content)
         {
-            var sanitizedContent = content;
+            if (string.IsNullOrEmpty(content))
+            {
+                return content;
+            }
+
+            string sanitizedContent = content;
 
             if (sanitizedContent.Contains(ODataFilterOperator))
             {
@@ -207,11 +218,6 @@ namespace TelemetryService
             }
 
             var contents = content.Split(ODataFilterOperator);
-
-            if (!(contents?.Any() ?? false))
-            {
-                return content;
-            }
 
             // e.g. "openapi?url=/users?$filter=displayName eq 'John Doe'&method=GET" --> =displayName eq 'John Doe'&method=GET
             var filterableContent = contents[1];
@@ -244,12 +250,12 @@ namespace TelemetryService
         /// <returns>The string content with all searchable values redacted.</returns>
         private static string RedactSearchableValues(string content)
         {
-            var contents = content.Split(ODataSearchOperator);
-
-            if (!(contents?.Any() ?? false))
+            if (!(content?.Contains(ODataSearchOperator) ?? false))
             {
                 return content;
             }
+
+            var contents = content.Split(ODataSearchOperator);
 
             // e.g /openapi?url=/users?$search='displayName:Meghan' --> 'displayName:Meghan'
             var searchableContent = contents[1];
