@@ -208,7 +208,7 @@ namespace TelemetryService
 
             var contents = content.Split(ODataFilterOperator);
 
-            if (!(bool)contents?.Any())
+            if (!(contents?.Any() ?? false))
             {
                 return content;
             }
