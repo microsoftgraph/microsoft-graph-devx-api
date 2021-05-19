@@ -179,7 +179,7 @@ namespace TelemetryService
         /// <returns>The string content with all PII in the query option sanitized.</returns>
         private static string SanitizeODataQueryOptions(string content)
         {
-            string sanitizedContent = content;
+            var sanitizedContent = content;
 
             if (sanitizedContent.Contains(ODataFilterOperator))
             {
