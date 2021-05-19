@@ -246,7 +246,7 @@ namespace TelemetryService
         {
             var contents = content.Split(ODataSearchOperator);
 
-            if (!(bool)contents?.Any())
+            if (!(contents?.Any() ?? false))
             {
                 return content;
             }
