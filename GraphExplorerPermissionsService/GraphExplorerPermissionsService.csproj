@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FileService\FileService.csproj" />
     <ProjectReference Include="..\UriMatchService\UriMatchingService.csproj" />
+    <ProjectReference Include="..\UtilityService\UtilityService.csproj" />
   </ItemGroup>
 
 </Project>
