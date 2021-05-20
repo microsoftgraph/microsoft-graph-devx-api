@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Web;
+using UtilityService;
 
 namespace TelemetryService
 
@@ -141,16 +142,15 @@ namespace TelemetryService
         /// <returns>The string url with PII sanitized from its query path.</returns>
         private string SanitizeUrlQueryPath(string url)
         {
-            var queryIndex = url?.IndexOf('?') ?? -1;
+            var queryPath = url?.Query();
 
-            if (queryIndex is < 0)
+            if (string.IsNullOrEmpty(queryPath))
             {
                 return url;
             }
 
-            var queryPath = url[queryIndex..];
             queryPath = SanitizeContent(queryPath);
-            return url[0..queryIndex] + queryPath;
+            return $"{url.BaseUriPath()}?{queryPath}";
         }
 
         /// <summary>
