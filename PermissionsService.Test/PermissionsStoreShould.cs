@@ -122,7 +122,7 @@ namespace PermissionsService.Test
             /* Act */
 
             List<ScopeInformation> result1 =
-                _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/users/{id}/calendars/{id}", method: "GET").GetAwaiter().GetResult(); // permission in ver1 doc.
+                _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/users/{id}/calendars/{id}?$orderby=CreatedDate desc", method: "GET").GetAwaiter().GetResult(); // permission in ver1 doc.
             List<ScopeInformation> result2 =
                 _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/anonymousipriskevents/{id}", method: "GET").GetAwaiter().GetResult(); // permission in ver2 doc.
             List<ScopeInformation> result3 =
