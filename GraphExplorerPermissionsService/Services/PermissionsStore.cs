@@ -17,6 +17,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UriMatchingService;
+using UtilityService;
 
 namespace GraphExplorerPermissionsService
 {
@@ -319,7 +320,7 @@ namespace GraphExplorerPermissionsService
                         throw new ArgumentNullException(nameof(method), "The HTTP method value cannot be null or empty.");
                     }
 
-                    requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
+                    requestUrl = requestUrl.BaseUriPath(); // remove any query params
                     requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
 
                     // Check if requestUrl is contained in our Url Template table

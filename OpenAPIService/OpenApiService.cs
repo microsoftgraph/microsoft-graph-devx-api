@@ -21,6 +21,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using OpenAPIService.Common;
 using UriMatchingService;
+using UtilityService;
 
 namespace OpenAPIService
 {
@@ -168,7 +169,8 @@ namespace OpenAPIService
                     await PopulateReferenceTablesAync(source);
                 }
 
-                url = url.Replace('-', '_');
+                url = url.BaseUriPath()
+                         .Replace('-', '_');
 
                 TemplateMatch resultMatch = _uriTemplateTable.Match(new Uri(url.ToLower(), UriKind.RelativeOrAbsolute));
 
