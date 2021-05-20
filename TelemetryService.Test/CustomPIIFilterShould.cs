@@ -148,14 +148,14 @@ namespace Telemetry.Test
         }
 
         [Theory]
-        [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eq 'Megan Bowen')",
-                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eq ****)")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eQ 'Megan Bowen')",
+                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eQ ****)")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=displayName%20eq%20%27Meghan%27",
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=displayName eq ****")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=firstName eq 'Megan'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=firstName eq ****")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=firstName Eq 'Megan'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=firstName Eq ****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com'",
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq ****")]
@@ -172,14 +172,14 @@ namespace Telemetry.Test
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=givenName in ('Adele', 'Alex')",
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=givenName in ****")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=startswith(givenName,'Alex')",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=startswith****")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=StartsWith(givenName,'Alex')",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=StartsWith****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=startswith(displayName, 'a')&$count=true&$top=1&$orderby=displayName",
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=startswith****&$count=true&$top=1&$orderby=displayName")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=testProperty eq 'arbitraryPropertyData'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=testProperty eq ****")]
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=testProperty EQ 'arbitraryPropertyData'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=testProperty EQ ****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
                     "https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]

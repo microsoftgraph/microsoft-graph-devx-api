@@ -225,10 +225,10 @@ namespace TelemetryService
             foreach (var option in _odataFilterOptions)
             {
                 // Matches 'Milk' in example: /Products?$filter=Name eq 'Milk'
-                var regex_1 = new Regex(@$"(?<=\b{option}\s*)('(.*?)')");
+                var regex_1 = new Regex(@$"(?<=\b{option}\s*)('(.*?)')", RegexOptions.IgnoreCase);
 
                 // Matches ('Milk', 'Cheese') in example: /Products?$filter=Name in ('Milk', 'Cheese')
-                var regex_2 = new Regex(@$"(?<=\b{option}\s*)(\((.*?)\))");
+                var regex_2 = new Regex(@$"(?<=\b{option}\s*)(\((.*?)\))", RegexOptions.IgnoreCase);
 
                 if (regex_1.IsMatch(filterableContent))
                 {
