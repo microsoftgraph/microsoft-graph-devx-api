@@ -7,6 +7,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="TestFiles\Permissions\appsettings.json" />
+    <None Remove="TestFiles\Permissions\permissions-beta.json" />
+    <None Remove="TestFiles\Permissions\permissions-descriptions.json" />
+    <None Remove="TestFiles\Permissions\permissions-v1.0.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestFiles\Permissions\appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\Permissions\permissions-beta.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\Permissions\permissions-descriptions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestFiles\Permissions\permissions-v1.0.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.17.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
     <PackageReference Include="xunit" Version="2.4.1" />
@@ -21,7 +43,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GraphWebApi\GraphWebApi.csproj" />
+    <ProjectReference Include="..\MockTestUtility\MockTestUtility.csproj" />
+    <ProjectReference Include="..\TelemetryService\TelemetryService.csproj" />
   </ItemGroup>
 
 </Project>

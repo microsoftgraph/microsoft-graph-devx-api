@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -9,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Web;
+using UriMatchingService;
 using UtilityService;
 
 namespace TelemetryService
@@ -20,6 +22,7 @@ namespace TelemetryService
     public class CustomPIIFilter : ITelemetryProcessor
     {
         private readonly ITelemetryProcessor _next;
+        private readonly UriTemplateMatcher _uriTemplateMatcher;
 
         private static readonly Regex _guidRegex = new(@"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -66,10 +69,17 @@ namespace TelemetryService
         private const string ODataFilterOperator = "$filter";
         private const string SecurityMask = "****";
 
-        public CustomPIIFilter(ITelemetryProcessor next)
+        public CustomPIIFilter(ITelemetryProcessor next, IPermissionsStore permissionsStore)
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
+
+            if (permissionsStore == null)
+            {
+                throw new ArgumentNullException(nameof(permissionsStore), $"{ permissionsStore }: { nameof(permissionsStore) }");
+            }
+
+            _uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
         }
 
         /// <summary>
@@ -142,6 +152,7 @@ namespace TelemetryService
         /// <returns>The string url with PII sanitized from its query path.</returns>
         private string SanitizeUrlQueryPath(string url)
         {
+            const char QueryValSeparator = '&';
             var queryPath = url?.Query();
 
             if (string.IsNullOrEmpty(queryPath))
@@ -149,7 +160,29 @@ namespace TelemetryService
                 return url;
             }
 
-            queryPath = SanitizeContent(queryPath);
+            var queryValues = queryPath.Split(QueryValSeparator, StringSplitOptions.RemoveEmptyEntries);
+
+            for (int i = 0; i < queryValues.Length; i++)
+            {
+                var queryValue = queryValues[i];
+                if (queryValue.Contains("url=", StringComparison.OrdinalIgnoreCase))
+                {
+                    var valueIndex = queryValue.IndexOf('=');
+                    var valueSegment = queryValue[(valueIndex + 1)..];
+                    var resultMatch = _uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
+
+                    if (resultMatch != null)
+                    {
+                        queryValue = queryValue[0..(valueIndex + 1)] + resultMatch.Template;
+                    }
+
+                    queryValue = SanitizeContent(queryValue);
+                    queryValues[i] = queryValue;
+                    queryPath = string.Join(QueryValSeparator, queryValues);
+                    break;
+                }
+            }
+
             return $"{url.BaseUriPath()}?{queryPath}";
         }
 

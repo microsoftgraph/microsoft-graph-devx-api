@@ -2,7 +2,9 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.ApplicationInsights.DataContracts;
+using MockTestUtility;
 using System;
 using TelemetryService;
 using TelemetryService.Test;
@@ -13,23 +15,33 @@ namespace Telemetry.Test
     public class CustomPIIFilterShould
     {
         private readonly CustomPIIFilter _telemetryProcessor;
+        private readonly IPermissionsStore _permissionsStore;
 
         public CustomPIIFilterShould()
         {
-            _telemetryProcessor = new CustomPIIFilter(new TestProcessorNext());
+            _permissionsStore = PermissionStoreMock.GetPermissionStore(".\\TestFiles\\Permissions\\appsettings.json");
+            _telemetryProcessor = new CustomPIIFilter(new TestProcessorNext(), _permissionsStore);
         }
 
         [Fact]
-        public void ThrowsArgumentNullExceptionWithoutNextPocessor()
+        public void ThrowsArgumentNullExceptionWithNullNextPocessor()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(null));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(null, _permissionsStore));
+        }
+
+        [Fact]
+        public void ThrowsArgumentNullExceptionWithNullPermissionsStore()
+        {
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(_telemetryProcessor, null));
         }
 
         [Theory]
         [InlineData("/permissions?requestUrl=/groups/20463493-79c2-4116-b87b-a20d06242e6a&method=GET",
-                    "/permissions?requestUrl=/groups/****&method=GET")]
+                    "/permissions?requestUrl=/groups/{id}&method=GET")]
         [InlineData("/permissions?requestUrl=/me/people/9f376303-1936-44a9-b4fd-7271483525bb/drives&method=GET",
                     "/permissions?requestUrl=/me/people/****/drives&method=GET")]
+        [InlineData("/permissions?requestUrl=/users/V+iW+VgtM0m2IPytHq76gA==/drives&method=GET",
+                    "/permissions?requestUrl=/users/{id}/drives&method=GET")]
         public void SanitizeGUIDFromEventTelemetry(string requestPath, string expectedPath)
         {
             // Arrange
@@ -161,7 +173,7 @@ namespace Telemetry.Test
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq ****")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&method=GET",
-                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/****&method=GET")]
+                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/{id}&method=GET")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$orderby=from/emailAddress/MiriamG@M365x214355.onmicrosoft.com",
                     "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$orderby=from/emailAddress/****")]
