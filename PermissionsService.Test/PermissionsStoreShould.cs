@@ -17,7 +17,7 @@ namespace PermissionsService.Test
 
         public PermissionsStoreShould()
         {
-            _permissionsStore = PermissionStoreMock.GetPermissionStore(".\\TestFiles\\appsettingstest-valid.json");
+            _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(".\\TestFiles\\appsettingstest-valid.json");
         }
 
         [Fact]
@@ -223,7 +223,7 @@ namespace PermissionsService.Test
         {
             /* Act & Assert */
 
-            Assert.Throws<InvalidOperationException>(() => PermissionStoreMock.GetPermissionStore(".\\TestFiles\\appsettingstest-empty.json"));
+            Assert.Throws<InvalidOperationException>(() => PermissionStoreFactoryMock.GetPermissionStore(".\\TestFiles\\appsettingstest-empty.json"));
         }
 
         [Fact]
