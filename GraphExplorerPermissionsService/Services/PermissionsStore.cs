@@ -14,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UriMatchingService;
 using UtilityService;
@@ -63,6 +62,8 @@ namespace GraphExplorerPermissionsService
             _scopesInformation = configuration[ScopesInfoBlobConfig]
                 ?? throw new ArgumentNullException(nameof(ScopesInfoBlobConfig), $"Config path missing: { ScopesInfoBlobConfig }");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
+
+            InitializePermissions();
         }
 
         /// <summary>
@@ -97,7 +98,9 @@ namespace GraphExplorerPermissionsService
                     foreach (JProperty property in apiPermissions)
                     {
                         // Remove any '(...)' from the request url and set to lowercase for uniformity
-                        string requestUrl = Regex.Replace(property.Name.ToLower(), @"\(.*?\)", string.Empty);
+                        string requestUrl = property.Name
+                                                    .RemoveParantheses()
+                                                    .ToLower();
 
                         if (uniqueRequestUrlsTable.Add(requestUrl))
                         {
@@ -320,8 +323,8 @@ namespace GraphExplorerPermissionsService
                         throw new ArgumentNullException(nameof(method), "The HTTP method value cannot be null or empty.");
                     }
 
-                    requestUrl = requestUrl.BaseUriPath(); // remove any query params
-                    requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
+                    requestUrl = requestUrl.BaseUriPath() // remove any query params
+                                           .RemoveParantheses(); // remove any '(...)' resource modifiers
 
                     // Check if requestUrl is contained in our Url Template table
                     TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
@@ -418,6 +421,12 @@ namespace GraphExplorerPermissionsService
                     }
                 }
             }
+        }
+
+        public UriTemplateMatcher GetUriTemplateMatcher()
+        {
+            InitializePermissions();
+            return _urlTemplateMatcher;
         }
     }
 }
