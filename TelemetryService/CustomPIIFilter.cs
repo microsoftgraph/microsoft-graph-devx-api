@@ -134,7 +134,7 @@ namespace TelemetryService
             if (request != null)
             {
                 var requestUrl = request.Url.ToString();
-                request.Url = new Uri(SanitizeUrlQueryPath(requestUrl));
+                request.Url = new Uri(SanitizeUrlQueryPath(requestUrl), UriKind.RelativeOrAbsolute);
             }
 
             if (trace != null)
@@ -148,7 +148,7 @@ namespace TelemetryService
         /// </summary>
         /// <remarks>In the context of DevX API requests,
         /// only the query path requires sanitization.</remarks>
-        /// <param name="url">The target url string. Can be of relative or absolute uri.</param>
+        /// <param name="url">The target url string. Can be of relative or absolute uri kind.</param>
         /// <returns>The string url with PII sanitized from its query path.</returns>
         private string SanitizeUrlQueryPath(string url)
         {
@@ -165,10 +165,18 @@ namespace TelemetryService
             for (int i = 0; i < queryValues.Length; i++)
             {
                 var queryValue = queryValues[i];
+
+                /* Target url examples:
+                   "/permissions?requestUrl=/users/9f376303-1936-44a9-b4fd-7271483525bb/drives&method=GET" or
+                   "/openapi?url=/users/9f376303-1936-44a9-b4fd-7271483525bb"
+                */
+
                 if (queryValue.Contains("url=", StringComparison.OrdinalIgnoreCase))
                 {
                     var valueIndex = queryValue.IndexOf('=');
                     var valueSegment = queryValue[(valueIndex + 1)..];
+                    valueSegment = valueSegment.BaseUriPath()
+                                               .RemoveParantheses();
                     var resultMatch = _uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
 
                     if (resultMatch != null)

@@ -19,20 +19,20 @@ namespace Telemetry.Test
 
         public CustomPIIFilterShould()
         {
-            _permissionsStore = PermissionStoreMock.GetPermissionStore(".\\TestFiles\\Permissions\\appsettings.json");
+            _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(".\\TestFiles\\Permissions\\appsettings.json");
             _telemetryProcessor = new CustomPIIFilter(new TestProcessorNext(), _permissionsStore);
         }
 
         [Fact]
-        public void ThrowsArgumentNullExceptionWithNullNextPocessor()
+        public void ThrowsArgumentNullExceptionIfNextPocessorArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(null, _permissionsStore));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: null, permissionsStore: _permissionsStore));
         }
 
         [Fact]
-        public void ThrowsArgumentNullExceptionWithNullPermissionsStore()
+        public void ThrowsArgumentNullExceptionIfPermissionsStoreArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(_telemetryProcessor, null));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: _telemetryProcessor, permissionsStore: null));
         }
 
         [Theory]
@@ -69,14 +69,17 @@ namespace Telemetry.Test
             Assert.Equal(expectedMessage, eventTelemetry.Properties["RenderedMessage"]);
         }
 
-        [Fact]
-        public void RedactEmailFromEventTelemetry()
+        [Theory]
+        [InlineData("openapi?url=/foobar?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')",
+                    "openapi?url=/foobar?$filter(emailAddress eq ****)")]
+        [InlineData("openapi?url=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')",
+                    "openapi?url=/users")]
+        public void RedactEmailFromEventTelemetry(string requestPath, string expectedPath)
         {
             // Arrange
             var httpMethod = "GET";
             var statusCode = "200";
             var elapsed = "5000";
-            var requestPath = "openapi?url=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')";
             var renderedMessage = $"HTTP {httpMethod} {requestPath} responded {statusCode} in {elapsed} ms";
 
             var eventTelemetry = new EventTelemetry();
@@ -91,67 +94,6 @@ namespace Telemetry.Test
                 _telemetryProcessor.Process(eventTelemetry);
             }
 
-            var expectedPath = "openapi?url=/users?$filter(emailAddress eq ****)";
-            var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
-
-            // Assert
-            Assert.Equal(expectedPath, eventTelemetry.Properties["RequestPath"]);
-            Assert.Equal(expectedMessage, eventTelemetry.Properties["RenderedMessage"]);
-        }
-
-        [Fact]
-        public void RedactUsernameFromEventTelemetry()
-        {
-            // Arrange
-            var httpMethod = "GET";
-            var statusCode = "200";
-            var elapsed = "5000";
-            var requestPath = "/openapi?url=/users?$filter(displayName eq 'Megan Bowen')";
-            var renderedMessage = $"HTTP {httpMethod} {requestPath} responded {statusCode} in {elapsed} ms";
-
-            var eventTelemetry = new EventTelemetry();
-            eventTelemetry.Properties.Add("RequestPath", requestPath);
-            eventTelemetry.Properties.Add("RequestMethod", httpMethod);
-            eventTelemetry.Properties.Add("StatusCode", statusCode);
-            eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
-
-            // Act
-            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
-            {
-                _telemetryProcessor.Process(eventTelemetry);
-            }
-
-            var expectedPath = "/openapi?url=/users?$filter(displayName eq ****)";
-            var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
-
-            // Assert
-            Assert.Equal(expectedPath, eventTelemetry.Properties["RequestPath"]);
-            Assert.Equal(expectedMessage, eventTelemetry.Properties["RenderedMessage"]);
-        }
-
-        [Fact]
-        public void RedactFirstNameFromEventTelemetry()
-        {
-            // Arrange
-            var httpMethod = "GET";
-            var statusCode = "200";
-            var elapsed = "5000";
-            var requestPath = "/openapi?url=/users?$filter(firstName eq 'Megan')";
-            var renderedMessage = $"HTTP {httpMethod} {requestPath} responded {statusCode} in {elapsed} ms";
-
-            var eventTelemetry = new EventTelemetry();
-            eventTelemetry.Properties.Add("RequestPath", requestPath);
-            eventTelemetry.Properties.Add("RequestMethod", httpMethod);
-            eventTelemetry.Properties.Add("StatusCode", statusCode);
-            eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
-
-            // Act
-            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
-            {
-                _telemetryProcessor.Process(eventTelemetry);
-            }
-
-            var expectedPath = "/openapi?url=/users?$filter(firstName eq ****)";
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -160,59 +102,122 @@ namespace Telemetry.Test
         }
 
         [Theory]
-        [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eQ 'Megan Bowen')",
-                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users?$filter(displayName eQ ****)")]
+        [InlineData("/permissions?requestUrl=/foobar?$filter(displayName eq 'Megan Bowen')",
+                    "/permissions?requestUrl=/foobar?$filter(displayName eq ****)")]
+        [InlineData("/permissions?requestUrl=/users?$filter(displayName eq 'Megan Bowen')",
+                    "/permissions?requestUrl=/users")]
+        public void RedactUsernameFromEventTelemetry(string requestPath, string expectedPath)
+        {
+            // Arrange
+            var httpMethod = "GET";
+            var statusCode = "200";
+            var elapsed = "5000";
+            var renderedMessage = $"HTTP {httpMethod} {requestPath} responded {statusCode} in {elapsed} ms";
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=displayName%20eq%20%27Meghan%27",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=displayName eq ****")]
+            var eventTelemetry = new EventTelemetry();
+            eventTelemetry.Properties.Add("RequestPath", requestPath);
+            eventTelemetry.Properties.Add("RequestMethod", httpMethod);
+            eventTelemetry.Properties.Add("StatusCode", statusCode);
+            eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=firstName Eq 'Megan'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=firstName Eq ****")]
+            // Act
+            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
+            {
+                _telemetryProcessor.Process(eventTelemetry);
+            }
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=emailAddress eq ****")]
+            var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a&method=GET",
-                    "https://graphexplorerapi.azurewebsites.net/permissions?requestUrl=/users/{id}&method=GET")]
+            // Assert
+            Assert.Equal(expectedPath, eventTelemetry.Properties["RequestPath"]);
+            Assert.Equal(expectedMessage, eventTelemetry.Properties["RenderedMessage"]);
+        }
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$orderby=from/emailAddress/MiriamG@M365x214355.onmicrosoft.com",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$orderby=from/emailAddress/****")]
+        [Theory]
+        [InlineData("/openapi?url=/foobar?$filter(firstName eq 'Megan')", "/openapi?url=/foobar?$filter(firstName eq ****)")]
+        [InlineData("/openapi?url=/users?$filter(firstName eq 'Megan')", "/openapi?url=/users")]
+        public void RedactFirstNameFromEventTelemetry(string requestPath, string expectedPath)
+        {
+            // Arrange
+            var httpMethod = "GET";
+            var statusCode = "200";
+            var elapsed = "5000";
+            var renderedMessage = $"HTTP {httpMethod} {requestPath} responded {statusCode} in {elapsed} ms";
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$expand=directreports($filter=firstName eq 'mary')",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$expand=directreports($filter=firstName eq ****)")]
+            var eventTelemetry = new EventTelemetry();
+            eventTelemetry.Properties.Add("RequestPath", requestPath);
+            eventTelemetry.Properties.Add("RequestMethod", httpMethod);
+            eventTelemetry.Properties.Add("StatusCode", statusCode);
+            eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=givenName in ('Adele', 'Alex')",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=givenName in ****")]
+            // Act
+            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
+            {
+                _telemetryProcessor.Process(eventTelemetry);
+            }
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=StartsWith(givenName,'Alex')",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$filter=StartsWith****")]
+            var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=startswith(displayName, 'a')&$count=true&$top=1&$orderby=displayName",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=startswith****&$count=true&$top=1&$orderby=displayName")]
+            // Assert
+            Assert.Equal(expectedPath, eventTelemetry.Properties["RequestPath"]);
+            Assert.Equal(expectedMessage, eventTelemetry.Properties["RenderedMessage"]);
+        }
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=testProperty EQ 'arbitraryPropertyData'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/groups?$filter=testProperty EQ ****")]
+        [Theory]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
-                    "https://graphexplorerapi.azurewebsites.net/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]
+        #region Paths available in the UriTemplateMatcher table
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='displayName:Meghan'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search=****")]
+        [InlineData("/openapi?url=/users?$filter=emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com'",
+                    "/openapi?url=/users")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search='Meghan'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/users?$search=****")]
+        [InlineData("/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a/calendar/events&method=GET",
+                    "/permissions?requestUrl=/users/{id}/calendar/events&method=GET")]
 
-        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/me/messages?$search='5555551212'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/me/messages?$search=****")]
+        [InlineData("/openapi?url=/me/messages/123456/attachments?$search='5555551212'",
+                    "/openapi?url=/me/messages/{id}/attachments")]
+        #endregion
+
+        #region Non-Graph paths / paths not available in the UriTemplateMatcher table
+
+        [InlineData("/permissions?requestUrl=/abc?$filter(displayName eQ 'Megan Bowen')",
+                    "/permissions?requestUrl=/abc?$filter(displayName eQ ****)")]
+
+        [InlineData("/openapi?url=/xyz?$filter=displayName%20Eq%20%27Meghan%27",
+                    "/openapi?url=/xyz?$filter=displayName Eq ****")]
+
+        [InlineData("/openapi?url=/randomPath?$orderby=from/emailAddress/MiriamG@M365x214355.onmicrosoft.com",
+                    "/openapi?url=/randomPath?$orderby=from/emailAddress/****")]
+
+        [InlineData("/openapi?url=/students?$filter=givenName in ('Adele', 'Alex')",
+                    "/openapi?url=/students?$filter=givenName in ****")]
+
+        [InlineData("/openapi?url=/students?$filter=startswith(displayName, 'a')&$count=true&$top=1&$orderby=displayName",
+                    "/openapi?url=/students?$filter=startswith****&$count=true&$top=1&$orderby=displayName")]
+
+        [InlineData("/openapi?url=/foobar?$search='Meghan'",
+                    "/openapi?url=/foobar?$search=****")]
+
+        [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/xyz?$filter=testProperty EQ 'arbitraryPropertyData'",
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/xyz?$filter=testProperty EQ ****")]
+
+        #endregion
+
+        #region Paths not requiring sanitization
+
+        [InlineData("/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c",
+                    "/samples/0277cf48-fd30-45fa-b2a7-a845f4f4e36c")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/samples?search='hello world'",
                     "https://graphexplorerapi.azurewebsites.net/samples?search='hello world'")]
-        public void SanitizeODataQueryOptionsFromTelemetry(string incomingUrl, string expectedUrl)
+
+        #endregion
+
+        public void SanitizeODataQueryOptionsFromRequestTelemetry(string incomingUrl, string expectedUrl)
         {
             // Arrange
             var request = new RequestTelemetry
             {
-                Url = new Uri(incomingUrl)
+                Url = new Uri(incomingUrl, UriKind.RelativeOrAbsolute)
             };
 
             // Act
