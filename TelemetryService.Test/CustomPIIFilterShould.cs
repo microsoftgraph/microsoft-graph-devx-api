@@ -70,10 +70,15 @@ namespace Telemetry.Test
         }
 
         [Theory]
+        // Non-existent path in UriTemplateMatcher table
         [InlineData("openapi?url=/foobar?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')",
-                    "openapi?url=/foobar?$filter(emailAddress eq ****)")]
+                    "openapi?url=/foobar")]
+        // Valid query param & existing path in UriTemplateMatcher table
         [InlineData("openapi?url=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')",
                     "openapi?url=/users")]
+        // Invalid query param supplied in url
+        [InlineData("openapi?endpoint=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')",
+                    "openapi?endpoint=/users?$filter(emailAddress eq ****)")]
         public void RedactEmailFromEventTelemetry(string requestPath, string expectedPath)
         {
             // Arrange
@@ -102,10 +107,15 @@ namespace Telemetry.Test
         }
 
         [Theory]
+        // Non-existent path in UriTemplateMatcher table
         [InlineData("/permissions?requestUrl=/foobar?$filter(displayName eq 'Megan Bowen')",
-                    "/permissions?requestUrl=/foobar?$filter(displayName eq ****)")]
+                    "/permissions?requestUrl=/foobar")]
+        // Valid query param & existing path in UriTemplateMatcher table
         [InlineData("/permissions?requestUrl=/users?$filter(displayName eq 'Megan Bowen')",
                     "/permissions?requestUrl=/users")]
+        // Invalid query param supplied in url
+        [InlineData("/permissions?endpoint=/users?$filter(displayName eq 'Megan Bowen')",
+                    "/permissions?endpoint=/users?$filter(displayName eq ****)")]
         public void RedactUsernameFromEventTelemetry(string requestPath, string expectedPath)
         {
             // Arrange
@@ -134,8 +144,15 @@ namespace Telemetry.Test
         }
 
         [Theory]
-        [InlineData("/openapi?url=/foobar?$filter(firstName eq 'Megan')", "/openapi?url=/foobar?$filter(firstName eq ****)")]
-        [InlineData("/openapi?url=/users?$filter(firstName eq 'Megan')", "/openapi?url=/users")]
+        // Non-existent path in UriTemplateMatcher table
+        [InlineData("/openapi?url=/foobar?$filter(firstName eq 'Megan')",
+                    "/openapi?url=/foobar")]
+        // Valid query param & existing path in UriTemplateMatcher table
+        [InlineData("/openapi?url=/users?$filter(firstName eq 'Megan')",
+                    "/openapi?url=/users")]
+        // Invalid query param supplied in url
+        [InlineData("/openapi?endpoint=/users?$filter(firstName eq 'Megan')",
+                    "/openapi?endpoint=/users?$filter(firstName eq ****)")]
         public void RedactFirstNameFromEventTelemetry(string requestPath, string expectedPath)
         {
             // Arrange
@@ -170,6 +187,9 @@ namespace Telemetry.Test
         [InlineData("/openapi?url=/users?$filter=emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com'",
                     "/openapi?url=/users")]
 
+        [InlineData("permissions?requestUrl=/users('MeganB@M365x214355.onmicrosoft.com')",
+                    "permissions?requestUrl=/users")]
+
         [InlineData("/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a/calendar/events&method=GET",
                     "/permissions?requestUrl=/users/{id}/calendar/events&method=GET")]
 
@@ -177,28 +197,38 @@ namespace Telemetry.Test
                     "/openapi?url=/me/messages/{id}/attachments")]
         #endregion
 
-        #region Non-Graph paths / paths not available in the UriTemplateMatcher table
+        #region Paths not available in the UriTemplateMatcher table
 
-        [InlineData("/permissions?requestUrl=/abc?$filter(displayName eQ 'Megan Bowen')",
-                    "/permissions?requestUrl=/abc?$filter(displayName eQ ****)")]
+        [InlineData("/openapi?style=PowerShell&url=/randomPath?$orderby=from/emailAddress/MiriamG@M365x214355.onmicrosoft.com",
+                    "/openapi?style=PowerShell&url=/randomPath")]
 
-        [InlineData("/openapi?url=/xyz?$filter=displayName%20Eq%20%27Meghan%27",
-                    "/openapi?url=/xyz?$filter=displayName Eq ****")]
+        [InlineData("/openapi?url=/students?$filter=givenName in ('Adele', 'Alex')&graphVersion=beta",
+                    "/openapi?url=/students&graphVersion=beta")]
 
-        [InlineData("/openapi?url=/randomPath?$orderby=from/emailAddress/MiriamG@M365x214355.onmicrosoft.com",
-                    "/openapi?url=/randomPath?$orderby=from/emailAddress/****")]
-
-        [InlineData("/openapi?url=/students?$filter=givenName in ('Adele', 'Alex')",
-                    "/openapi?url=/students?$filter=givenName in ****")]
-
-        [InlineData("/openapi?url=/students?$filter=startswith(displayName, 'a')&$count=true&$top=1&$orderby=displayName",
-                    "/openapi?url=/students?$filter=startswith****&$count=true&$top=1&$orderby=displayName")]
-
-        [InlineData("/openapi?url=/foobar?$search='Meghan'",
-                    "/openapi?url=/foobar?$search=****")]
+        [InlineData("/permissions?requesturl=/foobar?$search='Meghan'",
+                    "/permissions?requesturl=/foobar")]
 
         [InlineData("https://graphexplorerapi.azurewebsites.net/openapi?url=/xyz?$filter=testProperty EQ 'arbitraryPropertyData'",
-                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/xyz?$filter=testProperty EQ ****")]
+                    "https://graphexplorerapi.azurewebsites.net/openapi?url=/xyz")]
+
+        [InlineData("permissions?requestUrl=/me/people/9f376303-1936-44a9-b4fd-7271483525bb/drives&method=GET",
+                    "permissions?requestUrl=/me/people/****/drives&method=GET")]
+
+        #endregion
+
+        #region Invalid query params supplied in url
+
+        [InlineData("/permissions?request=/abc?$filter(displayName eQ 'Megan Bowen')",
+                    "/permissions?request=/abc?$filter(displayName eQ ****)")]
+
+        [InlineData("/openapi?endpoint=/xyz?$filter=displayName%20Eq%20%27Meghan%27",
+                    "/openapi?endpoint=/xyz?$filter=displayName Eq ****")]
+
+        [InlineData("/openapi?test=/students?$filter=startswith(displayName, 'a')&$count=true&$top=1&$orderby=displayName",
+                    "/openapi?test=/students?$filter=startswith****&$count=true&$top=1&$orderby=displayName")]
+
+        [InlineData("permissions?foo=/students('MeganB@M365x214355.onmicrosoft.com')",
+                    "permissions?foo=/students('****')")]
 
         #endregion
 

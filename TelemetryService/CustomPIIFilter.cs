@@ -166,13 +166,14 @@ namespace TelemetryService
             {
                 var queryValue = queryValues[i];
 
-                /* Target url examples:
-                   "/permissions?requestUrl=/users/9f376303-1936-44a9-b4fd-7271483525bb/drives&method=GET" or
-                   "/openapi?url=/users/9f376303-1936-44a9-b4fd-7271483525bb"
-                */
-
                 if (queryValue.Contains("url=", StringComparison.OrdinalIgnoreCase))
                 {
+                    /* Sanitize first using uri templates paths supplied from below example paths:
+                        /permissions?requestUrl=xyz or
+                        /openapi?url=xyz
+                       Possibility that these could be valid Graph urls.
+                    */
+
                     var valueIndex = queryValue.IndexOf('=');
                     var valueSegment = queryValue[(valueIndex + 1)..];
                     valueSegment = valueSegment.BaseUriPath()
@@ -183,14 +184,18 @@ namespace TelemetryService
                     {
                         queryValue = queryValue[0..(valueIndex + 1)] + resultMatch.Template;
                     }
+                    else
+                    {
+                        queryValue = queryValue[0..(valueIndex + 1)] + valueSegment;
+                    }
 
-                    queryValue = SanitizeContent(queryValue);
                     queryValues[i] = queryValue;
                     queryPath = string.Join(QueryValSeparator, queryValues);
                     break;
                 }
             }
 
+            queryPath = SanitizeContent(queryPath);
             return $"{url.BaseUriPath()}?{queryPath}";
         }
 
