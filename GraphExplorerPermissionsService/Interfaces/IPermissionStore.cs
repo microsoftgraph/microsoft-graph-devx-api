@@ -5,6 +5,7 @@
 using GraphExplorerPermissionsService.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UriMatchingService;
 
 namespace GraphExplorerPermissionsService.Interfaces
 {
@@ -19,5 +20,7 @@ namespace GraphExplorerPermissionsService.Interfaces
                                                     string method = null,
                                                     string org = null,
                                                     string branchName = null);
+
+        UriTemplateMatcher GetUriTemplateMatcher();
     }
 }
