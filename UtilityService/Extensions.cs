@@ -43,14 +43,19 @@ namespace UtilityService
             return regex.Match(uri).Value;
         }
 
-        public static string RemoveParantheses(this string uri)
+        /// <summary>
+        /// Removes matching open and close parentheses (including the enclosed content) from a string.
+        /// </summary>
+        /// <param name="value">The target string value.</param>
+        /// <returns>The string value without the open and close parentheses.</returns>
+        public static string RemoveParantheses(this string value)
         {
-            if (string.IsNullOrEmpty(uri))
+            if (string.IsNullOrEmpty(value))
             {
-                return uri;
+                return value;
             }
 
-            return Regex.Replace(uri, @"\(.*?\)", string.Empty);
+            return Regex.Replace(value, @"\(.*?\)", string.Empty);
         }
     }
 }
