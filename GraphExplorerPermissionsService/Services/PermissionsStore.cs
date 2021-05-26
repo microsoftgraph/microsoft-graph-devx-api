@@ -255,16 +255,7 @@ namespace GraphExplorerPermissionsService
             return refresh;
         }
 
-        /// <summary>
-        /// Retrieves permissions scopes.
-        /// </summary>
-        /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
-        /// <param name="locale">The language code for the preferred localized file.</param>
-        /// <param name="requestUrl">Optional: The target request url whose scopes are to be retrieved.</param>
-        /// <param name="method">Optional: The target http verb of the request url whose scopes are to be retrieved.</param>
-        /// <param name="org">Optional: The name of the org/owner of the repo.</param>
-        /// <param name="branchName">Optional: The name of the branch containing the files.</param>
-        /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
+        ///<inheritdoc/>
         public async Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
                                                                  string locale = DefaultLocale,
                                                                  string requestUrl = null,
@@ -423,6 +414,7 @@ namespace GraphExplorerPermissionsService
             }
         }
 
+        ///<inheritdoc/>
         public UriTemplateMatcher GetUriTemplateMatcher()
         {
             InitializePermissions();
