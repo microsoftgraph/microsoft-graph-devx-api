@@ -42,5 +42,15 @@ namespace UtilityService
             var regex = new Regex(@"(?<=\?)(.*)");
             return regex.Match(uri).Value;
         }
+
+        public static string RemoveParantheses(this string uri)
+        {
+            if (string.IsNullOrEmpty(uri))
+            {
+                return uri;
+            }
+
+            return Regex.Replace(uri, @"\(.*?\)", string.Empty);
+        }
     }
 }
