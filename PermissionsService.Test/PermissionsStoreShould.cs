@@ -13,7 +13,6 @@ namespace PermissionsService.Test
 {
     public class PermissionsStoreShould
     {
-       // private readonly IConfigurationRoot _configuration;
         private readonly IPermissionsStore _permissionsStore;
 
         public PermissionsStoreShould()
