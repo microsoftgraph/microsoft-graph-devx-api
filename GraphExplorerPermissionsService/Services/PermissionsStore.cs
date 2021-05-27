@@ -315,7 +315,7 @@ namespace GraphExplorerPermissionsService
                     }
 
                     requestUrl = requestUrl.BaseUriPath() // remove any query params
-                                           .RemoveParantheses(); // remove any '(...)' resource modifiers
+                                           .UriTemplatePathFormat();
 
                     // Check if requestUrl is contained in our Url Template table
                     TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl.ToLowerInvariant(), UriKind.RelativeOrAbsolute));

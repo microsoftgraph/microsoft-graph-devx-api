@@ -230,7 +230,7 @@ namespace Telemetry.Test
                     "/openapi?url=/users")]
 
         [InlineData("/permissions?requestUrl=/users('MeganB@M365x214355.onmicrosoft.com')",
-                    "/permissions?requestUrl=/users")]
+                    "/permissions?requestUrl=/users/{id}")]
 
         [InlineData("/permissions?requestUrl=/users/1d201493-c13f-4e36-bd06-a20d06242e6a/calendar/events&method=GET",
                     "/permissions?requestUrl=/users/{id}/calendar/events&method=GET")]
@@ -258,6 +258,9 @@ namespace Telemetry.Test
 
         [InlineData("/permissions?requestUrl=/me/people/12345/drives&method=GET",
                     "/permissions?requestUrl=/me/people/****/drives&method=GET")]
+
+        [InlineData("/permissions?requesturl=/students('MeganB@M365x214355.onmicrosoft.com')",
+                    "/permissions?requesturl=/students/'****'")]
 
         #endregion
 

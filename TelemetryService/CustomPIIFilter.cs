@@ -177,7 +177,7 @@ namespace TelemetryService
                     var valueIndex = queryValue.IndexOf('=');
                     var valueSegment = queryValue[(valueIndex + 1)..];
                     valueSegment = valueSegment.BaseUriPath()
-                                               .RemoveParantheses();
+                                               .UriTemplatePathFormat();
                     var resultMatch = _uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
 
                     if (resultMatch != null)
