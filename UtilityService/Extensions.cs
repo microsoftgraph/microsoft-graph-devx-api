@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using System;
 using System.Text.RegularExpressions;
 
 namespace UtilityService
@@ -14,6 +15,9 @@ namespace UtilityService
         /// <summary>
         /// Strips out the query path from a uri string.
         /// </summary>
+        /// <example>
+        /// '/openapi?url=/me/messages' resolves to '/openapi'
+        /// </example>
         /// <param name="uri">The target uri string.</param>
         /// <returns>The uri string without the query path.</returns>
         public static string BaseUriPath(this string uri)
@@ -30,6 +34,9 @@ namespace UtilityService
         /// <summary>
         /// Gets the query component from a uri string.
         /// </summary>
+        /// <example>
+        /// '/openapi?url=/me/messages' resolves to 'url=/me/messages'
+        /// </example>
         /// <param name="uri">The target uri string.</param>
         /// <returns>The query component from a uri string without the '?'.</returns>
         public static string Query(this string uri)
@@ -41,6 +48,83 @@ namespace UtilityService
 
             var regex = new Regex(@"(?<=\?)(.*)");
             return regex.Match(uri).Value;
+        }
+
+        /// <summary>
+        /// Removes matching open and close parentheses (including the enclosed content) from a string.
+        /// </summary>
+        /// <example>
+        /// 'microsoft.graph.delta()' resolves to 'microsoft.graph.delta'
+        /// 'microsoft.graph.range(address={address})' resolves to 'microsoft.graph.range'
+        /// </example>
+        /// <param name="value">The target string value.</param>
+        /// <returns>The string value without the open and close parentheses.</returns>
+        public static string RemoveParentheses(this string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            return Regex.Replace(value, @"\(.*?\)", string.Empty);
+        }
+
+        /// <summary>
+        /// Resolves a url string to the uri template path format.
+        /// </summary>
+        /// <example>
+        /// education/classes(educationClass-id)schools/microsoft.graph.delta()
+        /// resolves to education/classes/educationClass-id/schools/delta
+        /// </example>
+        /// <remarks>
+        /// This  format is used to standardize uri templates - resolve all paths to use keys
+        /// as segments and simplify action/function names by removing the namespaces from their names.
+        /// </remarks>
+        /// <param name="value">The target uri string.</param>
+        /// <returns>The uri template path format of a given url string.</returns>
+        public static string UriTemplatePathFormat(this string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            const string GraphNamespace = "microsoft.graph.";
+            const char ForwardSlash = '/';
+            const char OpenParen = '(';
+            const char CloseParen = ')';
+
+            var segments = value.Split(ForwardSlash);
+
+            for (int i = 0; i < segments.Length; i++)
+            {
+                var segment = segments[i];
+
+                if (segment.Contains(GraphNamespace, StringComparison.OrdinalIgnoreCase))
+                {
+                    /* Resolve action and functions names
+                        Ex. microsoft.graph.delta() or microsoft.graph.remove
+                    */
+
+                    var namespaceIndex = segment.IndexOf(GraphNamespace);
+                    var namespaceSegment = segment[namespaceIndex..];
+                    var operationName = namespaceSegment.Replace(GraphNamespace, string.Empty).RemoveParentheses();
+                    segment = namespaceIndex > 0 ? segment[0..namespaceIndex] + operationName : operationName;
+                }
+
+                if (segment.Contains(OpenParen) || segment.Contains(CloseParen))
+                {
+                    // key is not segment
+                    segment = segment.TrimStart(OpenParen)
+                                     .Replace(OpenParen, ForwardSlash)
+                                     .Replace(CloseParen, ForwardSlash)
+                                     .TrimEnd(ForwardSlash);
+                }
+
+                segments[i] = segment;
+            }
+
+            return string.Join(ForwardSlash, segments);
         }
     }
 }
