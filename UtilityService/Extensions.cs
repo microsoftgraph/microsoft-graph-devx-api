@@ -59,7 +59,7 @@ namespace UtilityService
         /// </example>
         /// <param name="value">The target string value.</param>
         /// <returns>The string value without the open and close parentheses.</returns>
-        public static string RemoveParantheses(this string value)
+        public static string RemoveParentheses(this string value)
         {
             if (string.IsNullOrEmpty(value))
             {
@@ -91,6 +91,8 @@ namespace UtilityService
 
             const string GraphNamespace = "microsoft.graph.";
             const char ForwardSlash = '/';
+            const char OpenParen = '(';
+            const char CloseParen = ')';
 
             var segments = value.Split(ForwardSlash);
 
@@ -106,15 +108,16 @@ namespace UtilityService
 
                     var namespaceIndex = segment.IndexOf(GraphNamespace);
                     var namespaceSegment = segment[namespaceIndex..];
-                    var operationName = namespaceSegment.Replace(GraphNamespace, string.Empty).RemoveParantheses();
+                    var operationName = namespaceSegment.Replace(GraphNamespace, string.Empty).RemoveParentheses();
                     segment = namespaceIndex > 0 ? segment[0..namespaceIndex] + operationName : operationName;
                 }
 
-                if (segment.Contains('(') || segment.Contains(')'))
+                if (segment.Contains(OpenParen) || segment.Contains(CloseParen))
                 {
                     // key is not segment
-                    segment = segment.Replace('(', ForwardSlash)
-                                     .Replace(')', ForwardSlash)
+                    segment = segment.TrimStart(OpenParen)
+                                     .Replace(OpenParen, ForwardSlash)
+                                     .Replace(CloseParen, ForwardSlash)
                                      .TrimEnd(ForwardSlash);
                 }
 
