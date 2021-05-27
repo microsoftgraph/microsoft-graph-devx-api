@@ -39,5 +39,37 @@ namespace UtilityService.Test
             // Assert
             Assert.Equal(expectedQuery, actualQuery);
         }
+
+        [Theory]
+        [InlineData("microsoft.graph.delta()",
+                    "microsoft.graph.delta")]
+        [InlineData("worksheets/microsoft.graph.range(address={address})",
+                    "worksheets/microsoft.graph.range")]
+        public void RemoveParantheses(string targetString, string expectedString)
+        {
+            // Arrange and Act
+            var actualString = targetString.RemoveParantheses();
+
+            // Assert
+            Assert.Equal(expectedString, actualString);
+        }
+
+        [Theory]
+        [InlineData("/users('MeganB@M365x214355.onmicrosoft.com')",
+                    "/users/'MeganB@M365x214355.onmicrosoft.com'")]
+        [InlineData("/education/schools(id)users/microsoft.graph.delta()",
+                    "/education/schools/id/users/delta")]
+        [InlineData("/users/{user-id}/insights/used(usedInsight-id)resource/microsoft.graph.workbookWorksheet/microsoft.graph.range(address={address})",
+                    "/users/{user-id}/insights/used/usedInsight-id/resource/workbookWorksheet/range")]
+        [InlineData("/groupLifecyclePolicies(groupLifecyclePolicy-id)microsoft.graph.remove",
+                    "/groupLifecyclePolicies/groupLifecyclePolicy-id/remove")]
+        public void GetUriTemplatePathFormat(string targetString, string expectedString)
+        {
+            // Arrange and Act
+            var actualString = targetString.UriTemplatePathFormat();
+
+            // Assert
+            Assert.Equal(expectedString, actualString);
+        }
     }
 }
