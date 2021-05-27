@@ -55,6 +55,7 @@ namespace UtilityService
         /// </summary>
         /// <example>
         /// 'microsoft.graph.delta()' resolves to 'microsoft.graph.delta'
+        /// 'microsoft.graph.range(address={address})' resolves to 'microsoft.graph.range'
         /// </example>
         /// <param name="value">The target string value.</param>
         /// <returns>The string value without the open and close parentheses.</returns>
