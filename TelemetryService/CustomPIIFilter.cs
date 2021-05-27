@@ -168,10 +168,12 @@ namespace TelemetryService
 
                 if (queryValue.Contains("url=", StringComparison.OrdinalIgnoreCase))
                 {
-                    /* Sanitize first using uri templates paths supplied from below example paths:
+                    /* Sanitizing only values for below query params:
                         /permissions?requestUrl=xyz or
                         /openapi?url=xyz
-                       Possibility that the query param values could be Graph urls.
+                       We expect that the above query param values contain Graph urls.
+                       It will be unfeasible sanitizing values from all query params.
+                       Some legitimate examples of query params that might be affected include '&openApiVersion=2&graphVersion=v1.0'
                     */
 
                     var valueIndex = queryValue.IndexOf('=') + 1;
@@ -187,15 +189,15 @@ namespace TelemetryService
                     else
                     {
                         queryValue = queryValue[0..valueIndex] + valueSegment;
+                        queryValue = SanitizeContent(queryValue);
                     }
 
                     queryValues[i] = queryValue;
-                    queryPath = string.Join(QueryValSeparator, queryValues);
                     break;
                 }
             }
 
-            queryPath = SanitizeContent(queryPath);
+            queryPath = string.Join(QueryValSeparator, queryValues);
             return $"{url.BaseUriPath()}?{queryPath}";
         }
 
