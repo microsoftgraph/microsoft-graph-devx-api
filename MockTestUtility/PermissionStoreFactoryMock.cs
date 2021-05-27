@@ -34,6 +34,8 @@ namespace MockTestUtility
         {
             if (string.IsNullOrEmpty(configFilePath) && configuration == null)
             {
+                // Either the configFilePath or the configuration parameters needs to be specified,
+                // that is, they can't both be null.
                 throw new ArgumentNullException($"{nameof(configFilePath)} and {nameof(configuration)}",
                                                 $"Specify values for either {nameof(configFilePath)} or {nameof(configuration)}");
             }
