@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="TestFiles\Permissions\appsettings.json" />
-    <None Remove="TestFiles\Permissions\permissions-beta.json" />
-    <None Remove="TestFiles\Permissions\permissions-v1.0.json" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="TestFiles\Permissions\appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
