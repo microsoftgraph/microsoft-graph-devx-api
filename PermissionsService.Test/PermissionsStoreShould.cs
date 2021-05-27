@@ -14,10 +14,11 @@ namespace PermissionsService.Test
     public class PermissionsStoreShould
     {
         private readonly IPermissionsStore _permissionsStore;
+        private const string ConfigFilePath = ".\\TestFiles\\appsettingstest-valid.json";
 
         public PermissionsStoreShould()
         {
-            _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(".\\TestFiles\\appsettingstest-valid.json");
+            _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(ConfigFilePath);
         }
 
         [Fact]

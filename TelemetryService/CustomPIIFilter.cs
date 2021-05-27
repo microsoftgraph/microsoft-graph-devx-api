@@ -171,22 +171,22 @@ namespace TelemetryService
                     /* Sanitize first using uri templates paths supplied from below example paths:
                         /permissions?requestUrl=xyz or
                         /openapi?url=xyz
-                       Possibility that these could be valid Graph urls.
+                       Possibility that the query param values could be Graph urls.
                     */
 
-                    var valueIndex = queryValue.IndexOf('=');
-                    var valueSegment = queryValue[(valueIndex + 1)..];
+                    var valueIndex = queryValue.IndexOf('=') + 1;
+                    var valueSegment = queryValue[valueIndex..];
                     valueSegment = valueSegment.BaseUriPath()
                                                .UriTemplatePathFormat();
                     var resultMatch = _uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
 
                     if (resultMatch != null)
                     {
-                        queryValue = queryValue[0..(valueIndex + 1)] + resultMatch.Template;
+                        queryValue = queryValue[0..valueIndex] + resultMatch.Template;
                     }
                     else
                     {
-                        queryValue = queryValue[0..(valueIndex + 1)] + valueSegment;
+                        queryValue = queryValue[0..valueIndex] + valueSegment;
                     }
 
                     queryValues[i] = queryValue;

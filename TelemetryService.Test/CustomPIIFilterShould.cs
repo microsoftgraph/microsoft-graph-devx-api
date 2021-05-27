@@ -16,10 +16,11 @@ namespace Telemetry.Test
     {
         private readonly CustomPIIFilter _telemetryProcessor;
         private readonly IPermissionsStore _permissionsStore;
+        private const string ConfigFilePath = ".\\TestFiles\\Permissions\\appsettings.json";
 
         public CustomPIIFilterShould()
         {
-            _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(".\\TestFiles\\Permissions\\appsettings.json");
+            _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(ConfigFilePath);
             _telemetryProcessor = new CustomPIIFilter(new TestProcessorNext(), _permissionsStore);
         }
 
