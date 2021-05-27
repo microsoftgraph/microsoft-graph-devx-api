@@ -61,11 +61,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
-            {
-                _telemetryProcessor.Process(eventTelemetry);
-            }
-
+            _telemetryProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -100,11 +96,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
-            {
-                _telemetryProcessor.Process(eventTelemetry);
-            }
-
+            _telemetryProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -137,11 +129,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
-            {
-                _telemetryProcessor.Process(eventTelemetry);
-            }
-
+            _telemetryProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -174,11 +162,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
-            {
-                _telemetryProcessor.Process(eventTelemetry);
-            }
-
+            _telemetryProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -211,11 +195,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            if (eventTelemetry.Properties.ContainsKey("RequestPath") && eventTelemetry.Properties.ContainsKey("RenderedMessage"))
-            {
-                _telemetryProcessor.Process(eventTelemetry);
-            }
-
+            _telemetryProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
