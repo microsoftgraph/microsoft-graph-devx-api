@@ -45,10 +45,12 @@ namespace UtilityService.Test
                     "microsoft.graph.delta")]
         [InlineData("worksheets/microsoft.graph.range(address={address})",
                     "worksheets/microsoft.graph.range")]
+        [InlineData("worksheets/microsoft.graph.range(address={address})/microsoft.graph.range(address={address})",
+                    "worksheets/microsoft.graph.range/microsoft.graph.range")]
         public void RemoveParantheses(string targetString, string expectedString)
         {
             // Arrange and Act
-            var actualString = targetString.RemoveParantheses();
+            var actualString = targetString.RemoveParentheses();
 
             // Assert
             Assert.Equal(expectedString, actualString);
@@ -63,6 +65,12 @@ namespace UtilityService.Test
                     "/users/{user-id}/insights/used/usedInsight-id/resource/workbookWorksheet/range")]
         [InlineData("/groupLifecyclePolicies(groupLifecyclePolicy-id)microsoft.graph.remove",
                     "/groupLifecyclePolicies/groupLifecyclePolicy-id/remove")]
+        [InlineData("worksheets/range/microsoft.graph.range(address={address})",
+                    "worksheets/range/range")]
+        [InlineData("/permissions?requesturl=/students('MeganB@M365x214355.onmicrosoft.com')/classes",
+                    "/permissions?requesturl=/students/'MeganB@M365x214355.onmicrosoft.com'/classes")]
+        [InlineData("/permissions?requesturl=/students/('MeganB@M365x214355.onmicrosoft.com')/classes",
+                    "/permissions?requesturl=/students/'MeganB@M365x214355.onmicrosoft.com'/classes")]
         public void GetUriTemplatePathFormat(string targetString, string expectedString)
         {
             // Arrange and Act

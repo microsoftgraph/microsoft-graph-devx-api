@@ -228,6 +228,9 @@ namespace Telemetry.Test
         [InlineData("/permissions?requesturl=/students('MeganB@M365x214355.onmicrosoft.com')",
                     "/permissions?requesturl=/students/'****'")]
 
+        [InlineData("/permissions?requesturl=/students('MeganB@M365x214355.onmicrosoft.com')/classes",
+                    "/permissions?requesturl=/students/'****'/classes")]
+
         #endregion
 
         #region Paths not requiring sanitization

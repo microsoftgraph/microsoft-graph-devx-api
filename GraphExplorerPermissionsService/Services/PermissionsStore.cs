@@ -99,7 +99,7 @@ namespace GraphExplorerPermissionsService
                     {
                         // Remove any '(...)' from the request url and set to lowercase for uniformity
                         string requestUrl = property.Name
-                                                    .RemoveParantheses()
+                                                    .RemoveParentheses()
                                                     .ToLower();
 
                         if (uniqueRequestUrlsTable.Add(requestUrl))
