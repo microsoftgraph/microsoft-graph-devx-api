@@ -14,9 +14,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UriMatchingService;
+using UtilityService;
 
 namespace GraphExplorerPermissionsService
 {
@@ -62,6 +62,8 @@ namespace GraphExplorerPermissionsService
             _scopesInformation = configuration[ScopesInfoBlobConfig]
                 ?? throw new ArgumentNullException(nameof(ScopesInfoBlobConfig), $"Config path missing: { ScopesInfoBlobConfig }");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
+
+            InitializePermissions();
         }
 
         /// <summary>
@@ -96,7 +98,9 @@ namespace GraphExplorerPermissionsService
                     foreach (JProperty property in apiPermissions)
                     {
                         // Remove any '(...)' from the request url and set to lowercase for uniformity
-                        string requestUrl = Regex.Replace(property.Name.ToLower(), @"\(.*?\)", string.Empty);
+                        string requestUrl = property.Name
+                                                    .RemoveParentheses()
+                                                    .ToLower();
 
                         if (uniqueRequestUrlsTable.Add(requestUrl))
                         {
@@ -251,16 +255,7 @@ namespace GraphExplorerPermissionsService
             return refresh;
         }
 
-        /// <summary>
-        /// Retrieves permissions scopes.
-        /// </summary>
-        /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
-        /// <param name="locale">The language code for the preferred localized file.</param>
-        /// <param name="requestUrl">Optional: The target request url whose scopes are to be retrieved.</param>
-        /// <param name="method">Optional: The target http verb of the request url whose scopes are to be retrieved.</param>
-        /// <param name="org">Optional: The name of the org/owner of the repo.</param>
-        /// <param name="branchName">Optional: The name of the branch containing the files.</param>
-        /// <returns>A list of scopes for the target request url given a http verb and type of scope.</returns>
+        ///<inheritdoc/>
         public async Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
                                                                  string locale = DefaultLocale,
                                                                  string requestUrl = null,
@@ -319,8 +314,8 @@ namespace GraphExplorerPermissionsService
                         throw new ArgumentNullException(nameof(method), "The HTTP method value cannot be null or empty.");
                     }
 
-                    requestUrl = Regex.Replace(requestUrl, @"\?.*", string.Empty); // remove any query params
-                    requestUrl = Regex.Replace(requestUrl, @"\(.*?\)", string.Empty); // remove any '(...)' resource modifiers
+                    requestUrl = requestUrl.BaseUriPath() // remove any query params
+                                           .UriTemplatePathFormat();
 
                     // Check if requestUrl is contained in our Url Template table
                     TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
@@ -417,6 +412,13 @@ namespace GraphExplorerPermissionsService
                     }
                 }
             }
+        }
+
+        ///<inheritdoc/>
+        public UriTemplateMatcher GetUriTemplateMatcher()
+        {
+            InitializePermissions();
+            return _urlTemplateMatcher;
         }
     }
 }
