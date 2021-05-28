@@ -189,7 +189,6 @@ namespace Telemetry.Test
         }
 
         [Theory]
-
         #region Paths available in the UriTemplateMatcher table
 
         [InlineData("/openapi?url=/users?$filter=emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com'",
