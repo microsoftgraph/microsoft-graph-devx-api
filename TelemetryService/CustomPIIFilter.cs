@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -9,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Web;
+using UriMatchingService;
+using UtilityService;
 
 namespace TelemetryService
 
@@ -19,6 +22,7 @@ namespace TelemetryService
     public class CustomPIIFilter : ITelemetryProcessor
     {
         private readonly ITelemetryProcessor _next;
+        private readonly UriTemplateMatcher _uriTemplateMatcher;
 
         private static readonly Regex _guidRegex = new(@"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -30,7 +34,7 @@ namespace TelemetryService
         private static readonly Regex _mobilePhoneRegex = new(@"^(\+\d{1,2}\s?)?1?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex _employeeIdRegex = new(@"[0-9]{7}",
+        private static readonly Regex _numberRegex = new(@"[0-9]+",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private readonly List<Regex> _piiRegexes = new()
@@ -38,7 +42,7 @@ namespace TelemetryService
             _guidRegex,
             _emailRegex,
             _mobilePhoneRegex,
-            _employeeIdRegex
+            _numberRegex
         };
 
         private static readonly List<string> _odataFilterOptions = new()
@@ -65,10 +69,17 @@ namespace TelemetryService
         private const string ODataFilterOperator = "$filter";
         private const string SecurityMask = "****";
 
-        public CustomPIIFilter(ITelemetryProcessor next)
+        public CustomPIIFilter(ITelemetryProcessor next, IPermissionsStore permissionsStore)
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
+
+            if (permissionsStore == null)
+            {
+                throw new ArgumentNullException(nameof(permissionsStore), $"{ permissionsStore }: { nameof(permissionsStore) }");
+            }
+
+            _uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
         }
 
         /// <summary>
@@ -123,7 +134,7 @@ namespace TelemetryService
             if (request != null)
             {
                 var requestUrl = request.Url.ToString();
-                request.Url = new Uri(SanitizeUrlQueryPath(requestUrl));
+                request.Url = new Uri(SanitizeUrlQueryPath(requestUrl), UriKind.RelativeOrAbsolute);
             }
 
             if (trace != null)
@@ -137,20 +148,57 @@ namespace TelemetryService
         /// </summary>
         /// <remarks>In the context of DevX API requests,
         /// only the query path requires sanitization.</remarks>
-        /// <param name="url">The target url string. Can be of relative or absolute uri.</param>
+        /// <param name="url">The target url string. Can be of relative or absolute uri kind.</param>
         /// <returns>The string url with PII sanitized from its query path.</returns>
         private string SanitizeUrlQueryPath(string url)
         {
-            var queryIndex = url?.IndexOf('?') ?? -1;
+            const char QueryValSeparator = '&';
+            var queryPath = url?.Query();
 
-            if (queryIndex is < 0)
+            if (string.IsNullOrEmpty(queryPath))
             {
                 return url;
             }
 
-            var queryPath = url[queryIndex..];
-            queryPath = SanitizeContent(queryPath);
-            return url[0..queryIndex] + queryPath;
+            var queryValues = queryPath.Split(QueryValSeparator, StringSplitOptions.RemoveEmptyEntries);
+
+            for (int i = 0; i < queryValues.Length; i++)
+            {
+                var queryValue = queryValues[i];
+
+                if (queryValue.Contains("url=", StringComparison.OrdinalIgnoreCase))
+                {
+                    /* Sanitizing only values for below query params:
+                        /permissions?requestUrl=xyz or
+                        /openapi?url=xyz
+                       We expect that the above query param values contain Graph urls.
+                       It will be unfeasible sanitizing values from all query params.
+                       Some legitimate examples of query params that might be affected include '&openApiVersion=2&graphVersion=v1.0'
+                    */
+
+                    var valueIndex = queryValue.IndexOf('=') + 1;
+                    var valueSegment = queryValue[valueIndex..];
+                    valueSegment = valueSegment.BaseUriPath()
+                                               .UriTemplatePathFormat();
+                    var resultMatch = _uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
+
+                    if (resultMatch != null)
+                    {
+                        queryValue = queryValue[0..valueIndex] + resultMatch.Template;
+                    }
+                    else
+                    {
+                        queryValue = queryValue[0..valueIndex] + valueSegment;
+                        queryValue = SanitizeContent(queryValue);
+                    }
+
+                    queryValues[i] = queryValue;
+                    break;
+                }
+            }
+
+            queryPath = string.Join(QueryValSeparator, queryValues);
+            return $"{url.BaseUriPath()}?{queryPath}";
         }
 
         /// <summary>
