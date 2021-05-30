@@ -1,7 +1,8 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -9,16 +10,19 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Web;
+using UriMatchingService;
+using UtilityService;
 
 namespace TelemetryService
 
 {
     /// <summary>
-    /// Initializes a telemetry processor to sanitize http request urls to remove sensitive data.
+    /// Initializes a telemetry processor to sanitize telemetry data to remove sensitive data (PII).
     /// </summary>
     public class CustomPIIFilter : ITelemetryProcessor
     {
         private readonly ITelemetryProcessor _next;
+        private readonly UriTemplateMatcher _uriTemplateMatcher;
 
         private static readonly Regex _guidRegex = new(@"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -27,221 +31,286 @@ namespace TelemetryService
         private static readonly Regex _emailRegex = new(@"([a-zA-Z0-9_\.-]+)@([\da-zA-Z\.-]+)\.([a-zA-Z\.]{2,6})",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex _usernameRegex = new(@"[A-Za-z][A-Za-z0-9._]",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
         private static readonly Regex _mobilePhoneRegex = new(@"^(\+\d{1,2}\s?)?1?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex _employeeIdRegex = new(@"[0-9]{7}",
+        private static readonly Regex _numberRegex = new(@"[0-9]+",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private readonly List<Regex> _piiRegexes = new List<Regex>
-            {
-                _guidRegex,
-                _emailRegex,
-                _mobilePhoneRegex,
-                _employeeIdRegex
-            };
+        private readonly List<Regex> _piiRegexes = new()
+        {
+            _guidRegex,
+            _emailRegex,
+            _mobilePhoneRegex,
+            _numberRegex
+        };
 
-        private static readonly List<string> _propertyNames = new List<string>
-            {
-                "displayName",
-                "firstName",
-                "lastName",
-                "givenName",
-                "preferredName",
-                "surname"
-            };
+        private static readonly List<string> _odataFilterOptions = new()
+        {
+            "eq",
+            "ne",
+            "gt",
+            "ge",
+            "le",
+            "lt",
+            "in",
+            "has",
+            "endswith",
+            "startswith",
+            "substringof",
+            "contains",
+            "indexof",
+            "substring"
+        };
 
-        private static readonly List<string> _userKeywords = new List<string> { "users", "people" };
         private const string RequestPath = "RequestPath";
         private const string RenderedMessage = "RenderedMessage";
-        private const string SearchOperator = "$search=";
+        private const string ODataSearchOperator = "$search=";
+        private const string ODataFilterOperator = "$filter";
+        private const string SecurityMask = "****";
 
-
-        public CustomPIIFilter(ITelemetryProcessor next)
+        public CustomPIIFilter(ITelemetryProcessor next, IPermissionsStore permissionsStore)
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
+
+            if (permissionsStore == null)
+            {
+                throw new ArgumentNullException(nameof(permissionsStore), $"{ permissionsStore }: { nameof(permissionsStore) }");
+            }
+
+            _uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
         }
 
         /// <summary>
-        /// Filters request data and calls the next ITelemetryProcessor in the chain
+        /// Filters telemetry data and calls the next ITelemetryProcessor in the chain.
         /// </summary>
-        /// <param name="item"> A telemetry Item.</param>
+        /// <param name="item">A telemetry Item.</param>
         public void Process(ITelemetry item)
         {
-            if (item is EventTelemetry)
+            if (item is EventTelemetry customEvent &&
+                customEvent.Properties.ContainsKey(RequestPath) &&
+                customEvent.Properties.ContainsKey(RenderedMessage))
             {
-                var customEvent = item as EventTelemetry;
-                if (customEvent != null)
-                {
-                    if (customEvent.Properties.ContainsKey(RequestPath) && customEvent.Properties.ContainsKey(RenderedMessage))
-                    {
-                        SanitizeTelemetry(customEvent: customEvent);
-                    }
-                }
+                SanitizeTelemetry(customEvent: customEvent);
             }
-            if(item is RequestTelemetry)
+
+            if (item is RequestTelemetry request)
             {
-                var request = item as RequestTelemetry;
-                if(request != null)
-                {
-                    SanitizeTelemetry(request: request);
-                }
+                SanitizeTelemetry(request: request);
+            }
+
+            if (item is TraceTelemetry trace)
+            {
+                SanitizeTelemetry(trace: trace);
             }
 
             _next.Process(item);
         }
 
         /// <summary>
-        /// Sanitizes a custom event telemetry's request path and the rendered message properties
+        /// Sanitizes telemetry data for any PII.
         /// </summary>
-        /// <param name="request"> An event telemetry item.</param>
+        /// <param name="customEvent">Optional: A custom event telemetry.</param>
+        /// <param name="request">Optional: A request telemetry.</param>
+        /// <param name="trace">Optional: A trace telemetry.</param>
         public void SanitizeTelemetry(EventTelemetry customEvent = null,
-                                           RequestTelemetry request = null)
+                                      RequestTelemetry request = null,
+                                      TraceTelemetry trace = null)
         {
-            if(customEvent != null)
+            if (customEvent != null)
             {
                 var requestPathValue = customEvent.Properties[RequestPath];
-                var renderedMessageValue = customEvent.Properties[RenderedMessage];
+                var pathValueLength = requestPathValue.Length;
+                var pathValueIndex = customEvent.Properties[RenderedMessage].IndexOf(requestPathValue);
 
-                foreach (var keyword in _userKeywords)
-                {
-                    if (requestPathValue.Contains(keyword) && renderedMessageValue.Contains(keyword))
-                    {
-                        foreach (var piiRegex in _piiRegexes)
-                        {
-                            if (piiRegex.IsMatch(requestPathValue) && piiRegex.IsMatch(renderedMessageValue))
-                            {
-                                customEvent.Properties[RequestPath] = piiRegex.Replace(requestPathValue, "****");
-                                customEvent.Properties[RenderedMessage] = piiRegex.Replace(renderedMessageValue, "****");
-                            }
-                        }
-
-                        SanitizeQueryString(customEvent: customEvent);
-                    }
-                }
+                requestPathValue = SanitizeUrlQueryPath(requestPathValue);
+                customEvent.Properties[RequestPath] = requestPathValue;
+                customEvent.Properties[RenderedMessage] = customEvent.Properties[RenderedMessage]
+                    .Remove(pathValueIndex, pathValueLength)
+                    .Insert(pathValueIndex, requestPathValue);
             }
-            if(request != null)
+
+            if (request != null)
             {
                 var requestUrl = request.Url.ToString();
+                request.Url = new Uri(SanitizeUrlQueryPath(requestUrl), UriKind.RelativeOrAbsolute);
+            }
 
-                foreach(string keyword in _userKeywords)
-                {
-                    if (requestUrl.Contains(keyword))
-                    {
-                        foreach (var piiRegex in _piiRegexes)
-                        {
-                            if (piiRegex.IsMatch(requestUrl))
-                            {
-                                request.Url = new Uri(piiRegex.Replace(requestUrl, "****"));
-                            }
-                        }
-
-                        SanitizeQueryString(request: request);
-                    }
-                }
-
+            if (trace != null)
+            {
+                trace.Message = SanitizeContent(trace?.Message);
             }
         }
 
         /// <summary>
-        /// Parses the query string in a request url and sanitizes the username property.
+        /// Sanitizes any PII present in the query path of a url string.
         /// </summary>
-        /// <param name="requestUrl"> The url of the Http request.</param>
-        /// <returns>A sanitized request url.</returns>
-        private void SanitizeQueryString(EventTelemetry customEvent = null,
-                                         RequestTelemetry request = null)
+        /// <remarks>In the context of DevX API requests,
+        /// only the query path requires sanitization.</remarks>
+        /// <param name="url">The target url string. Can be of relative or absolute uri kind.</param>
+        /// <returns>The string url with PII sanitized from its query path.</returns>
+        private string SanitizeUrlQueryPath(string url)
         {
-            string newQueryString;
+            const char QueryValSeparator = '&';
+            var queryPath = url?.Query();
 
-            foreach (var propertyName in _propertyNames)
+            if (string.IsNullOrEmpty(queryPath))
             {
-                if (customEvent != null)
+                return url;
+            }
+
+            var queryValues = queryPath.Split(QueryValSeparator, StringSplitOptions.RemoveEmptyEntries);
+
+            for (int i = 0; i < queryValues.Length; i++)
+            {
+                var queryValue = queryValues[i];
+
+                if (queryValue.Contains("url=", StringComparison.OrdinalIgnoreCase))
                 {
-                    var requestPathValue = customEvent.Properties[RequestPath];
-                    var renderedMessageValue = customEvent.Properties[RenderedMessage];
+                    /* Sanitizing only values for below query params:
+                        /permissions?requestUrl=xyz or
+                        /openapi?url=xyz
+                       We expect that the above query param values contain Graph urls.
+                       It will be unfeasible sanitizing values from all query params.
+                       Some legitimate examples of query params that might be affected include '&openApiVersion=2&graphVersion=v1.0'
+                    */
 
-                    if (requestPathValue.Contains("filter") && requestPathValue.Contains(propertyName))
+                    var valueIndex = queryValue.IndexOf('=') + 1;
+                    var valueSegment = queryValue[valueIndex..];
+                    valueSegment = valueSegment.BaseUriPath()
+                                               .UriTemplatePathFormat();
+                    var resultMatch = _uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
+
+                    if (resultMatch != null)
                     {
-                        newQueryString = RedactUserName(requestPathValue);
-                        customEvent.Properties[RequestPath] = newQueryString;
+                        queryValue = queryValue[0..valueIndex] + resultMatch.Template;
                     }
-                    if (renderedMessageValue.Contains("filter") && renderedMessageValue.Contains(propertyName))
+                    else
                     {
-                        // Fetch the request path
-                        string[] separators = { "GET", "responded" };
-                        var text = renderedMessageValue.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-                        var scheme = text[0];
-                        requestPathValue = text[1];
-                        var finalMessageSegment = text[2];
-
-                        newQueryString = RedactUserName(requestPathValue);
-
-                        // Append sanitized property name to query string
-                        newQueryString = $"{scheme}GET{newQueryString}responded{finalMessageSegment}";
-
-                        customEvent.Properties[RenderedMessage] = newQueryString;
+                        queryValue = queryValue[0..valueIndex] + valueSegment;
+                        queryValue = SanitizeContent(queryValue);
                     }
-                }
-                if (request != null)
-                {
-                    var requestUrl = request.Url.ToString();
 
-                    if (requestUrl.Contains("filter") && requestUrl.Contains(propertyName))
-                    {
-                        newQueryString = RedactUserName(requestUrl);
-                        request.Url = new Uri(newQueryString);
-                    }
-                    if (requestUrl.Contains(SearchOperator))
-                    {
-                        newQueryString = SanitizeSearchQueryOption(requestUrl);
-                        request.Url = new Uri(newQueryString);
-                    }
+                    queryValues[i] = queryValue;
+                    break;
                 }
             }
+
+            queryPath = string.Join(QueryValSeparator, queryValues);
+            return $"{url.BaseUriPath()}?{queryPath}";
         }
 
         /// <summary>
-        /// Takes in the request path of a custom event telemetry item, parses and sanitizes it.
+        /// Sanitizes any PII present in a string content.
         /// </summary>
-        /// <param name="requestPathValue"> The request path of a custom event.</param>
-        /// <returns>A sanitized request path string.</returns>
-        private string RedactUserName(string requestPathValue)
+        /// <param name="content">The target string content.</param>
+        /// <returns>The string content with all PII sanitized.</returns>
+        private string SanitizeContent(string content)
         {
-            var decodedUrl = HttpUtility.UrlDecode(requestPathValue);
-            var queryString = decodedUrl.Split("\'");
-
-            // Get the property name and sanitize it
-            var propertyName = queryString[1];
-            var urlSegment = queryString[0];
-            var closingBracket = queryString[2];
-
-            if (_usernameRegex.IsMatch(propertyName))
+            if (string.IsNullOrEmpty(content))
             {
-                propertyName = propertyName.Replace(propertyName, "'****'");
+                return content;
             }
 
-            // Append sanitized property name to query string
-            var newQueryString = $"{urlSegment + propertyName + closingBracket}";
+            var sanitizedContent = HttpUtility.UrlDecode(content);
 
-            return newQueryString;
+            foreach (var piiRegex in _piiRegexes)
+            {
+                if (piiRegex.IsMatch(sanitizedContent))
+                {
+                    sanitizedContent = piiRegex.Replace(sanitizedContent, SecurityMask);
+                }
+            }
+
+            return SanitizeODataQueryOptions(sanitizedContent);
         }
 
-        private string SanitizeSearchQueryOption(string requestUrl)
+        /// <summary>
+        /// Sanitizes any PII present in an OData query option of a string content.
+        /// </summary>
+        /// <param name="content">The target string content.</param>
+        /// <returns>The string content with all PII in the query option sanitized.</returns>
+        private static string SanitizeODataQueryOptions(string content)
         {
-            var queryString = requestUrl.Split(SearchOperator);
+            if (string.IsNullOrEmpty(content))
+            {
+                return content;
+            }
 
-            var urlSegment = queryString[0];
-            var querySegment = queryString[1];
+            string sanitizedContent = content;
 
-            querySegment = querySegment.Replace(querySegment, "'****'");
+            if (sanitizedContent.Contains(ODataFilterOperator))
+            {
+                sanitizedContent = RedactFilterableValues(content);
+            }
 
-            string sanitizedUrl = $"{urlSegment + SearchOperator + querySegment}";
+            if (sanitizedContent.Contains(ODataSearchOperator))
+            {
+                sanitizedContent = RedactSearchableValues(sanitizedContent);
+            }
 
-            return sanitizedUrl;
+            return sanitizedContent;
+        }
+
+        /// <summary>
+        /// Redacts any filterable values present in a string content.
+        /// </summary>
+        /// <param name="content">The target string content.</param>
+        /// <returns>The string content with all filterable values redacted.</returns>
+        private static string RedactFilterableValues(string content)
+        {
+            if (!(content?.Contains(ODataFilterOperator) ?? false))
+            {
+                return content;
+            }
+
+            var contents = content.Split(ODataFilterOperator);
+
+            // e.g. "openapi?url=/users?$filter=displayName eq 'John Doe'&method=GET" --> =displayName eq 'John Doe'&method=GET
+            var filterableContent = contents[1];
+
+            foreach (var option in _odataFilterOptions)
+            {
+                // Matches 'Milk' in example: /Products?$filter=Name eq 'Milk'
+                var regex_1 = new Regex(@$"(?<=\b{option}\s*)('(.*?)')", RegexOptions.IgnoreCase);
+
+                // Matches ('Milk', 'Cheese') in example: /Products?$filter=Name in ('Milk', 'Cheese')
+                var regex_2 = new Regex(@$"(?<=\b{option}\s*)(\((.*?)\))", RegexOptions.IgnoreCase);
+
+                if (regex_1.IsMatch(filterableContent))
+                {
+                    filterableContent = regex_1.Replace(filterableContent, SecurityMask);
+                }
+                else if (regex_2.IsMatch(filterableContent))
+                {
+                    filterableContent = regex_2.Replace(filterableContent, SecurityMask);
+                }
+            }
+
+            return contents[0] + ODataFilterOperator + filterableContent;
+        }
+
+        /// <summary>
+        /// Redacts any searchable values present in a string content.
+        /// </summary>
+        /// <param name="content">The target string content.</param>
+        /// <returns>The string content with all searchable values redacted.</returns>
+        private static string RedactSearchableValues(string content)
+        {
+            if (!(content?.Contains(ODataSearchOperator) ?? false))
+            {
+                return content;
+            }
+
+            var contents = content.Split(ODataSearchOperator);
+
+            // e.g /openapi?url=/users?$search='displayName:Meghan' --> 'displayName:Meghan'
+            var searchableContent = contents[1];
+
+            searchableContent = searchableContent.Replace(searchableContent, SecurityMask);
+
+            return contents[0] + ODataSearchOperator + searchableContent;
         }
     }
 }
