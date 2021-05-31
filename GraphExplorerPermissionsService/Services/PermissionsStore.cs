@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UriMatchingService;
 using UtilityService;
@@ -314,11 +315,10 @@ namespace GraphExplorerPermissionsService
                         throw new ArgumentNullException(nameof(method), "The HTTP method value cannot be null or empty.");
                     }
 
-                    requestUrl = requestUrl.BaseUriPath() // remove any query params
-                                           .UriTemplatePathFormat();
+                    requestUrl = CleanRequestUrl(requestUrl);
 
                     // Check if requestUrl is contained in our Url Template table
-                    TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
+                    TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
 
                     if (resultMatch == null)
                     {
@@ -416,6 +416,36 @@ namespace GraphExplorerPermissionsService
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Cleans up the request url by applying string formatting operations
+        /// on the target value in line with the expected standardized output value.
+        /// </summary>
+        /// <remarks>The expected standardized output value is the request url value
+        /// format as captured in the permissions doc. This is to ensure efficacy
+        /// of the uri template matching.</remarks>
+        /// <param name="requestUrl">The target request url string value.</param>
+        /// <returns>The target request url formatted to the expected standardized
+        /// output value.</returns>
+        private static string CleanRequestUrl(string requestUrl)
+        {
+            if (string.IsNullOrEmpty(requestUrl))
+            {
+                return requestUrl;
+            }
+
+            requestUrl = requestUrl.BaseUriPath() // remove any query params
+                                   .UriTemplatePathFormat();
+
+            /* Remove ${value} segments from paths,
+             * ex: /me/photo/$value --> $value or /applications/{application-id}/owners/$ref --> $ref
+             * Because these segments are not accounted for in the permissions doc.
+             * ${value} segments will always appear as the last segment in a path.
+            */
+            return Regex.Replace(requestUrl, @"(\$.*)", string.Empty)
+                        .TrimEnd('/')
+                        .ToLowerInvariant();
         }
 
         ///<inheritdoc/>
