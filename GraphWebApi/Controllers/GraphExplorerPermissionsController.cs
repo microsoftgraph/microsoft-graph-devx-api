@@ -59,11 +59,7 @@ namespace GraphWebApi.Controllers
                                                                     method: method);
                 }
 
-                return result == null ? NotFound() : (IActionResult)Ok(result);
-            }
-            catch (InvalidOperationException invalidOpsException)
-            {
-                return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+                return result == null ? NotFound() : Ok(result);
             }
             catch (ArgumentNullException argNullException)
             {
