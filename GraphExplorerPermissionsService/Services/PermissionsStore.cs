@@ -374,13 +374,17 @@ namespace GraphExplorerPermissionsService
                     return scopesList;
                 }
             }
-            catch (ArgumentNullException exception)
+            catch (ArgumentNullException)
             {
-                throw exception;
+                throw;
             }
             catch (ArgumentException)
             {
-                return null; // equivalent to no match for the given requestUrl
+                /* Equivalent to 'No match for the given requestUrl.'
+                 * This is the exception thrown by a regex match error
+                 * from the UriTemplateMatcher class.
+                */
+                return null;
             }
         }
 
