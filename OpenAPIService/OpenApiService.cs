@@ -47,7 +47,6 @@ namespace OpenAPIService
         /// <returns>A partial OpenAPI document.</returns>
         public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, string graphVersion, Func<OpenApiOperation, bool> predicate)
         {
-
             var subset = new OpenApiDocument
             {
                 Info = new OpenApiInfo()
