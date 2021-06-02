@@ -57,7 +57,12 @@ namespace GraphWebApi.Controllers
 
                 OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
+                var predicate = await OpenApiService.CreatePredicate(operationIds: operationIds,
+                                                                     tags: tags,
+                                                                     url: url,
+                                                                     source: source,
+                                                                     graphVersion: styleOptions.GraphVersion,
+                                                                     forceRefresh: forceRefresh);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
@@ -105,16 +110,14 @@ namespace GraphWebApi.Controllers
             {
                 OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-                string graphUri = GetVersionUri(styleOptions.GraphVersion);
-
-                if (graphUri == null)
-                {
-                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
-                }
-
                 OpenApiDocument source = await OpenApiService.ConvertCsdlToOpenApiAsync(Request.Body);
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
+                var predicate = await OpenApiService.CreatePredicate(operationIds: operationIds,
+                                                                     tags: tags,
+                                                                     url: url,
+                                                                     source: source,
+                                                                     graphVersion: styleOptions.GraphVersion,
+                                                                     forceRefresh: forceRefresh);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
