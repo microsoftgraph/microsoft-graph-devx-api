@@ -106,7 +106,8 @@ namespace OpenAPIService.Test
             var message = Assert.Throws<ArgumentException>(() => OpenApiService.CreatePredicate(operationIds: null,
                                                                                                 tags: null,
                                                                                                 url: "/foo",
-                                                                                                source: source)
+                                                                                                source: source,
+                                                                                                graphVersion: GraphVersion)
                                                                                                 .GetAwaiter().GetResult()).Message;
             Assert.Equal("The url supplied could not be found.", message);
         }
@@ -120,7 +121,9 @@ namespace OpenAPIService.Test
             var predicate = OpenApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: "/",
-                                                           source: source).GetAwaiter().GetResult(); // root path will be non-existent in a PowerShell styled doc.
+                                                           source: source,
+                                                           graphVersion: GraphVersion)
+                                                           .GetAwaiter().GetResult(); // root path will be non-existent in a PowerShell styled doc.
 
             var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
 
@@ -161,7 +164,8 @@ namespace OpenAPIService.Test
             var predicate = OpenApiService.CreatePredicate(operationIds: operationIds,
                                                            tags: tags,
                                                            url: url,
-                                                           source: source)
+                                                           source: source,
+                                                           graphVersion: GraphVersion)
                                                            .GetAwaiter().GetResult();
 
             // Assert
@@ -181,7 +185,8 @@ namespace OpenAPIService.Test
             var predicate = OpenApiService.CreatePredicate(operationIds: operationIds,
                                                            tags: tags,
                                                            url: url,
-                                                           source: source)
+                                                           source: source,
+                                                           graphVersion: GraphVersion)
                                                            .GetAwaiter().GetResult();
 
             var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
@@ -205,7 +210,7 @@ namespace OpenAPIService.Test
 
         [Theory]
         [InlineData(OpenApiStyle.Plain, "/users/{user-id}", OperationType.Get)]
-        [InlineData(OpenApiStyle.GEAutocomplete, "/users/{user-id}", OperationType.Get)]
+        [InlineData(OpenApiStyle.GEAutocomplete, "/users/12345/messages", OperationType.Get)]
         [InlineData(OpenApiStyle.PowerPlatform, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
         [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post, "administrativeUnits_restore")]
         [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch, "users.user_UpdateUser")]
@@ -222,7 +227,8 @@ namespace OpenAPIService.Test
             var predicate = OpenApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: url,
-                                                           source: source)
+                                                           source: source,
+                                                           graphVersion: GraphVersion)
                                                            .GetAwaiter().GetResult();
 
             var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
@@ -324,7 +330,8 @@ namespace OpenAPIService.Test
             var predicate = OpenApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: "/security/hostSecurityProfiles",
-                                                           source: source)
+                                                           source: source,
+                                                           graphVersion: GraphVersion)
                                                            .GetAwaiter().GetResult();
 
             var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
@@ -349,7 +356,8 @@ namespace OpenAPIService.Test
             var predicate = OpenApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: url,
-                                                           source: source)
+                                                           source: source,
+                                                           graphVersion: GraphVersion)
                                                            .GetAwaiter().GetResult();
 
             var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
