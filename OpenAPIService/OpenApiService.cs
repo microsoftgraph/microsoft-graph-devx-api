@@ -175,7 +175,7 @@ namespace OpenAPIService
                // url = url.RemoveParentheses();
                 OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url, graphVersion);
 
-                if (openApiOps == null)
+                if (!(openApiOps?.Any() ?? false))
                 {
                     throw new ArgumentException("The url supplied could not be found.");
                 }
