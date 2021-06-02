@@ -71,7 +71,26 @@ namespace UtilityService.Test
                     "/permissions?requesturl=/students/'MeganB@M365x214355.onmicrosoft.com'/classes")]
         [InlineData("/permissions?requesturl=/students/('MeganB@M365x214355.onmicrosoft.com')/classes",
                     "/permissions?requesturl=/students/'MeganB@M365x214355.onmicrosoft.com'/classes")]
-        public void GetUriTemplatePathFormat(string targetString, string expectedString)
+        public void GetUriTemplatePathFormatWithSimplifyNamespaceTrue(string targetString, string expectedString)
+        {
+            // Arrange and Act
+            var actualString = targetString.UriTemplatePathFormat(true);
+
+            // Assert
+            Assert.Equal(expectedString, actualString);
+        }
+        [Theory]
+        [InlineData("/education/schools(id)users/microsoft.graph.delta()",
+                    "/education/schools/id/users/microsoft.graph.delta()")]
+        [InlineData("/users/{user-id}/insights/used(usedInsight-id)resource/microsoft.graph.workbookWorksheet/microsoft.graph.range(address={address})",
+                    "/users/{user-id}/insights/used/usedInsight-id/resource/microsoft.graph.workbookWorksheet/microsoft.graph.range(address={address})")]
+        [InlineData("/groupLifecyclePolicies(groupLifecyclePolicy-id)microsoft.graph.remove",
+                    "/groupLifecyclePolicies/groupLifecyclePolicy-id/microsoft.graph.remove")]
+        [InlineData("worksheets/range/microsoft.graph.range(address={address})",
+                    "worksheets/range/microsoft.graph.range(address={address})")]
+        [InlineData("/drive/list/items(listItem-id)microsoft.graph.getActivitiesByInterval()",
+                    "/drive/list/items/listItem-id/microsoft.graph.getActivitiesByInterval()")]
+        public void GetUriTemplatePathFormatWithSimplifyNamespaceFalse(string targetString, string expectedString)
         {
             // Arrange and Act
             var actualString = targetString.UriTemplatePathFormat();

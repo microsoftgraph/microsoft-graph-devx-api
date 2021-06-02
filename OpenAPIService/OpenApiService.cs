@@ -172,7 +172,7 @@ namespace OpenAPIService
                     _openApiRootNode.Attach(source, graphVersion);
                 }
 
-               // url = url.RemoveParentheses();
+                url = url.UriTemplatePathFormat();
                 OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url, graphVersion);
 
                 if (!(openApiOps?.Any() ?? false))
