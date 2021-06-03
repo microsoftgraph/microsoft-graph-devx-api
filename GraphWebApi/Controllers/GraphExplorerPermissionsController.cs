@@ -67,6 +67,8 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception exception)
             {
+                // Any 'InvalidOperationException' will also be caught here - these are classified as error 500
+
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
