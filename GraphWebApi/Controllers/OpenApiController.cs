@@ -57,7 +57,7 @@ namespace GraphWebApi.Controllers
 
                 OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds: operationIds,
+                var predicate = OpenApiService.CreatePredicate(operationIds: operationIds,
                                                                      tags: tags,
                                                                      url: url,
                                                                      source: source,
@@ -112,7 +112,7 @@ namespace GraphWebApi.Controllers
 
                 OpenApiDocument source = await OpenApiService.ConvertCsdlToOpenApiAsync(Request.Body);
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds: operationIds,
+                var predicate = OpenApiService.CreatePredicate(operationIds: operationIds,
                                                                      tags: tags,
                                                                      url: url,
                                                                      source: source,

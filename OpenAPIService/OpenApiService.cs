@@ -121,7 +121,7 @@ namespace OpenAPIService
         /// <param name="graphVersion">Version of the target Microsoft Graph API.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A predicate.</returns>
-        public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
+        public static Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags, string url,
             OpenApiDocument source, string graphVersion = "v1.0", bool forceRefresh = false)
         {
             if (url != null && (operationIds != null || tags != null))
@@ -191,7 +191,7 @@ namespace OpenAPIService
                 throw new InvalidOperationException("Either operationIds, tags or url need to be specified.");
             }
 
-            return await Task.FromResult(predicate);
+            return predicate;
         }
 
         /// <summary>
