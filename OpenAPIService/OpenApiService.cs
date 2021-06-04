@@ -171,7 +171,9 @@ namespace OpenAPIService
                     _openApiRootNode.Attach(source, graphVersion);
                 }
 
-                url = url.UriTemplatePathFormat();
+                url = url.BaseUriPath()
+                         .UriTemplatePathFormat();
+
                 OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url, graphVersion);
 
                 if (!(openApiOps?.Any() ?? false))
@@ -244,6 +246,7 @@ namespace OpenAPIService
                                                   .FirstOrDefault(x => x.Key.Equals(urlSegments[i],
                                                                     StringComparison.OrdinalIgnoreCase)).Value;
 
+                // Segment name mismatch
                 if (tempTargetChild == null)
                 {
                     if (i == 0)
@@ -282,6 +285,7 @@ namespace OpenAPIService
                     parameterNameOffset = 0;
                 }
 
+                // Move to the next segment
                 targetChild = tempTargetChild;
 
                 // We want the operations of the last segment of the path.
