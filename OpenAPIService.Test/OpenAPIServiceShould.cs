@@ -4,6 +4,7 @@
 
 using Microsoft.OpenApi.Models;
 using System;
+using System.Linq;
 using Xunit;
 
 namespace OpenAPIService.Test
@@ -210,7 +211,9 @@ namespace OpenAPIService.Test
 
         [Theory]
         [InlineData(OpenApiStyle.Plain, "/users/{user-id}", OperationType.Get)]
-        [InlineData(OpenApiStyle.GEAutocomplete, "/users/12345/messages", OperationType.Get)]
+        [InlineData(OpenApiStyle.Plain, "/users/12345", OperationType.Get)]
+        [InlineData(OpenApiStyle.GEAutocomplete, "/users(user-id)messages(message-id)", OperationType.Get)]
+        [InlineData(OpenApiStyle.GEAutocomplete, "/users/12345/messages/abcde", OperationType.Get)]
         [InlineData(OpenApiStyle.PowerPlatform, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
         [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post, "administrativeUnits_restore")]
         [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch, "users.user_UpdateUser")]
@@ -238,7 +241,8 @@ namespace OpenAPIService.Test
             // Assert
             if (style == OpenApiStyle.GEAutocomplete || style == OpenApiStyle.Plain)
             {
-                var content = subsetOpenApiDocument.Paths[url]
+                var content = subsetOpenApiDocument.Paths
+                                .FirstOrDefault().Value
                                 .Operations[operationType]
                                 .Responses["200"]
                                 .Content;
@@ -258,7 +262,8 @@ namespace OpenAPIService.Test
             {
                 if (operationType == OperationType.Post)
                 {
-                    var anyOf = subsetOpenApiDocument.Paths[url]
+                    var anyOf = subsetOpenApiDocument.Paths
+                                    .FirstOrDefault().Value
                                     .Operations[operationType]
                                     .Responses["200"]
                                     .Content["application/json"]
@@ -272,7 +277,8 @@ namespace OpenAPIService.Test
                 {
                     if (operationType == OperationType.Post)
                     {
-                        var newOperationId = subsetOpenApiDocument.Paths[url]
+                        var newOperationId = subsetOpenApiDocument.Paths
+                                            .FirstOrDefault().Value
                                             .Operations[operationType]
                                             .OperationId;
 
@@ -280,7 +286,8 @@ namespace OpenAPIService.Test
                     }
                     else if (operationType == OperationType.Patch)
                     {
-                        var newOperationId = subsetOpenApiDocument.Paths[url]
+                        var newOperationId = subsetOpenApiDocument.Paths
+                                            .FirstOrDefault().Value
                                             .Operations[operationType]
                                             .OperationId;
 
@@ -288,7 +295,8 @@ namespace OpenAPIService.Test
                     }
                     else if (operationType == OperationType.Put)
                     {
-                        var newOperationId = subsetOpenApiDocument.Paths[url]
+                        var newOperationId = subsetOpenApiDocument.Paths
+                                            .FirstOrDefault().Value
                                             .Operations[operationType]
                                             .OperationId;
 
@@ -362,7 +370,8 @@ namespace OpenAPIService.Test
 
             var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
             subsetOpenApiDocument = OpenApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
-            var operationId = subsetOpenApiDocument.Paths[url]
+            var operationId = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
                               .Operations[operationType]
                               .OperationId;
 
