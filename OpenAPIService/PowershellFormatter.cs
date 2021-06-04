@@ -45,9 +45,13 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// The last '.' character of the OperationId value separates the method group from the operation name.
-        /// This is replaced with an '_' to format the OperationId to allow for the creation of logical Powershell cmdlet names
+        /// Visits an <see cref="OpenApiOperation"/>
         /// </summary>
+        /// <remarks>
+        /// The last '.' character of the OperationId value separates the method group from the operation name.
+        /// This is replaced with an '_' to format the OperationId to allow for the creation of logical Powershell cmdlet names.
+        /// </remarks>
+        /// <param name="operation">The target <see cref="OpenApiOperation"/></param>
         public override void Visit(OpenApiOperation operation)
         {
             var operationId = operation.OperationId;
@@ -81,6 +85,10 @@ namespace OpenAPIService
             }
         }
 
+        /// <summary>
+        /// Visits an <see cref="OpenApiSchema"/>
+        /// </summary>
+        /// <param name="schema">The target <see cref="OpenApiSchema"/></param>
         public override void Visit(OpenApiSchema schema)
         {
             if (_schemaLoop.Contains(schema))
