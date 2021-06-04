@@ -96,7 +96,7 @@ namespace OpenAPIService
                 return; // loop detected, this schema has already been walked.
             }
 
-            if (schema?.Type == "object")
+            if ("object".Equals(schema?.Type, StringComparison.OrdinalIgnoreCase))
             {
                 schema.AdditionalProperties = new OpenApiSchema() { Type = "object" }; // To make AutoREST happy
 
