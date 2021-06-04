@@ -79,6 +79,7 @@ namespace UtilityService.Test
             // Assert
             Assert.Equal(expectedString, actualString);
         }
+
         [Theory]
         [InlineData("/education/schools(id)users/microsoft.graph.delta()",
                     "/education/schools/id/users/microsoft.graph.delta()")]
