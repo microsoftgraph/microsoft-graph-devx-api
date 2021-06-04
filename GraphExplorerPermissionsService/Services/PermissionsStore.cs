@@ -422,7 +422,7 @@ namespace GraphExplorerPermissionsService
             }
 
             requestUrl = requestUrl.BaseUriPath() // remove any query params
-                                   .UriTemplatePathFormat();
+                                   .UriTemplatePathFormat(true);
 
             /* Remove ${value} segments from paths,
              * ex: /me/photo/$value --> $value or /applications/{application-id}/owners/$ref --> $ref
