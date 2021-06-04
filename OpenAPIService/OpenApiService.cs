@@ -263,7 +263,7 @@ namespace OpenAPIService
                      * ex.: matching '/users/12345/messages' with '/users/{user-id}/messages'
                      */
                     tempTargetChild = targetChild.Children
-                                                 .FirstOrDefault(x => x.Value.IsParameter == true).Value;
+                                                 .FirstOrDefault(x => x.Value.IsParameter).Value;
 
                     /* If no parameter segment exists in the children of the
                      * current node or we've already skipped a parameter
