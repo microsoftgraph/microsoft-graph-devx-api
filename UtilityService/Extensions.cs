@@ -81,18 +81,20 @@ namespace UtilityService
         /// as segments and simplify action/function names by removing the namespaces from their names.
         /// </remarks>
         /// <param name="value">The target uri string.</param>
+        /// <param name="simplifyNamespace">Whether to simplify any fully qualified 'microsoft.graph' namespace present.</param>
         /// <returns>The uri template path format of a given url string.</returns>
-        public static string UriTemplatePathFormat(this string value)
+        public static string UriTemplatePathFormat(this string value, bool simplifyNamespace = false)
         {
             if (string.IsNullOrEmpty(value))
             {
                 return value;
             }
 
-            const string GraphNamespace = "microsoft.graph.";
+            const string GraphNamespace = "microsoft.graph";
             const char ForwardSlash = '/';
             const char OpenParen = '(';
             const char CloseParen = ')';
+            Match matchFunction = null;
 
             var segments = value.Split(ForwardSlash);
 
@@ -102,23 +104,49 @@ namespace UtilityService
 
                 if (segment.Contains(GraphNamespace, StringComparison.OrdinalIgnoreCase))
                 {
-                    /* Resolve action and functions names
-                        Ex. microsoft.graph.delta() or microsoft.graph.remove
-                    */
-
-                    var namespaceIndex = segment.IndexOf(GraphNamespace);
-                    var namespaceSegment = segment[namespaceIndex..];
-                    var operationName = namespaceSegment.Replace(GraphNamespace, string.Empty).RemoveParentheses();
-                    segment = namespaceIndex > 0 ? segment[0..namespaceIndex] + operationName : operationName;
+                    if (simplifyNamespace)
+                    {
+                        /* Resolve action and functions names
+                         * ex. microsoft.graph.delta() or microsoft.graph.remove
+                         */
+                        var namespaceIndex = segment.IndexOf(GraphNamespace);
+                        var namespaceSegment = segment[namespaceIndex..];
+                        var operationName = namespaceSegment.Replace(GraphNamespace, string.Empty)
+                                                            .RemoveParentheses()
+                                                            .TrimStart('.');
+                        segment = namespaceIndex > 0 ? segment[0..namespaceIndex] + operationName : operationName;
+                    }
+                    else
+                    {
+                        // Capture a function --> ex: microsoft.graph.delta()
+                        matchFunction = Regex.Match(segment, @$"({GraphNamespace}).*\(.*\)");
+                    }
                 }
 
                 if (segment.Contains(OpenParen) || segment.Contains(CloseParen))
                 {
-                    // key is not segment
-                    segment = segment.TrimStart(OpenParen)
-                                     .Replace(OpenParen, ForwardSlash)
-                                     .Replace(CloseParen, ForwardSlash)
-                                     .TrimEnd(ForwardSlash);
+                    /* Resolve any possible parentheses as key instances
+                     */
+                    if (matchFunction?.Success ?? false)
+                    {
+                        /* Don't remove the parentheses of a function segment
+                         * ex: /drive/list/items(listItem-id)microsoft.graph.getActivitiesByInterval()
+                         * --> microsoft.graph.getActivitiesByInterval()
+                         */
+                        var tempSegment = segment.Replace(matchFunction.Value, string.Empty);
+                        segment = tempSegment.TrimStart(OpenParen)
+                                             .Replace(OpenParen, ForwardSlash)
+                                             .Replace(CloseParen, ForwardSlash)
+                                             + matchFunction.Value;
+                    }
+                    else
+                    {
+                        // ex: /users(user-id) --> resolved to /users/user-id
+                        segment = segment.TrimStart(OpenParen)
+                                         .Replace(OpenParen, ForwardSlash)
+                                         .Replace(CloseParen, ForwardSlash)
+                                         .TrimEnd(ForwardSlash);
+                    }
                 }
 
                 segments[i] = segment;
