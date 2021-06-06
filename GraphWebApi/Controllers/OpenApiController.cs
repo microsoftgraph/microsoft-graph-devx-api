@@ -28,11 +28,11 @@ namespace GraphWebApi.Controllers
         private readonly TelemetryClient _telemetry;
 
         public OpenApiController(IConfiguration configuration,
-                                 TelemetryClient telemetry,
-                                 OpenApiService openApiService)
+                                 TelemetryClient telemetry)
         {
             _configuration = configuration;
             _telemetry = telemetry;
+            OpenApiService.TelemetryClient = _telemetry;
         }
 
         [Route("openapi")]

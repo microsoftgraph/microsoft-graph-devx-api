@@ -22,7 +22,6 @@ using System.Text;
 using OpenAPIService.Common;
 using UriMatchingService;
 using UtilityService;
-using OpenAPIService.Interfaces;
 using Microsoft.ApplicationInsights;
 
 namespace OpenAPIService
@@ -35,17 +34,26 @@ namespace OpenAPIService
         GEAutocomplete
     }
 
-    public class OpenApiService : IOpenApiService
+    public class OpenApiService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
         private static UriTemplateMatcher _uriTemplateTable = new UriTemplateMatcher();
         private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
-        private readonly TelemetryClient _telemetry;
         private readonly IDictionary<string, string> _samplesTraceProperties = new Dictionary<string, string> { { "OpenAPI", "OpenApiService" } };
-
-        public OpenApiService(TelemetryClient telemetry)
+        private static readonly object _telemetrySetLock = new();
+        private static TelemetryClient _telemetryClient;
+        public static TelemetryClient TelemetryClient
         {
-            _telemetry = telemetry;
+            set
+            {
+                lock (_telemetrySetLock)
+                {
+                    if (_telemetryClient == null)
+                    {
+                        _telemetryClient = value;
+                    }
+                }
+            }
         }
 
         /// <summary>
