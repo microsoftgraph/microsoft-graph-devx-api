@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using GraphWebApi.Models;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -24,10 +25,14 @@ namespace GraphWebApi.Controllers
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly TelemetryClient _telemetry;
 
-        public OpenApiController(IConfiguration configuration)
+        public OpenApiController(IConfiguration configuration,
+                                 TelemetryClient telemetry,
+                                 OpenApiService openApiService)
         {
             _configuration = configuration;
+            _telemetry = telemetry;
         }
 
         [Route("openapi")]
