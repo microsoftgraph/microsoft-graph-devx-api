@@ -32,7 +32,7 @@ namespace GraphWebApi.Controllers
         {
             _configuration = configuration;
             _telemetry = telemetry;
-            OpenApiService.TelemetryClient = _telemetry;
+            OpenApiService.TelemetryClient = telemetry;
         }
 
         [Route("openapi")]
