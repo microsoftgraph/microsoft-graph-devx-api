@@ -26,7 +26,6 @@ namespace ChangesService.Services
         // Field to hold key-value pairs of url and workload names
         private static readonly Dictionary<string, string> _urlWorkloadDict = new();
         private static readonly IDictionary<string, string> ChangesTraceProperties = new Dictionary<string, string> { { "Changes", "ChangesService" } };
-
         private static readonly object _telemetrySetLock = new();
         private static TelemetryClient _telemetryClient;
 
