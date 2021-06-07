@@ -323,6 +323,55 @@ namespace OpenAPIService.Test
                             }
                         }
                     },
+                    ["/users/{user-id}/messages/{message-id}"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        {
+                                            new OpenApiTag()
+                                            {
+                                                Name = "users.message"
+                                            }
+                                        }
+                                    },
+                                    OperationId = "users.GetMessages",
+                                    Summary = "Get messages from users",
+                                    Description = "The messages in a mailbox or folder. Read-only. Nullable.",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200", new OpenApiResponse()
+                                            {
+                                                Description = "Retrieved navigation property",
+                                                Content = new Dictionary<string, OpenApiMediaType>
+                                                {
+                                                    {
+                                                        applicationJsonMediaType,
+                                                        new OpenApiMediaType
+                                                        {
+                                                            Schema = new OpenApiSchema
+                                                            {
+                                                                Reference = new OpenApiReference
+                                                                {
+                                                                    Type = ReferenceType.Schema,
+                                                                    Id = "microsoft.graph.message"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     ["/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore"] = new OpenApiPathItem()
                     {
                         Operations = new Dictionary<OperationType, OpenApiOperation>

@@ -20,7 +20,6 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Text;
 using OpenAPIService.Common;
-using UriMatchingService;
 using UtilityService;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -38,8 +37,7 @@ namespace OpenAPIService
     public class OpenApiService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
-        private static UriTemplateMatcher _uriTemplateTable = new UriTemplateMatcher();
-        private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+        private static OpenApiUrlTreeNode _openApiRootNode = OpenApiUrlTreeNode.Create();
         private static readonly IDictionary<string, string> OpenApiTraceProperties = new Dictionary<string, string> { { "OpenApi", "Fetch" } };
         private static readonly object _telemetrySetLock = new();
         private static TelemetryClient _telemetryClient;
@@ -59,11 +57,16 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Create partial document based on provided predicate
+        /// Create partial OpenAPI document based on the provided predicate.
         /// </summary>
+        /// <param name="source">The target <see cref="OpenApiDocument"/>.</param>
+        /// <param name="title">The OpenAPI document title.</param>
+        /// <param name="graphVersion">Version of the target Microsoft Graph API.</param>
+        /// <param name="predicate">A predicate function.</param>
+        /// <returns>A partial OpenAPI document.</returns>
         public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, string graphVersion, Func<OpenApiOperation, bool> predicate)
         {
-            _telemetryClient?.TrackTrace("Creating subset document based on provided predicate",
+            _telemetryClient?.TrackTrace("Creating subset OpenApi document based on the provided predicate",
                                          SeverityLevel.Information,
                                          OpenApiTraceProperties);
 
@@ -128,7 +131,7 @@ namespace OpenAPIService
 
             CopyReferences(subset);
 
-            _telemetryClient?.TrackTrace("Finished creating subset document",
+            _telemetryClient?.TrackTrace("Finished creating subset OpenApi document",
                                          SeverityLevel.Information,
                                          OpenApiTraceProperties);
 
@@ -141,11 +144,12 @@ namespace OpenAPIService
         /// <param name="operationIds">Comma delimited list of operationIds or * for all operations.</param>
         /// <param name="tags">Comma delimited list of tags or a single regex.</param>
         /// <param name="url">Url path to match with Operation Ids.</param>
-        /// <param name="graphVersion">Version of Microsoft Graph.</param>
+        /// <param name="source">The target <see cref="OpenApiDocument"/>.</param>
+        /// <param name="graphVersion">Version of the target Microsoft Graph API.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
-        /// <returns>A predicate</returns>
-        public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
-            OpenApiDocument source, bool forceRefresh = false)
+        /// <returns>A predicate.</returns>
+        public static Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags, string url,
+            OpenApiDocument source, string graphVersion = "v1.0", bool forceRefresh = false)
         {
             _telemetryClient?.TrackTrace("Creating a predicate based on the passed query params",
                                          SeverityLevel.Information,
@@ -189,33 +193,30 @@ namespace OpenAPIService
             }
             else if (url != null)
             {
-                /* Extract the respective Operation Id(s) that match the provided url path */
-
-                if (!_openApiOperationsTable.Any() || forceRefresh)
+                if (forceRefresh)
                 {
-                    _uriTemplateTable = new UriTemplateMatcher();
-                    _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+                    _telemetryClient.TrackTrace("Create OpenApi Url Tree node",
+                                                SeverityLevel.Information,
+                                                OpenApiTraceProperties);
 
-                    _telemetryClient?.TrackTrace("Reload the document from source if forceRefresh is true else, refresh to populate the reference table",
-                                                 SeverityLevel.Information,
-                                                 OpenApiTraceProperties);
-
-                    await PopulateReferenceTablesAync(source);
+                    _openApiRootNode = CreateOpenApiUrlTreeNode(source, graphVersion);
+                }
+                else if (!_openApiRootNode.PathItems.ContainsKey(graphVersion))
+                {
+                    _openApiRootNode.Attach(source, graphVersion);
                 }
 
                 url = url.BaseUriPath()
-                         .Replace('-', '_');
+                         .UriTemplatePathFormat();
 
-                TemplateMatch resultMatch = _uriTemplateTable.Match(new Uri(url.ToLower(), UriKind.RelativeOrAbsolute));
+                OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url, graphVersion);
 
-                if (resultMatch == null)
+                if (!(openApiOps?.Any() ?? false))
                 {
                     throw new ArgumentException("The url supplied could not be found.");
                 }
 
-                /* Fetch the corresponding Operations Id(s) for the matched url */
-
-                OpenApiOperation[] openApiOps = _openApiOperationsTable[int.Parse(resultMatch.Key)];
+                // Fetch the corresponding Operations Id(s) for the matched url
                 string[] operationIdsArray = openApiOps.Select(x => x.OperationId).ToArray();
 
                 predicate = (o) => operationIdsArray.Contains(o.OperationId);
@@ -232,45 +233,118 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Populates the _uriTemplateTable with the Graph url paths and the _openApiOperationsTable
-        /// with the respective OpenApiOperations for these urls paths.
+        /// Creates an <see cref="OpenApiUrlTreeNode"/> from an <see cref="OpenApiDocument"/>.
         /// </summary>
-        /// <param name="source">The OpenAPI document.</param>
-        /// <returns>A task.</returns>
-        private static Task PopulateReferenceTablesAync(OpenApiDocument source)
-		{
-			HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
+        /// <param name="source">The target <see cref="OpenApiDocument"/>.</param>
+        /// <param name="label">Name tag for labelling the nodes in the directory structure.</param>
+        /// <returns>The created <see cref="OpenApiUrlTreeNode"/>.</returns>
+        private static OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(OpenApiDocument source, string label)
+        {
+            return source == null ? null : OpenApiUrlTreeNode.Create(source, label);
+        }
 
-            _telemetryClient?.TrackTrace("Start seeding the _uriTemplateTable with Graph url paths and _openApiOperationsTable with the respective " +
-                                         "OpenApiOperations for the url paths",
-                                         SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+        /// <summary>
+        /// Retrieves an array of <see cref="OpenApiOperation"/> for a given url path from an
+        /// <see cref="OpenApiUrlTreeNode"/>.
+        /// </summary>
+        /// <param name="rootNode">The target <see cref="OpenApiUrlTreeNode"/> root node.</param>
+        /// <param name="relativeUrl">The relative url path to retrieve
+        /// the array of <see cref="OpenApiOperation"/> from.</param>
+        /// <param name="label">The name of the key for the target operations in the node's PathItems dictionary.</param>
+        /// <returns>The array of <see cref="OpenApiOperation"/> for a given url path.</returns>
+        private static OpenApiOperation[] GetOpenApiOperations(OpenApiUrlTreeNode rootNode, string relativeUrl, string label)
+        {
+            Utils.CheckArgumentNull(rootNode, nameof(rootNode));
+            Utils.CheckArgumentNullOrEmpty(relativeUrl, nameof(relativeUrl));
+            Utils.CheckArgumentNullOrEmpty(label, nameof(label));
 
-            int count = 0;
+            _telemetryClient.TrackTrace($"Start fetching an OpenApiOperation array for a given url path '{relativeUrl}' from an OpenApiUrlTreeNode",
+                                        SeverityLevel.Information,
+                                        OpenApiTraceProperties);
 
-            foreach (var path in source.Paths)
+            if (relativeUrl.Equals("/", StringComparison.Ordinal))
             {
-                if (uniqueUrlsTable.Add(path.Key))
+                // root path
+                if (rootNode.HasOperations(label))
                 {
-                    count++;
+                    return rootNode.PathItems[label].Operations.Values.ToArray();
+                }
+            }
 
-                    string urlPath = path.Key.Replace('-', '_');
-                    _uriTemplateTable.Add(count.ToString(), urlPath.ToLower());
+            var urlSegments = relativeUrl.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    OpenApiOperation[] operations = path.Value.Operations.Values.ToArray();
-                    _openApiOperationsTable.Add(count, operations);
+            OpenApiOperation[] operations = null;
+            var targetChild = rootNode;
 
+            /* This will help keep track of whether we've skipped a segment
+             * in the target url due to a possible parameter naming mismatch
+             * with the corresponding OpenApiUrlTreeNode target child segment.
+             */
+            int parameterNameOffset = 0;
 
+            for (int i = 0; i < urlSegments?.Length; i++)
+            {
+                var tempTargetChild = targetChild?.Children
+                                                  .FirstOrDefault(x => x.Key.Equals(urlSegments[i],
+                                                                    StringComparison.OrdinalIgnoreCase)).Value;
+
+                // Segment name mismatch
+                if (tempTargetChild == null)
+                {
+                    if (i == 0)
+                    {
+                        /* If no match and we are at the 1st segment of the relative url,
+                         * exit; no need to continue matching subsequent segments.
+                         */
+                        break;
+                    }
+
+                    /* Attempt to get the parameter segment from the children of the current node:
+                     * We are assuming a failed match because of different parameter namings
+                     * between the relative url segment and the corresponding OpenApiUrlTreeNode segment name
+                     * ex.: matching '/users/12345/messages' with '/users/{user-id}/messages'
+                     */
+                    tempTargetChild = targetChild.Children
+                                                 .FirstOrDefault(x => x.Value.IsParameter).Value;
+
+                    /* If no parameter segment exists in the children of the
+                     * current node or we've already skipped a parameter
+                     * segment in the relative url from the last pass,
+                     * then exit; there's no match.
+                     */
+                    if (tempTargetChild == null || parameterNameOffset > 0)
+                    {
+                        break;
+                    }
+
+                    /* To help us know we've skipped a
+                     * corresponding segment in the relative url.
+                     */
+                    parameterNameOffset++;
+                }
+                else
+                {
+                    parameterNameOffset = 0;
                 }
 
+                // Move to the next segment
+                targetChild = tempTargetChild;
+
+                // We want the operations of the last segment of the path.
+                if (i == urlSegments.Length - 1)
+                {
+                    if (targetChild.HasOperations(label))
+                    {
+                        operations = targetChild.PathItems[label].Operations.Values.ToArray();
+                    }
+                }
             }
-            _telemetryClient?.TrackTrace("Finished seeding the tables",
+            _telemetryClient?.TrackTrace($"Finished fetching an OpenApiOperation array for a given url path '{relativeUrl}' from an OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          OpenApiTraceProperties);
 
-
-            return Task.CompletedTask;
-		}
+            return operations;
+        }
 
 		/// <summary>
 		/// Create a representation of the OpenApiDocument to return from an API
@@ -352,7 +426,7 @@ namespace OpenAPIService
 
             _telemetryClient?.TrackTrace("Fetch an OpenApi document from the source",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties); 
+                                         OpenApiTraceProperties);
 
             OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;
@@ -480,7 +554,7 @@ namespace OpenAPIService
 
             document = FixReferences(document);
 
-            _telemetryClient?.TrackTrace("Conversion complete..",
+            _telemetryClient?.TrackTrace("Conversion of CSDL stream to an OpenApi document complete",
                                          SeverityLevel.Information,
                                          OpenApiTraceProperties);
 

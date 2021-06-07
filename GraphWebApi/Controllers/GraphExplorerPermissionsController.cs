@@ -73,12 +73,6 @@ namespace GraphWebApi.Controllers
 
                 return result == null ? NotFound() : Ok(result);
             }
-            catch (InvalidOperationException invalidOpsException)
-            {
-                _telemetry?.TrackException(invalidOpsException,
-                                          PermissionsTraceProperties);
-                return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status500InternalServerError };
-            }
             catch (ArgumentNullException argNullException)
             {
                 _telemetry?.TrackException(argNullException,
@@ -87,6 +81,8 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception exception)
             {
+                // Any 'InvalidOperationException' will also be caught here - these are classified as error 500
+
                 _telemetry?.TrackException(exception,
                                           PermissionsTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
