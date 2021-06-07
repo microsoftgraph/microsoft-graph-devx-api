@@ -62,6 +62,7 @@ namespace GraphWebApi
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
             services.AddSingleton<IChangesStore, ChangesStore>();
+            services.AddSingleton<ChangesService.Services.ChangesService>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
             services.AddControllers().AddNewtonsoftJson();
             services.Configure<SamplesAdministrators>(Configuration);

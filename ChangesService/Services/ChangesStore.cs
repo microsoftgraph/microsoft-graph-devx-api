@@ -25,19 +25,22 @@ namespace ChangesService.Services
     /// </summary>
     public class ChangesStore : IChangesStore
     {
+        private readonly ChangesService _changesService;
         private readonly object _changesLock = new object();
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changeLogCache;
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetry;
-        private readonly IDictionary<string, string> ChangesTraceProperties = new Dictionary<string, string> { { "Changes", "Fetch" } };
+        private readonly IDictionary<string, string> ChangesTraceProperties = new Dictionary<string, string> { { "Changes", "ChangesStore" } };
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
 
-        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, 
+        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, ChangesService changesService,
                             IHttpClientUtility httpClientUtility, TelemetryClient telemetry = null)
         {
             _telemetry = telemetry;
+            _changesService = changesService ?? throw new ArgumentNullException(nameof(changesService),
+                $"{ ChangesServiceConstants.ValueNullError }: { nameof(changesService) }");
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
                 $"{ ChangesServiceConstants.ValueNullError }: { nameof(configuration) }");
             _changeLogCache = changeLogCache ?? throw new ArgumentNullException(nameof(changeLogCache),
@@ -116,7 +119,7 @@ namespace ChangesService.Services
                                   ChangesTraceProperties);
 
                     // Return the changelog records from the file contents
-                    return Task.FromResult(ChangesService.DeserializeChangeLogRecords(jsonFileContents));
+                    return Task.FromResult(_changesService.DeserializeChangeLogRecords(jsonFileContents));
                 }
             });
 
