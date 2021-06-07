@@ -6,6 +6,8 @@ using ChangesService.Common;
 using ChangesService.Models;
 using FileService.Common;
 using FileService.Interfaces;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -23,6 +25,24 @@ namespace ChangesService.Services
     {
         // Field to hold key-value pairs of url and workload names
         private static readonly Dictionary<string, string> _urlWorkloadDict = new();
+        private static readonly IDictionary<string, string> ChangesTraceProperties = new Dictionary<string, string> { { "Changes", "ChangesService" } };
+
+        private static readonly object _telemetrySetLock = new();
+        private static TelemetryClient _telemetryClient;
+
+        public static TelemetryClient TelemetryClient
+        {
+            set
+            {
+                lock (_telemetrySetLock)
+                {
+                    if (_telemetryClient == null)
+                    {
+                        _telemetryClient = value;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Deserializes a <see cref="ChangeLogRecords"/> from a json string.
@@ -58,6 +78,10 @@ namespace ChangesService.Services
                                                               MicrosoftGraphProxyConfigs graphProxyConfigs,
                                                               IHttpClientUtility httpClientUtility = null)
         {
+            _telemetryClient?.TrackTrace("Starts filtering changelog records based on the search options provided.",
+                                         SeverityLevel.Information,
+                                         ChangesTraceProperties);
+
             if (changeLogRecords == null)
             {
                 throw new ArgumentNullException(nameof(changeLogRecords), ChangesServiceConstants.ValueNullError);
@@ -127,6 +151,10 @@ namespace ChangesService.Services
             {
                 ChangeLogs = enumerableChangeLog.ToList()
             };
+
+            _telemetryClient?.TrackTrace("Completes filtering changelog records",
+                                         SeverityLevel.Information,
+                                         ChangesTraceProperties);
 
             return PaginateChangeLogRecords(filteredChangeLogRecords, searchOptions);
         }
@@ -230,6 +258,10 @@ namespace ChangesService.Services
                                                                              MicrosoftGraphProxyConfigs graphProxy,
                                                                              IHttpClientUtility httpClientUtility)
         {
+            _telemetryClient?.TrackTrace("Starts retrieving workload name for a given Microsoft Graph request url",
+                                         SeverityLevel.Information,
+                                         ChangesTraceProperties);
+
             // Pull out the workload name value if it was already cached
             if (_urlWorkloadDict.TryGetValue(searchOptions.RequestUrl, out string workloadValue))
             {
@@ -274,6 +306,10 @@ namespace ChangesService.Services
 
             // Cache the retrieved workload name
             _urlWorkloadDict.Add(searchOptions.RequestUrl, workloadName);
+
+            _telemetryClient?.TrackTrace("Finished retrieving workload name for a given Microsoft Graph request url",
+                                         SeverityLevel.Information,
+                                         ChangesTraceProperties);
 
             return workloadName;
             // NB: No test coverage for this currently; requires a service call to the Graph proxy url
