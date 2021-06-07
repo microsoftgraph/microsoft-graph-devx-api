@@ -30,7 +30,7 @@ namespace ChangesService.Services
         private readonly IMemoryCache _changeLogCache;
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetry;
-        private readonly IDictionary<string, string> ChangesTraceProperties = new Dictionary<string, string> { { "Changes", "Fetch" } };
+        private readonly IDictionary<string, string> ChangesTraceProperties = new Dictionary<string, string> { { "Changes", "ChangesStore" } };
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
 
