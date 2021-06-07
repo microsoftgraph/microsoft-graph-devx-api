@@ -195,7 +195,7 @@ namespace OpenAPIService
             {
                 if (forceRefresh)
                 {
-                    _telemetryClient.TrackTrace("Create OpenApi Url Tree node",
+                    _telemetryClient?.TrackTrace("Create OpenApi Url Tree node",
                                                 SeverityLevel.Information,
                                                 OpenApiTraceProperties);
 
@@ -258,7 +258,7 @@ namespace OpenAPIService
             Utils.CheckArgumentNullOrEmpty(relativeUrl, nameof(relativeUrl));
             Utils.CheckArgumentNullOrEmpty(label, nameof(label));
 
-            _telemetryClient.TrackTrace($"Start fetching an OpenApiOperation array for a given url path '{relativeUrl}' from an OpenApiUrlTreeNode",
+            _telemetryClient?.TrackTrace($"Start fetching an OpenApiOperation array for a given url path '{relativeUrl}' from an OpenApiUrlTreeNode",
                                         SeverityLevel.Information,
                                         OpenApiTraceProperties);
 
