@@ -22,6 +22,8 @@ using System.Text;
 using OpenAPIService.Common;
 using UriMatchingService;
 using UtilityService;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 
 namespace OpenAPIService
 {
@@ -38,12 +40,32 @@ namespace OpenAPIService
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
         private static UriTemplateMatcher _uriTemplateTable = new UriTemplateMatcher();
         private static IDictionary<int, OpenApiOperation[]> _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
+        private static readonly IDictionary<string, string> OpenApiTraceProperties = new Dictionary<string, string> { { "OpenApi", "Fetch" } };
+        private static readonly object _telemetrySetLock = new();
+        private static TelemetryClient _telemetryClient;
+
+        public static TelemetryClient TelemetryClient
+        {
+            set
+            {
+                lock (_telemetrySetLock)
+                {
+                    if (_telemetryClient == null)
+                    {
+                        _telemetryClient = value;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Create partial document based on provided predicate
         /// </summary>
         public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, string graphVersion, Func<OpenApiOperation, bool> predicate)
         {
+            _telemetryClient?.TrackTrace("Creating subset document based on provided predicate",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
 
             var subset = new OpenApiDocument
             {
@@ -106,6 +128,10 @@ namespace OpenAPIService
 
             CopyReferences(subset);
 
+            _telemetryClient?.TrackTrace("Finished creating subset document",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
+
             return subset;
         }
 
@@ -121,6 +147,10 @@ namespace OpenAPIService
         public static async Task<Func<OpenApiOperation, bool>> CreatePredicate(string operationIds, string tags, string url,
             OpenApiDocument source, bool forceRefresh = false)
         {
+            _telemetryClient?.TrackTrace("Creating a predicate based on the passed query params",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
+
             if (url != null && (operationIds != null || tags != null))
             {
                 throw new InvalidOperationException("Cannot filter by url and either operationIds and tags at the same time.");
@@ -166,6 +196,10 @@ namespace OpenAPIService
                     _uriTemplateTable = new UriTemplateMatcher();
                     _openApiOperationsTable = new Dictionary<int, OpenApiOperation[]>();
 
+                    _telemetryClient?.TrackTrace("Reload the document from source if forceRefresh is true else, refresh to populate the reference table",
+                                                 SeverityLevel.Information,
+                                                 OpenApiTraceProperties);
+
                     await PopulateReferenceTablesAync(source);
                 }
 
@@ -191,6 +225,9 @@ namespace OpenAPIService
                 throw new InvalidOperationException("Either operationIds, tags or url need to be specified.");
             }
 
+            _telemetryClient?.TrackTrace("Finished creating a predicate",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
             return predicate;
         }
 
@@ -203,6 +240,11 @@ namespace OpenAPIService
         private static Task PopulateReferenceTablesAync(OpenApiDocument source)
 		{
 			HashSet<string> uniqueUrlsTable = new HashSet<string>(); // to ensure unique url path entries in the UriTemplate table
+
+            _telemetryClient?.TrackTrace("Start seeding the _uriTemplateTable with Graph url paths and _openApiOperationsTable with the respective " +
+                                         "OpenApiOperations for the url paths",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
 
             int count = 0;
 
@@ -217,10 +259,17 @@ namespace OpenAPIService
 
                     OpenApiOperation[] operations = path.Value.Operations.Values.ToArray();
                     _openApiOperationsTable.Add(count, operations);
-                }
-            }
 
-			return Task.CompletedTask;
+
+                }
+
+            }
+            _telemetryClient?.TrackTrace("Finished seeding the tables",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
+
+
+            return Task.CompletedTask;
 		}
 
 		/// <summary>
@@ -231,6 +280,10 @@ namespace OpenAPIService
 		/// <returns>A memory stream.</returns>
 		public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
+            _telemetryClient?.TrackTrace("Serializing the subset document",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
+
             var stream = new MemoryStream();
             var sr = new StreamWriter(stream);
             OpenApiWriterBase writer;
@@ -270,6 +323,11 @@ namespace OpenAPIService
             }
             sr.Flush();
             stream.Position = 0;
+
+            _telemetryClient?.TrackTrace("Finished serializing the subset document",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
+
             return stream;
         }
 
@@ -285,8 +343,16 @@ namespace OpenAPIService
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
             {
+                _telemetryClient?.TrackTrace("Fetch an OpenApi document from the cache",
+                                             SeverityLevel.Information,
+                                             OpenApiTraceProperties);
+
                 return doc;
             }
+
+            _telemetryClient?.TrackTrace("Fetch an OpenApi document from the source",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties); 
 
             OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;
@@ -301,6 +367,10 @@ namespace OpenAPIService
         /// <returns>An OpenAPI doc with the respective style applied.</returns>
         public static OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument)
         {
+            _telemetryClient?.TrackTrace($"Applying style for '{style}'",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
+
             if (style == OpenApiStyle.GEAutocomplete)
             {
                 // Clone doc before making changes
@@ -349,6 +419,10 @@ namespace OpenAPIService
                 throw new ArgumentException("No paths found for the supplied parameters.");
             }
 
+            _telemetryClient?.TrackTrace($"Finished applying style for '{style}'",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
+
             return subsetOpenApiDocument;
         }
 
@@ -381,6 +455,10 @@ namespace OpenAPIService
         /// <returns>An OpenAPI document.</returns>
         public static async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl)
         {
+            _telemetryClient?.TrackTrace("Convert the CSDL stream to an OpenApi document",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
+
             using var reader = new StreamReader(csdl);
             var csdlTxt = await reader.ReadToEndAsync();
             var edmModel = CsdlReader.Parse(XElement.Parse(csdlTxt).CreateReader());
@@ -401,6 +479,11 @@ namespace OpenAPIService
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
             document = FixReferences(document);
+
+            _telemetryClient?.TrackTrace("Conversion complete..",
+                                         SeverityLevel.Information,
+                                         OpenApiTraceProperties);
+
             return document;
         }
 
