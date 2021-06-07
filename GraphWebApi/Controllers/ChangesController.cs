@@ -22,7 +22,6 @@ namespace GraphWebApi.Controllers
     [ApiController]
     public class ChangesController : ControllerBase
     {
-        private ChangesService.Services.ChangesService _changesService;
         private readonly IChangesStore _changesStore;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientUtility _httpClientUtility;
@@ -73,7 +72,6 @@ namespace GraphWebApi.Controllers
                 _telemetry?.TrackTrace($"Request to fetch changelog records for the requested culture info '{cultureInfo}'",
                                         SeverityLevel.Information,
                                         ChangesTraceProperties);
-
                 // Fetch the changelog records
                 var changeLog = await _changesStore.FetchChangeLogRecordsAsync(cultureInfo);
 
@@ -90,7 +88,7 @@ namespace GraphWebApi.Controllers
                         GraphVersion = graphVersion
                     };
 
-                    changeLog = _changesService
+                    changeLog = ChangesService.Services.ChangesService
                                     .FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
                 }
                 else
@@ -104,7 +102,6 @@ namespace GraphWebApi.Controllers
                     _telemetry?.TrackTrace($"Search options not found in: requestUrl, workload, daysRange, startDate, endDate properties of changelog records",
                                            SeverityLevel.Error,
                                            ChangesTraceProperties);
-
                     // Filtered items yielded no result
                     return NotFound();
                 }

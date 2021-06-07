@@ -10,13 +10,6 @@ namespace ChangesService.Test
 {
     public class ChangeLogRecordsModelShould
     {
-        private Services.ChangesService _changesService;
-
-        public ChangeLogRecordsModelShould()
-        {
-            _changesService = new Services.ChangesService();
-        }
-
         [Fact]
         public void UpdateTotalItemsOnChangeLogsPropertySetter()
         {
@@ -99,7 +92,7 @@ namespace ChangesService.Test
         /// <param name="variableDate">Optional. CreatedDateTime value for Reports
         /// workload.</param>
         /// <returns>Sample <see cref="ChangeLogRecords"/></returns>
-        public ChangeLogRecords GetChangeLogRecords(string variableDate = "2020-12-31T00:00:00.000Z")
+        public static ChangeLogRecords GetChangeLogRecords(string variableDate = "2020-12-31T00:00:00.000Z")
         {
             // variableDate param will be used for specifying custom CreatedDateTime
             // value for Reports workload
@@ -165,7 +158,7 @@ namespace ChangesService.Test
 
             changeLogRecords = changeLogRecords.Replace("variableDate", variableDate);
 
-            return _changesService.DeserializeChangeLogRecords(changeLogRecords);
+            return Services.ChangesService.DeserializeChangeLogRecords(changeLogRecords);
         }
     }
 }
