@@ -69,6 +69,7 @@ namespace GraphWebApi.Controllers
                     return NotFound();
                 }
 
+                _samplesTraceProperties.Add("Count", "SamplesCount");
                 _telemetry?.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
                                       SeverityLevel.Information,
                                       _samplesTraceProperties);
@@ -348,6 +349,7 @@ namespace GraphWebApi.Controllers
                 sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
             }
 
+            _samplesTraceProperties.Add("Count", "SamplesCount");
             _telemetry?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
                                   SeverityLevel.Information,
                                   _samplesTraceProperties);

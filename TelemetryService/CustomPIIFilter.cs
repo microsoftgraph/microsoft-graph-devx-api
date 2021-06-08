@@ -102,7 +102,14 @@ namespace TelemetryService
 
             if (item is TraceTelemetry trace)
             {
-                SanitizeTelemetry(trace: trace);
+                /* Count properties contain custom
+                 * numerical telemetry not required to
+                 * be sanitized.
+                 */
+                if (!trace.Properties.ContainsKey("Count"))
+                {
+                    SanitizeTelemetry(trace: trace);
+                }
             }
 
             _next.Process(item);
