@@ -38,10 +38,9 @@ namespace OpenAPIService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<Uri, OpenApiDocument>();
         private static OpenApiUrlTreeNode _openApiRootNode = OpenApiUrlTreeNode.Create();
-        private static readonly IDictionary<string, string> OpenApiTraceProperties = new Dictionary<string, string> { { "OpenApi", "Fetch" } };
+        private static readonly IDictionary<string, string> _openApiTraceProperties = new Dictionary<string, string> { { "OpenApi", "OpenApiService" } };
         private static readonly object _telemetrySetLock = new();
         private static TelemetryClient _telemetryClient;
-
         public static TelemetryClient TelemetryClient
         {
             set
@@ -66,9 +65,9 @@ namespace OpenAPIService
         /// <returns>A partial OpenAPI document.</returns>
         public static OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, string graphVersion, Func<OpenApiOperation, bool> predicate)
         {
-            _telemetryClient?.TrackTrace("Creating subset OpenApi document based on the provided predicate",
+            _telemetryClient?.TrackTrace("Creating subset OpenApi document",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             var subset = new OpenApiDocument
             {
@@ -133,7 +132,7 @@ namespace OpenAPIService
 
             _telemetryClient?.TrackTrace("Finished creating subset OpenApi document",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             return subset;
         }
@@ -151,9 +150,10 @@ namespace OpenAPIService
         public static Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags, string url,
             OpenApiDocument source, string graphVersion = "v1.0", bool forceRefresh = false)
         {
-            _telemetryClient?.TrackTrace("Creating a predicate based on the passed query params",
+            string predicateSource = null;
+            _telemetryClient?.TrackTrace("Creating predicate",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             if (url != null && (operationIds != null || tags != null))
             {
@@ -176,6 +176,8 @@ namespace OpenAPIService
                     var operationIdsArray = operationIds.Split(',');
                     predicate = (o) => operationIdsArray.Contains(o.OperationId);
                 }
+
+                predicateSource = $"operationIds: {operationIds}";
             }
             else if (tags != null)
             {
@@ -190,20 +192,34 @@ namespace OpenAPIService
                 {
                     predicate = (o) => o.Tags.Any(t => tagsArray.Contains(t.Name));
                 }
+
+                predicateSource = $"tags: {tags}";
             }
             else if (url != null)
             {
                 if (forceRefresh)
                 {
-                    _telemetryClient?.TrackTrace("Create OpenApi Url Tree node",
+                    _telemetryClient?.TrackTrace($"{nameof(forceRefresh)} requested; creating new OpenApiUrlTreeNode",
                                                 SeverityLevel.Information,
-                                                OpenApiTraceProperties);
+                                                _openApiTraceProperties);
 
                     _openApiRootNode = CreateOpenApiUrlTreeNode(source, graphVersion);
+
+                    _telemetryClient?.TrackTrace("Finished creating new OpenApiUrlTreeNode",
+                                                SeverityLevel.Information,
+                                                _openApiTraceProperties);
                 }
                 else if (!_openApiRootNode.PathItems.ContainsKey(graphVersion))
                 {
+                    _telemetryClient?.TrackTrace($"Attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
+                                               SeverityLevel.Information,
+                                               _openApiTraceProperties);
+
                     _openApiRootNode.Attach(source, graphVersion);
+
+                    _telemetryClient?.TrackTrace($"Finished attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
+                                                SeverityLevel.Information,
+                                                _openApiTraceProperties);
                 }
 
                 url = url.BaseUriPath()
@@ -220,15 +236,17 @@ namespace OpenAPIService
                 string[] operationIdsArray = openApiOps.Select(x => x.OperationId).ToArray();
 
                 predicate = (o) => operationIdsArray.Contains(o.OperationId);
+
+                predicateSource = $"url: {url}";
             }
             else
             {
                 throw new InvalidOperationException("Either operationIds, tags or url need to be specified.");
             }
 
-            _telemetryClient?.TrackTrace("Finished creating a predicate",
+            _telemetryClient?.TrackTrace($"Finished creating predicate for {predicateSource}",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
             return predicate;
         }
 
@@ -258,9 +276,9 @@ namespace OpenAPIService
             Utils.CheckArgumentNullOrEmpty(relativeUrl, nameof(relativeUrl));
             Utils.CheckArgumentNullOrEmpty(label, nameof(label));
 
-            _telemetryClient?.TrackTrace($"Start fetching an OpenApiOperation array for a given url path '{relativeUrl}' from an OpenApiUrlTreeNode",
+            _telemetryClient?.TrackTrace($"Fetching OpenApiOperations for url path '{relativeUrl}' from the OpenApiUrlTreeNode",
                                         SeverityLevel.Information,
-                                        OpenApiTraceProperties);
+                                        _openApiTraceProperties);
 
             if (relativeUrl.Equals("/", StringComparison.Ordinal))
             {
@@ -281,6 +299,7 @@ namespace OpenAPIService
              * with the corresponding OpenApiUrlTreeNode target child segment.
              */
             int parameterNameOffset = 0;
+            bool matchFound = false;
 
             for (int i = 0; i < urlSegments?.Length; i++)
             {
@@ -337,11 +356,25 @@ namespace OpenAPIService
                     {
                         operations = targetChild.PathItems[label].Operations.Values.ToArray();
                     }
+
+                    matchFound = true;
                 }
             }
-            _telemetryClient?.TrackTrace($"Finished fetching an OpenApiOperation array for a given url path '{relativeUrl}' from an OpenApiUrlTreeNode",
-                                         SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+
+            if (matchFound)
+            {
+                _telemetryClient?.TrackTrace($"Finished fetching OpenApiOperations for url path '{relativeUrl}' from the OpenApiUrlTreeNode." +
+                                             $"Matched path: {targetChild.Path}",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
+            }
+            else
+            {
+
+                _telemetryClient?.TrackTrace($"No match found in the OpenApiUrlTreeNode for url '{relativeUrl}'",
+                                SeverityLevel.Information,
+                                _openApiTraceProperties);
+            }
 
             return operations;
         }
@@ -354,9 +387,9 @@ namespace OpenAPIService
 		/// <returns>A memory stream.</returns>
 		public static MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
-            _telemetryClient?.TrackTrace("Serializing the subset document",
+            _telemetryClient?.TrackTrace($"Serializing the subset OpenApiDocument document for '{styleOptions.OpenApiFormat}' format",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             var stream = new MemoryStream();
             var sr = new StreamWriter(stream);
@@ -398,9 +431,9 @@ namespace OpenAPIService
             sr.Flush();
             stream.Position = 0;
 
-            _telemetryClient?.TrackTrace("Finished serializing the subset document",
+            _telemetryClient?.TrackTrace($"Finished serializing the subset OpenApiDocument document for '{styleOptions.OpenApiFormat}' format",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             return stream;
         }
@@ -417,16 +450,16 @@ namespace OpenAPIService
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
             {
-                _telemetryClient?.TrackTrace("Fetch an OpenApi document from the cache",
+                _telemetryClient?.TrackTrace("Fetch the OpenApi document from the in-memory cache",
                                              SeverityLevel.Information,
-                                             OpenApiTraceProperties);
+                                             _openApiTraceProperties);
 
                 return doc;
             }
 
-            _telemetryClient?.TrackTrace("Fetch an OpenApi document from the source",
+            _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;
@@ -443,7 +476,7 @@ namespace OpenAPIService
         {
             _telemetryClient?.TrackTrace($"Applying style for '{style}'",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             if (style == OpenApiStyle.GEAutocomplete)
             {
@@ -495,7 +528,7 @@ namespace OpenAPIService
 
             _telemetryClient?.TrackTrace($"Finished applying style for '{style}'",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             return subsetOpenApiDocument;
         }
@@ -529,9 +562,9 @@ namespace OpenAPIService
         /// <returns>An OpenAPI document.</returns>
         public static async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl)
         {
-            _telemetryClient?.TrackTrace("Convert the CSDL stream to an OpenApi document",
+            _telemetryClient?.TrackTrace("Converting CSDL stream to an OpenApi document",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             using var reader = new StreamReader(csdl);
             var csdlTxt = await reader.ReadToEndAsync();
@@ -554,9 +587,9 @@ namespace OpenAPIService
 
             document = FixReferences(document);
 
-            _telemetryClient?.TrackTrace("Conversion of CSDL stream to an OpenApi document complete",
+            _telemetryClient?.TrackTrace("Finished converting CSDL stream to an OpenApi document",
                                          SeverityLevel.Information,
-                                         OpenApiTraceProperties);
+                                         _openApiTraceProperties);
 
             return document;
         }

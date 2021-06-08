@@ -27,7 +27,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetry;
-        private static readonly IDictionary<string, string> OpenApiTraceProperties = new Dictionary<string, string> { { "OpenApi", "Fetch" } };
+        private static readonly IDictionary<string, string> _openApiTraceProperties = new Dictionary<string, string> { { "OpenApi", "OpenApiController" } };
 
         public OpenApiController(IConfiguration configuration, TelemetryClient telemetry)
         {
@@ -88,21 +88,21 @@ namespace GraphWebApi.Controllers
             catch (InvalidOperationException invalidOps)
             {
                 _telemetry?.TrackException(invalidOps,
-                                        OpenApiTraceProperties);
+                                           _openApiTraceProperties);
 
                 return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (ArgumentException argException)
             {
                 _telemetry?.TrackException(argException,
-                                        OpenApiTraceProperties);
+                                           _openApiTraceProperties);
 
                 return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
                 _telemetry?.TrackException(ex,
-                                        OpenApiTraceProperties);
+                                           _openApiTraceProperties);
 
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
@@ -152,21 +152,21 @@ namespace GraphWebApi.Controllers
             catch (InvalidOperationException invalidOps)
             {
                 _telemetry?.TrackException(invalidOps,
-                                        OpenApiTraceProperties);
+                                           _openApiTraceProperties);
 
                 return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (ArgumentException argException)
             {
                 _telemetry?.TrackException(argException,
-                                        OpenApiTraceProperties);
+                                           _openApiTraceProperties);
 
                 return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
                 _telemetry?.TrackException(ex,
-                                        OpenApiTraceProperties);
+                                           _openApiTraceProperties);
 
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
@@ -200,21 +200,21 @@ namespace GraphWebApi.Controllers
             catch (InvalidOperationException invalidOps)
             {
                 _telemetry?.TrackException(invalidOps,
-                                        OpenApiTraceProperties);
+                                           _openApiTraceProperties);
 
                 return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (ArgumentException argException)
             {
                 _telemetry?.TrackException(argException,
-                                        OpenApiTraceProperties);
+                                           _openApiTraceProperties);
 
                 return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
                 _telemetry?.TrackException(ex,
-                                        OpenApiTraceProperties);
+                                           _openApiTraceProperties);
 
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
