@@ -178,11 +178,15 @@ namespace GraphWebApi.Controllers
             }
             catch (InvalidOperationException invalidOpsException)
             {
+                _telemetry.TrackException(invalidOpsException,
+                                         SamplesTraceProperties);
                 // sample query with provided id not found
                 return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
+                _telemetry.TrackException(exception,
+                                         SamplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -241,6 +245,8 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception exception)
             {
+                _telemetry.TrackException(exception,
+                                         SamplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -306,11 +312,15 @@ namespace GraphWebApi.Controllers
             }
             catch (InvalidOperationException invalidOpsException)
             {
+                _telemetry.TrackException(invalidOpsException,
+                                        SamplesTraceProperties);
                 // Sample query with provided id not found
                 return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
+                _telemetry.TrackException(exception,
+                                          SamplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }

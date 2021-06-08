@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Services;
 using OpenAPIService;
 using OpenAPIService.Common;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
@@ -26,9 +27,9 @@ namespace GraphWebApi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetry;
+        private static readonly IDictionary<string, string> OpenApiTraceProperties = new Dictionary<string, string> { { "OpenApi", "Fetch" } };
 
-        public OpenApiController(IConfiguration configuration,
-                                 TelemetryClient telemetry)
+        public OpenApiController(IConfiguration configuration, TelemetryClient telemetry)
         {
             _configuration = configuration;
             _telemetry = telemetry;
@@ -62,7 +63,12 @@ namespace GraphWebApi.Controllers
 
                 OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
+                var predicate = OpenApiService.CreatePredicate(operationIds: operationIds,
+                                                               tags: tags,
+                                                               url: url,
+                                                               source: source,
+                                                               graphVersion: styleOptions.GraphVersion,
+                                                               forceRefresh: forceRefresh);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
@@ -79,16 +85,25 @@ namespace GraphWebApi.Controllers
                     return new FileStreamResult(stream, "application/json");
                 }
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException invalidOps)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+                _telemetry?.TrackException(invalidOps,
+                                        OpenApiTraceProperties);
+
+                return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException argException)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
+                _telemetry?.TrackException(argException,
+                                        OpenApiTraceProperties);
+
+                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
+                _telemetry?.TrackException(ex,
+                                        OpenApiTraceProperties);
+
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -110,16 +125,14 @@ namespace GraphWebApi.Controllers
             {
                 OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-                string graphUri = GetVersionUri(styleOptions.GraphVersion);
-
-                if (graphUri == null)
-                {
-                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
-                }
-
                 OpenApiDocument source = await OpenApiService.ConvertCsdlToOpenApiAsync(Request.Body);
 
-                var predicate = await OpenApiService.CreatePredicate(operationIds, tags, url, source, forceRefresh);
+                var predicate = OpenApiService.CreatePredicate(operationIds: operationIds,
+                                                                     tags: tags,
+                                                                     url: url,
+                                                                     source: source,
+                                                                     graphVersion: styleOptions.GraphVersion,
+                                                                     forceRefresh: forceRefresh);
 
                 var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
@@ -136,16 +149,25 @@ namespace GraphWebApi.Controllers
                     return new FileStreamResult(stream, "application/json");
                 }
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException invalidOps)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+                _telemetry?.TrackException(invalidOps,
+                                        OpenApiTraceProperties);
+
+                return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException argException)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
+                _telemetry?.TrackException(argException,
+                                        OpenApiTraceProperties);
+
+                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
+                _telemetry?.TrackException(ex,
+                                        OpenApiTraceProperties);
+
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -175,16 +197,25 @@ namespace GraphWebApi.Controllers
 
                 return new EmptyResult();
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException invalidOps)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+                _telemetry?.TrackException(invalidOps,
+                                        OpenApiTraceProperties);
+
+                return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException argException)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
+                _telemetry?.TrackException(argException,
+                                        OpenApiTraceProperties);
+
+                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
+                _telemetry?.TrackException(ex,
+                                        OpenApiTraceProperties);
+
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
