@@ -62,11 +62,12 @@ namespace GraphWebApi.Controllers
 
             try
             {
-                _telemetry.TrackTrace($"Processing request payload and generate a snippet for '{lang}'",
+                using HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false);
+
+                _telemetry.TrackTrace($"Processing the request payload: '{requestPayload}'",
                                     SeverityLevel.Information,
                                     _snippetsTraceProperties);
 
-                using HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false);
                 var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
 
                 _telemetry.TrackTrace("Finished generating a code snippet",
