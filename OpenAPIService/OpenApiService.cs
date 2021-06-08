@@ -450,7 +450,7 @@ namespace OpenAPIService
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
             {
-                _telemetryClient?.TrackTrace("Fetch the OpenApi document from the in-memory cache",
+                _telemetryClient?.TrackTrace("Fetch the OpenApi document from the cache",
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
 
