@@ -22,7 +22,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly IPermissionsStore _permissionsStore;
         private readonly TelemetryClient _telemetry;
-        private readonly IDictionary<string, string> PermissionsTraceProperties = new Dictionary<string, string> { { "Permissions", "Fetch" } };
+        private readonly IDictionary<string, string> _permissionsTraceProperties = new Dictionary<string, string> { { "Permissions", "PermissionsController" } };
 
         public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, TelemetryClient telemetry)
         {
@@ -44,7 +44,7 @@ namespace GraphWebApi.Controllers
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
                 _telemetry?.TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
                                   SeverityLevel.Information,
-                                  PermissionsTraceProperties);
+                                  _permissionsTraceProperties);
 
                 List<ScopeInformation> result = null;
 
@@ -69,14 +69,14 @@ namespace GraphWebApi.Controllers
 
                 _telemetry?.TrackTrace($"Fetched {result.Count} permissions",
                                       SeverityLevel.Information,
-                                      PermissionsTraceProperties);
+                                      _permissionsTraceProperties);
 
                 return result == null ? NotFound() : Ok(result);
             }
             catch (ArgumentNullException argNullException)
             {
                 _telemetry?.TrackException(argNullException,
-                                          PermissionsTraceProperties);
+                                          _permissionsTraceProperties);
                 return new JsonResult(argNullException.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (Exception exception)
@@ -84,7 +84,7 @@ namespace GraphWebApi.Controllers
                 // Any 'InvalidOperationException' will also be caught here - these are classified as error 500
 
                 _telemetry?.TrackException(exception,
-                                          PermissionsTraceProperties);
+                                          _permissionsTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }

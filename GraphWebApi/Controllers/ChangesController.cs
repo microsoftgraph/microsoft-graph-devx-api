@@ -26,7 +26,7 @@ namespace GraphWebApi.Controllers
         private readonly IConfiguration _configuration;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly TelemetryClient _telemetry;
-        private readonly IDictionary<string, string> ChangesTraceProperties = new Dictionary<string, string> { { "Changes", "Fetch" } };
+        private readonly IDictionary<string, string> _changesTraceProperties = new Dictionary<string, string> { { "Changes", "ChangesController" } };
 
 
         public ChangesController(IChangesStore changesStore, IConfiguration configuration,
@@ -71,7 +71,7 @@ namespace GraphWebApi.Controllers
 
                 _telemetry?.TrackTrace($"Request to fetch changelog records for the requested culture info '{cultureInfo}'",
                                         SeverityLevel.Information,
-                                        ChangesTraceProperties);
+                                        _changesTraceProperties);
                 // Fetch the changelog records
                 var changeLog = await _changesStore.FetchChangeLogRecordsAsync(cultureInfo);
 
@@ -101,32 +101,32 @@ namespace GraphWebApi.Controllers
                 {
                     _telemetry?.TrackTrace($"Search options not found in: requestUrl, workload, daysRange, startDate, endDate properties of changelog records",
                                            SeverityLevel.Error,
-                                           ChangesTraceProperties);
+                                           _changesTraceProperties);
                     // Filtered items yielded no result
                     return NotFound();
                 }
 
                 _telemetry?.TrackTrace($"Fetched {changeLog.CurrentItems} changes",
                                          SeverityLevel.Information,
-                                         ChangesTraceProperties);
+                                         _changesTraceProperties);
                 return Ok(changeLog);
             }
             catch (InvalidOperationException invalidOpsException)
             {
                 _telemetry?.TrackException(invalidOpsException,
-                                          ChangesTraceProperties);
+                                          _changesTraceProperties);
                 return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
             catch (ArgumentException argException)
             {
                 _telemetry?.TrackException(argException,
-                                          ChangesTraceProperties);
+                                          _changesTraceProperties);
                 return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
                 _telemetry?.TrackException(exception,
-                                          ChangesTraceProperties);
+                                          _changesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
