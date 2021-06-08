@@ -6,6 +6,8 @@ using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
 using CodeSnippetsReflection.LanguageGenerators;
 using System.Collections.Generic;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 
 namespace CodeSnippetsReflection
 {
@@ -14,6 +16,8 @@ namespace CodeSnippetsReflection
     /// </summary>
     public class SnippetsGenerator : ISnippetsGenerator
     {
+        private readonly TelemetryClient _telemetry;
+        private readonly IDictionary<string, string> _snippetsTraceProperties = new Dictionary<string, string> { { "Snippets", "SnippetsGenerator" } };
         public static HashSet<string> SupportedLanguages = new HashSet<string>
         {
             "c#",
@@ -98,6 +102,10 @@ namespace CodeSnippetsReflection
         /// <returns>String of snippet generated</returns>
         public string ProcessPayloadRequest(HttpRequestMessage httpRequestMessage, string language)
         {
+            _telemetry.TrackTrace($"Generating code snippet for '{language}' from payload",
+                                  SeverityLevel.Information,
+                                  _snippetsTraceProperties);
+
             var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(httpRequestMessage.RequestUri);
             var snippetModel = new SnippetModel(httpRequestMessage, serviceRootUri.AbsoluteUri, edmModel);
 
@@ -120,7 +128,6 @@ namespace CodeSnippetsReflection
 
                 default:
                     throw new Exception("Invalid Language selected");
-
             }
         }
 
