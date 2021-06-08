@@ -32,7 +32,7 @@ namespace GraphExplorerPermissionsService
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetry;
-        private readonly IDictionary<string, string> PermissionsTraceProperties = new Dictionary<string, string> { { "Permissions", "PermissionsStore" } };
+        private readonly IDictionary<string, string> _permissionsTraceProperties = new Dictionary<string, string> { { "Permissions", "PermissionsStore" } };
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
@@ -88,7 +88,7 @@ namespace GraphExplorerPermissionsService
             {
                 _telemetry?.TrackTrace($"Seeding permissions table from file source '{permissionFilePath}'",
                                   SeverityLevel.Information,
-                                  PermissionsTraceProperties);
+                                  _permissionsTraceProperties);
 
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, permissionFilePath);
                 string jsonString = _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
@@ -131,7 +131,7 @@ namespace GraphExplorerPermissionsService
 
             _telemetry?.TrackTrace("Finished seeding permissions tables",
                                   SeverityLevel.Information,
-                                  PermissionsTraceProperties);
+                                  _permissionsTraceProperties);
         }
 
         /// <summary>
@@ -143,14 +143,14 @@ namespace GraphExplorerPermissionsService
         {
             _telemetry?.TrackTrace($"Retrieving permissions for locale '{locale}' from in-memory cache 'ScopesInfoList_{locale}'",
                                    SeverityLevel.Information,
-                                   PermissionsTraceProperties);
+                                   _permissionsTraceProperties);
 
             var scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", cacheEntry =>
             {
                 _telemetry?.TrackTrace($"In-memory cache 'ScopesInfoList_{locale}' empty. " +
                                        $"Seeding permissions for locale '{locale}' from Azure blob resource",
                                        SeverityLevel.Information,
-                                       PermissionsTraceProperties);
+                                       _permissionsTraceProperties);
 
                 /* Localized copy of permissions descriptions
                    is to be seeded by only one executing thread.
@@ -172,7 +172,7 @@ namespace GraphExplorerPermissionsService
                         string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
                         _telemetry?.TrackTrace($"Successfully seeded permissions for locale '{locale}' from Azure blob resource",
                                                SeverityLevel.Information,
-                                               PermissionsTraceProperties);
+                                               _permissionsTraceProperties);
 
                         seededScopesInfoDictionary = CreateScopesInformationTables(scopesInfoJson);
                         cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
@@ -183,12 +183,12 @@ namespace GraphExplorerPermissionsService
                         _telemetry?.TrackTrace($"In-memory cache 'ScopesInfoList_{locale}' of permissions " +
                                                $"already seeded by a concurrently running thread",
                                                SeverityLevel.Information,
-                                               PermissionsTraceProperties);
+                                               _permissionsTraceProperties);
                     }
 
                     _telemetry?.TrackTrace(sourceMsg,
                                            SeverityLevel.Information,
-                                           PermissionsTraceProperties);
+                                           _permissionsTraceProperties);
 
                     return Task.FromResult(seededScopesInfoDictionary);
                 }
@@ -210,7 +210,7 @@ namespace GraphExplorerPermissionsService
         {
             _telemetry?.TrackTrace($"Retrieving permissions for locale '{locale}' from GitHub repository",
                                    SeverityLevel.Information,
-                                   PermissionsTraceProperties);
+                                   _permissionsTraceProperties);
 
             string host = _configuration["BlobStorage:GithubHost"];
             string repo = _configuration["BlobStorage:RepoName"];
@@ -227,7 +227,7 @@ namespace GraphExplorerPermissionsService
 
             _telemetry?.TrackTrace($"Return permissions for locale '{locale}' from GitHub repository",
                                    SeverityLevel.Information,
-                                   PermissionsTraceProperties);
+                                   _permissionsTraceProperties);
 
             return scopesInformationDictionary;
         }
@@ -257,13 +257,13 @@ namespace GraphExplorerPermissionsService
             {
                 _telemetry?.TrackTrace($"{nameof(scopesInfoJson)} empty or null when creating the scopes information tables",
                                        SeverityLevel.Error,
-                                       PermissionsTraceProperties);
+                                       _permissionsTraceProperties);
                 return null;
             }
 
             _telemetry?.TrackTrace("Creating the scopes information tables",
                                    SeverityLevel.Information,
-                                   PermissionsTraceProperties);
+                                   _permissionsTraceProperties);
 
             ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
 
@@ -284,7 +284,7 @@ namespace GraphExplorerPermissionsService
                                    $"Delegated scopes count: {_delegatedScopesInfoTable.Count}. " +
                                    $"Application scopes count: {_applicationScopesInfoTable.Count}",
                                    SeverityLevel.Information,
-                                   PermissionsTraceProperties);
+                                   _permissionsTraceProperties);
 
             return new Dictionary<string, IDictionary<string, ScopeInformation>>
             {
@@ -341,7 +341,7 @@ namespace GraphExplorerPermissionsService
             {
                 _telemetry?.TrackTrace("Fetching all permissions",
                                         SeverityLevel.Information,
-                                        PermissionsTraceProperties);
+                                        _permissionsTraceProperties);
 
                 List<ScopeInformation> scopesListInfo = new List<ScopeInformation>();
 
@@ -368,7 +368,7 @@ namespace GraphExplorerPermissionsService
 
                 _telemetry?.TrackTrace("Return all permissions",
                                         SeverityLevel.Information,
-                                        PermissionsTraceProperties);
+                                        _permissionsTraceProperties);
 
                 return scopesListInfo;
             }
@@ -388,7 +388,7 @@ namespace GraphExplorerPermissionsService
                 {
                     _telemetry?.TrackTrace($"Url '{requestUrl}' not found",
                                             SeverityLevel.Error,
-                                            PermissionsTraceProperties);
+                                            _permissionsTraceProperties);
 
                     return null;
                 }
@@ -405,7 +405,7 @@ namespace GraphExplorerPermissionsService
                 {
                     _telemetry?.TrackTrace($"No '{scopeType}' permissions found for the url '{requestUrl}' and method '{method}'",
                                             SeverityLevel.Error,
-                                            PermissionsTraceProperties);
+                                            _permissionsTraceProperties);
 
                     return null;
                 }
@@ -445,7 +445,7 @@ namespace GraphExplorerPermissionsService
 
                 _telemetry?.TrackTrace($"Return '{scopeType}' permissions for url '{requestUrl}' and method '{method}'",
                                         SeverityLevel.Information,
-                                        PermissionsTraceProperties);
+                                        _permissionsTraceProperties);
 
                 return scopesList;
 
@@ -477,7 +477,7 @@ namespace GraphExplorerPermissionsService
                     {
                         _telemetry?.TrackTrace("Refreshing the permissions table",
                                                 SeverityLevel.Information,
-                                                PermissionsTraceProperties);
+                                                _permissionsTraceProperties);
 
                         SeedPermissionsTables();
                         _permissionsRefreshed = true;
