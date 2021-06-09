@@ -12,6 +12,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using UtilityService;
 
 namespace GraphWebApi.Controllers
 {
@@ -22,7 +23,8 @@ namespace GraphWebApi.Controllers
     {
         private readonly IPermissionsStore _permissionsStore;
         private readonly TelemetryClient _telemetry;
-        private Dictionary<string, string> _permissionsTraceProperties = new Dictionary<string, string> { { "Permissions", "PermissionsController" } };
+        private readonly Dictionary<string, string> _permissionsTraceProperties =
+            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, "PermissionsController" } };
 
         public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, TelemetryClient telemetry)
         {
@@ -67,7 +69,7 @@ namespace GraphWebApi.Controllers
                                                                     method: method);
                 }
 
-                _permissionsTraceProperties.Add("Count", "PermissionsCount");
+                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_Count, "PermissionsCount");
                 _telemetry?.TrackTrace($"Fetched {result.Count} permissions",
                                       SeverityLevel.Information,
                                       _permissionsTraceProperties);

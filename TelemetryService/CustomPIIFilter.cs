@@ -106,7 +106,7 @@ namespace TelemetryService
                  * numerical telemetry not required to
                  * be sanitized.
                  */
-                if (!trace.Properties.ContainsKey("Count"))
+                if (!trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_Count))
                 {
                     SanitizeTelemetry(trace: trace);
                 }
