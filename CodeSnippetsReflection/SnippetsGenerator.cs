@@ -95,19 +95,19 @@ namespace CodeSnippetsReflection
         }
 
         /// <summary>
-        /// Entry point to generate snippets from the payload 
+        /// Entry point to generate snippets from the payload
         /// </summary>
         /// <param name="language"></param>
         /// <param name="httpRequestMessage"></param>
         /// <returns>String of snippet generated</returns>
         public string ProcessPayloadRequest(HttpRequestMessage httpRequestMessage, string language)
         {
-            _telemetry.TrackTrace($"Generating code snippet for '{language}' from payload",
-                                  SeverityLevel.Information,
-                                  _snippetsTraceProperties);
-
             var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(httpRequestMessage.RequestUri);
             var snippetModel = new SnippetModel(httpRequestMessage, serviceRootUri.AbsoluteUri, edmModel);
+
+            _telemetry.TrackTrace($"Generating code snippet for '{language}' from the request payload",
+                                  SeverityLevel.Information,
+                                  _snippetsTraceProperties);
 
             switch (language.ToLower())
             {
