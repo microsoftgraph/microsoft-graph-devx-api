@@ -59,11 +59,7 @@ namespace GraphWebApi.Controllers
                                                                     method: method);
                 }
 
-                return result == null ? NotFound() : (IActionResult)Ok(result);
-            }
-            catch (InvalidOperationException invalidOpsException)
-            {
-                return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+                return result == null ? NotFound() : Ok(result);
             }
             catch (ArgumentNullException argNullException)
             {
@@ -71,6 +67,8 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception exception)
             {
+                // Any 'InvalidOperationException' will also be caught here - these are classified as error 500
+
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }

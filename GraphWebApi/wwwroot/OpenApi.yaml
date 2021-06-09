@@ -1,10 +1,12 @@
 openapi: 3.0.3
 info:
   title: "DevX API"
-  version: "20210415.1"
+  version: "20210528.1"
 servers:
   - url: https://graphexplorerapi.azurewebsites.net/
     description: Main server
+  - url: https://graphexplorerapi-staging.azurewebsites.net/
+    description: Staging server
   - url: https://localhost:44399/
     description: Local test server
   - url: https://localhost:5001/
