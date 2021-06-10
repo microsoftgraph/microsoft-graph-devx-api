@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using UtilityService;
 
 namespace GraphExplorerSamplesService.Services
 {
@@ -28,7 +29,8 @@ namespace GraphExplorerSamplesService.Services
         private readonly IMemoryCache _samplesCache;
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetry;
-        private readonly IDictionary<string, string> SamplesTraceProperties = new Dictionary<string, string> { { "Samples", "SamplesStore" } };
+        private readonly IDictionary<string, string> SamplesTraceProperties =
+            new Dictionary<string, string> { { UtilityConstants.TelemetryPropertyKey_Samples, "SamplesStore" } };
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;

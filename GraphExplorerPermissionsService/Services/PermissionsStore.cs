@@ -32,7 +32,8 @@ namespace GraphExplorerPermissionsService
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetry;
-        private readonly IDictionary<string, string> _permissionsTraceProperties = new Dictionary<string, string> { { "Permissions", "PermissionsStore" } };
+        private readonly Dictionary<string, string> _permissionsTraceProperties =
+            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, "PermissionsStore" } };
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
@@ -50,10 +51,9 @@ namespace GraphExplorerPermissionsService
         private const string NullValueError = "Value cannot be null";
 
         public PermissionsStore(IConfiguration configuration, IHttpClientUtility httpClientUtility,
-                                IFileUtility fileUtility, IMemoryCache permissionsCache,
-                                TelemetryClient telemetry = null)
+                                IFileUtility fileUtility, IMemoryCache permissionsCache)
         {
-            _telemetry = telemetry;
+           // _telemetry = telemetry;
             _configuration = configuration
                ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }: { nameof(configuration) }");
             _permissionsCache = permissionsCache

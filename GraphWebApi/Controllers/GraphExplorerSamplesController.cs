@@ -16,6 +16,7 @@ using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using UtilityService;
 
 namespace GraphWebApi.Controllers
 {
@@ -24,7 +25,8 @@ namespace GraphWebApi.Controllers
     {
         private readonly ISamplesStore _samplesStore;
         private readonly TelemetryClient _telemetry;
-        private readonly IDictionary<string, string> _samplesTraceProperties = new Dictionary<string, string> { { "Samples", "SamplesController" } };
+        private readonly Dictionary<string, string> _samplesTraceProperties =
+            new() { { UtilityConstants.TelemetryPropertyKey_Samples, "SamplesController" } };
 
         public GraphExplorerSamplesController(ISamplesStore samplesStore, TelemetryClient telemetry)
         {
@@ -69,7 +71,7 @@ namespace GraphWebApi.Controllers
                     return NotFound();
                 }
 
-                _samplesTraceProperties.Add("Count", "SamplesCount");
+                _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_Count, "SamplesCount");
                 _telemetry?.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
                                       SeverityLevel.Information,
                                       _samplesTraceProperties);

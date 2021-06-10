@@ -65,6 +65,7 @@
     <ProjectReference Include="..\GraphExplorerSamplesService\GraphExplorerSamplesService.csproj" />
     <ProjectReference Include="..\OpenAPIService\OpenAPIService.csproj" />
     <ProjectReference Include="..\TelemetryService\TelemetryService.csproj" />
+    <ProjectReference Include="..\UtilityService\UtilityService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
