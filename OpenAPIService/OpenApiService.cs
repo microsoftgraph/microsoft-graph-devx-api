@@ -168,8 +168,11 @@ namespace OpenAPIService
                     _openApiRootNode = CreateOpenApiUrlSpaceNode(source, graphVersion);
 
                     // TESTING GROUNDS
-                    var betaSource = GetOpenApiDocumentFromFile(@"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Expanded\GraphOpenApiDescriptions_v1 (Expanded).yaml");
-                    _openApiRootNode.Attach(betaSource, "extended");
+                    var v1 = @"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Expanded\GraphOpenApiDescriptions_v1 (Expanded)_1.yaml";
+                    var beta = @"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Expanded\GraphOpenApiDescriptions_beta (Expanded)_5.yaml";
+
+                    var betaSource = GetOpenApiDocumentFromFile(v1);
+                     _openApiRootNode.Attach(betaSource, "extended");
 
                     //using var stream = new MemoryStream();
                     //RenderJSON(_openApiRootNode, stream);
@@ -387,7 +390,10 @@ namespace OpenAPIService
                 return doc;
             }
 
-            OpenApiDocument source = GetOpenApiDocumentFromFile(@"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Original\GraphOpenApiDescriptions_v1.yaml"); // await CreateOpenApiDocumentAsync(csdlHref);
+            var v1 = @"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Original\GraphOpenApiDescriptions_v1_1.yaml";
+            var beta = @"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Original\GraphOpenApiDescriptions_beta_test2.yaml";
+
+            OpenApiDocument source = GetOpenApiDocumentFromFile(v1); // await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
