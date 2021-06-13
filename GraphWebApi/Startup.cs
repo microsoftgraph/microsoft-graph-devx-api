@@ -25,6 +25,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using TelemetryService;
+using UtilityService;
 
 namespace GraphWebApi
 {
@@ -56,7 +57,33 @@ namespace GraphWebApi
                            ValidIssuer = Configuration["AzureAd:Issuer"]
                        };
                    });
+
+            #region AppInsights
+
+            services.AddApplicationInsightsTelemetry(options =>
+            {
+                options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
+                options.RequestCollectionOptions.InjectResponseHeaders = true;
+                options.RequestCollectionOptions.TrackExceptions = true;
+                options.EnableAuthenticationTrackingJavaScript = false;
+                options.EnableHeartbeat = true;
+                options.EnableAdaptiveSampling = true;    // Control volume of telemetry sent to AppInsights
+                options.EnableQuickPulseMetricStream = true;   // Enable Live Metrics stream
+                options.EnableDebugLogger = true;
+
+            });
+            services.AddApplicationInsightsTelemetryProcessor<CustomPIIFilter>();
+
+            if (!_env.IsDevelopment())
+            {
+                services.ConfigureTelemetryModule<QuickPulseTelemetryModule>((module, o) =>
+                    module.AuthenticationApiKey = Configuration["ApplicationInsights:AppInsightsApiKey"]);
+            }
+
+            #endregion
+
             services.AddMemoryCache();
+            services.AddSingleton<TelemetryClientUtility>();
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
@@ -83,29 +110,6 @@ namespace GraphWebApi
                 options.DefaultRequestCulture = new RequestCulture("en");
                 options.SupportedCultures = supportedCultures;
             });
-
-            #region AppInsights
-
-            services.AddApplicationInsightsTelemetry(options =>
-            {
-                options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
-                options.RequestCollectionOptions.InjectResponseHeaders = true;
-                options.RequestCollectionOptions.TrackExceptions = true;
-                options.EnableAuthenticationTrackingJavaScript = false;
-                options.EnableHeartbeat = true;
-                options.EnableAdaptiveSampling = true;    // Control volume of telemetry sent to AppInsights
-                options.EnableQuickPulseMetricStream = true;   // Enable Live Metrics stream
-                options.EnableDebugLogger = true;
-            });
-            services.AddApplicationInsightsTelemetryProcessor<CustomPIIFilter>();
-
-            if (!_env.IsDevelopment())
-            {
-                services.ConfigureTelemetryModule<QuickPulseTelemetryModule>((module, o) =>
-                    module.AuthenticationApiKey = Configuration["ApplicationInsights:AppInsightsApiKey"]);
-            }
-
-            #endregion
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -132,6 +136,8 @@ namespace GraphWebApi
             // Localization
             var localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value;
             app.UseRequestLocalization(localizationOptions);
+
+            app.ApplicationServices.GetService<TelemetryClientUtility>();
 
             app.UseEndpoints(endpoints =>
             {

@@ -2,15 +2,20 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using Microsoft.ApplicationInsights;
+
 namespace UtilityService
 {
     /// <summary>
-    /// Provides commonly used reusable constants.
+    /// Provides access to a singleton instance of a <see cref="Microsoft.ApplicationInsights.TelemetryClient"/>.
     /// </summary>
-    public static class UtilityConstants
+    public sealed class TelemetryClientUtility
     {
-        public const string TelemetryPropertyKey_Count = "Count";
-        public const string TelemetryPropertyKey_Permissions = "Permissions";
-        public const string TelemetryPropertyKey_Samples = "Samples";
+        public static TelemetryClient TelemetryClient { get; private set; }
+
+        public TelemetryClientUtility(TelemetryClient telemetryClient)
+        {
+            TelemetryClient = telemetryClient;
+        }
     }
 }
