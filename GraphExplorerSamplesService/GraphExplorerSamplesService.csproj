@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FileService\FileService.csproj" />
+    <ProjectReference Include="..\TelemetryClientFactory\TelemetryClientWrapper.csproj" />
     <ProjectReference Include="..\UtilityService\UtilityService.csproj" />
   </ItemGroup>
 
