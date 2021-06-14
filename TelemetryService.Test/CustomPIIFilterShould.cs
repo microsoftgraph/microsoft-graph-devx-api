@@ -12,14 +12,14 @@ namespace TelemetrySanitizerService.Test
 {
     public class CustomPIIFilterShould
     {
-        private readonly CustomPIIFilter _telemetryProcessor;
+        private readonly CustomPIIFilter _telemetryClientProcessor;
         private readonly IPermissionsStore _permissionsStore;
         private const string ConfigFilePath = ".\\TestFiles\\Permissions\\appsettings.json";
 
         public CustomPIIFilterShould()
         {
             _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(ConfigFilePath);
-            _telemetryProcessor = new CustomPIIFilter(new TestProcessorNext(), _permissionsStore);
+            _telemetryClientProcessor = new CustomPIIFilter(new TestProcessorNext(), _permissionsStore);
         }
 
         [Fact]
@@ -31,7 +31,7 @@ namespace TelemetrySanitizerService.Test
         [Fact]
         public void ThrowsArgumentNullExceptionIfPermissionsStoreArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: _telemetryProcessor, permissionsStore: null));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: _telemetryClientProcessor, permissionsStore: null));
         }
 
         [Theory]
@@ -56,7 +56,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -88,7 +88,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -118,7 +118,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -148,7 +148,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -178,7 +178,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -249,7 +249,7 @@ namespace TelemetrySanitizerService.Test
             };
 
             // Act
-            _telemetryProcessor.Process(request);
+            _telemetryClientProcessor.Process(request);
 
             // Assert
             Assert.Equal(expectedUrl, request.Url.ToString());
@@ -269,7 +269,7 @@ namespace TelemetrySanitizerService.Test
             };
 
             // Act
-            _telemetryProcessor.Process(trace);
+            _telemetryClientProcessor.Process(trace);
 
             // Assert
             Assert.Equal(expectedMsg, trace.Message);

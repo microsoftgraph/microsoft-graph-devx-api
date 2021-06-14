@@ -32,7 +32,7 @@ namespace GraphWebApi.Controllers
         public ChangesController(IChangesStore changesStore, IConfiguration configuration,
                                  IHttpClientUtility httpClientUtility, TelemetryClient telemetry)
         {
-            _telemetry = telemetry;
+            _telemetryClient = telemetry;
             _changesStore = changesStore;
             _configuration = configuration;
             _httpClientUtility = httpClientUtility;
@@ -69,7 +69,7 @@ namespace GraphWebApi.Controllers
                 var cultureFeature = HttpContext.Features.Get<IRequestCultureFeature>();
                 var cultureInfo = cultureFeature.RequestCulture.Culture;
 
-                _telemetry?.TrackTrace($"Request to fetch changelog records for the requested culture info '{cultureInfo}'",
+                _telemetryClient?.TrackTrace($"Request to fetch changelog records for the requested culture info '{cultureInfo}'",
                                         SeverityLevel.Information,
                                         _changesTraceProperties);
                 // Fetch the changelog records
@@ -99,33 +99,33 @@ namespace GraphWebApi.Controllers
 
                 if (!changeLog.ChangeLogs.Any())
                 {
-                    _telemetry?.TrackTrace($"Search options not found in: requestUrl, workload, daysRange, startDate, endDate properties of changelog records",
+                    _telemetryClient?.TrackTrace($"Search options not found in: requestUrl, workload, daysRange, startDate, endDate properties of changelog records",
                                            SeverityLevel.Error,
                                            _changesTraceProperties);
                     // Filtered items yielded no result
                     return NotFound();
                 }
 
-                _telemetry?.TrackTrace($"Fetched {changeLog.CurrentItems} changes",
+                _telemetryClient?.TrackTrace($"Fetched {changeLog.CurrentItems} changes",
                                          SeverityLevel.Information,
                                          _changesTraceProperties);
                 return Ok(changeLog);
             }
             catch (InvalidOperationException invalidOpsException)
             {
-                _telemetry?.TrackException(invalidOpsException,
+                _telemetryClient?.TrackException(invalidOpsException,
                                           _changesTraceProperties);
                 return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
             catch (ArgumentException argException)
             {
-                _telemetry?.TrackException(argException,
+                _telemetryClient?.TrackException(argException,
                                           _changesTraceProperties);
                 return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
-                _telemetry?.TrackException(exception,
+                _telemetryClient?.TrackException(exception,
                                           _changesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
