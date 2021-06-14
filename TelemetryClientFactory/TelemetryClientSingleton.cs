@@ -12,7 +12,6 @@ namespace TelemetryClientWrapper
     /// </summary>
     public sealed class TelemetryClientSingleton
     {
-        private readonly object _lock = new();
         public static TelemetryClient TelemetryClient { get; private set; }
 
         public TelemetryClientSingleton(TelemetryClient telemetryClient)
@@ -21,13 +20,7 @@ namespace TelemetryClientWrapper
 
             if (TelemetryClient == null)
             {
-                lock (_lock)
-                {
-                    if (TelemetryClient == null)
-                    {
-                        TelemetryClient = telemetryClient;
-                    }
-                }
+                TelemetryClient = telemetryClient;
             }
         }
     }
