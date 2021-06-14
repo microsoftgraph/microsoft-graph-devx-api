@@ -98,13 +98,16 @@ namespace GraphExplorerPermissionsService
 
                     if (permissionsObject.Count < 1)
                     {
-                        _telemetryClient?.TrackTrace("The permissions data source cannot be empty",
-                                              SeverityLevel.Information,
-                                              _permissionsTraceProperties);
-
-                        throw new InvalidOperationException("The permissions data sources cannot be empty." +
+                        var message = "The permissions data sources cannot be empty." +
                             "Check the source file or check whether the file path is properly set. File path: " +
-                            $"{relativePermissionPath}");
+                            $"{relativePermissionPath}";
+
+                        TelemetryClientSingleton.TelemetryClient?
+                            .TrackTrace(message,
+                            SeverityLevel.Error,
+                            _permissionsTraceProperties);
+
+                        throw new InvalidOperationException(message);                        
                     }
 
                     JToken apiPermissions = permissionsObject.First.First;
