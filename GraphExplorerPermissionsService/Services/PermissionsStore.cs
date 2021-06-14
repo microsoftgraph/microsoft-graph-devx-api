@@ -107,7 +107,7 @@ namespace GraphExplorerPermissionsService
                             SeverityLevel.Error,
                             _permissionsTraceProperties);
 
-                        throw new InvalidOperationException(message);                        
+                        throw new InvalidOperationException(message);
                     }
 
                     JToken apiPermissions = permissionsObject.First.First;
