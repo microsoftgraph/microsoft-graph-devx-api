@@ -42,9 +42,10 @@ namespace GraphWebApi.Controllers
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
-                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
-                                  SeverityLevel.Information,
-                                  _permissionsTraceProperties);
+                TelemetryClientSingleton.TelemetryClient?
+                    .TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
+                                SeverityLevel.Information,
+                                _permissionsTraceProperties);
 
                 List<ScopeInformation> result = null;
 
@@ -68,9 +69,10 @@ namespace GraphWebApi.Controllers
                 }
 
                 _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_Count, "PermissionsCount");
-                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Fetched {result.Count} permissions",
-                                      SeverityLevel.Information,
-                                      _permissionsTraceProperties);
+                TelemetryClientSingleton.TelemetryClient?
+                    .TrackTrace($"Fetched {result.Count} permissions",
+                                SeverityLevel.Information,
+                                _permissionsTraceProperties);
 
                 return result == null ? NotFound() : Ok(result);
             }

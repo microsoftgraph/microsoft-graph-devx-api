@@ -63,16 +63,18 @@ namespace GraphWebApi.Controllers
 
                 if (filteredSampleQueries.Count == 0)
                 {
-                    TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Search value: '{search}' not found in: category, humanName or tip properties of sample queries",
-                                          SeverityLevel.Error,
-                                          _samplesTraceProperties);
+                    TelemetryClientSingleton.TelemetryClient?
+                        .TrackTrace($"Search value: '{search}' not found in: category, humanName or tip properties of sample queries",
+                                    SeverityLevel.Error,
+                                    _samplesTraceProperties);
                     return NotFound();
                 }
 
                 _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_Count, "SamplesCount");
-                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
-                                      SeverityLevel.Information,
-                                      _samplesTraceProperties);
+                TelemetryClientSingleton.TelemetryClient?
+                    .TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
+                                   SeverityLevel.Information,
+                                   _samplesTraceProperties);
                 return Ok(filteredSampleQueries);
             }
             catch (Exception exception)
@@ -104,9 +106,10 @@ namespace GraphWebApi.Controllers
 
                 if (sampleQueryById == null)
                 {
-                    TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Sample query with id: {id} doesn't exist in the list of sample queries",
-                                          SeverityLevel.Error,
-                                          _samplesTraceProperties);
+                    TelemetryClientSingleton.TelemetryClient?
+                        .TrackTrace($"Sample query with id: {id} doesn't exist in the list of sample queries",
+                                    SeverityLevel.Error,
+                                    _samplesTraceProperties);
                     return NotFound();
                 }
 
@@ -335,9 +338,10 @@ namespace GraphWebApi.Controllers
         private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string org, string branchName)
         {
             string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
-            TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Request to fetch samples for locale '{locale}'",
-                                  SeverityLevel.Information,
-                                  _samplesTraceProperties);
+            TelemetryClientSingleton.TelemetryClient?.
+                TrackTrace($"Request to fetch samples for locale '{locale}'",
+                           SeverityLevel.Information,
+                           _samplesTraceProperties);
 
             SampleQueriesList sampleQueriesList;
             if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
@@ -350,9 +354,10 @@ namespace GraphWebApi.Controllers
             }
 
             _samplesTraceProperties.Add("Count", "SamplesCount");
-            TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
-                                  SeverityLevel.Information,
-                                  _samplesTraceProperties);
+            TelemetryClientSingleton.TelemetryClient?
+                .TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
+                            SeverityLevel.Information,
+                            _samplesTraceProperties);
 
             return sampleQueriesList;
         }
