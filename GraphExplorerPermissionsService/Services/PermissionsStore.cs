@@ -47,10 +47,10 @@ namespace GraphExplorerPermissionsService
         private const string ScopesInfoBlobConfig = "BlobStorage:Blobs:Permissions:Descriptions";
         private const string PermissionsNamesBlobConfig = "BlobStorage:Blobs:Permissions:Names";
         private const string PermissionsContainerBlobConfig = "BlobStorage:Containers:Permissions";
-        private const string NullValueError = "Value cannot be null";        
+        private const string NullValueError = "Value cannot be null";
 
         public PermissionsStore(IConfiguration configuration, IHttpClientUtility httpClientUtility,
-                                IFileUtility fileUtility, IMemoryCache permissionsCache, TelemetryClient telemetryClient)
+                                IFileUtility fileUtility, IMemoryCache permissionsCache)
         {
             _configuration = configuration
                ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }: { nameof(configuration) }");
