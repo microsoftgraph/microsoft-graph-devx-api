@@ -24,8 +24,8 @@ using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPuls
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
-using TelemetryService;
-using UtilityService;
+using TelemetrySanitizerService;
+using TelemetryClientWrapper;
 
 namespace GraphWebApi
 {
@@ -83,7 +83,7 @@ namespace GraphWebApi
             #endregion
 
             services.AddMemoryCache();
-            services.AddSingleton<TelemetryClientUtility>();
+            services.AddSingleton<TelemetryClientSingleton>();
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
@@ -137,7 +137,7 @@ namespace GraphWebApi
             var localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value;
             app.UseRequestLocalization(localizationOptions);
 
-            app.ApplicationServices.GetService<TelemetryClientUtility>();
+            app.ApplicationServices.GetService<TelemetryClientSingleton>();
 
             app.UseEndpoints(endpoints =>
             {

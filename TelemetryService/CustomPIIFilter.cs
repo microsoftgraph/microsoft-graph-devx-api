@@ -13,7 +13,7 @@ using System.Web;
 using UriMatchingService;
 using UtilityService;
 
-namespace TelemetryService
+namespace TelemetrySanitizerService
 
 {
     /// <summary>

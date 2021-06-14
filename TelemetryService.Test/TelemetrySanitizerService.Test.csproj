@@ -34,7 +34,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MockTestUtility\MockTestUtility.csproj" />
-    <ProjectReference Include="..\TelemetryService\TelemetryService.csproj" />
+    <ProjectReference Include="..\TelemetryService\TelemetrySanitizerService.csproj" />
   </ItemGroup>
 
 </Project>

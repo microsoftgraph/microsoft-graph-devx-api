@@ -5,7 +5,7 @@
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
 
-namespace TelemetryService.Test
+namespace TelemetrySanitizerService.Test
 {
     public class TestProcessorNext : ITelemetryProcessor
     {

@@ -3,19 +3,32 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.ApplicationInsights;
+using UtilityService;
 
-namespace UtilityService
+namespace TelemetryClientWrapper
 {
     /// <summary>
     /// Provides access to a singleton instance of a <see cref="Microsoft.ApplicationInsights.TelemetryClient"/>.
     /// </summary>
-    public sealed class TelemetryClientUtility
+    public sealed class TelemetryClientSingleton
     {
+        private readonly object _lock = new();
         public static TelemetryClient TelemetryClient { get; private set; }
 
-        public TelemetryClientUtility(TelemetryClient telemetryClient)
+        public TelemetryClientSingleton(TelemetryClient telemetryClient)
         {
-            TelemetryClient = telemetryClient;
+            UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
+
+            if (TelemetryClient == null)
+            {
+                lock (_lock)
+                {
+                    if (TelemetryClient == null)
+                    {
+                        TelemetryClient = telemetryClient;
+                    }
+                }
+            }
         }
     }
 }
