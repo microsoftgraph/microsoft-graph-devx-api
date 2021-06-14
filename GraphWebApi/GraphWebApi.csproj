@@ -64,7 +64,8 @@
     <ProjectReference Include="..\GraphExplorerPermissionsService\GraphExplorerPermissionsService.csproj" />
     <ProjectReference Include="..\GraphExplorerSamplesService\GraphExplorerSamplesService.csproj" />
     <ProjectReference Include="..\OpenAPIService\OpenAPIService.csproj" />
-    <ProjectReference Include="..\TelemetryService\TelemetryService.csproj" />
+    <ProjectReference Include="..\TelemetryClientFactory\TelemetryClientWrapper.csproj" />
+    <ProjectReference Include="..\TelemetryService\TelemetrySanitizerService.csproj" />
     <ProjectReference Include="..\UtilityService\UtilityService.csproj" />
   </ItemGroup>
 

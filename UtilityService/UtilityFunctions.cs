@@ -6,7 +6,10 @@ using System;
 
 namespace UtilityService
 {
-    public static class Utils
+    /// <summary>
+    /// Provides commonly used utility functions
+    /// </summary>
+    public static class UtilityFunctions
     {
         /// <summary>
         /// Check whether the input argument value is null or not.

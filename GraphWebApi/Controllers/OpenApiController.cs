@@ -27,13 +27,12 @@ namespace GraphWebApi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetry;
-        private static readonly IDictionary<string, string> _openApiTraceProperties = new Dictionary<string, string> { { "OpenApi", "OpenApiController" } };
+        private static readonly Dictionary<string, string> _openApiTraceProperties = new() { { "OpenApi", "OpenApiController" } };
 
         public OpenApiController(IConfiguration configuration, TelemetryClient telemetry)
         {
             _configuration = configuration;
             _telemetry = telemetry;
-            OpenApiService.TelemetryClient = telemetry;
         }
 
         [Route("openapi")]

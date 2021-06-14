@@ -6,11 +6,9 @@ using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.ApplicationInsights.DataContracts;
 using MockTestUtility;
 using System;
-using TelemetryService;
-using TelemetryService.Test;
 using Xunit;
 
-namespace Telemetry.Test
+namespace TelemetrySanitizerService.Test
 {
     public class CustomPIIFilterShould
     {

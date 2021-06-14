@@ -26,7 +26,7 @@ namespace GraphWebApi.Controllers
         private readonly IConfiguration _configuration;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly TelemetryClient _telemetry;
-        private readonly IDictionary<string, string> _changesTraceProperties = new Dictionary<string, string> { { "Changes", "ChangesController" } };
+        private readonly Dictionary<string, string> _changesTraceProperties = new() { { "Changes", "ChangesController" } };
 
 
         public ChangesController(IChangesStore changesStore, IConfiguration configuration,

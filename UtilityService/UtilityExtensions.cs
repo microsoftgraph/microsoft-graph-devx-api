@@ -8,9 +8,9 @@ using System.Text.RegularExpressions;
 namespace UtilityService
 {
     /// <summary>
-    /// Provides common utility functions.
+    /// Provides commonly used extension methods.
     /// </summary>
-    public static class Extensions
+    public static class UtilityExtensions
     {
         /// <summary>
         /// Strips out the query path from a uri string.

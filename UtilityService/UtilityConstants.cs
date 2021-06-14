@@ -5,7 +5,7 @@
 namespace UtilityService
 {
     /// <summary>
-    /// Provides reusable constants.
+    /// Provides commonly used reusable constants.
     /// </summary>
     public static class UtilityConstants
     {
