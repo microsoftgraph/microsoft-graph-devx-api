@@ -6,9 +6,9 @@ using System.IO;
 using CodeSnippetsReflection;
 using GraphWebApi.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.ApplicationInsights;
 using System.Collections.Generic;
 using Microsoft.ApplicationInsights.DataContracts;
+using TelemetryClientWrapper;
 
 namespace GraphWebApi.Controllers
 {
@@ -18,23 +18,21 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSnippetsController : ControllerBase
     {
         private readonly ISnippetsGenerator _snippetGenerator;
-        private readonly TelemetryClient _telemetryClient;
         private readonly IDictionary<string, string> _snippetsTraceProperties = new Dictionary<string, string> { { "Snippets", "SnippetsController" } };
 
-        public GraphExplorerSnippetsController(ISnippetsGenerator snippetGenerator, TelemetryClient telemetry)
+        public GraphExplorerSnippetsController(ISnippetsGenerator snippetGenerator)
         {
             _snippetGenerator = snippetGenerator;
-            _telemetryClient = telemetry;
         }
 
-        //Default Service Page GET 
+        //Default Service Page GET
         [HttpGet]
         [Produces("application/json")]
         public IActionResult Get(string arg)
         {
             if(string.IsNullOrWhiteSpace(arg))
             {
-                _telemetryClient.TrackTrace("Fetching code snippet",
+                TelemetryClientSingleton.TelemetryClient?.TrackTrace("Fetching code snippet",
                                       SeverityLevel.Information,
                                       _snippetsTraceProperties);
 
@@ -43,7 +41,7 @@ namespace GraphWebApi.Controllers
             }
             else
             {
-                _telemetryClient.TrackTrace($"Fetching snippet based on '{arg}'",
+                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Fetching snippet based on '{arg}'",
                                     SeverityLevel.Information,
                                     _snippetsTraceProperties);
                 string result = "Graph Explorer Snippets Generator";
@@ -64,13 +62,13 @@ namespace GraphWebApi.Controllers
             {
                 using HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false);
 
-                _telemetryClient.TrackTrace($"Processing the request payload: '{requestPayload}'",
+                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Processing the request payload: '{requestPayload}'",
                                     SeverityLevel.Information,
                                     _snippetsTraceProperties);
 
                 var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
 
-                _telemetryClient.TrackTrace("Finished generating a code snippet",
+                TelemetryClientSingleton.TelemetryClient?.TrackTrace("Finished generating a code snippet",
                                     SeverityLevel.Information,
                                     _snippetsTraceProperties);
 
@@ -78,7 +76,7 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception e)
             {
-                _telemetryClient.TrackException(e,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(e,
                                         _snippetsTraceProperties);
                 return new BadRequestObjectResult(e.Message);
             }

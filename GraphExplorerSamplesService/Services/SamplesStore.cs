@@ -6,7 +6,6 @@ using FileService.Common;
 using FileService.Interfaces;
 using GraphExplorerSamplesService.Interfaces;
 using GraphExplorerSamplesService.Models;
-using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using TelemetryClientWrapper;
 using UtilityService;
 
 namespace GraphExplorerSamplesService.Services
@@ -28,7 +28,6 @@ namespace GraphExplorerSamplesService.Services
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _samplesCache;
         private readonly IConfiguration _configuration;
-        private readonly TelemetryClient _telemetry;
         private readonly Dictionary<string, string> SamplesTraceProperties =
             new() { { UtilityConstants.TelemetryPropertyKey_Samples, "SamplesStore" } };
         private readonly string _sampleQueriesContainerName;
@@ -37,10 +36,8 @@ namespace GraphExplorerSamplesService.Services
         private const string NullValueError = "Value cannot be null";
 
         public SamplesStore(IConfiguration configuration, IHttpClientUtility httpClientUtility,
-                            IFileUtility fileUtility, IMemoryCache samplesCache,
-                            TelemetryClient telemetry = null)
+                            IFileUtility fileUtility, IMemoryCache samplesCache)
         {
-            _telemetryClient = telemetry;
             _configuration = configuration
                 ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }: { nameof(configuration) }");
             _httpClientUtility = httpClientUtility
@@ -62,7 +59,7 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
         public async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale)
         {
-            _telemetryClient?.TrackTrace($"Retrieving sample queries list for locale '{locale}' from in-memory cache '{locale}'",
+            TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Retrieving sample queries list for locale '{locale}' from in-memory cache '{locale}'",
                                    SeverityLevel.Information,
                                    SamplesTraceProperties);
 
@@ -71,7 +68,7 @@ namespace GraphExplorerSamplesService.Services
             // Fetch cached sample queries
             SampleQueriesList sampleQueriesList = await _samplesCache.GetOrCreateAsync(locale, cacheEntry =>
             {
-                _telemetryClient?.TrackTrace($"In-memory cache '{locale}' empty. " +
+                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"In-memory cache '{locale}' empty. " +
                                        $"Seeding sample queries list from Azure Blob resource",
                                        SeverityLevel.Information,
                                        SamplesTraceProperties);
@@ -87,7 +84,7 @@ namespace GraphExplorerSamplesService.Services
 
                     if (seededSampleQueriesList != null)
                     {
-                        _telemetryClient?.TrackTrace($"In-memory cache '{lockedLocale}' of sample queries list " +
+                        TelemetryClientSingleton.TelemetryClient?.TrackTrace($"In-memory cache '{lockedLocale}' of sample queries list " +
                                                $"already seeded by a concurrently running thread",
                                                SeverityLevel.Information,
                                                SamplesTraceProperties);
@@ -105,7 +102,7 @@ namespace GraphExplorerSamplesService.Services
                     // Get the file contents from source
                     string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
-                    _telemetryClient?.TrackTrace($"Successfully seeded sample queries list for locale '{lockedLocale}' from Azure Blob resource",
+                    TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Successfully seeded sample queries list for locale '{lockedLocale}' from Azure Blob resource",
                                            SeverityLevel.Information,
                                            SamplesTraceProperties);
 
@@ -120,7 +117,7 @@ namespace GraphExplorerSamplesService.Services
                 }
             });
 
-            _telemetryClient?.TrackTrace(sourceMsg,
+            TelemetryClientSingleton.TelemetryClient?.TrackTrace(sourceMsg,
                                    SeverityLevel.Information,
                                    SamplesTraceProperties);
 
@@ -137,7 +134,7 @@ namespace GraphExplorerSamplesService.Services
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
         public async Task<SampleQueriesList> FetchSampleQueriesListAsync(string locale, string org, string branchName)
         {
-            _telemetryClient?.TrackTrace($"Retrieving sample queries list for locale '{locale}' from GitHub repository.",
+            TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Retrieving sample queries list for locale '{locale}' from GitHub repository.",
                                    SeverityLevel.Information,
                                    SamplesTraceProperties);
 
@@ -155,7 +152,7 @@ namespace GraphExplorerSamplesService.Services
 
             string jsonFileContents = await _httpClientUtility.ReadFromDocumentAsync(httpRequestMessage);
 
-            _telemetryClient?.TrackTrace($"Return sample queries list for locale '{locale}' from GitHub repository",
+            TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Return sample queries list for locale '{locale}' from GitHub repository",
                                    SeverityLevel.Information,
                                    SamplesTraceProperties);
 

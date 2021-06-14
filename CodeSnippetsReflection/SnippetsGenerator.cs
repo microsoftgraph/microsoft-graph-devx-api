@@ -6,8 +6,8 @@ using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
 using CodeSnippetsReflection.LanguageGenerators;
 using System.Collections.Generic;
-using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using TelemetryClientWrapper;
 
 namespace CodeSnippetsReflection
 {
@@ -16,7 +16,6 @@ namespace CodeSnippetsReflection
     /// </summary>
     public class SnippetsGenerator : ISnippetsGenerator
     {
-        private readonly TelemetryClient _telemetryClient;
         private readonly IDictionary<string, string> _snippetsTraceProperties = new Dictionary<string, string> { { "Snippets", "SnippetsGenerator" } };
         public static HashSet<string> SupportedLanguages = new HashSet<string>
         {
@@ -105,7 +104,7 @@ namespace CodeSnippetsReflection
             var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(httpRequestMessage.RequestUri);
             var snippetModel = new SnippetModel(httpRequestMessage, serviceRootUri.AbsoluteUri, edmModel);
 
-            _telemetryClient.TrackTrace($"Generating code snippet for '{language}' from the request payload",
+            TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Generating code snippet for '{language}' from the request payload",
                                   SeverityLevel.Information,
                                   _snippetsTraceProperties);
 

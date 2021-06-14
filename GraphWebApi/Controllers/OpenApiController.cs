@@ -3,7 +3,6 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using GraphWebApi.Models;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -16,6 +15,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
+using TelemetryClientWrapper;
 
 namespace GraphWebApi.Controllers
 {
@@ -26,13 +26,11 @@ namespace GraphWebApi.Controllers
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly TelemetryClient _telemetry;
         private static readonly Dictionary<string, string> _openApiTraceProperties = new() { { "OpenApi", "OpenApiController" } };
 
-        public OpenApiController(IConfiguration configuration, TelemetryClient telemetryClient)
+        public OpenApiController(IConfiguration configuration)
         {
             _configuration = configuration;
-            _telemetry = telemetry;
         }
 
         [Route("openapi")]
@@ -86,21 +84,21 @@ namespace GraphWebApi.Controllers
             }
             catch (InvalidOperationException invalidOps)
             {
-                _telemetryClient?.TrackException(invalidOps,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(invalidOps,
                                            _openApiTraceProperties);
 
                 return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (ArgumentException argException)
             {
-                _telemetryClient?.TrackException(argException,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(argException,
                                            _openApiTraceProperties);
 
                 return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
-                _telemetryClient?.TrackException(ex,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(ex,
                                            _openApiTraceProperties);
 
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
@@ -150,21 +148,21 @@ namespace GraphWebApi.Controllers
             }
             catch (InvalidOperationException invalidOps)
             {
-                _telemetryClient?.TrackException(invalidOps,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(invalidOps,
                                            _openApiTraceProperties);
 
                 return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (ArgumentException argException)
             {
-                _telemetryClient?.TrackException(argException,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(argException,
                                            _openApiTraceProperties);
 
                 return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
-                _telemetryClient?.TrackException(ex,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(ex,
                                            _openApiTraceProperties);
 
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
@@ -198,21 +196,21 @@ namespace GraphWebApi.Controllers
             }
             catch (InvalidOperationException invalidOps)
             {
-                _telemetryClient?.TrackException(invalidOps,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(invalidOps,
                                            _openApiTraceProperties);
 
                 return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
             catch (ArgumentException argException)
             {
-                _telemetryClient?.TrackException(argException,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(argException,
                                            _openApiTraceProperties);
 
                 return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
-                _telemetryClient?.TrackException(ex,
+                TelemetryClientSingleton.TelemetryClient?.TrackException(ex,
                                            _openApiTraceProperties);
 
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };

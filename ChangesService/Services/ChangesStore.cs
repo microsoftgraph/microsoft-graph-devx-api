@@ -8,7 +8,6 @@ using ChangesService.Models;
 using FileService.Common;
 using FileService.Extensions;
 using FileService.Interfaces;
-using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +16,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
 using System.Threading.Tasks;
+using TelemetryClientWrapper;
+using UtilityService;
 
 namespace ChangesService.Services
 {
@@ -29,15 +30,14 @@ namespace ChangesService.Services
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changeLogCache;
         private readonly IConfiguration _configuration;
-        private readonly TelemetryClient _telemetryClient;
-        private readonly IDictionary<string, string> _changesTraceProperties = new Dictionary<string, string> { { "Changes", "ChangesStore" } };
+        private readonly Dictionary<string, string> _changesTraceProperties =
+                        new() { { UtilityConstants.TelemetryPropertyKey_Changes, "ChangesStore" } };
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
 
         public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache,
-                            IHttpClientUtility httpClientUtility, TelemetryClient telemetry = null)
+                            IHttpClientUtility httpClientUtility)
         {
-            _telemetryClient = telemetry;
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
                 $"{ ChangesServiceConstants.ValueNullError }: { nameof(configuration) }");
             _changeLogCache = changeLogCache ?? throw new ArgumentNullException(nameof(changeLogCache),
@@ -58,14 +58,14 @@ namespace ChangesService.Services
         {
             var locale = cultureInfo.GetSupportedLocaleVariant().ToLower(); // lowercased in line with source files
 
-            _telemetryClient?.TrackTrace($"Retrieving changelog records for locale '{locale}' from in-memory cache '{locale}'",
+            TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Retrieving changelog records for locale '{locale}' from in-memory cache '{locale}'",
                                    SeverityLevel.Information,
                                    _changesTraceProperties);
 
             // Fetch cached changelog records
             ChangeLogRecords changeLogRecords = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>
             {
-                _telemetryClient?.TrackTrace($"In-memory cache '{locale}' empty. " +
+                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"In-memory cache '{locale}' empty. " +
                                        $"Seeding changelog records for locale '{locale}' from Azure blob resource",
                                        SeverityLevel.Information,
                                        _changesTraceProperties);
@@ -82,7 +82,7 @@ namespace ChangesService.Services
 
                     if (seededChangeLogRecords != null)
                     {
-                        _telemetryClient?.TrackTrace($"In-memory cache '{lockedLocale}' of changelog records " +
+                        TelemetryClientSingleton.TelemetryClient?.TrackTrace($"In-memory cache '{lockedLocale}' of changelog records " +
                                                $"already seeded by a concurrently running thread",
                                                SeverityLevel.Information,
                                                _changesTraceProperties);
@@ -111,7 +111,7 @@ namespace ChangesService.Services
 
                     sourceMsg = $"Successfully seeded changelog records for locale '{lockedLocale}' from source";
 
-                    _telemetryClient?.TrackTrace(sourceMsg,
+                    TelemetryClientSingleton.TelemetryClient?.TrackTrace(sourceMsg,
                                   SeverityLevel.Information,
                                   _changesTraceProperties);
 
