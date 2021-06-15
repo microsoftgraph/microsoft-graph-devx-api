@@ -69,17 +69,17 @@ namespace TelemetrySanitizerService
         private const string ODataFilterOperator = "$filter";
         private const string SecurityMask = "****";
 
-        public CustomPIIFilter(ITelemetryProcessor next, IPermissionsStore permissionsStore)
+        public CustomPIIFilter(ITelemetryProcessor next, UriTemplateMatcher uriTemplateMatcher)
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
 
-            if (permissionsStore == null)
+            if (uriTemplateMatcher == null)
             {
-                throw new ArgumentNullException(nameof(permissionsStore), $"{ permissionsStore }: { nameof(permissionsStore) }");
+                throw new ArgumentNullException(nameof(uriTemplateMatcher), $"{ uriTemplateMatcher }: { nameof(uriTemplateMatcher) }");
             }
 
-            _uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
+            _uriTemplateMatcher = uriTemplateMatcher;
         }
 
         /// <summary>

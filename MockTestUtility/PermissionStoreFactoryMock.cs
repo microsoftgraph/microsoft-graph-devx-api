@@ -47,7 +47,7 @@ namespace MockTestUtility
                                     .AddJsonFile(configFilePath)
                                     .Build();
 
-            return new PermissionsStore(configuration, httpClientUtility, fileUtility, permissionsCache);
+            return new PermissionsStore(configuration, httpClientUtility, fileUtility, permissionsCache, null);
         }
     }
 }

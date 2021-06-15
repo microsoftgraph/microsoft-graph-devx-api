@@ -3,9 +3,13 @@
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using GraphExplorerPermissionsService.Interfaces;
+
 using Microsoft.ApplicationInsights.DataContracts;
+
 using MockTestUtility;
+
 using System;
+
 using Xunit;
 
 namespace TelemetrySanitizerService.Test
@@ -19,19 +23,19 @@ namespace TelemetrySanitizerService.Test
         public CustomPIIFilterShould()
         {
             _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(ConfigFilePath);
-            _telemetryClientProcessor = new CustomPIIFilter(new TestProcessorNext(), _permissionsStore);
+            _telemetryClientProcessor = new CustomPIIFilter(new TestProcessorNext(), _permissionsStore.GetUriTemplateMatcher());
         }
 
         [Fact]
         public void ThrowsArgumentNullExceptionIfNextPocessorArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: null, permissionsStore: _permissionsStore));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: null, _permissionsStore.GetUriTemplateMatcher()));
         }
 
         [Fact]
         public void ThrowsArgumentNullExceptionIfPermissionsStoreArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: _telemetryClientProcessor, permissionsStore: null));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: _telemetryClientProcessor, null));
         }
 
         [Theory]
