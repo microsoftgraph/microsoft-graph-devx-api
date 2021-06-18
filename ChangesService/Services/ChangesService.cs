@@ -6,6 +6,7 @@ using ChangesService.Common;
 using ChangesService.Models;
 using FileService.Common;
 using FileService.Interfaces;
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,18 +15,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using TelemetryClientWrapper;
 
 namespace ChangesService.Services
 {
     /// <summary>
     /// Utility functions for transforming and filtering <see cref="ChangeLogRecords"/> and <see cref="ChangeLog"/> objects.
     /// </summary>
-    public static class ChangesService
+    public class ChangesService
     {
         // Field to hold key-value pairs of url and workload names
         private static readonly Dictionary<string, string> _urlWorkloadDict = new();
         private static readonly Dictionary<string, string> _changesTraceProperties = new() { { "Changes", "ChangesService" } };
+        private static TelemetryClient _telemetryClient;
+
+        public ChangesService(TelemetryClient telemetryClient = null)
+        {
+            _telemetryClient = telemetryClient;
+        }
 
         /// <summary>
         /// Deserializes a <see cref="ChangeLogRecords"/> from a json string.
@@ -61,10 +67,9 @@ namespace ChangesService.Services
                                                               MicrosoftGraphProxyConfigs graphProxyConfigs,
                                                               IHttpClientUtility httpClientUtility = null)
         {
-            TelemetryClientSingleton.TelemetryClient?
-                .TrackTrace("Filtering changelog records",
-                            SeverityLevel.Information,
-                            _changesTraceProperties);
+            _telemetryClient?.TrackTrace("Filtering changelog records",
+                                         SeverityLevel.Information,
+                                         _changesTraceProperties);
 
             string filterType = null;
 
@@ -142,10 +147,9 @@ namespace ChangesService.Services
                 ChangeLogs = enumerableChangeLog.ToList()
             };
 
-            TelemetryClientSingleton.TelemetryClient?
-                .TrackTrace($"Completed filtering changelog records by '{filterType}'",
-                            SeverityLevel.Information,
-                            _changesTraceProperties);
+            _telemetryClient?.TrackTrace($"Completed filtering changelog records by '{filterType}'",
+                                         SeverityLevel.Information,
+                                         _changesTraceProperties);
 
             return PaginateChangeLogRecords(filteredChangeLogRecords, searchOptions);
         }
@@ -249,10 +253,9 @@ namespace ChangesService.Services
                                                                              MicrosoftGraphProxyConfigs graphProxy,
                                                                              IHttpClientUtility httpClientUtility)
         {
-            TelemetryClientSingleton.TelemetryClient?
-                .TrackTrace($"Retrieving workload name for url '{searchOptions.RequestUrl}'",
-                            SeverityLevel.Information,
-                            _changesTraceProperties);
+            _telemetryClient?.TrackTrace($"Retrieving workload name for url '{searchOptions.RequestUrl}'",
+                                         SeverityLevel.Information,
+                                         _changesTraceProperties);
 
             // Pull out the workload name value if it was already cached
             if (_urlWorkloadDict.TryGetValue(searchOptions.RequestUrl, out string workloadValue))
@@ -299,11 +302,10 @@ namespace ChangesService.Services
             // Cache the retrieved workload name
             _urlWorkloadDict.Add(searchOptions.RequestUrl, workloadName);
 
-            TelemetryClientSingleton.TelemetryClient?
-                .TrackTrace($"Finished retrieving workload name for url '{searchOptions.RequestUrl}'. " +
-                            $"Retrieved workload name: {workloadName}",
-                            SeverityLevel.Information,
-                            _changesTraceProperties);
+            _telemetryClient?.TrackTrace($"Finished retrieving workload name for url '{searchOptions.RequestUrl}'. " +
+                                         $"Retrieved workload name: {workloadName}",
+                                         SeverityLevel.Information,
+                                         _changesTraceProperties);
 
             return workloadName;
             // NB: No test coverage for this currently; requires a service call to the Graph proxy url

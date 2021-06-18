@@ -8,7 +8,7 @@ using GraphWebApi.Models;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using Microsoft.ApplicationInsights.DataContracts;
-using TelemetryClientWrapper;
+using Microsoft.ApplicationInsights;
 
 namespace GraphWebApi.Controllers
 {
@@ -19,9 +19,11 @@ namespace GraphWebApi.Controllers
     {
         private readonly ISnippetsGenerator _snippetGenerator;
         private readonly IDictionary<string, string> _snippetsTraceProperties = new Dictionary<string, string> { { "Snippets", "SnippetsController" } };
+        private readonly TelemetryClient _telemetryClient;
 
-        public GraphExplorerSnippetsController(ISnippetsGenerator snippetGenerator)
+        public GraphExplorerSnippetsController(ISnippetsGenerator snippetGenerator, TelemetryClient telemetryClient)
         {
+            _telemetryClient = telemetryClient;
             _snippetGenerator = snippetGenerator;
         }
 
@@ -32,18 +34,18 @@ namespace GraphWebApi.Controllers
         {
             if(string.IsNullOrWhiteSpace(arg))
             {
-                TelemetryClientSingleton.TelemetryClient?.TrackTrace("Fetching code snippet",
-                                      SeverityLevel.Information,
-                                      _snippetsTraceProperties);
+                _telemetryClient?.TrackTrace("Fetching code snippet",
+                                             SeverityLevel.Information,
+                                             _snippetsTraceProperties);
 
                 string result = "Graph Explorer Snippets Generator";
                 return new OkObjectResult(new CodeSnippetResult { Code = "null", StatusCode = false, Message = result, Language = "Default C#" });
             }
             else
             {
-                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Fetching snippet based on '{arg}'",
-                                    SeverityLevel.Information,
-                                    _snippetsTraceProperties);
+                _telemetryClient?.TrackTrace($"Fetching snippet based on '{arg}'",
+                                             SeverityLevel.Information,
+                                             _snippetsTraceProperties);
                 string result = "Graph Explorer Snippets Generator";
                 return new OkObjectResult(new CodeSnippetResult { Code = "null", StatusCode = false, Message = result, Language = "Default C#" });
             }
@@ -62,21 +64,21 @@ namespace GraphWebApi.Controllers
             {
                 using HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false);
 
-                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Processing the request payload: '{requestPayload}'",
-                                    SeverityLevel.Information,
-                                    _snippetsTraceProperties);
+                _telemetryClient?.TrackTrace($"Processing the request payload: '{requestPayload}'",
+                                             SeverityLevel.Information,
+                                             _snippetsTraceProperties);
 
                 var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
 
-                TelemetryClientSingleton.TelemetryClient?.TrackTrace("Finished generating a code snippet",
-                                    SeverityLevel.Information,
-                                    _snippetsTraceProperties);
+                _telemetryClient?.TrackTrace("Finished generating a code snippet",
+                                             SeverityLevel.Information,
+                                             _snippetsTraceProperties);
 
                 return new StringResult(response);
             }
             catch (Exception e)
             {
-                TelemetryClientSingleton.TelemetryClient?.TrackException(e,
+                _telemetryClient?.TrackException(e,
                                         _snippetsTraceProperties);
                 return new BadRequestObjectResult(e.Message);
             }

@@ -8,6 +8,7 @@ using ChangesService.Models;
 using FileService.Common;
 using FileService.Extensions;
 using FileService.Interfaces;
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +17,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
 using System.Threading.Tasks;
-using TelemetryClientWrapper;
 using UtilityService;
 
 namespace ChangesService.Services
@@ -34,10 +34,12 @@ namespace ChangesService.Services
                         new() { { UtilityConstants.TelemetryPropertyKey_Changes, "ChangesStore" } };
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
+        private readonly TelemetryClient _telemetryClient;
 
         public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache,
-                            IHttpClientUtility httpClientUtility)
+                            IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient = null)
         {
+            _telemetryClient = telemetryClient;
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
                 $"{ ChangesServiceConstants.ValueNullError }: { nameof(configuration) }");
             _changeLogCache = changeLogCache ?? throw new ArgumentNullException(nameof(changeLogCache),
@@ -58,17 +60,17 @@ namespace ChangesService.Services
         {
             var locale = cultureInfo.GetSupportedLocaleVariant().ToLower(); // lowercased in line with source files
 
-            TelemetryClientSingleton.TelemetryClient?.TrackTrace($"Retrieving changelog records for locale '{locale}' from in-memory cache '{locale}'",
-                                   SeverityLevel.Information,
-                                   _changesTraceProperties);
+            _telemetryClient?.TrackTrace($"Retrieving changelog records for locale '{locale}' from in-memory cache '{locale}'",
+                                         SeverityLevel.Information,
+                                         _changesTraceProperties);
 
             // Fetch cached changelog records
             ChangeLogRecords changeLogRecords = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>
             {
-                TelemetryClientSingleton.TelemetryClient?.TrackTrace($"In-memory cache '{locale}' empty. " +
-                                       $"Seeding changelog records for locale '{locale}' from Azure blob resource",
-                                       SeverityLevel.Information,
-                                       _changesTraceProperties);
+                _telemetryClient?.TrackTrace($"In-memory cache '{locale}' empty. " +
+                                             $"Seeding changelog records for locale '{locale}' from Azure blob resource",
+                                             SeverityLevel.Information,
+                                             _changesTraceProperties);
 
                 // Localized copy of changes is to be seeded by only one executing thread.
                 lock (_changesLock)
@@ -82,10 +84,10 @@ namespace ChangesService.Services
 
                     if (seededChangeLogRecords != null)
                     {
-                        TelemetryClientSingleton.TelemetryClient?.TrackTrace($"In-memory cache '{lockedLocale}' of changelog records " +
-                                               $"already seeded by a concurrently running thread",
-                                               SeverityLevel.Information,
-                                               _changesTraceProperties);
+                        _telemetryClient?.TrackTrace($"In-memory cache '{lockedLocale}' of changelog records " +
+                                                     $"already seeded by a concurrently running thread",
+                                                     SeverityLevel.Information,
+                                                     _changesTraceProperties);
                         sourceMsg = $"Return changelog records for locale '{lockedLocale}' from in-memory cache '{lockedLocale}'";
 
                         // Already seeded by another thread
@@ -111,9 +113,9 @@ namespace ChangesService.Services
 
                     sourceMsg = $"Successfully seeded changelog records for locale '{lockedLocale}' from source";
 
-                    TelemetryClientSingleton.TelemetryClient?.TrackTrace(sourceMsg,
-                                  SeverityLevel.Information,
-                                  _changesTraceProperties);
+                    _telemetryClient?.TrackTrace(sourceMsg,
+                                                 SeverityLevel.Information,
+                                                 _changesTraceProperties);
 
                     // Return the changelog records from the file contents
                     return Task.FromResult(ChangesService.DeserializeChangeLogRecords(jsonFileContents));

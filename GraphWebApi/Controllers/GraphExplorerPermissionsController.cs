@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
 using GraphWebApi.Common;
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using TelemetryClientWrapper;
 using UtilityService;
 
 namespace GraphWebApi.Controllers
@@ -24,9 +24,11 @@ namespace GraphWebApi.Controllers
         private readonly IPermissionsStore _permissionsStore;
         private readonly Dictionary<string, string> _permissionsTraceProperties =
             new() { { UtilityConstants.TelemetryPropertyKey_Permissions, "PermissionsController" } };
+        private readonly TelemetryClient _telemetryClient;
 
-        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore)
+        public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, TelemetryClient telemetryClient)
         {
+            _telemetryClient = telemetryClient;
             _permissionsStore = permissionsStore;
         }
 
@@ -42,10 +44,9 @@ namespace GraphWebApi.Controllers
             try
             {
                 string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
-                TelemetryClientSingleton.TelemetryClient?
-                    .TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
-                                SeverityLevel.Information,
-                                _permissionsTraceProperties);
+                _telemetryClient?.TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
+                                             SeverityLevel.Information,
+                                             _permissionsTraceProperties);
 
                 List<ScopeInformation> result = null;
 
@@ -69,16 +70,15 @@ namespace GraphWebApi.Controllers
                 }
 
                 _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_Count, "PermissionsCount");
-                TelemetryClientSingleton.TelemetryClient?
-                    .TrackTrace($"Fetched {result.Count} permissions",
-                                SeverityLevel.Information,
-                                _permissionsTraceProperties);
+                _telemetryClient?.TrackTrace($"Fetched {result.Count} permissions",
+                                             SeverityLevel.Information,
+                                             _permissionsTraceProperties);
 
                 return result == null ? NotFound() : Ok(result);
             }
             catch (ArgumentNullException argNullException)
             {
-                TelemetryClientSingleton.TelemetryClient?.TrackException(argNullException,
+                _telemetryClient?.TrackException(argNullException,
                                           _permissionsTraceProperties);
                 return new JsonResult(argNullException.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
@@ -86,7 +86,7 @@ namespace GraphWebApi.Controllers
             {
                 // Any 'InvalidOperationException' will also be caught here - these are classified as error 500
 
-                TelemetryClientSingleton.TelemetryClient?.TrackException(exception,
+                _telemetryClient?.TrackException(exception,
                                           _permissionsTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
