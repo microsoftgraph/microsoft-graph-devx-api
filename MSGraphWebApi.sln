@@ -43,8 +43,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilityService", "UtilitySe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilityService.Test", "UtilityService.Test\UtilityService.Test.csproj", "{0F4A15DC-F4CD-415D-A62D-6B0D95ED25E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TelemetryClientWrapper", "TelemetryClientFactory\TelemetryClientWrapper.csproj", "{128890A7-FEB7-4B30-ACA9-DD77A0EF0309}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,10 +129,6 @@ Global
 		{0F4A15DC-F4CD-415D-A62D-6B0D95ED25E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F4A15DC-F4CD-415D-A62D-6B0D95ED25E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F4A15DC-F4CD-415D-A62D-6B0D95ED25E8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{128890A7-FEB7-4B30-ACA9-DD77A0EF0309}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{128890A7-FEB7-4B30-ACA9-DD77A0EF0309}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{128890A7-FEB7-4B30-ACA9-DD77A0EF0309}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{128890A7-FEB7-4B30-ACA9-DD77A0EF0309}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
