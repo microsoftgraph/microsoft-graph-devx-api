@@ -6,6 +6,7 @@ using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -22,7 +23,7 @@ namespace TelemetrySanitizerService
     public class CustomPIIFilter : ITelemetryProcessor
     {
         private readonly ITelemetryProcessor _next;
-        private readonly UriTemplateMatcher _uriTemplateMatcher;
+        private readonly IServiceProvider _serviceProvider;
 
         private static readonly Regex _guidRegex = new(@"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -69,17 +70,15 @@ namespace TelemetrySanitizerService
         private const string ODataFilterOperator = "$filter";
         private const string SecurityMask = "****";
 
-        public CustomPIIFilter(ITelemetryProcessor next, UriTemplateMatcher uriTemplateMatcher)
+        public CustomPIIFilter(ITelemetryProcessor next, IServiceProvider serviceProvider)
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
-
-            if (uriTemplateMatcher == null)
+            if (serviceProvider == null)
             {
-                throw new ArgumentNullException(nameof(uriTemplateMatcher), $"{ uriTemplateMatcher }: { nameof(uriTemplateMatcher) }");
+                throw new ArgumentNullException(nameof(serviceProvider), $"{ serviceProvider }: { nameof(serviceProvider) }");
             }
-
-            _uriTemplateMatcher = uriTemplateMatcher;
+            _serviceProvider = serviceProvider;
         }
 
         /// <summary>
@@ -159,6 +158,10 @@ namespace TelemetrySanitizerService
         /// <returns>The string url with PII sanitized from its query path.</returns>
         private string SanitizeUrlQueryPath(string url)
         {
+            // use the service provider to lazily get an IPermissionsStore instance
+            var permissionsStore = _serviceProvider.GetRequiredService<IPermissionsStore>();
+            var uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
+            
             const char QueryValSeparator = '&';
             var queryPath = url?.Query();
 
@@ -187,7 +190,8 @@ namespace TelemetrySanitizerService
                     var valueSegment = queryValue[valueIndex..];
                     valueSegment = valueSegment.BaseUriPath()
                                                .UriTemplatePathFormat(true);
-                    var resultMatch = _uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
+
+                    var resultMatch = uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
 
                     if (resultMatch != null)
                     {
