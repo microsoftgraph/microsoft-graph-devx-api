@@ -5,9 +5,9 @@
 using GraphExplorerPermissionsService.Interfaces;
 
 using Microsoft.ApplicationInsights.DataContracts;
-
+using Microsoft.Extensions.DependencyInjection;
 using MockTestUtility;
-
+using Moq;
 using System;
 
 using Xunit;
@@ -17,19 +17,20 @@ namespace TelemetrySanitizerService.Test
     public class CustomPIIFilterShould
     {
         private readonly CustomPIIFilter _telemetryClientProcessor;
-        private readonly IPermissionsStore _permissionsStore;
-        private const string ConfigFilePath = ".\\TestFiles\\Permissions\\appsettings.json";
+        private readonly IServiceProviderMock _serviceProviderMock;
+        private readonly IServiceProvider _serviceProvider;
 
         public CustomPIIFilterShould()
         {
-            _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(ConfigFilePath);
-            _telemetryClientProcessor = new CustomPIIFilter(new TestProcessorNext(), _permissionsStore.GetUriTemplateMatcher());
+            _serviceProviderMock = new IServiceProviderMock();
+            _serviceProvider = _serviceProviderMock.MockServiceProvider();
+            _telemetryClientProcessor = new CustomPIIFilter(new TestProcessorNext(), _serviceProvider);
         }
 
         [Fact]
         public void ThrowsArgumentNullExceptionIfNextPocessorArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: null, _permissionsStore.GetUriTemplateMatcher()));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: null, _serviceProvider));
         }
 
         [Fact]
