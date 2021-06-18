@@ -25,8 +25,6 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using TelemetrySanitizerService;
-using TelemetryClientWrapper;
-using UriMatchingService;
 
 namespace GraphWebApi
 {
@@ -84,14 +82,7 @@ namespace GraphWebApi
             #endregion
 
             services.AddMemoryCache();
-            //services.AddSingleton<TelemetryClientSingleton>();
-            //services.AddTransient<TelemetryClient>();
-            services.AddScoped(provider =>
-            {
-                var permissionStore = provider.GetRequiredService<IPermissionsStore>();
-                var matcher = permissionStore.GetUriTemplateMatcher();
-                return matcher;
-            });
+            
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
