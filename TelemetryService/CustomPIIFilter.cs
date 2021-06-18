@@ -74,11 +74,8 @@ namespace TelemetrySanitizerService
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
-            if (serviceProvider == null)
-            {
-                throw new ArgumentNullException(nameof(serviceProvider), $"{ serviceProvider }: { nameof(serviceProvider) }");
-            }
-            _serviceProvider = serviceProvider;
+            _serviceProvider = serviceProvider 
+                ?? throw new ArgumentNullException(nameof(serviceProvider), $"{ serviceProvider }: { nameof(serviceProvider) }");
         }
 
         /// <summary>
