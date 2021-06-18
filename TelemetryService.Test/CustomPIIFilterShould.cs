@@ -3,37 +3,40 @@
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using GraphExplorerPermissionsService.Interfaces;
+
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.Extensions.DependencyInjection;
 using MockTestUtility;
+using Moq;
 using System;
-using TelemetryService;
-using TelemetryService.Test;
+
 using Xunit;
 
-namespace Telemetry.Test
+namespace TelemetrySanitizerService.Test
 {
     public class CustomPIIFilterShould
     {
-        private readonly CustomPIIFilter _telemetryProcessor;
-        private readonly IPermissionsStore _permissionsStore;
-        private const string ConfigFilePath = ".\\TestFiles\\Permissions\\appsettings.json";
+        private readonly CustomPIIFilter _telemetryClientProcessor;
+        private readonly IServiceProviderMock _serviceProviderMock;
+        private readonly IServiceProvider _serviceProvider;
 
         public CustomPIIFilterShould()
         {
-            _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(ConfigFilePath);
-            _telemetryProcessor = new CustomPIIFilter(new TestProcessorNext(), _permissionsStore);
+            _serviceProviderMock = new IServiceProviderMock();
+            _serviceProvider = _serviceProviderMock.MockServiceProvider();
+            _telemetryClientProcessor = new CustomPIIFilter(new TestProcessorNext(), _serviceProvider);
         }
 
         [Fact]
         public void ThrowsArgumentNullExceptionIfNextPocessorArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: null, permissionsStore: _permissionsStore));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: null, _serviceProvider));
         }
 
         [Fact]
         public void ThrowsArgumentNullExceptionIfPermissionsStoreArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: _telemetryProcessor, permissionsStore: null));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: _telemetryClientProcessor, null));
         }
 
         [Theory]
@@ -58,7 +61,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -90,7 +93,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -120,7 +123,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -150,7 +153,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -180,7 +183,7 @@ namespace Telemetry.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryProcessor.Process(eventTelemetry);
+            _telemetryClientProcessor.Process(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -251,7 +254,7 @@ namespace Telemetry.Test
             };
 
             // Act
-            _telemetryProcessor.Process(request);
+            _telemetryClientProcessor.Process(request);
 
             // Assert
             Assert.Equal(expectedUrl, request.Url.ToString());
@@ -271,7 +274,7 @@ namespace Telemetry.Test
             };
 
             // Act
-            _telemetryProcessor.Process(trace);
+            _telemetryClientProcessor.Process(trace);
 
             // Assert
             Assert.Equal(expectedMsg, trace.Message);

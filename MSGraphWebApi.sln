@@ -35,13 +35,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChangesService", "ChangesSe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChangesService.Test", "ChangesService.Test\ChangesService.Test.csproj", "{D6B39205-2CEB-4232-96E3-E0538A8EC0C9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TelemetryService.Test", "TelemetryService.Test\TelemetryService.Test.csproj", "{3F86F0DF-82CA-4EC2-8FC7-00B7B62A3A0B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TelemetrySanitizerService.Test", "TelemetryService.Test\TelemetrySanitizerService.Test.csproj", "{3F86F0DF-82CA-4EC2-8FC7-00B7B62A3A0B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TelemetryService", "TelemetryService\TelemetryService.csproj", "{F0BA9165-34C0-4A76-B42E-0FC274357AF0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TelemetrySanitizerService", "TelemetryService\TelemetrySanitizerService.csproj", "{F0BA9165-34C0-4A76-B42E-0FC274357AF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilityService", "UtilityService\UtilityService.csproj", "{C3241050-9B95-49B9-B223-5FACF59F0052}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilityService", "UtilityService\UtilityService.csproj", "{C3241050-9B95-49B9-B223-5FACF59F0052}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilityService.Test", "UtilityService.Test\UtilityService.Test.csproj", "{0F4A15DC-F4CD-415D-A62D-6B0D95ED25E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilityService.Test", "UtilityService.Test\UtilityService.Test.csproj", "{0F4A15DC-F4CD-415D-A62D-6B0D95ED25E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

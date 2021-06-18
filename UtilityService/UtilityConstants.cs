@@ -2,15 +2,18 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights;
 
-namespace TelemetrySanitizerService.Test
+namespace UtilityService
 {
-    public class TestProcessorNext : ITelemetryProcessor
+    /// <summary>
+    /// Provides commonly used reusable constants.
+    /// </summary>
+    public static class UtilityConstants
     {
-        public void Process(ITelemetry item)
-        {
-        }
+        public const string TelemetryPropertyKey_Count = "Count";
+        public const string TelemetryPropertyKey_Permissions = "Permissions";
+        public const string TelemetryPropertyKey_Samples = "Samples";
+        public const string TelemetryPropertyKey_Changes = "Changes";      
     }
 }

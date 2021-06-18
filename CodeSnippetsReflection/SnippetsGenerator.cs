@@ -6,6 +6,8 @@ using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
 using CodeSnippetsReflection.LanguageGenerators;
 using System.Collections.Generic;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights;
 
 namespace CodeSnippetsReflection
 {
@@ -14,6 +16,8 @@ namespace CodeSnippetsReflection
     /// </summary>
     public class SnippetsGenerator : ISnippetsGenerator
     {
+        private readonly TelemetryClient _telemetryClient;
+        private readonly IDictionary<string, string> _snippetsTraceProperties = new Dictionary<string, string> { { "Snippets", "SnippetsGenerator" } };
         public static HashSet<string> SupportedLanguages = new HashSet<string>
         {
             "c#",
@@ -48,8 +52,9 @@ namespace CodeSnippetsReflection
         /// </summary>
         /// <param name="isCommandLine">Determines whether we are running the snippet generation in command line</param>
         /// <param name="customMetadataPath">Full file path to the metadata</param>
-        public SnippetsGenerator(bool isCommandLine = false, string customMetadataPath = null)
+        public SnippetsGenerator(bool isCommandLine = false, string customMetadataPath = null, TelemetryClient telemetryClient = null)
         {
+            _telemetryClient = telemetryClient;
             IsCommandLine = isCommandLine;
             LoadGraphMetadata(customMetadataPath);
             JavascriptExpressions = new JavascriptExpressions();
@@ -91,7 +96,7 @@ namespace CodeSnippetsReflection
         }
 
         /// <summary>
-        /// Entry point to generate snippets from the payload 
+        /// Entry point to generate snippets from the payload
         /// </summary>
         /// <param name="language"></param>
         /// <param name="httpRequestMessage"></param>
@@ -100,6 +105,10 @@ namespace CodeSnippetsReflection
         {
             var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(httpRequestMessage.RequestUri);
             var snippetModel = new SnippetModel(httpRequestMessage, serviceRootUri.AbsoluteUri, edmModel);
+
+            _telemetryClient?.TrackTrace($"Generating code snippet for '{language}' from the request payload",
+                                         SeverityLevel.Information,
+                                         _snippetsTraceProperties);
 
             switch (language.ToLower())
             {
@@ -120,7 +129,6 @@ namespace CodeSnippetsReflection
 
                 default:
                     throw new Exception("Invalid Language selected");
-
             }
         }
 

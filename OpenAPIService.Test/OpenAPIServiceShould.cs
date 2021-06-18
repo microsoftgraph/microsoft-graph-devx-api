@@ -72,7 +72,7 @@ namespace OpenAPIService.Test
                 string.IsNullOrEmpty(tags) &&
                 string.IsNullOrEmpty(url))
             {
-                var message = Assert.Throws<InvalidOperationException>(() => 
+                var message = Assert.Throws<InvalidOperationException>(() =>
                     OpenApiService.CreatePredicate(operationIds: operationIds,
                                                    tags: tags,
                                                    url: url,
@@ -81,7 +81,7 @@ namespace OpenAPIService.Test
             }
             else
             {
-                var message = Assert.Throws<InvalidOperationException>(() => 
+                var message = Assert.Throws<InvalidOperationException>(() =>
                     OpenApiService.CreatePredicate(operationIds: operationIds,
                                                    tags: tags,
                                                    url: url,

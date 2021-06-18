@@ -8,12 +8,16 @@ using ChangesService.Models;
 using FileService.Common;
 using FileService.Extensions;
 using FileService.Interfaces;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
 using System.Threading.Tasks;
+using UtilityService;
 
 namespace ChangesService.Services
 {
@@ -26,11 +30,16 @@ namespace ChangesService.Services
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changeLogCache;
         private readonly IConfiguration _configuration;
+        private readonly Dictionary<string, string> _changesTraceProperties =
+                        new() { { UtilityConstants.TelemetryPropertyKey_Changes, "ChangesStore" } };
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
+        private readonly TelemetryClient _telemetryClient;
 
-        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IHttpClientUtility httpClientUtility)
+        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache,
+                            IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient = null)
         {
+            _telemetryClient = telemetryClient;
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
                 $"{ ChangesServiceConstants.ValueNullError }: { nameof(configuration) }");
             _changeLogCache = changeLogCache ?? throw new ArgumentNullException(nameof(changeLogCache),
@@ -51,9 +60,19 @@ namespace ChangesService.Services
         {
             var locale = cultureInfo.GetSupportedLocaleVariant().ToLower(); // lowercased in line with source files
 
+            _telemetryClient?.TrackTrace($"Retrieving changelog records for locale '{locale}' from in-memory cache '{locale}'",
+                                         SeverityLevel.Information,
+                                         _changesTraceProperties);
+
             // Fetch cached changelog records
             ChangeLogRecords changeLogRecords = await _changeLogCache.GetOrCreateAsync(locale, cacheEntry =>
             {
+                _telemetryClient?.TrackTrace($"In-memory cache '{locale}' empty. " +
+                                             $"Seeding changelog records for locale '{locale}' from Azure blob resource",
+                                             SeverityLevel.Information,
+                                             _changesTraceProperties);
+
+                // Localized copy of changes is to be seeded by only one executing thread.
                 lock (_changesLock)
                 {
                     /* Check whether a previous thread already seeded an
@@ -61,9 +80,16 @@ namespace ChangesService.Services
                      */
                     var lockedLocale = locale;
                     var seededChangeLogRecords = _changeLogCache.Get<ChangeLogRecords>(lockedLocale);
+                    var sourceMsg = $"Return locale '{locale}' changelog records from in-memory cache";
 
                     if (seededChangeLogRecords != null)
                     {
+                        _telemetryClient?.TrackTrace($"In-memory cache '{lockedLocale}' of changelog records " +
+                                                     $"already seeded by a concurrently running thread",
+                                                     SeverityLevel.Information,
+                                                     _changesTraceProperties);
+                        sourceMsg = $"Return changelog records for locale '{lockedLocale}' from in-memory cache '{lockedLocale}'";
+
                         // Already seeded by another thread
                         return Task.FromResult(seededChangeLogRecords);
                     }
@@ -84,6 +110,12 @@ namespace ChangesService.Services
                     // Get the file contents from source
                     var jsonFileContents = _httpClientUtility.ReadFromDocumentAsync(httpRequestMessage)
                                                 .GetAwaiter().GetResult();
+
+                    sourceMsg = $"Successfully seeded changelog records for locale '{lockedLocale}' from source";
+
+                    _telemetryClient?.TrackTrace(sourceMsg,
+                                                 SeverityLevel.Information,
+                                                 _changesTraceProperties);
 
                     // Return the changelog records from the file contents
                     return Task.FromResult(ChangesService.DeserializeChangeLogRecords(jsonFileContents));
