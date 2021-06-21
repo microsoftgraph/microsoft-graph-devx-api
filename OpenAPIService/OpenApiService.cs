@@ -39,7 +39,8 @@ namespace OpenAPIService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new();
         private static OpenApiUrlTreeNode _openApiRootNode = OpenApiUrlTreeNode.Create();
-        private static readonly Dictionary<string, string> _openApiTraceProperties = new() { { "OpenApi", "OpenApiService" } };
+        private static readonly Dictionary<string, string> _openApiTraceProperties =
+                        new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, "OpenApiService" } };
         private static TelemetryClient _telemetryClient;
 
         public OpenApiService(TelemetryClient telemetryClient = null)

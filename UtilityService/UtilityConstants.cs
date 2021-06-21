@@ -14,6 +14,7 @@ namespace UtilityService
         public const string TelemetryPropertyKey_Count = "Count";
         public const string TelemetryPropertyKey_Permissions = "Permissions";
         public const string TelemetryPropertyKey_Samples = "Samples";
-        public const string TelemetryPropertyKey_Changes = "Changes";      
+        public const string TelemetryPropertyKey_Changes = "Changes";
+        public const string TelemetryPropertyKey_OpenApi = "OpenApi";
     }
 }
