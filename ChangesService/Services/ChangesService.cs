@@ -64,7 +64,8 @@ namespace ChangesService.Services
         /// <param name="graphProxyConfigs">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
         /// <param name="httpClientUtility">Optional. An implementation instance of <see cref="IHttpClientUtility"/>.</param>
         /// <returns><see cref="ChangeLogRecords"/> containing the filtered and/or paginated
-        /// <see cref="ChangeLog"/> entries.</returns>        public ChangeLogRecords FilterChangeLogRecords(ChangeLogRecords changeLogRecords,
+        /// <see cref="ChangeLog"/> entries.</returns>
+        public ChangeLogRecords FilterChangeLogRecords(ChangeLogRecords changeLogRecords,
         ChangeLogSearchOptions searchOptions,
                                                               MicrosoftGraphProxyConfigs graphProxyConfigs,
                                                               IHttpClientUtility httpClientUtility = null)
