@@ -29,14 +29,16 @@ namespace GraphWebApi.Controllers
         private readonly Dictionary<string, string> _changesTraceProperties =
             new() { { UtilityConstants.TelemetryPropertyKey_Changes, "ChangesController" } };
         private readonly TelemetryClient _telemetryClient;
+        private readonly IChangesService _changesService;
 
-        public ChangesController(IChangesStore changesStore, IConfiguration configuration,
+        public ChangesController(IChangesStore changesStore, IConfiguration configuration, IChangesService changesService,
                                  IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient)
         {
             _telemetryClient = telemetryClient;
             _changesStore = changesStore;
             _configuration = configuration;
             _httpClientUtility = httpClientUtility;
+            _changesService = changesService;
         }
 
         // Gets the changelog records
@@ -89,8 +91,7 @@ namespace GraphWebApi.Controllers
                         GraphVersion = graphVersion
                     };
 
-                    changeLog = ChangesService.Services.ChangesService
-                                    .FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
+                    changeLog = _changesService.FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
                 }
                 else
                 {

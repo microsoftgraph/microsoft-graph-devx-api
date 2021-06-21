@@ -69,7 +69,7 @@ namespace GraphWebApi.Controllers
                                                                     method: method);
                 }
 
-                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_Count, "PermissionsCount");
+                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "PermissionsCount");
                 _telemetryClient?.TrackTrace($"Fetched {result.Count} permissions",
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);

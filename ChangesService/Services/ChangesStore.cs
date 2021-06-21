@@ -35,11 +35,14 @@ namespace ChangesService.Services
         private readonly string _changeLogRelativeUrl;
         private readonly int _defaultRefreshTimeInHours;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IChangesService _changesService;
 
-        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache,
+        public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IChangesService changesService,
                             IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient = null)
         {
             _telemetryClient = telemetryClient;
+            _changesService = changesService ?? throw new ArgumentNullException(nameof(changesService),
+                $"{ ChangesServiceConstants.ValueNullError }: { nameof(changesService) }"); ;
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
                 $"{ ChangesServiceConstants.ValueNullError }: { nameof(configuration) }");
             _changeLogCache = changeLogCache ?? throw new ArgumentNullException(nameof(changeLogCache),
@@ -118,7 +121,7 @@ namespace ChangesService.Services
                                                  _changesTraceProperties);
 
                     // Return the changelog records from the file contents
-                    return Task.FromResult(ChangesService.DeserializeChangeLogRecords(jsonFileContents));
+                    return Task.FromResult(_changesService.DeserializeChangeLogRecords(jsonFileContents));
                 }
             });
 

@@ -29,7 +29,7 @@ namespace ChangesService.Services
         private static readonly Dictionary<string, string> _urlWorkloadDict = new();
         private static readonly Dictionary<string, string> _changesTraceProperties =
                         new() { { UtilityConstants.TelemetryPropertyKey_Changes, "ChangesService" } };
-        private static TelemetryClient _telemetryClient;
+        private readonly TelemetryClient _telemetryClient;
 
         public ChangesService(TelemetryClient telemetryClient = null)
         {
@@ -41,7 +41,7 @@ namespace ChangesService.Services
         /// </summary>
         /// <param name="jsonString">The json string to deserialize</param>
         /// <returns>The deserialized <see cref="ChangeLogRecords"/>.</returns>
-        public static ChangeLogRecords DeserializeChangeLogRecords(string jsonString)
+        public ChangeLogRecords DeserializeChangeLogRecords(string jsonString)
         {
             if (string.IsNullOrEmpty(jsonString))
             {
@@ -64,9 +64,8 @@ namespace ChangesService.Services
         /// <param name="graphProxyConfigs">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
         /// <param name="httpClientUtility">Optional. An implementation instance of <see cref="IHttpClientUtility"/>.</param>
         /// <returns><see cref="ChangeLogRecords"/> containing the filtered and/or paginated
-        /// <see cref="ChangeLog"/> entries.</returns>
-        public static ChangeLogRecords FilterChangeLogRecords(ChangeLogRecords changeLogRecords,
-                                                              ChangeLogSearchOptions searchOptions,
+        /// <see cref="ChangeLog"/> entries.</returns>        public ChangeLogRecords FilterChangeLogRecords(ChangeLogRecords changeLogRecords,
+        ChangeLogSearchOptions searchOptions,
                                                               MicrosoftGraphProxyConfigs graphProxyConfigs,
                                                               IHttpClientUtility httpClientUtility = null)
         {
@@ -252,7 +251,7 @@ namespace ChangesService.Services
         /// <param name="graphProxy">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
         /// <param name="httpClientUtility">An implementation instance of <see cref="IFileUtility"/>.</param>
         /// <returns>The workload name for the target request url.</returns>
-        private static async Task<string> RetrieveWorkloadNameFromRequestUrl(ChangeLogSearchOptions searchOptions,
+        private async Task<string> RetrieveWorkloadNameFromRequestUrl(ChangeLogSearchOptions searchOptions,
                                                                              MicrosoftGraphProxyConfigs graphProxy,
                                                                              IHttpClientUtility httpClientUtility)
         {
