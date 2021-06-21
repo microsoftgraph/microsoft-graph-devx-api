@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using UtilityService;
 
 namespace ChangesService.Services
 {
@@ -26,7 +27,8 @@ namespace ChangesService.Services
     {
         // Field to hold key-value pairs of url and workload names
         private static readonly Dictionary<string, string> _urlWorkloadDict = new();
-        private static readonly Dictionary<string, string> _changesTraceProperties = new() { { "Changes", "ChangesService" } };
+        private static readonly Dictionary<string, string> _changesTraceProperties =
+                        new() { { UtilityConstants.TelemetryPropertyKey_Changes, "ChangesService" } };
         private static TelemetryClient _telemetryClient;
 
         public ChangesService(TelemetryClient telemetryClient = null)
