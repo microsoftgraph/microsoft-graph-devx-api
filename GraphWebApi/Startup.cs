@@ -25,6 +25,8 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using TelemetrySanitizerService;
+using OpenAPIService.Interfaces;
+using OpenAPIService;
 
 namespace GraphWebApi
 {
@@ -87,7 +89,9 @@ namespace GraphWebApi
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
+            services.AddSingleton<IChangesService, ChangesService.Services.ChangesService>();
             services.AddSingleton<IChangesStore, ChangesStore>();
+            services.AddSingleton<IOpenApiService, OpenApiService>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
             services.AddControllers().AddNewtonsoftJson();
             services.Configure<SamplesAdministrators>(Configuration);
@@ -135,6 +139,8 @@ namespace GraphWebApi
             // Localization
             var localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value;
             app.UseRequestLocalization(localizationOptions);
+            app.ApplicationServices.GetRequiredService<IChangesService>();
+            app.ApplicationServices.GetRequiredService<IOpenApiService>();
 
 
             app.UseEndpoints(endpoints =>
