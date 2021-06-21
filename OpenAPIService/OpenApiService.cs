@@ -450,9 +450,11 @@ namespace OpenAPIService
                 return doc;
             }
 
+            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "OpenApiService");
             _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
+            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
             OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
             _OpenApiDocuments[csdlHref] = source;

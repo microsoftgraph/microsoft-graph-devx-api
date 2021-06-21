@@ -86,9 +86,11 @@ namespace GraphExplorerPermissionsService
 
             foreach (string permissionFilePath in _permissionsBlobNames)
             {
+                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "PermissionsStore");
                 _telemetryClient?.TrackTrace($"Seeding permissions table from file source '{permissionFilePath}'",
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
+                _permissionsTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, permissionFilePath);
                 string jsonString = _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
