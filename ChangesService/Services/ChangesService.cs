@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using ChangesService.Common;
+using ChangesService.Interfaces;
 using ChangesService.Models;
 using FileService.Common;
 using FileService.Interfaces;
@@ -21,7 +22,7 @@ namespace ChangesService.Services
     /// <summary>
     /// Utility functions for transforming and filtering <see cref="ChangeLogRecords"/> and <see cref="ChangeLog"/> objects.
     /// </summary>
-    public class ChangesService
+    public class ChangesService : IChangesService
     {
         // Field to hold key-value pairs of url and workload names
         private static readonly Dictionary<string, string> _urlWorkloadDict = new();

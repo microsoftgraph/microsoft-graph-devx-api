@@ -23,6 +23,7 @@ using OpenAPIService.Common;
 using UtilityService;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
+using OpenAPIService.Interfaces;
 
 namespace OpenAPIService
 {
@@ -34,7 +35,7 @@ namespace OpenAPIService
         GEAutocomplete
     }
 
-    public class OpenApiService
+    public class OpenApiService : IOpenApiService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new();
         private static OpenApiUrlTreeNode _openApiRootNode = OpenApiUrlTreeNode.Create();
