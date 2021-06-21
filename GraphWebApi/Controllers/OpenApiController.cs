@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
+using UtilityService;
 
 namespace GraphWebApi.Controllers
 {
@@ -26,7 +27,8 @@ namespace GraphWebApi.Controllers
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private static readonly Dictionary<string, string> _openApiTraceProperties = new() { { "OpenApi", "OpenApiController" } };
+        private static readonly Dictionary<string, string> _openApiTraceProperties =
+                        new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, "OpenApiController" } };
         private readonly TelemetryClient _telemetryClient;
 
         public OpenApiController(IConfiguration configuration, TelemetryClient telemetryClient)

@@ -84,7 +84,6 @@ namespace GraphWebApi
             #endregion
 
             services.AddMemoryCache();
-            
             services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
@@ -139,9 +138,9 @@ namespace GraphWebApi
             // Localization
             var localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value;
             app.UseRequestLocalization(localizationOptions);
+
             app.ApplicationServices.GetRequiredService<IChangesService>();
             app.ApplicationServices.GetRequiredService<IOpenApiService>();
-
 
             app.UseEndpoints(endpoints =>
             {

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
+using UtilityService;
 
 namespace GraphWebApi.Controllers
 {
@@ -18,7 +19,8 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSnippetsController : ControllerBase
     {
         private readonly ISnippetsGenerator _snippetGenerator;
-        private readonly IDictionary<string, string> _snippetsTraceProperties = new Dictionary<string, string> { { "Snippets", "SnippetsController" } };
+        private readonly Dictionary<string, string> _snippetsTraceProperties =
+            new() { { UtilityConstants.TelemetryPropertyKey_Snippets, "SnippetsController" } };
         private readonly TelemetryClient _telemetryClient;
 
         public GraphExplorerSnippetsController(ISnippetsGenerator snippetGenerator, TelemetryClient telemetryClient)

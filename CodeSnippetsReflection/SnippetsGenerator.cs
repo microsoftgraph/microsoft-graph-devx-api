@@ -8,6 +8,7 @@ using CodeSnippetsReflection.LanguageGenerators;
 using System.Collections.Generic;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
+using UtilityService;
 
 namespace CodeSnippetsReflection
 {
@@ -17,7 +18,8 @@ namespace CodeSnippetsReflection
     public class SnippetsGenerator : ISnippetsGenerator
     {
         private readonly TelemetryClient _telemetryClient;
-        private readonly IDictionary<string, string> _snippetsTraceProperties = new Dictionary<string, string> { { "Snippets", "SnippetsGenerator" } };
+        private readonly Dictionary<string, string> _snippetsTraceProperties =
+                    new() { { UtilityConstants.TelemetryPropertyKey_Snippets, "SnippetsGenerator" } };
         public static HashSet<string> SupportedLanguages = new HashSet<string>
         {
             "c#",

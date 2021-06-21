@@ -106,7 +106,7 @@ namespace GraphWebApi.Controllers
                     // Filtered items yielded no result
                     return NotFound();
                 }
-                _changesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_Count, "ChangesCount");
+                _changesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "ChangesCount");
                 _telemetryClient?.TrackTrace($"Fetched {changeLog.CurrentItems} changes",
                                              SeverityLevel.Information,
                                              _changesTraceProperties);

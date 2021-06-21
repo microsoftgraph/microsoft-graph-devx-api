@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.ApplicationInsights;
+using System.Collections.Generic;
 
 namespace UtilityService
 {
@@ -11,10 +12,12 @@ namespace UtilityService
     /// </summary>
     public static class UtilityConstants
     {
-        public const string TelemetryPropertyKey_Count = "Count";
+        public const string TelemetryPropertyKey_SanitizeIgnore = "SanitizeIgnore";
         public const string TelemetryPropertyKey_Permissions = "Permissions";
         public const string TelemetryPropertyKey_Samples = "Samples";
         public const string TelemetryPropertyKey_Changes = "Changes";
         public const string TelemetryPropertyKey_OpenApi = "OpenApi";
+        public const string TelemetryPropertyKey_Snippets = "Snippets";
     }
 }
+ 

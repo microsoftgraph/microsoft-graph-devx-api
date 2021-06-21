@@ -71,7 +71,7 @@ namespace GraphWebApi.Controllers
                     return NotFound();
                 }
 
-                _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_Count, "SamplesCount");
+                _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "SamplesCount");
                 _telemetryClient?.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
                                              SeverityLevel.Information,
                                              _samplesTraceProperties);
@@ -352,7 +352,7 @@ namespace GraphWebApi.Controllers
                 sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
             }
 
-            _samplesTraceProperties.Add("Count", "SamplesCount");
+            _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "SamplesCount");
             _telemetryClient?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
                                          SeverityLevel.Information,
                                          _samplesTraceProperties);

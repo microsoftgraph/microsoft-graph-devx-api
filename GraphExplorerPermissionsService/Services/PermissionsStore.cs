@@ -280,6 +280,7 @@ namespace GraphExplorerPermissionsService
                 _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
             }
 
+            _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "PermissionsCount");
             _telemetryClient?.TrackTrace("Finished creating the scopes information tables. " +
                                          $"Delegated scopes count: {_delegatedScopesInfoTable.Count}. " +
                                          $"Application scopes count: {_applicationScopesInfoTable.Count}",

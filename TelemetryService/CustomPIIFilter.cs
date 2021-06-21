@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Web;
-using UriMatchingService;
 using UtilityService;
 
 namespace TelemetrySanitizerService
@@ -102,7 +101,7 @@ namespace TelemetrySanitizerService
                  * numerical telemetry not required to
                  * be sanitized.
                  */
-                if (!trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_Count))
+                if (!trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
                 {
                     SanitizeTelemetry(trace: trace);
                 }
@@ -158,7 +157,7 @@ namespace TelemetrySanitizerService
             // use the service provider to lazily get an IPermissionsStore instance
             var permissionsStore = _serviceProvider.GetRequiredService<IPermissionsStore>();
             var uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
-            
+
             const char QueryValSeparator = '&';
             var queryPath = url?.Query();
 
