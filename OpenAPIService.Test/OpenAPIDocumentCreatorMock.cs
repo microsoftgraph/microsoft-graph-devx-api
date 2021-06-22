@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
 using OpenAPIService.Interfaces;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -18,10 +19,12 @@ namespace OpenAPIService.Test
     {
         private static readonly ConcurrentDictionary<string, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<string, OpenApiDocument>();
         private readonly IOpenApiService _openApiService;
+        private const string NullValueError = "Value cannot be null";
 
         public OpenAPIDocumentCreatorMock(IOpenApiService openApiService)
         {
-            _openApiService = openApiService;
+            _openApiService = openApiService
+                ?? throw new ArgumentNullException(nameof(openApiService), $"{ NullValueError }: { nameof(openApiService) }");
         }
 
         /// <summary>
