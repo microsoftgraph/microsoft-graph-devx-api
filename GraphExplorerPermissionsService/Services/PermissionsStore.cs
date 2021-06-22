@@ -282,12 +282,13 @@ namespace GraphExplorerPermissionsService
                 _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
             }
 
-            _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "PermissionsCount");
+            _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "PermissionsStore");
             _telemetryClient?.TrackTrace("Finished creating the scopes information tables. " +
                                          $"Delegated scopes count: {_delegatedScopesInfoTable.Count}. " +
                                          $"Application scopes count: {_applicationScopesInfoTable.Count}",
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
+            _permissionsTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
             return new Dictionary<string, IDictionary<string, ScopeInformation>>
             {
