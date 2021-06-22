@@ -33,7 +33,7 @@ namespace GraphExplorerPermissionsService
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _permissionsTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, "PermissionsStore" } };
+            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(PermissionsStore)} };
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
@@ -86,7 +86,7 @@ namespace GraphExplorerPermissionsService
 
             foreach (string permissionFilePath in _permissionsBlobNames)
             {
-                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "PermissionsStore");
+                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore));
                 _telemetryClient?.TrackTrace($"Seeding permissions table from file source '{permissionFilePath}'",
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
@@ -282,7 +282,7 @@ namespace GraphExplorerPermissionsService
                 _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
             }
 
-            _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "PermissionsStore");
+            _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore));
             _telemetryClient?.TrackTrace("Finished creating the scopes information tables. " +
                                          $"Delegated scopes count: {_delegatedScopesInfoTable.Count}. " +
                                          $"Application scopes count: {_applicationScopesInfoTable.Count}",

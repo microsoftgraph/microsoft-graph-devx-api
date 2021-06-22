@@ -19,7 +19,7 @@ namespace CodeSnippetsReflection
     {
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
-                    new() { { UtilityConstants.TelemetryPropertyKey_Snippets, "SnippetsGenerator" } };
+                    new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(SnippetsGenerator) } };
         public static HashSet<string> SupportedLanguages = new HashSet<string>
         {
             "c#",

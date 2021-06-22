@@ -25,7 +25,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly ISamplesStore _samplesStore;
         private readonly Dictionary<string, string> _samplesTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Samples, "SamplesController" } };
+            new() { { UtilityConstants.TelemetryPropertyKey_Samples, nameof(GraphExplorerSamplesController)} };
         private readonly TelemetryClient _telemetryClient;
 
         public GraphExplorerSamplesController(ISamplesStore samplesStore, TelemetryClient telemetryClient)
@@ -71,7 +71,7 @@ namespace GraphWebApi.Controllers
                     return NotFound();
                 }
 
-                _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "SamplesCount");
+                _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
                 _telemetryClient?.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
                                              SeverityLevel.Information,
                                              _samplesTraceProperties);
@@ -352,7 +352,7 @@ namespace GraphWebApi.Controllers
                 sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
             }
 
-            _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "SamplesCount");
+            _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
             _telemetryClient?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
                                          SeverityLevel.Information,
                                          _samplesTraceProperties);

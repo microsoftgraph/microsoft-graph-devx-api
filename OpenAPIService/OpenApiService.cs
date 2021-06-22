@@ -40,7 +40,7 @@ namespace OpenAPIService
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new();
         private static OpenApiUrlTreeNode _openApiRootNode = OpenApiUrlTreeNode.Create();
         private static readonly Dictionary<string, string> _openApiTraceProperties =
-                        new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, "OpenApiService" } };
+                        new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
         private readonly TelemetryClient _telemetryClient;
 
         public OpenApiService(TelemetryClient telemetryClient = null)
@@ -203,7 +203,7 @@ namespace OpenAPIService
                 }
                 else if (!_openApiRootNode.PathItems.ContainsKey(graphVersion))
                 {
-                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "OpenApiService");
+                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
                     _telemetryClient?.TrackTrace($"Attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
                                                  SeverityLevel.Information,
                                                  _openApiTraceProperties);
@@ -211,7 +211,7 @@ namespace OpenAPIService
 
                     _openApiRootNode.Attach(source, graphVersion);
 
-                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "OpenApiService");
+                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
                     _telemetryClient?.TrackTrace($"Finished attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
                                                  SeverityLevel.Information,
                                                  _openApiTraceProperties);
@@ -455,7 +455,7 @@ namespace OpenAPIService
                 return doc;
             }
 
-            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "OpenApiService");
+            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
             _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);

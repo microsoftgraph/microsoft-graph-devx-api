@@ -23,7 +23,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly IPermissionsStore _permissionsStore;
         private readonly Dictionary<string, string> _permissionsTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, "PermissionsController" } };
+            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(GraphExplorerPermissionsController) } };
         private readonly TelemetryClient _telemetryClient;
 
         public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, TelemetryClient telemetryClient)
@@ -69,7 +69,7 @@ namespace GraphWebApi.Controllers
                                                                     method: method);
                 }
 
-                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "PermissionsCount");
+                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerPermissionsController));
                 _telemetryClient?.TrackTrace($"Fetched {result.Count} permissions",
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);

@@ -20,7 +20,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly ISnippetsGenerator _snippetGenerator;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Snippets, "SnippetsController" } };
+            new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(GraphExplorerSnippetsController) } };
         private readonly TelemetryClient _telemetryClient;
 
         public GraphExplorerSnippetsController(ISnippetsGenerator snippetGenerator, TelemetryClient telemetryClient)

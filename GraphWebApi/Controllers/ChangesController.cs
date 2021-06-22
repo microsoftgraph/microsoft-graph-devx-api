@@ -27,7 +27,7 @@ namespace GraphWebApi.Controllers
         private readonly IConfiguration _configuration;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly Dictionary<string, string> _changesTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Changes, "ChangesController" } };
+            new() { { UtilityConstants.TelemetryPropertyKey_Changes, nameof(ChangesController) } };
         private readonly TelemetryClient _telemetryClient;
         private readonly IChangesService _changesService;
 
@@ -107,7 +107,7 @@ namespace GraphWebApi.Controllers
                     // Filtered items yielded no result
                     return NotFound();
                 }
-                _changesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "ChangesCount");
+                _changesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(ChangesController));
                 _telemetryClient?.TrackTrace($"Fetched {changeLog.CurrentItems} changes",
                                              SeverityLevel.Information,
                                              _changesTraceProperties);
