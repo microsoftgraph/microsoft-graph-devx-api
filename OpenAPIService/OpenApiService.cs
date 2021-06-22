@@ -203,7 +203,7 @@ namespace OpenAPIService
                 }
                 else if (!_openApiRootNode.PathItems.ContainsKey(graphVersion))
                 {
-                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "GraphVersion");
+                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "OpenApiService");
                     _telemetryClient?.TrackTrace($"Attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
                                                  SeverityLevel.Information,
                                                  _openApiTraceProperties);
@@ -211,7 +211,7 @@ namespace OpenAPIService
 
                     _openApiRootNode.Attach(source, graphVersion);
 
-                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "GraphVersion");
+                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, "OpenApiService");
                     _telemetryClient?.TrackTrace($"Finished attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
                                                  SeverityLevel.Information,
                                                  _openApiTraceProperties);
