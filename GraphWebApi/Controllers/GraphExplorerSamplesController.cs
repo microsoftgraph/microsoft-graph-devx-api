@@ -14,6 +14,9 @@ using System.Security.Claims;
 using System.Linq;
 using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
+using Microsoft.ApplicationInsights.DataContracts;
+using UtilityService;
+using Microsoft.ApplicationInsights;
 
 namespace GraphWebApi.Controllers
 {
@@ -21,9 +24,13 @@ namespace GraphWebApi.Controllers
     public class GraphExplorerSamplesController : ControllerBase
     {
         private readonly ISamplesStore _samplesStore;
+        private readonly Dictionary<string, string> _samplesTraceProperties =
+            new() { { UtilityConstants.TelemetryPropertyKey_Samples, nameof(GraphExplorerSamplesController)} };
+        private readonly TelemetryClient _telemetryClient;
 
-        public GraphExplorerSamplesController(ISamplesStore samplesStore)
+        public GraphExplorerSamplesController(ISamplesStore samplesStore, TelemetryClient telemetryClient)
         {
+            _telemetryClient = telemetryClient;
             _samplesStore = samplesStore;
         }
 
@@ -58,15 +65,23 @@ namespace GraphWebApi.Controllers
 
                 if (filteredSampleQueries.Count == 0)
                 {
-                    // Search parameter not found in list of sample queries
+                    _telemetryClient?.TrackTrace($"Search value: '{search}' not found in: category, humanName or tip properties of sample queries",
+                                                 SeverityLevel.Error,
+                                                 _samplesTraceProperties);
                     return NotFound();
                 }
 
-                // Success; return the found list of sample queries from filtered search
+                _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
+                _telemetryClient?.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
+                                             SeverityLevel.Information,
+                                             _samplesTraceProperties);
+
                 return Ok(filteredSampleQueries);
             }
             catch (Exception exception)
             {
+                _telemetryClient?.TrackException(exception,
+                                          _samplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -92,7 +107,10 @@ namespace GraphWebApi.Controllers
 
                 if (sampleQueryById == null)
                 {
-                    return NotFound(); // sample query with the given id doesn't exist in the list of sample queries
+                    _telemetryClient?.TrackTrace($"Sample query with id: {id} doesn't exist in the list of sample queries",
+                                                 SeverityLevel.Error,
+                                                 _samplesTraceProperties);
+                    return NotFound();
                 }
 
                 // Success; return the found sample query
@@ -100,6 +118,8 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception exception)
             {
+                _telemetryClient?.TrackException(exception,
+                                          _samplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -162,11 +182,15 @@ namespace GraphWebApi.Controllers
             }
             catch (InvalidOperationException invalidOpsException)
             {
+               _telemetryClient?.TrackException(invalidOpsException,
+                                         _samplesTraceProperties);
                 // sample query with provided id not found
                 return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
+               _telemetryClient?.TrackException(exception,
+                                         _samplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -225,6 +249,8 @@ namespace GraphWebApi.Controllers
             }
             catch (Exception exception)
             {
+               _telemetryClient?.TrackException(exception,
+                                         _samplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -290,11 +316,15 @@ namespace GraphWebApi.Controllers
             }
             catch (InvalidOperationException invalidOpsException)
             {
+               _telemetryClient?.TrackException(invalidOpsException,
+                                        _samplesTraceProperties);
                 // Sample query with provided id not found
                 return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception exception)
             {
+               _telemetryClient?.TrackException(exception,
+                                          _samplesTraceProperties);
                 return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -308,18 +338,24 @@ namespace GraphWebApi.Controllers
         private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string org, string branchName)
         {
             string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
+            _telemetryClient?.TrackTrace($"Request to fetch samples for locale '{locale}'",
+                                         SeverityLevel.Information,
+                                         _samplesTraceProperties);
 
             SampleQueriesList sampleQueriesList;
             if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
             {
-                // Fetch samples file from Github
                 sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale, org, branchName);
             }
             else
             {
-                // Fetch sample queries from Azure Blob
                 sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
             }
+
+            _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
+            _telemetryClient?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
+                                         SeverityLevel.Information,
+                                         _samplesTraceProperties);
 
             return sampleQueriesList;
         }

@@ -24,9 +24,11 @@ namespace ChangesService.Test
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changesCache;
         private IChangesStore _changesStore;
+        private readonly IChangesService _changesService;
 
         public ChangesStoreShould()
         {
+            _changesService = new Services.ChangesService();
             _httpClientUtility = new FileUtilityMock();
             _changesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
@@ -39,16 +41,17 @@ namespace ChangesService.Test
         {
             /* Act and Assert */
 
-            Assert.Throws<ArgumentNullException>(() => new ChangesStore(null, _changesCache, _httpClientUtility)); // null configuration
-            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, null, _httpClientUtility)); // null changesCache
-            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, _changesCache, null)); // null httpClientUtility
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(null, _changesCache, _changesService, _httpClientUtility)); // null configuration
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, null, _changesService, _httpClientUtility)); // null changesCache
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, _changesCache, null, _httpClientUtility)); // null changesService
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, _changesCache, _changesService, null)); // null httpClientUtility
         }
 
         [Fact]
         public async Task CorrectlySeedLocaleCachesOfChangeLogRecordsWhenMultipleRequestsMultipleLocaleReceived()
         {
             // Arrange
-            _changesStore = new ChangesStore(_configuration, _changesCache, _httpClientUtility);
+            _changesStore = new ChangesStore(_configuration, _changesCache, _changesService, _httpClientUtility);
 
             /* Act */
 
@@ -80,7 +83,7 @@ namespace ChangesService.Test
         public async Task CorrectlySeedLocaleCachesOfChangeLogRecordsWhenMultipleRequestsSingleLocaleReceived()
         {
             // Arrange
-            _changesStore = new ChangesStore(_configuration, _changesCache, _httpClientUtility);
+            _changesStore = new ChangesStore(_configuration, _changesCache, _changesService, _httpClientUtility);
 
             /* Act */
 
@@ -114,7 +117,7 @@ namespace ChangesService.Test
         public async Task SetDefaultLocaleInFetchChangeLogRecords(string locale)
         {
             // Arrange
-            _changesStore = new ChangesStore(_configuration, _changesCache, _httpClientUtility);
+            _changesStore = new ChangesStore(_configuration, _changesCache, _changesService, _httpClientUtility);
 
             /* Act */
 

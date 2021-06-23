@@ -6,7 +6,7 @@ using Xunit;
 
 namespace UtilityService.Test
 {
-    public class UtilityServiceExtensionsShould
+    public class UtilityExtensionsShould
     {
         [Theory]
         [InlineData("", "")]

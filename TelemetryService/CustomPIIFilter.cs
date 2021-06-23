@@ -6,14 +6,14 @@ using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Web;
-using UriMatchingService;
 using UtilityService;
 
-namespace TelemetryService
+namespace TelemetrySanitizerService
 
 {
     /// <summary>
@@ -22,7 +22,7 @@ namespace TelemetryService
     public class CustomPIIFilter : ITelemetryProcessor
     {
         private readonly ITelemetryProcessor _next;
-        private readonly UriTemplateMatcher _uriTemplateMatcher;
+        private readonly IServiceProvider _serviceProvider;
 
         private static readonly Regex _guidRegex = new(@"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -69,17 +69,12 @@ namespace TelemetryService
         private const string ODataFilterOperator = "$filter";
         private const string SecurityMask = "****";
 
-        public CustomPIIFilter(ITelemetryProcessor next, IPermissionsStore permissionsStore)
+        public CustomPIIFilter(ITelemetryProcessor next, IServiceProvider serviceProvider)
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
-
-            if (permissionsStore == null)
-            {
-                throw new ArgumentNullException(nameof(permissionsStore), $"{ permissionsStore }: { nameof(permissionsStore) }");
-            }
-
-            _uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
+            _serviceProvider = serviceProvider 
+                ?? throw new ArgumentNullException(nameof(serviceProvider), $"{ serviceProvider }: { nameof(serviceProvider) }");
         }
 
         /// <summary>
@@ -102,7 +97,14 @@ namespace TelemetryService
 
             if (item is TraceTelemetry trace)
             {
-                SanitizeTelemetry(trace: trace);
+                /* Count properties contain custom
+                 * numerical telemetry not required to
+                 * be sanitized.
+                 */
+                if (!trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
+                {
+                    SanitizeTelemetry(trace: trace);
+                }
             }
 
             _next.Process(item);
@@ -152,6 +154,10 @@ namespace TelemetryService
         /// <returns>The string url with PII sanitized from its query path.</returns>
         private string SanitizeUrlQueryPath(string url)
         {
+            // use the service provider to lazily get an IPermissionsStore instance
+            var permissionsStore = _serviceProvider.GetRequiredService<IPermissionsStore>();
+            var uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
+
             const char QueryValSeparator = '&';
             var queryPath = url?.Query();
 
@@ -180,7 +186,8 @@ namespace TelemetryService
                     var valueSegment = queryValue[valueIndex..];
                     valueSegment = valueSegment.BaseUriPath()
                                                .UriTemplatePathFormat(true);
-                    var resultMatch = _uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
+
+                    var resultMatch = uriTemplateMatcher?.Match(new Uri(valueSegment.ToLowerInvariant(), UriKind.RelativeOrAbsolute));
 
                     if (resultMatch != null)
                     {

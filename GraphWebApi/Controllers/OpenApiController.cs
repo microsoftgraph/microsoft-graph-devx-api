@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using GraphWebApi.Models;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -10,10 +11,13 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService;
 using OpenAPIService.Common;
+using OpenAPIService.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
+using UtilityService;
 
 namespace GraphWebApi.Controllers
 {
@@ -24,10 +28,16 @@ namespace GraphWebApi.Controllers
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private static readonly Dictionary<string, string> _openApiTraceProperties =
+                        new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiController)} };
+        private readonly TelemetryClient _telemetryClient;
+        private readonly IOpenApiService _openApiService;
 
-        public OpenApiController(IConfiguration configuration)
+        public OpenApiController(IConfiguration configuration, IOpenApiService openApiService, TelemetryClient telemetryClient)
         {
+            _telemetryClient = telemetryClient;
             _configuration = configuration;
+            _openApiService = openApiService;
         }
 
         [Route("openapi")]
@@ -55,20 +65,20 @@ namespace GraphWebApi.Controllers
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                OpenApiDocument source = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+                OpenApiDocument source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
-                var predicate = OpenApiService.CreatePredicate(operationIds: operationIds,
-                                                                     tags: tags,
-                                                                     url: url,
-                                                                     source: source,
-                                                                     graphVersion: styleOptions.GraphVersion,
-                                                                     forceRefresh: forceRefresh);
+                var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
+                                                               tags: tags,
+                                                               url: url,
+                                                               source: source,
+                                                               graphVersion: styleOptions.GraphVersion,
+                                                               forceRefresh: forceRefresh);
 
-                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
+                var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
-                subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
+                subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
 
-                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
+                var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
 
                 if (styleOptions.OpenApiFormat == "yaml")
                 {
@@ -79,16 +89,25 @@ namespace GraphWebApi.Controllers
                     return new FileStreamResult(stream, "application/json");
                 }
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException invalidOps)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+                _telemetryClient?.TrackException(invalidOps,
+                                           _openApiTraceProperties);
+
+                return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException argException)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
+                _telemetryClient?.TrackException(argException,
+                                           _openApiTraceProperties);
+
+                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
+                _telemetryClient?.TrackException(ex,
+                                           _openApiTraceProperties);
+
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -110,20 +129,20 @@ namespace GraphWebApi.Controllers
             {
                 OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-                OpenApiDocument source = await OpenApiService.ConvertCsdlToOpenApiAsync(Request.Body);
+                OpenApiDocument source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
 
-                var predicate = OpenApiService.CreatePredicate(operationIds: operationIds,
+                var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
                                                                      tags: tags,
                                                                      url: url,
                                                                      source: source,
                                                                      graphVersion: styleOptions.GraphVersion,
                                                                      forceRefresh: forceRefresh);
 
-                var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
+                var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
-                subsetOpenApiDocument = OpenApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
+                subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
 
-                var stream = OpenApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
+                var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
 
                 if (styleOptions.OpenApiFormat == "yaml")
                 {
@@ -134,16 +153,25 @@ namespace GraphWebApi.Controllers
                     return new FileStreamResult(stream, "application/json");
                 }
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException invalidOps)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+                _telemetryClient?.TrackException(invalidOps,
+                                           _openApiTraceProperties);
+
+                return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException argException)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
+                _telemetryClient?.TrackException(argException,
+                                           _openApiTraceProperties);
+
+                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
+                _telemetryClient?.TrackException(ex,
+                                           _openApiTraceProperties);
+
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
@@ -167,22 +195,31 @@ namespace GraphWebApi.Controllers
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                var graphOpenApi = await OpenApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+                var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
                 await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                     graphOpenApi, Response.Body, styleOptions.Style);
 
                 return new EmptyResult();
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException invalidOps)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status400BadRequest };
+                _telemetryClient?.TrackException(invalidOps,
+                                           _openApiTraceProperties);
+
+                return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException argException)
             {
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status404NotFound };
+                _telemetryClient?.TrackException(argException,
+                                           _openApiTraceProperties);
+
+                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
             catch (Exception ex)
             {
+                _telemetryClient?.TrackException(ex,
+                                           _openApiTraceProperties);
+
                 return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
