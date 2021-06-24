@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -106,6 +106,27 @@ namespace OpenAPIService
                  */
                 _schemaLoop.Push(schema.AdditionalProperties);
             }
+        }
+
+        /// <summary>
+        /// Visits the list of <see cref="OpenApiParameter>"/>
+        /// </summary>
+        /// <param name="parameters"></param>
+        public override void Visit(IList<OpenApiParameter> parameters)
+        {
+            /* The Parameter.Explode property should be true
+             * if Parameter.Style == Form. But PowerShell needs
+             * to work around this and render Parameter.Explode == false.
+             */
+            foreach (var parameter in parameters)
+            {
+                if (parameter.Style == ParameterStyle.Form)
+                {
+                    parameter.Explode = false;
+                }
+            }
+
+            base.Visit(parameters);
         }
 
         /// <summary>
