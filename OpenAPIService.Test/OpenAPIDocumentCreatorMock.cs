@@ -342,6 +342,23 @@ namespace OpenAPIService.Test
                                     OperationId = "users.GetMessages",
                                     Summary = "Get messages from users",
                                     Description = "The messages in a mailbox or folder. Read-only. Nullable.",
+                                    Parameters = new List<OpenApiParameter>
+                                    {
+                                        {
+                                            new OpenApiParameter()
+                                            {
+                                                Name = "$select",
+                                                In = ParameterLocation.Query,
+                                                Required = true,
+                                                Description = "Select properties to be returned",
+                                                Schema = new OpenApiSchema()
+                                                {
+                                                    Type = "array"                                                    
+                                                }
+                                                // missing explode parameter
+                                            }
+                                        }
+                                    },
                                     Responses = new OpenApiResponses()
                                     {
                                         {
