@@ -37,7 +37,7 @@ namespace OpenAPIService
         public override void Visit(IList<OpenApiParameter> parameters)
         {
             /* The Parameter.Explode property should be true
-             * if Parameter.Style == Form but OData query params
+             * if Parameter.Style == Form; but OData query params
              * as used in Microsoft Graph implement explode: false
              * ex: $select=id,displayName,givenName
              */
