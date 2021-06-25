@@ -30,6 +30,28 @@ namespace OpenAPIService
             }
         }
 
+        /// <summary>
+        /// Visits the list of <see cref="OpenApiParameter>"/>
+        /// </summary>
+        /// <param name="parameters"></param>
+        public override void Visit(IList<OpenApiParameter> parameters)
+        {
+            /* The Parameter.Explode property should be true
+             * if Parameter.Style == Form but OData query params
+             * as used in Microsoft Graph implement explode: false
+             * ex: $select=id,displayName,givenName
+             */
+            foreach (var parameter in parameters)
+            {
+                if (parameter.Style == ParameterStyle.Form)
+                {
+                    parameter.Explode = false;
+                }
+            }
+
+            base.Visit(parameters);
+        }
+
         private CurrentKeys CopyCurrentKeys(CurrentKeys currentKeys)
         {
             var keys = new CurrentKeys

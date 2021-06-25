@@ -109,27 +109,6 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Visits the list of <see cref="OpenApiParameter>"/>
-        /// </summary>
-        /// <param name="parameters"></param>
-        public override void Visit(IList<OpenApiParameter> parameters)
-        {
-            /* The Parameter.Explode property should be true
-             * if Parameter.Style == Form. But PowerShell needs
-             * to work around this and render Parameter.Explode == false.
-             */
-            foreach (var parameter in parameters)
-            {
-                if (parameter.Style == ParameterStyle.Form)
-                {
-                    parameter.Explode = false;
-                }
-            }
-
-            base.Visit(parameters);
-        }
-
-        /// <summary>
         /// Resolves action and function OperationIds by reverting their signatures
         /// to how they were being defined in package Microsoft.OpenApi.OData ver. 1.0.6 and below.
         /// </summary>
