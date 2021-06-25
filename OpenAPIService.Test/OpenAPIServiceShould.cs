@@ -390,14 +390,14 @@ namespace OpenAPIService.Test
             OpenApiDocument source = _graphBetaSource;
 
             // Act
-            var predicate = OpenApiService.CreatePredicate(operationIds: null,
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: "/users/{user-id}/messages/{message-id}",
                                                            source: source,
                                                            graphVersion: GraphVersion);
 
-            var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = OpenApiService.ApplyStyle(style, subsetOpenApiDocument);
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument);
 
             var parameter = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
