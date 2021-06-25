@@ -5,6 +5,8 @@
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
+using OpenAPIService.Interfaces;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -13,9 +15,17 @@ namespace OpenAPIService.Test
     /// <summary>
     /// Mock class that creates a sample OpenAPI document.
     /// </summary>
-    public static class OpenAPIDocumentCreatorMock
+    public class OpenAPIDocumentCreatorMock
     {
         private static readonly ConcurrentDictionary<string, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<string, OpenApiDocument>();
+        private readonly IOpenApiService _openApiService;
+        private const string NullValueError = "Value cannot be null";
+
+        public OpenAPIDocumentCreatorMock(IOpenApiService openApiService)
+        {
+            _openApiService = openApiService
+                ?? throw new ArgumentNullException(nameof(openApiService), $"{ NullValueError }: { nameof(openApiService) }");
+        }
 
         /// <summary>
         /// Gets an OpenAPI document of Microsoft Graph
@@ -24,7 +34,7 @@ namespace OpenAPIService.Test
         /// <param name="key">The key for the OpenAPI document dictionary.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>Instance of an OpenApiDocument</returns>
-        public static OpenApiDocument GetGraphOpenApiDocument(string key, bool forceRefresh)
+        public OpenApiDocument GetGraphOpenApiDocument(string key, bool forceRefresh)
         {
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(key, out OpenApiDocument doc))
             {
@@ -40,7 +50,7 @@ namespace OpenAPIService.Test
         /// Creates an OpenAPI document.
         /// </summary>
         /// <returns>Instance of an OpenApi document</returns>
-        private static OpenApiDocument CreateOpenApiDocument()
+        private OpenApiDocument CreateOpenApiDocument()
         {
             string applicationJsonMediaType = "application/json";
 
@@ -732,7 +742,7 @@ namespace OpenAPIService.Test
                 }
             };
 
-            return OpenApiService.FixReferences(document);
+            return _openApiService.FixReferences(document);
         }
     }
 }

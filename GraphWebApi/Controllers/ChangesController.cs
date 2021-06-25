@@ -27,16 +27,18 @@ namespace GraphWebApi.Controllers
         private readonly IConfiguration _configuration;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly Dictionary<string, string> _changesTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Changes, "ChangesController" } };
+            new() { { UtilityConstants.TelemetryPropertyKey_Changes, nameof(ChangesController) } };
         private readonly TelemetryClient _telemetryClient;
+        private readonly IChangesService _changesService;
 
-        public ChangesController(IChangesStore changesStore, IConfiguration configuration,
+        public ChangesController(IChangesStore changesStore, IConfiguration configuration, IChangesService changesService,
                                  IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient)
         {
             _telemetryClient = telemetryClient;
             _changesStore = changesStore;
             _configuration = configuration;
             _httpClientUtility = httpClientUtility;
+            _changesService = changesService;
         }
 
         // Gets the changelog records
@@ -89,8 +91,7 @@ namespace GraphWebApi.Controllers
                         GraphVersion = graphVersion
                     };
 
-                    changeLog = ChangesService.Services.ChangesService
-                                    .FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
+                    changeLog = _changesService.FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
                 }
                 else
                 {
@@ -106,7 +107,7 @@ namespace GraphWebApi.Controllers
                     // Filtered items yielded no result
                     return NotFound();
                 }
-                _changesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_Count, "ChangesCount");
+                _changesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(ChangesController));
                 _telemetryClient?.TrackTrace($"Fetched {changeLog.CurrentItems} changes",
                                              SeverityLevel.Information,
                                              _changesTraceProperties);

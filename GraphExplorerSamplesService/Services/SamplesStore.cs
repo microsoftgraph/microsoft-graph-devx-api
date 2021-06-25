@@ -29,7 +29,7 @@ namespace GraphExplorerSamplesService.Services
         private readonly IMemoryCache _samplesCache;
         private readonly IConfiguration _configuration;
         private readonly Dictionary<string, string> SamplesTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Samples, "SamplesStore" } };
+            new() { { UtilityConstants.TelemetryPropertyKey_Samples, nameof(SamplesStore)} };
         private readonly string _sampleQueriesContainerName;
         private readonly string _sampleQueriesBlobName;
         private readonly int _defaultRefreshTimeInHours;
