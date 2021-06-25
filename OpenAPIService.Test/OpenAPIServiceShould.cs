@@ -373,8 +373,12 @@ namespace OpenAPIService.Test
             Assert.Equal(expectedOperationId, operationId);
         }
 
-        [Fact]
-        public void SetExplodePropertyToFalseInParametersWithStyleEqualsFormInPowerShellStyle()
+        [Theory]
+        [InlineData(OpenApiStyle.GEAutocomplete)]
+        [InlineData(OpenApiStyle.Plain)]
+        [InlineData(OpenApiStyle.PowerPlatform)]
+        [InlineData(OpenApiStyle.PowerShell)]
+        public void SetExplodePropertyToFalseInParametersWithStyleEqualsFormForAllStyles(OpenApiStyle style)
         {
             // Arrange
             OpenApiDocument source = _graphBetaSource;
@@ -387,7 +391,7 @@ namespace OpenAPIService.Test
                                                            graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = OpenApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = OpenApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument = OpenApiService.ApplyStyle(style, subsetOpenApiDocument);
 
             var parameter = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
