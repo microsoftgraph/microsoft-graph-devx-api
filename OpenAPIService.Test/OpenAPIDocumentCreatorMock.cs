@@ -354,18 +354,18 @@ namespace OpenAPIService.Test
                                     Description = "The messages in a mailbox or folder. Read-only. Nullable.",
                                     Parameters = new List<OpenApiParameter>
                                     {
-                                            new OpenApiParameter()
+                                        new OpenApiParameter()
+                                        {
+                                            Name = "$select",
+                                            In = ParameterLocation.Query,
+                                            Required = true,
+                                            Description = "Select properties to be returned",
+                                            Schema = new OpenApiSchema()
                                             {
-                                                Name = "$select",
-                                                In = ParameterLocation.Query,
-                                                Required = true,
-                                                Description = "Select properties to be returned",
-                                                Schema = new OpenApiSchema()
-                                                {
-                                                    Type = "array"                                                    
-                                                }
-                                                // missing explode parameter
+                                                Type = "array"
                                             }
+                                            // missing explode parameter
+                                        }
                                     },
                                     Responses = new OpenApiResponses()
                                     {
@@ -578,22 +578,20 @@ namespace OpenAPIService.Test
                                     Summary = "Invoke action keepAlive",
                                     Parameters = new List<OpenApiParameter>
                                     {
+                                        new OpenApiParameter()
                                         {
-                                            new OpenApiParameter()
+                                            Name = "call-id",
+                                            In = ParameterLocation.Path,
+                                            Description = "key: id of call",
+                                            Required = true,
+                                            Schema = new OpenApiSchema()
                                             {
-                                                Name = "call-id",
-                                                In = ParameterLocation.Path,
-                                                Description = "key: id of call",
-                                                Required = true,
-                                                Schema = new OpenApiSchema()
+                                                Type = "string"
+                                            },
+                                            Extensions = new Dictionary<string, IOpenApiExtension>
+                                            {
                                                 {
-                                                    Type = "string"
-                                                },
-                                                Extensions = new Dictionary<string, IOpenApiExtension>
-                                                {
-                                                    {
-                                                        "x-ms-docs-key-type", new OpenApiString("call")
-                                                    }
+                                                    "x-ms-docs-key-type", new OpenApiString("call")
                                                 }
                                             }
                                         }
@@ -626,52 +624,46 @@ namespace OpenAPIService.Test
                                 {
                                     Tags = new List<OpenApiTag>
                                     {
+                                        new OpenApiTag()
                                         {
-                                            new OpenApiTag()
-                                            {
-                                                Name = "groups.Functions"
-                                            }
+                                            Name = "groups.Functions"
                                         }
                                     },
                                     OperationId = "groups.group.events.event.calendar.events.delta",
                                     Summary = "Invoke function delta",
                                     Parameters = new List<OpenApiParameter>
                                     {
+                                        new OpenApiParameter()
                                         {
-                                            new OpenApiParameter()
+                                            Name = "group-id",
+                                            In = ParameterLocation.Path,
+                                            Description = "key: id of group",
+                                            Required = true,
+                                            Schema = new OpenApiSchema()
                                             {
-                                                Name = "group-id",
-                                                In = ParameterLocation.Path,
-                                                Description = "key: id of group",
-                                                Required = true,
-                                                Schema = new OpenApiSchema()
+                                                Type = "string"
+                                            },
+                                            Extensions = new Dictionary<string, IOpenApiExtension>
+                                            {
                                                 {
-                                                    Type = "string"
-                                                },
-                                                Extensions = new Dictionary<string, IOpenApiExtension>
-                                                {
-                                                    {
-                                                        "x-ms-docs-key-type", new OpenApiString("group")
-                                                    }
+                                                    "x-ms-docs-key-type", new OpenApiString("group")
                                                 }
                                             }
                                         },
+                                        new OpenApiParameter()
                                         {
-                                            new OpenApiParameter()
+                                            Name = "event-id",
+                                            In = ParameterLocation.Path,
+                                            Description = "key: id of event",
+                                            Required = true,
+                                            Schema = new OpenApiSchema()
                                             {
-                                                Name = "event-id",
-                                                In = ParameterLocation.Path,
-                                                Description = "key: id of event",
-                                                Required = true,
-                                                Schema = new OpenApiSchema()
+                                                Type = "string"
+                                            },
+                                            Extensions = new Dictionary<string, IOpenApiExtension>
+                                            {
                                                 {
-                                                    Type = "string"
-                                                },
-                                                Extensions = new Dictionary<string, IOpenApiExtension>
-                                                {
-                                                    {
-                                                        "x-ms-docs-key-type", new OpenApiString("event")
-                                                    }
+                                                    "x-ms-docs-key-type", new OpenApiString("event")
                                                 }
                                             }
                                         }
