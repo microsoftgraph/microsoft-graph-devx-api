@@ -45,7 +45,6 @@ namespace OpenAPIService
             {
                 if (parameter.Style == ParameterStyle.Form)
                  parameter.Explode = false;
-                }
             }
 
             base.Visit(parameters);
