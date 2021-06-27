@@ -354,7 +354,6 @@ namespace OpenAPIService.Test
                                     Description = "The messages in a mailbox or folder. Read-only. Nullable.",
                                     Parameters = new List<OpenApiParameter>
                                     {
-                                        {
                                             new OpenApiParameter()
                                             {
                                                 Name = "$select",
