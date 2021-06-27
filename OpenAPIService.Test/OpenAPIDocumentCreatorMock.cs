@@ -367,7 +367,6 @@ namespace OpenAPIService.Test
                                                 }
                                                 // missing explode parameter
                                             }
-                                        }
                                     },
                                     Responses = new OpenApiResponses()
                                     {
