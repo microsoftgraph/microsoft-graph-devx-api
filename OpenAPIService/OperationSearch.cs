@@ -43,7 +43,6 @@ namespace OpenAPIService
              */
             foreach (var parameter in parameters.Where(x => x.Style == ParameterStyle.Form))
             {
-                if (parameter.Style == ParameterStyle.Form)
                  parameter.Explode = false;
             }
 
