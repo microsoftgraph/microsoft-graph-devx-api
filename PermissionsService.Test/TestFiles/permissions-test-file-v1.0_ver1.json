@@ -1,8 +1,7 @@
 {
   "ApiPermissions": {
-    "/security/alerts/{id}": [
-      {
-        "HttpVerb": "GET",
+    "/security/alerts/{id}": {
+      "GET": {
         "DelegatedWork": [
           "SecurityEvents.Read.All",
           "SecurityEvents.ReadWrite.All"
@@ -13,8 +12,7 @@
           "SecurityEvents.ReadWrite.All"
         ]
       },
-      {
-        "HttpVerb": "PATCH",
+      "PATCH": {
         "DelegatedWork": [
           "SecurityEvents.ReadWrite.All"
         ],
@@ -23,10 +21,10 @@
           "SecurityEvents.ReadWrite.All"
         ]
       }
-    ],
-    "/security/alerts": [
-      {
-        "HttpVerb": "GET",
+    },
+    "/security/alerts": {
+
+      "GET": {
         "DelegatedWork": [
           "SecurityEvents.Read.All",
           "SecurityEvents.ReadWrite.All"
@@ -37,10 +35,10 @@
           "SecurityEvents.ReadWrite.All"
         ]
       }
-    ],
-    "/me/calendars/{id}": [
-      {
-        "HttpVerb": "DELETE",
+    },
+    "/me/calendars/{id}": {
+
+      "DELETE": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -51,8 +49,8 @@
           "Calendars.ReadWrite"
         ]
       },
-      {
-        "HttpVerb": "GET",
+
+      "GET": {
         "DelegatedWork": [
           "Calendars.Read"
         ],
@@ -63,8 +61,8 @@
           "Calendars.Read"
         ]
       },
-      {
-        "HttpVerb": "PATCH",
+
+      "PATCH": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -75,10 +73,12 @@
           "Calendars.ReadWrite"
         ]
       }
-    ],
-    "/users/{id}/calendars/{id}": [
-      {
-        "HttpVerb": "DELETE",
+
+    },
+    "/users/{id}/calendars/{id}": {
+
+
+      "DELETE": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -88,9 +88,10 @@
         "Application": [
           "Calendars.ReadWrite"
         ]
+
       },
-      {
-        "HttpVerb": "GET",
+
+      "GET": {
         "DelegatedWork": [
           "Calendars.Read"
         ],
@@ -101,8 +102,8 @@
           "Calendars.Read"
         ]
       },
-      {
-        "HttpVerb": "PATCH",
+
+      "PATCH": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -113,10 +114,10 @@
           "Calendars.ReadWrite"
         ]
       }
-    ],
-    "/me/calendars/{id}": [
-      {
-        "HttpVerb": "DELETE",
+    },
+    "/me/calendars/{id}": {
+
+      "DELETE": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -127,8 +128,8 @@
           "Calendars.ReadWrite"
         ]
       },
-      {
-        "HttpVerb": "GET",
+
+      "GET": {
         "DelegatedWork": [
           "Calendars.Read"
         ],
@@ -139,8 +140,7 @@
           "Calendars.Read"
         ]
       },
-      {
-        "HttpVerb": "PATCH",
+      "PATCH": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -151,10 +151,9 @@
           "Calendars.ReadWrite"
         ]
       }
-    ],
-    "/me/calendargroup/calendars/{id}": [
-      {
-        "HttpVerb": "DELETE",
+    },
+    "/me/calendargroup/calendars/{id}": {
+      "DELETE": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -165,8 +164,7 @@
           "Calendars.ReadWrite"
         ]
       },
-      {
-        "HttpVerb": "GET",
+      "GET": {
         "DelegatedWork": [
           "Calendars.Read"
         ],
@@ -177,8 +175,7 @@
           "Calendars.Read"
         ]
       },
-      {
-        "HttpVerb": "PATCH",
+      "PATCH": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -189,10 +186,9 @@
           "Calendars.ReadWrite"
         ]
       }
-    ],
-    "/users/{id}/calendargroup/calendars": [
-      {
-        "HttpVerb": "GET",
+    },
+    "/users/{id}/calendargroup/calendars": {
+      "GET": {
         "DelegatedWork": [
           "Calendars.Read"
         ],
@@ -202,9 +198,9 @@
         "Application": [
           "Calendars.Read"
         ]
+
       },
-      {
-        "HttpVerb": "POST",
+      "POST": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -215,10 +211,9 @@
           "Calendars.ReadWrite"
         ]
       }
-    ],
-    "/me/calendargroup/calendars/{id}": [
-      {
-        "HttpVerb": "DELETE",
+    },
+    "/me/calendargroup/calendars/{id}": {
+      "DELETE": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -229,8 +224,8 @@
           "Calendars.ReadWrite"
         ]
       },
-      {
-        "HttpVerb": "GET",
+
+      "GET": {
         "DelegatedWork": [
           "Calendars.Read"
         ],
@@ -241,8 +236,7 @@
           "Calendars.Read"
         ]
       },
-      {
-        "HttpVerb": "PATCH",
+      "PATCH": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
         ],
@@ -253,38 +247,35 @@
           "Calendars.ReadWrite"
         ]
       }
-    ],
-    "/workbook/worksheets/{id}/charts/{id}": [
-      {
-        "HttpVerb": "GET",
+    },
+    "/workbook/worksheets/{id}/charts/{id}": {
+      "GET": {
         "DelegatedWork": [
           "Files.ReadWrite"
         ],
         "DelegatedPersonal": [],
         "Application": []
       },
-      {
-        "HttpVerb": "PATCH",
+      "PATCH": {
         "DelegatedWork": [
           "Files.ReadWrite"
         ],
         "DelegatedPersonal": [],
         "Application": []
       }
-    ],
-    "/workbook/worksheets/{id}/charts/{id}/image(width=640)": [
-      {
-        "HttpVerb": "GET",
+
+    },
+    "/workbook/worksheets/{id}/charts/{id}/image(width=640)": {
+      "GET": {
         "DelegatedWork": [
           "Files.ReadWrite"
         ],
         "DelegatedPersonal": [],
         "Application": []
       }
-    ],
-    "/me/photo": [
-      {
-        "HttpVerb": "GET",
+    },
+    "/me/photo": {
+      "GET": {
         "DelegatedWork": [
           "User.ReadBasic.All",
           "User.Read",
@@ -299,8 +290,7 @@
           "Not supported."
         ]
       },
-      {
-        "HttpVerb": "PATCH",
+      "PATCH": {
         "DelegatedWork": [
           "User.ReadWrite",
           "User.ReadWrite.All"
@@ -312,8 +302,7 @@
           "Not supported."
         ]
       },
-      {
-        "HttpVerb": "PUT",
+      "PUT": {
         "DelegatedWork": [
           "User.ReadWrite",
           "User.ReadWrite.All"
@@ -325,6 +314,6 @@
           "Not supported."
         ]
       }
-    ]
+    }
   }
 }
