@@ -400,13 +400,18 @@ namespace GraphExplorerPermissionsService
                 string[] scopes = null;
                 var resultValue = (JToken)_scopesListTable[int.Parse(resultMatch.Key)];
 
-                foreach (JProperty scopeCategory in from JProperty httpVerb in resultValue
-                                                  where httpVerb.Name.ToLowerInvariant().Equals(method.ToLowerInvariant())
-                                                  from JProperty scopeCategory in httpVerb.Value
-                                                  where scopeCategory.Name.ToLowerInvariant().Equals(scopeType.ToLowerInvariant())
-                                                  select scopeCategory)
+                foreach (JProperty httpVerb in resultValue)
                 {
-                    scopes = scopeCategory.Value?.ToObject<string[]>();
+                    if (httpVerb.Name.ToLowerInvariant().Equals(method.ToLowerInvariant()))
+                    {
+                        foreach (JProperty scopeCategory in httpVerb.Value)
+                        {
+                            if (scopeCategory.Name.ToLowerInvariant().Equals(scopeType.ToLowerInvariant()))
+                            {
+                                scopes = scopeCategory.Value?.ToObject<string[]>();
+                            }
+                        }
+                    }
                 }
 
                 if (scopes == null)
