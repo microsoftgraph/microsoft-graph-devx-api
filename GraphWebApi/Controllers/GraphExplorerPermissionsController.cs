@@ -70,7 +70,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerPermissionsController));
-                _telemetryClient?.TrackTrace($"Fetched {result.Count} permissions",
+                _telemetryClient?.TrackTrace($"Fetched {result?.Count ?? 0} permissions",
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
 
