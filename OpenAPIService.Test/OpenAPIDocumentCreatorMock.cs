@@ -2,7 +2,11 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
+using OpenAPIService.Interfaces;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
@@ -11,9 +15,17 @@ namespace OpenAPIService.Test
     /// <summary>
     /// Mock class that creates a sample OpenAPI document.
     /// </summary>
-    public static class OpenAPIDocumentCreatorMock
+    public class OpenAPIDocumentCreatorMock
     {
         private static readonly ConcurrentDictionary<string, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<string, OpenApiDocument>();
+        private readonly IOpenApiService _openApiService;
+        private const string NullValueError = "Value cannot be null";
+
+        public OpenAPIDocumentCreatorMock(IOpenApiService openApiService)
+        {
+            _openApiService = openApiService
+                ?? throw new ArgumentNullException(nameof(openApiService), $"{ NullValueError }: { nameof(openApiService) }");
+        }
 
         /// <summary>
         /// Gets an OpenAPI document of Microsoft Graph
@@ -22,7 +34,7 @@ namespace OpenAPIService.Test
         /// <param name="key">The key for the OpenAPI document dictionary.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>Instance of an OpenApiDocument</returns>
-        public static OpenApiDocument GetGraphOpenApiDocument(string key, bool forceRefresh)
+        public OpenApiDocument GetGraphOpenApiDocument(string key, bool forceRefresh)
         {
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(key, out OpenApiDocument doc))
             {
@@ -38,7 +50,7 @@ namespace OpenAPIService.Test
         /// Creates an OpenAPI document.
         /// </summary>
         /// <returns>Instance of an OpenApi document</returns>
-        private static OpenApiDocument CreateOpenApiDocument()
+        private OpenApiDocument CreateOpenApiDocument()
         {
             string applicationJsonMediaType = "application/json";
 
@@ -321,6 +333,55 @@ namespace OpenAPIService.Test
                             }
                         }
                     },
+                    ["/users/{user-id}/messages/{message-id}"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        {
+                                            new OpenApiTag()
+                                            {
+                                                Name = "users.message"
+                                            }
+                                        }
+                                    },
+                                    OperationId = "users.GetMessages",
+                                    Summary = "Get messages from users",
+                                    Description = "The messages in a mailbox or folder. Read-only. Nullable.",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200", new OpenApiResponse()
+                                            {
+                                                Description = "Retrieved navigation property",
+                                                Content = new Dictionary<string, OpenApiMediaType>
+                                                {
+                                                    {
+                                                        applicationJsonMediaType,
+                                                        new OpenApiMediaType
+                                                        {
+                                                            Schema = new OpenApiSchema
+                                                            {
+                                                                Reference = new OpenApiReference
+                                                                {
+                                                                    Type = ReferenceType.Schema,
+                                                                    Id = "microsoft.graph.message"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     ["/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore"] = new OpenApiPathItem()
                     {
                         Operations = new Dictionary<OperationType, OpenApiOperation>
@@ -481,6 +542,161 @@ namespace OpenAPIService.Test
                                 }
                             }
                         }
+                    },
+                    ["/communications/calls/{call-id}/microsoft.graph.keepAlive"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Post, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        {
+                                            new OpenApiTag()
+                                            {
+                                                Name = "communications.Actions"
+                                            }
+                                        }
+                                    },
+                                    OperationId = "communications.calls.call.keepAlive",
+                                    Summary = "Invoke action keepAlive",
+                                    Parameters = new List<OpenApiParameter>
+                                    {
+                                        {
+                                            new OpenApiParameter()
+                                            {
+                                                Name = "call-id",
+                                                In = ParameterLocation.Path,
+                                                Description = "key: id of call",
+                                                Required = true,
+                                                Schema = new OpenApiSchema()
+                                                {
+                                                    Type = "string"
+                                                },
+                                                Extensions = new Dictionary<string, IOpenApiExtension>
+                                                {
+                                                    {
+                                                        "x-ms-docs-key-type", new OpenApiString("call")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "204", new OpenApiResponse()
+                                            {
+                                                Description = "Success"
+                                            }
+                                        }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("action")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/groups/{group-id}/events/{event-id}/calendar/events/microsoft.graph.delta"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        {
+                                            new OpenApiTag()
+                                            {
+                                                Name = "groups.Functions"
+                                            }
+                                        }
+                                    },
+                                    OperationId = "groups.group.events.event.calendar.events.delta",
+                                    Summary = "Invoke function delta",
+                                    Parameters = new List<OpenApiParameter>
+                                    {
+                                        {
+                                            new OpenApiParameter()
+                                            {
+                                                Name = "group-id",
+                                                In = ParameterLocation.Path,
+                                                Description = "key: id of group",
+                                                Required = true,
+                                                Schema = new OpenApiSchema()
+                                                {
+                                                    Type = "string"
+                                                },
+                                                Extensions = new Dictionary<string, IOpenApiExtension>
+                                                {
+                                                    {
+                                                        "x-ms-docs-key-type", new OpenApiString("group")
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            new OpenApiParameter()
+                                            {
+                                                Name = "event-id",
+                                                In = ParameterLocation.Path,
+                                                Description = "key: id of event",
+                                                Required = true,
+                                                Schema = new OpenApiSchema()
+                                                {
+                                                    Type = "string"
+                                                },
+                                                Extensions = new Dictionary<string, IOpenApiExtension>
+                                                {
+                                                    {
+                                                        "x-ms-docs-key-type", new OpenApiString("event")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200", new OpenApiResponse()
+                                            {
+                                                Description = "Success",
+                                                Content = new Dictionary<string, OpenApiMediaType>
+                                                {
+                                                    {
+                                                        applicationJsonMediaType,
+                                                        new OpenApiMediaType
+                                                        {
+                                                            Schema = new OpenApiSchema
+                                                            {
+                                                                Type = "array",
+                                                                Reference = new OpenApiReference
+                                                                {
+                                                                    Type = ReferenceType.Schema,
+                                                                    Id = "microsoft.graph.event"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("function")
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 Components = new OpenApiComponents
@@ -509,7 +725,7 @@ namespace OpenAPIService.Test
                 }
             };
 
-            return OpenApiService.FixReferences(document);
+            return _openApiService.FixReferences(document);
         }
     }
 }

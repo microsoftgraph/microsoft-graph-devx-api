@@ -2,12 +2,8 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using FileService.Interfaces;
-using GraphExplorerPermissionsService;
+using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
-using MemoryCache.Testing.Moq;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
 using MockTestUtility;
 using System;
 using System.Collections.Generic;
@@ -17,22 +13,12 @@ namespace PermissionsService.Test
 {
     public class PermissionsStoreShould
     {
-        private readonly IConfigurationRoot _configuration;
-        private readonly IFileUtility _fileUtility;
-        private readonly IHttpClientUtility _httpClientUtility;
-        private readonly IMemoryCache _permissionsCache;
-        private readonly PermissionsStore _permissionsStore;
+        private readonly IPermissionsStore _permissionsStore;
+        private const string ConfigFilePath = ".\\TestFiles\\appsettingstest-valid.json";
 
         public PermissionsStoreShould()
         {
-            _fileUtility = new FileUtilityMock();
-            _httpClientUtility = new FileUtilityMock();
-            _permissionsCache = Create.MockedMemoryCache();
-            _configuration = new ConfigurationBuilder()
-               .AddJsonFile(".\\TestFiles\\appsettingstest-valid.json")
-               .Build();
-
-            _permissionsStore = new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, _permissionsCache);
+            _permissionsStore = PermissionStoreFactoryMock.GetPermissionStore(ConfigFilePath);
         }
 
         [Fact]
@@ -122,11 +108,13 @@ namespace PermissionsService.Test
             /* Act */
 
             List<ScopeInformation> result1 =
-                _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/users/{id}/calendars/{id}", method: "GET").GetAwaiter().GetResult(); // permission in ver1 doc.
+                _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/users/{id}/calendars/{id}?$orderby=CreatedDate desc", method: "GET").GetAwaiter().GetResult(); // permission in ver1 doc.
             List<ScopeInformation> result2 =
                 _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/anonymousipriskevents/{id}", method: "GET").GetAwaiter().GetResult(); // permission in ver2 doc.
             List<ScopeInformation> result3 =
                 _permissionsStore.GetScopesAsync(scopeType: "Application", requestUrl: "/security/alerts/{id}", method: "PATCH").GetAwaiter().GetResult(); // permission in ver1 doc.
+            List<ScopeInformation> result4 =
+                _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/me/photo/$value", method: "PATCH").GetAwaiter().GetResult(); // permission in ver1 doc.
 
             /* Assert */
 
@@ -155,6 +143,22 @@ namespace PermissionsService.Test
                   Assert.Equal("Read and update your organization's security events", item.DisplayName);
                   Assert.Equal("Allows the app to read your organization's security events without a signed-in user. Also allows the app to update editable properties in security events.", item.Description);
                   Assert.False(item.IsAdmin);
+              });
+
+            Assert.Collection(result4,
+              item =>
+              {
+                  Assert.Equal("User.ReadWrite", item.ScopeName);
+                  Assert.Equal("Read and update your profile", item.DisplayName);
+                  Assert.Equal("Allows the app to read your profile, and discover your group membership, reports and manager. It also allows the app to update your profile information on your behalf.", item.Description);
+                  Assert.False(item.IsAdmin);
+              },
+              item =>
+              {
+                  Assert.Equal("User.ReadWrite.All", item.ScopeName);
+                  Assert.Equal("Read and write all users' full profiles", item.DisplayName);
+                  Assert.Equal("Allows the app to read and write the full set of profile properties, reports, and managers of other users in your organization, on your behalf.", item.Description);
+                  Assert.True(item.IsAdmin);
               });
         }
 
@@ -236,17 +240,9 @@ namespace PermissionsService.Test
         [Fact]
         public void ThrowInvalidOperationExceptionIfTablesNotPopulatedDueToEmptyPermissionsFile()
         {
-            /* Arrange */
+            /* Act & Assert */
 
-            IConfigurationRoot configuration = new ConfigurationBuilder()
-                .AddJsonFile(".\\TestFiles\\appsettingstest-empty.json")
-                .Build();
-
-            PermissionsStore permissionsStore = new PermissionsStore(configuration, _httpClientUtility, _fileUtility, _permissionsCache);
-
-            // Act and Assert
-            Assert.Throws<InvalidOperationException>(() => permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
-                                                                           .GetAwaiter().GetResult());
+            Assert.Throws<InvalidOperationException>(() => PermissionStoreFactoryMock.GetPermissionStore(".\\TestFiles\\appsettingstest-empty.json"));
         }
 
         [Fact]
@@ -274,7 +270,7 @@ namespace PermissionsService.Test
         [Fact]
         public void FetchPermissionsDescriptionsFromGithubGivenARequestUrl()
         {
-            //Arrange
+            // Arrange
             string org = "\\Org";
             string branchName = "Branch";
 
@@ -298,16 +294,6 @@ namespace PermissionsService.Test
                     Assert.Equal("Allows the app to read your organization's security events on your behalf. Also allows you to update editable properties in security events.", item.Description);
                     Assert.True(item.IsAdmin);
                 });
-        }
-
-        [Fact]
-        public void ThrowArgumentNullExceptionOnConstructorIfArgumentsAreNull()
-        {
-            // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(null, _httpClientUtility, _fileUtility,_permissionsCache)); // null config object
-            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, null, _fileUtility, _permissionsCache)); // null httpClientUtility object
-            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, _httpClientUtility, null, _permissionsCache)); // null fileUtility object
-            Assert.Throws<ArgumentNullException>(() => new PermissionsStore(_configuration, _httpClientUtility, _fileUtility, null)); // null permissionsCache object
         }
     }
 }

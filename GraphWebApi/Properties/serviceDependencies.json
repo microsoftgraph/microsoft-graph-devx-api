@@ -5,7 +5,7 @@
     },
     "appInsights1": {
       "type": "appInsights",
-      "connectionId": "APPINSIGHTS_INSTRUMENTATIONKEY"
+      "connectionId": "APPINSIGHTS_CONNECTIONSTRING"
     }
   }
 }

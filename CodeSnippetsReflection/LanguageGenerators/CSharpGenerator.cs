@@ -635,6 +635,11 @@ namespace CodeSnippetsReflection.LanguageGenerators
         /// <returns>a string builder with the relevant odata code added</returns>
         private static StringBuilder ProcessOdataIdAndType(StringBuilder stringBuilder, string key, string value, string className, string tabSpace)
         {
+            if(String.IsNullOrEmpty(value))
+            {
+                throw new ArgumentNullException(nameof(value), "Value for @odata.type cannot be empty");
+            }
+
             switch (key)
             {
                 case "@odata.id" when className.Equals("DirectoryObject") :
@@ -651,7 +656,19 @@ namespace CodeSnippetsReflection.LanguageGenerators
                     break;
 
                 case "@odata.type":
-                    var proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
+                    string proposedType;
+                    // If type contains subnamespace of Microsoft.Graph e.g Microsoft.Graph.Ediscovery.LegalHold, prefix the namespace to the typeName
+                    // else if type not in graph namespace e.g Microsoft.OutlookServices or is a type directly within the graph subnamespace e.g Microsoft.Graph.IdentitySet
+                    // then proposedType is the <typeName> without prefix 
+                    var graphSubspaces = value.StartsWith("#microsoft.graph.") ? value["#microsoft.graph.".Length..].Split(".".ToCharArray()) : new string[] {} ; 
+                    if (graphSubspaces.Length > 1) {
+                        // Remove the prefixed `#`, then uppercase the individual strings in the odata path
+                        var namespacedTypeName = value.Split("#").Last().Split(".").Select((item, _) => CommonGenerator.UppercaseFirstLetter(item));
+                        proposedType = String.Join(".", namespacedTypeName);
+                    }
+                    else{
+                        proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
+                    }
                     proposedType = proposedType.EndsWith("Request") ? proposedType + "Object" : proposedType; // disambiguate class names that end with Request
                     //check if the odata type specified is different
                     // maybe due to the declaration of a subclass of the type specified from the url.
