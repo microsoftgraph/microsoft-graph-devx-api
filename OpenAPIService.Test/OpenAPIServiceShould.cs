@@ -378,5 +378,33 @@ namespace OpenAPIService.Test
             // Assert
             Assert.Equal(expectedOperationId, operationId);
         }
+
+        [Theory]
+        [InlineData(OpenApiStyle.GEAutocomplete)]
+        [InlineData(OpenApiStyle.Plain)]
+        [InlineData(OpenApiStyle.PowerPlatform)]
+        [InlineData(OpenApiStyle.PowerShell)]
+        public void SetExplodePropertyToFalseInParametersWithStyleEqualsFormForAllStyles(OpenApiStyle style)
+        {
+            // Arrange
+            OpenApiDocument source = _graphBetaSource;
+
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: "/users/{user-id}/messages/{message-id}",
+                                                           source: source,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument);
+
+            var parameter = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
+                              .Operations.FirstOrDefault().Value
+                              .Parameters.First(s => s.Name.Equals("$select"));
+            // Assert
+            Assert.False(parameter.Explode);
+        }
     }
 }
