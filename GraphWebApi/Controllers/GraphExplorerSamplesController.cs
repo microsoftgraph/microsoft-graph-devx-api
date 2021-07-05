@@ -72,7 +72,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
-                _telemetryClient?.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
+                _telemetryClient?.TrackTrace($"{filteredSampleQueries?.Count ?? 0} sample queries found from search value '{search}'",
                                              SeverityLevel.Information,
                                              _samplesTraceProperties);
 
@@ -353,7 +353,7 @@ namespace GraphWebApi.Controllers
             }
 
             _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
-            _telemetryClient?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
+            _telemetryClient?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries?.Count ?? 0} samples",
                                          SeverityLevel.Information,
                                          _samplesTraceProperties);
 
