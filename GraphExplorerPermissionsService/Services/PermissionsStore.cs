@@ -398,17 +398,17 @@ namespace GraphExplorerPermissionsService
                 }
 
                 string[] scopes = null;
-                var resultValue = (JToken)_scopesListTable[int.Parse(resultMatch.Key)];
-
+                var resultValue = _scopesListTable[int.Parse(resultMatch.Key)] as JToken;
                 foreach (JProperty httpVerb in resultValue)
                 {
-                    if (httpVerb.Name.ToLowerInvariant().Equals(method.ToLowerInvariant()))
+                    if (httpVerb.Name.Equals(method, StringComparison.OrdinalIgnoreCase))
                     {
                         foreach (JProperty scopeCategory in httpVerb.Value)
                         {
-                            if (scopeCategory.Name.ToLowerInvariant().Equals(scopeType.ToLowerInvariant()))
+                            if (scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase))
                             {
                                 scopes = scopeCategory.Value?.ToObject<string[]>();
+                                break;
                             }
                         }
                     }
