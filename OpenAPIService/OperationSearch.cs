@@ -19,7 +19,7 @@ namespace OpenAPIService
 
         public OperationSearch(Func<OpenApiOperation, bool> predicate)
         {
-            _predicate = predicate;
+            _predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
         }
 
         /// <summary>
