@@ -337,7 +337,7 @@ namespace GraphWebApi.Controllers
         /// <returns>A list of Sample Queries.</returns>
         private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string org, string branchName)
         {
-            string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
+            string locale = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
             _telemetryClient?.TrackTrace($"Request to fetch samples for locale '{locale}'",
                                          SeverityLevel.Information,
                                          _samplesTraceProperties);

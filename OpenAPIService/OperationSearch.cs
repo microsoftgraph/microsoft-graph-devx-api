@@ -1,23 +1,31 @@
-﻿using Microsoft.OpenApi.Models;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OpenAPIService
 {
     public class OperationSearch : OpenApiVisitorBase
     {
         private readonly Func<OpenApiOperation, bool> _predicate;
+        private readonly List<SearchResult> _searchResults = new();
 
-        private List<SearchResult> _searchResults = new List<SearchResult>();
-
-        public IList<SearchResult> SearchResults { get { return _searchResults; } }
+        public IList<SearchResult> SearchResults => _searchResults;
 
         public OperationSearch(Func<OpenApiOperation, bool> predicate)
         {
-            this._predicate = predicate;
+            _predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
         }
 
+        /// <summary>
+        /// Visits <see cref="OpenApiOperation"/>.
+        /// </summary>
+        /// <param name="operation">The target <see cref="OpenApiOperation"/>.</param>
         public override void Visit(OpenApiOperation operation)
         {
             if (_predicate(operation))
@@ -30,16 +38,32 @@ namespace OpenAPIService
             }
         }
 
-        private CurrentKeys CopyCurrentKeys(CurrentKeys currentKeys)
+        /// <summary>
+        /// Visits list of <see cref="OpenApiParameter"/>.
+        /// </summary>
+        /// <param name="parameters">The target list of <see cref="OpenApiParameter"/>.</param>
+        public override void Visit(IList<OpenApiParameter> parameters)
         {
-            var keys = new CurrentKeys
+            /* The Parameter.Explode property should be true
+             * if Parameter.Style == Form; but OData query params
+             * as used in Microsoft Graph implement explode: false
+             * ex: $select=id,displayName,givenName
+             */
+            foreach (var parameter in parameters.Where(x => x.Style == ParameterStyle.Form))
+            {
+                parameter.Explode = false;
+            }
+
+            base.Visit(parameters);
+        }
+
+        private static CurrentKeys CopyCurrentKeys(CurrentKeys currentKeys)
+        {
+            return new CurrentKeys
             {
                 Path = currentKeys.Path,
                 Operation = currentKeys.Operation
             };
-
-            return keys;
         }
     }
-
 }
