@@ -60,7 +60,7 @@ namespace GraphExplorerSamplesService.Models
                 // Check if value starts with '/' and whether there are any subsequent '/'
                 if(!testValue.Trim(' ').StartsWith("/") || !testValue.TrimStart('/').Contains("/"))
                 {
-                    throw new ArgumentException(nameof(RequestUrl), "Invalid request url.\r\nEx.: /v1.0/me/messages");
+                    throw new ArgumentException(nameof(RequestUrl), $"Invalid request url: {testValue}\r\nEx.: /v1.0/me/messages");
                 }
 
                 _requestUrl = value.Trim(' '); // remove all leading and trailing whitespaces before assigning
@@ -75,7 +75,7 @@ namespace GraphExplorerSamplesService.Models
             {
                 if (!Uri.IsWellFormedUriString(value, UriKind.Absolute))
                 {
-                    throw new ArgumentException(nameof(DocLink), "URL must be absolute and valid.");
+                    throw new ArgumentException(nameof(DocLink), $"URL must be absolute and valid: {value}");
                 }
 
                 _docLink = value.Trim(' '); // remove all leading and trailing whitespaces before assigning
