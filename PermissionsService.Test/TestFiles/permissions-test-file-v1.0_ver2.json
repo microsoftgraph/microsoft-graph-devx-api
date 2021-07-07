@@ -1,8 +1,7 @@
 {
   "ApiPermissions": {
-    "/accessreviews('{id}')/reviewers": [
-      {
-        "HttpVerb": "POST",
+    "/accessreviews('{id}')/reviewers": {
+      "POST": {
         "DelegatedWork": [
           "AccessReview.ReadWrite.All"
         ],
@@ -11,8 +10,8 @@
           "AccessReview.ReadWrite.Membership"
         ]
       },
-      {
-        "HttpVerb": "GET",
+
+      "GET": {
         "DelegatedWork": [
           "AccessReview.Read.All",
           "AccessReview.ReadWrite.All"
@@ -23,10 +22,9 @@
           "AccessReview.ReadWrite.Membership"
         ]
       }
-    ],
-    "/accessreviews('<id>')/applydecisions()": [
-      {
-        "HttpVerb": "POST",
+    },
+    "/accessreviews('<id>')/applydecisions()": {
+      "POST": {
         "DelegatedWork": [
           "AccessReview.ReadWrite.All"
         ],
@@ -35,10 +33,11 @@
           "AccessReview.ReadWrite.Membership"
         ]
       }
-    ],
-    "/administrativeunits/{id}": [
-      {
-        "HttpVerb": "DELETE",
+
+    },
+    "/administrativeunits/{id}": {
+
+      "DELETE": {
         "DelegatedWork": [
           "AdministrativeUnit.ReadWrite.All",
           "Directory.AccessAsUser.All"
@@ -48,8 +47,7 @@
           "AdministrativeUnit.ReadWrite.All"
         ]
       },
-      {
-        "HttpVerb": "GET",
+      "GET": {
         "DelegatedWork": [
           "AdministrativeUnit.Read.All",
           "Directory.Read.All",
@@ -65,8 +63,7 @@
           "Directory.ReadWrite.All"
         ]
       },
-      {
-        "HttpVerb": "PATCH",
+      "PATCH": {
         "DelegatedWork": [
           "AdministrativeUnit.ReadWrite.All",
           "Directory.AccessAsUser.All"
@@ -76,10 +73,9 @@
           "AdministrativeUnit.ReadWrite.All"
         ]
       }
-    ],
-    "/administrativeunits/{id}/members/{id}": [
-      {
-        "HttpVerb": "GET",
+    },
+    "/administrativeunits/{id}/members/{id}": {
+      "GET": {
         "DelegatedWork": [
           "AdministrativeUnit.Read.All",
           "Directory.Read.All",
@@ -95,10 +91,9 @@
           "Directory.ReadWrite.All"
         ]
       }
-    ],
-    "/security/alerts/{id}": [
-      {
-        "HttpVerb": "GET",
+    },
+    "/security/alerts/{id}": {
+      "GET": {
         "DelegatedWork": [
           "SecurityEvents.Read.All",
           "SecurityEvents.ReadWrite.All"
@@ -109,10 +104,9 @@
           "SecurityEvents.ReadWrite.All"
         ]
       }
-    ],
-    "/anonymousipriskevents/{id}": [
-      {
-        "HttpVerb": "GET",
+    },
+    "/anonymousipriskevents/{id}": {
+      "GET": {
         "DelegatedWork": [
           "IdentityRiskEvent.Read.All"
         ],
@@ -121,10 +115,9 @@
           "IdentityRiskEvent.Read.All"
         ]
       }
-    ],
-    "/lorem/ipsum/{id}": [
-      {
-        "HttpVerb": "GET",
+    },
+    "/lorem/ipsum/{id}": {
+      "GET": {
         "DelegatedWork": [
           "LoremIpsum.Read.All",
           "LoremIpsum.ReadWrite.All"
@@ -135,6 +128,6 @@
           "LoremIpsum.ReadWrite.All"
         ]
       }
-    ]
+    }
   }
 }

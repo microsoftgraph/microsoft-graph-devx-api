@@ -397,13 +397,22 @@ namespace GraphExplorerPermissionsService
                     return null;
                 }
 
-                JArray resultValue = new JArray();
-                resultValue = (JArray)_scopesListTable[int.Parse(resultMatch.Key)];
-
-                var scopes = resultValue.FirstOrDefault(x => x.Value<string>("HttpVerb") == method)?
-                    .SelectToken(scopeType)?
-                    .Select(s => (string)s)
-                    .ToArray();
+                string[] scopes = null;
+                var resultValue = _scopesListTable[int.Parse(resultMatch.Key)] as JToken;
+                foreach (JProperty httpVerb in resultValue)
+                {
+                    if (httpVerb.Name.Equals(method, StringComparison.OrdinalIgnoreCase))
+                    {
+                        foreach (JProperty scopeCategory in httpVerb.Value)
+                        {
+                            if (scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase))
+                            {
+                                scopes = scopeCategory.Value?.ToObject<string[]>();
+                                break;
+                            }
+                        }
+                    }
+                }
 
                 if (scopes == null)
                 {
