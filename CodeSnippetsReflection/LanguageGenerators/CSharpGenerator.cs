@@ -390,8 +390,8 @@ namespace CodeSnippetsReflection.LanguageGenerators
             if (className == "JToken") // handle special case of JToken
             {
                 var jToken = jsonObject is string _
-                    ? jsonBody                            // simple strings auto cast to JToken
-                    : $"JToken.Parse(\"{jsonBody}\")";    // complex objects need JToken.Parse()
+                    ? $"JsonDocument.Parse(@\"\"{jsonBody}\"\")"     // parse string differently
+                    : $"JsonDocument.Parse(\"{jsonBody}\")";    // complex objects need JToken.Parse()
                 stringBuilder.Append($"{jToken}\r\n");
             }
             else if (jsonObject is JObject _ && className == "String") // special case where empty string is represented as {}
