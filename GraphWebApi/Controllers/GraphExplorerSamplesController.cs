@@ -72,7 +72,7 @@ namespace GraphWebApi.Controllers
                 }
 
                 _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
-                _telemetryClient?.TrackTrace($"{filteredSampleQueries.Count} sample queries found from search value '{search}'",
+                _telemetryClient?.TrackTrace($"{filteredSampleQueries?.Count ?? 0} sample queries found from search value '{search}'",
                                              SeverityLevel.Information,
                                              _samplesTraceProperties);
 
@@ -337,7 +337,7 @@ namespace GraphWebApi.Controllers
         /// <returns>A list of Sample Queries.</returns>
         private async Task<SampleQueriesList> FetchSampleQueriesListAsync(string org, string branchName)
         {
-            string locale = RequestHelper.GetPreferredLocaleLanguage(Request);
+            string locale = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
             _telemetryClient?.TrackTrace($"Request to fetch samples for locale '{locale}'",
                                          SeverityLevel.Information,
                                          _samplesTraceProperties);
@@ -353,7 +353,7 @@ namespace GraphWebApi.Controllers
             }
 
             _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
-            _telemetryClient?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries.Count} samples",
+            _telemetryClient?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries?.Count ?? 0} samples",
                                          SeverityLevel.Information,
                                          _samplesTraceProperties);
 
