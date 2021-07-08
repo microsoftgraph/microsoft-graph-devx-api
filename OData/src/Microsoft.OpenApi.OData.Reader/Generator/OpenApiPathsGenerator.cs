@@ -6,7 +6,6 @@
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.OData.Common;
 using Microsoft.OpenApi.OData.Edm;
-using System.Threading.Tasks;
 
 namespace Microsoft.OpenApi.OData.Generator
 {
@@ -32,10 +31,7 @@ namespace Microsoft.OpenApi.OData.Generator
             // in the Paths Object is typically not feasible, so this mapping only describes the minimum
             // information desired in the Paths Object.
             OpenApiPaths paths = new OpenApiPaths();
-
-            var pathItems = context.CreatePathItems().GetAwaiter().GetResult();
-
-            foreach (var item in pathItems)
+            foreach (var item in context.CreatePathItems())
             {
                 paths.Add(item.Key, item.Value);
             }
