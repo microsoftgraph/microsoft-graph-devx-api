@@ -428,6 +428,7 @@ namespace GraphExplorerPermissionsService
             {
                 throw new ArgumentNullException(nameof(scopesInformationDictionary));
             }
+
             if (scopes is null)
             {
                 throw new ArgumentNullException(nameof(scopes));
