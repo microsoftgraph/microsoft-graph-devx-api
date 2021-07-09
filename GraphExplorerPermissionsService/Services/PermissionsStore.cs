@@ -407,7 +407,10 @@ namespace GraphExplorerPermissionsService
                         {
                             if (scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase))
                             {
-                                scopes = scopeCategory.Value?.ToObject<string[]>();
+                                scopes = scopeCategory.Value?
+                                                      .ToObject<string[]>()
+                                                      .Distinct()
+                                                      .ToArray();
                                 break;
                             }
                         }
