@@ -361,13 +361,11 @@ namespace GraphExplorerPermissionsService
 
                 scopes = scopes.Distinct().ToList();
 
-                scopesListInfo = GetScopesListInformation(scopes, scopeType, scopesInformationDictionary);
+                scopesListInfo = GetScopesListInformation(scopesInformationDictionary, scopes, scopeType);
 
                 _telemetryClient?.TrackTrace("Return all permissions",
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
-
-                return scopesListInfo;
             }
             else // fetch permissions for a given request url and method
             {
@@ -381,7 +379,7 @@ namespace GraphExplorerPermissionsService
                 // Check if requestUrl is contained in our Url Template table
                 TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
 
-                if (resultMatch == null)
+                if (resultMatch is null)
                 {
                     _telemetryClient?.TrackTrace($"Url '{requestUrl}' not found",
                                             SeverityLevel.Error,
@@ -402,7 +400,7 @@ namespace GraphExplorerPermissionsService
                     break;
                 }
 
-                if (scopes == null)
+                if (scopes is null)
                 {
                     _telemetryClient?.TrackTrace($"No '{scopeType}' permissions found for the url '{requestUrl}' and method '{method}'",
                                                  SeverityLevel.Error,
@@ -411,7 +409,7 @@ namespace GraphExplorerPermissionsService
                     return null;
                 }
 
-                scopesListInfo = GetScopesListInformation(scopes, scopeType, scopesInformationDictionary);
+                scopesListInfo = GetScopesListInformation(scopesInformationDictionary, scopes, scopeType);
 
                 _telemetryClient?.TrackTrace($"Return '{scopeType}' permissions for url '{requestUrl}' and method '{method}'",
                                              SeverityLevel.Information,
@@ -422,10 +420,26 @@ namespace GraphExplorerPermissionsService
             return scopesListInfo;
         }
 
-        private static List<ScopeInformation> GetScopesListInformation(List<string> scopes, string scopeType, IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary)
+        private static List<ScopeInformation> GetScopesListInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
+                                                                       List<string> scopes,
+                                                                       string scopeType)
         {
+            if (scopesInformationDictionary is null)
+            {
+                throw new ArgumentNullException(nameof(scopesInformationDictionary));
+            }
+            if (scopes is null)
+            {
+                throw new ArgumentNullException(nameof(scopes));
+            }
+
+            if (string.IsNullOrEmpty(scopeType))
+            {
+                throw new ArgumentException($"'{nameof(scopeType)}' cannot be null or empty.", nameof(scopeType));
+            }
+
             var scopesList = new List<ScopeInformation>();
-            foreach (string scope in scopes)
+            foreach (var scope in scopes)
             {
                 ScopeInformation scopeInfo = null;
 
@@ -444,7 +458,7 @@ namespace GraphExplorerPermissionsService
                     }
                 }
 
-                if (scopeInfo != null)
+                if (scopeInfo is not null)
                 {
                     scopesList.Add(scopeInfo);
                 }
