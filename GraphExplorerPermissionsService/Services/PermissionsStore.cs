@@ -269,31 +269,31 @@ namespace GraphExplorerPermissionsService
 
             ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
 
-            var _delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
-            var _applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
+            var delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
+            var applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
 
             foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
             {
-                _delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
+                delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
             }
 
             foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
             {
-                _applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
+                applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
             }
 
             _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore));
             _telemetryClient?.TrackTrace("Finished creating the scopes information tables. " +
-                                         $"Delegated scopes count: {_delegatedScopesInfoTable.Count}. " +
-                                         $"Application scopes count: {_applicationScopesInfoTable.Count}",
+                                         $"Delegated scopes count: {delegatedScopesInfoTable.Count}. " +
+                                         $"Application scopes count: {applicationScopesInfoTable.Count}",
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
             _permissionsTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
             return new Dictionary<string, IDictionary<string, ScopeInformation>>
             {
-                { Delegated, _delegatedScopesInfoTable },
-                { Application, _applicationScopesInfoTable }
+                { Delegated, delegatedScopesInfoTable },
+                { Application, applicationScopesInfoTable }
             };
         }
 
@@ -341,34 +341,27 @@ namespace GraphExplorerPermissionsService
                 scopesInformationDictionary = await GetOrCreatePermissionsDescriptionsAsync(locale);
             }
 
+            List<ScopeInformation> scopesListInfo = new List<ScopeInformation>();
+
             if (string.IsNullOrEmpty(requestUrl))  // fetch all permissions
             {
                 _telemetryClient?.TrackTrace("Fetching all permissions",
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
 
-                List<ScopeInformation> scopesListInfo = new List<ScopeInformation>();
+                var scopes = new List<string>();
+                foreach (var scopeCategory in from JToken operations in _scopesListTable.Values
+                                              from JProperty httpVerb in operations
+                                              from JProperty scopeCategory in httpVerb.Value
+                                              where scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase)
+                                              select scopeCategory)
+                {
+                    scopes.AddRange(scopeCategory.Value?.ToObject<List<string>>());
+                }
 
-                if (scopeType.Contains(Delegated))
-                {
-                    if (scopesInformationDictionary.ContainsKey(Delegated))
-                    {
-                        foreach (var scopesInfo in scopesInformationDictionary[Delegated])
-                        {
-                            scopesListInfo.Add(scopesInfo.Value);
-                        }
-                    }
-                }
-                else // Application scopes
-                {
-                    if (scopesInformationDictionary.ContainsKey(Application))
-                    {
-                        foreach (var scopesInfo in scopesInformationDictionary[Application])
-                        {
-                            scopesListInfo.Add(scopesInfo.Value);
-                        }
-                    }
-                }
+                scopes = scopes.Distinct().ToList();
+
+                scopesListInfo = GetScopesListInformation(scopes, scopeType, scopesInformationDictionary);
 
                 _telemetryClient?.TrackTrace("Return all permissions",
                                              SeverityLevel.Information,
@@ -397,21 +390,16 @@ namespace GraphExplorerPermissionsService
                     return null;
                 }
 
-                string[] scopes = null;
+                List<string> scopes = null;
                 var resultValue = _scopesListTable[int.Parse(resultMatch.Key)] as JToken;
-                foreach (JProperty httpVerb in resultValue)
+                foreach (var scopeCategory in from JProperty httpVerb in resultValue
+                                              where httpVerb.Name.Equals(method, StringComparison.OrdinalIgnoreCase)
+                                              from JProperty scopeCategory in httpVerb.Value
+                                              where scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase)
+                                              select scopeCategory)
                 {
-                    if (httpVerb.Name.Equals(method, StringComparison.OrdinalIgnoreCase))
-                    {
-                        foreach (JProperty scopeCategory in httpVerb.Value)
-                        {
-                            if (scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase))
-                            {
-                                scopes = scopeCategory.Value?.ToObject<string[]>();
-                                break;
-                            }
-                        }
-                    }
+                    scopes = scopeCategory.Value?.ToObject<List<string>>();
+                    break;
                 }
 
                 if (scopes == null)
@@ -423,46 +411,53 @@ namespace GraphExplorerPermissionsService
                     return null;
                 }
 
-                List<ScopeInformation> scopesList = new List<ScopeInformation>();
-
-                foreach (string scopeName in scopes)
-                {
-                    ScopeInformation scopeInfo = null;
-
-                    if (scopeType.Contains(Delegated))
-                    {
-                        if (scopesInformationDictionary[Delegated].ContainsKey(scopeName))
-                        {
-                            scopeInfo = scopesInformationDictionary[Delegated][scopeName];
-                        }
-                    }
-                    else // Application scopes
-                    {
-                        if (scopesInformationDictionary[Application].ContainsKey(scopeName))
-                        {
-                            scopeInfo = scopesInformationDictionary[Application][scopeName];
-                        }
-                    }
-                    if (scopeInfo == null)
-                    {
-                        scopesList.Add(new ScopeInformation
-                        {
-                            ScopeName = scopeName
-                        });
-                    }
-                    else
-                    {
-                        scopesList.Add(scopeInfo);
-                    }
-                }
+                scopesListInfo = GetScopesListInformation(scopes, scopeType, scopesInformationDictionary);
 
                 _telemetryClient?.TrackTrace($"Return '{scopeType}' permissions for url '{requestUrl}' and method '{method}'",
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
 
-                return scopesList;
-
             }
+
+            return scopesListInfo;
+        }
+
+        private static List<ScopeInformation> GetScopesListInformation(List<string> scopes, string scopeType, IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary)
+        {
+            var scopesList = new List<ScopeInformation>();
+            foreach (string scope in scopes)
+            {
+                ScopeInformation scopeInfo = null;
+
+                if (scopeType.Contains(Delegated))
+                {
+                    if (scopesInformationDictionary[Delegated].ContainsKey(scope))
+                    {
+                        scopeInfo = scopesInformationDictionary[Delegated][scope];
+                    }
+                }
+                else // Application scopes
+                {
+                    if (scopesInformationDictionary[Application].ContainsKey(scope))
+                    {
+                        scopeInfo = scopesInformationDictionary[Application][scope];
+                    }
+                }
+
+                if (scopeInfo != null)
+                {
+                    scopesList.Add(scopeInfo);
+                }
+                else
+                {
+                    scopesList.Add(new ScopeInformation
+                    {
+                        ScopeName = scope
+                    });
+                }
+            }
+
+            return scopesList;
         }
 
         /// <summary>
