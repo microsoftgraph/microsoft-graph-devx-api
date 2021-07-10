@@ -341,7 +341,7 @@ namespace GraphExplorerPermissionsService
                 scopesInformationDictionary = await GetOrCreatePermissionsDescriptionsAsync(locale);
             }
 
-            List<ScopeInformation> scopesListInfo = new List<ScopeInformation>();
+            var scopesInfo = new List<ScopeInformation>();
 
             if (string.IsNullOrEmpty(requestUrl))  // fetch all permissions
             {
@@ -359,9 +359,10 @@ namespace GraphExplorerPermissionsService
                     scopes.AddRange(scopeCategory.Value?.ToObject<List<string>>());
                 }
 
+                // The permissions source files may have duplicated scopes
                 scopes = scopes.Distinct().ToList();
 
-                scopesListInfo = GetScopesListInformation(scopesInformationDictionary, scopes, scopeType);
+                scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType);
 
                 _telemetryClient?.TrackTrace("Return all permissions",
                                              SeverityLevel.Information,
@@ -390,11 +391,11 @@ namespace GraphExplorerPermissionsService
 
                 List<string> scopes = null;
                 var resultValue = _scopesListTable[int.Parse(resultMatch.Key)] as JToken;
-                foreach (var scopeCategory in from JProperty httpVerb in resultValue
-                                              where httpVerb.Name.Equals(method, StringComparison.OrdinalIgnoreCase)
-                                              from JProperty scopeCategory in httpVerb.Value
-                                              where scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase)
-                                              select scopeCategory)
+                foreach (JProperty scopeCategory in from JProperty httpVerb in resultValue
+                                                    where httpVerb.Name.Equals(method, StringComparison.OrdinalIgnoreCase)
+                                                    from JProperty scopeCategory in httpVerb.Value
+                                                    where scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase)
+                                                    select scopeCategory)
                 {
                     scopes = scopeCategory.Value?.ToObject<List<string>>();
                     break;
@@ -409,7 +410,7 @@ namespace GraphExplorerPermissionsService
                     return null;
                 }
 
-                scopesListInfo = GetScopesListInformation(scopesInformationDictionary, scopes, scopeType);
+                scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType);
 
                 _telemetryClient?.TrackTrace($"Return '{scopeType}' permissions for url '{requestUrl}' and method '{method}'",
                                              SeverityLevel.Information,
@@ -417,10 +418,17 @@ namespace GraphExplorerPermissionsService
 
             }
 
-            return scopesListInfo;
+            return scopesInfo;
         }
 
-        private static List<ScopeInformation> GetScopesListInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
+        /// <summary>
+        /// Retrieves the scopes information for a given list of scopes.
+        /// </summary>
+        /// <param name="scopesInformationDictionary">The source of the scopes information.</param>
+        /// <param name="scopes">The target list of scopes.</param>
+        /// <param name="scopeType">The type of scope from which to retrieve the scopes information for.</param>
+        /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
+        private static List<ScopeInformation> GetScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
                                                                        List<string> scopes,
                                                                        string scopeType)
         {
@@ -439,7 +447,7 @@ namespace GraphExplorerPermissionsService
                 throw new ArgumentException($"'{nameof(scopeType)}' cannot be null or empty.", nameof(scopeType));
             }
 
-            var scopesList = new List<ScopeInformation>();
+            var scopesInfo = new List<ScopeInformation>();
             foreach (var scope in scopes)
             {
                 ScopeInformation scopeInfo = null;
@@ -461,18 +469,18 @@ namespace GraphExplorerPermissionsService
 
                 if (scopeInfo is not null)
                 {
-                    scopesList.Add(scopeInfo);
+                    scopesInfo.Add(scopeInfo);
                 }
                 else
                 {
-                    scopesList.Add(new ScopeInformation
+                    scopesInfo.Add(new ScopeInformation
                     {
                         ScopeName = scope
                     });
                 }
             }
 
-            return scopesList;
+            return scopesInfo;
         }
 
         /// <summary>
