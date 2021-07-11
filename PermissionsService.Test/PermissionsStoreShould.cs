@@ -46,14 +46,17 @@ namespace PermissionsService.Test
                 });
         }
 
-        [Fact]
-        public void GetAllPermissionScopesGivenNoRequestUrl()
+        [Theory]
+        [InlineData("DelegatedWork", 20)]
+        [InlineData("Application", 14)]
+        public void GetAllPermissionScopesGivenNoRequestUrl(string scopeType, int expectedCount)
         {
             // Act
-            List<ScopeInformation> result = _permissionsStore.GetScopesAsync().GetAwaiter().GetResult();
+            List<ScopeInformation> result = _permissionsStore.GetScopesAsync(scopeType: scopeType).GetAwaiter().GetResult();
 
             // Assert
             Assert.NotEmpty(result);
+            Assert.Equal(expectedCount, result.Count);
         }
 
         [Fact]

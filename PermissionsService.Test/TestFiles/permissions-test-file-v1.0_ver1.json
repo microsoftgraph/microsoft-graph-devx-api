@@ -93,6 +93,8 @@
 
       "GET": {
         "DelegatedWork": [
+          "Calendars.Read",
+          "Calendars.Read",
           "Calendars.Read"
         ],
         "DelegatedPersonal": [
