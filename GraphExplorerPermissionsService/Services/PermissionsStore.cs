@@ -383,21 +383,37 @@ namespace GraphExplorerPermissionsService
                 if (resultMatch is null)
                 {
                     _telemetryClient?.TrackTrace($"Url '{requestUrl}' not found",
-                                            SeverityLevel.Error,
-                                            _permissionsTraceProperties);
+                                                 SeverityLevel.Error,
+                                                 _permissionsTraceProperties);
+
+                    return null;
+                }
+
+                if (int.TryParse(resultMatch.Key, out int key) is false)
+                {
+                    throw new InvalidOperationException($"Failed to parse '{resultMatch.Key}' to int.");
+                }
+
+                if (_scopesListTable[key] is not JToken resultValue)
+                {
+                    _telemetryClient?.TrackTrace($"Key '{_scopesListTable[key]}' has a null value.",
+                                                 SeverityLevel.Error,
+                                                 _permissionsTraceProperties);
 
                     return null;
                 }
 
                 List<string> scopes = null;
-                var resultValue = _scopesListTable[int.Parse(resultMatch.Key)] as JToken;
                 foreach (JProperty scopeCategory in from JProperty httpVerb in resultValue
                                                     where httpVerb.Name.Equals(method, StringComparison.OrdinalIgnoreCase)
                                                     from JProperty scopeCategory in httpVerb.Value
                                                     where scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase)
                                                     select scopeCategory)
                 {
-                    scopes = scopeCategory.Value?.ToObject<List<string>>();
+                    scopes = scopeCategory.Value?
+                                          .ToObject<List<string>>()
+                                          .Distinct()
+                                          .ToList();
                     break;
                 }
 
@@ -415,69 +431,6 @@ namespace GraphExplorerPermissionsService
                 _telemetryClient?.TrackTrace($"Return '{scopeType}' permissions for url '{requestUrl}' and method '{method}'",
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
-
-            }
-
-            return scopesInfo;
-        }
-
-        /// <summary>
-        /// Retrieves the scopes information for a given list of scopes.
-        /// </summary>
-        /// <param name="scopesInformationDictionary">The source of the scopes information.</param>
-        /// <param name="scopes">The target list of scopes.</param>
-        /// <param name="scopeType">The type of scope from which to retrieve the scopes information for.</param>
-        /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
-        private static List<ScopeInformation> GetScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
-                                                                       List<string> scopes,
-                                                                       string scopeType)
-        {
-            if (scopesInformationDictionary is null)
-            {
-                throw new ArgumentNullException(nameof(scopesInformationDictionary));
-            }
-
-            if (scopes is null)
-            {
-                throw new ArgumentNullException(nameof(scopes));
-            }
-
-            if (string.IsNullOrEmpty(scopeType))
-            {
-                throw new ArgumentException($"'{nameof(scopeType)}' cannot be null or empty.", nameof(scopeType));
-            }
-
-            var scopesInfo = new List<ScopeInformation>();
-            foreach (var scope in scopes)
-            {
-                ScopeInformation scopeInfo = null;
-
-                if (scopeType.Contains(Delegated))
-                {
-                    if (scopesInformationDictionary[Delegated].ContainsKey(scope))
-                    {
-                        scopeInfo = scopesInformationDictionary[Delegated][scope];
-                    }
-                }
-                else // Application scopes
-                {
-                    if (scopesInformationDictionary[Application].ContainsKey(scope))
-                    {
-                        scopeInfo = scopesInformationDictionary[Application][scope];
-                    }
-                }
-
-                if (scopeInfo is not null)
-                {
-                    scopesInfo.Add(scopeInfo);
-                }
-                else
-                {
-                    scopesInfo.Add(new ScopeInformation
-                    {
-                        ScopeName = scope
-                    });
-                }
             }
 
             return scopesInfo;
@@ -545,6 +498,68 @@ namespace GraphExplorerPermissionsService
             return Regex.Replace(requestUrl, @"(\$.*)", string.Empty)
                         .TrimEnd('/')
                         .ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// Retrieves the scopes information for a given list of scopes.
+        /// </summary>
+        /// <param name="scopesInformationDictionary">The source of the scopes information.</param>
+        /// <param name="scopes">The target list of scopes.</param>
+        /// <param name="scopeType">The type of scope from which to retrieve the scopes information for.</param>
+        /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
+        private static List<ScopeInformation> GetScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
+                                                                   List<string> scopes,
+                                                                   string scopeType)
+        {
+            if (scopesInformationDictionary is null)
+            {
+                throw new ArgumentNullException(nameof(scopesInformationDictionary));
+            }
+
+            if (scopes is null)
+            {
+                throw new ArgumentNullException(nameof(scopes));
+            }
+
+            if (string.IsNullOrEmpty(scopeType))
+            {
+                throw new ArgumentException($"'{nameof(scopeType)}' cannot be null or empty.", nameof(scopeType));
+            }
+
+            var scopesInfo = new List<ScopeInformation>();
+            foreach (var scope in scopes)
+            {
+                ScopeInformation scopeInfo = null;
+
+                if (scopeType.Contains(Delegated))
+                {
+                    if (scopesInformationDictionary[Delegated].ContainsKey(scope))
+                    {
+                        scopeInfo = scopesInformationDictionary[Delegated][scope];
+                    }
+                }
+                else // Application scopes
+                {
+                    if (scopesInformationDictionary[Application].ContainsKey(scope))
+                    {
+                        scopeInfo = scopesInformationDictionary[Application][scope];
+                    }
+                }
+
+                if (scopeInfo is not null)
+                {
+                    scopesInfo.Add(scopeInfo);
+                }
+                else
+                {
+                    scopesInfo.Add(new ScopeInformation
+                    {
+                        ScopeName = scope
+                    });
+                }
+            }
+
+            return scopesInfo;
         }
 
         ///<inheritdoc/>
