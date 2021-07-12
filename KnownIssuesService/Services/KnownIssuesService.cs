@@ -1,9 +1,10 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using KnownIssuesService.Interfaces;
 using KnownIssuesService.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
@@ -11,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using UtilityService;
 
 namespace KnownIssuesService.Services
 {
@@ -46,7 +48,7 @@ namespace KnownIssuesService.Services
 				Query = "Select [Id] " +
 						"From WorkItems " +
 						"Where [Work Item Type] = 'Bug' " +
-						"And [System.TeamProject] = '" + knownIssuesOrganisation + "' " +
+						"And [System.TeamProject] = '" + UtilityConstants.knownIssuesOrganisation + "' " +
 						"Order By [State] Asc, [Changed Date] Desc",
 			};
 
