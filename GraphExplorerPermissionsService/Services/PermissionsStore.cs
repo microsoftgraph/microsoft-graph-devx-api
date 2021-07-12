@@ -349,7 +349,11 @@ namespace GraphExplorerPermissionsService
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
 
-                var scopes = new List<string>();
+                var scopes = new List<string>(from JToken operations in _scopesListTable.Values
+                                              from JProperty httpVerb in operations
+                                              from JProperty scopeCategory in httpVerb.Value
+                                              where scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase)
+                                              from scopeCategory.Value?.ToObject<List<string>>());
                 foreach (var scopeCategory in from JToken operations in _scopesListTable.Values
                                               from JProperty httpVerb in operations
                                               from JProperty scopeCategory in httpVerb.Value
