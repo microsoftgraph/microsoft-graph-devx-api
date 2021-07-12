@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -20,25 +20,25 @@ namespace KnownIssuesService.Services
 		/// Contain the Azure DevOps Known Issues Url
 		/// </summary>
 		private readonly string knownIssuesUri = "https://microsoftgraph.visualstudio.com/";
+		private readonly IConfiguration _configuration;
+		private readonly string _accessToken;
 
-		/// <summary>
-		/// Contains the name of the Known Issues Azure DevOps Organisation
-		/// </summary>
-		private readonly string knownIssuesOrganisation = "Known Issues (staging)";
+        public KnownIssuesService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+			_accessToken = _configuration["KnownIssuesToken"];
+        }
 
-
-		/// <summary>
-		/// Function to Query the List of Known Issues from Azure DevOps Known Organization
-		/// </summary>
-		/// <returns>Known Issues Contract that contains json items that will be rendered on the browser</returns>
-		public async Task<List<KnownIssuesContract>> QueryBugs()
+        /// <summary>
+        /// Function to Query the List of Known Issues from Azure DevOps Known Organization
+        /// </summary>
+        /// <returns>Known Issues Contract that contains json items that will be rendered on the browser</returns>
+        public async Task<List<KnownIssuesContract>> QueryBugs()
 		{
 
 			List<KnownIssuesContract> knownIssuesList = new List<KnownIssuesContract>();
 
-			var personalaccesstoken = "khvs3igmgpug5mujrn65kyxjnscnjwjyrud5vsc6vduzld33khga";
-
-			VssBasicCredential credentials = new VssBasicCredential(string.Empty, personalaccesstoken);
+			VssBasicCredential credentials = new VssBasicCredential(string.Empty, _accessToken);
 
 			// create a wiql object and build our query
 			var wiql = new Wiql()
