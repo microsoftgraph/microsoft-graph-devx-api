@@ -396,7 +396,7 @@ namespace GraphExplorerPermissionsService
 
                 if (_scopesListTable[key] is not JToken resultValue)
                 {
-                    _telemetryClient?.TrackTrace($"Key '{_scopesListTable[key]}' has a null value.",
+                    _telemetryClient?.TrackTrace($"Key '{_scopesListTable[key]}' in the {nameof(_scopesListTable)} has a null value.",
                                                  SeverityLevel.Error,
                                                  _permissionsTraceProperties);
 
