@@ -267,20 +267,9 @@ namespace GraphExplorerPermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
 
-            ScopesInformationList scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
-
-            var delegatedScopesInfoTable = new Dictionary<string, ScopeInformation>();
-            var applicationScopesInfoTable = new Dictionary<string, ScopeInformation>();
-
-            foreach (ScopeInformation delegatedScopeInfo in scopesInformationList.DelegatedScopesList)
-            {
-                delegatedScopesInfoTable.Add(delegatedScopeInfo.ScopeName, delegatedScopeInfo);
-            }
-
-            foreach (ScopeInformation applicationScopeInfo in scopesInformationList.ApplicationScopesList)
-            {
-                applicationScopesInfoTable.Add(applicationScopeInfo.ScopeName, applicationScopeInfo);
-            }
+            var scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+            var delegatedScopesInfoTable = scopesInformationList.DelegatedScopesList.ToDictionary(x => x.ScopeName);
+            var applicationScopesInfoTable = scopesInformationList.ApplicationScopesList.ToDictionary(x => x.ScopeName);
 
             _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore));
             _telemetryClient?.TrackTrace("Finished creating the scopes information tables. " +
@@ -349,22 +338,12 @@ namespace GraphExplorerPermissionsService
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
 
-                var scopes = new List<string>(from JToken operations in _scopesListTable.Values
-                                              from JProperty httpVerb in operations
-                                              from JProperty scopeCategory in httpVerb.Value
-                                              where scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase)
-                                              from scopeCategory.Value?.ToObject<List<string>>());
-                foreach (var scopeCategory in from JToken operations in _scopesListTable.Values
-                                              from JProperty httpVerb in operations
-                                              from JProperty scopeCategory in httpVerb.Value
-                                              where scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase)
-                                              select scopeCategory)
-                {
-                    scopes.AddRange(scopeCategory.Value?.ToObject<List<string>>());
-                }
-
-                // The permissions source files may have duplicated scopes
-                scopes = scopes.Distinct().ToList();
+                var scopes = _scopesListTable.Values.OfType<JToken>()
+                                                    .SelectMany(x => x).OfType<JProperty>()
+                                                    .SelectMany(x => x.Value).OfType<JProperty>()
+                                                    .Where(x => x.Name.Equals(scopeType))
+                                                    .SelectMany(x => x.Value)
+                                                    .Values<string>().Distinct().ToList();
 
                 scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType);
 
@@ -407,19 +386,11 @@ namespace GraphExplorerPermissionsService
                     return null;
                 }
 
-                List<string> scopes = null;
-                foreach (JProperty scopeCategory in from JProperty httpVerb in resultValue
-                                                    where httpVerb.Name.Equals(method, StringComparison.OrdinalIgnoreCase)
-                                                    from JProperty scopeCategory in httpVerb.Value
-                                                    where scopeCategory.Name.Equals(scopeType, StringComparison.OrdinalIgnoreCase)
-                                                    select scopeCategory)
-                {
-                    scopes = scopeCategory.Value?
-                                          .ToObject<List<string>>()
-                                          .Distinct()
-                                          .ToList();
-                    break;
-                }
+                var scopes = resultValue.OfType<JProperty>()
+                                        .Where(x => method.Equals(x.Name, StringComparison.OrdinalIgnoreCase))
+                                        .SelectMany(x => x.Value).OfType<JProperty>()
+                                        .FirstOrDefault(x => scopeType.Equals(x.Name, StringComparison.OrdinalIgnoreCase))
+                                        ?.Value?.ToObject<List<string>>().Distinct().ToList();
 
                 if (scopes is null)
                 {
@@ -530,24 +501,14 @@ namespace GraphExplorerPermissionsService
                 throw new ArgumentException($"'{nameof(scopeType)}' cannot be null or empty.", nameof(scopeType));
             }
 
+            string key = scopeType.Contains(Delegated) ? Delegated : Application;
             var scopesInfo = new List<ScopeInformation>();
             foreach (var scope in scopes)
             {
                 ScopeInformation scopeInfo = null;
-
-                if (scopeType.Contains(Delegated))
+                if (scopesInformationDictionary[key].ContainsKey(scope))
                 {
-                    if (scopesInformationDictionary[Delegated].ContainsKey(scope))
-                    {
-                        scopeInfo = scopesInformationDictionary[Delegated][scope];
-                    }
-                }
-                else // Application scopes
-                {
-                    if (scopesInformationDictionary[Application].ContainsKey(scope))
-                    {
-                        scopeInfo = scopesInformationDictionary[Application][scope];
-                    }
+                    scopeInfo = scopesInformationDictionary[key][scope];
                 }
 
                 if (scopeInfo is not null)
