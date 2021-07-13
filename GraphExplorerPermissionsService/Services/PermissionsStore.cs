@@ -505,25 +505,11 @@ namespace GraphExplorerPermissionsService
             var scopesInfo = new List<ScopeInformation>();
             foreach (var scope in scopes)
             {
-                ScopeInformation scopeInfo = null;
-scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
+                scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
+                scopesInfo.Add(scopeInfo ?? new()
                 {
-                    scopeInfo = scopesInformationDictionary[key][scope];
-                }
-
-                if (scopeInfo is not null)
-                {
-                    scopesInfo.Add(scopeInfo ?? new() {
-                        ScopeName = scope
-                    });
-                }
-                else
-                {
-                    scopesInfo.Add(new ScopeInformation
-                    {
-                        ScopeName = scope
-                    });
-                }
+                    ScopeName = scope
+                });
             }
 
             return scopesInfo;
