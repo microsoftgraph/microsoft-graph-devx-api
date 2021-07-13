@@ -506,7 +506,7 @@ namespace GraphExplorerPermissionsService
             foreach (var scope in scopes)
             {
                 ScopeInformation scopeInfo = null;
-                if (scopesInformationDictionary[key].ContainsKey(scope))
+scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
                 {
                     scopeInfo = scopesInformationDictionary[key][scope];
                 }
