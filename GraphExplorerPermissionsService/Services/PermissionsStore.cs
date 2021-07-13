@@ -501,7 +501,7 @@ namespace GraphExplorerPermissionsService
                 throw new ArgumentException($"'{nameof(scopeType)}' cannot be null or empty.", nameof(scopeType));
             }
 
-            string key = scopeType.Contains(Delegated) ? Delegated : Application;
+            var key = scopeType.Contains(Delegated) ? Delegated : Application;
             return scopes.Select(scope =>
             {
                 scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
