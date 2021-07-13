@@ -502,17 +502,11 @@ namespace GraphExplorerPermissionsService
             }
 
             string key = scopeType.Contains(Delegated) ? Delegated : Application;
-            var scopesInfo = new List<ScopeInformation>();
-            foreach (var scope in scopes)
+            return scopes.Select(scope =>
             {
                 scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
-                scopesInfo.Add(scopeInfo ?? new()
-                {
-                    ScopeName = scope
-                });
-            }
-
-            return scopesInfo;
+                return scopeInfo ?? new() { ScopeName = scope };
+            }).ToList();
         }
 
         ///<inheritdoc/>
