@@ -513,7 +513,9 @@ namespace GraphExplorerPermissionsService
 
                 if (scopeInfo is not null)
                 {
-                    scopesInfo.Add(scopeInfo);
+                    scopesInfo.Add(scopeInfo ?? new() {
+                        ScopeName = scope
+                    });
                 }
                 else
                 {
