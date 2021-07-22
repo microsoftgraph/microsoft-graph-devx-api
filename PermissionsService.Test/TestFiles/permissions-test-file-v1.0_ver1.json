@@ -40,7 +40,7 @@
 
       "DELETE": {
         "DelegatedWork": [
-          "Calendars.ReadWrite"
+          "Foobar.ReadWrite"
         ],
         "DelegatedPersonal": [
           "Calendars.ReadWrite"
