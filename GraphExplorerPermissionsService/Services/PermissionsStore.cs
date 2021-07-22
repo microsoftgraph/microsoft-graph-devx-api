@@ -481,6 +481,7 @@ namespace GraphExplorerPermissionsService
         /// <param name="scopesInformationDictionary">The source of the scopes information.</param>
         /// <param name="scopes">The target list of scopes.</param>
         /// <param name="scopeType">The type of scope from which to retrieve the scopes information for.</param>
+        /// <param name="getAllPermissions">Optional: Whether to return all available permissions for a given <paramref name="scopeType"/>.</param>
         /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
         private static List<ScopeInformation> GetScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
                                                                    List<string> scopes,

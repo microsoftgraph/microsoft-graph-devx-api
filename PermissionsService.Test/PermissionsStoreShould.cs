@@ -49,7 +49,7 @@ namespace PermissionsService.Test
         }
 
         [Theory]
-        [InlineData(DelegatedWork, 113)]
+        [InlineData(DelegatedWork, 115)]
         [InlineData(Application, 66)]
         public void GetAllPermissionScopesGivenNoRequestUrl(string scopeType, int expectedCount)
         {
@@ -216,14 +216,14 @@ namespace PermissionsService.Test
             Assert.Collection(result,
                 item =>
                 {
-                    Assert.Equal("LoremIpsum.Read.All", item.ScopeName);
+                    Assert.Equal("LoremIpsum.Read", item.ScopeName);
                     Assert.Equal("Consent name unavailable", item.DisplayName);
                     Assert.Equal("Consent description unavailable", item.Description);
                     Assert.False(item.IsAdmin);
                 },
                 item =>
                 {
-                    Assert.Equal("LoremIpsum.ReadWrite.All", item.ScopeName);
+                    Assert.Equal("LoremIpsum.ReadWrite", item.ScopeName);
                     Assert.Equal("Consent name unavailable", item.DisplayName);
                     Assert.Equal("Consent description unavailable", item.Description);
                     Assert.False(item.IsAdmin);
