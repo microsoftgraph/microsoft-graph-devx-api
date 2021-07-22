@@ -513,7 +513,7 @@ namespace GraphExplorerPermissionsService
             if (getAllPermissions)
             {
                 scopesInfo.AddRange(scopesInformationDictionary[key]
-                          .Where(kvp => !scopesInfo.Exists(x => x.ScopeName.Equals(kvp.Value.ScopeName, StringComparison.Ordinal)))
+                          .Where(kvp => !scopesInfo.Exists(x => x.ScopeName.Equals(kvp.Value.ScopeName, StringComparison.OrdinalIgnoreCase)))
                           .Select(kvp => kvp.Value));
             }
 
