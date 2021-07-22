@@ -345,7 +345,7 @@ namespace GraphExplorerPermissionsService
                                                     .SelectMany(x => x.Value)
                                                     .Values<string>().Distinct().ToList();
 
-                scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType);
+                scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType, true);
 
                 _telemetryClient?.TrackTrace("Return all permissions",
                                              SeverityLevel.Information,
@@ -484,7 +484,8 @@ namespace GraphExplorerPermissionsService
         /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
         private static List<ScopeInformation> GetScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
                                                                    List<string> scopes,
-                                                                   string scopeType)
+                                                                   string scopeType,
+                                                                   bool getAllPermissions = false)
         {
             if (scopesInformationDictionary is null)
             {
@@ -502,11 +503,20 @@ namespace GraphExplorerPermissionsService
             }
 
             var key = scopeType.Contains(Delegated) ? Delegated : Application;
-            return scopes.Select(scope =>
+            var scopesInfo = scopes.Select(scope =>
             {
                 scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
                 return scopeInfo ?? new() { ScopeName = scope };
             }).ToList();
+
+            if (getAllPermissions)
+            {
+                scopesInfo.AddRange(scopesInformationDictionary[key]
+                          .Where(kvp => !scopesInfo.Exists(x => x.ScopeName.Equals(kvp.Value.ScopeName, StringComparison.Ordinal)))
+                          .Select(kvp => kvp.Value));
+            }
+
+            return scopesInfo;
         }
 
         ///<inheritdoc/>
