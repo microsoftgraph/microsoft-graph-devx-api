@@ -23,7 +23,6 @@
       }
     },
     "/security/alerts": {
-
       "GET": {
         "DelegatedWork": [
           "SecurityEvents.Read.All",
@@ -36,11 +35,10 @@
         ]
       }
     },
-    "/me/calendars/{id}": {
-
+    "/me/calendars/{id}/events": {
       "DELETE": {
         "DelegatedWork": [
-          "Calendars.ReadWrite"
+          "Foobar.ReadWrite"
         ],
         "DelegatedPersonal": [
           "Calendars.ReadWrite"
@@ -49,10 +47,9 @@
           "Calendars.ReadWrite"
         ]
       },
-
       "GET": {
         "DelegatedWork": [
-          "Calendars.Read"
+          "Foobar.Read"
         ],
         "DelegatedPersonal": [
           "Calendars.Read"
@@ -61,7 +58,6 @@
           "Calendars.Read"
         ]
       },
-
       "PATCH": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
@@ -76,8 +72,6 @@
 
     },
     "/users/{id}/calendars/{id}": {
-
-
       "DELETE": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
@@ -90,7 +84,6 @@
         ]
 
       },
-
       "GET": {
         "DelegatedWork": [
           "Calendars.Read",
@@ -104,7 +97,6 @@
           "Calendars.Read"
         ]
       },
-
       "PATCH": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
@@ -118,7 +110,6 @@
       }
     },
     "/me/calendars/{id}": {
-
       "DELETE": {
         "DelegatedWork": [
           "Calendars.ReadWrite"
@@ -130,7 +121,6 @@
           "Calendars.ReadWrite"
         ]
       },
-
       "GET": {
         "DelegatedWork": [
           "Calendars.Read"
@@ -226,7 +216,6 @@
           "Calendars.ReadWrite"
         ]
       },
-
       "GET": {
         "DelegatedWork": [
           "Calendars.Read"
@@ -265,7 +254,6 @@
         "DelegatedPersonal": [],
         "Application": []
       }
-
     },
     "/workbook/worksheets/{id}/charts/{id}/image(width=640)": {
       "GET": {
