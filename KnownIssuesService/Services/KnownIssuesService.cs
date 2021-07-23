@@ -11,6 +11,7 @@ using Microsoft.VisualStudio.Services.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using UtilityService;
 
@@ -18,32 +19,83 @@ namespace KnownIssuesService.Services
 {
     public class KnownIssuesService : IKnownIssuesService
     {
-		/// <summary>
-		/// Contain the Azure DevOps Known Issues Url
-		/// </summary>
-		private readonly string knownIssuesUri = "https://microsoftgraph.visualstudio.com/";
 		private readonly IConfiguration _configuration;
 		private readonly string _accessToken;
+		private readonly string _knownIssuesUri;
+        private readonly WorkItemTrackingHttpClient _httpQueryClient;
+        private readonly Wiql _workItemQuery;
 
-        public KnownIssuesService(IConfiguration configuration)
-        {
-            _configuration = configuration;
-			_accessToken = _configuration["KnownIssuesToken"];
-        }
-
-        /// <summary>
-        /// Function to Query the List of Known Issues from Azure DevOps Known Organization
-        /// </summary>
-        /// <returns>Known Issues Contract that contains json items that will be rendered on the browser</returns>
-        public async Task<List<KnownIssuesContract>> QueryBugs()
+		public KnownIssuesService(IConfiguration configuration)
 		{
+			_configuration = configuration;
+			_accessToken = _configuration["KnownIssues:Token"];
+			_knownIssuesUri = _configuration["KnownIssues:Uri"];
+			_workItemQuery = QueryBuilder();
+			_httpQueryClient = GetWorkItemTrackingHttpClient();
+		}
 
-			List<KnownIssuesContract> knownIssuesList = new List<KnownIssuesContract>();
+		public KnownIssuesService(WorkItemTrackingHttpClient httpQueryClient, Wiql workItemQuery)
+        {
+			_httpQueryClient = httpQueryClient;
+			_workItemQuery = workItemQuery;
+		}
 
+		/// <summary>
+		/// Authenticates a process/service to a Visual Studio Service.
+		/// </summary>
+		/// <param name="personalaccesstoken">access token used for authenticating to a Visual Studio Service</param>
+		/// <returns>an instance of the authenticated VS Service</returns>
+		public VssBasicCredential Authenticate()
+		{
 			VssBasicCredential credentials = new VssBasicCredential(string.Empty, _accessToken);
+			return credentials;
+		}
 
+		/// <summary>
+		/// Initializes a WorkItemTracking Http Client instance with the required parameters i.e. credentials
+		/// and the Azure DevOps Known Issues Organisation url
+		/// </summary>
+		/// <returns>an Instance of a WorkItemTrackingHttpClient</returns>
+		public WorkItemTrackingHttpClient GetWorkItemTrackingHttpClient()
+		{
+			var credentials = Authenticate();
+			WorkItemTrackingHttpClient workItemTrackingHttpClient = new WorkItemTrackingHttpClient(new Uri(_knownIssuesUri), credentials);
+
+			return workItemTrackingHttpClient;
+		}
+
+		/// <summary>
+		/// Creates a WorkItemQuery Result used for getting work item ids and their urls from 
+		/// Azure DevOps Org
+		/// </summary>
+		/// <returns>WorkItem Query result</returns>
+		public async Task<WorkItemQueryResult> GetQueryByWiqlAsync()
+		{
+			WorkItemQueryResult result = await _httpQueryClient.QueryByWiqlAsync(_workItemQuery, null, 100, null, CancellationToken.None).ConfigureAwait(false);
+
+			return result;
+		}
+
+		/// <summary>
+		/// Retrieves WorkItems data from Azure DevOps Org based on the passed in work item ids
+		/// </summary>
+		/// <param name="ids">Work Item Ids From Azure DevOps Organisation</param>
+		/// <param name="result">WorkItemQuery result that contains the specific ids and their urls</param>
+		/// <returns>a List of Work Items from Azure DevOps Org</returns>
+		public async Task<List<WorkItem>> GetWorkItemsQueryAsync(int[] ids, WorkItemQueryResult result)
+		{
+			List<WorkItem> items = await _httpQueryClient.GetWorkItemsAsync(ids, null, result.AsOf, null, null, null, CancellationToken.None).ConfigureAwait(false);
+			return items;
+		}
+
+		/// <summary>
+		/// Create a Query builder for retrieving work items from an Azure DevOps Organisation
+		/// </summary>
+		/// <returns>a work item query builder containing the selection criteria</returns>
+		public Wiql QueryBuilder()
+		{
 			// create a wiql object and build our query
-			var wiql = new Wiql()
+			Wiql wiql = new Wiql()
 			{
 				Query = "Select [Id] " +
 						"From WorkItems " +
@@ -51,11 +103,19 @@ namespace KnownIssuesService.Services
 						"And [System.TeamProject] = '" + UtilityConstants.knownIssuesOrganisation + "' " +
 						"Order By [State] Asc, [Changed Date] Desc",
 			};
+			return wiql;
+		}
 
+		/// <summary>
+		/// Function to Query the List of Known Issues from Azure DevOps Known Organization
+		/// </summary>
+		/// <returns>Known Issues Contract that contains json items that will be rendered on the browser</returns>
+		public async Task<List<KnownIssuesContract>> QueryBugs()
+		{
+			List<KnownIssuesContract> knownIssuesList = new List<KnownIssuesContract>();
 			try
 			{
-				WorkItemTrackingHttpClient httpClient = new WorkItemTrackingHttpClient(new Uri(knownIssuesUri), credentials);
-				var result = await httpClient.QueryByWiqlAsync(wiql, null, 100).ConfigureAwait(false);
+				WorkItemQueryResult result = await GetQueryByWiqlAsync();
 				var ids = result.WorkItems.Select(item => item.Id).ToArray();
 
 				if (ids.Length == 0)
@@ -63,12 +123,9 @@ namespace KnownIssuesService.Services
 					return new List<KnownIssuesContract>();
 				}
 
-
-				// build a list of the fields we want to see
-				//var fields = new[] { "System.Id", "System.Title", "System.State", "System.Tags" };
-
 				// get work items for the ids found in query
-				var items = await httpClient.GetWorkItemsAsync(ids, null, result.AsOf).ConfigureAwait(false);
+				var test = result.AsOf;
+				List<WorkItem> items = await GetWorkItemsQueryAsync(ids, result);
 
 				foreach (var item in items)
 				{
