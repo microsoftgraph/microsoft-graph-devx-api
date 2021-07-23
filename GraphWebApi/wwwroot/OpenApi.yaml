@@ -509,6 +509,34 @@ paths:
             default: false
           required: false
           description: Reload the OpenAPI document.
+      requestBody:
+        description: CSDL to be converted to OpenAPI
+        required: true
+        content:
+          application/xml:
+            schema:
+              type: string
+            examples:
+              TodoService:
+                value:
+                  <edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+    <edmx:DataServices>
+        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="microsoft.graph" >
+            <EntityContainer Name="TodoService">
+                <EntitySet Name="Todos" EntityType="microsoft.graph.Todo">
+        </EntitySet>
+            </EntityContainer>
+            <EntityType Name="Todo" HasStream="true">
+                <Key>
+                    <PropertyRef Name="Id"/>
+                </Key>
+                <Property Name="Id" Type="Edm.String"/>
+                <Property Name="Logo" Type="Edm.Stream"/>
+                <Property Name="Description" Type="Edm.String"/>
+            </EntityType>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>
       responses:
         "200":
           description: List of operations associated to a tag/operationIds/url
