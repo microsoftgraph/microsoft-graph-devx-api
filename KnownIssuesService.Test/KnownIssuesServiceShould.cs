@@ -35,7 +35,7 @@ namespace KnownIssuesService.Test
         }
 
         [Fact]
-        public async Task GetQueryByWiqlAsync_Test()
+        public async Task GetQueryByWiql()
         {
             //Arrange
             int expectedNoOfWorkItems = 5;
@@ -49,14 +49,14 @@ namespace KnownIssuesService.Test
         }
 
         [Fact]
-        public async Task GetWorkItemsQueryAsync_Test()
+        public async Task GetWorkItemsQuery()
         {
             //Arrange
             int expectedNoOfWorkItems = 4;
 
             //Act
             WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync();
-            var ids = workItemQueryResult.WorkItems.Select(item => item.Id).ToArray();
+            int[] ids = workItemQueryResult.WorkItems.Select(item => item.Id).ToArray();
             List<WorkItem> items = await _knownIssuesService.GetWorkItemsQueryAsync(ids, workItemQueryResult);
 
             //Assert
@@ -64,18 +64,18 @@ namespace KnownIssuesService.Test
         }
 
         [Fact]
-        public async Task QueryBugs_Test()
+        public async Task QueryBugs()
         {
             //Arrange
             int expectedNoOfWorkItems = 4;
-            KnownIssuesContract contract = new KnownIssuesContract()
+            KnownIssue contract = new KnownIssue()
             {
                 Title = "Issue B",
                 State = "Active",
                 WorkLoadArea = "Notifications"
             };
             //Act
-            List<KnownIssuesContract> items = await _knownIssuesService.QueryBugs();
+            List<KnownIssue> items = await _knownIssuesService.QueryBugsAsync();
 
             //Assert
             Assert.Equal(expectedNoOfWorkItems, items.Count);
