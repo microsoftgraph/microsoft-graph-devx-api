@@ -9,7 +9,7 @@ namespace KnownIssuesService.Models
     /// <summary>
     /// A Model that will hold the known issues data for front-end rendering
     /// </summary>
-    public class KnownIssuesContract
+    public record KnownIssue
     {
         /// <summary>
         /// Reference Id for every known issue
