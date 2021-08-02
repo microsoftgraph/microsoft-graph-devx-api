@@ -10,9 +10,9 @@ namespace KnownIssuesService.Test
     /// <summary>
     /// Contains work item stub data for testing purposes
     /// </summary>
-    public class WorkItemsStubData
+    public static class WorkItemsStubData
     {
-        public List<WorkItemReference> GetWorkItemReferences()
+        public static List<WorkItemReference> GetWorkItemReferences()
         {
             return new List<WorkItemReference>()
             {
@@ -24,7 +24,7 @@ namespace KnownIssuesService.Test
             };
         }
 
-        public List<WorkItem> GetWorkItems()
+        public static List<WorkItem> GetWorkItems()
         {
             return new List<WorkItem>()
             {

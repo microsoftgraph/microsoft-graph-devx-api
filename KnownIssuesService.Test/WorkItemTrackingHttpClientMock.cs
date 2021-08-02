@@ -5,6 +5,7 @@
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace KnownIssuesService.Test
@@ -16,14 +17,12 @@ namespace KnownIssuesService.Test
     {
         private readonly Mock<WorkItemTrackingHttpClient> _workItemTrackHttpClient;
         private readonly WorkItemQueryResult _workItemQueryResult;
-        private readonly WorkItemsStubData _workItemsStubData;
 
         public WorkItemTrackingHttpClientMock()
         {
             _workItemTrackHttpClient = new Mock<WorkItemTrackingHttpClient>(null, null);
             _workItemQueryResult = new WorkItemQueryResult();
-            _workItemsStubData = new WorkItemsStubData();
-            _workItemQueryResult.WorkItems = _workItemsStubData.GetWorkItemReferences();
+            _workItemQueryResult.WorkItems = WorkItemsStubData.GetWorkItemReferences();
         }
 
         /// <summary>
@@ -33,7 +32,7 @@ namespace KnownIssuesService.Test
         /// <returns> The mocked instance of a WorkItemTracking http client.</returns>
         public WorkItemTrackingHttpClient MockWorkItemTrackingHttpClient(Mock<Wiql> wiql)
         {
-            var workItems = _workItemsStubData.GetWorkItems();
+            List<WorkItem> workItems = WorkItemsStubData.GetWorkItems();
 
             _workItemTrackHttpClient.Setup(x => x.QueryByWiqlAsync(wiql.Object, null, 100, null, CancellationToken.None)).ReturnsAsync(_workItemQueryResult);
             _workItemTrackHttpClient.Setup(x => x.GetWorkItemsAsync(
