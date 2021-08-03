@@ -4,6 +4,8 @@
 
 using KnownIssuesService.Interfaces;
 using KnownIssuesService.Models;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
@@ -22,18 +24,22 @@ namespace KnownIssuesService.Services
 	/// </summary>
     public class KnownIssuesService : IKnownIssuesService
     {
+		private List<KnownIssue> KnownIssuesList { get; set; }
 		private readonly WorkItemTrackingHttpClient _httpQueryClient;
 		private readonly Wiql _workItemQuery;
-
         private readonly IConfiguration _configuration;
-        private const string AccessTokenValue = "KnownIssues:Token";
+		private readonly TelemetryClient _telemetryClient;
+		private readonly Dictionary<string, string> _knownIssuesTraceProperties =
+			new() { { UtilityConstants.TelemetryPropertyKey_KnownIssues, nameof(KnownIssuesService) } };
+		private const string AccessTokenValue = "KnownIssues:Token";
 		private const string KnownIssuesPath = "KnownIssues:Uri";
-		private List<KnownIssue> KnownIssuesList { get; set; }
 
-		public KnownIssuesService(IConfiguration configuration)
+
+		public KnownIssuesService(IConfiguration configuration, TelemetryClient telemetryClient = null)
 		{
 			UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
 			_configuration = configuration;
+			_telemetryClient = telemetryClient;
 			_workItemQuery = QueryBuilder();
 			_httpQueryClient = GetWorkItemTrackingHttpClient();
 		}
@@ -109,36 +115,41 @@ namespace KnownIssuesService.Services
 		/// <returns>Known Issues Contract that contains json items that will be rendered on the browser</returns>
 		public async Task<List<KnownIssue>> QueryBugsAsync()
 		{
-			try
+			_telemetryClient?.TrackTrace($"Fetches a WorkItemQueryResult for fetching work item Ids and urls",
+											 SeverityLevel.Information,
+											 _knownIssuesTraceProperties);
+
+			WorkItemQueryResult result = await GetQueryByWiqlAsync();
+			var ids = result.WorkItems.Select(item => item.Id).ToArray();
+
+            if (ids.Length == 0)
+            {
+                return KnownIssuesList;
+            }
+
+			_telemetryClient?.TrackTrace($"Use the selected ids to fetch their subsequent work items from the query result",
+											SeverityLevel.Information,
+											_knownIssuesTraceProperties);
+
+			// get work items for the ids found in query
+			List<WorkItem> items = await GetWorkItemsQueryAsync(ids, result);
+
+			KnownIssuesList = items.Select(x => new KnownIssue
 			{
-				WorkItemQueryResult result = await GetQueryByWiqlAsync();
-				var ids = result.WorkItems.Select(item => item.Id).ToArray();
+				Id = x?.Id,
+				State = x.Fields.TryGetValue("System.State", out var state) ? state.ToString(): default,
+				Title = x.Fields.TryGetValue("System.Title", out var title) ? title.ToString() : default,
+				WorkLoadArea = x.Fields.TryGetValue("Custom.MSGraphM365Workload", out var workLoadArea) ? workLoadArea.ToString() : default,
+				Description = x.Fields.TryGetValue("System.Description", out var description) ? description.ToString() : default,
+				WorkAround = x.Fields.TryGetValue("Custom.Workaround", out var workAround) ? workAround.ToString() : default,
+				Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default
+			}).ToList();
 
-                if (ids.Length == 0)
-                {
-                    return KnownIssuesList;
-                }
+			_telemetryClient?.TrackTrace($"Return a list of Known Issues",
+											SeverityLevel.Information,
+											_knownIssuesTraceProperties);
 
-                // get work items for the ids found in query
-                List<WorkItem> items = await GetWorkItemsQueryAsync(ids, result);
-
-				KnownIssuesList = items.Select(x => new KnownIssue
-				{
-					Id = x?.Id,
-					State = x.Fields.TryGetValue("System.State", out var state) ? state.ToString(): default,
-					Title = x.Fields.TryGetValue("System.Title", out var title) ? title.ToString() : default,
-					WorkLoadArea = x.Fields.TryGetValue("Custom.MSGraphM365Workload", out var workLoadArea) ? workLoadArea.ToString() : default,
-					Description = x.Fields.TryGetValue("System.Description", out var description) ? description.ToString() : default,
-					WorkAround = x.Fields.TryGetValue("Custom.Workaround", out var workAround) ? workAround.ToString() : default,
-					Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default
-				}).ToList();
-
-				return KnownIssuesList;
-			}
-            catch
-			{
-				throw;
-			}
+			return KnownIssuesList;
 		}
 	}
 }
