@@ -17,63 +17,62 @@ using UtilityService;
 
 namespace KnownIssuesService.Services
 {
+	/// <summary>
+	/// Fetches a list of known issues from Azure Devops
+	/// </summary>
     public class KnownIssuesService : IKnownIssuesService
     {
-		private readonly IConfiguration _configuration;
-		private readonly string _accessToken;
-		private readonly string _knownIssuesUri;
-        private readonly WorkItemTrackingHttpClient _httpQueryClient;
-        private readonly Wiql _workItemQuery;
+		private readonly WorkItemTrackingHttpClient _httpQueryClient;
+		private readonly Wiql _workItemQuery;
+
+        private readonly IConfiguration _configuration;
+        private const string AccessTokenValue = "KnownIssues:Token";
+		private const string KnownIssuesPath = "KnownIssues:Uri";
+		private List<KnownIssue> KnownIssuesList { get; set; }
 
 		public KnownIssuesService(IConfiguration configuration)
 		{
+			UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
 			_configuration = configuration;
-			_accessToken = _configuration["KnownIssues:Token"];
-			_knownIssuesUri = _configuration["KnownIssues:Uri"];
 			_workItemQuery = QueryBuilder();
 			_httpQueryClient = GetWorkItemTrackingHttpClient();
 		}
 
-		public KnownIssuesService(WorkItemTrackingHttpClient httpQueryClient, Wiql workItemQuery)
+        public KnownIssuesService(WorkItemTrackingHttpClient httpQueryClient, Wiql workItemQuery)
         {
-			_httpQueryClient = httpQueryClient;
-			_workItemQuery = workItemQuery;
-		}
+            _httpQueryClient = httpQueryClient;
+            _workItemQuery = workItemQuery;
+        }
 
-		/// <summary>
-		/// Authenticates a process/service to a Visual Studio Service.
-		/// </summary>
-		/// <param name="personalaccesstoken">access token used for authenticating to a Visual Studio Service</param>
-		/// <returns>an instance of the authenticated VS Service</returns>
-		public VssBasicCredential Authenticate()
+        /// <summary>
+        /// Authenticates a process/service to a Visual Studio Service.
+        /// </summary>
+        /// <returns>An instance of the authenticated VS Service</returns>
+        public VssBasicCredential Authenticate()
 		{
-			VssBasicCredential credentials = new VssBasicCredential(string.Empty, _accessToken);
-			return credentials;
+			var accessToken = _configuration[AccessTokenValue];
+			return new VssBasicCredential(string.Empty, accessToken); ;
 		}
 
 		/// <summary>
 		/// Initializes a WorkItemTracking Http Client instance with the required parameters i.e. credentials
 		/// and the Azure DevOps Known Issues Organisation url
 		/// </summary>
-		/// <returns>an Instance of a WorkItemTrackingHttpClient</returns>
+		/// <returns>An Instance of a WorkItemTrackingHttpClient</returns>
 		public WorkItemTrackingHttpClient GetWorkItemTrackingHttpClient()
 		{
-			var credentials = Authenticate();
-			WorkItemTrackingHttpClient workItemTrackingHttpClient = new WorkItemTrackingHttpClient(new Uri(_knownIssuesUri), credentials);
-
-			return workItemTrackingHttpClient;
+			var knownIssuesUri = _configuration[KnownIssuesPath];
+			return new WorkItemTrackingHttpClient(new Uri(knownIssuesUri), Authenticate());
 		}
 
 		/// <summary>
-		/// Creates a WorkItemQuery Result used for getting work item ids and their urls from 
+		/// Creates a WorkItemQuery Result used for getting work item ids and their urls from
 		/// Azure DevOps Org
 		/// </summary>
 		/// <returns>WorkItem Query result</returns>
-		public async Task<WorkItemQueryResult> GetQueryByWiqlAsync()
+		public Task<WorkItemQueryResult> GetQueryByWiqlAsync()
 		{
-			WorkItemQueryResult result = await _httpQueryClient.QueryByWiqlAsync(_workItemQuery, null, 100, null, CancellationToken.None).ConfigureAwait(false);
-
-			return result;
+			return _httpQueryClient.QueryByWiqlAsync(_workItemQuery, null, 100, null, CancellationToken.None);
 		}
 
 		/// <summary>
@@ -81,21 +80,20 @@ namespace KnownIssuesService.Services
 		/// </summary>
 		/// <param name="ids">Work Item Ids From Azure DevOps Organisation</param>
 		/// <param name="result">WorkItemQuery result that contains the specific ids and their urls</param>
-		/// <returns>a List of Work Items from Azure DevOps Org</returns>
-		public async Task<List<WorkItem>> GetWorkItemsQueryAsync(int[] ids, WorkItemQueryResult result)
+		/// <returns>A List of Work Items from Azure DevOps Org</returns>
+		public Task<List<WorkItem>> GetWorkItemsQueryAsync(int[] ids, WorkItemQueryResult result)
 		{
-			List<WorkItem> items = await _httpQueryClient.GetWorkItemsAsync(ids, null, result.AsOf, null, null, null, CancellationToken.None).ConfigureAwait(false);
-			return items;
+			return _httpQueryClient.GetWorkItemsAsync(ids, null, result.AsOf, null, null, null, CancellationToken.None);
 		}
 
 		/// <summary>
 		/// Create a Query builder for retrieving work items from an Azure DevOps Organisation
 		/// </summary>
-		/// <returns>a work item query builder containing the selection criteria</returns>
-		public Wiql QueryBuilder()
+		/// <returns>A work item query builder containing the selection criteria</returns>
+		public static Wiql QueryBuilder()
 		{
 			// create a wiql object and build our query
-			Wiql wiql = new Wiql()
+			return new Wiql()
 			{
 				Query = "Select [Id] " +
 						"From WorkItems " +
@@ -103,72 +101,43 @@ namespace KnownIssuesService.Services
 						"And [System.TeamProject] = '" + UtilityConstants.knownIssuesOrganisation + "' " +
 						"Order By [State] Asc, [Changed Date] Desc",
 			};
-			return wiql;
 		}
 
 		/// <summary>
 		/// Function to Query the List of Known Issues from Azure DevOps Known Organization
 		/// </summary>
 		/// <returns>Known Issues Contract that contains json items that will be rendered on the browser</returns>
-		public async Task<List<KnownIssuesContract>> QueryBugs()
+		public async Task<List<KnownIssue>> QueryBugsAsync()
 		{
-			List<KnownIssuesContract> knownIssuesList = new List<KnownIssuesContract>();
 			try
 			{
 				WorkItemQueryResult result = await GetQueryByWiqlAsync();
 				var ids = result.WorkItems.Select(item => item.Id).ToArray();
 
-				if (ids.Length == 0)
+                if (ids.Length == 0)
+                {
+                    return KnownIssuesList;
+                }
+
+                // get work items for the ids found in query
+                List<WorkItem> items = await GetWorkItemsQueryAsync(ids, result);
+
+				KnownIssuesList = items.Select(x => new KnownIssue
 				{
-					return new List<KnownIssuesContract>();
-				}
+					Id = x?.Id,
+					State = x.Fields.TryGetValue("System.State", out var state) ? state.ToString(): default,
+					Title = x.Fields.TryGetValue("System.Title", out var title) ? title.ToString() : default,
+					WorkLoadArea = x.Fields.TryGetValue("Custom.MSGraphM365Workload", out var workLoadArea) ? workLoadArea.ToString() : default,
+					Description = x.Fields.TryGetValue("System.Description", out var description) ? description.ToString() : default,
+					WorkAround = x.Fields.TryGetValue("Custom.Workaround", out var workAround) ? workAround.ToString() : default,
+					Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default
+				}).ToList();
 
-				// get work items for the ids found in query
-				var test = result.AsOf;
-				List<WorkItem> items = await GetWorkItemsQueryAsync(ids, result);
-
-				foreach (var item in items)
-				{
-					KnownIssuesContract contract = new KnownIssuesContract();
-					contract.Id = item?.Id;
-
-					if (item.Fields.ContainsKey("System.State"))
-					{
-						contract.State = item.Fields["System.State"].ToString();
-					}
-
-					if (item.Fields.ContainsKey("System.Title"))
-					{
-						contract.Title = item.Fields["System.Title"].ToString();
-					}
-
-					if (item.Fields.ContainsKey("Custom.MSGraphM365Workload"))
-					{
-						contract.WorkLoadArea = item.Fields["Custom.MSGraphM365Workload"].ToString();
-					}
-
-					if (item.Fields.ContainsKey("System.Description"))
-					{
-						contract.Description = item.Fields["System.Description"].ToString();
-					}
-
-					if (item.Fields.ContainsKey("Custom.Workaround"))
-					{
-						contract.WorkAround = item.Fields["Custom.Workaround"].ToString();
-					}
-
-					if (item.Fields.ContainsKey("Custom.APIPathLink"))
-					{
-						contract.Link = item.Fields["Custom.APIPathLink"].ToString();
-					}
-					knownIssuesList.Add(contract);
-				}
-
-				return knownIssuesList;
+				return KnownIssuesList;
 			}
-			catch (Exception ex)
+            catch
 			{
-				throw ex;
+				throw;
 			}
 		}
 	}

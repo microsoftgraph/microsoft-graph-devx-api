@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using KnownIssuesService.Models;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace KnownIssuesService.Interfaces
     /// </summary>
     public interface IKnownIssuesService
     {
-        Task<List<KnownIssuesContract>> QueryBugs();
+        Task<List<KnownIssue>> QueryBugsAsync();
         Task<WorkItemQueryResult> GetQueryByWiqlAsync();
         Task<List<WorkItem>> GetWorkItemsQueryAsync(int[] ids, WorkItemQueryResult result);
     }
