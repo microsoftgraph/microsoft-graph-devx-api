@@ -9,9 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="TestFiles\appsettingstest.json">
+    <None Remove="TestFiles\appsettingstest.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestFiles\appsettingstest.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
