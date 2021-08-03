@@ -17,7 +17,7 @@ namespace KnownIssuesService.Test
 {
     public class KnownIssuesServiceShould
     {
-        private readonly IKnownIssuesService _knownIssuesService;
+        private IKnownIssuesService _knownIssuesService;
         private readonly IConfigurationRoot _configuration;
         private readonly WorkItemTrackingHttpClientMock _workItemTrackingHttpClientMock;
         private readonly WorkItemTrackingHttpClient _workItemTrackingHttpClient;
@@ -27,7 +27,7 @@ namespace KnownIssuesService.Test
         {
             _wiqlTest = new Mock<Wiql>();
             _configuration ??= new ConfigurationBuilder()
-                                    .AddJsonFile("appsettingstest.json")
+                                    .AddJsonFile(".\\TestFiles\\appsettingstest.json")
                                     .Build();
             _workItemTrackingHttpClientMock = new WorkItemTrackingHttpClientMock();
             _workItemTrackingHttpClient = _workItemTrackingHttpClientMock.MockWorkItemTrackingHttpClient(_wiqlTest);

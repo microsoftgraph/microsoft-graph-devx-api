@@ -7,27 +7,28 @@ using KnownIssuesService.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using UtilityService;
 
 namespace GraphWebApi.Controllers
 {
     [ApiController]
     public class KnownIssuesController : ControllerBase
     {
-        private readonly IKnownIssuesService _knownIssueService;
+        private readonly IKnownIssuesService _knownIssuesService;
 
-        public KnownIssuesController(IKnownIssuesService knownIssueService)
+        public KnownIssuesController(IKnownIssuesService knownIssuesService)
         {
-            _knownIssueService = knownIssueService;
+            UtilityFunctions.CheckArgumentNull(knownIssuesService, nameof(knownIssuesService));
+            _knownIssuesService = knownIssuesService;
         }
 
         // GET: api/<KnownIssuesController>
         [Route("api/[controller]")]
         [Route("knownissues")]
         [HttpGet]
-        public async Task<IEnumerable<KnownIssuesContract>> Get()
+        public Task<List<KnownIssue>> Get()
         {
-            var results = await _knownIssueService.QueryBugs();
-            return results;
+            return _knownIssuesService.QueryBugsAsync();
         }
     }
 }
