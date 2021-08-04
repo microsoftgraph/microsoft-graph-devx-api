@@ -6,6 +6,7 @@ using KnownIssuesService.Interfaces;
 using KnownIssuesService.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -33,7 +34,7 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]")]
         [Route("knownissues")]
         [HttpGet]
-        public Task<List<KnownIssue>> GetKnownIssues()
+        public async Task<IActionResult> GetKnownIssues()
         {
             try
             {
@@ -41,12 +42,13 @@ namespace GraphWebApi.Controllers
                                              SeverityLevel.Information,
                                              _knownIssuesTraceProperties);
 
-                return _knownIssuesService.QueryBugsAsync();
+                List<KnownIssue> result = await _knownIssuesService.QueryBugsAsync();
+                return result == null ? NotFound() : Ok(result);
             }
             catch(Exception ex)
             {
                 _telemetryClient?.TrackException(ex, _knownIssuesTraceProperties);
-                throw;
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };                
             }
         }
     }

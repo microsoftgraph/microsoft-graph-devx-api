@@ -19,21 +19,19 @@ namespace KnownIssuesService.Test
     {
         private readonly IKnownIssuesService _knownIssuesService;
         private readonly WorkItemTrackingHttpClientMock _workItemTrackingHttpClientMock;
+        private readonly WorkItemTrackingHttpClient _workItemTrackingHttpClient;
         private readonly Mock<Wiql> _wiqlTest;
         private readonly IConfigurationRoot _configuration;
 
         public KnownIssuesServiceShould()
         {
-            _wiqlTest = new Mock<Wiql>();
-            _workItemTrackingHttpClientMock = new WorkItemTrackingHttpClientMock();
-
             _configuration = new ConfigurationBuilder()
                             .AddJsonFile("appsettingstest.json")
                             .Build();
-            _knownIssuesService = new Services.KnownIssuesService(_configuration);
-
-            _knownIssuesService.HttpQueryClient = _workItemTrackingHttpClientMock.MockWorkItemTrackingHttpClient(_wiqlTest);
-            _knownIssuesService.WorkItemQuery = _wiqlTest.Object;
+            _wiqlTest = new Mock<Wiql>();
+            _workItemTrackingHttpClientMock = new WorkItemTrackingHttpClientMock();
+            _workItemTrackingHttpClient = _workItemTrackingHttpClientMock.MockWorkItemTrackingHttpClient(_wiqlTest);
+            _knownIssuesService = new Services.KnownIssuesService(_configuration, wiql: _wiqlTest.Object, httpQueryClient: _workItemTrackingHttpClient);
         }
 
         [Fact]

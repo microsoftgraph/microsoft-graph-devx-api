@@ -24,10 +24,9 @@ namespace KnownIssuesService.Services
     /// </summary>
     public class KnownIssuesService : IKnownIssuesService
     {
-		public Wiql WorkItemQuery { get; set; }
-		public WorkItemTrackingHttpClient HttpQueryClient { get; set; }
-
 		private List<KnownIssue> _knownIssuesList;
+		private readonly Wiql _workItemQuery;
+		private readonly WorkItemTrackingHttpClient _httpQueryClient;
 		private readonly IConfiguration _configuration;
 		private readonly TelemetryClient _telemetryClient;
 		private readonly Dictionary<string, string> _knownIssuesTraceProperties =
@@ -36,13 +35,16 @@ namespace KnownIssuesService.Services
 		private const string KnownIssuesPath = "KnownIssues:Uri";
 
 
-		public KnownIssuesService(IConfiguration configuration, TelemetryClient telemetryClient = null)
+		public KnownIssuesService(IConfiguration configuration,
+								  TelemetryClient telemetryClient = null,
+								  Wiql wiql = null,
+								  WorkItemTrackingHttpClient httpQueryClient = null)
 		{
 			UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
 			_configuration = configuration;
 			_telemetryClient = telemetryClient;
-			WorkItemQuery = QueryBuilder();
-			HttpQueryClient = GetWorkItemTrackingHttpClient();
+			_workItemQuery = wiql ?? QueryBuilder();
+			_httpQueryClient = httpQueryClient ?? GetWorkItemTrackingHttpClient();
 		}
 
         /// <summary>
@@ -88,7 +90,7 @@ namespace KnownIssuesService.Services
 		/// <returns>WorkItem Query result</returns>
 		public Task<WorkItemQueryResult> GetQueryByWiqlAsync()
 		{
-			return HttpQueryClient.QueryByWiqlAsync(WorkItemQuery, null, 100, null, CancellationToken.None);
+			return _httpQueryClient.QueryByWiqlAsync(_workItemQuery, null, 100, null, CancellationToken.None);
 		}
 
 		/// <summary>
@@ -103,7 +105,7 @@ namespace KnownIssuesService.Services
 										 SeverityLevel.Information,
 										 _knownIssuesTraceProperties);
 
-			return HttpQueryClient.GetWorkItemsAsync(ids, null, result.AsOf, null, null, null, CancellationToken.None);
+			return _httpQueryClient.GetWorkItemsAsync(ids, null, result.AsOf, null, null, null, CancellationToken.None);
 		}
 
 		/// <summary>
