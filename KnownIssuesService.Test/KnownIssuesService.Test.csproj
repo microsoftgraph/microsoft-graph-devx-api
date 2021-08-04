@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -7,16 +7,6 @@
 
     <UserSecretsId>7b323335-5c83-4a78-9580-f18012bd68a6</UserSecretsId>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="TestFiles\appsettingstest.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="TestFiles\appsettingstest.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />

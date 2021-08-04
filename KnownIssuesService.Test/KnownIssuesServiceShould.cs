@@ -26,9 +26,6 @@ namespace KnownIssuesService.Test
         public KnownIssuesServiceShould()
         {
             _wiqlTest = new Mock<Wiql>();
-            _configuration ??= new ConfigurationBuilder()
-                                    .AddJsonFile(".\\TestFiles\\appsettingstest.json")
-                                    .Build();
             _workItemTrackingHttpClientMock = new WorkItemTrackingHttpClientMock();
             _workItemTrackingHttpClient = _workItemTrackingHttpClientMock.MockWorkItemTrackingHttpClient(_wiqlTest);
             _knownIssuesService = new Services.KnownIssuesService(_workItemTrackingHttpClient, _wiqlTest.Object);
