@@ -40,13 +40,13 @@ paths:
             examples:
               GetUserProfile:
                 value: |
-                  GET /v1.0/users/joe@tenant.com HTTP/1.1 
-                  Host: https://graph.microsoft.com  
+                  GET /v1.0/users/joe@tenant.com HTTP/1.1
+                  Host: https://graph.microsoft.com
                   Accept: application/json
               SendMail:
                 value: |
-                  POST /v1.0/me/sendMail 
-                  Host: https://graph.microsoft.com 
+                  POST /v1.0/me/sendMail
+                  Host: https://graph.microsoft.com
                   Content-type: application/json
                   {
                     "message": {
@@ -365,17 +365,16 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/knownIssues"
+                  $ref: "#/components/schemas/knownIssue"
               example:
                 KnownIssues:
-                  - Id: 9076
-                    Url: https://microsoftgraph.visualstudio.com/_apis/wit/workItems/9076"
-                    Fields: {
-                      System.State: Active,
-                      System.Title: Issue B,
-                      Custom.MSGraphM365Workload: Notifications,
-                      Custom.Workaround: Test
-                    }
+                  - Id: 9076,
+                    State: Active,
+                    Title: Accessing a shared calendar,
+                    Description: Notifications fail when an organization has several Bookings businesses,
+                    WorkloadArea: Notifications,
+                    Workaround: Upgrade Notifications,
+                    APIPathLink: https://docs.microsoft.com/en-us/graph/api/resources/calendar?view=graph-rest-1.0
         "404":
           description: Not found
         "500":
@@ -715,3 +714,22 @@ components:
           - createdDateTime
           - workloadArea
           - subArea
+    knownIssue:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          state:
+            type: string
+          title:
+            type: string
+          workloadArea:
+            type: string
+          description:
+            type: string
+          workAround:
+            type: string
+          link:
+            type: string
