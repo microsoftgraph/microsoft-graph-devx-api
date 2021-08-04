@@ -18,7 +18,6 @@ namespace KnownIssuesService.Test
     public class KnownIssuesServiceShould
     {
         private IKnownIssuesService _knownIssuesService;
-        private readonly IConfigurationRoot _configuration;
         private readonly WorkItemTrackingHttpClientMock _workItemTrackingHttpClientMock;
         private readonly WorkItemTrackingHttpClient _workItemTrackingHttpClient;
         private readonly Mock<Wiql> _wiqlTest;
