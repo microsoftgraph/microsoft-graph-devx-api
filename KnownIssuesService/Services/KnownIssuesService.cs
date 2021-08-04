@@ -46,8 +46,10 @@ namespace KnownIssuesService.Services
 
         public KnownIssuesService(WorkItemTrackingHttpClient httpQueryClient, Wiql workItemQuery)
         {
-            _httpQueryClient = httpQueryClient;
-            _workItemQuery = workItemQuery;
+			UtilityFunctions.CheckArgumentNull(httpQueryClient, nameof(httpQueryClient));
+			_httpQueryClient = httpQueryClient;
+			UtilityFunctions.CheckArgumentNull(workItemQuery, nameof(workItemQuery));
+			_workItemQuery = workItemQuery;
         }
 
         /// <summary>
@@ -67,6 +69,10 @@ namespace KnownIssuesService.Services
 		/// <returns>An Instance of a WorkItemTrackingHttpClient</returns>
 		public WorkItemTrackingHttpClient GetWorkItemTrackingHttpClient()
 		{
+			_telemetryClient?.TrackTrace("Initialize a WorkItemTrackingHttpClient instance with the required credentials",
+										 SeverityLevel.Information,
+										 _knownIssuesTraceProperties);
+
 			var knownIssuesUri = _configuration[KnownIssuesPath];
 			return new WorkItemTrackingHttpClient(new Uri(knownIssuesUri), Authenticate());
 		}
@@ -89,6 +95,10 @@ namespace KnownIssuesService.Services
 		/// <returns>A List of Work Items from Azure DevOps Org</returns>
 		public Task<List<WorkItem>> GetWorkItemsQueryAsync(int[] ids, WorkItemQueryResult result)
 		{
+			_telemetryClient?.TrackTrace($"Fetch WorkItems query result {result} based on {ids}",
+										 SeverityLevel.Information,
+										 _knownIssuesTraceProperties);
+
 			return _httpQueryClient.GetWorkItemsAsync(ids, null, result.AsOf, null, null, null, CancellationToken.None);
 		}
 
@@ -115,9 +125,9 @@ namespace KnownIssuesService.Services
 		/// <returns>Known Issues Contract that contains json items that will be rendered on the browser</returns>
 		public async Task<List<KnownIssue>> QueryBugsAsync()
 		{
-			_telemetryClient?.TrackTrace($"Fetches a WorkItemQueryResult for fetching work item Ids and urls",
-											 SeverityLevel.Information,
-											 _knownIssuesTraceProperties);
+			_telemetryClient?.TrackTrace("Fetches a WorkItemQueryResult for fetching work item Ids and urls",
+										 SeverityLevel.Information,
+										 _knownIssuesTraceProperties);
 
 			WorkItemQueryResult result = await GetQueryByWiqlAsync();
 			var ids = result.WorkItems.Select(item => item.Id).ToArray();
@@ -127,9 +137,9 @@ namespace KnownIssuesService.Services
                 return KnownIssuesList;
             }
 
-			_telemetryClient?.TrackTrace($"Use the selected ids to fetch their subsequent work items from the query result",
-											SeverityLevel.Information,
-											_knownIssuesTraceProperties);
+			_telemetryClient?.TrackTrace("Use the selected ids to fetch their subsequent work items from the query result",
+										 SeverityLevel.Information,
+										 _knownIssuesTraceProperties);
 
 			// get work items for the ids found in query
 			List<WorkItem> items = await GetWorkItemsQueryAsync(ids, result);
@@ -145,9 +155,9 @@ namespace KnownIssuesService.Services
 				Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default
 			}).ToList();
 
-			_telemetryClient?.TrackTrace($"Return a list of Known Issues",
-											SeverityLevel.Information,
-											_knownIssuesTraceProperties);
+			_telemetryClient?.TrackTrace("Return a list of Known Issues",
+										 SeverityLevel.Information,
+										 _knownIssuesTraceProperties);
 
 			return KnownIssuesList;
 		}

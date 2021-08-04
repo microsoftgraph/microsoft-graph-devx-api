@@ -37,9 +37,9 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                _telemetryClient?.TrackTrace($"Request to query the list of known issues",
-                                         SeverityLevel.Information,
-                                         _knownIssuesTraceProperties);
+                _telemetryClient?.TrackTrace("Request to query the list of known issues",
+                                             SeverityLevel.Information,
+                                             _knownIssuesTraceProperties);
 
                 return _knownIssuesService.QueryBugsAsync();
             }
