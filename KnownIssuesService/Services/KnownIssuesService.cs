@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -64,14 +64,21 @@ namespace KnownIssuesService.Services
 		/// and the Azure DevOps Known Issues Organisation url
 		/// </summary>
 		/// <returns>An Instance of a WorkItemTrackingHttpClient</returns>
-		public WorkItemTrackingHttpClient GetWorkItemTrackingHttpClient()
+		private WorkItemTrackingHttpClient GetWorkItemTrackingHttpClient()
 		{
-			_telemetryClient?.TrackTrace("Initialize a WorkItemTrackingHttpClient instance with the required credentials",
-										 SeverityLevel.Information,
-										 _knownIssuesTraceProperties);
+            try
+            {
+				_telemetryClient?.TrackTrace("Initialize a WorkItemTrackingHttpClient instance with the required credentials",
+														 SeverityLevel.Information,
+														 _knownIssuesTraceProperties);
 
-			var knownIssuesUri = _configuration[KnownIssuesPath];
-			return new WorkItemTrackingHttpClient(new Uri(knownIssuesUri), Authenticate());
+				var knownIssuesUri = _configuration[KnownIssuesPath];
+				return new WorkItemTrackingHttpClient(new Uri(knownIssuesUri), Authenticate());
+			}
+            catch
+            {
+				throw;
+            }
 		}
 
 		/// <summary>
@@ -127,11 +134,11 @@ namespace KnownIssuesService.Services
 										 _knownIssuesTraceProperties);
 
 			WorkItemQueryResult result = await GetQueryByWiqlAsync();
-			var ids = result.WorkItems.Select(item => item.Id).ToArray();
+			int[] ids = result.WorkItems.Select(item => item.Id).ToArray();
 
             if (ids.Length == 0)
             {
-                return KnownIssuesList;
+                return _knownIssuesList;
             }
 
 			_telemetryClient?.TrackTrace("Use the selected ids to fetch their subsequent work items from the query result",
@@ -141,7 +148,7 @@ namespace KnownIssuesService.Services
 			// get work items for the ids found in query
 			List<WorkItem> items = await GetWorkItemsQueryAsync(ids, result);
 
-			KnownIssuesList = items.Select(x => new KnownIssue
+			_knownIssuesList = items.Select(x => new KnownIssue
 			{
 				Id = x?.Id,
 				State = x.Fields.TryGetValue("System.State", out var state) ? state.ToString(): default,
@@ -156,7 +163,7 @@ namespace KnownIssuesService.Services
 										 SeverityLevel.Information,
 										 _knownIssuesTraceProperties);
 
-			return KnownIssuesList;
+			return _knownIssuesList;
 		}
 	}
 }
