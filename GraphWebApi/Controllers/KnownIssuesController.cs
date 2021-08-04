@@ -24,9 +24,9 @@ namespace GraphWebApi.Controllers
 
         public KnownIssuesController(IKnownIssuesService knownIssuesService, TelemetryClient telemetryClient)
         {
-            UtilityFunctions.CheckArgumentNull(knownIssuesService, nameof(knownIssuesService));
-            _knownIssuesService = knownIssuesService;
             _telemetryClient = telemetryClient;
+            _knownIssuesService = knownIssuesService
+                ?? UtilityFunctions.CheckArgumentNull(knownIssuesService, nameof(knownIssuesService));
         }
 
         // GET: api/<KnownIssuesController>

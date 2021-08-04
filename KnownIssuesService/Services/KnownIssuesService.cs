@@ -37,20 +37,22 @@ namespace KnownIssuesService.Services
 
 		public KnownIssuesService(IConfiguration configuration, TelemetryClient telemetryClient = null)
 		{
-			UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
-			_configuration = configuration;
 			_telemetryClient = telemetryClient;
-			_workItemQuery = QueryBuilder();
-			_httpQueryClient = GetWorkItemTrackingHttpClient();
+			_configuration = configuration
+				?? UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
+			_workItemQuery = QueryBuilder()
+				?? throw new ArgumentNullException("Value cannot be null");
+			_httpQueryClient = GetWorkItemTrackingHttpClient()
+				?? throw new ArgumentNullException("Value cannot be null");
 		}
 
         public KnownIssuesService(WorkItemTrackingHttpClient httpQueryClient, Wiql workItemQuery)
         {
-			UtilityFunctions.CheckArgumentNull(httpQueryClient, nameof(httpQueryClient));
-			_httpQueryClient = httpQueryClient;
-			UtilityFunctions.CheckArgumentNull(workItemQuery, nameof(workItemQuery));
-			_workItemQuery = workItemQuery;
-        }
+			_httpQueryClient = httpQueryClient
+				?? UtilityFunctions.CheckArgumentNull(httpQueryClient, nameof(httpQueryClient));
+			_workItemQuery = workItemQuery
+				?? UtilityFunctions.CheckArgumentNull(workItemQuery, nameof(workItemQuery));
+		}
 
         /// <summary>
         /// Authenticates a process/service to a Visual Studio Service.
