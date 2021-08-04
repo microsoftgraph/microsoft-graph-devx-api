@@ -18,6 +18,11 @@ namespace UtilityService
         public const string TelemetryPropertyKey_Changes = "Changes";
         public const string TelemetryPropertyKey_OpenApi = "OpenApi";
         public const string TelemetryPropertyKey_Snippets = "Snippets";
+        public const string TelemetryPropertyKey_KnownIssues = "KnownIssues";
+
+        /// <summary>
+        /// Contains the name of the Known Issues Azure DevOps Organisation
+		/// </summary>
+		public const string knownIssuesOrganisation = "Known Issues (staging)";
     }
 }
- 
