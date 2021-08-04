@@ -40,13 +40,13 @@ paths:
             examples:
               GetUserProfile:
                 value: |
-                  GET /v1.0/users/joe@tenant.com HTTP/1.1 
-                  Host: https://graph.microsoft.com  
+                  GET /v1.0/users/joe@tenant.com HTTP/1.1
+                  Host: https://graph.microsoft.com
                   Accept: application/json
               SendMail:
                 value: |
-                  POST /v1.0/me/sendMail 
-                  Host: https://graph.microsoft.com 
+                  POST /v1.0/me/sendMail
+                  Host: https://graph.microsoft.com
                   Content-type: application/json
                   {
                     "message": {
@@ -346,6 +346,35 @@ paths:
                     WorkloadArea: Compliance
                     SubArea: eDiscovery
 
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+  /knownissues:
+    get:
+      tags:
+        - knownissues
+      summary: Known Issues
+      description: Get all the Known Issues existing across different MS Graph APIs and keeping track of their statuses.
+      operationId: knownIssues.ListKnownIssues
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/knownIssue"
+              example:
+                KnownIssues:
+                  - Id: 9076,
+                    State: Active,
+                    Title: Accessing a shared calendar,
+                    Description: Notifications fail when an organization has several Bookings businesses,
+                    WorkloadArea: Notifications,
+                    Workaround: Upgrade Notifications,
+                    APIPathLink: https://docs.microsoft.com/en-us/graph/api/resources/calendar?view=graph-rest-1.0
         "404":
           description: Not found
         "500":
@@ -685,3 +714,22 @@ components:
           - createdDateTime
           - workloadArea
           - subArea
+    knownIssue:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          state:
+            type: string
+          title:
+            type: string
+          workloadArea:
+            type: string
+          description:
+            type: string
+          workAround:
+            type: string
+          link:
+            type: string
