@@ -350,6 +350,36 @@ paths:
           description: Not found
         "500":
           description: Internal server error
+  /knownissues:
+    get:
+      tags:
+        - knownissues
+      summary: Known Issues
+      description: Get all the Known Issues existing across different MS Graph APIs and keeping track of their statuses.
+      operationId: knownIssues.ListKnownIssues
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/knownIssues"
+              example:
+                KnownIssues:
+                  - Id: 9076
+                    Url: https://microsoftgraph.visualstudio.com/_apis/wit/workItems/9076"
+                    Fields: {
+                      System.State: Active,
+                      System.Title: Issue B,
+                      Custom.MSGraphM365Workload: Notifications,
+                      Custom.Workaround: Test
+                    }
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
   /openapi: # /openapi?url=/users&openApiVersion=3&graphVersion=beta&format=json&style=GEAutocomplete
     get:
       tags:
