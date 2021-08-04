@@ -15,6 +15,9 @@ namespace KnownIssuesService.Interfaces
     /// </summary>
     public interface IKnownIssuesService
     {
+        public WorkItemTrackingHttpClient HttpQueryClient { get; set; }
+        public Wiql WorkItemQuery { get; set; }
+
         Task<List<KnownIssue>> QueryBugsAsync();
         Task<WorkItemQueryResult> GetQueryByWiqlAsync();
         Task<List<WorkItem>> GetWorkItemsQueryAsync(int[] ids, WorkItemQueryResult result);

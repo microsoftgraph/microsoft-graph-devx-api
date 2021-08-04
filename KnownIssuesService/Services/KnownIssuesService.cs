@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -19,15 +19,16 @@ using UtilityService;
 
 namespace KnownIssuesService.Services
 {
-	/// <summary>
-	/// Fetches a list of known issues from Azure Devops
-	/// </summary>
+    /// <summary>
+    /// Fetches a list of known issues from Azure Devops
+    /// </summary>
     public class KnownIssuesService : IKnownIssuesService
     {
-		private List<KnownIssue> KnownIssuesList { get; set; }
-		private readonly WorkItemTrackingHttpClient _httpQueryClient;
-		private readonly Wiql _workItemQuery;
-        private readonly IConfiguration _configuration;
+		public Wiql WorkItemQuery { get; set; }
+		public WorkItemTrackingHttpClient HttpQueryClient { get; set; }
+
+		private List<KnownIssue> _knownIssuesList;
+		private readonly IConfiguration _configuration;
 		private readonly TelemetryClient _telemetryClient;
 		private readonly Dictionary<string, string> _knownIssuesTraceProperties =
 			new() { { UtilityConstants.TelemetryPropertyKey_KnownIssues, nameof(KnownIssuesService) } };
@@ -37,31 +38,25 @@ namespace KnownIssuesService.Services
 
 		public KnownIssuesService(IConfiguration configuration, TelemetryClient telemetryClient = null)
 		{
+			UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
+			_configuration = configuration;
 			_telemetryClient = telemetryClient;
-			_configuration = configuration
-				?? UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
-			_workItemQuery = QueryBuilder()
-				?? throw new ArgumentNullException("Value cannot be null");
-			_httpQueryClient = GetWorkItemTrackingHttpClient()
-				?? throw new ArgumentNullException("Value cannot be null");
-		}
-
-        public KnownIssuesService(WorkItemTrackingHttpClient httpQueryClient, Wiql workItemQuery)
-        {
-			_httpQueryClient = httpQueryClient
-				?? UtilityFunctions.CheckArgumentNull(httpQueryClient, nameof(httpQueryClient));
-			_workItemQuery = workItemQuery
-				?? UtilityFunctions.CheckArgumentNull(workItemQuery, nameof(workItemQuery));
+			WorkItemQuery = QueryBuilder();
+			HttpQueryClient = GetWorkItemTrackingHttpClient();
 		}
 
         /// <summary>
         /// Authenticates a process/service to a Visual Studio Service.
         /// </summary>
         /// <returns>An instance of the authenticated VS Service</returns>
-        public VssBasicCredential Authenticate()
+        private VssBasicCredential Authenticate()
 		{
+			_telemetryClient?.TrackTrace("Fetch personal access token from configuration and use it to authenticate into Visual Studio Service",
+										 SeverityLevel.Information,
+										 _knownIssuesTraceProperties);
+
 			var accessToken = _configuration[AccessTokenValue];
-			return new VssBasicCredential(string.Empty, accessToken); ;
+			return new VssBasicCredential(string.Empty, accessToken);
 		}
 
 		/// <summary>
@@ -86,7 +81,7 @@ namespace KnownIssuesService.Services
 		/// <returns>WorkItem Query result</returns>
 		public Task<WorkItemQueryResult> GetQueryByWiqlAsync()
 		{
-			return _httpQueryClient.QueryByWiqlAsync(_workItemQuery, null, 100, null, CancellationToken.None);
+			return HttpQueryClient.QueryByWiqlAsync(WorkItemQuery, null, 100, null, CancellationToken.None);
 		}
 
 		/// <summary>
@@ -101,14 +96,14 @@ namespace KnownIssuesService.Services
 										 SeverityLevel.Information,
 										 _knownIssuesTraceProperties);
 
-			return _httpQueryClient.GetWorkItemsAsync(ids, null, result.AsOf, null, null, null, CancellationToken.None);
+			return HttpQueryClient.GetWorkItemsAsync(ids, null, result.AsOf, null, null, null, CancellationToken.None);
 		}
 
 		/// <summary>
 		/// Create a Query builder for retrieving work items from an Azure DevOps Organisation
 		/// </summary>
 		/// <returns>A work item query builder containing the selection criteria</returns>
-		public static Wiql QueryBuilder()
+		private static Wiql QueryBuilder()
 		{
 			// create a wiql object and build our query
 			return new Wiql()
