@@ -48,7 +48,7 @@ namespace GraphWebApi.Controllers
             catch(Exception ex)
             {
                 _telemetryClient?.TrackException(ex, _knownIssuesTraceProperties);
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };                
+                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
             }
         }
     }
