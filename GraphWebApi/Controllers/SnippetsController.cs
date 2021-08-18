@@ -16,14 +16,14 @@ namespace GraphWebApi.Controllers
     [Route("api/[controller]")]
     [Route("snippetgenerator")]
     [ApiController]
-    public class GraphExplorerSnippetsController : ControllerBase
+    public class SnippetsController : ControllerBase
     {
         private readonly ISnippetsGenerator _snippetGenerator;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(GraphExplorerSnippetsController) } };
+            new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(SnippetsController) } };
         private readonly TelemetryClient _telemetryClient;
 
-        public GraphExplorerSnippetsController(ISnippetsGenerator snippetGenerator, TelemetryClient telemetryClient)
+        public SnippetsController(ISnippetsGenerator snippetGenerator, TelemetryClient telemetryClient)
         {
             _telemetryClient = telemetryClient;
             _snippetGenerator = snippetGenerator;

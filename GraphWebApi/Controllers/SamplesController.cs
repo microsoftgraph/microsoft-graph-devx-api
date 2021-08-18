@@ -21,14 +21,14 @@ using Microsoft.ApplicationInsights;
 namespace GraphWebApi.Controllers
 {
     [ApiController]
-    public class GraphExplorerSamplesController : ControllerBase
+    public class SamplesController : ControllerBase
     {
         private readonly ISamplesStore _samplesStore;
         private readonly Dictionary<string, string> _samplesTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Samples, nameof(GraphExplorerSamplesController)} };
+            new() { { UtilityConstants.TelemetryPropertyKey_Samples, nameof(SamplesController)} };
         private readonly TelemetryClient _telemetryClient;
 
-        public GraphExplorerSamplesController(ISamplesStore samplesStore, TelemetryClient telemetryClient)
+        public SamplesController(ISamplesStore samplesStore, TelemetryClient telemetryClient)
         {
             _telemetryClient = telemetryClient;
             _samplesStore = samplesStore;
@@ -71,7 +71,7 @@ namespace GraphWebApi.Controllers
                     return NotFound();
                 }
 
-                _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
+                _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(SamplesController));
                 _telemetryClient?.TrackTrace($"{filteredSampleQueries?.Count ?? 0} sample queries found from search value '{search}'",
                                              SeverityLevel.Information,
                                              _samplesTraceProperties);
@@ -308,9 +308,6 @@ namespace GraphWebApi.Controllers
                 // Get the serialized JSON string of the list of sample queries
                 string newSampleQueriesJson = SamplesService.SerializeSampleQueriesList(sampleQueriesList);
 
-                // Disabled functionality
-                // await _fileUtility.WriteToFile(updatedSampleQueriesJson, _queriesFilePathSource);
-
                 // Success; no content to return
                 return new JsonResult("Deleted successfully.") { StatusCode = StatusCodes.Status204NoContent};
             }
@@ -318,6 +315,7 @@ namespace GraphWebApi.Controllers
             {
                _telemetryClient?.TrackException(invalidOpsException,
                                         _samplesTraceProperties);
+
                 // Sample query with provided id not found
                 return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status404NotFound };
             }
@@ -352,7 +350,7 @@ namespace GraphWebApi.Controllers
                 sampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync(locale);
             }
 
-            _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(GraphExplorerSamplesController));
+            _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(SamplesController));
             _telemetryClient?.TrackTrace($"Fetched {sampleQueriesList?.SampleQueries?.Count ?? 0} samples",
                                          SeverityLevel.Information,
                                          _samplesTraceProperties);
