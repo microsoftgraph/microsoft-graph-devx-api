@@ -4,14 +4,10 @@
 
 using System;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using GraphExplorerSamplesService.Services;
 using GraphExplorerSamplesService.Models;
-using System.Security.Claims;
-using System.Linq;
 using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
 using Microsoft.ApplicationInsights.DataContracts;
