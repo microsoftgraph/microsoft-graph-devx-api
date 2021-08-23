@@ -95,7 +95,6 @@ namespace GraphWebApi
             services.AddSingleton<IKnownIssuesService, KnownIssuesService.Services.KnownIssuesService>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
             services.AddControllers().AddNewtonsoftJson();
-            services.Configure<SamplesAdministrators>(Configuration);
 
             // Localization
             services.Configure<RequestLocalizationOptions>(options =>
