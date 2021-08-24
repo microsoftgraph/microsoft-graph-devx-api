@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
+using CodeSnippetsReflection.OData;
+using CodeSnippetsReflection.OpenAPI;
 
 namespace CodeSnippetsReflection.App
 {
@@ -30,11 +32,12 @@ namespace CodeSnippetsReflection.App
             var snippetsPathArg = config.GetSection("SnippetsPath");
             var languagesArg = config.GetSection("Languages");
             var customMetadataPathArg = config.GetSection("CustomMetadataPath");
+            var generationArg = config.GetSection("Generation");
             if (!snippetsPathArg.Exists() || !languagesArg.Exists())
             {
                 Console.Error.WriteLine("Http snippets directory and languages should be specified");
                 Console.WriteLine(@"Example usage:
-  .\CodeSnippetReflection.App.exe --SnippetsPath C:\snippets --Languages c#,javascript");
+  .\CodeSnippetReflection.App.exe --SnippetsPath C:\snippets --Languages c#,javascript --Generation odata|openapi");
                 return;
             }
 
@@ -60,7 +63,7 @@ namespace CodeSnippetsReflection.App
             // splits language list into supported and unsupported languages
             // where key "true" holds supported and key "false" holds unsupported languages
             var languageGroups = languages
-                .GroupBy(l => SnippetsGenerator.SupportedLanguages.Contains(l.ToLowerInvariant()))
+                .GroupBy(l => ODataSnippetsGenerator.SupportedLanguages.Contains(l.ToLowerInvariant()))
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var supportedLanguages = languageGroups.ContainsKey(true) ? languageGroups[true] : null;
@@ -68,19 +71,21 @@ namespace CodeSnippetsReflection.App
 
             if (supportedLanguages == null)
             {
-                Console.Error.WriteLine($"None of the given languages are supported. Supported languages: {string.Join(" ", SnippetsGenerator.SupportedLanguages)}");
+                Console.Error.WriteLine($"None of the given languages are supported. Supported languages: {string.Join(" ", ODataSnippetsGenerator.SupportedLanguages)}");
                 return;
             }
 
             if (unsupportedLanguages != null)
             {
                 Console.WriteLine($"Skipping these languages as they are not currently supported: {string.Join(" ", unsupportedLanguages)}");
-                Console.WriteLine($"Supported languages: {string.Join(" ", SnippetsGenerator.SupportedLanguages)}");
+                Console.WriteLine($"Supported languages: {string.Join(" ", ODataSnippetsGenerator.SupportedLanguages)}");
             }
 
-            var generator = customMetadataPathArg.Exists()
-                ? new SnippetsGenerator(isCommandLine: true, customMetadataPathArg.Value)
-                : new SnippetsGenerator(isCommandLine: true);
+            var generation = generationArg.Value;
+            if(string.IsNullOrEmpty(generation))
+                generation = "odata";
+
+            var generator = GetSnippetsGenerator(generation, customMetadataPathArg);
             var files = Directory.EnumerateFiles(httpSnippetsDir, "*-httpSnippet");
 
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
@@ -96,7 +101,16 @@ namespace CodeSnippetsReflection.App
             Console.WriteLine($"Processed {files.Count()} files.");
         }
 
-        private static void ProcessFile(SnippetsGenerator generator, string language, string file)
+        private static ISnippetsGenerator GetSnippetsGenerator(string generation, IConfigurationSection customMetadataSection) {
+            return (generation) switch {
+                "odata" when customMetadataSection.Exists() => new ODataSnippetsGenerator(isCommandLine: true, customMetadataSection.Value),
+                "odata" => new ODataSnippetsGenerator(isCommandLine: true),
+                "openapi" => new OpenAPISnippetsGenerator(),
+                _ => throw new InvalidOperationException($"Unknown generation type: {generation}")
+            };
+        }
+
+        private static void ProcessFile(ISnippetsGenerator generator, string language, string file)
         {
             // convert http request into a type that works with SnippetGenerator.ProcessPayloadRequest()
             // we are not altering the types as it should continue serving the HTTP endpoint as well
