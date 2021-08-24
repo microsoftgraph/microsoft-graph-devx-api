@@ -1,4 +1,4 @@
-using CodeSnippetsReflection.LanguageGenerators;
+using CodeSnippetsReflection.OData.LanguageGenerators;
 using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
 using System.Collections.Generic;

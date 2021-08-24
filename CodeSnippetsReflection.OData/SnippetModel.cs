@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using CodeSnippetsReflection.LanguageGenerators;
+using CodeSnippetsReflection.OData.LanguageGenerators;
 using Microsoft.OData;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;

@@ -1,4 +1,4 @@
-﻿namespace CodeSnippetsReflection.LanguageGenerators
+﻿namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public abstract class LanguageExpressions
     {

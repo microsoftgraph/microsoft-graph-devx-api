@@ -9,7 +9,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using CodeSnippetsReflection.StringExtensions;
 
-namespace CodeSnippetsReflection.LanguageGenerators
+namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public class CommonGenerator
     {

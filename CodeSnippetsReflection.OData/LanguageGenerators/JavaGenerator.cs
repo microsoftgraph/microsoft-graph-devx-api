@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
-namespace CodeSnippetsReflection.LanguageGenerators
+namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public class JavaGenerator
     {
@@ -716,7 +716,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
     }
 
-    internal class JavaExpressions : LanguageExpressions
+    public class JavaExpressions : LanguageExpressions
     {
         public override string ExpandExpression => "\r\n\t.expand(\"{0}\")";
         public override string SelectExpression => "\r\n\t.select(\"{0}\")";

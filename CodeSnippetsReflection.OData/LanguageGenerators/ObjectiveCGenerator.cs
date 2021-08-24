@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
-namespace CodeSnippetsReflection.LanguageGenerators
+namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public class ObjectiveCGenerator
     {
@@ -343,7 +343,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
             return stringBuilder.ToString();
         }
     }
-    internal class ObjectiveCExpressions : LanguageExpressions
+    public class ObjectiveCExpressions : LanguageExpressions
     {
         public override string FilterExpression => string.Empty;
         public override string SearchExpression => string.Empty;

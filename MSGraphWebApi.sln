@@ -5,9 +5,9 @@ VisualStudioVersion = 16.0.29025.244
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphWebApi", "GraphWebApi\GraphWebApi.csproj", "{9B8D74F3-26AE-4B0E-BFB2-0D9CFF6327C1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeSnippetsReflection", "CodeSnippetsReflection\CodeSnippetsReflection.csproj", "{04A2CD71-175A-48C3-BF6F-213CE9CED440}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeSnippetsReflection.OData", "CodeSnippetsReflection.OData\CodeSnippetsReflection.OData.csproj", "{04A2CD71-175A-48C3-BF6F-213CE9CED440}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeSnippetsReflection.Test", "CodeSnippetsReflection.Test\CodeSnippetsReflection.Test.csproj", "{04379F1A-8A18-4079-8C89-E37065FE90D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeSnippetsReflection.OData.Test", "CodeSnippetsReflection.OData.Test\CodeSnippetsReflection.OData.Test.csproj", "{04379F1A-8A18-4079-8C89-E37065FE90D4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphExplorerSamplesService", "GraphExplorerSamplesService\GraphExplorerSamplesService.csproj", "{6FD6FCCE-4519-49C4-AF8B-A4EB028559A6}"
 EndProject
