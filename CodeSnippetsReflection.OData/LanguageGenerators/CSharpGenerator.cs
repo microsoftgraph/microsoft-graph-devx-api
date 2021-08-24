@@ -8,10 +8,10 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Microsoft.OData.Edm;
-using CodeSnippetsReflection.TypeProperties;
+using CodeSnippetsReflection.OData.TypeProperties;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
-namespace CodeSnippetsReflection.LanguageGenerators
+namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public class CSharpGenerator
     {
@@ -940,7 +940,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
 
     }
 
-    internal class CSharpExpressions : LanguageExpressions
+    public class CSharpExpressions : LanguageExpressions
     {
         public override string FilterExpression => "\r\n\t.Filter(\"{0}\")";
         public override string SearchExpression => "\r\n\t.Search(\"{0}\")";

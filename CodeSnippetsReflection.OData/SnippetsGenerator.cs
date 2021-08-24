@@ -4,7 +4,7 @@ using System.Net.Http;
 using System.Xml;
 using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
-using CodeSnippetsReflection.LanguageGenerators;
+using CodeSnippetsReflection.OData.LanguageGenerators;
 using System.Collections.Generic;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;

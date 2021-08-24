@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using CodeSnippetsReflection.StringExtensions;
 
 [assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
-namespace CodeSnippetsReflection.LanguageGenerators
+namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public static class JavaScriptGenerator
     {
@@ -149,7 +149,7 @@ namespace CodeSnippetsReflection.LanguageGenerators
         }
     }
 
-    internal class JavascriptExpressions : LanguageExpressions
+    public class JavascriptExpressions : LanguageExpressions
     {
         public override string FilterExpression => "\r\n\t.filter('{0}')"; 
         public override string SearchExpression => "\r\n\t.search('{0}')"; 
