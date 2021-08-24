@@ -28,6 +28,8 @@ using TelemetrySanitizerService;
 using OpenAPIService.Interfaces;
 using OpenAPIService;
 using KnownIssuesService.Interfaces;
+using CodeSnippetsReflection.OData;
+using CodeSnippetsReflection.OpenAPI;
 
 namespace GraphWebApi
 {
@@ -85,7 +87,8 @@ namespace GraphWebApi
             #endregion
 
             services.AddMemoryCache();
-            services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
+            services.AddSingleton<IODataSnippetsGenerator, ODataSnippetsGenerator>();
+            services.AddSingleton<IOpenAPISnippetsGenerator, OpenAPISnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();

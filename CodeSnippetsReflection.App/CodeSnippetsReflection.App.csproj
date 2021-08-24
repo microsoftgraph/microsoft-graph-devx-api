@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CodeSnippetsReflection.OData\CodeSnippetsReflection.OData.csproj" />
+    <ProjectReference Include="..\CodeSnippetsReflection.OpenAPI\CodeSnippetsReflection.OpenAPI.csproj" />
   </ItemGroup>
 
 </Project>

@@ -67,6 +67,7 @@
     <ProjectReference Include="..\OpenAPIService\OpenAPIService.csproj" />
     <ProjectReference Include="..\TelemetryService\TelemetrySanitizerService.csproj" />
     <ProjectReference Include="..\UtilityService\UtilityService.csproj" />
+    <ProjectReference Include="..\CodeSnippetsReflection.OpenAPI\CodeSnippetsReflection.OpenAPI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

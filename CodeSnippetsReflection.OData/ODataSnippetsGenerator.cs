@@ -10,16 +10,16 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
 using UtilityService;
 
-namespace CodeSnippetsReflection
+namespace CodeSnippetsReflection.OData
 {
     /// <summary>
     /// Snippets Generator Class with all the logic for code generation
     /// </summary>
-    public class SnippetsGenerator : ISnippetsGenerator
+    public class ODataSnippetsGenerator : IODataSnippetsGenerator
     {
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
-                    new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(SnippetsGenerator) } };
+                    new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(ODataSnippetsGenerator) } };
         public static HashSet<string> SupportedLanguages = new HashSet<string>
         {
             "c#",
@@ -54,7 +54,7 @@ namespace CodeSnippetsReflection
         /// </summary>
         /// <param name="isCommandLine">Determines whether we are running the snippet generation in command line</param>
         /// <param name="customMetadataPath">Full file path to the metadata</param>
-        public SnippetsGenerator(bool isCommandLine = false, string customMetadataPath = null, TelemetryClient telemetryClient = null)
+        public ODataSnippetsGenerator(bool isCommandLine = false, string customMetadataPath = null, TelemetryClient telemetryClient = null)
         {
             _telemetryClient = telemetryClient;
             IsCommandLine = isCommandLine;
