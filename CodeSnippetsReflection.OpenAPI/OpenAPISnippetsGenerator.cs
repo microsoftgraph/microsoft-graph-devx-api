@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using CodeSnippetsReflection;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using UtilityService;
@@ -45,6 +46,9 @@ namespace CodeSnippetsReflection.OpenAPI
 		}
 		public string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language)
 		{
+			_telemetryClient?.TrackTrace($"Generating code snippet for '{language}' from the request payload",
+                                         SeverityLevel.Information,
+                                         _snippetsTraceProperties);
 			throw new NotImplementedException();
 		}
 	}

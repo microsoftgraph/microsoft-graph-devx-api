@@ -9,26 +9,12 @@ using Microsoft.OData.UriParser;
 
 namespace CodeSnippetsReflection
 {
-    public class SnippetModel
+    public class SnippetModel : SnippetBaseModel<ODataPathSegment>
     {
         private readonly IEdmModel _edmModel;
-        public HttpMethod Method { get; set; }
         public ODataUri ODataUri { get; set; }
         public ODataUriParser ODataUriParser { get; set; }
-        public string Path { get; set; }
-        public string QueryString { get; set; }
-        public string ApiVersion { get; set; }
-        public string ResponseVariableName { get; set; }
-        public string SearchExpression { get; set; }
         public List<ODataPathSegment> Segments { get; set; }
-        public List<string> SelectFieldList { get; set; }
-        public string ExpandFieldExpression { get; set; }
-        public List<string> FilterFieldList { get; set; }
-        public List<string> OrderByFieldList { get; set; }
-        public IEnumerable<KeyValuePair<string, IEnumerable<string>>> RequestHeaders { get; set; }
-        public IEnumerable<KeyValuePair<string, string>> CustomQueryOptions { get; set; }
-        public string RequestBody { get; set; }
-        public string ContentType { get; set; }
 
         /// <summary>
         /// Model for the information needed to create a snippet from the request message
@@ -36,29 +22,15 @@ namespace CodeSnippetsReflection
         /// <param name="requestPayload">The request message to generate a snippet from</param>
         /// <param name="serviceRootUrl">The service root URI</param>
         /// <param name="edmModel">The EDM model used for this request</param>
-        public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, IEdmModel edmModel)
+        public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, IEdmModel edmModel):base(requestPayload, serviceRootUrl)
         {
             this._edmModel = edmModel;
-            this.Method = requestPayload.Method;
             this.ODataUriParser = GetODataUriParser(new Uri(serviceRootUrl), requestPayload.RequestUri);
             this.ODataUri = ODataUriParser.ParseUri();
             this.CustomQueryOptions = ODataUriParser.CustomQueryOptions;
             this.Segments = ODataUri.Path.ToList();
-            this.Path = Uri.UnescapeDataString(requestPayload.RequestUri.AbsolutePath.Substring(5));
             this.QueryString = requestPayload.RequestUri.Query;
-            this.ApiVersion = serviceRootUrl.Substring(serviceRootUrl.Length - 4);
-            this.SelectFieldList = new List<string>();
-            this.FilterFieldList = new List<string>();
-            this.OrderByFieldList = new List<string>();
-            this.RequestHeaders = requestPayload.Headers;
-
-            // replace the response variable name with generic response when URL has placeholder
-            // e.g. {size} in GET graph.microsoft.com/v1.0/me/drive/items/{item-id}/thumbnails/{thumb-id}/{size}
-            var responseVariableName = GetResponseVariableName(ODataUri.Path.LastOrDefault());
-            this.ResponseVariableName = responseVariableName.StartsWith("{") ? "response" : responseVariableName;
-
-            PopulateQueryFieldLists(QueryString);
-            GetRequestBody(requestPayload);
+            InitializeModel(requestPayload);
         }
 
         /// <summary>
@@ -66,7 +38,7 @@ namespace CodeSnippetsReflection
         /// </summary>
         /// <param name="oDataPathSegment">The path segment in question</param>
         /// <returns> string to be used as return variable name in this call.</returns>
-        private string GetResponseVariableName(ODataPathSegment oDataPathSegment)
+        protected override string GetResponseVariableName(ODataPathSegment oDataPathSegment)
         {
             var edmType = oDataPathSegment.EdmType;
 
@@ -104,13 +76,21 @@ namespace CodeSnippetsReflection
 
             return parser;
         }
+        protected override string GetSearchExpression() {
+            if (ODataUri.Search == null)
+                return string.Empty;
+            var searchTerm = (SearchTermNode) ODataUri.Search.Expression;
+            return searchTerm.Text;
+        }
 
         /// <summary>
         /// This function populates the Select and Expand field lists in the class from reading the data from the
         /// Odata URI. <see cref="SelectExpandClause"/>
         /// </summary>
-        private void PopulateSelectAndExpandQueryFields(string queryString)
+        protected override void PopulateSelectAndExpandQueryFields(string queryString)
         {
+            if(ODataUri.SelectAndExpand == null) return;
+
             var pathSelectedItems = ODataUri.SelectAndExpand.SelectedItems;
             foreach (var item in pathSelectedItems)
             {
@@ -135,61 +115,9 @@ namespace CodeSnippetsReflection
                 }
             }
         }
-
-        /// <summary>
-        /// This function splits the query part of the url to individual query section(filter, search etc)
-        /// and then populates the relevant field list lists in the class data structures in th
-        /// </summary>
-        /// <param name="queryString">Query section of url as a string</param>
-        private void PopulateQueryFieldLists(string queryString)
-        {
-            var queryStrings = System.Web.HttpUtility.ParseQueryString(queryString);
-            foreach (var key in queryStrings.AllKeys)
-            {
-                // in beta, $ is optional for OData queries.
-                // https://docs.microsoft.com/en-us/graph/query-parameters
-                var optionalKey = key.StartsWith("$") ? key[1..] : key;
-                if (optionalKey.ToLowerInvariant() == "filter")
-                {
-                    FilterFieldList = new List<string> { queryStrings[key] };
-                }
-                else if (optionalKey.ToLowerInvariant() == "orderby")
-                {
-                    OrderByFieldList = new List<string> { queryStrings[key] };
-                }
-            }
-
-            if (ODataUri.Search != null)
-            {
-                var searchTerm = (SearchTermNode) ODataUri.Search.Expression;
-                SearchExpression = searchTerm.Text;
-            }
-
-            if (ODataUri.SelectAndExpand != null)
-            {
-                PopulateSelectAndExpandQueryFields(queryString);
-            }
-
-        }
-
-        /// <summary>
-        /// Reads the request body from the request payload to save it as a string for later processing
-        /// </summary>
-        /// <param name="requestPayload"><see cref="HttpRequestMessage"/> to read the body from</param>
-        private void GetRequestBody(HttpRequestMessage requestPayload)
-        {
-            //do not try to read in the content if there isn't any
-            if (null != requestPayload.Content)
-            {
-                this.RequestBody = requestPayload.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                if(null != requestPayload.Content.Headers.ContentType)
-                    this.ContentType = requestPayload.Content.Headers.ContentType.MediaType;
-            }
-            else
-            {
-                this.RequestBody = string.Empty;
-            }
-        }
-    }
-
+		protected override ODataPathSegment GetLastPathSegmentFromPath(string path)
+		{
+			return ODataUri.Path.LastOrDefault();
+		}
+	}
 }
