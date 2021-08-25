@@ -29,7 +29,6 @@ namespace CodeSnippetsReflection
             this.ODataUri = ODataUriParser.ParseUri();
             this.CustomQueryOptions = ODataUriParser.CustomQueryOptions;
             this.Segments = ODataUri.Path.ToList();
-            this.QueryString = requestPayload.RequestUri.Query;
             InitializeModel(requestPayload);
         }
 
@@ -76,7 +75,7 @@ namespace CodeSnippetsReflection
 
             return parser;
         }
-        protected override string GetSearchExpression() {
+        protected override string GetSearchExpression(string queryString) {
             if (ODataUri.Search == null)
                 return string.Empty;
             var searchTerm = (SearchTermNode) ODataUri.Search.Expression;
@@ -115,7 +114,7 @@ namespace CodeSnippetsReflection
                 }
             }
         }
-		protected override ODataPathSegment GetLastPathSegmentFromPath(string path)
+		protected override ODataPathSegment GetLastPathSegment()
 		{
 			return ODataUri.Path.LastOrDefault();
 		}

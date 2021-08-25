@@ -308,13 +308,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         /// <returns>Modified string</returns>
         public static string LowerCaseFirstLetter(string s)
         {
-            if (string.IsNullOrEmpty(s))
-            {
-                return string.Empty;
-            }
-            var a = s.ToCharArray();
-            a[0] = char.ToLower(a[0]);
-            return new string(a);
+            return s.ToFirstCharacterLowerCase();
         }
         /// <summary>
         /// This is a language agnostic function that looks at a operationSegment and returns a list of parameters with their names and values needed by the operation.

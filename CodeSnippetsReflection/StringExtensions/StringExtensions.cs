@@ -18,5 +18,9 @@
                 .Replace("\"", doubleQuoteEscapeSequence)
                 .Replace("'", singleQuoteEscapeSequence);
         }
+        public static string ToFirstCharacterLowerCase(this string stringValue) {
+            if(string.IsNullOrEmpty(stringValue)) return stringValue;
+            return char.ToLower(stringValue[0]) + stringValue[1..];
+        }
     }
 }
