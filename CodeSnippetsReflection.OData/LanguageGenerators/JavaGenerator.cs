@@ -9,7 +9,7 @@ using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-[assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
+[assembly: InternalsVisibleTo("CodeSnippetsReflection.OData.Test")]
 namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public class JavaGenerator
@@ -716,7 +716,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         }
     }
 
-    public class JavaExpressions : LanguageExpressions
+    internal class JavaExpressions : LanguageExpressions
     {
         public override string ExpandExpression => "\r\n\t.expand(\"{0}\")";
         public override string SelectExpression => "\r\n\t.select(\"{0}\")";
