@@ -10,7 +10,7 @@ using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-[assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
+[assembly: InternalsVisibleTo("CodeSnippetsReflection.OData.Test")]
 namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public class ObjectiveCGenerator
@@ -343,7 +343,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             return stringBuilder.ToString();
         }
     }
-    public class ObjectiveCExpressions : LanguageExpressions
+    internal class ObjectiveCExpressions : LanguageExpressions
     {
         public override string FilterExpression => string.Empty;
         public override string SearchExpression => string.Empty;
