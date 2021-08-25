@@ -51,6 +51,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeSnippetsReflection.Open
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeSnippetsReflection.OpenAPI.Test", "CodeSnippetsReflection.OpenAPI.Test\CodeSnippetsReflection.OpenAPI.Test.csproj", "{9694F3E6-0248-44F1-8343-CD8016383E4A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeSnippetsReflection", "CodeSnippetsReflection\CodeSnippetsReflection.csproj", "{791634FF-813B-4AAF-9421-E207828DB205}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +155,10 @@ Global
 		{9694F3E6-0248-44F1-8343-CD8016383E4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9694F3E6-0248-44F1-8343-CD8016383E4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9694F3E6-0248-44F1-8343-CD8016383E4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{791634FF-813B-4AAF-9421-E207828DB205}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{791634FF-813B-4AAF-9421-E207828DB205}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{791634FF-813B-4AAF-9421-E207828DB205}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{791634FF-813B-4AAF-9421-E207828DB205}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
