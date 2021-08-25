@@ -29,6 +29,9 @@ namespace CodeSnippetsReflection
         /// <param name="edmModel">The EDM model used for this request</param>
         public SnippetBaseModel(HttpRequestMessage requestPayload, string serviceRootUrl)
         {
+            if(requestPayload == null || requestPayload.RequestUri == null) throw new ArgumentNullException(nameof(requestPayload));
+			if(string.IsNullOrWhiteSpace(serviceRootUrl)) throw new ArgumentNullException(nameof(serviceRootUrl));
+
             this.Method = requestPayload.Method;
             this.Path = Uri.UnescapeDataString(requestPayload.RequestUri.AbsolutePath.Substring(5));
             this.QueryString = requestPayload.RequestUri.Query;
@@ -45,14 +48,14 @@ namespace CodeSnippetsReflection
         protected void InitializeModel(HttpRequestMessage requestPayload) {
             // replace the response variable name with generic response when URL has placeholder
             // e.g. {size} in GET graph.microsoft.com/v1.0/me/drive/items/{item-id}/thumbnails/{thumb-id}/{size}
-            var lastPathSegment = GetLastPathSegmentFromPath(this.Path);
+            var lastPathSegment = GetLastPathSegment();
             var responseVariableName = GetResponseVariableName(lastPathSegment);
             this.ResponseVariableName = responseVariableName.StartsWith("{") ? "response" : responseVariableName;
 
             PopulateQueryFieldLists(QueryString);
             GetRequestBody(requestPayload);
         }
-        protected abstract PathSegment GetLastPathSegmentFromPath(string path);
+        protected abstract PathSegment GetLastPathSegment();
         /// <summary>
         ///Get a string showing the name variable to be manipulated by the segment
         /// </summary>
@@ -86,11 +89,11 @@ namespace CodeSnippetsReflection
                 }
             }
 
-            SearchExpression = GetSearchExpression();
+            SearchExpression = GetSearchExpression(queryString);
 
             PopulateSelectAndExpandQueryFields(queryString);
         }
-        protected abstract string GetSearchExpression();
+        protected abstract string GetSearchExpression(string queryString);
 
         /// <summary>
         /// Reads the request body from the request payload to save it as a string for later processing
