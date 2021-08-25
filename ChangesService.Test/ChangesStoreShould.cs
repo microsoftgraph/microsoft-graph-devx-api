@@ -77,7 +77,7 @@ namespace ChangesService.Test
 
             // fr-FR
             Assert.Equal(495, frenchChangeLogRecords.ChangeLogs.Count());
-            Assert.Equal("Conformit�", frenchChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
+            Assert.Equal("Conformité", frenchChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
         }
 
         [Fact]
