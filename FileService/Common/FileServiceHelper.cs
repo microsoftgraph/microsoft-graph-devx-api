@@ -4,6 +4,7 @@
 
 using System;
 using System.Globalization;
+using System.IO;
 using FileService.Extensions;
 
 namespace FileService.Common
@@ -27,10 +28,10 @@ namespace FileService.Common
             string directoryName = null;
             string fileName = null;
 
-            if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) > 0)
+            if (filePathSource.IndexOfAny(new char[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar}) > 0)
             {
                 // File path source format --> directoryName\\fileName
-                string[] storageValues = filePathSource.Split(FileServiceConstants.DirectorySeparator);
+                string[] storageValues = filePathSource.Split(new char[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
                 directoryName = storageValues[0];
                 fileName = storageValues[1];
             }
@@ -65,7 +66,7 @@ namespace FileService.Common
             }
 
             // File path source format --> directoryName\\fileName
-            return $"{containerName}{FileServiceConstants.DirectorySeparator}{defaultBlobName}";
+            return Path.Combine(containerName, defaultBlobName);
         }
 
         /// <summary>
