@@ -22,5 +22,9 @@
             if(string.IsNullOrEmpty(stringValue)) return stringValue;
             return char.ToLower(stringValue[0]) + stringValue[1..];
         }
+        public static string ToFirstCharacterUpperCase(this string stringValue) {
+            if(string.IsNullOrEmpty(stringValue)) return stringValue;
+            return char.ToUpper(stringValue[0]) + stringValue[1..];
+        }
     }
 }
