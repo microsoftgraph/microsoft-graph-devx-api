@@ -10,34 +10,34 @@ namespace CodeSnippetsReflection.OpenAPI
 {
 	public class SnippetModel : SnippetBaseModel<OpenApiUrlTreeNode>
 	{
-		public OpenApiUrlTreeNode CurrentNode { get; set; }
-		public OpenApiUrlTreeNode RootNode { get; set; }
+		public OpenApiUrlTreeNode EndPathNode { get  => PathNodes.LastOrDefault(); }
+		public OpenApiUrlTreeNode RootPathNode { get => PathNodes.FirstOrDefault(); }
+		public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
 		public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiUrlTreeNode treeNode) : base(requestPayload, serviceRootUrl)
 		{
 			if(treeNode == null) throw new ArgumentNullException(nameof(treeNode));
-			RootNode = treeNode;
 
 			var splatPath = requestPayload.RequestUri
 										.AbsolutePath
 										.TrimStart(pathSeparator)
 										.Split(pathSeparator)
 										.Skip(1); //skipping the version
-			CurrentNode = GetTreeNode(treeNode, splatPath);
+			LoadPathNodes(treeNode, splatPath);
 			InitializeModel(requestPayload);
 		}
 		private static char pathSeparator = '/';
-		private static OpenApiUrlTreeNode GetTreeNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments) {
+		private void LoadPathNodes(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments) {
 			if(!pathSegments.Any())
-				return node;
-			var found = node.Children.TryGetValue(pathSegments.First(), out var childNode);
-			if(found)
-				return GetTreeNode(childNode, pathSegments.Skip(1));
-			else
+				return;
+			if(node.Children.TryGetValue(pathSegments.First(), out var childNode)) {
+				PathNodes.Add(childNode);
+				LoadPathNodes(childNode, pathSegments.Skip(1));
+			} else
 				throw new EntryPointNotFoundException($"Path segment '{pathSegments.First()}' not found in path");
 		}
 		protected override OpenApiUrlTreeNode GetLastPathSegment()
 		{
-			return CurrentNode;
+			return EndPathNode;
 		}
 		protected override string GetResponseVariableName(OpenApiUrlTreeNode pathSegment)
 		{
