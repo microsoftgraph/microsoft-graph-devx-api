@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using CodeSnippetsReflection.StringExtensions;
+using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
@@ -16,28 +17,71 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 		private const string httpCoreVarName = "httpCore";
 		public string GenerateCodeSnippet(SnippetModel snippetModel)
 		{
+			var indentManager = new IndentManager();
 			var snippetBuilder = new StringBuilder(
 									"//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
 									$"var {clientVarName} = new {clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
-			var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel);
+			var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
 			snippetBuilder.Append(requestPayload);
 			snippetBuilder.AppendLine($"var result = await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({payloadVarName});");
 			return snippetBuilder.ToString();
 		}
 		private const string requestBodyVarName = "requestBody";
-		private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel) {
+		private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
 			if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
 				return (default, default);
+			if(indentManager == null) throw new ArgumentNullException(nameof(indentManager));
 			
 			using var ms = new MemoryStream(UTF8Encoding.UTF8.GetBytes(snippetModel.RequestBody));
 			var parsedBody = JsonDocument.Parse(ms);
 			var schema = snippetModel.RequestSchema;
 			var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-			var payloadSB = new StringBuilder($"var {requestBodyVarName} = new {className} {{");
-
+			var payloadSB = new StringBuilder($"var {requestBodyVarName} = new {className} {{{Environment.NewLine}");
+			WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
 			payloadSB.AppendLine("};");
-
 			return (payloadSB.ToString(), requestBodyVarName);
+		}
+		private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager) {
+			indentManager.Indent();
+			foreach(var property in value.EnumerateObject()) {
+				var propertyName = property.Name.ToFirstCharacterUpperCase();
+				switch (property.Value.ValueKind) {
+					case JsonValueKind.String:
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{propertyName} = \"{property.Value.GetString()}\",");
+						break;
+					case JsonValueKind.Number:
+						var numberPropSchema = schema.GetPropertySchema(property.Name);
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{propertyName} = {GetNumberLiteral(numberPropSchema, property.Value)},");
+						break;
+					case JsonValueKind.False:
+					case JsonValueKind.True:
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{propertyName} = {property.Value.GetBoolean().ToString().ToLowerInvariant()},");
+						break;
+					case JsonValueKind.Null:
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{propertyName} = null,");
+						break;
+					case JsonValueKind.Object:
+						var propSchema = schema.GetPropertySchema(property.Name);
+						if(propSchema != null) {
+							payloadSB.AppendLine($"{indentManager.GetIndent()}{propertyName} = new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()} {{");
+							WriteJsonObjectValue(payloadSB, property.Value, propSchema, indentManager);
+							payloadSB.AppendLine($"{indentManager.GetIndent()}}},");
+						}
+						break;
+					default://TODO Array
+					 	throw new NotImplementedException($"Unsupported JsonValueKind: {property.Value.ValueKind}");
+				};
+			}
+			indentManager.Unindent();
+		}
+		private static string GetNumberLiteral(OpenApiSchema schema, JsonElement value) {
+			if(schema == default) return default;
+			return schema.Type switch {
+				"number" when schema.Format.Equals("double") => $"{value.GetDouble()}d",
+				"number" when schema.Format.Equals("float") => $"{value.GetDecimal()}f",
+				"integer" when schema.Format.Equals("int64") => $"{value.GetInt64()}L",
+				_ => value.GetInt32().ToString(),
+			};
 		}
 		private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes) {
 			if(!(nodes?.Any() ?? false)) return string.Empty;

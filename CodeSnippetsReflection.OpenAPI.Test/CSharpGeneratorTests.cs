@@ -60,6 +60,18 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
 			var result = _generator.GenerateCodeSnippet(snippetModel);
 			Assert.Contains("new User", result);
+			Assert.Contains("AccountEnabled = true,", result);
+			Assert.Contains("PasswordProfile = new PasswordProfile", result);
+			Assert.Contains("DisplayName = \"displayName-value\"", result);
 		}
+
+		//TODO test for number types
+		//TODO test for arrays
+		//TODO test for functions (delta & co)
+		//TODO test for PUT/PATCH/DELETE
+		//TODO test for query string parameters (select, expand)
+		//TODO test for binary data
+		//TODO test for request headers
+		//TODO test for DateTimeOffset
 	}
 }
