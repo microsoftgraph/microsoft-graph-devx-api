@@ -28,6 +28,7 @@ using TelemetrySanitizerService;
 using OpenAPIService.Interfaces;
 using OpenAPIService;
 using KnownIssuesService.Interfaces;
+using GraphWebApi.Middleware;
 
 namespace GraphWebApi
 {
@@ -126,6 +127,7 @@ namespace GraphWebApi
             {
                 app.UseHsts();
             }
+            app.UseGlobalExceptionMiddleware();
             app.UseStaticFiles(new StaticFileOptions
             {
                 DefaultContentType = "text/plain",
