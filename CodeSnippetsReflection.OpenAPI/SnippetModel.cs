@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Web;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
 
@@ -29,11 +30,22 @@ namespace CodeSnippetsReflection.OpenAPI
 		private void LoadPathNodes(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments) {
 			if(!pathSegments.Any())
 				return;
-			if(node.Children.TryGetValue(pathSegments.First(), out var childNode)) {
-				PathNodes.Add(childNode);
-				LoadPathNodes(childNode, pathSegments.Skip(1));
-			} else
-				throw new EntryPointNotFoundException($"Path segment '{pathSegments.First()}' not found in path");
+			var pathSegment = HttpUtility.UrlDecode(pathSegments.First());
+			if(node.Children.TryGetValue(pathSegment, out var childNode)) {
+				LoadNextNode(childNode, pathSegments);
+				return;
+			} else if(pathSegment.IsCollectionIndex()) {
+				var collectionIndexNode = node.Children.FirstOrDefault(x => x.Key.IsCollectionIndex());
+				if(collectionIndexNode.Value == null) {
+					LoadNextNode(collectionIndexNode.Value, pathSegments);
+					return;
+				}
+			}
+			throw new EntryPointNotFoundException($"Path segment '{pathSegment}' not found in path");
+		}
+		private void LoadNextNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments) {
+			PathNodes.Add(node);
+			LoadPathNodes(node, pathSegments.Skip(1));
 		}
 		protected override OpenApiUrlTreeNode GetLastPathSegment()
 		{

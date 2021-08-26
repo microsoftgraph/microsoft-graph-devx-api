@@ -20,8 +20,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 		}
 		private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes) {
 			if(!(nodes?.Any() ?? false)) return string.Empty;
-			return nodes.Select(x => x.Segment.ToFirstCharacterUpperCase())
-						.Aggregate((x, y) => $"{x}.{y}");
+			return nodes.Select(x => {
+										if(x.Segment.IsCollectionIndex())
+											return x.Segment.Replace("{", "[\"").Replace("}", "\"]");
+										return x.Segment.ToFirstCharacterUpperCase();
+									})
+						.Aggregate((x, y) => {
+							var dot = y.StartsWith("[") ? 
+											string.Empty : 
+											".";
+							return $"{x}{dot}{y}";
+						});
 		}
 		private static string GetMethodName(HttpMethod method) {
 			// can't use pattern matching with switch as it's not an enum but a bunch of static values

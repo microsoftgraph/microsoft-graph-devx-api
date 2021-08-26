@@ -24,6 +24,13 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.Contains(".Me.Messages", result);
 		}
 		[Fact]
+		public void GeneratesTheCorrectFluentAPIPathForIndexedCollections() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains(".Me.Messages[\"message-id\"]", result);
+		}
+		[Fact]
 		public void GeneratesTheSnippetHeader() {
 			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
 			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
