@@ -17,7 +17,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test {
 				_v1TreeNode = new Lazy<OpenApiUrlTreeNode>(() => GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml").GetAwaiter().GetResult());
 			}
 		}
-		private static async Task<OpenApiUrlTreeNode> GetTreeNode(string url) {
+		internal static async Task<OpenApiUrlTreeNode> GetTreeNode(string url) {
 			using var httpClient = new HttpClient();
 			using var response =  await httpClient.GetAsync(url);
 			using var stream = await response.Content.ReadAsStreamAsync();

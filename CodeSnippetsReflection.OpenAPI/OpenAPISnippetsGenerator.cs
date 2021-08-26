@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using CodeSnippetsReflection;
+using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.OpenApi.Models;
@@ -67,8 +68,16 @@ namespace CodeSnippetsReflection.OpenAPI
                                          _snippetsTraceProperties);
 			var (openApiTreeNode, serviceRootUri) = GetModelAndServiceUriTuple(requestPayload.RequestUri);
 			var snippetModel = new SnippetModel(requestPayload, serviceRootUri.AbsoluteUri, openApiTreeNode);
-			throw new NotImplementedException();
+
+			if(_languageGenerators.TryGetValue(language.ToLowerInvariant(), out var generator) &&
+				generator is ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> languageGenerator)
+				return languageGenerator.GenerateCodeSnippet(snippetModel);
+			else
+				throw new InvalidOperationException($"Language '{language}' is not supported");
 		}
+		private static readonly Dictionary<string, ILanguageGenerator<SnippetBaseModel<object>, object>> _languageGenerators = new () {
+			{ "c#", new CSharpGenerator() as ILanguageGenerator<SnippetBaseModel<object>, object> },
+		};
 		/// <summary>
         /// Helper function to select the appropriate EDM model and service root url depending on the request made
         /// </summary>
