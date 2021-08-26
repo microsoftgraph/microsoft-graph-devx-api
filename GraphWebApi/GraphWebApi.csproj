@@ -70,9 +70,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="SampleQueriesPolicies\CategoryPolicies.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Update="wwwroot\swagger\favicon-16x16.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
