@@ -15,7 +15,6 @@ namespace GraphWebApi.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly TelemetryClient _telemetryClient;
-        private readonly Dictionary<string, string> _traceProperties;
 
         public ExceptionMiddleware(RequestDelegate next, TelemetryClient telemetryClient)
         {
@@ -37,7 +36,7 @@ namespace GraphWebApi.Middleware
             }
             catch (Exception exception)
             {
-                _telemetryClient?.TrackException(exception, _traceProperties);
+                _telemetryClient?.TrackException(exception);
                 await HandleGlobalExceptionAsync(httpContext, exception);
             }
         }
@@ -56,8 +55,7 @@ namespace GraphWebApi.Middleware
                 ArgumentNullException => StatusCodes.Status400BadRequest,
                 InvalidOperationException => StatusCodes.Status400BadRequest,
                 ArgumentException => StatusCodes.Status404NotFound,
-                Exception => StatusCodes.Status500InternalServerError,
-                _ => StatusCodes.Status500InternalServerError,
+                Exception => StatusCodes.Status500InternalServerError
             };
 
             return context?.Response.WriteAsync(new GlobalErrorDetails()
