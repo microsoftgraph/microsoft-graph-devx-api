@@ -42,15 +42,26 @@ namespace CodeSnippetsReflection.OpenAPI.Test {
                                           "\"userPrincipalName\": \"upn-value@tenant-value.onmicrosoft.com\",\r\n " +
                                           " \"passwordProfile\" : {\r\n    \"forceChangePasswordNextSignIn\": true,\r\n    \"password\": \"password-value\"\r\n  }\r\n}";//nested passwordProfile Object
 
-            var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users")
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users")
             {
                 Content = new StringContent(userJsonObject)
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
-			Assert.NotNull(snippetModel.CurrentNode);
-			Assert.NotNull(snippetModel.RootNode);
-			Assert.NotEqual(snippetModel.CurrentNode, snippetModel.RootNode);
-			Assert.Equal("users", snippetModel.CurrentNode.Segment);
+			Assert.NotNull(snippetModel.EndPathNode);
+			Assert.NotNull(snippetModel.RootPathNode);
+			Assert.Equal(snippetModel.EndPathNode, snippetModel.RootPathNode);
+			Assert.Equal("users", snippetModel.EndPathNode.Segment);
+			Assert.InRange(snippetModel.PathNodes.Count, 1, 1);
+		}
+		[Fact]
+		public void FindsTheSubPathItem() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			Assert.NotNull(snippetModel.EndPathNode);
+			Assert.NotNull(snippetModel.RootPathNode);
+			Assert.NotEqual(snippetModel.EndPathNode, snippetModel.RootPathNode);
+			Assert.Equal("messages", snippetModel.EndPathNode.Segment);
+			Assert.InRange(snippetModel.PathNodes.Count, 2, 2);
 		}
 	}
 }
