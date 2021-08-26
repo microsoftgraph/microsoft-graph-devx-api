@@ -35,21 +35,6 @@ namespace GraphWebApi.Middleware
             {
                 await _next(httpContext);
             }
-            catch (ArgumentNullException argNullException)
-            {
-                _telemetryClient?.TrackException(argNullException, _traceProperties);
-                await HandleGlobalExceptionAsync(httpContext, argNullException);
-            }
-            catch (InvalidOperationException invalidOps)
-            {
-                _telemetryClient?.TrackException(invalidOps, _traceProperties);
-                await HandleGlobalExceptionAsync(httpContext, invalidOps);
-            }
-            catch (ArgumentException argException)
-            {
-                _telemetryClient?.TrackException(argException, _traceProperties);
-                await HandleGlobalExceptionAsync(httpContext, argException);
-            }
             catch (Exception exception)
             {
                 _telemetryClient?.TrackException(exception, _traceProperties);
