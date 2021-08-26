@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using GraphExplorerSamplesService.Models;
+using System.Linq;
 using GraphWebApi.Common;
 using GraphExplorerSamplesService.Interfaces;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -41,12 +42,7 @@ namespace GraphWebApi.Controllers
             try
             {
                 SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
-
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
-                {
-                    // List is empty, just return status code 204 - No Content
-                    return NoContent();
-                }
+                Validate(sampleQueriesList);
 
                 if (string.IsNullOrEmpty(search))
                 {
@@ -60,7 +56,7 @@ namespace GraphWebApi.Controllers
                                  (x.HumanName != null && x.HumanName.ToLower().Contains(search.ToLower())) ||
                                  (x.Tip != null && x.Tip.ToLower().Contains(search.ToLower())));
 
-                if (filteredSampleQueries.Count == 0)
+                if (!filteredSampleQueries.Any())
                 {
                     _telemetryClient?.TrackTrace($"Search value: '{search}' not found in: category, humanName or tip properties of sample queries",
                                                  SeverityLevel.Error,
@@ -93,25 +89,28 @@ namespace GraphWebApi.Controllers
             try
             {
                 SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
+                Validate(sampleQueriesList);
 
-                if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
+                if (!string.IsNullOrEmpty(id))
                 {
-                    return NoContent(); // list is empty, just return status code 204 - No Content
+                    // Search for sample query with the provided id
+                    var guidId = Guid.Parse(id);
+                    SampleQueryModel sampleQueryById = sampleQueriesList.SampleQueries.Find(x => x.Id == guidId);
+
+                    if (sampleQueryById == null)
+                    {
+                        _telemetryClient?.TrackTrace($"Sample query with id: {id} doesn't exist in the list of sample queries",
+                                                        SeverityLevel.Error,
+                                                        _samplesTraceProperties);
+                        return NotFound();
+                    }
+
+                    // Success; return the found sample query
+                    return Ok(sampleQueryById);
                 }
+                
+                return Ok(sampleQueriesList);
 
-                // Search for sample query with the provided id
-                SampleQueryModel sampleQueryById = sampleQueriesList.SampleQueries.Find(x => x.Id == Guid.Parse(id));
-
-                if (sampleQueryById == null)
-                {
-                    _telemetryClient?.TrackTrace($"Sample query with id: {id} doesn't exist in the list of sample queries",
-                                                 SeverityLevel.Error,
-                                                 _samplesTraceProperties);
-                    return NotFound();
-                }
-
-                // Success; return the found sample query
-                return Ok(sampleQueryById);
             }
             catch (Exception exception)
             {
@@ -150,6 +149,21 @@ namespace GraphWebApi.Controllers
                                          _samplesTraceProperties);
 
             return sampleQueriesList;
+        }
+
+        /// <summary>
+        /// Checks whether the SampleQueriesList is empty and returns status code 204.
+        /// </summary>
+        /// <param name="sampleQueriesList"></param>
+        /// <returns>Status code response.</returns>
+        private IActionResult Validate(SampleQueriesList sampleQueriesList)
+        {
+            if (sampleQueriesList == null || !sampleQueriesList.SampleQueries.Any())
+            {
+                return NoContent(); // list is empty, just return status code 204 - No Content
+            }
+
+            return Ok(sampleQueriesList);
         }
     }
 }
