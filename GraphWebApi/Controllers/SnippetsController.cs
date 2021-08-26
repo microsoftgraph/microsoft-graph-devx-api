@@ -1,4 +1,7 @@
-using System;
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http;
@@ -62,28 +65,19 @@ namespace GraphWebApi.Controllers
             using var streamContent = new StreamContent(Request.Body);
             streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
 
-            try
-            {
-                using HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false);
+            using HttpRequestMessage requestPayload = await streamContent.ReadAsHttpRequestMessageAsync().ConfigureAwait(false);
 
-                _telemetryClient?.TrackTrace($"Processing the request payload: '{requestPayload}'",
-                                             SeverityLevel.Information,
-                                             _snippetsTraceProperties);
+            _telemetryClient?.TrackTrace($"Processing the request payload: '{requestPayload}'",
+                                            SeverityLevel.Information,
+                                            _snippetsTraceProperties);
 
-                var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
+            var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
 
-                _telemetryClient?.TrackTrace("Finished generating a code snippet",
-                                             SeverityLevel.Information,
-                                             _snippetsTraceProperties);
+            _telemetryClient?.TrackTrace("Finished generating a code snippet",
+                                            SeverityLevel.Information,
+                                            _snippetsTraceProperties);
 
-                return new StringResult(response);
-            }
-            catch (Exception e)
-            {
-                _telemetryClient?.TrackException(e,
-                                        _snippetsTraceProperties);
-                return new BadRequestObjectResult(e.Message);
-            }
+            return new StringResult(response);
         }
     }
 
