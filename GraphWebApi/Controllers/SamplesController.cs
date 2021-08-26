@@ -4,7 +4,6 @@
 
 using System;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using GraphExplorerSamplesService.Models;
@@ -39,44 +38,35 @@ namespace GraphWebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSampleQueriesListAsync(string search, string org, string branchName)
         {
-            try
+            SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
+            Validate(sampleQueriesList);
+
+            if (string.IsNullOrEmpty(search))
             {
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
-                Validate(sampleQueriesList);
-
-                if (string.IsNullOrEmpty(search))
-                {
-                    // No query string value provided; return entire list of sample queries
-                    return Ok(sampleQueriesList);
-                }
-
-                // Search sample queries
-                List<SampleQueryModel> filteredSampleQueries = sampleQueriesList.SampleQueries.
-                    FindAll(x => (x.Category != null && x.Category.ToLower().Contains(search.ToLower())) ||
-                                 (x.HumanName != null && x.HumanName.ToLower().Contains(search.ToLower())) ||
-                                 (x.Tip != null && x.Tip.ToLower().Contains(search.ToLower())));
-
-                if (!filteredSampleQueries.Any())
-                {
-                    _telemetryClient?.TrackTrace($"Search value: '{search}' not found in: category, humanName or tip properties of sample queries",
-                                                 SeverityLevel.Error,
-                                                 _samplesTraceProperties);
-                    return NotFound();
-                }
-
-                _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(SamplesController));
-                _telemetryClient?.TrackTrace($"{filteredSampleQueries?.Count ?? 0} sample queries found from search value '{search}'",
-                                             SeverityLevel.Information,
-                                             _samplesTraceProperties);
-
-                return Ok(filteredSampleQueries);
+                // No query string value provided; return entire list of sample queries
+                return Ok(sampleQueriesList);
             }
-            catch (Exception exception)
+
+            // Search sample queries
+            List<SampleQueryModel> filteredSampleQueries = sampleQueriesList.SampleQueries.
+                FindAll(x => (x.Category != null && x.Category.ToLower().Contains(search.ToLower())) ||
+                             (x.HumanName != null && x.HumanName.ToLower().Contains(search.ToLower())) ||
+                             (x.Tip != null && x.Tip.ToLower().Contains(search.ToLower())));
+
+            if (!filteredSampleQueries.Any())
             {
-                _telemetryClient?.TrackException(exception,
-                                          _samplesTraceProperties);
-                return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+                _telemetryClient?.TrackTrace($"Search value: '{search}' not found in: category, humanName or tip properties of sample queries",
+                                                SeverityLevel.Error,
+                                                _samplesTraceProperties);
+                return NotFound();
             }
+
+            _samplesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(SamplesController));
+            _telemetryClient?.TrackTrace($"{filteredSampleQueries?.Count ?? 0} sample queries found from search value '{search}'",
+                                            SeverityLevel.Information,
+                                            _samplesTraceProperties);
+
+            return Ok(filteredSampleQueries);
         }
 
        // Gets a sample query from the list of sample queries by its id
@@ -86,38 +76,28 @@ namespace GraphWebApi.Controllers
        [HttpGet]
         public async Task<IActionResult> GetSampleQueryByIdAsync(string id, string org, string branchName)
         {
-            try
-            {
-                SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
-                Validate(sampleQueriesList);
+            SampleQueriesList sampleQueriesList = await FetchSampleQueriesListAsync(org, branchName);
+            Validate(sampleQueriesList);
 
-                if (!string.IsNullOrEmpty(id))
+            if (!string.IsNullOrEmpty(id))
+            {
+                // Search for sample query with the provided id
+                var guidId = Guid.Parse(id);
+                SampleQueryModel sampleQueryById = sampleQueriesList.SampleQueries.Find(x => x.Id == guidId);
+
+                if (sampleQueryById == null)
                 {
-                    // Search for sample query with the provided id
-                    var guidId = Guid.Parse(id);
-                    SampleQueryModel sampleQueryById = sampleQueriesList.SampleQueries.Find(x => x.Id == guidId);
-
-                    if (sampleQueryById == null)
-                    {
-                        _telemetryClient?.TrackTrace($"Sample query with id: {id} doesn't exist in the list of sample queries",
-                                                        SeverityLevel.Error,
-                                                        _samplesTraceProperties);
-                        return NotFound();
-                    }
-
-                    // Success; return the found sample query
-                    return Ok(sampleQueryById);
+                    _telemetryClient?.TrackTrace($"Sample query with id: {id} doesn't exist in the list of sample queries",
+                                                    SeverityLevel.Error,
+                                                    _samplesTraceProperties);
+                    return NotFound();
                 }
-                
-                return Ok(sampleQueriesList);
 
+                // Success; return the found sample query
+                return Ok(sampleQueryById);
             }
-            catch (Exception exception)
-            {
-                _telemetryClient?.TrackException(exception,
-                                          _samplesTraceProperties);
-                return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
-            }
+
+            return Ok(sampleQueriesList);
         }
 
         /// <summary>
