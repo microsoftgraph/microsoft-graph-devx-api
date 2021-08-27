@@ -28,6 +28,8 @@ namespace GraphWebApi.Controllers
 
         public SnippetsController(ISnippetsGenerator snippetGenerator, TelemetryClient telemetryClient)
         {
+            UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
+            UtilityFunctions.CheckArgumentNull(snippetGenerator, nameof(snippetGenerator));
             _telemetryClient = telemetryClient;
             _snippetGenerator = snippetGenerator;
         }

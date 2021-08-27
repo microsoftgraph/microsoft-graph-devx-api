@@ -34,6 +34,11 @@ namespace GraphWebApi.Controllers
         public ChangesController(IChangesStore changesStore, IConfiguration configuration, IChangesService changesService,
                                  IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient)
         {
+            UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
+            UtilityFunctions.CheckArgumentNull(changesStore, nameof(changesStore));
+            UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
+            UtilityFunctions.CheckArgumentNull(changesService, nameof(changesService));
+            UtilityFunctions.CheckArgumentNull(httpClientUtility, nameof(httpClientUtility));
             _telemetryClient = telemetryClient;
             _changesStore = changesStore;
             _configuration = configuration;

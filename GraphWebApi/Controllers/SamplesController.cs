@@ -27,6 +27,7 @@ namespace GraphWebApi.Controllers
         public SamplesController(ISamplesStore samplesStore, TelemetryClient telemetryClient)
         {
             UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
+            UtilityFunctions.CheckArgumentNull(samplesStore, nameof(samplesStore));
             _telemetryClient = telemetryClient;
             _samplesStore = samplesStore;
         }

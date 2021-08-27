@@ -34,6 +34,9 @@ namespace GraphWebApi.Controllers
 
         public OpenApiController(IConfiguration configuration, IOpenApiService openApiService, TelemetryClient telemetryClient)
         {
+            UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
+            UtilityFunctions.CheckArgumentNull(openApiService, nameof(openApiService));
+            UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
             _telemetryClient = telemetryClient;
             _configuration = configuration;
             _openApiService = openApiService;

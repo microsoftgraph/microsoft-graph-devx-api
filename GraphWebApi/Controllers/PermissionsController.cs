@@ -26,6 +26,8 @@ namespace GraphWebApi.Controllers
 
         public GraphExplorerPermissionsController(IPermissionsStore permissionsStore, TelemetryClient telemetryClient)
         {
+            UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
+            UtilityFunctions.CheckArgumentNull(permissionsStore, nameof(permissionsStore));
             _telemetryClient = telemetryClient;
             _permissionsStore = permissionsStore;
         }
