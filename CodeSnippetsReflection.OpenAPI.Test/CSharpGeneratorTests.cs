@@ -39,11 +39,41 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.Contains("var graphClient = new GraphClient(httpCore)", result);
 		}
 		[Fact]
-		public void GeneratesTheCorrectMethodCall() {
+		public void GeneratesTheGetMethodCall() {
 			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
 			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
 			var result = _generator.GenerateCodeSnippet(snippetModel);
 			Assert.Contains("GetAsync", result);
+			Assert.Contains("await", result);
+		}
+		[Fact]
+		public void GeneratesThePostMethodCall() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/messages");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("PostAsync", result);
+		}
+		[Fact]
+		public void GeneratesThePatchMethodCall() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/me/messages/{{message-id}}");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("PatchAsync", result);
+		}
+		[Fact]
+		public void GeneratesThePutMethodCall() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/applications/{{application-id}}/logo");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("PutAsync", result);
+		}
+		[Fact]
+		public void GeneratesTheDeleteMethodCall() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{message-id}}");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("DeleteAsync", result);
+			Assert.DoesNotContain("var result =", result);
 		}
 		[Fact]
 		public void WritesTheRequestPayload() {
@@ -68,7 +98,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 		//TODO test for number types
 		//TODO test for arrays
 		//TODO test for functions (delta & co)
-		//TODO test for PUT/PATCH/DELETE
 		//TODO test for query string parameters (select, expand)
 		//TODO test for binary data
 		//TODO test for request headers
