@@ -59,7 +59,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 				var propertyName = property.Name.ToFirstCharacterUpperCase();
 				switch (property.Value.ValueKind) {
 					case JsonValueKind.String:
-						payloadSB.AppendLine($"{indentManager.GetIndent()}{propertyName} = \"{property.Value.GetString()}\",");
+						var stringPropSchema = schema.GetPropertySchema(property.Name);
+						if(stringPropSchema?.Format.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
+							payloadSB.AppendLine($"{indentManager.GetIndent()}{propertyName} = Encoding.ASCII.GetBytes(\"{property.Value.GetString()}\"),");
+						else
+							payloadSB.AppendLine($"{indentManager.GetIndent()}{propertyName} = \"{property.Value.GetString()}\",");
 						break;
 					case JsonValueKind.Number:
 						var numberPropSchema = schema.GetPropertySchema(property.Name);

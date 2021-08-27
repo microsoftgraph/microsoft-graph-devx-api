@@ -129,6 +129,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			var result = _generator.GenerateCodeSnippet(snippetModel);
 			Assert.Contains("new MemoryStream", result);
 		}
+		[Fact]
+		public void GeneratesABase64UrlPayload() {
+			const string userJsonObject = "{\r\n  \"contentBytes\": \"wiubviuwbegviwubiu\"\r\n\r\n}";
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/chats/{{chat-id}}/messages/{{chatMessage-id}}/hostedContents") {
+				Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+			};
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("Encoding.ASCII.GetBytes", result);
+		}
 
 		//TODO test for arrays
 		//TODO test for query string parameters (select, expand)
