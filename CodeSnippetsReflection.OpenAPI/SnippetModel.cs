@@ -37,14 +37,19 @@ namespace CodeSnippetsReflection.OpenAPI
 				{
 					var contentType = ContentType ?? defaultContentType;
 					var operationType = GetOperationType(Method);
-					_responseSchema = EndPathNode.PathItems[OpenAPISnippetsGenerator.treeNodeLabel]
-										.Operations[operationType]
-										.Responses
-										.Select(x => x.Value.Content.TryGetValue(contentType, out var mediaType) ? mediaType.Schema : null)
-										.FirstOrDefault(x => x != null);
+					_responseSchema = GetOperation(operationType)
+										?.Responses
+										?.Where(x => !x.Key.Equals("204", StringComparison.OrdinalIgnoreCase) && //204 doesn't have content
+													!x.Key.Equals("default", StringComparison.OrdinalIgnoreCase))// default is the error response
+										?.Select(x => x.Value.Content.TryGetValue(contentType, out var mediaType) ? mediaType.Schema : null)
+										?.FirstOrDefault(x => x != null);
 				}
 				return _responseSchema;
 			}
+		}
+		private OpenApiOperation GetOperation(OperationType type) {
+			EndPathNode.PathItems[OpenAPISnippetsGenerator.treeNodeLabel].Operations.TryGetValue(type, out var operation);
+			return operation;
 		}
 		private OpenApiSchema _requestSchema;
 		public OpenApiSchema RequestSchema
@@ -55,11 +60,12 @@ namespace CodeSnippetsReflection.OpenAPI
 				{
 					var contentType = ContentType ?? defaultContentType;
 					var operationType = GetOperationType(Method);
-					_requestSchema = EndPathNode.PathItems[OpenAPISnippetsGenerator.treeNodeLabel]
-										.Operations[operationType]
-										.RequestBody
-										.Content
-										.TryGetValue(contentType, out var mediaType) ? mediaType.Schema : null;
+					var operation = GetOperation(operationType);
+					if(operation != default)
+						_requestSchema = operation
+											.RequestBody
+											.Content
+											.TryGetValue(contentType, out var mediaType) ? mediaType.Schema : null;
 				}
 				return _requestSchema;
 			}
