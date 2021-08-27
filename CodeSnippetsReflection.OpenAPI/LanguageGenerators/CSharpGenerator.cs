@@ -23,7 +23,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 									$"var {clientVarName} = new {clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
 			var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
 			snippetBuilder.Append(requestPayload);
-			snippetBuilder.AppendLine($"var result = await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({payloadVarName});");
+			var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "var result = ";
+			snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({payloadVarName});");
 			return snippetBuilder.ToString();
 		}
 		private const string requestBodyVarName = "requestBody";
