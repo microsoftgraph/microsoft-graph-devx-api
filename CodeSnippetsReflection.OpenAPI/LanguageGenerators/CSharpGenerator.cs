@@ -33,13 +33,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 				return (default, default);
 			if(indentManager == null) throw new ArgumentNullException(nameof(indentManager));
 			
-			using var ms = new MemoryStream(UTF8Encoding.UTF8.GetBytes(snippetModel.RequestBody));
-			var parsedBody = JsonDocument.Parse(ms);
-			var schema = snippetModel.RequestSchema;
-			var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-			var payloadSB = new StringBuilder($"var {requestBodyVarName} = new {className} {{{Environment.NewLine}");
-			WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
-			payloadSB.AppendLine("};");
+			var payloadSB = new StringBuilder();
+			switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant()) {
+				case "application/json":
+					using (var ms = new MemoryStream(UTF8Encoding.UTF8.GetBytes(snippetModel.RequestBody))) {
+						var parsedBody = JsonDocument.Parse(ms);
+						var schema = snippetModel.RequestSchema;
+						var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
+						payloadSB.AppendLine($"var {requestBodyVarName} = new {className} {{");
+						WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
+						payloadSB.AppendLine("};");
+					}
+				break;
+				case "application/octect-stream":
+					payloadSB.AppendLine($"using var {requestBodyVarName} = new MemoryStream(); //stream to upload");
+				break;
+				default:
+					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
+			}
 			return (payloadSB.ToString(), requestBodyVarName);
 		}
 		private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager) {

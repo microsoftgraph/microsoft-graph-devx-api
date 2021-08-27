@@ -119,10 +119,19 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			var result = _generator.GenerateCodeSnippet(snippetModel);
 			Assert.Contains("10d", result);
 		}
+		[Fact]
+		public void GeneratesABinaryPayload() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/applications/{{application-id}}/logo") {
+				Content = new ByteArrayContent(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 })
+			};
+			requestPayload.Content.Headers.ContentType = new ("application/octect-stream");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("new MemoryStream", result);
+		}
 
 		//TODO test for arrays
 		//TODO test for query string parameters (select, expand)
-		//TODO test for binary data
 		//TODO test for request headers
 		//TODO test for DateTimeOffset
 	}
