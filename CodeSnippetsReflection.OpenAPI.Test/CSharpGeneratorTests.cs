@@ -139,8 +139,17 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			var result = _generator.GenerateCodeSnippet(snippetModel);
 			Assert.Contains("Encoding.ASCII.GetBytes", result);
 		}
-
-		//TODO test for arrays
+		[Fact]
+		public void GeneratesAnArrayPayloadInAdditionalData() {
+			const string userJsonObject = "{\r\n  \"members@odata.bind\": [\r\n    \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\",\r\n    \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\",\r\n    \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"\r\n    ]\r\n}";
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/groups/{{group-id}}") {
+				Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+			};
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("new List", result);
+			Assert.Contains("AdditionalData", result);
+		}
 		//TODO test for query string parameters (select, expand)
 		//TODO test for request headers
 		//TODO test for DateTimeOffset
