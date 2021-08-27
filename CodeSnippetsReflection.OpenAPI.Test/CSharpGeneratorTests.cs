@@ -149,6 +149,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			var result = _generator.GenerateCodeSnippet(snippetModel);
 			Assert.Contains("new List", result);
 			Assert.Contains("AdditionalData", result);
+			Assert.Contains("members", result); // property name hasn't been changed
 		}
 		//TODO test for query string parameters (select, expand)
 		//TODO test for request headers
