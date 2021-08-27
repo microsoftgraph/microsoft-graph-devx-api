@@ -107,8 +107,19 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.Contains("10L", result);
 			Assert.DoesNotContain("microsoft.graph", result);
 		}
+		[Fact]
+		public void WritesADouble() {
+			const string userJsonObject = "{\r\n  \"minimumAttendeePercentage\": 10\r\n\r\n}";
 
-		//TODO test for number types
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/findMeetingTimes")
+			{
+				Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+			};
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("10d", result);
+		}
+
 		//TODO test for arrays
 		//TODO test for query string parameters (select, expand)
 		//TODO test for binary data

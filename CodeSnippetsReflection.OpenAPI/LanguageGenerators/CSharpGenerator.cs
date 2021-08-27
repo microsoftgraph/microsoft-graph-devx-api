@@ -78,9 +78,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 		private static string GetNumberLiteral(OpenApiSchema schema, JsonElement value) {
 			if(schema == default) return default;
 			return schema.Type switch {
-				"number" when schema.Format.Equals("double") => $"{value.GetDouble()}d",
-				"number" when schema.Format.Equals("float") => $"{value.GetDecimal()}f",
 				"integer" when schema.Format.Equals("int64") => $"{value.GetInt64()}L",
+				_ when schema.Format.Equals("float") => $"{value.GetDecimal()}f",
+				_ when schema.Format.Equals("double") => $"{value.GetDouble()}d", //in MS Graph float & double are any of number, string and enum
 				_ => value.GetInt32().ToString(),
 			};
 		}
