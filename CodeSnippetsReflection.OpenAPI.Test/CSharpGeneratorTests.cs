@@ -94,10 +94,22 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.Contains("PasswordProfile = new PasswordProfile", result);
 			Assert.Contains("DisplayName = \"displayName-value\"", result);
 		}
+		[Fact]
+		public void WritesALongAndFindsAnAction() {
+			const string userJsonObject = "{\r\n  \"chainId\": 10\r\n\r\n}";
+
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/teams/{{team-id}}/sendActivityNotification")
+			{
+				Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+			};
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("10L", result);
+			Assert.DoesNotContain("microsoft.graph", result);
+		}
 
 		//TODO test for number types
 		//TODO test for arrays
-		//TODO test for functions (delta & co)
 		//TODO test for query string parameters (select, expand)
 		//TODO test for binary data
 		//TODO test for request headers

@@ -89,6 +89,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			return nodes.Select(x => {
 										if(x.Segment.IsCollectionIndex())
 											return x.Segment.Replace("{", "[\"").Replace("}", "\"]");
+										else if (x.Segment.IsFunction())
+											return x.Segment.Split('.').Last().ToFirstCharacterUpperCase();
 										return x.Segment.ToFirstCharacterUpperCase();
 									})
 						.Aggregate((x, y) => {
