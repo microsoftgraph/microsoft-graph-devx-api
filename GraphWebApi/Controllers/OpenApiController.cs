@@ -28,7 +28,7 @@ namespace GraphWebApi.Controllers
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private static readonly Dictionary<string, string> _openApiTraceProperties =
+        private readonly static Dictionary<string, string> _openApiTraceProperties =
                         new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiController)} };
         private readonly TelemetryClient _telemetryClient;
         private readonly IOpenApiService _openApiService;
@@ -224,7 +224,7 @@ namespace GraphWebApi.Controllers
             }
         }
 
-        private async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
+        private static async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
                                 OpenApiDocument graphOpenApi, Stream stream, OpenApiStyle style)
 
         {
