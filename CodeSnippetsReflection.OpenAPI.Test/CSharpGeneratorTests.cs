@@ -151,7 +151,40 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.Contains("AdditionalData", result);
 			Assert.Contains("members", result); // property name hasn't been changed
 		}
-		//TODO test for query string parameters (select, expand)
+		[Fact]
+		public void GeneratesSelectQueryParameters() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$select=displayName,id");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("displayName", result);
+			Assert.Contains("new GetQueryParameters", result);
+		}
+		[Fact]
+		public void GeneratesCountBooleanQueryParameters() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$select=displayName,id");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("displayName", result);
+			Assert.DoesNotContain("\"true\"", result);
+			Assert.Contains("true", result);
+		}
+		[Fact]
+		public void GeneratesSkipQueryParameters() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$skip=10");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.DoesNotContain("\"10\"", result);
+			Assert.Contains("10", result);
+		}
+		[Fact]
+		public void GeneratesSelectExpandQueryParameters() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=id,displayName)");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("Expand", result);
+			Assert.Contains("members($select=id,displayName)", result);
+			Assert.DoesNotContain("Select", result);
+		}
 		//TODO test for request headers
 		//TODO test for DateTimeOffset
 	}

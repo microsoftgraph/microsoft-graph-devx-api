@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -24,9 +25,67 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
 			snippetBuilder.Append(requestPayload);
 			var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "var result = ";
-			snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({payloadVarName});");
+			var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
+			if(!string.IsNullOrEmpty(queryParamsPayload))
+				snippetBuilder.Append(queryParamsPayload);
+			
+			var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName);
+			snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({parametersList});");
 			return snippetBuilder.ToString();
 		}
+		private string GetActionParametersList(params string[] parameters) {
+			var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
+			if(nonEmptyParameters.Any())
+				return string.Join(", ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}"));
+			else return string.Empty;
+		}
+		private const string requestParametersVarName = "requestParameters";
+		private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager) {
+			var payloadSB = new StringBuilder();
+			if(!string.IsNullOrEmpty(model.QueryString)) {
+				var methodName = model.Method.ToString().ToFirstCharacterUpperCaseAndRemainingLowerCase();
+				payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestParametersVarName} = new {methodName}QueryParameters {{");
+				indentManager.Indent();
+				var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
+				foreach(var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)) {
+					if(queryParam.Contains("=")) {
+						var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)},");
+					} else
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = string.Empty,");
+				}
+				indentManager.Unindent();
+				payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
+				return (payloadSB.ToString(), requestParametersVarName);
+			}
+			return (default, default);
+		}
+		private static Regex nestedStatementRegex = new Regex(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
+		private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams) {
+			var replacements = new Dictionary<string, string>();
+			var matches = nestedStatementRegex.Matches(queryParams);
+			if(matches.Any())
+				foreach(Match match in matches) {
+					var key = match.Groups[1].Value;
+					var value = match.Groups[2].Value;
+					replacements.Add(key, value);
+					queryParams = queryParams.Replace(value, string.Empty);
+				}
+			return (queryParams, replacements);
+		}
+		private static string GetQueryParameterValue(string originalValue, Dictionary<string, string> replacements) {
+			if(originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
+				return originalValue.ToLowerInvariant();
+			else if(int.TryParse(originalValue, out var intValue))
+				return intValue.ToString();
+			else {
+				var valueWithNested = originalValue.Split(',')
+													.Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
+													.Aggregate((a, b) => $"{a},{b}");
+				return $"\"{valueWithNested}\"";
+			}
+		}
+		private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterUpperCase();
 		private const string requestBodyVarName = "requestBody";
 		private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
 			if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
