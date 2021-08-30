@@ -56,16 +56,16 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+                var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-                string graphUri = GetVersionUri(styleOptions.GraphVersion);
+                var graphUri = GetVersionUri(styleOptions.GraphVersion);
 
                 if (graphUri == null)
                 {
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                OpenApiDocument source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+                var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
                 var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
                                                                tags: tags,
@@ -127,9 +127,9 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+                var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-                OpenApiDocument source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
+                var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
 
                 var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
                                                                      tags: tags,
@@ -186,9 +186,9 @@ namespace GraphWebApi.Controllers
         {
             try
             {
-                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+                var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-                string graphUri = GetVersionUri(styleOptions.GraphVersion);
+                var graphUri = GetVersionUri(styleOptions.GraphVersion);
 
                 if (graphUri == null)
                 {
