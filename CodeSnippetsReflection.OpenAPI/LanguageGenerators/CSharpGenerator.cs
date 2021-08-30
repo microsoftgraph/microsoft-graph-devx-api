@@ -154,6 +154,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 				case JsonValueKind.String:
 					if(propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
 						payloadSB.AppendLine($"{propertyAssignment}Encoding.ASCII.GetBytes(\"{value.GetString()}\"){propertySuffix},");
+					else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
+						payloadSB.AppendLine($"{propertyAssignment}DateTimeOffset.Parse(\"{value.GetString()}\"){propertySuffix},");
 					else
 						payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix},");
 					break;

@@ -140,6 +140,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.Contains("Encoding.ASCII.GetBytes", result);
 		}
 		[Fact]
+		public void GeneratesADateTimeOffsetPayload() {
+			const string userJsonObject = "{\r\n  \"receivedDateTime\": \"2021-08-30T20:00:00:00Z\"\r\n\r\n}";
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/messages") {
+				Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+			};
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("DateTimeOffset.Parse", result);
+		}
+		[Fact]
 		public void GeneratesAnArrayPayloadInAdditionalData() {
 			const string userJsonObject = "{\r\n  \"members@odata.bind\": [\r\n    \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\",\r\n    \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\",\r\n    \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"\r\n    ]\r\n}";
 			using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/groups/{{group-id}}") {
