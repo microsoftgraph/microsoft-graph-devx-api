@@ -28,7 +28,7 @@ namespace GraphWebApi.Controllers
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly static Dictionary<string, string> _openApiTraceProperties =
+        private static readonly Dictionary<string, string> _openApiTraceProperties =
                         new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiController)} };
         private readonly TelemetryClient _telemetryClient;
         private readonly IOpenApiService _openApiService;
