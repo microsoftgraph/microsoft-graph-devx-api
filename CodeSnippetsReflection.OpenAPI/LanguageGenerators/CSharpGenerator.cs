@@ -28,10 +28,26 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
 			if(!string.IsNullOrEmpty(queryParamsPayload))
 				snippetBuilder.Append(queryParamsPayload);
-			
-			var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName);
+			var (requestHeadersPayload, requestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
+			if(!string.IsNullOrEmpty(requestHeadersPayload))
+				snippetBuilder.Append(requestHeadersPayload);
+			var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, requestHeadersVarName);
 			snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({parametersList});");
 			return snippetBuilder.ToString();
+		}
+		private const string requestHeadersVarName = "headers";
+		private static (string, string) GetRequestHeaders(SnippetModel snippetModel, IndentManager indentManager) {
+			var payloadSB = new StringBuilder();
+			if(snippetModel.RequestHeaders.Any()) {
+				payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestHeadersVarName} = (h) => {{");
+				indentManager.Indent();
+				foreach(var header in snippetModel.RequestHeaders)
+					payloadSB.AppendLine($"{indentManager.GetIndent()}h.Add(\"{header.Key}\", \"{header.Value.FirstOrDefault()}\");");
+				indentManager.Unindent();
+				payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
+				return (payloadSB.ToString(), requestHeadersVarName);
+			}
+			return (default, default);
 		}
 		private string GetActionParametersList(params string[] parameters) {
 			var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));

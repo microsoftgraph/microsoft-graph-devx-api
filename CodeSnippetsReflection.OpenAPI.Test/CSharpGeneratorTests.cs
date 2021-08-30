@@ -185,7 +185,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.Contains("members($select=id,displayName)", result);
 			Assert.DoesNotContain("Select", result);
 		}
-		//TODO test for request headers
+		[Fact]
+		public void GeneratesRequestHeaders() {
+			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups");
+			requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var result = _generator.GenerateCodeSnippet(snippetModel);
+			Assert.Contains("Add(\"ConsistencyLevel\", \"eventual\");", result);
+		}
 		//TODO test for DateTimeOffset
 	}
 }
