@@ -9,11 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeSnippetsReflection", "C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeSnippetsReflection.Test", "CodeSnippetsReflection.Test\CodeSnippetsReflection.Test.csproj", "{04379F1A-8A18-4079-8C89-E37065FE90D4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphExplorerSamplesService", "GraphExplorerSamplesService\GraphExplorerSamplesService.csproj", "{6FD6FCCE-4519-49C4-AF8B-A4EB028559A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SamplesService", "GraphExplorerSamplesService\SamplesService.csproj", "{6FD6FCCE-4519-49C4-AF8B-A4EB028559A6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SamplesService.Test", "SamplesService.Test\SamplesService.Test.csproj", "{9AE7112F-F35A-4474-9968-9FA3A33FCA7E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphExplorerPermissionsService", "GraphExplorerPermissionsService\GraphExplorerPermissionsService.csproj", "{E50C9B93-D6E5-4D11-82AD-D741C1F2BD1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PermissionsService", "GraphExplorerPermissionsService\PermissionsService.csproj", "{E50C9B93-D6E5-4D11-82AD-D741C1F2BD1C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileService", "FileService\FileService.csproj", "{D9659D5A-8043-4E90-B270-680E7A76CC4E}"
 EndProject
@@ -43,9 +43,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilityService", "UtilitySe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilityService.Test", "UtilityService.Test\UtilityService.Test.csproj", "{0F4A15DC-F4CD-415D-A62D-6B0D95ED25E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KnownIssuesService", "KnownIssuesService\KnownIssuesService.csproj", "{253AC0B3-6FE2-480F-A607-F9C72C106459}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnownIssuesService", "KnownIssuesService\KnownIssuesService.csproj", "{253AC0B3-6FE2-480F-A607-F9C72C106459}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KnownIssuesService.Test", "KnownIssuesService.Test\KnownIssuesService.Test.csproj", "{74A17AE8-14C3-441F-AEB2-918E1F7799A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KnownIssuesService.Test", "KnownIssuesService.Test\KnownIssuesService.Test.csproj", "{74A17AE8-14C3-441F-AEB2-918E1F7799A2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
