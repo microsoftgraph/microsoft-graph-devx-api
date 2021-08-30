@@ -157,7 +157,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
 			var result = _generator.GenerateCodeSnippet(snippetModel);
 			Assert.Contains("displayName", result);
-			Assert.Contains("new GetQueryParameters", result);
+			Assert.Contains("(q) => ", result);
 		}
 		[Fact]
 		public void GeneratesCountBooleanQueryParameters() {
@@ -192,6 +192,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
 			var result = _generator.GenerateCodeSnippet(snippetModel);
 			Assert.Contains("Add(\"ConsistencyLevel\", \"eventual\");", result);
+			Assert.Contains("(h) =>", result);
 		}
 		//TODO test for DateTimeOffset
 	}

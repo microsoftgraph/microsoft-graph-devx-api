@@ -59,16 +59,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 		private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager) {
 			var payloadSB = new StringBuilder();
 			if(!string.IsNullOrEmpty(model.QueryString)) {
-				var methodName = model.Method.ToString().ToFirstCharacterUpperCaseAndRemainingLowerCase();
-				payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestParametersVarName} = new {methodName}QueryParameters {{");
+				payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestParametersVarName} = (q) => {{");
 				indentManager.Indent();
 				var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
 				foreach(var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)) {
 					if(queryParam.Contains("=")) {
 						var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
-						payloadSB.AppendLine($"{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)},");
+						payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)};");
 					} else
-						payloadSB.AppendLine($"{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = string.Empty,");
+						payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = string.Empty;");
 				}
 				indentManager.Unindent();
 				payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
