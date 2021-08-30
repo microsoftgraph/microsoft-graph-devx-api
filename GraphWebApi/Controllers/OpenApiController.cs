@@ -258,15 +258,12 @@ namespace GraphWebApi.Controllers
 
         private string GetVersionUri(string graphVersion)
         {
-            switch (graphVersion.ToLower(CultureInfo.InvariantCulture))
+            return graphVersion.ToLower(CultureInfo.InvariantCulture) switch
             {
-                case "v1.0":
-                    return _configuration["GraphMetadata:V1.0"];
-                case "beta":
-                    return _configuration["GraphMetadata:Beta"];
-                default:
-                    return null;
-            }
+                "v1.0" => _configuration["GraphMetadata:V1.0"],
+                "beta" => _configuration["GraphMetadata:Beta"],
+                _ => null,
+            };
         }
     }
 }
