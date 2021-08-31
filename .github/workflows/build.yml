@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Cache SonarCloud packages
-        uses: actions/@v2.1.6
+        uses: actions/cache@v2.1.6
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
@@ -45,4 +45,4 @@ jobs:
           ./.sonar/scanner/dotnet-sonarscanner begin /k:"microsoftgraph_microsoft-graph-devx-api" /o:"microsoftgraph2" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
           dotnet build
           dotnet test MSGraphWebApi.sln --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          ./.sonar/scanner/dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
