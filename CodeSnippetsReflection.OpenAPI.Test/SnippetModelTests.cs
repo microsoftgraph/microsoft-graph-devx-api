@@ -13,14 +13,13 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 	public class SnippetModelTests
 	{
 		private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-		private static Lazy<OpenApiUrlTreeNode> _v1TreeNode;
-		public SnippetModelTests()
-		{
-			if (_v1TreeNode == null)
-			{
-				_v1TreeNode = new Lazy<OpenApiUrlTreeNode>(() => GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml").GetAwaiter().GetResult());
-			}
-		}
+        private static OpenApiUrlTreeNode _v1TreeNode;
+		private async static Task<OpenApiUrlTreeNode> GetV1TreeNode() {
+            if(_v1TreeNode == null) {
+                _v1TreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
+            }
+            return _v1TreeNode;
+        }
 		internal static async Task<OpenApiUrlTreeNode> GetTreeNode(string url)
 		{
 			using var httpClient = new HttpClient();
@@ -41,7 +40,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.Throws<ArgumentNullException>(() => new SnippetModel(requestMock, "something", null));
 		}
 		[Fact]
-		public void FindsThePathItem()
+		public async Task FindsThePathItem()
 		{
 			const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
 										  "\"displayName\": \"displayName-value\",\r\n  " +
@@ -53,7 +52,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			{
 				Content = new StringContent(userJsonObject)
 			};
-			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 			Assert.NotNull(snippetModel.EndPathNode);
 			Assert.NotNull(snippetModel.RootPathNode);
 			Assert.Equal(snippetModel.EndPathNode, snippetModel.RootPathNode);
@@ -61,10 +60,10 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.InRange(snippetModel.PathNodes.Count, 1, 1);
 		}
 		[Fact]
-		public void FindsTheSubPathItem()
+		public async Task FindsTheSubPathItem()
 		{
 			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
-			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 			Assert.NotNull(snippetModel.EndPathNode);
 			Assert.NotNull(snippetModel.RootPathNode);
 			Assert.NotEqual(snippetModel.EndPathNode, snippetModel.RootPathNode);
@@ -72,7 +71,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			Assert.InRange(snippetModel.PathNodes.Count, 2, 2);
 		}
 		[Fact]
-		public void GetsTheRequestSchema()
+		public async Task GetsTheRequestSchema()
 		{
 			const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
 										  "\"displayName\": \"displayName-value\",\r\n  " +
@@ -84,15 +83,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			{
 				Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
 			};
-			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 			Assert.NotNull(snippetModel.RequestSchema);
 			Assert.NotEmpty(snippetModel.RequestSchema.AllOf);
 		}
 		[Fact]
-		public void GetsTheResponseSchema()
+		public async Task GetsTheResponseSchema()
 		{
 			using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users");
-			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _v1TreeNode.Value);
+			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 			Assert.NotNull(snippetModel.ResponseSchema);
 			Assert.NotEmpty(snippetModel.ResponseSchema.Properties);
 		}
