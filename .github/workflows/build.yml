@@ -45,3 +45,4 @@ jobs:
           ./.sonar/scanner/dotnet-sonarscanner begin /k:"microsoftgraph_microsoft-graph-devx-api" /o:"microsoftgraph2" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
           dotnet build
           dotnet test MSGraphWebApi.sln --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
