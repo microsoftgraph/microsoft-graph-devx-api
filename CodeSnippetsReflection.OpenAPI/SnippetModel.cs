@@ -12,9 +12,9 @@ namespace CodeSnippetsReflection.OpenAPI
 {
 	public class SnippetModel : SnippetBaseModel<OpenApiUrlTreeNode>
 	{
-		public OpenApiUrlTreeNode EndPathNode { get => PathNodes.LastOrDefault(); }
-		public OpenApiUrlTreeNode RootPathNode { get => PathNodes.FirstOrDefault(); }
-		public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
+        public OpenApiUrlTreeNode EndPathNode => PathNodes.LastOrDefault();
+        public OpenApiUrlTreeNode RootPathNode => PathNodes.FirstOrDefault();
+        public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
 		public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiUrlTreeNode treeNode) : base(requestPayload, serviceRootUrl)
 		{
 			if (treeNode == null) throw new ArgumentNullException(nameof(treeNode));
@@ -48,7 +48,7 @@ namespace CodeSnippetsReflection.OpenAPI
 			}
 		}
 		private OpenApiOperation GetOperation(OperationType type) {
-			EndPathNode.PathItems[OpenAPISnippetsGenerator.treeNodeLabel].Operations.TryGetValue(type, out var operation);
+			EndPathNode.PathItems[OpenApiSnippetsGenerator.treeNodeLabel].Operations.TryGetValue(type, out var operation);
 			return operation;
 		}
 		private OpenApiSchema _requestSchema;
@@ -70,7 +70,7 @@ namespace CodeSnippetsReflection.OpenAPI
 				return _requestSchema;
 			}
 		}
-		private OperationType GetOperationType(HttpMethod method)
+		private static OperationType GetOperationType(HttpMethod method)
 		{
 			if (method == HttpMethod.Get) return OperationType.Get;
 			else if (method == HttpMethod.Post) return OperationType.Post;
@@ -82,7 +82,7 @@ namespace CodeSnippetsReflection.OpenAPI
 			else if (method == HttpMethod.Trace) return OperationType.Trace;
 			else throw new ArgumentOutOfRangeException(nameof(method));
 		}
-		private static char pathSeparator = '/';
+		private static readonly char pathSeparator = '/';
 		private void LoadPathNodes(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments)
 		{
 			if (!pathSegments.Any())
@@ -130,7 +130,7 @@ namespace CodeSnippetsReflection.OpenAPI
 				: pathSegmentidentifier;
 			return identifier.ToFirstCharacterLowerCase();
 		}
-		private static Regex searchValueRegex = new Regex(@"\$?search=""([^\""]*)""", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+		private static readonly Regex searchValueRegex = new(@"\$?search=""([^\""]*)""", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
 		protected override string GetSearchExpression(string queryString)
 		{

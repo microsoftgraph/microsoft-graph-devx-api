@@ -13,16 +13,16 @@ using UtilityService;
 
 namespace CodeSnippetsReflection.OpenAPI
 {
-	public class OpenAPISnippetsGenerator : IOpenAPISnippetsGenerator
+	public class OpenApiSnippetsGenerator : IOpenApiSnippetsGenerator
 	{
 		public const string treeNodeLabel = "default";
 		private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
-                    new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(OpenAPISnippetsGenerator) } };
+                    new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(OpenApiSnippetsGenerator) } };
 		private readonly Lazy<OpenApiUrlTreeNode> _v1OpenApiDocument;
 		private readonly Lazy<OpenApiUrlTreeNode> _betaOpenApiDocument;
 		private readonly Lazy<OpenApiUrlTreeNode> _customOpenApiDocument;
-		public OpenAPISnippetsGenerator(
+		public OpenApiSnippetsGenerator(
 			string v1OpenApiDocumentUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml",
 			string betaOpenApiDocumentUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/beta/openapi.yaml",
 			string customOpenApiPathOrUrl = default,
@@ -64,14 +64,11 @@ namespace CodeSnippetsReflection.OpenAPI
 			return generator.GenerateCodeSnippet(snippetModel);
 		}
 		private static ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> GetLanguageGenerator(string language) {
-			return (language.ToLowerInvariant()) switch {
+			return language.ToLowerInvariant() switch {
 				"c#" => new CSharpGenerator(),
 				_ => throw new ArgumentOutOfRangeException($"Language '{language}' is not supported"),
 			};
 		}
-		private static readonly Dictionary<string, ILanguageGenerator<SnippetBaseModel<object>, object>> _languageGenerators = new () {
-			{ "c#", new CSharpGenerator() as ILanguageGenerator<SnippetBaseModel<object>, object> },
-		};
 		/// <summary>
         /// Helper function to select the appropriate EDM model and service root url depending on the request made
         /// </summary>
@@ -79,19 +76,13 @@ namespace CodeSnippetsReflection.OpenAPI
         /// <returns>Tuple of the OpenApiUrlTreeNode and the URI of the service root</returns>
         private (OpenApiUrlTreeNode, Uri) GetModelAndServiceUriTuple(Uri requestUri)
         {
-			var serviceRootUri = new Uri(requestUri.GetLeftPart(UriPartial.Authority) + "/" + requestUri.Segments.First());
-            switch (requestUri.Segments[1].Trim('/').ToLowerInvariant())
+			var serviceRootUri = new Uri(new Uri(requestUri.GetLeftPart(UriPartial.Authority)), requestUri.Segments.First());
+            return requestUri.Segments[1].Trim('/').ToLowerInvariant() switch
             {
-                case "v1.0":
-                    return ((_customOpenApiDocument ?? _v1OpenApiDocument).Value, serviceRootUri);
-
-                case "beta":
-                    return ((_customOpenApiDocument ?? _betaOpenApiDocument).Value, serviceRootUri);
-
-                default:
-                    throw new Exception("Unsupported Graph version in url");
-            }
-
+                "v1.0" => ((_customOpenApiDocument ?? _v1OpenApiDocument).Value, serviceRootUri),
+                "beta" => ((_customOpenApiDocument ?? _betaOpenApiDocument).Value, serviceRootUri),
+                _ => throw new ArgumentOutOfRangeException(nameof(requestUri), "Unsupported Graph version in url"),
+            };
         }
 	}
 }

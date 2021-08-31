@@ -105,7 +105,7 @@ namespace CodeSnippetsReflection.App
             return (generation) switch {
                 "odata" when customMetadataSection.Exists() => new ODataSnippetsGenerator(isCommandLine: true, customMetadataSection.Value),
                 "odata" => new ODataSnippetsGenerator(isCommandLine: true),
-                "openapi" => new OpenAPISnippetsGenerator(),
+                "openapi" => new OpenApiSnippetsGenerator(),
                 _ => throw new InvalidOperationException($"Unknown generation type: {generation}")
             };
         }

@@ -30,7 +30,7 @@ namespace GraphWebApi.Controllers
             new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(SnippetsController) } };
         private readonly TelemetryClient _telemetryClient;
 
-        public SnippetsController(IODataSnippetsGenerator oDataSnippetGenerator, IOpenAPISnippetsGenerator openApiSnippetGenerator, TelemetryClient telemetryClient)
+        public SnippetsController(IODataSnippetsGenerator oDataSnippetGenerator, IOpenApiSnippetsGenerator openApiSnippetGenerator, TelemetryClient telemetryClient)
         {
             UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
             UtilityFunctions.CheckArgumentNull(openApiSnippetGenerator, nameof(openApiSnippetGenerator));

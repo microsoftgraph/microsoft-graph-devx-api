@@ -9,9 +9,9 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Fact]
         public void DefensiveProgramming()
         {
-            Assert.Throws<ArgumentNullException>(() => new OpenAPISnippetsGenerator(null));
-            Assert.Throws<ArgumentNullException>(() => new OpenAPISnippetsGenerator("something", null));
-            Assert.NotNull(new OpenAPISnippetsGenerator("something", "something"));
+            Assert.Throws<ArgumentNullException>(() => new OpenApiSnippetsGenerator(null));
+            Assert.Throws<ArgumentNullException>(() => new OpenApiSnippetsGenerator("something", null));
+            Assert.NotNull(new OpenApiSnippetsGenerator("something", "something"));
         }
     }
 }

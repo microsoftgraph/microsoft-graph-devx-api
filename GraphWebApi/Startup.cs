@@ -89,7 +89,7 @@ namespace GraphWebApi
 
             services.AddMemoryCache();
             services.AddSingleton<IODataSnippetsGenerator, ODataSnippetsGenerator>();
-            services.AddSingleton<IOpenAPISnippetsGenerator, OpenAPISnippetsGenerator>();
+            services.AddSingleton<IOpenApiSnippetsGenerator, OpenApiSnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();

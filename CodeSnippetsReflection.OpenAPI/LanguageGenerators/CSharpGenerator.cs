@@ -52,7 +52,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			}
 			return (default, default);
 		}
-		private string GetActionParametersList(params string[] parameters) {
+		private static string GetActionParametersList(params string[] parameters) {
 			var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
 			if(nonEmptyParameters.Any())
 				return string.Join(", ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}"));

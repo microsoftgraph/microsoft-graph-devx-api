@@ -27,7 +27,7 @@ namespace CodeSnippetsReflection
         /// <param name="requestPayload">The request message to generate a snippet from</param>
         /// <param name="serviceRootUrl">The service root URI</param>
         /// <param name="edmModel">The EDM model used for this request</param>
-        public SnippetBaseModel(HttpRequestMessage requestPayload, string serviceRootUrl)
+        protected SnippetBaseModel(HttpRequestMessage requestPayload, string serviceRootUrl)
         {
             if(requestPayload == null || requestPayload.RequestUri == null) throw new ArgumentNullException(nameof(requestPayload));
 			if(string.IsNullOrWhiteSpace(serviceRootUrl)) throw new ArgumentNullException(nameof(serviceRootUrl));
