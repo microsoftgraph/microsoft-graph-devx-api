@@ -38,11 +38,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 		private const string requestHeadersVarName = "headers";
 		private static (string, string) GetRequestHeaders(SnippetModel snippetModel, IndentManager indentManager) {
 			var payloadSB = new StringBuilder();
-			if(snippetModel.RequestHeaders.Any()) {
+			var filteredHeaders = snippetModel.RequestHeaders.Where(h => !h.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
+															.ToList();
+			if(filteredHeaders.Any()) {
 				payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestHeadersVarName} = (h) => {{");
 				indentManager.Indent();
-				foreach(var header in snippetModel.RequestHeaders)
-					payloadSB.AppendLine($"{indentManager.GetIndent()}h.Add(\"{header.Key}\", \"{header.Value.FirstOrDefault()}\");");
+				filteredHeaders.ForEach(h => 
+					payloadSB.AppendLine($"{indentManager.GetIndent()}h.Add(\"{h.Key}\", \"{h.Value.FirstOrDefault()}\");")
+				);
 				indentManager.Unindent();
 				payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
 				return (payloadSB.ToString(), requestHeadersVarName);
@@ -110,14 +113,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			var payloadSB = new StringBuilder();
 			switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant()) {
 				case "application/json":
-					using (var ms = new MemoryStream(UTF8Encoding.UTF8.GetBytes(snippetModel.RequestBody))) {
-						var parsedBody = JsonDocument.Parse(ms);
-						var schema = snippetModel.RequestSchema;
-						var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-						payloadSB.AppendLine($"var {requestBodyVarName} = new {className} {{");
-						WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
-						payloadSB.AppendLine("};");
-					}
+					if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
+						!"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
+						using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody)) {
+							var schema = snippetModel.RequestSchema;
+							var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
+							payloadSB.AppendLine($"var {requestBodyVarName} = new {className} {{");
+							WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
+							payloadSB.AppendLine("};");
+						}
 				break;
 				case "application/octect-stream":
 					payloadSB.AppendLine($"using var {requestBodyVarName} = new MemoryStream(); //stream to upload");
