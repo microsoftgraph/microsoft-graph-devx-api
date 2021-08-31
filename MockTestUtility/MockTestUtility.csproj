@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FileService\FileService.csproj" />
-    <ProjectReference Include="..\GraphExplorerPermissionsService\GraphExplorerPermissionsService.csproj" />
+    <ProjectReference Include="..\GraphExplorerPermissionsService\PermissionsService.csproj" />
   </ItemGroup>
 
 </Project>
