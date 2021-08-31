@@ -4,11 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using CodeSnippetsReflection;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
 using UtilityService;
@@ -21,10 +19,6 @@ namespace CodeSnippetsReflection.OpenAPI
 		private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
                     new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(OpenAPISnippetsGenerator) } };
-        public static HashSet<string> SupportedLanguages = new HashSet<string>
-        {
-            "c#",
-        };
 		private readonly Lazy<OpenApiUrlTreeNode> _v1OpenApiDocument;
 		private readonly Lazy<OpenApiUrlTreeNode> _betaOpenApiDocument;
 		private readonly Lazy<OpenApiUrlTreeNode> _customOpenApiDocument;
@@ -47,10 +41,7 @@ namespace CodeSnippetsReflection.OpenAPI
 			Stream stream;
 			if(url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) {
 				using var httpClient = new HttpClient();
-				using var response =  await httpClient.GetAsync(url);
-				if(response.IsSuccessStatusCode)
-					throw new InvalidOperationException($"Failed to get the OpenAPI document: {url} returned {response.StatusCode}");
-				stream = await response.Content.ReadAsStreamAsync();
+				stream = await httpClient.GetStreamAsync(url);
 			} else {
 				stream = File.OpenRead(url);
 			}
@@ -69,11 +60,14 @@ namespace CodeSnippetsReflection.OpenAPI
 			var (openApiTreeNode, serviceRootUri) = GetModelAndServiceUriTuple(requestPayload.RequestUri);
 			var snippetModel = new SnippetModel(requestPayload, serviceRootUri.AbsoluteUri, openApiTreeNode);
 
-			if(_languageGenerators.TryGetValue(language.ToLowerInvariant(), out var generator) &&
-				generator is ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> languageGenerator)
-				return languageGenerator.GenerateCodeSnippet(snippetModel);
-			else
-				throw new InvalidOperationException($"Language '{language}' is not supported");
+			var generator = GetLanguageGenerator(language);
+			return generator.GenerateCodeSnippet(snippetModel);
+		}
+		private static ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> GetLanguageGenerator(string language) {
+			return (language.ToLowerInvariant()) switch {
+				"c#" => new CSharpGenerator(),
+				_ => throw new ArgumentOutOfRangeException($"Language '{language}' is not supported"),
+			};
 		}
 		private static readonly Dictionary<string, ILanguageGenerator<SnippetBaseModel<object>, object>> _languageGenerators = new () {
 			{ "c#", new CSharpGenerator() as ILanguageGenerator<SnippetBaseModel<object>, object> },
