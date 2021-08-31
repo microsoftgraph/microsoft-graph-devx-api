@@ -56,16 +56,16 @@ namespace GraphWebApi.Controllers
                                     [FromQuery]string graphVersion = null,
                                     [FromQuery]bool forceRefresh = false)
         {
-            OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+            var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-            string graphUri = GetVersionUri(styleOptions.GraphVersion);
+            var graphUri = GetVersionUri(styleOptions.GraphVersion);
 
             if (graphUri == null)
             {
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
 
-            OpenApiDocument source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+            var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
 
             var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
                                                             tags: tags,
@@ -103,9 +103,9 @@ namespace GraphWebApi.Controllers
                             [FromQuery] string graphVersion = null,
                             [FromQuery] bool forceRefresh = false)
         {
-           OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+                var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-                OpenApiDocument source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
+                var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
 
                 var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
                                                                      tags: tags,
@@ -138,15 +138,15 @@ namespace GraphWebApi.Controllers
                                              [FromQuery]string format = null,
                                              [FromQuery]bool forceRefresh = false)
         {
-            OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+            var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-            string graphUri = GetVersionUri(styleOptions.GraphVersion);
+            var graphUri = GetVersionUri(styleOptions.GraphVersion);
 
             if (graphUri == null)
             {
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
-
+            
             var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
             await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                 graphOpenApi, Response.Body, styleOptions.Style);
@@ -154,7 +154,7 @@ namespace GraphWebApi.Controllers
             return new EmptyResult();
         }
 
-        private async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
+        private static async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
                                 OpenApiDocument graphOpenApi, Stream stream, OpenApiStyle style)
 
         {
@@ -188,15 +188,12 @@ namespace GraphWebApi.Controllers
 
         private string GetVersionUri(string graphVersion)
         {
-            switch (graphVersion.ToLower(CultureInfo.InvariantCulture))
+            return graphVersion.ToLower(CultureInfo.InvariantCulture) switch
             {
-                case "v1.0":
-                    return _configuration["GraphMetadata:V1.0"];
-                case "beta":
-                    return _configuration["GraphMetadata:Beta"];
-                default:
-                    return null;
-            }
+                "v1.0" => _configuration["GraphMetadata:V1.0"],
+                "beta" => _configuration["GraphMetadata:Beta"],
+                _ => null,
+            };
         }
     }
 }
