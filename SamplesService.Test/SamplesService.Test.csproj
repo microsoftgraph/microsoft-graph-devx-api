@@ -57,7 +57,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GraphExplorerSamplesService\GraphExplorerSamplesService.csproj" />
+    <ProjectReference Include="..\GraphExplorerSamplesService\SamplesService.csproj" />
     <ProjectReference Include="..\MockTestUtility\MockTestUtility.csproj" />
   </ItemGroup>
 
