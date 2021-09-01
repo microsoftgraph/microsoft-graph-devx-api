@@ -36,7 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public void ThrowsOnInvalidLanguage() {
             var generator = new OpenApiSnippetsGenerator();
             using var requestMock = new HttpRequestMessage {
-                RequestUri = new Uri("https://graph.microsoft.com/v1.0/something")
+                RequestUri = new Uri("https://graph.microsoft.com/v1.0/me")
             };
             Assert.Throws<ArgumentOutOfRangeException>(() => generator.ProcessPayloadRequest(requestMock, "inexistingLanguage"));
         }
