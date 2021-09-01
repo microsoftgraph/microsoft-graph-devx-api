@@ -6,11 +6,9 @@ using System.Net.Http;
 using System.Text;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Microsoft.OData.Edm;
 using CodeSnippetsReflection.OData.TypeProperties;
 
-[assembly: InternalsVisibleTo("CodeSnippetsReflection.OData.Test")]
 namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public class CSharpGenerator

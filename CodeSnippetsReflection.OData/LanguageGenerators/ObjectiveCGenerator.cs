@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-[assembly: InternalsVisibleTo("CodeSnippetsReflection.OData.Test")]
 namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public class ObjectiveCGenerator

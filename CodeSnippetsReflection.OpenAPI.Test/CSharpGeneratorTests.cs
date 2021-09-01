@@ -168,7 +168,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 			var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 			var result = _generator.GenerateCodeSnippet(snippetModel);
 			Assert.Contains("displayName", result);
-			Assert.Contains("(q) => ", result);
+			Assert.Contains("(q) =>", result);
 		}
 		[Fact]
 		public async Task GeneratesCountBooleanQueryParameters() {
