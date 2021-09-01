@@ -59,7 +59,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ChangesService\ChangesService.csproj" />
-    <ProjectReference Include="..\CodeSnippetsReflection.OData\CodeSnippetsReflection.OData.csproj" />
     <ProjectReference Include="..\FileService\FileService.csproj" />
     <ProjectReference Include="..\GraphExplorerPermissionsService\PermissionsService.csproj" />
     <ProjectReference Include="..\GraphExplorerSamplesService\SamplesService.csproj" />

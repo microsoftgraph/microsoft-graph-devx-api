@@ -26,7 +26,6 @@ namespace CodeSnippetsReflection
         /// </summary>
         /// <param name="requestPayload">The request message to generate a snippet from</param>
         /// <param name="serviceRootUrl">The service root URI</param>
-        /// <param name="edmModel">The EDM model used for this request</param>
         protected SnippetBaseModel(HttpRequestMessage requestPayload, string serviceRootUrl)
         {
             if(requestPayload == null || requestPayload.RequestUri == null) throw new ArgumentNullException(nameof(requestPayload));
@@ -63,6 +62,7 @@ namespace CodeSnippetsReflection
         /// <returns> string to be used as return variable name in this call.</returns>
         protected abstract string GetResponseVariableName(PathSegment pathSegment);
 
+        /// <summary>
         /// This function populates the Select and Expand field lists in the class from reading the data from the
         /// Odata URI. <see cref="SelectExpandClause"/>
         /// </summary>

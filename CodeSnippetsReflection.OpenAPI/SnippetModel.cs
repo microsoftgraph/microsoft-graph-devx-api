@@ -93,21 +93,21 @@ namespace CodeSnippetsReflection.OpenAPI
 				LoadNextNode(childNode, pathSegments);
 				return;
 			}
-			else if (pathSegment.IsCollectionIndex())
-			{
-				var collectionIndexNode = node.Children.FirstOrDefault(x => x.Key.IsCollectionIndex());
-				if (collectionIndexNode.Value != null)
-				{
-					LoadNextNode(collectionIndexNode.Value, pathSegments);
-					return;
-				}
-			}
-			else if (node.Children.Keys.Any(x => x.IsFunction()))
+            if (node.Children.Keys.Any(x => x.IsFunction()))
 			{
 				var actionChildNode = node.Children.FirstOrDefault(x => x.Key.Split('.').Last().Equals(pathSegment, StringComparison.OrdinalIgnoreCase));
 				if(actionChildNode.Value != null)
 				{
 					LoadNextNode(actionChildNode.Value, pathSegments);
+					return;
+				}
+			}
+			if (node.Children.Any(x => x.Key.IsCollectionIndex()))
+			{
+				var collectionIndexNode = node.Children.FirstOrDefault(x => x.Key.IsCollectionIndex());
+				if (collectionIndexNode.Value != null)
+				{
+					LoadNextNode(collectionIndexNode.Value, pathSegments);
 					return;
 				}
 			}
