@@ -81,6 +81,7 @@ namespace CodeSnippetsReflection.OpenAPI
             {
                 "v1.0" => ((_customOpenApiDocument ?? _v1OpenApiDocument).Value, serviceRootUri),
                 "beta" => ((_customOpenApiDocument ?? _betaOpenApiDocument).Value, serviceRootUri),
+                _ when _customOpenApiDocument != null => (_customOpenApiDocument.Value, serviceRootUri),
                 _ => throw new ArgumentOutOfRangeException(nameof(requestUri), "Unsupported Graph version in url"),
             };
         }
