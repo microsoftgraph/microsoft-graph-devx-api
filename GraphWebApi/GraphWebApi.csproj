@@ -59,7 +59,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ChangesService\ChangesService.csproj" />
-    <ProjectReference Include="..\CodeSnippetsReflection\CodeSnippetsReflection.csproj" />
     <ProjectReference Include="..\FileService\FileService.csproj" />
     <ProjectReference Include="..\GraphExplorerPermissionsService\PermissionsService.csproj" />
     <ProjectReference Include="..\GraphExplorerSamplesService\SamplesService.csproj" />
@@ -67,6 +66,8 @@
     <ProjectReference Include="..\OpenAPIService\OpenAPIService.csproj" />
     <ProjectReference Include="..\TelemetryService\TelemetrySanitizerService.csproj" />
     <ProjectReference Include="..\UtilityService\UtilityService.csproj" />
+    <ProjectReference Include="..\CodeSnippetsReflection.OpenAPI\CodeSnippetsReflection.OpenAPI.csproj" />
+    <ProjectReference Include="..\CodeSnippetsReflection.OData\CodeSnippetsReflection.OData.csproj" />
   </ItemGroup>
 
   <ItemGroup>

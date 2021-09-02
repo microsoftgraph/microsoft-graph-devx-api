@@ -1,9 +1,9 @@
-﻿using CodeSnippetsReflection.LanguageGenerators;
+﻿using CodeSnippetsReflection.OData.LanguageGenerators;
 using Microsoft.OData.Edm;
 using System.Linq;
 using System.Text;
 
-namespace CodeSnippetsReflection.TypeProperties
+namespace CodeSnippetsReflection.OData.TypeProperties
 {
     public class CSharpTypeProperties
     {

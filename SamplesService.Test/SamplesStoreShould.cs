@@ -12,6 +12,8 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using MockTestUtility;
 using Xunit;
+using System.IO;
+using System;
 
 namespace SamplesService.Test
 {
@@ -29,7 +31,7 @@ namespace SamplesService.Test
             _httpClientUtility = new FileUtilityMock();
             _samplesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
-                .AddJsonFile(".\\TestFiles\\appsettingstest.json")
+                .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest.json"))
                 .Build();
         }
 
@@ -86,7 +88,7 @@ namespace SamplesService.Test
         {
             //Arrange
             var configuration = new ConfigurationBuilder()
-                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "GithubTestFiles", "appsettings-test.json"))
                             .Build();
 
             string org = configuration["BlobStorage:Org"];
@@ -118,7 +120,7 @@ namespace SamplesService.Test
         {
             //Arrange
             var configuration = new ConfigurationBuilder()
-                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "GithubTestFiles","appsettings-test.json"))
                             .Build();
 
             string org = configuration["BlobStorage:Org"];

@@ -13,6 +13,9 @@ using System.Collections.Generic;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
 using UtilityService;
+using CodeSnippetsReflection.OData;
+using CodeSnippetsReflection.OpenAPI;
+using System;
 
 namespace GraphWebApi.Controllers
 {
@@ -21,17 +24,20 @@ namespace GraphWebApi.Controllers
     [ApiController]
     public class SnippetsController : ControllerBase
     {
-        private readonly ISnippetsGenerator _snippetGenerator;
-        private readonly Dictionary<string, string> _snippetsTraceProperties =
+        private readonly ISnippetsGenerator _oDataSnippetGenerator;
+		private readonly ISnippetsGenerator _openApiSnippetGenerator;
+		private readonly Dictionary<string, string> _snippetsTraceProperties =
             new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(SnippetsController) } };
         private readonly TelemetryClient _telemetryClient;
 
-        public SnippetsController(ISnippetsGenerator snippetGenerator, TelemetryClient telemetryClient)
+        public SnippetsController(IODataSnippetsGenerator oDataSnippetGenerator, IOpenApiSnippetsGenerator openApiSnippetGenerator, TelemetryClient telemetryClient)
         {
             UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
-            UtilityFunctions.CheckArgumentNull(snippetGenerator, nameof(snippetGenerator));
+            UtilityFunctions.CheckArgumentNull(openApiSnippetGenerator, nameof(openApiSnippetGenerator));
+            UtilityFunctions.CheckArgumentNull(oDataSnippetGenerator, nameof(oDataSnippetGenerator));
             _telemetryClient = telemetryClient;
-            _snippetGenerator = snippetGenerator;
+            _oDataSnippetGenerator = oDataSnippetGenerator;
+            _openApiSnippetGenerator = openApiSnippetGenerator;
         }
 
         //Default Service Page GET
@@ -61,7 +67,7 @@ namespace GraphWebApi.Controllers
         //POST api/graphexplorersnippets
         [HttpPost]
         [Consumes("application/http")]
-        public async Task<IActionResult> PostAsync(string lang = "c#")
+        public async Task<IActionResult> PostAsync(string lang = "c#", string generation = "odata")
         {
             Request.EnableBuffering();
             using var streamContent = new StreamContent(Request.Body);
@@ -73,13 +79,20 @@ namespace GraphWebApi.Controllers
                                             SeverityLevel.Information,
                                             _snippetsTraceProperties);
 
-            var response = _snippetGenerator.ProcessPayloadRequest(requestPayload, lang);
+            var response = GetSnippetGenerator(generation).ProcessPayloadRequest(requestPayload, lang);
 
             _telemetryClient?.TrackTrace("Finished generating a code snippet",
                                             SeverityLevel.Information,
                                             _snippetsTraceProperties);
 
             return new StringResult(response);
+        }
+        private ISnippetsGenerator GetSnippetGenerator(string generation) {
+            return (generation.ToLowerInvariant()) switch {
+                "odata" => _oDataSnippetGenerator,
+                "openapi" => _openApiSnippetGenerator,
+                _ => throw new ArgumentException($"{generation} is not a valid generation type")
+            };
         }
     }
 
@@ -94,9 +107,9 @@ namespace GraphWebApi.Controllers
         public async Task ExecuteResultAsync(ActionContext context)
         {
             context.HttpContext.Response.ContentType = "text/plain";
-            using var streamWriter = new StreamWriter(context.HttpContext.Response.Body);
+            var streamWriter = new StreamWriter(context.HttpContext.Response.Body);
             await streamWriter.WriteAsync(this._value);
-            await streamWriter.FlushAsync().ConfigureAwait(false);
+            await streamWriter.DisposeAsync();
         }
     }
 }

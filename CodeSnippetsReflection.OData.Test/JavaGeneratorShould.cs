@@ -3,7 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Xml;
-using CodeSnippetsReflection.LanguageGenerators;
+using CodeSnippetsReflection.OData.LanguageGenerators;
 using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
 using Xunit;
