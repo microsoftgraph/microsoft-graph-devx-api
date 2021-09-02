@@ -8,6 +8,7 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace MockTestUtility
 {
@@ -23,13 +24,10 @@ namespace MockTestUtility
                 throw new ArgumentNullException(nameof(filePathSource), "Value cannot be null");
             }
 
-            if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
-            {
-                throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
-            }
-
             // Prepend the root directory notation since we're reading off of a relative folder location
-            filePathSource = $".\\{filePathSource}";
+            filePathSource = Path.Combine(Environment.CurrentDirectory, filePathSource);
+            if(!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) // path separator kinds are mixed on linux platforms because of the configuration files, which leads to failures
+                filePathSource = filePathSource.Replace('\\', Path.DirectorySeparatorChar);
 
             using StreamReader streamReader = new StreamReader(filePathSource);
             return await streamReader.ReadToEndAsync();

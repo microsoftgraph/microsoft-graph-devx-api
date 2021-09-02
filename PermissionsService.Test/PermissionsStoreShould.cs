@@ -7,6 +7,7 @@ using GraphExplorerPermissionsService.Models;
 using MockTestUtility;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Xunit;
 
 namespace PermissionsService.Test
@@ -14,7 +15,7 @@ namespace PermissionsService.Test
     public class PermissionsStoreShould
     {
         private readonly IPermissionsStore _permissionsStore;
-        private const string ConfigFilePath = ".\\TestFiles\\appsettingstest-valid.json";
+        private static string ConfigFilePath => Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest-valid.json");
         private const string DelegatedWork = "DelegatedWork";
         private const string Application = "Application";
 
@@ -262,7 +263,7 @@ namespace PermissionsService.Test
         {
             /* Act & Assert */
 
-            Assert.Throws<InvalidOperationException>(() => PermissionStoreFactoryMock.GetPermissionStore(".\\TestFiles\\appsettingstest-empty.json"));
+            Assert.Throws<InvalidOperationException>(() => PermissionStoreFactoryMock.GetPermissionStore(Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest-empty.json")));
         }
 
         [Fact]
