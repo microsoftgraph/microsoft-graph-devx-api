@@ -14,7 +14,7 @@ namespace ExceptionMiddlewareShould
     public class ExceptionMiddlewareShould
     {
         [Fact]
-        public async Task ExceptionHandlingMiddlewareTest_WritesExceptionResponseJsonToBody()
+        public async Task ExceptionMiddlewareShouldThrowArgumentNullException()
         {
             // Arrange
             var expected = "{\"StatusCode\":400,\"Message\":\"Value cannot be null.\"}";
@@ -46,7 +46,7 @@ namespace ExceptionMiddlewareShould
         }
 
         [Fact]
-        public async Task ExceptionMiddlewareShouldThrowException()
+        public async Task ExceptionMiddlewareShouldThrowInvalidOperationException()
         {
             // Arrange
             var expected = "{\"StatusCode\":400,\"Message\":\"Operation is not valid due to the current state of the object.\"}";
