@@ -5,9 +5,7 @@
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using UtilityService;
 
 namespace GraphWebApi.Middleware
 {
@@ -19,7 +17,6 @@ namespace GraphWebApi.Middleware
         public ExceptionMiddleware(RequestDelegate next, TelemetryClient telemetryClient)
         {
             _next = next;
-            UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
             _telemetryClient = telemetryClient;
         }
 
