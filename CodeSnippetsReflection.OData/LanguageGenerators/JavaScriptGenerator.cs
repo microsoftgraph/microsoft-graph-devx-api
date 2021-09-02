@@ -1,13 +1,11 @@
 using System;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using CodeSnippetsReflection.StringExtensions;
 
-[assembly: InternalsVisibleTo("CodeSnippetsReflection.Test")]
-namespace CodeSnippetsReflection.LanguageGenerators
+namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
     public static class JavaScriptGenerator
     {

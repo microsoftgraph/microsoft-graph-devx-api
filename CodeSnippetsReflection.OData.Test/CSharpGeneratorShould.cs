@@ -1,4 +1,4 @@
-﻿using CodeSnippetsReflection.LanguageGenerators;
+﻿using CodeSnippetsReflection.OData.LanguageGenerators;
 using System.Net.Http;
 using System.Xml;
 using Microsoft.OData.Edm;

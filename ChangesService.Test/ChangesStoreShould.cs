@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using MockTestUtility;
 using System;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
@@ -32,7 +33,7 @@ namespace ChangesService.Test
             _httpClientUtility = new FileUtilityMock();
             _changesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
-                .AddJsonFile(".\\TestFiles\\appsettingstest.json")
+                .AddJsonFile(Path.Join(Environment.CurrentDirectory, "TestFiles", "appsettingstest.json"))
                 .Build();
         }
 
@@ -76,7 +77,7 @@ namespace ChangesService.Test
 
             // fr-FR
             Assert.Equal(495, frenchChangeLogRecords.ChangeLogs.Count());
-            Assert.Equal("Conformité", frenchChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
+            Assert.Equal("ConformitÃ©", frenchChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
         }
 
         [Fact]
