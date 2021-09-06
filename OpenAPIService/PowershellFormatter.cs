@@ -85,7 +85,7 @@ namespace OpenAPIService
                 operationId = newOperationId.ToString();
             }
 
-            // Change Ref operationId name
+            // Update $ref path operationId name
             // Ref key word is enclosed between lower-cased and upper-cased letters
             // Ex.: applications_GetRefCreatedOnBehalfOf to applications_GetCreatedOnBehalfOfByRef
             var regex = new Regex("(?<=[a-z])Ref(?=[A-Z])");
