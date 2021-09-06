@@ -704,6 +704,26 @@ namespace OpenAPIService.Test
                                 }
                             }
                         }
+                    },
+                    ["/applications/{application-id}/createdOnBehalfOf/$ref"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        new OpenApiTag()
+                                        {
+                                            Name = "applications.directoryObject"
+                                        }
+                                    },
+                                    OperationId = "applications.GetRefCreatedOnBehalfOf",
+                                    Summary = "Get ref of createdOnBehalfOf from applications"
+                                }
+                            }
+                        }
                     }
                 },
                 Components = new OpenApiComponents
