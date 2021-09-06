@@ -4,7 +4,6 @@
 
 using GraphWebApi.Models;
 using Microsoft.ApplicationInsights;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
@@ -35,6 +34,9 @@ namespace GraphWebApi.Controllers
 
         public OpenApiController(IConfiguration configuration, IOpenApiService openApiService, TelemetryClient telemetryClient)
         {
+            UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
+            UtilityFunctions.CheckArgumentNull(openApiService, nameof(openApiService));
+            UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
             _telemetryClient = telemetryClient;
             _configuration = configuration;
             _openApiService = openApiService;
@@ -54,61 +56,37 @@ namespace GraphWebApi.Controllers
                                     [FromQuery]string graphVersion = null,
                                     [FromQuery]bool forceRefresh = false)
         {
-            try
+            var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+
+            var graphUri = GetVersionUri(styleOptions.GraphVersion);
+
+            if (graphUri == null)
             {
-                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
-
-                string graphUri = GetVersionUri(styleOptions.GraphVersion);
-
-                if (graphUri == null)
-                {
-                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
-                }
-
-                OpenApiDocument source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-
-                var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
-                                                               tags: tags,
-                                                               url: url,
-                                                               source: source,
-                                                               graphVersion: styleOptions.GraphVersion,
-                                                               forceRefresh: forceRefresh);
-
-                var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
-
-                subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
-
-                var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
-
-                if (styleOptions.OpenApiFormat == "yaml")
-                {
-                    return new FileStreamResult(stream, "text/yaml");
-                }
-                else
-                {
-                    return new FileStreamResult(stream, "application/json");
-                }
+                throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
-            catch (InvalidOperationException invalidOps)
-            {
-                _telemetryClient?.TrackException(invalidOps,
-                                           _openApiTraceProperties);
 
-                return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
+            var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+
+            var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
+                                                            tags: tags,
+                                                            url: url,
+                                                            source: source,
+                                                            graphVersion: styleOptions.GraphVersion,
+                                                            forceRefresh: forceRefresh);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
+
+            subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
+
+            var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
+
+            if (styleOptions.OpenApiFormat == "yaml")
+            {
+                return new FileStreamResult(stream, "text/yaml");
             }
-            catch (ArgumentException argException)
+            else
             {
-                _telemetryClient?.TrackException(argException,
-                                           _openApiTraceProperties);
-
-                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient?.TrackException(ex,
-                                           _openApiTraceProperties);
-
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+                return new FileStreamResult(stream, "application/json");
             }
         }
 
@@ -125,11 +103,9 @@ namespace GraphWebApi.Controllers
                             [FromQuery] string graphVersion = null,
                             [FromQuery] bool forceRefresh = false)
         {
-            try
-            {
-                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+                var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-                OpenApiDocument source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
+                var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
 
                 var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
                                                                      tags: tags,
@@ -152,28 +128,6 @@ namespace GraphWebApi.Controllers
                 {
                     return new FileStreamResult(stream, "application/json");
                 }
-            }
-            catch (InvalidOperationException invalidOps)
-            {
-                _telemetryClient?.TrackException(invalidOps,
-                                           _openApiTraceProperties);
-
-                return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
-            }
-            catch (ArgumentException argException)
-            {
-                _telemetryClient?.TrackException(argException,
-                                           _openApiTraceProperties);
-
-                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient?.TrackException(ex,
-                                           _openApiTraceProperties);
-
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
-            }
         }
 
         [Route("openapi/operations")]
@@ -184,47 +138,23 @@ namespace GraphWebApi.Controllers
                                              [FromQuery]string format = null,
                                              [FromQuery]bool forceRefresh = false)
         {
-            try
+            var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+
+            var graphUri = GetVersionUri(styleOptions.GraphVersion);
+
+            if (graphUri == null)
             {
-                OpenApiStyleOptions styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
-
-                string graphUri = GetVersionUri(styleOptions.GraphVersion);
-
-                if (graphUri == null)
-                {
-                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
-                }
-
-                var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-                await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
-                    graphOpenApi, Response.Body, styleOptions.Style);
-
-                return new EmptyResult();
+                throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
-            catch (InvalidOperationException invalidOps)
-            {
-                _telemetryClient?.TrackException(invalidOps,
-                                           _openApiTraceProperties);
+            
+            var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+            await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
+                graphOpenApi, Response.Body, styleOptions.Style);
 
-                return new JsonResult(invalidOps.Message) { StatusCode = StatusCodes.Status400BadRequest };
-            }
-            catch (ArgumentException argException)
-            {
-                _telemetryClient?.TrackException(argException,
-                                           _openApiTraceProperties);
-
-                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient?.TrackException(ex,
-                                           _openApiTraceProperties);
-
-                return new JsonResult(ex.Message) { StatusCode = StatusCodes.Status500InternalServerError };
-            }
+            return new EmptyResult();
         }
 
-        private async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
+        private static async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
                                 OpenApiDocument graphOpenApi, Stream stream, OpenApiStyle style)
 
         {
@@ -258,15 +188,12 @@ namespace GraphWebApi.Controllers
 
         private string GetVersionUri(string graphVersion)
         {
-            switch (graphVersion.ToLower(CultureInfo.InvariantCulture))
+            return graphVersion.ToLower(CultureInfo.InvariantCulture) switch
             {
-                case "v1.0":
-                    return _configuration["GraphMetadata:V1.0"];
-                case "beta":
-                    return _configuration["GraphMetadata:Beta"];
-                default:
-                    return null;
-            }
+                "v1.0" => _configuration["GraphMetadata:V1.0"],
+                "beta" => _configuration["GraphMetadata:Beta"],
+                _ => null,
+            };
         }
     }
 }

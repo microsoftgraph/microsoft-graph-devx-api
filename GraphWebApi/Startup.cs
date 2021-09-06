@@ -28,6 +28,9 @@ using TelemetrySanitizerService;
 using OpenAPIService.Interfaces;
 using OpenAPIService;
 using KnownIssuesService.Interfaces;
+using GraphWebApi.Middleware;
+using CodeSnippetsReflection.OData;
+using CodeSnippetsReflection.OpenAPI;
 
 namespace GraphWebApi
 {
@@ -85,7 +88,8 @@ namespace GraphWebApi
             #endregion
 
             services.AddMemoryCache();
-            services.AddSingleton<ISnippetsGenerator, SnippetsGenerator>();
+            services.AddSingleton<IODataSnippetsGenerator, ODataSnippetsGenerator>();
+            services.AddSingleton<IOpenApiSnippetsGenerator, OpenApiSnippetsGenerator>();
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
@@ -95,7 +99,6 @@ namespace GraphWebApi
             services.AddSingleton<IKnownIssuesService, KnownIssuesService.Services.KnownIssuesService>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
             services.AddControllers().AddNewtonsoftJson();
-            services.Configure<SamplesAdministrators>(Configuration);
 
             // Localization
             services.Configure<RequestLocalizationOptions>(options =>
@@ -127,6 +130,7 @@ namespace GraphWebApi
             {
                 app.UseHsts();
             }
+            app.UseGlobalExceptionMiddleware();
             app.UseStaticFiles(new StaticFileOptions
             {
                 DefaultContentType = "text/plain",

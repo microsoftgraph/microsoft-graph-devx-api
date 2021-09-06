@@ -6,12 +6,13 @@ using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using System;
+using System.IO;
 
 namespace MockTestUtility
 {
     public class IServiceProviderMock
     {
-        private const string ConfigFilePath = ".\\TestFiles\\Permissions\\appsettings.json";
+        private static string ConfigFilePath => Path.Join(Environment.CurrentDirectory, "TestFiles", "Permissions", "appsettings.json");
         private readonly IPermissionsStore _permissionsStore;
         private readonly Mock<IServiceProvider> _serviceProvider;
         private readonly Mock<IServiceScope> _serviceScope;
