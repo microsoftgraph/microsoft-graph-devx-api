@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace OpenAPIService
 {
@@ -36,7 +37,7 @@ namespace OpenAPIService
 
                 if (operationId.Contains(DefaultPutPrefix))
                 {
-                    StringBuilder newOperationId = new StringBuilder(operationId);
+                    var newOperationId = new StringBuilder(operationId);
 
                     newOperationId.Replace(DefaultPutPrefix, NewPutPrefix);
                     pathItem.Operations[putOperation].OperationId = newOperationId.ToString();
@@ -73,16 +74,27 @@ namespace OpenAPIService
                 }
             }
 
-            int charPos = operationId.LastIndexOf('.', operationId.Length - 1);
+            var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 
             // Check whether Put operation id already got updated
             if (charPos >= 0 && !operationId.Contains(NewPutPrefix))
             {
-                StringBuilder newOperationId = new StringBuilder(operationId);
+                var newOperationId = new StringBuilder(operationId);
 
                 newOperationId[charPos] = '_';
-                operation.OperationId = newOperationId.ToString();
+                operationId = newOperationId.ToString();
             }
+
+            // Change Ref operationId name
+            // Ref key word is enclosed between lower-cased and upper-cased letters
+            // Ex.: applications_GetRefCreatedOnBehalfOf to applications_GetCreatedOnBehalfOfByRef
+            var regex = new Regex("(?<=[a-z])Ref(?=[A-Z])");
+            if (regex.Match(operationId).Success)
+            {
+                operationId = $"{regex.Replace(operationId, string.Empty)}ByRef";
+            }
+
+            operation.OperationId = operationId;
         }
 
         /// <summary>
@@ -121,7 +133,7 @@ namespace OpenAPIService
         /// </example>
         /// <param name="operation">The target OpenAPI operation.</param>
         /// <returns>The resolved OperationId.</returns>
-        private string ResolveActionFunctionOperationId(OpenApiOperation operation)
+        private static string ResolveActionFunctionOperationId(OpenApiOperation operation)
         {
             var operationId = operation.OperationId;
             var segments = operationId.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries).ToList();
