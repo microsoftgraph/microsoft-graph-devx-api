@@ -1,14 +1,14 @@
 # microsoft-graph-devx-api
 
 ## About the project/repo
-The Graph DevX API is a backend RESTful API that primarily exposes resources that are consumed by Microsoft Graph docs, [Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer), [Powershell sdk](https://github.com/microsoftgraph/msgraph-sdk-powershell) and Graph samples workload teams which are managed by the Graph PM team.
+The Graph DevX API is a backend RESTful API that primarily exposes resources that are consumed by [Microsoft Graph documentation](https://docs.microsoft.com/graph/), [Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer), [Powershell sdk](https://github.com/microsoftgraph/msgraph-sdk-powershell) and Graph samples workload teams which are managed by the Graph PM team.
 It serves up a list of the following resources:
 
 - Sample Queries: A set of queries that you can run against [Microsoft Graph](https://docs.microsoft.com/en-us/graph/overview).
 - Permissions: a set of permissive scopes for running different queries on [Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer) for different APIs.
 - OpenAPI Descriptions: OpenAPI definitions for APIs within MS Graph which are used by [Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer) and [Powershell sdk](https://github.com/microsoftgraph/msgraph-sdk-powershell).
-- Changes: Changelog info for Microsoft Graph versions v1.0 and beta.
-- Known Issues: A list of known issues for Graph and the statuses of the issues.
+- Changes: [Changelog info](https://developer.microsoft.com/en-us/graph/changelog) for Microsoft Graph versions v1.0 and beta.
+- Known Issues: A list of [known issues](https://docs.microsoft.com/en-us/graph/known-issues) for Graph and the statuses of the issues.
 
 ## Overview
 DevX API is a collection of the following endpoints for different services:
