@@ -13,8 +13,8 @@ namespace OpenAPIService.Test
     public class OpenAPIServiceShould
     {
         private const string Title = "Partial Graph API";
-        private const string GraphVersion = "beta";
-        private readonly OpenApiDocument _graphBetaSource = null;
+        private const string GraphVersion = "mock";
+        private readonly OpenApiDocument _graphMockSource = null;
         private readonly IOpenApiService _openApiService;
         private readonly OpenAPIDocumentCreatorMock _openAPIDocumentCreatorMock;
 
@@ -24,30 +24,29 @@ namespace OpenAPIService.Test
             _openAPIDocumentCreatorMock = new OpenAPIDocumentCreatorMock(_openApiService);
 
             // Create OpenAPI document with default OpenApiStyle = Plain
-            _graphBetaSource = _openAPIDocumentCreatorMock.GetGraphOpenApiDocument("Beta", false);
+            _graphMockSource = _openAPIDocumentCreatorMock.GetGraphOpenApiDocument("Mock", false);
         }
 
         [Fact]
         public void FormatPathFunctionsOfStringDataTypesWithSingleQuotationMarks()
         {
             // Arrange
-            string operationId_1 = "reports.getTeamsUserActivityCounts";
-            string operationId_2 = "reports.getTeamsUserActivityUserDetail-a3f1";
-            OpenApiDocument source = _graphBetaSource;
+            var operationId_1 = "reports.getTeamsUserActivityCounts";
+            var operationId_2 = "reports.getTeamsUserActivityUserDetail-a3f1";
 
             var predicate_1 = _openApiService.CreatePredicate(operationIds: operationId_1,
                                                              tags: null,
                                                              url: null,
-                                                             source: source);
+                                                             source: _graphMockSource);
 
             var predicate_2 = _openApiService.CreatePredicate(operationIds: operationId_2,
                                                              tags: null,
                                                              url: null,
-                                                             source: source);
+                                                             source: _graphMockSource);
 
             // Act
-            var subsetOpenApiDocument_1 = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate_1);
-            var subsetOpenApiDocument_2 = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate_2);
+            var subsetOpenApiDocument_1 = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate_1);
+            var subsetOpenApiDocument_2 = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate_2);
 
             // Assert
             Assert.Collection(subsetOpenApiDocument_1.Paths,
@@ -70,9 +69,6 @@ namespace OpenAPIService.Test
         [InlineData(null, "users.user", "/users")]
         public void ThrowsInvalidOperationExceptionInCreatePredicateWhenInvalidNumberOfArgumentsAreSpecified(string operationIds, string tags, string url)
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
-
             // Act and Assert
             if (string.IsNullOrEmpty(operationIds) &&
                 string.IsNullOrEmpty(tags) &&
@@ -82,7 +78,7 @@ namespace OpenAPIService.Test
                     _openApiService.CreatePredicate(operationIds: operationIds,
                                                    tags: tags,
                                                    url: url,
-                                                   source: source)).Message;
+                                                   source: _graphMockSource)).Message;
                 Assert.Equal("Either operationIds, tags or url need to be specified.", message);
             }
             else
@@ -91,7 +87,7 @@ namespace OpenAPIService.Test
                     _openApiService.CreatePredicate(operationIds: operationIds,
                                                    tags: tags,
                                                    url: url,
-                                                   source: source)).Message;
+                                                   source: _graphMockSource)).Message;
 
                 if (url != null && (operationIds != null || tags != null))
                 {
@@ -107,14 +103,11 @@ namespace OpenAPIService.Test
         [Fact]
         public void ThrowsArgumentExceptionInCreatePredicateWhenNonExistentUrlArgumentIsSpecified()
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
-
             // Act and Assert
             var message = Assert.Throws<ArgumentException>(() => _openApiService.CreatePredicate(operationIds: null,
                                                                                                 tags: null,
                                                                                                 url: "/foo",
-                                                                                                source: source,
+                                                                                                source: _graphMockSource,
                                                                                                 graphVersion: GraphVersion)).Message;
             Assert.Equal("The url supplied could not be found.", message);
         }
@@ -122,16 +115,13 @@ namespace OpenAPIService.Test
         [Fact]
         public void ThrowsArgumentExceptionInApplyStyleWhenNoPathsAreReturned()
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
-
             var predicate = _openApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: "/",
-                                                           source: source,
+                                                           source: _graphMockSource,
                                                            graphVersion: GraphVersion); // root path will be non-existent in a PowerShell styled doc.
 
-            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
             // Act & Assert
             var message = Assert.Throws<ArgumentException>(() => _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument)).Message;
@@ -143,17 +133,14 @@ namespace OpenAPIService.Test
         [InlineData(null, "bar.foo")]
         public void ThrowsArgumentExceptionInCreateFilteredDocumentWhenNonExistentOperationIdsAndTagsAreSupplied(string operationIds, string tags)
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
-
             var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
                                                            tags: tags,
                                                            url: null,
-                                                           source: source);
+                                                           source: _graphMockSource);
 
             // Act & Assert
             var message = Assert.Throws<ArgumentException>(() =>
-                _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate)).Message;
+                _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate)).Message;
 
             Assert.Equal("No paths found for the supplied parameters.", message);
         }
@@ -164,14 +151,11 @@ namespace OpenAPIService.Test
         [InlineData("users.user.ListUser", null, null)]
         public void ReturnValueInCreatePredicateWhenValidArgumentsAreSpecified(string operationIds, string tags, string url)
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
-
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
                                                            tags: tags,
                                                            url: url,
-                                                           source: source,
+                                                           source: _graphMockSource,
                                                            graphVersion: GraphVersion);
 
             // Assert
@@ -184,17 +168,14 @@ namespace OpenAPIService.Test
         [InlineData("users.user.ListUser", null, null)]
         public void ReturnOpenApiDocumentInCreateFilteredDocumentWhenValidArgumentsAreSpecified(string operationIds, string tags, string url)
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
-
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
                                                            tags: tags,
                                                            url: url,
-                                                           source: source,
+                                                           source: _graphMockSource,
                                                            graphVersion: GraphVersion);
 
-            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
             // Assert
             Assert.NotNull(subsetOpenApiDocument);
@@ -227,17 +208,14 @@ namespace OpenAPIService.Test
                                                                                OperationType operationType,
                                                                                string expectedOperationId = null)
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
-
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: url,
-                                                           source: source,
+                                                           source: _graphMockSource,
                                                            graphVersion: GraphVersion);
 
-            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
             subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument);
 
@@ -312,16 +290,13 @@ namespace OpenAPIService.Test
         [Fact]
         public void RemoveRootPathFromOpenApiDocumentInApplyStyleForPowerShellOpenApiStyle()
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
-
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: "*",
                                                            tags: null,
                                                            url: null,
-                                                           source: source); // fetch all paths/operations
+                                                           source: _graphMockSource); // fetch all paths/operations
 
-            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
 
@@ -333,17 +308,16 @@ namespace OpenAPIService.Test
         public void EscapePoundCharacterFromNetworkInterfaceSchemaDescription()
         {
             // Arrange
-            OpenApiDocument source = _graphBetaSource;
             var expectedDescription = "Description of the NIC (e.g. Ethernet adapter, Wireless LAN adapter Local Area Connection <#/>, etc.).";
 
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: "/security/hostSecurityProfiles",
-                                                           source: source,
+                                                           source: _graphMockSource,
                                                            graphVersion: GraphVersion);
 
-            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
 
             var parentSchema = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"];
@@ -358,17 +332,15 @@ namespace OpenAPIService.Test
         [InlineData("/groups/{group-id}/events/{event-id}/calendar/events/microsoft.graph.delta", OperationType.Get, "groups.events.calendar.events_delta")]
         public void ResolveActionFunctionOperationIdsForPowerShellStyle(string url, OperationType operationType, string expectedOperationId)
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
 
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: url,
-                                                           source: source,
+                                                           source: _graphMockSource,
                                                            graphVersion: GraphVersion);
 
-            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
             var operationId = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
@@ -386,17 +358,14 @@ namespace OpenAPIService.Test
         [InlineData(OpenApiStyle.PowerShell)]
         public void SetExplodePropertyToFalseInParametersWithStyleEqualsFormForAllStyles(OpenApiStyle style)
         {
-            // Arrange
-            OpenApiDocument source = _graphBetaSource;
-
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
                                                            url: "/users/{user-id}/messages/{message-id}",
-                                                           source: source,
+                                                           source: _graphMockSource,
                                                            graphVersion: GraphVersion);
 
-            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, Title, GraphVersion, predicate);
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
             subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument);
 
             var parameter = subsetOpenApiDocument.Paths
@@ -405,6 +374,27 @@ namespace OpenAPIService.Test
                               .Parameters.First(s => s.Name.Equals("$select"));
             // Assert
             Assert.False(parameter.Explode);
+        }
+
+        [Fact]
+        public void SetByRefPostfixForRefOperationIds()
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: "/applications/{application-id}/createdOnBehalfOf/$ref",
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            var operationId = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
+                              .Operations[OperationType.Get]
+                              .OperationId;
+
+            // Assert
+            Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operationId);
         }
     }
 }
