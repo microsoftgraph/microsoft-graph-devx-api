@@ -48,6 +48,7 @@ steps:
 
 - task: PublishTestResults@2
   displayName: "Publish Test Results"
+  condition: succeededOrFailed()
   inputs:
     testResultsFormat: xUnit
     testResultsFiles: '**/*.trx' 
