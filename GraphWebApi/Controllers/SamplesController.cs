@@ -34,7 +34,8 @@ namespace GraphWebApi.Controllers
 
         // Gets the list of all sample queries
         [Route("api/[controller]")]
-        [Route("graphexplorersamples")]
+        [Route("api/graphexplorersamples")]
+        [Route("samples")]
         [Produces("application/json")]
         [HttpGet]
         public async Task<IActionResult> GetSampleQueriesListAsync(string search, string org, string branchName)
@@ -72,7 +73,8 @@ namespace GraphWebApi.Controllers
 
        // Gets a sample query from the list of sample queries by its id
        [Route("api/[controller]/{id}")]
-       [Route("graphexplorersamples/{id}")]
+       [Route("api/graphexplorersamples/{id}")]
+       [Route("samples/{id}")]
        [Produces("application/json")]
        [HttpGet]
         public async Task<IActionResult> GetSampleQueryByIdAsync(string id, string org, string branchName)
