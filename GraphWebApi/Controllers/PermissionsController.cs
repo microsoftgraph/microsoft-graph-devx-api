@@ -15,7 +15,7 @@ using UtilityService;
 namespace GraphWebApi.Controllers
 {
     [Route("api/[controller]")]
-    [Route("permissions")]
+    [Route("graphexplorerpermissions")]
     [ApiController]
     public class PermissionsController : ControllerBase
     {
