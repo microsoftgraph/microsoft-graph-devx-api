@@ -36,7 +36,6 @@ steps:
 - task: VSBuild@1
   inputs:
     vsVersion: 'latest'
-    restoreNugetPackages: true
     solution: '**\*.sln'
     configuration: '$(buildConfiguration)'
     msbuildArchitecture: 'x64'
