@@ -15,7 +15,7 @@ trigger:
 pr: none
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-latest'
 
 variables:
   solution: '**/*.sln'
@@ -27,29 +27,18 @@ steps:
   clean: true
   fetchDepth: 1
 
-- task: NuGetToolInstaller@1
-
-- task: NuGetCommand@2
+- task: DotNetCoreCLI@2
+  displayName: "Restore Nuget Packages"
   inputs:
-    restoreSolution: '$(solution)'
+    command: 'restore'
+    feedsToUse: 'select'
 
-- task: VSBuild@1
+- task: DotNetCoreCLI@2
   inputs:
-    vsVersion: 'latest'
-    solution: '**\*.sln'
-    configuration: '$(buildConfiguration)'
-    msbuildArchitecture: 'x64'
-
-- task: VisualStudioTestPlatformInstaller@1
-  displayName: 'Install VSTest Platform'
-  inputs:
-    versionSelector: latestStable
-    packageFeedSelector: nugetOrg
-    testPlatformVersion: 16.9.4
+    command: 'build'
 
 - task: DotNetCoreCLI@2
   displayName: "Run Tests"
-  continueOnError: true
   inputs:
     command: test
     projects: '**/*Test/*.csproj'
