@@ -84,8 +84,4 @@ steps:
   enabled: true
 
 - task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)//GraphExplorerApi.zip'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
 
