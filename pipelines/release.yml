@@ -35,10 +35,11 @@ steps:
 
 - task: VSBuild@1
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
+    vsVersion: 'latest'
+    restoreNugetPackages: true
+    solution: '**\*.sln'
     configuration: '$(buildConfiguration)'
+    msbuildArchitecture: 'x64'
 
 - task: VSTest@2
   inputs:
