@@ -40,22 +40,38 @@ steps:
     configuration: '$(buildConfiguration)'
     msbuildArchitecture: 'x64'
 
-- task: VSTest@2
+- task: VisualStudioTestPlatformInstaller@1
+  displayName: 'Install VSTest Platform'
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    testAssemblyVer2: |
-      **/net5.0/**.Test.dll
-      !**/*TestAdapter.dll
-      !**/obj/**
-    diagnosticsEnabled: true
+    versionSelector: latestStable
+    packageFeedSelector: nugetOrg
+    testPlatformVersion: 16.9.4
 
-- task: VSBuild@1
+- task: DotNetCoreCLI@2
+  displayName: "Run Tests"
+  continueOnError: true
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: test
+    projects: '**/*Tests/*.csproj'
+    arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --no-build'
+
+- task: PublishTestResults@2
+  displayName: "Publish Test Results"
+  inputs:
+    testResultsFormat: xUnit
+    testResultsFiles: '**/*.trx' 
+    codeCoverageTool: 'cobertura'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
+    failTaskOnFailedTests: false # Optional
+    publishRunAttachments: true # Optional
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Artifacts'
+  inputs:
+    command: 'publish'
+    publishWebProjects: true
+    zipAfterPublish: false
+    arguments: '--configuration $(buildConfiguration) --no-build --nologo --output $(Build.ArtifactStagingDirectory) '
 
 - task: YodLabs.O365PostMessage.O365PostMessageBuild.O365PostMessageBuild@0
   displayName: 'Graph Client Tooling pipeline fail notification'
