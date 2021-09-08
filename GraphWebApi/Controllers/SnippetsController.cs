@@ -20,7 +20,8 @@ using System;
 namespace GraphWebApi.Controllers
 {
     [Route("api/[controller]")]
-    [Route("snippetgenerator")]
+    [Route("snippets")]
+    [Route("api/graphexplorersnippets")]
     [ApiController]
     public class SnippetsController : ControllerBase
     {
