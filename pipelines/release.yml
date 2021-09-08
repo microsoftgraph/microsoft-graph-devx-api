@@ -70,7 +70,7 @@ steps:
   inputs:
     command: 'publish'
     publishWebProjects: true
-    zipAfterPublish: false
+    zipAfterPublish: true
     arguments: '--configuration $(buildConfiguration) --no-build --nologo --output $(Build.ArtifactStagingDirectory) '
 
 - task: YodLabs.O365PostMessage.O365PostMessageBuild.O365PostMessageBuild@0
@@ -84,4 +84,8 @@ steps:
   enabled: true
 
 - task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)//GraphExplorerApi.zip'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
 
