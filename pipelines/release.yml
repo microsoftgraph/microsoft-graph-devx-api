@@ -42,7 +42,7 @@ steps:
   inputs:
     command: test
     projects: '**/*Test/*.csproj'
-    arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --no-build'
+    arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
 
 - task: PublishTestResults@2
   displayName: "Publish Test Results"
@@ -60,7 +60,7 @@ steps:
     command: 'publish'
     publishWebProjects: true
     zipAfterPublish: true
-    arguments: '--configuration $(buildConfiguration) --no-build --nologo --output $(Build.ArtifactStagingDirectory) '
+    arguments: '--configuration $(buildConfiguration) --nologo --output $(Build.ArtifactStagingDirectory) '
 
 - task: YodLabs.O365PostMessage.O365PostMessageBuild.O365PostMessageBuild@0
   displayName: 'Graph Client Tooling pipeline fail notification'
