@@ -26,6 +26,7 @@ steps:
 - checkout: self
   clean: true
   fetchDepth: 1
+  submodules: true
 
 - task: DotNetCoreCLI@2
   displayName: "Restore Nuget Packages"
