@@ -50,5 +50,3 @@ steps:
     testResultsFiles: '**/*.trx' 
     codeCoverageTool: 'cobertura'
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
-    failTaskOnFailedTests: false # Optional
-    publishRunAttachments: true # Optional
