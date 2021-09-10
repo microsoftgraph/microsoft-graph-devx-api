@@ -34,6 +34,7 @@ namespace GraphWebApi.Controllers
 
         // Gets the list of all sample queries
         [Route("api/[controller]")]
+        [Route("api/graphexplorersamples")]
         [Route("samples")]
         [Produces("application/json")]
         [HttpGet]
@@ -72,6 +73,7 @@ namespace GraphWebApi.Controllers
 
        // Gets a sample query from the list of sample queries by its id
        [Route("api/[controller]/{id}")]
+       [Route("api/graphexplorersamples/{id}")]
        [Route("samples/{id}")]
        [Produces("application/json")]
        [HttpGet]
