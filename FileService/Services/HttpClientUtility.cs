@@ -41,7 +41,7 @@ namespace FileService.Services
             using var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
             if (httpResponseMessage == null)
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("The request message was already sent by the HttpClient instance.");
             }
 
             var fileContents = await httpResponseMessage?.Content?.ReadAsStringAsync();
