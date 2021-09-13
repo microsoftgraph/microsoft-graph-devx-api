@@ -152,7 +152,7 @@ namespace KnownIssuesService.Services
 
 			_knownIssuesList = items.Where(x => x!=null).Select(x => new KnownIssue
 			{
-				Id = x?.Id,
+				Id = x.Id,
 				State = x.Fields.TryGetValue("System.State", out var state) ? state.ToString(): default,
 				Title = x.Fields.TryGetValue("System.Title", out var title) ? title.ToString() : default,
 				WorkLoadArea = x.Fields.TryGetValue("Custom.MSGraphM365Workload", out var workLoadArea) ? workLoadArea.ToString() : default,
