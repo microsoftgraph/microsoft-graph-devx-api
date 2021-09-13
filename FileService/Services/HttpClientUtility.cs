@@ -44,9 +44,9 @@ namespace FileService.Services
                 throw new InvalidOperationException("The request message was already sent by the HttpClient instance.");
             }
 
-            var fileContents = await httpResponseMessage?.Content?.ReadAsStringAsync();
+            var fileContents = await httpResponseMessage.Content?.ReadAsStringAsync();
 
-            return !httpResponseMessage.IsSuccessStatusCode ? throw new Exception(fileContents) : fileContents;
+            return httpResponseMessage.IsSuccessStatusCode ? throw new Exception(fileContents) : fileContents;
         }
     }
 }
