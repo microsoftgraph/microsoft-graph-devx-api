@@ -321,7 +321,7 @@ namespace OpenAPIService
                      * between the relative url segment and the corresponding OpenApiUrlTreeNode segment name
                      * ex.: matching '/users/12345/messages' with '/users/{user-id}/messages'
                      */
-                    tempTargetChild = targetChild.Children
+                    tempTargetChild = targetChild?.Children
                                                  .FirstOrDefault(x => x.Value.IsParameter).Value;
 
                     /* If no parameter segment exists in the children of the

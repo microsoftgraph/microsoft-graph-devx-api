@@ -39,6 +39,11 @@ namespace FileService.Services
             requestMessage.Method ??= HttpMethod.Get; // default is GET
 
             using var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
+            if (httpResponseMessage == null)
+            {
+                throw new InvalidOperationException();
+            }
+
             var fileContents = await httpResponseMessage?.Content?.ReadAsStringAsync();
 
             return !httpResponseMessage.IsSuccessStatusCode ? throw new Exception(fileContents) : fileContents;

@@ -103,20 +103,24 @@ namespace OpenAPIService
         /// <param name="schema">The target <see cref="OpenApiSchema"/></param>
         public override void Visit(OpenApiSchema schema)
         {
-            if (_schemaLoop.Contains(schema))
+            if (schema != null)
             {
-                return; // loop detected, this schema has already been walked.
-            }
+                if (_schemaLoop.Contains(schema))
+                {
+                    return; // loop detected, this schema has already been walked.
+                }
 
-            if ("object".Equals(schema?.Type, StringComparison.OrdinalIgnoreCase))
-            {
-                schema.AdditionalProperties = new OpenApiSchema() { Type = "object" }; // To make AutoREST happy
+                if ("object".Equals(schema?.Type, StringComparison.OrdinalIgnoreCase))
+                {
 
-                /* Because 'additionalProperties' are now being walked,
-                 * we need a way to keep track of visited schemas to avoid
-                 * endlessly creating and walking them in an infinite recursion.
-                 */
-                _schemaLoop.Push(schema.AdditionalProperties);
+                    schema.AdditionalProperties = new OpenApiSchema() { Type = "object" }; // To make AutoREST happy
+
+                    /* Because 'additionalProperties' are now being walked,
+                     * we need a way to keep track of visited schemas to avoid
+                     * endlessly creating and walking them in an infinite recursion.
+                     */
+                    _schemaLoop.Push(schema.AdditionalProperties);
+                }
             }
         }
 

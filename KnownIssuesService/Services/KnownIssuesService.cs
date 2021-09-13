@@ -150,7 +150,7 @@ namespace KnownIssuesService.Services
 			// get work items for the ids found in query
 			List<WorkItem> items = await GetWorkItemsQueryAsync(ids, result);
 
-			_knownIssuesList = items.Select(x => new KnownIssue
+			_knownIssuesList = items.Where(x => x!=null).Select(x => new KnownIssue
 			{
 				Id = x?.Id,
 				State = x.Fields.TryGetValue("System.State", out var state) ? state.ToString(): default,
