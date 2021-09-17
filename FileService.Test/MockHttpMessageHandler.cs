@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using FileService.Test;
 
 namespace MockTestUtility
 {
@@ -22,7 +23,7 @@ namespace MockTestUtility
         /// <returns>A Task from the HttpResponseMessage result.</returns>
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var testContent = new StringContent("Content as string");
+            var testContent = new StringContent(Constants.HttpContent);
 
             var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
             {
