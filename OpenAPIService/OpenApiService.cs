@@ -518,6 +518,12 @@ namespace OpenAPIService
                     // 'microsoft.graph.networkInterface' schema
                     EscapePoundCharacter(subsetOpenApiDocument.Components);
                 }
+                else
+                {
+                    RemoveContent(subsetOpenApiDocument);
+                    subsetOpenApiDocument.Components.Schemas = null;
+                    subsetOpenApiDocument.Components.Responses = null;
+                }
             }
 
             if (subsetOpenApiDocument.Paths == null ||

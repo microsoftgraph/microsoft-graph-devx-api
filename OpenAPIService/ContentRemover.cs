@@ -12,23 +12,38 @@ namespace OpenAPIService
     /// Provides OpenApi visitor methods that traverse an OpenAPI document and clears the OpenApiResponse and OpenApiRequestBody Content property values.
     /// </summary>
     internal class ContentRemover: OpenApiVisitorBase
-    {       
-        public override void Visit(OpenApiResponse response)
-        {            
-            if (response.Content.Any())
-            {
-                response.Content.Clear();
-                base.Visit(response);
-            }
+    {
+        //public override void Visit(OpenApiResponse response)
+        //{
+        //    if (response.Content.Any())
+        //    {
+        //        response.Content.Clear();
+        //        base.Visit(response);
+        //    }
+        //}
+
+        //public override void Visit(OpenApiRequestBody requestBody)
+        //{
+        //    if (requestBody.Content.Any())
+        //    {
+        //       requestBody.Content.Clear();
+        //       base.Visit(requestBody);
+        //    }
+        //}
+
+        public override void Visit(OpenApiOperation operation)
+        {
+            operation.Parameters.Clear();
+            base.Visit(operation);
         }
 
-        public override void Visit(OpenApiRequestBody requestBody)
+        public override void Visit(OpenApiSchema schema)
         {
-            if (requestBody.Content.Any())
+            if (schema != null && schema.Items != null)
             {
-               requestBody.Content.Clear();
-               base.Visit(requestBody);
-            }         
+                schema.Items = new OpenApiSchema();
+                base.Visit(schema);
+            }
         }
     }
 }
