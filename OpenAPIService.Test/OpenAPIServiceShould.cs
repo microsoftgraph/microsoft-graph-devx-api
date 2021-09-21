@@ -1,11 +1,14 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Services;
 using OpenAPIService.Interfaces;
 using System;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Xunit;
 
 namespace OpenAPIService.Test
@@ -395,6 +398,32 @@ namespace OpenAPIService.Test
 
             // Assert
             Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operationId);
+        }
+
+        [Fact]
+        public void GetOpenApiTreeNode()
+        {
+            // Arrange & Act
+            var openApiUrlTreeNode = _openApiService.GetOpenApiTreeNode(_graphMockSource, GraphVersion);
+
+            using MemoryStream stream = new();
+            ConvertOpenApiUrlTreeNodeToJson(openApiUrlTreeNode, stream);
+            var jsonPayload = Encoding.ASCII.GetString(stream.ToArray());
+            var expectedPayloadContent = "{\"segment\":\"/\",\"labels\":[{\"name\":\"mock\",\"methods\":[\"Get\"]}],\"children\":[{\"segment\":\"administrativeUnits\",\"labels\":[]," +
+                "\"children\":[{\"segment\":\"{administrativeUnit-id}\",\"labels\":[],\"children\":[{\"segment\":\"microsoft.graph.restore\",";
+
+            // Assert
+            Assert.NotEmpty(jsonPayload);
+            Assert.NotNull(jsonPayload);
+            Assert.Contains(expectedPayloadContent, jsonPayload);
+        }
+
+        private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
+        {
+            Assert.NotNull(node);
+            _openApiService.ConvertOpenApiUrlTreeNodeToJson(node, stream);
+            Assert.True(stream.Length > 0);
+            return;
         }
     }
 }

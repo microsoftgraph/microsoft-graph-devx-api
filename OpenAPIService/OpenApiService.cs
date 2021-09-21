@@ -24,6 +24,8 @@ using UtilityService;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
 using OpenAPIService.Interfaces;
+using System.Text.Json;
+using System.Collections.Immutable;
 
 namespace OpenAPIService
 {
@@ -140,7 +142,7 @@ namespace OpenAPIService
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A predicate.</returns>
         public Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags, string url,
-            OpenApiDocument source, string graphVersion = "v1.0", bool forceRefresh = false)
+            OpenApiDocument source, string graphVersion = Constants.OpenApiConstants.GraphVersion_V1, bool forceRefresh = false)
         {
             string predicateSource = null;
             _telemetryClient?.TrackTrace("Creating predicate",
@@ -189,35 +191,7 @@ namespace OpenAPIService
             }
             else if (url != null)
             {
-                if (forceRefresh)
-                {
-                    _telemetryClient?.TrackTrace($"{nameof(forceRefresh)} requested; creating new OpenApiUrlTreeNode",
-                                                 SeverityLevel.Information,
-                                                 _openApiTraceProperties);
-
-                    _openApiRootNode = CreateOpenApiUrlTreeNode(source, graphVersion);
-
-                    _telemetryClient?.TrackTrace("Finished creating new OpenApiUrlTreeNode",
-                                                 SeverityLevel.Information,
-                                                 _openApiTraceProperties);
-                }
-                else if (!_openApiRootNode.PathItems.ContainsKey(graphVersion))
-                {
-                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-                    _telemetryClient?.TrackTrace($"Attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
-                                                 SeverityLevel.Information,
-                                                 _openApiTraceProperties);
-                    _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
-
-                    _openApiRootNode.Attach(source, graphVersion);
-
-                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-                    _telemetryClient?.TrackTrace($"Finished attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
-                                                 SeverityLevel.Information,
-                                                 _openApiTraceProperties);
-                    _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
-
-                }
+                _openApiRootNode = GetOpenApiTreeNode(source, graphVersion, forceRefresh);
 
                 url = url.BaseUriPath()
                          .UriTemplatePathFormat();
@@ -249,14 +223,49 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Creates an <see cref="OpenApiUrlTreeNode"/> from an <see cref="OpenApiDocument"/>.
+        /// Creates an <see cref="OpenApiUrlTreeNode"/> from an <see cref="OpenApiDocument"/>
+        /// or attaches an <see cref="OpenApiDocument"/> onto an existing <see cref="OpenApiUrlTreeNode"/>.
         /// </summary>
         /// <param name="source">The target <see cref="OpenApiDocument"/>.</param>
-        /// <param name="label">Name tag for labelling the nodes in the directory structure.</param>
-        /// <returns>The created <see cref="OpenApiUrlTreeNode"/>.</returns>
-        private static OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(OpenApiDocument source, string label)
+        /// <param name="graphVersion">Name tag for labelling the nodes in the directory structure.</param>
+        /// <param name="forceRefresh">Optional: Whether to create a new <see cref="OpenApiUrlTreeNode"/> or attach
+        /// an <see cref="OpenApiDocument"/> onto an existing <see cref="OpenApiUrlTreeNode"/>.</param>
+        /// <returns></returns>
+        public OpenApiUrlTreeNode GetOpenApiTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false)
         {
-            return source == null ? null : OpenApiUrlTreeNode.Create(source, label);
+            UtilityFunctions.CheckArgumentNull(source, nameof(source));
+            UtilityFunctions.CheckArgumentNullOrEmpty(graphVersion, nameof(graphVersion));
+
+            if (forceRefresh)
+            {
+                _telemetryClient?.TrackTrace($"{nameof(forceRefresh)} requested; creating new OpenApiUrlTreeNode",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
+
+                _openApiRootNode = OpenApiUrlTreeNode.Create(source, graphVersion);
+
+                _telemetryClient?.TrackTrace("Finished creating new OpenApiUrlTreeNode",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
+            }
+            else if (!_openApiRootNode.PathItems.ContainsKey(graphVersion))
+            {
+                _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+                _telemetryClient?.TrackTrace($"Attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
+                _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+
+                _openApiRootNode.Attach(source, graphVersion);
+
+                _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+                _telemetryClient?.TrackTrace($"Finished attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
+                _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+            }
+
+            return _openApiRootNode;
         }
 
         /// <summary>
@@ -377,17 +386,68 @@ namespace OpenAPIService
             return operations;
         }
 
-		/// <summary>
-		/// Create a representation of the OpenApiDocument to return from an API
-		/// </summary>
-		/// <param name="subset">OpenAPI document.</param>
-		/// <param name="styleOptions">The modal object containing the required styling options.</param>
-		/// <returns>A memory stream.</returns>
-		public MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
+        /// <summary>
+        /// Converts a <see cref="OpenApiUrlTreeNode"/> object to JSON text.
+        /// </summary>
+        /// <param name="node">The target <see cref="OpenApiUrlTreeNode"/> object.</param>
+        /// <param name="stream">The destination for writing the JSON text to.</param>
+        public void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
+        {
+            using Utf8JsonWriter writer = new Utf8JsonWriter(stream);
+            ConvertOpenApiUrlTreeNodeToJson(writer, node);
+            writer.FlushAsync();
+        }
+
+        /// <summary>
+        /// Converts a <see cref="OpenApiUrlTreeNode"/> object to JSON text.
+        /// </summary>
+        /// <param name="writer">An instance of the <see cref="Utf8JsonWriter"/> class that
+        /// uses a specified stream to write the JSON output to.</param>
+        /// <param name="node">The target <see cref="OpenApiUrlTreeNode"/> object.</param>
+        private static void ConvertOpenApiUrlTreeNodeToJson(Utf8JsonWriter writer, OpenApiUrlTreeNode node)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("segment", node.Segment);
+            writer.WriteStartArray("labels");
+
+            foreach (var pathItem in node.PathItems)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("name", pathItem.Key);
+                writer.WriteStartArray("methods");
+                var methods = pathItem.Value.Operations.Select(x => x.Key.ToString()).ToList();
+                foreach (var method in methods)
+                {
+                    writer.WriteStringValue(method);
+                }
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+
+            if (node.Children.Count > 0)
+            {
+                writer.WriteStartArray("children");
+                foreach (var childNode in node.Children.ToImmutableSortedDictionary().Values)
+                {
+                    ConvertOpenApiUrlTreeNodeToJson(writer, childNode);
+                }
+                writer.WriteEndArray();
+            }
+            writer.WriteEndObject();
+        }
+
+        /// <summary>
+        /// Create a representation of the OpenApiDocument to return from an API
+        /// </summary>
+        /// <param name="subset">OpenAPI document.</param>
+        /// <param name="styleOptions">The modal object containing the required styling options.</param>
+        /// <returns>A memory stream.</returns>
+        public MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
             _telemetryClient?.TrackTrace($"Serializing the subset OpenApiDocument document for '{styleOptions.OpenApiFormat}' format",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
+                                            SeverityLevel.Information,
+                                            _openApiTraceProperties);
 
             var stream = new MemoryStream();
             var sr = new StreamWriter(stream);
@@ -430,8 +490,8 @@ namespace OpenAPIService
             stream.Position = 0;
 
             _telemetryClient?.TrackTrace($"Finished serializing the subset OpenApiDocument document for '{styleOptions.OpenApiFormat}' format",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
+                                            SeverityLevel.Information,
+                                            _openApiTraceProperties);
 
             return stream;
         }

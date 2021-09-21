@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Services;
 using OpenAPIService.Common;
 using System;
 using System.IO;
@@ -20,6 +21,10 @@ namespace OpenAPIService.Interfaces
         MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions);
 
         Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh);
+
+        OpenApiUrlTreeNode GetOpenApiTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false);
+
+        void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode urlspace, Stream outfile);
 
         OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument);
 
