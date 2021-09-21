@@ -31,6 +31,14 @@ paths:
               - Java
               - Objective-C
             default: C#
+        - name: generation
+          in: query
+          schema:
+            type: string
+            enum:
+              - odata
+              - openapi
+            default: odata
       requestBody:
         description: HTTP request message to be translated into code.
         content:
