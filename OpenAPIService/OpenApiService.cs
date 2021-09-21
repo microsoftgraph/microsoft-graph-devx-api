@@ -40,10 +40,15 @@ namespace OpenAPIService
     public class OpenApiService : IOpenApiService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new();
-        private static OpenApiUrlTreeNode _openApiRootNode = OpenApiUrlTreeNode.Create();
         private static readonly Dictionary<string, string> _openApiTraceProperties =
                         new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
         private readonly TelemetryClient _telemetryClient;
+        private static OpenApiUrlTreeNode _rootNode = OpenApiUrlTreeNode.Create();
+        public OpenApiUrlTreeNode RootNode
+        {
+            get => _rootNode;
+            set => _rootNode = value;
+        }
 
         public OpenApiService(TelemetryClient telemetryClient = null)
         {
@@ -191,12 +196,12 @@ namespace OpenAPIService
             }
             else if (url != null)
             {
-                _openApiRootNode = GetOpenApiTreeNode(source, graphVersion, forceRefresh);
+                CreateOpenApiUrlTreeNode(source, graphVersion, forceRefresh);
 
                 url = url.BaseUriPath()
                          .UriTemplatePathFormat();
 
-                OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url, graphVersion);
+                OpenApiOperation[] openApiOps = GetOpenApiOperations(RootNode, url, graphVersion);
 
                 if (!(openApiOps?.Any() ?? false))
                 {
@@ -230,8 +235,7 @@ namespace OpenAPIService
         /// <param name="graphVersion">Name tag for labelling the nodes in the directory structure.</param>
         /// <param name="forceRefresh">Optional: Whether to create a new <see cref="OpenApiUrlTreeNode"/> or attach
         /// an <see cref="OpenApiDocument"/> onto an existing <see cref="OpenApiUrlTreeNode"/>.</param>
-        /// <returns></returns>
-        public OpenApiUrlTreeNode GetOpenApiTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false)
+        public void CreateOpenApiUrlTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false)
         {
             UtilityFunctions.CheckArgumentNull(source, nameof(source));
             UtilityFunctions.CheckArgumentNullOrEmpty(graphVersion, nameof(graphVersion));
@@ -242,13 +246,13 @@ namespace OpenAPIService
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
 
-                _openApiRootNode = OpenApiUrlTreeNode.Create(source, graphVersion);
+                RootNode = OpenApiUrlTreeNode.Create(source, graphVersion);
 
                 _telemetryClient?.TrackTrace("Finished creating new OpenApiUrlTreeNode",
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
             }
-            else if (!_openApiRootNode.PathItems.ContainsKey(graphVersion))
+            else if (!RootNode.PathItems.ContainsKey(graphVersion))
             {
                 _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
                 _telemetryClient?.TrackTrace($"Attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
@@ -256,7 +260,7 @@ namespace OpenAPIService
                                              _openApiTraceProperties);
                 _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
-                _openApiRootNode.Attach(source, graphVersion);
+                RootNode.Attach(source, graphVersion);
 
                 _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
                 _telemetryClient?.TrackTrace($"Finished attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
@@ -264,8 +268,6 @@ namespace OpenAPIService
                                              _openApiTraceProperties);
                 _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
             }
-
-            return _openApiRootNode;
         }
 
         /// <summary>
@@ -389,12 +391,12 @@ namespace OpenAPIService
         /// <summary>
         /// Converts a <see cref="OpenApiUrlTreeNode"/> object to JSON text.
         /// </summary>
-        /// <param name="node">The target <see cref="OpenApiUrlTreeNode"/> object.</param>
+        /// <param name="rootNode">The target <see cref="OpenApiUrlTreeNode"/> root node.</param>
         /// <param name="stream">The destination for writing the JSON text to.</param>
-        public void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
+        public void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream)
         {
             using Utf8JsonWriter writer = new Utf8JsonWriter(stream);
-            ConvertOpenApiUrlTreeNodeToJson(writer, node);
+            ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
             writer.FlushAsync();
         }
 
@@ -403,14 +405,14 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="writer">An instance of the <see cref="Utf8JsonWriter"/> class that
         /// uses a specified stream to write the JSON output to.</param>
-        /// <param name="node">The target <see cref="OpenApiUrlTreeNode"/> object.</param>
-        private static void ConvertOpenApiUrlTreeNodeToJson(Utf8JsonWriter writer, OpenApiUrlTreeNode node)
+        /// <param name="rootNode">The target <see cref="OpenApiUrlTreeNode"/> object.</param>
+        private static void ConvertOpenApiUrlTreeNodeToJson(Utf8JsonWriter writer, OpenApiUrlTreeNode rootNode)
         {
             writer.WriteStartObject();
-            writer.WriteString("segment", node.Segment);
+            writer.WriteString("segment", rootNode.Segment);
             writer.WriteStartArray("labels");
 
-            foreach (var pathItem in node.PathItems)
+            foreach (var pathItem in rootNode.PathItems)
             {
                 writer.WriteStartObject();
                 writer.WriteString("name", pathItem.Key);
@@ -425,10 +427,10 @@ namespace OpenAPIService
             }
             writer.WriteEndArray();
 
-            if (node.Children.Count > 0)
+            if (rootNode.Children.Count > 0)
             {
                 writer.WriteStartArray("children");
-                foreach (var childNode in node.Children.ToImmutableSortedDictionary().Values)
+                foreach (var childNode in rootNode.Children.ToImmutableSortedDictionary().Values)
                 {
                     ConvertOpenApiUrlTreeNodeToJson(writer, childNode);
                 }

@@ -176,7 +176,6 @@ namespace GraphWebApi.Controllers
                 graphVersionsList = graphVersions.Split(',', StringSplitOptions.TrimEntries).ToList();
             }
 
-            var openApiUrlTreeNode = OpenApiUrlTreeNode.Create();
             foreach (var graphVersion in graphVersionsList)
             {
                 var graphUri = GetVersionUri(graphVersion);
@@ -187,11 +186,11 @@ namespace GraphWebApi.Controllers
                 }
 
                 var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-                openApiUrlTreeNode = _openApiService.GetOpenApiTreeNode(source, graphVersion, forceRefresh);
+                _openApiService.CreateOpenApiUrlTreeNode(source, graphVersion, forceRefresh);
             }
 
             using MemoryStream stream = new();
-            _openApiService.ConvertOpenApiUrlTreeNodeToJson(openApiUrlTreeNode, stream);
+            _openApiService.ConvertOpenApiUrlTreeNodeToJson(_openApiService.RootNode, stream);
             return Ok(Encoding.ASCII.GetString(stream.ToArray()));
         }
 
