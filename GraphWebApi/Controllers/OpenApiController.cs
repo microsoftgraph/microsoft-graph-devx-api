@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -15,8 +15,11 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using UtilityService;
+using Constants = OpenAPIService.Common.Constants;
 
 namespace GraphWebApi.Controllers
 {
@@ -146,12 +149,50 @@ namespace GraphWebApi.Controllers
             {
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
-            
+
             var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
             await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                 graphOpenApi, Response.Body, styleOptions.Style);
 
             return new EmptyResult();
+        }
+
+        [Route("openapi/tree")]
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] string graphVersions = Constants.OpenApiConstants.GraphVersion_V1,
+                                             [FromQuery] bool forceRefresh = false)
+        {
+            List<string> graphVersionsList = new();
+
+            if (graphVersions == "*")
+            {
+                // Use both v1.0 and beta
+                graphVersionsList.Add(Constants.OpenApiConstants.GraphVersion_V1);
+                graphVersionsList.Add(Constants.OpenApiConstants.GraphVersion_Beta);
+            }
+            else
+            {
+                // Either v1.0 or beta explicitly defined, or both
+                graphVersionsList = graphVersions.Split(',', StringSplitOptions.TrimEntries).ToList();
+            }
+
+            var openApiUrlTreeNode = OpenApiUrlTreeNode.Create();
+            foreach (var graphVersion in graphVersionsList)
+            {
+                var graphUri = GetVersionUri(graphVersion);
+
+                if (graphUri == null)
+                {
+                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
+                }
+
+                var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+                openApiUrlTreeNode = _openApiService.GetOpenApiTreeNode(source, graphVersion, forceRefresh);
+            }
+
+            using MemoryStream stream = new();
+            _openApiService.ConvertOpenApiUrlTreeNodeToJson(openApiUrlTreeNode, stream);
+            return Ok(Encoding.ASCII.GetString(stream.ToArray()));
         }
 
         private static async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
