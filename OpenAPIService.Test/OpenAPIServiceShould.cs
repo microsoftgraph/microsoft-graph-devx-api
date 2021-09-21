@@ -405,14 +405,14 @@ namespace OpenAPIService.Test
         {
             // Arrange & Act
             var openApiUrlTreeNode = _openApiService.GetOpenApiTreeNode(_graphMockSource, GraphVersion);
-
             using MemoryStream stream = new();
             ConvertOpenApiUrlTreeNodeToJson(openApiUrlTreeNode, stream);
+
+            // Assert
             var jsonPayload = Encoding.ASCII.GetString(stream.ToArray());
             var expectedPayloadContent = "{\"segment\":\"/\",\"labels\":[{\"name\":\"mock\",\"methods\":[\"Get\"]}],\"children\":[{\"segment\":\"administrativeUnits\",\"labels\":[]," +
                 "\"children\":[{\"segment\":\"{administrativeUnit-id}\",\"labels\":[],\"children\":[{\"segment\":\"microsoft.graph.restore\",";
 
-            // Assert
             Assert.NotEmpty(jsonPayload);
             Assert.NotNull(jsonPayload);
             Assert.Contains(expectedPayloadContent, jsonPayload);
