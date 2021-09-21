@@ -24,7 +24,7 @@ namespace OpenAPIService.Interfaces
 
         OpenApiUrlTreeNode GetOpenApiTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false);
 
-        void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode urlspace, Stream outfile);
+        void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream);
 
         OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument);
 
