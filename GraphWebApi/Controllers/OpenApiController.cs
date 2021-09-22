@@ -191,7 +191,7 @@ namespace GraphWebApi.Controllers
 
             using MemoryStream stream = new();
             _openApiService.ConvertOpenApiUrlTreeNodeToJson(OpenApiService.RootNode, stream);
-            return Ok(Encoding.ASCII.GetString(stream.ToArray()));
+            return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
         }
 
         private static async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
