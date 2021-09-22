@@ -186,11 +186,11 @@ namespace GraphWebApi.Controllers
                 }
 
                 var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-                _openApiService.CreateOpenApiUrlTreeNode(source, graphVersion, forceRefresh);
+                _openApiService.GetOrCreateOpenApiUrlTreeNode(source, graphVersion, forceRefresh);
             }
 
             using MemoryStream stream = new();
-            _openApiService.ConvertOpenApiUrlTreeNodeToJson(_openApiService.RootNode, stream);
+            _openApiService.ConvertOpenApiUrlTreeNodeToJson(OpenApiService.RootNode, stream);
             return Ok(Encoding.ASCII.GetString(stream.ToArray()));
         }
 

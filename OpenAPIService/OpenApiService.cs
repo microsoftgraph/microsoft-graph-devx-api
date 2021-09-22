@@ -43,12 +43,7 @@ namespace OpenAPIService
         private static readonly Dictionary<string, string> _openApiTraceProperties =
                         new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
         private readonly TelemetryClient _telemetryClient;
-        private static OpenApiUrlTreeNode _rootNode = OpenApiUrlTreeNode.Create();
-        public OpenApiUrlTreeNode RootNode
-        {
-            get => _rootNode;
-            set => _rootNode = value;
-        }
+        public static OpenApiUrlTreeNode RootNode { get; private set; } = OpenApiUrlTreeNode.Create();
 
         public OpenApiService(TelemetryClient telemetryClient = null)
         {
@@ -196,7 +191,7 @@ namespace OpenAPIService
             }
             else if (url != null)
             {
-                CreateOpenApiUrlTreeNode(source, graphVersion, forceRefresh);
+                GetOrCreateOpenApiUrlTreeNode(source, graphVersion, forceRefresh);
 
                 url = url.BaseUriPath()
                          .UriTemplatePathFormat();
@@ -235,7 +230,8 @@ namespace OpenAPIService
         /// <param name="graphVersion">Name tag for labelling the nodes in the directory structure.</param>
         /// <param name="forceRefresh">Optional: Whether to create a new <see cref="OpenApiUrlTreeNode"/> or attach
         /// an <see cref="OpenApiDocument"/> onto an existing <see cref="OpenApiUrlTreeNode"/>.</param>
-        public void CreateOpenApiUrlTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false)
+        /// <returns>An <see cref="OpenApiUrlTreeNode"/>.</returns>
+        public OpenApiUrlTreeNode GetOrCreateOpenApiUrlTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false)
         {
             UtilityFunctions.CheckArgumentNull(source, nameof(source));
             UtilityFunctions.CheckArgumentNullOrEmpty(graphVersion, nameof(graphVersion));
@@ -268,6 +264,8 @@ namespace OpenAPIService
                                              _openApiTraceProperties);
                 _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
             }
+
+            return RootNode;
         }
 
         /// <summary>

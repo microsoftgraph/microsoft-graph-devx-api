@@ -13,7 +13,10 @@ namespace OpenAPIService.Interfaces
 {
     public interface IOpenApiService
     {
-        OpenApiUrlTreeNode RootNode { get; set; }
+        static OpenApiUrlTreeNode RootNode
+        {
+            get; private set;
+        }
 
         OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, string graphVersion, Func<OpenApiOperation, bool> predicate);
 
@@ -24,7 +27,7 @@ namespace OpenAPIService.Interfaces
 
         Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh);
 
-        void CreateOpenApiUrlTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false);
+        OpenApiUrlTreeNode GetOrCreateOpenApiUrlTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false);
 
         void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream);
 

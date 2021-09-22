@@ -404,9 +404,9 @@ namespace OpenAPIService.Test
         public void GetOpenApiTreeNode()
         {
             // Arrange & Act
-            _openApiService.CreateOpenApiUrlTreeNode(_graphMockSource, GraphVersion);
+            _openApiService.GetOrCreateOpenApiUrlTreeNode(_graphMockSource, GraphVersion);
             using MemoryStream stream = new();
-            ConvertOpenApiUrlTreeNodeToJson(_openApiService.RootNode, stream);
+            ConvertOpenApiUrlTreeNodeToJson(OpenApiService.RootNode, stream);
 
             // Assert
             var jsonPayload = Encoding.ASCII.GetString(stream.ToArray());
