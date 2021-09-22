@@ -13,6 +13,7 @@ using OpenAPIService.Common;
 using OpenAPIService.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -27,6 +28,7 @@ namespace GraphWebApi.Controllers
     /// Controller that enables querying over an OpenAPI document
     /// </summary>
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
