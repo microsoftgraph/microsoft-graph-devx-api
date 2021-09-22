@@ -1,8 +1,9 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using GraphExplorerPermissionsService.Interfaces;
 using GraphExplorerPermissionsService.Models;
@@ -18,6 +19,7 @@ namespace GraphWebApi.Controllers
     [Route("api/graphexplorerpermissions")]
     [Route("permissions")]
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class PermissionsController : ControllerBase
     {
         private readonly IPermissionsStore _permissionsStore;
