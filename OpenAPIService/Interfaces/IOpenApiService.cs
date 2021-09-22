@@ -13,11 +13,6 @@ namespace OpenAPIService.Interfaces
 {
     public interface IOpenApiService
     {
-        static OpenApiUrlTreeNode RootNode
-        {
-            get; private set;
-        }
-
         OpenApiDocument CreateFilteredDocument(OpenApiDocument source, string title, string graphVersion, Func<OpenApiOperation, bool> predicate);
 
         Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags, string url,
