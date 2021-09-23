@@ -401,16 +401,14 @@ namespace OpenAPIService.Test
             Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operationId);
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void GetOpenApiTreeNode(bool forceRefresh)
+        [Fact]
+        public void GetOpenApiTreeNode()
         {
             // Arrange
             var sources = new Dictionary<string, OpenApiDocument>() { { GraphVersion, _graphMockSource } };
 
             // Act
-            var rootNode = _openApiService.GetOrCreateOpenApiUrlTreeNode(sources, GraphVersion, forceRefresh);
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
             using MemoryStream stream = new();
             ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
 

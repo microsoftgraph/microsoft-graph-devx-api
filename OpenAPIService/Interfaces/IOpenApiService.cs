@@ -23,7 +23,7 @@ namespace OpenAPIService.Interfaces
 
         Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh);
 
-        OpenApiUrlTreeNode GetOrCreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources, string graphVersionKey, bool forceRefresh = false);
+        OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources);
 
         void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream);
 

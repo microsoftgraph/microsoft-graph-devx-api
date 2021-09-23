@@ -188,7 +188,7 @@ namespace GraphWebApi.Controllers
                 sources.Add(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
             }
 
-            var rootNode = _openApiService.GetOrCreateOpenApiUrlTreeNode(sources, graphVersions, forceRefresh);
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
             using MemoryStream stream = new();
             _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
             return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
