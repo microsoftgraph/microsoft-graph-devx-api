@@ -633,7 +633,7 @@ paths:
             type: boolean
             default: false
           required: false
-          description: Reload the OpenAPI document(s) and the OpenApiUrlTreeNode document.
+          description: Reload the OpenAPI document(s).
       responses:
         "200":
           description: Simplified OpenAPI document(s) rendered as an OpenApiUrlTreeNode document.
