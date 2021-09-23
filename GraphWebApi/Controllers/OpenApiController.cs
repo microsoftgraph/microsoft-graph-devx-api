@@ -16,7 +16,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UtilityService;
@@ -161,11 +160,11 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/tree")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string graphVersions = Constants.OpenApiConstants.GraphVersion_V1,
+        public async Task<IActionResult> Get([FromQuery] string graphVersions,
                                              [FromQuery] bool forceRefresh = false)
         {
+            graphVersions = string.IsNullOrEmpty(graphVersions) ? "*" : graphVersions.ToLower();
             List<string> graphVersionsList = new();
-
             if (graphVersions == "*")
             {
                 // Use both v1.0 and beta
@@ -181,7 +180,6 @@ namespace GraphWebApi.Controllers
             foreach (var graphVersion in graphVersionsList)
             {
                 var graphUri = GetVersionUri(graphVersion);
-
                 if (graphUri == null)
                 {
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
@@ -191,7 +189,6 @@ namespace GraphWebApi.Controllers
             }
 
             var rootNode = _openApiService.GetOrCreateOpenApiUrlTreeNode(sources, graphVersions, forceRefresh);
-
             using MemoryStream stream = new();
             _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
             return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
