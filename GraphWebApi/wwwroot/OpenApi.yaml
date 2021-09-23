@@ -626,14 +626,14 @@ paths:
             type: string
             default: v1.0
           required: false
-          description: Comma separated list of the target Microsoft Graph API versions. # Ex: graphVersions=v1.0 / graphVersions=beta / graphVersions=v1.0,beta or graphVersions=* (for both)
+          description: The target Microsoft Graph API version. # Ex: ?graphVersions=v1.0 / ?graphVersions=beta / or ?graphVersions=* (for both)
         - name: forceRefresh
           in: query
           schema:
             type: boolean
             default: false
           required: false
-          description: Reload the OpenAPI document(s).
+          description: Reload the OpenAPI document(s) and the OpenApiUrlTreeNode document.
       responses:
         "200":
           description: Simplified OpenAPI document(s) rendered as an OpenApiUrlTreeNode document.

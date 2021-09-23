@@ -174,10 +174,10 @@ namespace GraphWebApi.Controllers
             }
             else
             {
-                // Either v1.0 or beta explicitly defined, or both
-                graphVersionsList = graphVersions.Split(',', StringSplitOptions.TrimEntries).ToList();
+                graphVersionsList.Add(graphVersions);
             }
 
+            var sources = new Dictionary<string, OpenApiDocument>();
             foreach (var graphVersion in graphVersionsList)
             {
                 var graphUri = GetVersionUri(graphVersion);
@@ -187,12 +187,13 @@ namespace GraphWebApi.Controllers
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-                _openApiService.GetOrCreateOpenApiUrlTreeNode(source, graphVersion, forceRefresh);
+                sources.Add(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
             }
 
+            var rootNode = _openApiService.GetOrCreateOpenApiUrlTreeNode(sources, graphVersions, forceRefresh);
+
             using MemoryStream stream = new();
-            _openApiService.ConvertOpenApiUrlTreeNodeToJson(OpenApiService.RootNode, stream);
+            _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
             return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
         }
 
