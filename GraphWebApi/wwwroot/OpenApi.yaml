@@ -624,7 +624,7 @@ paths:
           in: query
           schema:
             type: string
-            default: v1.0
+            default: v1.0 and beta
           required: false
           description: The target Microsoft Graph API version. # Ex: ?graphVersions=v1.0 / ?graphVersions=beta / or ?graphVersions=* (for both)
         - name: forceRefresh
