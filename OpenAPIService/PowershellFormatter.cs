@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -103,12 +103,7 @@ namespace OpenAPIService
         /// <param name="schema">The target <see cref="OpenApiSchema"/></param>
         public override void Visit(OpenApiSchema schema)
         {
-            if (_schemaLoop.Contains(schema))
-            {
-                return; // loop detected, this schema has already been walked.
-            }
-
-            if ("object".Equals(schema?.Type, StringComparison.OrdinalIgnoreCase))
+            if (schema != null && !_schemaLoop.Contains(schema) && "object".Equals(schema?.Type, StringComparison.OrdinalIgnoreCase))
             {
                 schema.AdditionalProperties = new OpenApiSchema() { Type = "object" }; // To make AutoREST happy
 

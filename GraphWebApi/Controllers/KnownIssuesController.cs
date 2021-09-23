@@ -8,12 +8,14 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using UtilityService;
 
 namespace GraphWebApi.Controllers
 {
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class KnownIssuesController : ControllerBase
     {
         private readonly IKnownIssuesService _knownIssuesService;
