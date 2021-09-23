@@ -40,7 +40,6 @@ namespace OpenAPIService
     public class OpenApiService : IOpenApiService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new();
-        private static readonly ConcurrentDictionary<string, OpenApiUrlTreeNode> _RootNodes = new();
         private static readonly Dictionary<string, string> _openApiTraceProperties =
                         new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
         private readonly TelemetryClient _telemetryClient;
@@ -192,7 +191,7 @@ namespace OpenAPIService
             else if (url != null)
             {
                 var sources = new Dictionary<string, OpenApiDocument> { { graphVersion, source } };
-                var rootNode = GetOrCreateOpenApiUrlTreeNode(sources, graphVersion, forceRefresh);
+                var rootNode = CreateOpenApiUrlTreeNode(sources);
 
                 url = url.BaseUriPath()
                          .UriTemplatePathFormat();
@@ -224,48 +223,29 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Creates an <see cref="OpenApiUrlTreeNode"/> from an <see cref="OpenApiDocument"/>
-        /// or attaches an <see cref="OpenApiDocument"/> onto an existing <see cref="OpenApiUrlTreeNode"/> if it doesn't exist.
+        /// Creates an <see cref="OpenApiUrlTreeNode"/> from a collection of <see cref="OpenApiDocument"/>.
         /// </summary>
         /// <param name="sources">Dictionary of labels and their corresponding <see cref="OpenApiDocument"/> objects.</param>
-        /// <param name="graphVersionKey">The key for accessing the nodes in the <see cref="OpenApiUrlTreeNode"/> dictionary.</param>
-        /// <param name="forceRefresh">Optional: Whether to create a new <see cref="OpenApiUrlTreeNode"/> or attach
-        /// an <see cref="OpenApiDocument"/> onto an existing <see cref="OpenApiUrlTreeNode"/>.</param>
-        /// <returns>An <see cref="OpenApiUrlTreeNode"/>.</returns>
-        public OpenApiUrlTreeNode GetOrCreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources, string graphVersionKey, bool forceRefresh = false)
+        /// <returns>The created <see cref="OpenApiUrlTreeNode"/>.</returns>
+        public OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources)
         {
             UtilityFunctions.CheckArgumentNull(sources, nameof(sources));
-            UtilityFunctions.CheckArgumentNullOrEmpty(graphVersionKey, nameof(graphVersionKey));
 
-            if (forceRefresh || !_RootNodes.TryGetValue(graphVersionKey, out OpenApiUrlTreeNode rootNode))
-            {
-                _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-                _telemetryClient?.TrackTrace($"{nameof(forceRefresh)} requested; creating new OpenApiUrlTreeNode for key: {graphVersionKey}",
-                                             SeverityLevel.Information,
-                                             _openApiTraceProperties);
-
-                rootNode = OpenApiUrlTreeNode.Create();
-
-                foreach (var source in sources)
-                {
-                    _telemetryClient?.TrackTrace($"Attaching '{source.Key}' source document to the OpenApiUrlTreeNode with key: {graphVersionKey}",
+            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            _telemetryClient?.TrackTrace("Creating OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-                    rootNode.Attach(source.Value, source.Key);
-
-                    _telemetryClient?.TrackTrace($"Finished attaching '{source.Key}' source document to the OpenApiUrlTreeNode with key: {graphVersionKey}",
-                                                 SeverityLevel.Information,
-                                                 _openApiTraceProperties);
-                }
-
-                _RootNodes[graphVersionKey] = rootNode;
-
-                _telemetryClient?.TrackTrace($"Finished creating new OpenApiUrlTreeNode for key: {graphVersionKey}",
-                                             SeverityLevel.Information,
-                                             _openApiTraceProperties);
-                _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+            var rootNode = OpenApiUrlTreeNode.Create();
+            foreach (var source in sources)
+            {
+                rootNode.Attach(source.Value, source.Key);
             }
+
+            _telemetryClient?.TrackTrace($"Finished creating OpenApiUrlTreeNode",
+                                         SeverityLevel.Information,
+                                         _openApiTraceProperties);
+            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
             return rootNode;
         }
