@@ -9,6 +9,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using UtilityService;
 
 namespace MockTestUtility
 {
@@ -19,10 +20,7 @@ namespace MockTestUtility
     {
         public async Task<string> ReadFromFile(string filePathSource)
         {
-            if (string.IsNullOrEmpty(filePathSource))
-            {
-                throw new ArgumentNullException(nameof(filePathSource), "Value cannot be null");
-            }
+            UtilityFunctions.CheckArgumentNull(filePathSource, nameof(filePathSource));
 
             // Prepend the root directory notation since we're reading off of a relative folder location
             filePathSource = Path.Combine(Environment.CurrentDirectory, filePathSource);
@@ -35,10 +33,8 @@ namespace MockTestUtility
 
         public async Task<string> ReadFromDocumentAsync(HttpRequestMessage requestMessage)
         {
-            if (requestMessage == null)
-            {
-                throw new ArgumentNullException(nameof(requestMessage), "Value cannot be null");
-            }
+            UtilityFunctions.CheckArgumentNull(requestMessage, nameof(requestMessage));
+
             // Mock reading from an HTTP source.
             return await ReadFromFile(requestMessage.RequestUri.OriginalString);
         }

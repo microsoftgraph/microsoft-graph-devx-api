@@ -76,20 +76,9 @@ namespace ChangesService.Services
 
             string filterType = null;
 
-            if (changeLogRecords == null)
-            {
-                throw new ArgumentNullException(nameof(changeLogRecords), ChangesServiceConstants.ValueNullError);
-            }
-
-            if (searchOptions == null)
-            {
-                throw new ArgumentNullException(nameof(searchOptions), ChangesServiceConstants.ValueNullError);
-            }
-
-            if (graphProxyConfigs == null)
-            {
-                throw new ArgumentNullException(nameof(graphProxyConfigs), ChangesServiceConstants.ValueNullError);
-            }
+            UtilityFunctions.CheckArgumentNull(changeLogRecords, nameof(changeLogRecords));
+            UtilityFunctions.CheckArgumentNull(searchOptions, nameof(searchOptions));
+            UtilityFunctions.CheckArgumentNull(graphProxyConfigs, nameof(graphProxyConfigs));
 
             // Temp. var to hold cascading filtered results
             IEnumerable<ChangeLog> enumerableChangeLog = changeLogRecords.ChangeLogs;
@@ -266,15 +255,8 @@ namespace ChangesService.Services
                 return workloadValue;
             }
 
-            if (graphProxy == null)
-            {
-                throw new ArgumentNullException(nameof(graphProxy), ChangesServiceConstants.ValueNullError);
-            }
-
-            if (httpClientUtility == null)
-            {
-                throw new ArgumentNullException(nameof(httpClientUtility), ChangesServiceConstants.ValueNullError);
-            }
+            UtilityFunctions.CheckArgumentNull(graphProxy, nameof(graphProxy));
+            UtilityFunctions.CheckArgumentNull(httpClientUtility, nameof(httpClientUtility));
 
             // The proxy url helps fetch data from Microsoft Graph anonymously
             var relativeProxyUrl = string.Format(graphProxy.GraphProxyRelativeUrl, graphProxy.GraphVersion,
