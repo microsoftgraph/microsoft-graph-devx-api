@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -49,7 +49,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                 else if (snippetModel.Method == HttpMethod.Patch)
                 {
                     if (string.IsNullOrEmpty(snippetModel.RequestBody))
-                        throw new Exception("No body present for PATCH method in Javascript");
+                        throw new ArgumentException("No body present for PATCH method in Javascript");
 
                     snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\r\n\t.update({snippetModel.ResponseVariableName});"));
@@ -61,7 +61,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                 else if (snippetModel.Method == HttpMethod.Put)
                 {
                     if(string.IsNullOrEmpty(snippetModel.RequestBody))
-                        throw new Exception("No body present for PUT method in Javascript");
+                        throw new ArgumentException("No body present for PUT method in Javascript");
 
                     snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\r\n\t.put({snippetModel.ResponseVariableName});"));
@@ -111,7 +111,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         }
 
         /// <summary>
-        /// Generate a valid declaration of a json object from the json string. This essentially involves stripping out the quotation marks 
+        /// Generate a valid declaration of a json object from the json string. This essentially involves stripping out the quotation marks
         /// out of the json keys
         /// </summary>
         /// <param name="jsonBody">Json body to generate object from</param>
