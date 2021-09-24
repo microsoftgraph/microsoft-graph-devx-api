@@ -95,16 +95,9 @@ namespace TelemetrySanitizerService
                 SanitizeTelemetry(request: request);
             }
 
-            if (item is TraceTelemetry trace)
+            if (item is TraceTelemetry trace && !trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
             {
-                /* Count properties contain custom
-                 * numerical telemetry not required to
-                 * be sanitized.
-                 */
-                if (!trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
-                {
-                    SanitizeTelemetry(trace: trace);
-                }
+                SanitizeTelemetry(trace: trace);
             }
 
             _next.Process(item);
