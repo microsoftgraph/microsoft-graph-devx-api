@@ -71,12 +71,12 @@ namespace CodeSnippetsReflection.OData
         /// <param name="customMetadataPath">Full file path to the metadata</param>
         private void LoadGraphMetadata(string customMetadataPath)
         {
-            ServiceRootV1 = new Uri("https://graph.microsoft.com/v1.0");
-            ServiceRootBeta = new Uri("https://graph.microsoft.com/beta");
+            ServiceRootV1 = new Uri(UtilityConstants.ServiceRootV1);
+            ServiceRootBeta = new Uri(UtilityConstants.ServiceRootBeta);
 
             // use clean metadata
-            IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_v10_metadata/cleanMetadataWithDescriptionsv1.0.xml")));
-            IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_beta_metadata/cleanMetadataWithDescriptionsbeta.xml")));
+            IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanV1Metadata)));
+            IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanBetaMetadata)));
 
             if (customMetadataPath == null)
             {

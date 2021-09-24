@@ -120,7 +120,7 @@ namespace KnownIssuesService.Services
 				Query = "Select [Id] " +
 						"From WorkItems " +
 						"Where [Work Item Type] = 'Bug' " +
-						"And [System.TeamProject] = '" + UtilityConstants.knownIssuesOrganisation + "' " +
+						"And [System.TeamProject] = '" + UtilityConstants.KnownIssuesOrganisation + "' " +
 						"Order By [State] Asc, [Changed Date] Desc",
 			};
 		}
