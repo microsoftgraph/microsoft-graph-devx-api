@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -167,7 +167,7 @@ namespace GraphExplorerSamplesService.Services
         /// <param name="fileContents">The json files to be deserialized.</param>
         /// <param name="locale">The language code for the preferred localized file.</param>
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
-        private SampleQueriesList DeserializeSamplesList(string fileContents, string locale)
+        private static SampleQueriesList DeserializeSamplesList(string fileContents, string locale)
         {
             /* Current business process only supports ordering of the English
                translation of the sample queries.
