@@ -19,7 +19,7 @@ namespace TelemetrySanitizerService
     /// <summary>
     /// Initializes a telemetry processor to sanitize telemetry data to remove sensitive data (PII).
     /// </summary>
-    public class CustomPIIFilter : ITelemetryProcessor
+    public class CustomPiiFilter : ITelemetryProcessor
     {
         private readonly ITelemetryProcessor _next;
         private readonly IServiceProvider _serviceProvider;
@@ -69,11 +69,11 @@ namespace TelemetrySanitizerService
         private const string ODataFilterOperator = "$filter";
         private const string SecurityMask = "****";
 
-        public CustomPIIFilter(ITelemetryProcessor next, IServiceProvider serviceProvider)
+        public CustomPiiFilter(ITelemetryProcessor next, IServiceProvider serviceProvider)
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
-            _serviceProvider = serviceProvider 
+            _serviceProvider = serviceProvider
                 ?? throw new ArgumentNullException(nameof(serviceProvider), $"{ serviceProvider }: { nameof(serviceProvider) }");
         }
 
