@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Net.Http;
 using System.Xml;
@@ -101,10 +101,10 @@ namespace CodeSnippetsReflection.OData
         /// <param name="language"></param>
         /// <param name="httpRequestMessage"></param>
         /// <returns>String of snippet generated</returns>
-        public string ProcessPayloadRequest(HttpRequestMessage httpRequestMessage, string language)
+        public string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language)
         {
-            var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(httpRequestMessage.RequestUri);
-            var snippetModel = new SnippetModel(httpRequestMessage, serviceRootUri.AbsoluteUri, edmModel);
+            var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(requestPayload.RequestUri);
+            var snippetModel = new SnippetModel(requestPayload, serviceRootUri.AbsoluteUri, edmModel);
 
             _telemetryClient?.TrackTrace($"Generating code snippet for '{language}' from the request payload",
                                          SeverityLevel.Information,
@@ -128,7 +128,7 @@ namespace CodeSnippetsReflection.OData
                     return javaGenerator.GenerateCodeSnippet(snippetModel, JavaExpressions);
 
                 default:
-                    throw new Exception("Invalid Language selected");
+                    throw new ArgumentOutOfRangeException($"Invalid Language {language} selected");
             }
         }
 
@@ -139,18 +139,12 @@ namespace CodeSnippetsReflection.OData
         /// <returns>Tuple of the Edm model and the URI of the service root</returns>
         private (IEdmModel, Uri) GetModelAndServiceUriTuple(Uri requestUri)
         {
-            switch (requestUri.Segments[1])
+            return requestUri.Segments[1] switch
             {
-                case "v1.0/":
-                    return ((CustomEdmModel ?? IedmModelV1).Value, ServiceRootV1);
-
-                case "beta/":
-                    return ((CustomEdmModel ?? IedmModelBeta).Value, ServiceRootBeta);
-
-                default:
-                    throw new Exception("Unsupported Graph version in url");
-            }
-
+                "v1.0/" => ((CustomEdmModel ?? IedmModelV1).Value, ServiceRootV1),
+                "beta/" => ((CustomEdmModel ?? IedmModelBeta).Value, ServiceRootBeta),
+                _ => throw new ArgumentOutOfRangeException(nameof(requestUri), "Unsupported Graph version in url"),
+            };
         }
     }
 }
