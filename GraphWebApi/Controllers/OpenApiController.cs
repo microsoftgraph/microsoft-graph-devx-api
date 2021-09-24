@@ -164,7 +164,7 @@ namespace GraphWebApi.Controllers
                                              [FromQuery] bool forceRefresh = false)
         {
             graphVersions = string.IsNullOrEmpty(graphVersions) ? "*" : graphVersions.ToLower();
-            List<string> graphVersionsList = new();
+            HashSet<string> graphVersionsList = new();
             if (graphVersions == "*")
             {
                 // Use both v1.0 and beta
