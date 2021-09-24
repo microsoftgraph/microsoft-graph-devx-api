@@ -163,7 +163,6 @@ namespace GraphWebApi.Controllers
         public async Task<IActionResult> Get([FromQuery] string graphVersions = "*",
                                              [FromQuery] bool forceRefresh = false)
         {
-            graphVersions = string.IsNullOrEmpty(graphVersions) ? "*" : graphVersions.ToLower();
             HashSet<string> graphVersionsList = new();
             if (graphVersions == "*")
             {
