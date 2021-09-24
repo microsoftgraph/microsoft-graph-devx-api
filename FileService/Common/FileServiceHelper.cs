@@ -80,8 +80,6 @@ namespace FileService.Common
             {
                 throw new ArgumentNullException(parameterName, "Value cannot be null or empty.");
             }
-
-            return;
         }
 
         /// <summary>
