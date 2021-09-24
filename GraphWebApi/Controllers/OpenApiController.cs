@@ -173,7 +173,7 @@ namespace GraphWebApi.Controllers
             }
             else
             {
-                graphVersionsList.Add(graphVersions);
+                graphVersionsList.Add(graphVersions.ToLower());
             }
 
             var sources = new Dictionary<string, OpenApiDocument>();
