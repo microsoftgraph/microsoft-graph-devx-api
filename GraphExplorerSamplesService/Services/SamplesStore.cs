@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ namespace GraphExplorerSamplesService.Services
     /// </summary>
     public class SamplesStore : ISamplesStore
     {
-        private readonly object _samplesLock = new object();
+        private readonly object _samplesLock = new();
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _samplesCache;

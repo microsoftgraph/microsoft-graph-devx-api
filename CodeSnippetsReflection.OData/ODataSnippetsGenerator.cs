@@ -20,7 +20,7 @@ namespace CodeSnippetsReflection.OData
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
                     new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(ODataSnippetsGenerator) } };
-        private static readonly HashSet<string> supportedLanguages = new()
+        public static HashSet<string> SupportedLanguages = new()
         {
             "c#",
             "javascript",
