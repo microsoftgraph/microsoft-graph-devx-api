@@ -160,7 +160,7 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/tree")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string graphVersions,
+        public async Task<IActionResult> Get([FromQuery] string graphVersions = "*",
                                              [FromQuery] bool forceRefresh = false)
         {
             graphVersions = string.IsNullOrEmpty(graphVersions) ? "*" : graphVersions.ToLower();
