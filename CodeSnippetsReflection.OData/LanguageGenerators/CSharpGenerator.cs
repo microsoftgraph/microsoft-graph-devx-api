@@ -24,7 +24,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         ///     such as String and Stream (System namespace)
         ///     or Duration, Date, TimeOfDay (Microsoft.Graph namespace)
         /// </summary>
-        private static readonly HashSet<string> EdmTypesNonNullableByDefault = new HashSet<string>{ "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
+        private static readonly HashSet<string> EdmTypesNonNullableByDefault = new() { "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
 
         /// <summary>
         /// Determines whether the snippet generation is running through the command line interface
