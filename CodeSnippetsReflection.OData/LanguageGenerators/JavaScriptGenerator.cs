@@ -149,14 +149,14 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
 
     internal class JavascriptExpressions : LanguageExpressions
     {
-        public override string FilterExpression => "\r\n\t.filter('{0}')"; 
-        public override string SearchExpression => "\r\n\t.search('{0}')"; 
-        public override string ExpandExpression => "\r\n\t.expand('{0}')"; 
-        public override string SelectExpression => "\r\n\t.select('{0}')"; 
-        public override string OrderByExpression => "\r\n\t.orderby('{0}')"; 
-        public override string SkipExpression => "\r\n\t.skip({0})"; 
-        public override string SkipTokenExpression  => "\r\n\t.skiptoken('{0}')"; 
-        public override string TopExpression => "\r\n\t.top({0})"; 
+        public override string FilterExpression => "\r\n\t.filter('{0}')";
+        public override string SearchExpression => "\r\n\t.search('{0}')";
+        public override string ExpandExpression => "\r\n\t.expand('{0}')";
+        public override string SelectExpression => "\r\n\t.select('{0}')";
+        public override string OrderByExpression => "\r\n\t.orderby('{0}')";
+        public override string SkipExpression => "\r\n\t.skip({0})";
+        public override string SkipTokenExpression  => "\r\n\t.skiptoken('{0}')";
+        public override string TopExpression => "\r\n\t.top({0})";
 
         public override string FilterExpressionDelimiter => ",";
 
