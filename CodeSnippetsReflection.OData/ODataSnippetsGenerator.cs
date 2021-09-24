@@ -90,10 +90,8 @@ namespace CodeSnippetsReflection.OData
 
             CustomEdmModel = new Lazy<IEdmModel>(() =>
             {
-                using (var reader = File.OpenText(customMetadataPath))
-                {
-                    return CsdlReader.Parse(XmlReader.Create(reader));
-                }
+                using var reader = File.OpenText(customMetadataPath);
+                return CsdlReader.Parse(XmlReader.Create(reader));
             });
         }
 
