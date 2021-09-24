@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -27,17 +27,12 @@ namespace GraphWebApi.Controllers
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private static readonly Dictionary<string, string> _openApiTraceProperties =
-                        new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiController)} };
-        private readonly TelemetryClient _telemetryClient;
         private readonly IOpenApiService _openApiService;
 
-        public OpenApiController(IConfiguration configuration, IOpenApiService openApiService, TelemetryClient telemetryClient)
+        public OpenApiController(IConfiguration configuration, IOpenApiService openApiService)
         {
-            UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
             UtilityFunctions.CheckArgumentNull(openApiService, nameof(openApiService));
             UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
-            _telemetryClient = telemetryClient;
             _configuration = configuration;
             _openApiService = openApiService;
         }
@@ -146,7 +141,7 @@ namespace GraphWebApi.Controllers
             {
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
-            
+
             var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
             await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                 graphOpenApi, Response.Body, styleOptions.Style);
