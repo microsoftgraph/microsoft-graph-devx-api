@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -19,10 +19,10 @@ namespace ExceptionMiddlewareShould
             // Arrange
             var expected = "{\"StatusCode\":400,\"Message\":\"Value cannot be null.\"}";
 
-            RequestDelegate mockNextMiddleware = (HttpContext) =>
+            static Task mockNextMiddleware(HttpContext HttpContext)
             {
                 return Task.FromException(new ArgumentNullException());
-            };
+            }
 
             // Create the DefaultHttpContext
             var httpContext = new DefaultHttpContext();
@@ -51,10 +51,10 @@ namespace ExceptionMiddlewareShould
             // Arrange
             var expected = "{\"StatusCode\":400,\"Message\":\"Operation is not valid due to the current state of the object.\"}";
 
-            RequestDelegate mockNextMiddleware = (HttpContext) =>
+            static Task mockNextMiddleware(HttpContext HttpContext)
             {
                 return Task.FromException(new InvalidOperationException());
-            };
+            }
 
             // Create the DefaultHttpContext
             var httpContext = new DefaultHttpContext();
@@ -83,10 +83,10 @@ namespace ExceptionMiddlewareShould
             // Arrange
             var expected = "{\"StatusCode\":404,\"Message\":\"Value does not fall within the expected range.\"}";
 
-            RequestDelegate mockNextMiddleware = (HttpContext) =>
+            static Task mockNextMiddleware(HttpContext HttpContext)
             {
                 return Task.FromException(new ArgumentException());
-            };
+            }
 
             // Create the DefaultHttpContext
             var httpContext = new DefaultHttpContext();
