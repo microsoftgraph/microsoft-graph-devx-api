@@ -1,4 +1,4 @@
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// -------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -108,7 +108,7 @@ namespace GraphExplorerPermissionsService
 
                     JToken apiPermissions = permissionsObject.First.First;
 
-                    foreach (JProperty property in apiPermissions)
+                    foreach (JProperty property in apiPermissions.OfType<JProperty>())
                     {
                         // Remove any '(...)' from the request url and set to lowercase for uniformity
                         string requestUrl = property.Name
