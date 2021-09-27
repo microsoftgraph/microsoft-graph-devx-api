@@ -136,19 +136,22 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         ///    of the given type, it is a reference relationship. Generate a reference path to the item (ie "item/$ref").
         /// 3. If a navigation property does not have a defined EntitySet but there is a Singleton which has 
         ///    a self-contained reference to the given type, we can make a relationship to the implied EntitySet of 
-        ///    the singleton. Generate a reference path to the item (ie "singleton/item/$ref").
+        ///    the singleton(i.e. the entity collection contained by the singleton). Generate a reference path to the item (ie "singleton/item/$ref").
         /// 4. Otherwise return false so that the generator can find another way to generate snippets   
         /// </summary>
         /// <param name="navigationPropertyLinkSegment">The navigation property link to test</param>
         /// <returns></returns>
         public bool CanGetServiceCollectionNavigationPropertyForProperty(NavigationPropertyLinkSegment navigationPropertyLinkSegment)
         {
+            if (navigationPropertyLinkSegment == null)
+                throw new ArgumentNullException(nameof(navigationPropertyLinkSegment));
+
             if (navigationPropertyLinkSegment.NavigationProperty.ContainsTarget)
                 return true;
 
             // Check if its defined directly in an the entitySet
             var isDirectlyInEntitySet = Model.EntityContainer.EntitySets()
-                .Any(entitySet => entitySet.EntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName()));
+                .Any(entitySet => entitySet.EntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName(), StringComparison.OrdinalIgnoreCase));
 
             if (isDirectlyInEntitySet)
                 return true;
@@ -157,7 +160,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             var isImplicitFromSingleton = Model.EntityContainer.Singletons()
                             .SelectMany(singleton => singleton.NavigationPropertyBindings.Select(navPropertyBindings => navPropertyBindings.NavigationProperty)// get the nav propertyBinding from the singleton
                                                                 .Concat( singleton.EntityType().NavigationProperties()))    // Append the nav properties from the singleton type
-                            .Any(property => property.ContainsTarget && property.ToEntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName()));
+                            .Any(property => property.ContainsTarget && property.ToEntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName(), StringComparison.OrdinalIgnoreCase));
             
             return isImplicitFromSingleton;   
         }
