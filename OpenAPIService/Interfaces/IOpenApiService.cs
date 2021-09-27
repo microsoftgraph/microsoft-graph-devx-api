@@ -6,7 +6,6 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService.Common;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -23,7 +22,7 @@ namespace OpenAPIService.Interfaces
 
         Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh);
 
-        OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources);
+        OpenApiUrlTreeNode GetOrCreateOpenApiUrlTreeNode(OpenApiDocument source, string graphVersion, bool forceRefresh = false);
 
         void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream);
 

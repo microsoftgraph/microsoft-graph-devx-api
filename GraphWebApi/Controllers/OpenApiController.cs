@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UtilityService;
@@ -160,15 +161,11 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/tree")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string graphVersions = "*",
+        public async Task<IActionResult> Get([FromQuery] string graphVersions = Constants.OpenApiConstants.GraphVersion_V1,
                                              [FromQuery] bool forceRefresh = false)
         {
-            if (string.IsNullOrEmpty(graphVersions))
-            {
-                throw new InvalidOperationException($"{nameof(graphVersions)} parameter has an invalid value.");
-            }
+            List<string> graphVersionsList = new();
 
-            HashSet<string> graphVersionsList = new();
             if (graphVersions == "*")
             {
                 // Use both v1.0 and beta
@@ -177,24 +174,25 @@ namespace GraphWebApi.Controllers
             }
             else
             {
-                graphVersionsList.Add(graphVersions.ToLower());
+                // Either v1.0 or beta explicitly defined, or both
+                graphVersionsList = graphVersions.Split(',', StringSplitOptions.TrimEntries).ToList();
             }
 
-            var sources = new Dictionary<string, OpenApiDocument>();
             foreach (var graphVersion in graphVersionsList)
             {
                 var graphUri = GetVersionUri(graphVersion);
+
                 if (graphUri == null)
                 {
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                sources.Add(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
+                var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+                _openApiService.GetOrCreateOpenApiUrlTreeNode(source, graphVersion, forceRefresh);
             }
 
-            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
             using MemoryStream stream = new();
-            _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
+            _openApiService.ConvertOpenApiUrlTreeNodeToJson(OpenApiService.RootNode, stream);
             return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
         }
 

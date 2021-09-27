@@ -6,7 +6,6 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -401,16 +400,15 @@ namespace OpenAPIService.Test
             Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operationId);
         }
 
-        [Fact]
-        public void GetOpenApiTreeNode()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void GetOpenApiTreeNode(bool forceRefresh)
         {
-            // Arrange
-            var sources = new Dictionary<string, OpenApiDocument>() { { GraphVersion, _graphMockSource } };
-
-            // Act
-            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
+            // Arrange & Act
+            _openApiService.GetOrCreateOpenApiUrlTreeNode(_graphMockSource, GraphVersion, forceRefresh);
             using MemoryStream stream = new();
-            ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
+            ConvertOpenApiUrlTreeNodeToJson(OpenApiService.RootNode, stream);
 
             // Assert
             var jsonPayload = Encoding.ASCII.GetString(stream.ToArray());
