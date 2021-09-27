@@ -163,6 +163,11 @@ namespace GraphWebApi.Controllers
         public async Task<IActionResult> Get([FromQuery] string graphVersions = "*",
                                              [FromQuery] bool forceRefresh = false)
         {
+            if (string.IsNullOrEmpty(graphVersions))
+            {
+                throw new InvalidOperationException($"{nameof(graphVersions)} parameter has an invalid value.");
+            }
+
             HashSet<string> graphVersionsList = new();
             if (graphVersions == "*")
             {
