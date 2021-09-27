@@ -1,4 +1,4 @@
-using Microsoft.OData.UriParser;
+﻿using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
@@ -82,14 +82,26 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                     {
                         case NavigationPropertySegment _:
                         case EntitySetSegment _:
-                        case NavigationPropertyLinkSegment _:
+                        case NavigationPropertyLinkSegment navigationPropertyLinkSegment when CommonGenerator.CanGetServiceCollectionNavigationPropertyForProperty(navigationPropertyLinkSegment):
                             if (string.IsNullOrEmpty(snippetModel.RequestBody))
                                 throw new Exception($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
 
                             snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
                             snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
                             snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+                            break;
 
+                        case NavigationPropertyLinkSegment _:
+                            if (string.IsNullOrEmpty(snippetModel.RequestBody))
+                                throw new InvalidOperationException($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
+
+                            if (JObject.Parse(snippetModel.RequestBody).TryGetValue("@odata.id",out JToken odataId))
+                            {
+                                snippetModel.ResponseVariableName += "Reference"; // append suffix
+                                snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = new ReferenceRequestBody\n{{\n");
+                                snippetBuilder.Append($"\tOdataId = \"{odataId}\"\n}};\n\n");
+                                snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+                            }
                             break;
 
                         case OperationSegment os:
