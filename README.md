@@ -1,4 +1,5 @@
 # microsoft-graph-devx-api
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=microsoftgraph_microsoft-graph-devx-api&metric=coverage)](https://sonarcloud.io/dashboard?id=microsoftgraph_microsoft-graph-devx-api) [![Sonarcloud Status](https://sonarcloud.io/api/project_badges/measure?project=microsoftgraph_microsoft-graph-devx-api&metric=alert_status)](https://sonarcloud.io/dashboard?id=microsoftgraph_microsoft-graph-devx-api)
 
 ## About the project/repo
 The Graph DevX API is a backend RESTful API that primarily exposes resources that are consumed by [Microsoft Graph documentation](https://docs.microsoft.com/graph/), [Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer), [Powershell sdk](https://github.com/microsoftgraph/msgraph-sdk-powershell) and Graph samples workload teams which are managed by the Graph PM team.
