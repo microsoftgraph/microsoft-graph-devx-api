@@ -36,6 +36,6 @@ namespace GraphExplorerSamplesService.Models
                 "Search (beta)"
             };
 
-         public static List<string> CategoriesList = new List<string>(categories.OrderBy(s => s).Prepend("Getting Started"));
+         public static List<string> CategoriesList = new(categories.OrderBy(s => s).Prepend("Getting Started"));
     }
 }
