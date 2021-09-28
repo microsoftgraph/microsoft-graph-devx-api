@@ -3,7 +3,6 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using GraphWebApi.Models;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
@@ -12,7 +11,6 @@ using OpenAPIService;
 using OpenAPIService.Common;
 using OpenAPIService.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
