@@ -124,7 +124,6 @@ namespace GraphWebApi
             });
             app.UseSerilogRequestLogging();
             app.UseHttpsRedirection();
-            app.UseAuthentication();
             app.UseRouting();
 
             // Localization
