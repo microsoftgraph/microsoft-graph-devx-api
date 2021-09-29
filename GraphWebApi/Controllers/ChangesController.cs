@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using ChangesService.Common;
@@ -21,6 +22,7 @@ using UtilityService;
 namespace GraphWebApi.Controllers
 {
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class ChangesController : ControllerBase
     {
         private readonly IChangesStore _changesStore;

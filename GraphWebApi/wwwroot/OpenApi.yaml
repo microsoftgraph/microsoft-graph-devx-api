@@ -31,6 +31,14 @@ paths:
               - Java
               - Objective-C
             default: C#
+        - name: generation
+          in: query
+          schema:
+            type: string
+            enum:
+              - odata
+              - openapi
+            default: odata
       requestBody:
         description: HTTP request message to be translated into code.
         content:
@@ -604,6 +612,33 @@ paths:
           description: OK
           content:
             text/html: {}
+  /openapi/tree:
+    get:
+      tags:
+        - openapi.tree
+      summary: Microsoft Graph OpenAPI document tree view.
+      description: Get the Microsoft Graph API metadata CSDL document as an OpenAPIUrlTreeNode document.
+      operationId: openapi.tree.GetUrlTreeNode
+      parameters:
+        - name: graphVersions
+          in: query
+          schema:
+            type: string
+            default: v1.0 and beta
+          required: false
+          description: The target Microsoft Graph API version. # Ex: ?graphVersions=v1.0 / ?graphVersions=beta / or ?graphVersions=* (for both)
+        - name: forceRefresh
+          in: query
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Reload the OpenAPI document(s).
+      responses:
+        "200":
+          description: Simplified OpenAPI document(s) rendered as an OpenApiUrlTreeNode document.
+          content:
+            application/vnd.oai.openapi+json: {} # JSON
 components:
   schemas:
     sample:

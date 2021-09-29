@@ -15,7 +15,7 @@ trigger:
 pr: none
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-latest'
 
 variables:
   solution: '**/*.sln'
@@ -26,46 +26,42 @@ steps:
 - checkout: self
   clean: true
   fetchDepth: 1
+  submodules: true
 
-- task: NuGetToolInstaller@1
-
-- task: NuGetCommand@2
+- task: DotNetCoreCLI@2
+  displayName: "Restore Nuget Packages"
   inputs:
-    restoreSolution: '$(solution)'
+    command: 'restore'
+    feedsToUse: 'select'
 
-- task: VSBuild@1
+- task: DotNetCoreCLI@2
+  displayName: "Build"
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: 'build'
 
-- task: VSTest@2
+- task: DotNetCoreCLI@2
+  displayName: "Run Tests"
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    testAssemblyVer2: |
-      **/net5.0/**.Test.dll
-      !**/*TestAdapter.dll
-      !**/obj/**
-    diagnosticsEnabled: true
+    command: test
+    projects: '**/*Test/*.csproj'
+    arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
 
-- task: VSBuild@1
+- task: PublishTestResults@2
+  displayName: "Publish Test Results"
+  condition: succeededOrFailed()
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    testResultsFormat: xUnit
+    testResultsFiles: '**/*.trx' 
+    codeCoverageTool: 'cobertura'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
 
-- task: YodLabs.O365PostMessage.O365PostMessageBuild.O365PostMessageBuild@0
-  displayName: 'Graph Client Tooling pipeline fail notification'
+- task: DotNetCoreCLI@2
+  displayName: 'Publish Artifacts'
   inputs:
-    addressType: serviceEndpoint
-    serviceEndpointName: 'microsoftgraph pipeline status'
-    title: '$(Build.DefinitionName) failure notification'
-    text: 'This pipeline has failed. View the build details for further information. This is a blocking failure. '
-  condition: failed()
-  enabled: true
+    command: 'publish'
+    publishWebProjects: true
+    zipAfterPublish: true
+    arguments: '--configuration $(buildConfiguration) --nologo --output $(Build.ArtifactStagingDirectory) '
 
 - task: PublishBuildArtifacts@1
 

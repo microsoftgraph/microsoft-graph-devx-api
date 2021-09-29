@@ -11,10 +11,14 @@ using OpenAPIService;
 using OpenAPIService.Common;
 using OpenAPIService.Interfaces;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using UtilityService;
+using Constants = OpenAPIService.Common.Constants;
 
 namespace GraphWebApi.Controllers
 {
@@ -22,6 +26,7 @@ namespace GraphWebApi.Controllers
     /// Controller that enables querying over an OpenAPI document
     /// </summary>
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class OpenApiController : ControllerBase
     {
         private readonly IConfiguration _configuration;
@@ -145,6 +150,46 @@ namespace GraphWebApi.Controllers
                 graphOpenApi, Response.Body, styleOptions.Style);
 
             return new EmptyResult();
+        }
+
+        [Route("openapi/tree")]
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] string graphVersions = "*",
+                                             [FromQuery] bool forceRefresh = false)
+        {
+            if (string.IsNullOrEmpty(graphVersions))
+            {
+                throw new InvalidOperationException($"{nameof(graphVersions)} parameter has an invalid value.");
+            }
+
+            HashSet<string> graphVersionsList = new();
+            if (graphVersions == "*")
+            {
+                // Use both v1.0 and beta
+                graphVersionsList.Add(Constants.OpenApiConstants.GraphVersion_V1);
+                graphVersionsList.Add(Constants.OpenApiConstants.GraphVersion_Beta);
+            }
+            else
+            {
+                graphVersionsList.Add(graphVersions.ToLower());
+            }
+
+            var sources = new Dictionary<string, OpenApiDocument>();
+            foreach (var graphVersion in graphVersionsList)
+            {
+                var graphUri = GetVersionUri(graphVersion);
+                if (graphUri == null)
+                {
+                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
+                }
+
+                sources.Add(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
+            }
+
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
+            using MemoryStream stream = new();
+            _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
+            return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
         }
 
         private static async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
