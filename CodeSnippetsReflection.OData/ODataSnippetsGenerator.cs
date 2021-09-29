@@ -99,7 +99,7 @@ namespace CodeSnippetsReflection.OData
         /// Entry point to generate snippets from the payload
         /// </summary>
         /// <param name="language"></param>
-        /// <param name="httpRequestMessage"></param>
+        /// <param name="requestPayload"></param>
         /// <returns>String of snippet generated</returns>
         public string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language)
         {
