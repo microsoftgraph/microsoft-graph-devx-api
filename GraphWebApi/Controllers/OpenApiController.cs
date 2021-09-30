@@ -88,46 +88,6 @@ namespace GraphWebApi.Controllers
             }
         }
 
-        [Route("openapi")]
-        [HttpPost]
-        public async Task<IActionResult> Post(
-                            [FromQuery] string operationIds = null,
-                            [FromQuery] string tags = null,
-                            [FromQuery] string url = null,
-                            [FromQuery] string openApiVersion = null,
-                            [FromQuery] string title = "Partial Graph API",
-                            [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
-                            [FromQuery] string format = null,
-                            [FromQuery] string graphVersion = null,
-                            [FromQuery] bool forceRefresh = false)
-        {
-                var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
-
-                var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
-
-                var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
-                                                                     tags: tags,
-                                                                     url: url,
-                                                                     source: source,
-                                                                     graphVersion: styleOptions.GraphVersion,
-                                                                     forceRefresh: forceRefresh);
-
-                var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
-
-                subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
-
-                var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
-
-                if (styleOptions.OpenApiFormat == "yaml")
-                {
-                    return new FileStreamResult(stream, "text/yaml");
-                }
-                else
-                {
-                    return new FileStreamResult(stream, "application/json");
-                }
-        }
-
         [Route("openapi/operations")]
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery]string graphVersion = null,
@@ -190,6 +150,46 @@ namespace GraphWebApi.Controllers
             using MemoryStream stream = new();
             _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
             return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
+        }
+
+        [Route("openapi")]
+        [HttpPost]
+        public async Task<IActionResult> Post(
+                            [FromQuery] string operationIds = null,
+                            [FromQuery] string tags = null,
+                            [FromQuery] string url = null,
+                            [FromQuery] string openApiVersion = null,
+                            [FromQuery] string title = "Partial Graph API",
+                            [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
+                            [FromQuery] string format = null,
+                            [FromQuery] string graphVersion = null,
+                            [FromQuery] bool forceRefresh = false)
+        {
+            var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
+
+            var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
+
+            var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
+                                                                 tags: tags,
+                                                                 url: url,
+                                                                 source: source,
+                                                                 graphVersion: styleOptions.GraphVersion,
+                                                                 forceRefresh: forceRefresh);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
+
+            subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
+
+            var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
+
+            if (styleOptions.OpenApiFormat == "yaml")
+            {
+                return new FileStreamResult(stream, "text/yaml");
+            }
+            else
+            {
+                return new FileStreamResult(stream, "application/json");
+            }
         }
 
         private static async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
