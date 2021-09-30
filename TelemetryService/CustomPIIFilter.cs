@@ -1,4 +1,4 @@
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// -------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -19,7 +19,9 @@ namespace TelemetrySanitizerService
     /// <summary>
     /// Initializes a telemetry processor to sanitize telemetry data to remove sensitive data (PII).
     /// </summary>
-    public class CustomPiiFilter : ITelemetryProcessor
+#pragma warning disable S101 // Types should be named in PascalCase
+    public class CustomPIIFilter : ITelemetryProcessor
+#pragma warning restore S101 // Types should be named in PascalCase
     {
         private readonly ITelemetryProcessor _next;
         private readonly IServiceProvider _serviceProvider;
@@ -69,7 +71,7 @@ namespace TelemetrySanitizerService
         private const string ODataFilterOperator = "$filter";
         private const string SecurityMask = "****";
 
-        public CustomPiiFilter(ITelemetryProcessor next, IServiceProvider serviceProvider)
+        public CustomPIIFilter(ITelemetryProcessor next, IServiceProvider serviceProvider)
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");

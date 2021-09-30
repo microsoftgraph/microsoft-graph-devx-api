@@ -63,7 +63,7 @@ namespace GraphWebApi
                 options.EnableDebugLogger = true;
 
             });
-            services.AddApplicationInsightsTelemetryProcessor<CustomPiiFilter>();
+            services.AddApplicationInsightsTelemetryProcessor<CustomPIIFilter>();
 
             if (!_env.IsDevelopment())
             {

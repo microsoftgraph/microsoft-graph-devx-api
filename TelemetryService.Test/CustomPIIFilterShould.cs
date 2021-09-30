@@ -14,9 +14,11 @@ using Xunit;
 
 namespace TelemetrySanitizerService.Test
 {
+#pragma warning disable S101 // Types should be named in PascalCase
     public class CustomPIIFilterShould
+#pragma warning restore S101 // Types should be named in PascalCase
     {
-        private readonly CustomPiiFilter _telemetryClientProcessor;
+        private readonly CustomPIIFilter _telemetryClientProcessor;
         private readonly IServiceProviderMock _serviceProviderMock;
         private readonly IServiceProvider _serviceProvider;
 
@@ -24,19 +26,19 @@ namespace TelemetrySanitizerService.Test
         {
             _serviceProviderMock = new IServiceProviderMock();
             _serviceProvider = _serviceProviderMock.MockServiceProvider();
-            _telemetryClientProcessor = new CustomPiiFilter(new TestProcessorNext(), _serviceProvider);
+            _telemetryClientProcessor = new CustomPIIFilter(new TestProcessorNext(), _serviceProvider);
         }
 
         [Fact]
         public void ThrowsArgumentNullExceptionIfNextPocessorArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPiiFilter(next: null, _serviceProvider));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: null, _serviceProvider));
         }
 
         [Fact]
         public void ThrowsArgumentNullExceptionIfPermissionsStoreArgumentNull()
         {
-            Assert.Throws<ArgumentNullException>(() => new CustomPiiFilter(next: _telemetryClientProcessor, null));
+            Assert.Throws<ArgumentNullException>(() => new CustomPIIFilter(next: _telemetryClientProcessor, null));
         }
 
         [Theory]
