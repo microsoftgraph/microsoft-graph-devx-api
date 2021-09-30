@@ -16,6 +16,7 @@ namespace CodeSnippetsReflection.OData
     /// <summary>
     /// Snippets Generator Class with all the logic for code generation
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class ODataSnippetsGenerator : IODataSnippetsGenerator
     {
         private readonly TelemetryClient _telemetryClient;
@@ -139,7 +140,6 @@ namespace CodeSnippetsReflection.OData
         /// </summary>
         /// <param name="requestUri">The URI of the service requested</param>
         /// <returns>Tuple of the Edm model and the URI of the service root</returns>
-        [ExcludeFromCodeCoverage]
         private (IEdmModel, Uri) GetModelAndServiceUriTuple(Uri requestUri)
         {
             return requestUri.Segments[1] switch
