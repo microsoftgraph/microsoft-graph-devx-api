@@ -88,7 +88,7 @@ namespace OpenAPIService
             };
             subset.Components.SecuritySchemes.Add("azureaadv2", aadv2Scheme);
 
-            subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
+            subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, Array.Empty<string>() } });
 
             subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, graphVersion) });
 
@@ -748,7 +748,7 @@ namespace OpenAPIService
             string evaluator(Match match)
             {
                 string output = match.ToString(); // e.g. ---> ={period}
-                string paramName = $"{output.Substring(2, output.Length - 3)}"; // e.g. ---> period
+                string paramName = $"{output[2..^1]}"; // e.g. ---> period
 
                 if (parameterTypes.TryGetValue(paramName, out string type) && type.Equals("string", StringComparison.OrdinalIgnoreCase))
                 {
