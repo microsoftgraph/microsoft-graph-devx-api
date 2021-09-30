@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
 using UtilityService;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CodeSnippetsReflection.OData
 {
@@ -69,6 +70,7 @@ namespace CodeSnippetsReflection.OData
         /// Load the IEdmModel for both V1 and Beta
         /// </summary>
         /// <param name="customMetadataPath">Full file path to the metadata</param>
+        [ExcludeFromCodeCoverage]
         private void LoadGraphMetadata(string customMetadataPath)
         {
             ServiceRootV1 = new Uri(UtilityConstants.ServiceRootV1);
@@ -137,6 +139,7 @@ namespace CodeSnippetsReflection.OData
         /// </summary>
         /// <param name="requestUri">The URI of the service requested</param>
         /// <returns>Tuple of the Edm model and the URI of the service root</returns>
+        [ExcludeFromCodeCoverage]
         private (IEdmModel, Uri) GetModelAndServiceUriTuple(Uri requestUri)
         {
             return requestUri.Segments[1] switch

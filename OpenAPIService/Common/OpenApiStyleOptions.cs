@@ -2,11 +2,14 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace OpenAPIService.Common
 {
     /// <summary>
     /// Defines a model class that defines the different styling options for rendering an OpenAPI document.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class OpenApiStyleOptions
     {
         public OpenApiStyle Style { get; }

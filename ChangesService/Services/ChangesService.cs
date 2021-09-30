@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -241,6 +242,7 @@ namespace ChangesService.Services
         /// <param name="graphProxy">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
         /// <param name="httpClientUtility">An implementation instance of <see cref="IFileUtility"/>.</param>
         /// <returns>The workload name for the target request url.</returns>
+        [ExcludeFromCodeCoverage]
         private async Task<string> RetrieveWorkloadNameFromRequestUrl(ChangeLogSearchOptions searchOptions,
                                                                              MicrosoftGraphProxyConfigs graphProxy,
                                                                              IHttpClientUtility httpClientUtility)

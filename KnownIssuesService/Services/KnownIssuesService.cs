@@ -12,6 +12,7 @@ using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,6 +52,7 @@ namespace KnownIssuesService.Services
         /// Authenticates a process/service to a Visual Studio Service.
         /// </summary>
         /// <returns>An instance of the authenticated VS Service</returns>
+        [ExcludeFromCodeCoverage]
         private VssBasicCredential Authenticate()
 		{
 			_telemetryClient?.TrackTrace("Fetch personal access token from configuration and use it to authenticate into Visual Studio Service",
@@ -61,12 +63,13 @@ namespace KnownIssuesService.Services
 			return new VssBasicCredential(string.Empty, accessToken);
 		}
 
-		/// <summary>
-		/// Initializes a WorkItemTracking Http Client instance with the required parameters i.e. credentials
-		/// and the Azure DevOps Known Issues Organisation url
-		/// </summary>
-		/// <returns>An Instance of a WorkItemTrackingHttpClient</returns>
-		private WorkItemTrackingHttpClient GetWorkItemTrackingHttpClient()
+        /// <summary>
+        /// Initializes a WorkItemTracking Http Client instance with the required parameters i.e. credentials
+        /// and the Azure DevOps Known Issues Organisation url
+        /// </summary>
+        /// <returns>An Instance of a WorkItemTrackingHttpClient</returns>
+        [ExcludeFromCodeCoverage]
+        private WorkItemTrackingHttpClient GetWorkItemTrackingHttpClient()
 		{
             try
             {
@@ -108,11 +111,12 @@ namespace KnownIssuesService.Services
 			return _httpQueryClient.GetWorkItemsAsync(ids, null, result.AsOf, null, null, null, CancellationToken.None);
 		}
 
-		/// <summary>
-		/// Create a Query builder for retrieving work items from an Azure DevOps Organisation
-		/// </summary>
-		/// <returns>A work item query builder containing the selection criteria</returns>
-		private static Wiql QueryBuilder()
+        /// <summary>
+        /// Create a Query builder for retrieving work items from an Azure DevOps Organisation
+        /// </summary>
+        /// <returns>A work item query builder containing the selection criteria</returns>
+        [ExcludeFromCodeCoverage]
+        private static Wiql QueryBuilder()
 		{
 			// create a wiql object and build our query
 			return new Wiql()
