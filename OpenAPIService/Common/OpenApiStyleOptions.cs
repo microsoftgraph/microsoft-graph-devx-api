@@ -2,11 +2,14 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace OpenAPIService.Common
 {
     /// <summary>
     /// Defines a model class that defines the different styling options for rendering an OpenAPI document.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class OpenApiStyleOptions
     {
         public OpenApiStyle Style { get; }
@@ -48,31 +51,31 @@ namespace OpenAPIService.Common
 
         private void SetPlainStyle()
         {
-            OpenApiVersion = OpenApiVersion ?? Constants.OpenApiConstants.OpenApiVersion_2;
-            GraphVersion = GraphVersion ?? Constants.OpenApiConstants.GraphVersion_V1;
-            OpenApiFormat = OpenApiFormat ?? Constants.OpenApiConstants.Format_Yaml;
+            OpenApiVersion ??= Constants.OpenApiConstants.OpenApiVersion_2;
+            GraphVersion ??= Constants.OpenApiConstants.GraphVersion_V1;
+            OpenApiFormat ??= Constants.OpenApiConstants.Format_Yaml;
         }
 
         private void SetPowerPlatformStyle()
         {
-            OpenApiVersion = OpenApiVersion ?? Constants.OpenApiConstants.OpenApiVersion_2;
-            GraphVersion = GraphVersion ?? Constants.OpenApiConstants.GraphVersion_V1;
-            OpenApiFormat = OpenApiFormat ?? Constants.OpenApiConstants.Format_Json;
+            OpenApiVersion ??= Constants.OpenApiConstants.OpenApiVersion_2;
+            GraphVersion ??= Constants.OpenApiConstants.GraphVersion_V1;
+            OpenApiFormat ??= Constants.OpenApiConstants.Format_Json;
             InlineLocalReferences = true;
         }
 
         private void SetPowerShellStyle()
         {
-            OpenApiVersion = OpenApiVersion ?? Constants.OpenApiConstants.OpenApiVersion_3;
-            GraphVersion = GraphVersion ?? Constants.OpenApiConstants.GraphVersion_V1;
-            OpenApiFormat = OpenApiFormat ?? Constants.OpenApiConstants.Format_Yaml;
+            OpenApiVersion ??= Constants.OpenApiConstants.OpenApiVersion_3;
+            GraphVersion ??= Constants.OpenApiConstants.GraphVersion_V1;
+            OpenApiFormat ??= Constants.OpenApiConstants.Format_Yaml;
         }
 
         private void SetGEAutocompleteStyle()
         {
-            OpenApiVersion = OpenApiVersion ?? Constants.OpenApiConstants.OpenApiVersion_3;
-            GraphVersion = GraphVersion ?? Constants.OpenApiConstants.GraphVersion_V1;
-            OpenApiFormat = OpenApiFormat ?? Constants.OpenApiConstants.Format_Json;
+            OpenApiVersion ??= Constants.OpenApiConstants.OpenApiVersion_3;
+            GraphVersion ??= Constants.OpenApiConstants.GraphVersion_V1;
+            OpenApiFormat ??= Constants.OpenApiConstants.Format_Json;
             InlineLocalReferences = true;
         }
     }

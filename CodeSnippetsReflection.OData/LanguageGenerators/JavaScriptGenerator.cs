@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -49,7 +49,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                 else if (snippetModel.Method == HttpMethod.Patch)
                 {
                     if (string.IsNullOrEmpty(snippetModel.RequestBody))
-                        throw new Exception("No body present for PATCH method in Javascript");
+                        throw new ArgumentException("No body present for PATCH method in Javascript");
 
                     snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\r\n\t.update({snippetModel.ResponseVariableName});"));
@@ -61,7 +61,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                 else if (snippetModel.Method == HttpMethod.Put)
                 {
                     if(string.IsNullOrEmpty(snippetModel.RequestBody))
-                        throw new Exception("No body present for PUT method in Javascript");
+                        throw new ArgumentException("No body present for PUT method in Javascript");
 
                     snippetBuilder.Append(JavascriptGenerateObjectFromJson(snippetModel.RequestBody, snippetModel.ResponseVariableName));
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, $"\r\n\t.put({snippetModel.ResponseVariableName});"));
@@ -111,7 +111,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         }
 
         /// <summary>
-        /// Generate a valid declaration of a json object from the json string. This essentially involves stripping out the quotation marks 
+        /// Generate a valid declaration of a json object from the json string. This essentially involves stripping out the quotation marks
         /// out of the json keys
         /// </summary>
         /// <param name="jsonBody">Json body to generate object from</param>
@@ -149,14 +149,14 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
 
     internal class JavascriptExpressions : LanguageExpressions
     {
-        public override string FilterExpression => "\r\n\t.filter('{0}')"; 
-        public override string SearchExpression => "\r\n\t.search('{0}')"; 
-        public override string ExpandExpression => "\r\n\t.expand('{0}')"; 
-        public override string SelectExpression => "\r\n\t.select('{0}')"; 
-        public override string OrderByExpression => "\r\n\t.orderby('{0}')"; 
-        public override string SkipExpression => "\r\n\t.skip({0})"; 
-        public override string SkipTokenExpression  => "\r\n\t.skiptoken('{0}')"; 
-        public override string TopExpression => "\r\n\t.top({0})"; 
+        public override string FilterExpression => "\r\n\t.filter('{0}')";
+        public override string SearchExpression => "\r\n\t.search('{0}')";
+        public override string ExpandExpression => "\r\n\t.expand('{0}')";
+        public override string SelectExpression => "\r\n\t.select('{0}')";
+        public override string OrderByExpression => "\r\n\t.orderby('{0}')";
+        public override string SkipExpression => "\r\n\t.skip({0})";
+        public override string SkipTokenExpression  => "\r\n\t.skiptoken('{0}')";
+        public override string TopExpression => "\r\n\t.top({0})";
 
         public override string FilterExpressionDelimiter => ",";
 

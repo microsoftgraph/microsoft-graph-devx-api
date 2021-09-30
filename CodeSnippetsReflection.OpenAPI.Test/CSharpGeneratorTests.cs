@@ -11,7 +11,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
     public class CSharpGeneratorTests {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private static OpenApiUrlTreeNode _v1TreeNode;
-        private async static Task<OpenApiUrlTreeNode> GetV1TreeNode() {
+        private static async Task<OpenApiUrlTreeNode> GetV1TreeNode() {
             if(_v1TreeNode == null) {
                 _v1TreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
             }

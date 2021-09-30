@@ -1,4 +1,4 @@
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// -------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -108,7 +108,7 @@ namespace GraphExplorerPermissionsService
 
                     JToken apiPermissions = permissionsObject.First.First;
 
-                    foreach (JProperty property in apiPermissions)
+                    foreach (JProperty property in apiPermissions.OfType<JProperty>())
                     {
                         // Remove any '(...)' from the request url and set to lowercase for uniformity
                         string requestUrl = property.Name
@@ -296,10 +296,14 @@ namespace GraphExplorerPermissionsService
         {
             bool refresh = false;
 
+#pragma warning disable S1481 // Unused local variables should be removed
             bool cacheState = _permissionsCache.GetOrCreate("PermissionsTablesState", entry =>
+#pragma warning restore S1481 // Unused local variables should be removed
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+#pragma warning disable S2696 // Instance members should not write to "static" fields
                 _permissionsRefreshed = false;
+#pragma warning restore S2696 // Instance members should not write to "static" fields
                 return refresh = true;
             });
 

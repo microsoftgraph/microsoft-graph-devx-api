@@ -24,7 +24,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         ///     such as String and Stream (System namespace)
         ///     or Duration, Date, TimeOfDay (Microsoft.Graph namespace)
         /// </summary>
-        private static readonly HashSet<string> EdmTypesNonNullableByDefault = new HashSet<string>{ "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
+        private static readonly HashSet<string> EdmTypesNonNullableByDefault = new() { "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
 
         /// <summary>
         /// Determines whether the snippet generation is running through the command line interface
@@ -387,7 +387,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         {
             if (pathSegment is PropertySegment && pathSegment.EdmType?.FullTypeName() == "Edm.Stream")
             {
-                // special case where the full request body should be converted into a stream object	
+                // special case where the full request body should be converted into a stream object
                 var encodedMultilineString = jsonBody.Replace("\"", "\"\"");
                 return $"new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"{encodedMultilineString}\"));\r\n\r\n";
             }
@@ -669,8 +669,8 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                     string proposedType;
                     // If type contains subnamespace of Microsoft.Graph e.g Microsoft.Graph.Ediscovery.LegalHold, prefix the namespace to the typeName
                     // else if type not in graph namespace e.g Microsoft.OutlookServices or is a type directly within the graph subnamespace e.g Microsoft.Graph.IdentitySet
-                    // then proposedType is the <typeName> without prefix 
-                    var graphSubspaces = value.StartsWith("#microsoft.graph.") ? value["#microsoft.graph.".Length..].Split(".".ToCharArray()) : new string[] {} ; 
+                    // then proposedType is the <typeName> without prefix
+                    var graphSubspaces = value.StartsWith("#microsoft.graph.") ? value["#microsoft.graph.".Length..].Split(".".ToCharArray()) : new string[] {} ;
                     if (graphSubspaces.Length > 1) {
                         // Remove the prefixed `#`, then uppercase the individual strings in the odata path
                         var namespacedTypeName = value.Split("#").Last().Split(".").Select((item, _) => CommonGenerator.UppercaseFirstLetter(item));

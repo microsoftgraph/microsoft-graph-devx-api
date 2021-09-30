@@ -14,18 +14,18 @@ using Xunit;
 
 namespace OpenAPIService.Test
 {
-    public class OpenAPIServiceShould
+    public class OpenApiServiceShould
     {
         private const string Title = "Partial Graph API";
         private const string GraphVersion = "mock";
         private readonly OpenApiDocument _graphMockSource = null;
         private readonly IOpenApiService _openApiService;
-        private readonly OpenAPIDocumentCreatorMock _openAPIDocumentCreatorMock;
+        private readonly OpenApiDocumentCreatorMock _openAPIDocumentCreatorMock;
 
-        public OpenAPIServiceShould()
+        public OpenApiServiceShould()
         {
             _openApiService = new OpenApiService();
-            _openAPIDocumentCreatorMock = new OpenAPIDocumentCreatorMock(_openApiService);
+            _openAPIDocumentCreatorMock = new OpenApiDocumentCreatorMock(_openApiService);
 
             // Create OpenAPI document with default OpenApiStyle = Plain
             _graphMockSource = _openAPIDocumentCreatorMock.GetGraphOpenApiDocument("Mock", false);
@@ -427,7 +427,6 @@ namespace OpenAPIService.Test
             Assert.NotNull(node);
             _openApiService.ConvertOpenApiUrlTreeNodeToJson(node, stream);
             Assert.True(stream.Length > 0);
-            return;
         }
     }
 }
