@@ -6,7 +6,7 @@ using Microsoft.OpenApi.Models;
 // THIS CLASS IS COPIED FROM KIOTA TO GET THE SAME NAMEING CONVENTIONS, WE SHOULD FIND A WAY TO MUTUALIZE THE CODE
 namespace CodeSnippetsReflection.OpenAPI {
     public static class KiotaOpenApiSchemaExtensions {
-        private static Func<OpenApiSchema, IList<OpenApiSchema>> classNamesFlattener = (x) =>
+        private static readonly Func<OpenApiSchema, IList<OpenApiSchema>> classNamesFlattener = (x) =>
         (x.AnyOf ?? Enumerable.Empty<OpenApiSchema>()).Union(x.AllOf).Union(x.OneOf).ToList();
         public static IEnumerable<string> GetSchemaTitles(this OpenApiSchema schema) {
             if(schema == null)
@@ -36,7 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI {
         }
 
         public static string GetSchemaTitle(this OpenApiSchema schema) {
-            return schema.GetSchemaTitles().LastOrDefault();
+            return schema.GetSchemaTitles().LastOrDefault()?.TrimStart('$');// OData $ref
         }
 
         public static bool IsReferencedSchema(this OpenApiSchema schema) {
@@ -68,15 +68,17 @@ namespace CodeSnippetsReflection.OpenAPI {
         }
 
         public static IEnumerable<string> GetSchemaReferenceIds(this OpenApiSchema schema, HashSet<OpenApiSchema> visitedSchemas = null) {
-            if(visitedSchemas == null)
-                visitedSchemas = new();            
+            visitedSchemas ??= new();            
             if(schema != null && !visitedSchemas.Contains(schema)) {
                 visitedSchemas.Add(schema);
                 var result = new List<string>();
                 if(!string.IsNullOrEmpty(schema.Reference?.Id))
                     result.Add(schema.Reference.Id);
-                if(!string.IsNullOrEmpty(schema.Items?.Reference?.Id))
-                    result.Add(schema.Items.Reference.Id);
+                if(schema.Items != null) {
+                    if(!string.IsNullOrEmpty(schema.Items.Reference?.Id))
+                        result.Add(schema.Items.Reference.Id);
+                    result.AddRange(schema.Items.GetSchemaReferenceIds(visitedSchemas));
+                }
                 var subSchemaReferences = (schema.Properties?.Values ?? Enumerable.Empty<OpenApiSchema>())
                                             .Union(schema.AnyOf ?? Enumerable.Empty<OpenApiSchema>())
                                             .Union(schema.AllOf ?? Enumerable.Empty<OpenApiSchema>())
@@ -85,7 +87,7 @@ namespace CodeSnippetsReflection.OpenAPI {
                                             .ToList();// this to list is important otherwise the any marks the schemas as visited and add range doesn't find anything
                 if(subSchemaReferences.Any())
                     result.AddRange(subSchemaReferences);
-                return result;
+                return result.Distinct();
             } else 
                 return Enumerable.Empty<string>();
         }
