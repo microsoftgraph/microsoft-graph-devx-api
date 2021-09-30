@@ -21,13 +21,6 @@ namespace CodeSnippetsReflection.OData
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
                     new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(ODataSnippetsGenerator) } };
-        public static HashSet<string> SupportedLanguages = new()
-        {
-            "c#",
-            "javascript",
-            "objective-c",
-            "java"
-        };
 
         private Lazy<IEdmModel> IedmModelV1 { get; set; }
         private Lazy<IEdmModel> IedmModelBeta { get; set; }
@@ -43,6 +36,13 @@ namespace CodeSnippetsReflection.OData
         private CSharpExpressions CSharpExpressions { get; }
         private ObjectiveCExpressions ObjectiveCExpressions { get; }
         private JavaExpressions JavaExpressions { get; }
+        public static HashSet<string> SupportedLanguages { get; set; } = new()
+        {
+            "c#",
+            "javascript",
+            "objective-c",
+            "java"
+        };
 
         /// <summary>
         /// Determines whether the snippet generation is running through the command line interface
