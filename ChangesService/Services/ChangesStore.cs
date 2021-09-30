@@ -26,7 +26,7 @@ namespace ChangesService.Services
     /// </summary>
     public class ChangesStore : IChangesStore
     {
-        private readonly object _changesLock = new object();
+        private readonly object _changesLock = new();
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changeLogCache;
         private readonly IConfiguration _configuration;
