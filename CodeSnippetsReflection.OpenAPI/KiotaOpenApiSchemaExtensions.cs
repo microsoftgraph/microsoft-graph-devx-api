@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.OpenApi.Models;
 
-// THIS CLASS IS COPIED FROM KIOTA TO GET THE SAME NAMEING CONVENTIONS, WE SHOULD FIND A WAY TO MUTUALIZE THE CODE
+// THIS CLASS IS COPIED FROM KIOTA TO GET THE SAME NAMING CONVENTIONS, WE SHOULD FIND A WAY TO MUTUALIZE THE CODE
 namespace CodeSnippetsReflection.OpenAPI {
     public static class KiotaOpenApiSchemaExtensions {
         private static readonly Func<OpenApiSchema, IList<OpenApiSchema>> classNamesFlattener = (x) =>
