@@ -66,6 +66,7 @@ namespace CodeSnippetsReflection.OpenAPI
         private static ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> GetLanguageGenerator(string language) {
             return language.ToLowerInvariant() switch {
                 "c#" => new CSharpGenerator(),
+                "powershell" => new PowerShellGenerator(),
                 _ => throw new ArgumentOutOfRangeException($"Language '{language}' is not supported"),
             };
         }
@@ -76,8 +77,9 @@ namespace CodeSnippetsReflection.OpenAPI
         /// <returns>Tuple of the OpenApiUrlTreeNode and the URI of the service root</returns>
         private (OpenApiUrlTreeNode, Uri) GetModelAndServiceUriTuple(Uri requestUri)
         {
-            var serviceRootUri = new Uri(new Uri(requestUri.GetLeftPart(UriPartial.Authority)), requestUri.Segments.First());
-            return requestUri.Segments[1].Trim('/').ToLowerInvariant() switch
+            var apiVersion = requestUri.Segments[1].Trim('/');
+            var serviceRootUri = new Uri(new Uri(requestUri.GetLeftPart(UriPartial.Authority)), $"/{apiVersion}");
+            return apiVersion.ToLowerInvariant() switch
             {
                 "v1.0" => ((_customOpenApiDocument ?? _v1OpenApiDocument).Value, serviceRootUri),
                 "beta" => ((_customOpenApiDocument ?? _betaOpenApiDocument).Value, serviceRootUri),

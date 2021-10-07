@@ -26,5 +26,13 @@
             if(string.IsNullOrEmpty(stringValue)) return stringValue;
             return char.ToUpper(stringValue[0]) + stringValue[1..];
         }
+
+        public static string ToFirstCharacterUpperCaseAfterCharacter(this string stringValue, char character)
+        {
+            if (string.IsNullOrEmpty(stringValue)) return stringValue;
+            int charIndex = stringValue.IndexOf(character);
+            if (charIndex == -1) return stringValue;
+            return stringValue[0..charIndex] + char.ToUpper(stringValue[charIndex + 1]) + stringValue[(charIndex + 2)..].ToFirstCharacterUpperCaseAfterCharacter(character);
+        }
     }
 }

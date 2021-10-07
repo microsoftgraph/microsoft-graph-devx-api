@@ -127,7 +127,7 @@ namespace CodeSnippetsReflection.App
                 // With async-await, the same operation takes 1 minute 7 seconds.
                 using var message = streamContent.ReadAsHttpRequestMessageAsync().Result;
                 snippet = generator.ProcessPayloadRequest(message, language);
-            }
+             }
             catch (Exception e)
             {
                 Console.Error.WriteLine($"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}");

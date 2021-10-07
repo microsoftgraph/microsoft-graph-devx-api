@@ -112,7 +112,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			if(indentManager == null) throw new ArgumentNullException(nameof(indentManager));
 			
 			var payloadSB = new StringBuilder();
-			switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant()) {
+			switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant()) {
 				case "application/json":
 					if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
 						!"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason

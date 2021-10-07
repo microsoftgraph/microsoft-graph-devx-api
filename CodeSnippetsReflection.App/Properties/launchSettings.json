@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CodeSnippetsReflection.App": {
+      "commandName": "Project",
+      "commandLineArgs": "--SnippetsPath F:\\tmp\\snippets\\Http --Languages powershell --Generation openapi"
+    }
+  }
+}

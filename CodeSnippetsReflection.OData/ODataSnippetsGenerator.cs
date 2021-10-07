@@ -25,7 +25,8 @@ namespace CodeSnippetsReflection.OData
             "c#",
             "javascript",
             "objective-c",
-            "java"
+            "java",
+            "powershell"
         };
 
         private Lazy<IEdmModel> IedmModelV1 { get; set; }
