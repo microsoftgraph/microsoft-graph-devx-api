@@ -784,7 +784,7 @@ namespace OpenAPIService
                 if (parentSchema.Properties.TryGetValue("description", out OpenApiSchema descriptionSchema))
                 {
                     // PowerShell uses ` to escape special characters
-                    descriptionSchema.Description = descriptionSchema.Description.Replace("<#>", "<#/>");
+                    descriptionSchema.Description = descriptionSchema.Description?.Replace("<#>", "<#/>");
                 }
             }
         }
