@@ -40,21 +40,40 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 string moduleName = targetCommand.Module;
                 if (!string.IsNullOrEmpty(moduleName))
-                    snippetBuilder.AppendLine($"Import-Module {modulePrefix}.{moduleName}{Environment.NewLine}");
+                    snippetBuilder.AppendLine($"Import-Module {modulePrefix}.{moduleName}");
                 var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
                 if (!string.IsNullOrEmpty(requestPayload))
-                    snippetBuilder.Append(requestPayload);
-                //TODO: Handle query parameters.
-                //var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
-                //if (!string.IsNullOrEmpty(queryParamsPayload))
-                //    snippetBuilder.Append(queryParamsPayload);
+                    snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
+
+                snippetBuilder.Append($"{Environment.NewLine}{targetCommand.Command}");
+
+                // Get key segments for collections.
+                string keySegmentParameter = GetKeySegmentParameters(snippetModel.PathNodes);
+                if (!string.IsNullOrEmpty(keySegmentParameter))
+                    snippetBuilder.Append($" {keySegmentParameter}");
+
+                var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
+                if (!string.IsNullOrEmpty(queryParamsPayload))
+                    snippetBuilder.Append($" {queryParamsPayload}");
 
                 var parameterList = GetActionParametersList(payloadVarName);
-
-                snippetBuilder.AppendLine($"{targetCommand.Command} {parameterList}");
+                if (!string.IsNullOrEmpty(parameterList))
+                    snippetBuilder.Append($" {parameterList}");
             }
 
             return snippetBuilder.ToString();
+        }
+
+        private string GetKeySegmentParameters(IEnumerable<OpenApiUrlTreeNode> pathNodes)
+        {
+            if (!pathNodes.Any()) return string.Empty;
+            return pathNodes.Where(x => x.Segment.IsCollectionIndex())?.Select(p =>
+            {
+                string parameterName = (p.Segment.Replace("{", string.Empty).Replace("}", string.Empty).ToFirstCharacterUpperCaseAfterCharacter('-').Replace("-", string.Empty));
+                return $"-{parameterName.ToFirstCharacterLowerCase()} ${parameterName}";
+            }).Aggregate((x, y) => {
+                return $"{x}.{y}";
+            });
         }
 
         private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager)
@@ -63,25 +82,73 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var payloadSB = new StringBuilder();
             if (!string.IsNullOrEmpty(model.QueryString))
             {
-                payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestParametersVarName} = (q) =>");
-                payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
-                indentManager.Indent();
-                //var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
-                //foreach (var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
-                //{
-                //    //if (queryParam.Contains("="))
-                //    //{
-                //    //    var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
-                //    //    payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)};");
-                //    //}
-                //    //else
-                //    //    payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = string.Empty;");
-                //}
-                indentManager.Unindent();
-                payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
+                var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
+                foreach (var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (queryParam.Contains("="))
+                    {
+                        var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
+                        string parameterName = NormalizeQueryParameterName(kvPair[0]);
+                        payloadSB.Append($"-{parameterName} {GetQueryParameterValue(parameterName, kvPair[1], replacements)}");
+                    }
+                    else
+                        payloadSB.Append($"-{NormalizeQueryParameterName(queryParam)} = {""}");
+                }
                 return (payloadSB.ToString(), requestParametersVarName);
             }
             return (default, default);
+        }
+
+        private static string GetQueryParameterValue(string normalizedParameterName, string originalValue, Dictionary<string, string> replacements)
+        {
+            if (normalizedParameterName.Equals("CountVariable"))
+            {
+                return "CountVar";
+            }
+
+            if (originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
+                return originalValue.ToLowerInvariant();
+            else if (int.TryParse(originalValue, out var intValue))
+                return intValue.ToString();
+            else
+            {
+                var valueWithNested = originalValue.Split(',')
+                                                    .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
+                                                    .Aggregate((a, b) => $"{a},{b}");
+                return $"\"{valueWithNested}\"";
+            }
+        }
+        private static string NormalizeQueryParameterName(string queryParam)
+        {
+            string psParameterName = queryParam.TrimStart('$').ToFirstCharacterUpperCase();
+            switch (psParameterName)
+            {
+                case "Select":
+                    return "Property";
+                case "Expand":
+                    return "ExpandProperty";
+                case "Count":
+                    return "CountVariable";
+                default:
+                    return psParameterName;
+                    break;
+            }
+        }
+
+        private static Regex nestedStatementRegex = new Regex(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
+        private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams)
+        {
+            var replacements = new Dictionary<string, string>();
+            var matches = nestedStatementRegex.Matches(queryParams);
+            if (matches.Any())
+                foreach (Match match in matches)
+                {
+                    var key = match.Groups[1].Value;
+                    var value = match.Groups[2].Value;
+                    replacements.Add(key, value);
+                    queryParams = queryParams.Replace(value, string.Empty);
+                }
+            return (queryParams, replacements);
         }
 
         private IList<PowerShellCommandInfo> GetCommandForRequest(SnippetModel snippetModel,string path, string method, string apiVersion)
