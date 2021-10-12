@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -43,7 +43,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 				payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestHeadersVarName} = (h) =>");
                 payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
 				indentManager.Indent();
-				filteredHeaders.ForEach(h => 
+				filteredHeaders.ForEach(h =>
 					payloadSB.AppendLine($"{indentManager.GetIndent()}h.Add(\"{h.Key}\", \"{h.Value.FirstOrDefault()}\");")
 				);
 				indentManager.Unindent();
@@ -79,7 +79,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			}
 			return (default, default);
 		}
-		private static Regex nestedStatementRegex = new Regex(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
+		private static Regex nestedStatementRegex = new(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
 		private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams) {
 			var replacements = new Dictionary<string, string>();
 			var matches = nestedStatementRegex.Matches(queryParams);
@@ -110,7 +110,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
 				return (default, default);
 			if(indentManager == null) throw new ArgumentNullException(nameof(indentManager));
-			
+
 			var payloadSB = new StringBuilder();
 			switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant()) {
 				case "application/json":
@@ -221,8 +221,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 										return x.Segment.ToFirstCharacterUpperCase();
 									})
 						.Aggregate((x, y) => {
-							var dot = y.StartsWith("[") ? 
-											string.Empty : 
+							var dot = y.StartsWith("[") ?
+											string.Empty :
 											".";
 							return $"{x}{dot}{y}";
 						});

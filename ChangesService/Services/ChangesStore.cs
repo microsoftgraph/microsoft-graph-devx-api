@@ -26,7 +26,7 @@ namespace ChangesService.Services
     /// </summary>
     public class ChangesStore : IChangesStore
     {
-        private readonly object _changesLock = new object();
+        private readonly object _changesLock = new();
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _changeLogCache;
         private readonly IConfiguration _configuration;
@@ -42,7 +42,7 @@ namespace ChangesService.Services
         {
             _telemetryClient = telemetryClient;
             _changesService = changesService ?? throw new ArgumentNullException(nameof(changesService),
-                $"{ ChangesServiceConstants.ValueNullError }: { nameof(changesService) }"); ;
+                $"{ ChangesServiceConstants.ValueNullError }: { nameof(changesService) }");
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration),
                 $"{ ChangesServiceConstants.ValueNullError }: { nameof(configuration) }");
             _changeLogCache = changeLogCache ?? throw new ArgumentNullException(nameof(changeLogCache),
@@ -84,6 +84,9 @@ namespace ChangesService.Services
                     var lockedLocale = locale;
                     var seededChangeLogRecords = _changeLogCache.Get<ChangeLogRecords>(lockedLocale);
                     var sourceMsg = $"Return locale '{locale}' changelog records from in-memory cache";
+                    _telemetryClient?.TrackTrace(sourceMsg,
+                                                 SeverityLevel.Information,
+                                                 _changesTraceProperties);
 
                     if (seededChangeLogRecords != null)
                     {
@@ -92,7 +95,9 @@ namespace ChangesService.Services
                                                      SeverityLevel.Information,
                                                      _changesTraceProperties);
                         sourceMsg = $"Return changelog records for locale '{lockedLocale}' from in-memory cache '{lockedLocale}'";
-
+                        _telemetryClient?.TrackTrace(sourceMsg,
+                                                    SeverityLevel.Information,
+                                                    _changesTraceProperties);
                         // Already seeded by another thread
                         return Task.FromResult(seededChangeLogRecords);
                     }

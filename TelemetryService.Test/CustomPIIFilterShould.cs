@@ -1,4 +1,4 @@
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// -------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -14,7 +14,9 @@ using Xunit;
 
 namespace TelemetrySanitizerService.Test
 {
+#pragma warning disable S101 // Types should be named in PascalCase
     public class CustomPIIFilterShould
+#pragma warning restore S101 // Types should be named in PascalCase
     {
         private readonly CustomPIIFilter _telemetryClientProcessor;
         private readonly IServiceProviderMock _serviceProviderMock;

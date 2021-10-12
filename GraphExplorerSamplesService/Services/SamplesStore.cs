@@ -23,7 +23,7 @@ namespace GraphExplorerSamplesService.Services
     /// </summary>
     public class SamplesStore : ISamplesStore
     {
-        private readonly object _samplesLock = new object();
+        private readonly object _samplesLock = new();
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _samplesCache;
@@ -167,7 +167,7 @@ namespace GraphExplorerSamplesService.Services
         /// <param name="fileContents">The json files to be deserialized.</param>
         /// <param name="locale">The language code for the preferred localized file.</param>
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
-        private SampleQueriesList DeserializeSamplesList(string fileContents, string locale)
+        private static SampleQueriesList DeserializeSamplesList(string fileContents, string locale)
         {
             /* Current business process only supports ordering of the English
                translation of the sample queries.

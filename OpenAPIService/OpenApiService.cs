@@ -88,7 +88,7 @@ namespace OpenAPIService
             };
             subset.Components.SecuritySchemes.Add("azureaadv2", aadv2Scheme);
 
-            subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
+            subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, Array.Empty<string>() } });
 
             subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, graphVersion) });
 
@@ -269,13 +269,9 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            if (relativeUrl.Equals("/", StringComparison.Ordinal))
+            if (relativeUrl.Equals("/", StringComparison.Ordinal) && rootNode.HasOperations(label))
             {
-                // root path
-                if (rootNode.HasOperations(label))
-                {
-                    return rootNode.PathItems[label].Operations.Values.ToArray();
-                }
+                return rootNode.PathItems[label].Operations.Values.ToArray();
             }
 
             var urlSegments = relativeUrl.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
@@ -752,16 +748,13 @@ namespace OpenAPIService
             string evaluator(Match match)
             {
                 string output = match.ToString(); // e.g. ---> ={period}
-                string paramName = $"{output.Substring(2, output.Length - 3)}"; // e.g. ---> period
+                string paramName = $"{output[2..^1]}"; // e.g. ---> period
 
-                if (parameterTypes.TryGetValue(paramName, out string type))
+                if (parameterTypes.TryGetValue(paramName, out string type) && type.Equals("string", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (type.Equals("string", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Only format function parameters with string data types
-                        output = $"='{{{paramName}}}'";
-                        return output;
-                    }
+                    // Only format function parameters with string data types
+                    output = $"='{{{paramName}}}'";
+                    return output;
                 }
                 return output;
             }
@@ -779,13 +772,11 @@ namespace OpenAPIService
         /// <param name="components">The <see cref="OpenApiComponents"/> object with the target schema.</param>
         private static void EscapePoundCharacter(OpenApiComponents components)
         {
-            if (components.Schemas.TryGetValue("microsoft.graph.networkInterface", out OpenApiSchema parentSchema))
+            if (components.Schemas.TryGetValue("microsoft.graph.networkInterface", out OpenApiSchema parentSchema)
+                && parentSchema.Properties.TryGetValue("description", out OpenApiSchema descriptionSchema))
             {
-                if (parentSchema.Properties.TryGetValue("description", out OpenApiSchema descriptionSchema))
-                {
-                    // PowerShell uses ` to escape special characters
-                    descriptionSchema.Description = descriptionSchema.Description.Replace("<#>", "<#/>");
-                }
+                // PowerShell uses ` to escape special characters
+                descriptionSchema.Description = descriptionSchema.Description?.Replace("<#>", "<#/>");
             }
         }
     }

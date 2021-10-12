@@ -6,6 +6,7 @@ using FileService.Interfaces;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using UtilityService;
 
 namespace FileService.Services
 {
@@ -31,10 +32,7 @@ namespace FileService.Services
         /// <returns>The document contents from the HTTP source.</returns>
         public async Task<string> ReadFromDocumentAsync(HttpRequestMessage requestMessage)
         {
-            if (requestMessage == null)
-            {
-                throw new ArgumentNullException(nameof(requestMessage), "Value cannot be null.");
-            }
+            UtilityFunctions.CheckArgumentNull(requestMessage, nameof(requestMessage));
 
             requestMessage.Method ??= HttpMethod.Get; // default is GET
 

@@ -55,7 +55,7 @@ namespace FileService.Common
             {
                 localeCode = localeCode.GetSupportedLocaleVariant();
 
-                if (defaultBlobName.IndexOf('.') > 0 && localeCode != "en-US")
+                if (defaultBlobName.Contains('.') && localeCode != "en-US")
                 {
                     /* All localized files have a consistent structure, e.g. sample-queries_fr-FR.json
                        except for 'en-Us' --> sample-queries.json or permissions-v1.0.json */
@@ -80,8 +80,6 @@ namespace FileService.Common
             {
                 throw new ArgumentNullException(parameterName, "Value cannot be null or empty.");
             }
-
-            return;
         }
 
         /// <summary>

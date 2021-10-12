@@ -38,11 +38,7 @@ namespace FileService.Services
         public async Task<string> ReadFromFile(string filePathSource)
         {
             FileServiceHelper.CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));
-
-            if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
-            {
-                throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
-            }
+            CheckFileFormat(filePathSource);
 
             (_containerName, _blobName) = FileServiceHelper.RetrieveFilePathSourceValues(filePathSource);
 
@@ -82,6 +78,14 @@ namespace FileService.Services
         public Task WriteToFile(string fileContents, string filePathSource)
         {
             throw new NotImplementedException();
+        }
+
+        private static void CheckFileFormat(string filePathSource)
+        {
+            if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
+            {
+                throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
+            }
         }
     }
 }

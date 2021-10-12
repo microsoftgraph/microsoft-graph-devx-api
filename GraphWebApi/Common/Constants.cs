@@ -12,7 +12,7 @@ namespace GraphWebApi.Common
         {
             // User Principal Name
             public const string UpnJwt = "preferred_username";
-            public const string UpnUriSchema = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn";            
+            public const string UpnUriSchema = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn";
         }
     }
 }
