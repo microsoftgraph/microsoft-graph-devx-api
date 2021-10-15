@@ -244,8 +244,8 @@ namespace ChangesService.Services
         /// <returns>The workload name for the target request url.</returns>
         [ExcludeFromCodeCoverage]
         private async Task<string> RetrieveWorkloadNameFromRequestUrl(ChangeLogSearchOptions searchOptions,
-                                                                             MicrosoftGraphProxyConfigs graphProxy,
-                                                                             IHttpClientUtility httpClientUtility)
+                                                                      MicrosoftGraphProxyConfigs graphProxy,
+                                                                      IHttpClientUtility httpClientUtility)
         {
             _telemetryClient?.TrackTrace($"Retrieving workload name for url '{searchOptions.RequestUrl}'",
                                          SeverityLevel.Information,
@@ -259,6 +259,18 @@ namespace ChangesService.Services
 
             UtilityFunctions.CheckArgumentNull(graphProxy, nameof(graphProxy));
             UtilityFunctions.CheckArgumentNull(httpClientUtility, nameof(httpClientUtility));
+
+            // Fetch the Graph Proxy Url
+            using var graphProxyRequestMessage = new HttpRequestMessage(HttpMethod.Get, graphProxy.GraphProxyRequestUrl);
+            string graphProxyBaseUrl = await httpClientUtility.ReadFromDocumentAsync(graphProxyRequestMessage);
+
+            if (!string.IsNullOrEmpty(graphProxyBaseUrl))
+            {
+                graphProxy.GraphProxyBaseUrl = graphProxyBaseUrl.Trim('"');
+            }
+
+
+
 
             // The proxy url helps fetch data from Microsoft Graph anonymously
             var relativeProxyUrl = string.Format(graphProxy.GraphProxyRelativeUrl, graphProxy.GraphVersion,

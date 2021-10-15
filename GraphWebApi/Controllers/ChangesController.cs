@@ -64,10 +64,10 @@ namespace GraphWebApi.Controllers
         {
             // Options for searching, filtering and paging the changelog data
             var searchOptions = new ChangeLogSearchOptions(requestUrl: requestUrl,
-                                                            workload: workload,
-                                                            daysRange: daysRange,
-                                                            startDate: startDate,
-                                                            endDate: endDate)
+                                                           workload: workload,
+                                                           daysRange: daysRange,
+                                                           startDate: startDate,
+                                                           endDate: endDate)
             {
                 Page = page,
                 PageLimit = pageLimit
@@ -82,6 +82,7 @@ namespace GraphWebApi.Controllers
                                             _changesTraceProperties);
             // Fetch the changelog records
             var changeLog = await _changesStore.FetchChangeLogRecordsAsync(cultureInfo);
+            await _changesStore.FetchWorkloadMappingsAsync();
 
 
             // Filter the changelog records

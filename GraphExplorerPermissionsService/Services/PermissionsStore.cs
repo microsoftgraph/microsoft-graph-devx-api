@@ -349,6 +349,16 @@ namespace GraphExplorerPermissionsService
                                                     .SelectMany(x => x.Value)
                                                     .Values<string>().Distinct().ToList();
 
+
+                var scopesTest = _scopesListTable.Values.OfType<JToken>()
+                                             .SelectMany(x => x).OfType<JProperty>()
+                                             .Where(x => x.Name.Equals("GET"))
+                                             .SelectMany(x => x).OfType<JProperty>()
+                                             .Where(x => x.Name.Equals("DelegatedWork"))
+                                             .SelectMany(x => x.Value)
+                                             .Values<string>().Distinct().ToList();
+
+
                 scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType, true);
 
                 _telemetryClient?.TrackTrace("Return all permissions",

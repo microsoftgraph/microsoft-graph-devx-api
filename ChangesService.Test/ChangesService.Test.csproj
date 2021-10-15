@@ -4,7 +4,11 @@
     <TargetFramework>net5.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
-  </PropertyGroup> 
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="TestFiles\ChangeLogs\workload-mapping.json" />
+  </ItemGroup> 
 
   <ItemGroup>
     <Content Include="TestFiles\appsettingstest.json">
@@ -21,6 +25,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="TestFiles\ChangeLogs\fr-fr\ChangeLog.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TestFiles\ChangeLogs\workload-mapping.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
 

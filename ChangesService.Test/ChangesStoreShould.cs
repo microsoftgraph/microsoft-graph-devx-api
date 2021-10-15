@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -10,7 +10,10 @@ using MemoryCache.Testing.Moq;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MockTestUtility;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -23,6 +26,7 @@ namespace ChangesService.Test
     {
         private readonly IConfigurationRoot _configuration;
         private readonly IHttpClientUtility _httpClientUtility;
+        private readonly IFileUtility _fileUtility;
         private readonly IMemoryCache _changesCache;
         private IChangesStore _changesStore;
         private readonly IChangesService _changesService;
@@ -31,6 +35,7 @@ namespace ChangesService.Test
         {
             _changesService = new Services.ChangesService();
             _httpClientUtility = new FileUtilityMock();
+            _fileUtility = new FileUtilityMock();
             _changesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
                 .AddJsonFile(Path.Join(Environment.CurrentDirectory, "TestFiles", "appsettingstest.json"))
@@ -132,6 +137,31 @@ namespace ChangesService.Test
 
             Assert.Equal("Compliance", englishChangeLogRecords.ChangeLogs.FirstOrDefault().WorkloadArea);
             Assert.Equal("Compliance", englishChangeLogRecords1.ChangeLogs.FirstOrDefault().WorkloadArea);
+        }
+
+        [Fact]
+        public void GetWorkloadMappingFile()
+        {
+            var container = "BlobStorage:Containers:Changelog";
+            var blob = "BlobStorage:Blobs:WorkloadMapping";
+            string relativeSourcePath = FileService.Common.FileServiceHelper.GetLocalizedFilePathSource(_configuration[container], _configuration[blob]);
+            // Get file contents from source
+            string sourceJson = _fileUtility.ReadFromFile(relativeSourcePath).GetAwaiter().GetResult();
+            var dict = new Dictionary<string, JObject>();
+            try
+            {
+                JObject sourceToken = JsonConvert.DeserializeObject<JObject>(sourceJson).Value<JObject>("workloadMappings");
+                dict = sourceToken.ToObject<Dictionary<string, JObject>>();
+                foreach(var item in dict)
+                {
+                    var ids = item.Value.Properties().Where(x => x.Name.Equals("workloads"));
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
     }
 }

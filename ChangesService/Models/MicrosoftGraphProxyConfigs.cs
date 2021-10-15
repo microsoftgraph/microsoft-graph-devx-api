@@ -11,8 +11,9 @@ namespace ChangesService.Models
     public record MicrosoftGraphProxyConfigs
     {
         public string GraphVersion { get; init; } = "v1.0";
-        public string GraphProxyBaseUrl { get; init; } = "https://proxy.apisandbox.msdn.microsoft.com/";
-        public string GraphProxyRelativeUrl { get; init; } = "svc?url=https://graph.microsoft.com/{0}{1}?$whatif";
+        public string GraphProxyBaseUrl { get; set; } = "https://graph.office.net/en-us/graph/api/proxy";
+        public string GraphProxyRequestUrl { get; init; } = "https://cdn.graph.office.net/en-us/graph/api/proxy/endpoint";
+        public string GraphProxyRelativeUrl { get; init; } = "?url=https://graph.microsoft.com/{0}{1}?$whatif";
         public string GraphProxyAuthorization { get; init; }
     }
 }
