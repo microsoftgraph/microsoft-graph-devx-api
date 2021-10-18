@@ -2,11 +2,11 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DependencyInjection;
+using PermissionsService.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;

@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 using System;
 using Xunit;
 using System.Collections.Generic;
-using GraphExplorerSamplesService.Models;
+using SamplesService.Models;
 
 namespace SamplesService.Test
 {
@@ -61,7 +61,7 @@ namespace SamplesService.Test
             /* Act */
 
             // Get the serialized JSON string of the list of sample queries
-            string newSampleQueriesJson = GraphExplorerSamplesService.Services.SamplesService.SerializeSampleQueriesList(sampleQueriesList);
+            string newSampleQueriesJson = Services.SamplesService.SerializeSampleQueriesList(sampleQueriesList);
 
             // Assert
             Assert.NotNull(newSampleQueriesJson);
@@ -74,7 +74,7 @@ namespace SamplesService.Test
             SampleQueriesList emptySampleQueriesList = new SampleQueriesList();
 
             // Act
-            string sampleQueriesJson = GraphExplorerSamplesService.Services.SamplesService.SerializeSampleQueriesList(emptySampleQueriesList);
+            string sampleQueriesJson = Services.SamplesService.SerializeSampleQueriesList(emptySampleQueriesList);
 
             // Assert
             Assert.NotNull(sampleQueriesJson);
@@ -88,7 +88,7 @@ namespace SamplesService.Test
 
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
-                GraphExplorerSamplesService.Services.SamplesService.SerializeSampleQueriesList(nullSampleQueriesList));
+                Services.SamplesService.SerializeSampleQueriesList(nullSampleQueriesList));
         }
 
         #endregion
@@ -156,7 +156,7 @@ namespace SamplesService.Test
             }";
 
             // Act
-            SampleQueriesList sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(validJsonString, true);
+            SampleQueriesList sampleQueriesList = Services.SamplesService.DeserializeSampleQueriesList(validJsonString, true);
 
             /* Assert that the sample queries are returned in alphabetical order of their category names (with 'Getting Started' at the top-most)
              * and with all details and count of items correct */
@@ -253,7 +253,7 @@ namespace SamplesService.Test
 
             // Act and Assert
             Assert.Throws<JsonReaderException>(() =>
-                GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(invalidJsonString));
+                Services.SamplesService.DeserializeSampleQueriesList(invalidJsonString));
         }
 
         [Fact]
@@ -264,7 +264,7 @@ namespace SamplesService.Test
 
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
-                GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(nullArgument));
+                Services.SamplesService.DeserializeSampleQueriesList(nullArgument));
         }
 
         [Fact]
@@ -274,7 +274,7 @@ namespace SamplesService.Test
             string emptyJsonFileContents = "{ }";
 
             // Act
-            SampleQueriesList sampleQueriesList = GraphExplorerSamplesService.Services.SamplesService.DeserializeSampleQueriesList(emptyJsonFileContents);
+            SampleQueriesList sampleQueriesList = Services.SamplesService.DeserializeSampleQueriesList(emptyJsonFileContents);
 
             // Assert
             Assert.Empty(sampleQueriesList.SampleQueries);
