@@ -269,7 +269,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (x.Segment.IsCollectionIndex())
                     return $"{x.Segment.Replace("{", "(\"").Replace("}", "\")")}ById";
                 else if (x.Segment.IsFunction())
-                    return x.Segment.Split('.').Last().ToFirstCharacterUpperCase();
+                    return x.Segment.Split('.').Last().ToFirstCharacterLowerCase();
                 return x.Segment.ToFirstCharacterLowerCase();
             })
                         .Aggregate((x, y) => {
