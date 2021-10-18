@@ -33,7 +33,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                     $"const {clientVarName} = new {clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
             var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
             snippetBuilder.Append(requestPayload);
-            var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "let result = ";
+            var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "const result = ";
             var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
             if (!string.IsNullOrEmpty(queryParamsPayload))
                 snippetBuilder.Append(queryParamsPayload);
