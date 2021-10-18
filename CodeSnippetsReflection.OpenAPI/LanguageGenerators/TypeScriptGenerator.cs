@@ -267,7 +267,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!(nodes?.Any() ?? false)) return string.Empty;
             return nodes.Select(x => {
                 if (x.Segment.IsCollectionIndex())
-                    return $"ById{x.Segment.Replace("{", "(\"").Replace("}", "\")")}";
+                    return $"{x.Segment.Replace("{", "(\"").Replace("}", "\")")}ById";
                 else if (x.Segment.IsFunction())
                     return x.Segment.Split('.').Last().ToFirstCharacterUpperCase();
                 return x.Segment.ToFirstCharacterLowerCase();
