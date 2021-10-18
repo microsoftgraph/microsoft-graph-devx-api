@@ -50,7 +50,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("const graphClient = new GraphClient(httpCore)", result);
+            Assert.Contains("const graphClient = new GraphClient(requestAdapter)", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall()
@@ -240,6 +240,22 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("\"ConsistencyLevel\": \"eventual\",", result);
             Assert.Contains("const headers = {", result);
         }
-        //TODO test for DateTimeOffset
+        [Fact]
+        public async Task GenerateAdditionalData()
+        {
+            const string chatObject = "{   \"createdDateTime\":\"2019-02-04T19:58:15.511Z\",   " +
+                "\"from\":{      \"user\":{         \"id\":\"id-value\",         \"displayName\":\"Joh Doe\",        " +
+                " \"userIdentityType\":\"aadUser\"      }   },   \"body\":{      \"contentType\":\"html\",     " +
+                " \"content\":\"Hello World\"   }}";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/teams/team-id/channels/19:4b6bed8d24574f6a9e436813cb2617d8@thread.tacv2/messages")
+            {
+                Content = new StringContent(chatObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("new ChatMessage", result);
+            Assert.Contains("requestBody.from.additionalData", result);
+        }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,7 +37,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("var graphClient = new GraphClient(httpCore)", result);
+            Assert.Contains("var graphClient = new GraphClient(requestAdapter)", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall() {

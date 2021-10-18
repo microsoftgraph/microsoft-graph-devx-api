@@ -22,11 +22,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private const string clientVarName = "graphClient";
         private const string clientVarType = "GraphClient";
-        private const string httpCoreVarName = "httpCore";
+        private const string httpCoreVarName = "requestAdapter";
 
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
-            if (snippetModel == null) throw new ArgumentException("Argument snippetModel cannot be null");
+            if (snippetModel == null) throw new ArgumentNullException("Argument snippetModel cannot be null");
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder(
                                     "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
@@ -34,14 +34,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
             snippetBuilder.Append(requestPayload);
             var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "const result = ";
-            var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
-            if (!string.IsNullOrEmpty(queryParamsPayload))
-                snippetBuilder.Append(queryParamsPayload);
+
+            // add headers
             var (requestHeadersPayload, requestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
-            if (!string.IsNullOrEmpty(requestHeadersPayload))
-                snippetBuilder.Append(requestHeadersPayload);
+            if (!string.IsNullOrEmpty(requestHeadersPayload)) snippetBuilder.Append(requestHeadersPayload);
+
+            // add query parameters
+            var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
+            if (!string.IsNullOrEmpty(queryParamsPayload)) snippetBuilder.Append(queryParamsPayload);
+
+            // add parameters
             var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, requestHeadersVarName);
             snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({parametersList});");
+
             return snippetBuilder.ToString();
         }
         private const string requestHeadersVarName = "headers";
@@ -270,15 +275,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string GetMethodName(HttpMethod method)
         {
             // can't use pattern matching with switch as it's not an enum but a bunch of static values
-            if (method == HttpMethod.Get) return "get";
-            else if (method == HttpMethod.Post) return "post";
-            else if (method == HttpMethod.Put) return "put";
-            else if (method == HttpMethod.Delete) return "delete";
-            else if (method == HttpMethod.Patch) return "patch";
-            else if (method == HttpMethod.Head) return "head";
-            else if (method == HttpMethod.Options) return "options";
-            else if (method == HttpMethod.Trace) return "trace";
-            else throw new InvalidOperationException($"Unsupported HTTP method: {method}");
+            HttpMethod[] methods = { HttpMethod.Get, HttpMethod.Post, HttpMethod.Put, HttpMethod.Delete, HttpMethod.Patch, HttpMethod.Head, HttpMethod.Options, HttpMethod.Trace };
+            var supportedMethods = new HashSet<HttpMethod>(methods);
+
+            if (supportedMethods.Contains(method))
+                return method.ToString().ToLower();
+            else
+                throw new InvalidOperationException($"Unsupported HTTP method: {method}");
         }
     }
 }
