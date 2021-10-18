@@ -50,7 +50,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("const apiClient = new ApiClient(httpCore)", result);
+            Assert.Contains("const graphClient = new GraphClient(httpCore)", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall()
@@ -126,7 +126,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("10L", result);
+            Assert.Contains("10", result);
             Assert.DoesNotContain("microsoft.graph", result);
         }
         [Fact]
@@ -140,7 +140,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("10d", result);
+            Assert.Contains("10", result);
         }
         [Fact]
         public async Task GeneratesABinaryPayload()
@@ -152,7 +152,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Content.Headers.ContentType = new("application/octect-stream");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("new MemoryStream", result);
+            Assert.Contains("new WebStream", result);
         }
         [Fact]
         public async Task GeneratesABase64UrlPayload()
@@ -164,7 +164,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Encoding.ASCII.GetBytes", result);
+            Assert.Contains("btoa", result);
         }
         [Fact]
         public async Task GeneratesADatePayload()
@@ -238,7 +238,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("\"ConsistencyLevel\": \"eventual\",", result);
-            Assert.Contains("let headers = {", result);
+            Assert.Contains("const headers = {", result);
         }
         //TODO test for DateTimeOffset
     }

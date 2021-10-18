@@ -14,19 +14,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     public class TypeScriptGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         /// <summary>
-        /// Formulates the requested Graph snippets and returns it as string for JavaScript
+        /// Formulates the requested Graph snippets and returns it as string for TypeScript
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
-        /// <param name="languageExpressions">The language expressions to be used for code Gen</param>
         /// <returns>String of the snippet in Javascript code</returns>
         /// 
 
-        private const string clientVarName = "apiClient";
-        private const string clientVarType = "ApiClient";
+        private const string clientVarName = "graphClient";
+        private const string clientVarType = "GraphClient";
         private const string httpCoreVarName = "httpCore";
 
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
+            if (snippetModel == null) throw new ArgumentException("Argument snippetModel cannot be null");
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder(
                                     "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
@@ -87,7 +87,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         payloadSB.AppendLine($"{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} : {GetQueryParameterValue(kvPair[1], replacements)},");
                     }
                     else
-                        payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = string.Empty;");
+                        payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = undefined;");
                 }
                 indentManager.Unindent();
                 payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
@@ -147,7 +147,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         }
                     break;
                 case "application/octect-stream":
-                    payloadSB.AppendLine($"using var {requestBodyVarName} = new MemoryStream(); //stream to upload");
+                    payloadSB.AppendLine($"using var {requestBodyVarName} = new WebStream(); //stream to upload");
                     break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
@@ -204,14 +204,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 case JsonValueKind.String:
                     if (propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
-                        payloadSB.AppendLine($"{propertyAssignment}Encoding.ASCII.GetBytes(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
+                        payloadSB.AppendLine($"{propertyAssignment}btoa(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
                     else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
                         payloadSB.AppendLine($"{propertyAssignment} new Date(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
                     else
                         payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}{terminateLine}");
                     break;
                 case JsonValueKind.Number:
-                    payloadSB.AppendLine($"{propertyAssignment}{GetNumberLiteral(propSchema, value)}{propertySuffix}{terminateLine}");
+                    payloadSB.AppendLine($"{propertyAssignment}{value}{propertySuffix}{terminateLine}");
                     break;
                 case JsonValueKind.False:
                 case JsonValueKind.True:
@@ -240,7 +240,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static void WriteJsonArrayValue(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment, string terminateLine)
         {
-            var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? value.EnumerateArray().First().ValueKind.ToString();
             payloadSB.AppendLine($"{propertyAssignment}[");
             indentManager.Indent();
             indentManager.Indent();
@@ -251,29 +250,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             indentManager.Unindent();
             payloadSB.AppendLine($"{indentManager.GetIndent()}{terminateLine}");
         }
-        private static string GetNumberLiteral(OpenApiSchema schema, JsonElement value)
-        {
-            if (schema == default) return default;
-            return schema.Type switch
-            {
-                "integer" when schema.Format.Equals("int64") => $"{value.GetInt64()}L",
-                _ when schema.Format.Equals("float") => $"{value.GetDecimal()}f",
-                _ when schema.Format.Equals("double") => $"{value.GetDouble()}d", //in MS Graph float & double are any of number, string and enum
-                _ => value.GetInt32().ToString(),
-            };
-        }
         private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
             return nodes.Select(x => {
                 if (x.Segment.IsCollectionIndex())
-                    return $"{x.Segment.Replace("{", "(\"").Replace("}", "\")")}ById";
+                    return $"ById{x.Segment.Replace("{", "(\"").Replace("}", "\")")}";
                 else if (x.Segment.IsFunction())
                     return x.Segment.Split('.').Last().ToFirstCharacterLowerCase();
                 return x.Segment.ToFirstCharacterLowerCase();
             })
                         .Aggregate((x, y) => {
-                            var dot = y.EndsWith("ById") ?
+                            var dot = y.StartsWith("ById") ?
                                             string.Empty :
                                             ".";
                             return $"{x}{dot}{y}";
