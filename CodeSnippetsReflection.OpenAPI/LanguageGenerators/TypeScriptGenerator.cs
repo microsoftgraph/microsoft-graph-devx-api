@@ -52,7 +52,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                                             .ToList();
             if (filteredHeaders.Any())
             {
-                payloadSB.AppendLine($"{indentManager.GetIndent()}let {requestHeadersVarName} = {{");
+                payloadSB.AppendLine($"{indentManager.GetIndent()}const {requestHeadersVarName} = {{");
                 indentManager.Indent();
                 filteredHeaders.ForEach(h =>
                     payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Key}\": \"{h.Value.FirstOrDefault().Replace("\"", "\\\"")}\",")
