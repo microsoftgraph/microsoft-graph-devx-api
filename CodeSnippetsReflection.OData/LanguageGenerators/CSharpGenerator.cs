@@ -99,7 +99,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             {
                                 snippetModel.ResponseVariableName += "Reference"; // append suffix
                                 snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = new ReferenceRequestBody\n{{\n");
-                                snippetBuilder.Append($"\tOdataId = \"{odataId}\"\n}};\n\n");
+                                snippetBuilder.Append($"\tODataId = \"{odataId}\"\n}};\n\n");
                                 snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
                             }
                             break;
