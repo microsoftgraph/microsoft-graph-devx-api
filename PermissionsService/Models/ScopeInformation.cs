@@ -4,7 +4,7 @@
 
 using Newtonsoft.Json;
 
-namespace GraphExplorerPermissionsService.Models
+namespace PermissionsService.Models
 {
     /// <summary>
     /// Defines a representation of a scope information.

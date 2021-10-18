@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GraphExplorerPermissionsService\PermissionsService.csproj" />
+    <ProjectReference Include="..\PermissionsService\PermissionsService.csproj" />
     <ProjectReference Include="..\UtilityService\UtilityService.csproj" />
   </ItemGroup>
 

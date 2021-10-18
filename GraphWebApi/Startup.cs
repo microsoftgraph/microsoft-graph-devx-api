@@ -6,12 +6,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using GraphExplorerPermissionsService.Interfaces;
-using GraphExplorerPermissionsService;
 using FileService.Interfaces;
 using FileService.Services;
-using GraphExplorerSamplesService.Interfaces;
-using GraphExplorerSamplesService.Services;
 using Serilog;
 using ChangesService.Services;
 using ChangesService.Interfaces;
@@ -27,6 +23,10 @@ using KnownIssuesService.Interfaces;
 using GraphWebApi.Middleware;
 using CodeSnippetsReflection.OData;
 using CodeSnippetsReflection.OpenAPI;
+using PermissionsService.Interfaces;
+using SamplesService.Interfaces;
+using PermissionsService;
+using SamplesService.Services;
 
 namespace GraphWebApi
 {

@@ -9,11 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeSnippetsReflection.ODat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeSnippetsReflection.OData.Test", "CodeSnippetsReflection.OData.Test\CodeSnippetsReflection.OData.Test.csproj", "{04379F1A-8A18-4079-8C89-E37065FE90D4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SamplesService", "GraphExplorerSamplesService\SamplesService.csproj", "{6FD6FCCE-4519-49C4-AF8B-A4EB028559A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SamplesService", "SamplesService\SamplesService.csproj", "{6FD6FCCE-4519-49C4-AF8B-A4EB028559A6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SamplesService.Test", "SamplesService.Test\SamplesService.Test.csproj", "{9AE7112F-F35A-4474-9968-9FA3A33FCA7E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PermissionsService", "GraphExplorerPermissionsService\PermissionsService.csproj", "{E50C9B93-D6E5-4D11-82AD-D741C1F2BD1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PermissionsService", "PermissionsService\PermissionsService.csproj", "{E50C9B93-D6E5-4D11-82AD-D741C1F2BD1C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileService", "FileService\FileService.csproj", "{D9659D5A-8043-4E90-B270-680E7A76CC4E}"
 EndProject

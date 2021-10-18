@@ -4,19 +4,19 @@
 
 using FileService.Common;
 using FileService.Interfaces;
-using GraphExplorerSamplesService.Interfaces;
-using GraphExplorerSamplesService.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using SamplesService.Interfaces;
+using SamplesService.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UtilityService;
 
-namespace GraphExplorerSamplesService.Services
+namespace SamplesService.Services
 {
     /// <summary>
     /// Retrieves or adds localized sample queries to and from a memory cache or a remote source.
