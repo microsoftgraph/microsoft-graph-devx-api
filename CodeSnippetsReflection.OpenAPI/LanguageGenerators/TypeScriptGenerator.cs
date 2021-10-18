@@ -273,7 +273,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return x.Segment.ToFirstCharacterLowerCase();
             })
                         .Aggregate((x, y) => {
-                            var dot = y.StartsWith("ById") ?
+                            var dot = y.EndsWith("ById") ?
                                             string.Empty :
                                             ".";
                             return $"{x}{dot}{y}";
