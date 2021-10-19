@@ -49,7 +49,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             return snippetBuilder.ToString();
         }
-        private const string requestHeadersVarName = "headers";
+        private const string RequestHeadersVarName = "headers";
         private static (string, string) GetRequestHeaders(SnippetModel snippetModel, IndentManager indentManager)
         {
             var payloadSB = new StringBuilder();
