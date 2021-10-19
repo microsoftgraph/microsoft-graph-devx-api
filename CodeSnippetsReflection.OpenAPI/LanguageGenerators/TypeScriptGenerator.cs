@@ -75,7 +75,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return string.Join(", ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}"));
             else return string.Empty;
         }
-        private const string requestParametersVarName = "requestParameters";
+        private const string RequestParametersVarName = "requestParameters";
         private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager)
         {
             var payloadSB = new StringBuilder();
