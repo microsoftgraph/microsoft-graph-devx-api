@@ -14,7 +14,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 	{
 		private const string clientVarName = "graphClient";
 		private const string clientVarType = "GraphClient";
-		private const string httpCoreVarName = "httpCore";
+		private const string httpCoreVarName = "requestAdapter";
 		public string GenerateCodeSnippet(SnippetModel snippetModel)
 		{
 			var indentManager = new IndentManager();
