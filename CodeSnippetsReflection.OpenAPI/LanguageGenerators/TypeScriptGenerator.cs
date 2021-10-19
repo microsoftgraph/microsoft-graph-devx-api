@@ -36,7 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "const result = ";
 
             // add headers
-            var (requestHeadersPayload, RequestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
+            var (requestHeadersPayload, requestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
             if (!string.IsNullOrEmpty(requestHeadersPayload)) snippetBuilder.Append(requestHeadersPayload);
 
             // add query parameters
@@ -44,7 +44,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!string.IsNullOrEmpty(queryParamsPayload)) snippetBuilder.Append(queryParamsPayload);
 
             // add parameters
-            var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, RequestHeadersVarName);
+            var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, requestHeadersVarName);
             snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({parametersList});");
 
             return snippetBuilder.ToString();
