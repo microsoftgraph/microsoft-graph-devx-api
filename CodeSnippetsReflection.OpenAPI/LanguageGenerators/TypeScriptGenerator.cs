@@ -36,7 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "const result = ";
 
             // add headers
-            var (requestHeadersPayload, requestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
+            var (requestHeadersPayload, RequestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
             if (!string.IsNullOrEmpty(requestHeadersPayload)) snippetBuilder.Append(requestHeadersPayload);
 
             // add query parameters
@@ -44,7 +44,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!string.IsNullOrEmpty(queryParamsPayload)) snippetBuilder.Append(queryParamsPayload);
 
             // add parameters
-            var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, requestHeadersVarName);
+            var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, RequestHeadersVarName);
             snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({parametersList});");
 
             return snippetBuilder.ToString();
@@ -57,14 +57,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                                             .ToList();
             if (filteredHeaders.Any())
             {
-                payloadSB.AppendLine($"{indentManager.GetIndent()}const {requestHeadersVarName} = {{");
+                payloadSB.AppendLine($"{indentManager.GetIndent()}const {RequestHeadersVarName} = {{");
                 indentManager.Indent();
                 filteredHeaders.ForEach(h =>
                     payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Key}\": \"{h.Value.FirstOrDefault().Replace("\"", "\\\"")}\",")
                 );
                 indentManager.Unindent();
                 payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
-                return (payloadSB.ToString(), requestHeadersVarName);
+                return (payloadSB.ToString(), RequestHeadersVarName);
             }
             return (default, default);
         }
@@ -81,7 +81,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var payloadSB = new StringBuilder();
             if (!string.IsNullOrEmpty(model.QueryString))
             {
-                payloadSB.AppendLine($"{indentManager.GetIndent()}let {requestParametersVarName} = {{");
+                payloadSB.AppendLine($"{indentManager.GetIndent()}let {RequestParametersVarName} = {{");
                 indentManager.Indent();
                 var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
                 foreach (var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
@@ -96,7 +96,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 }
                 indentManager.Unindent();
                 payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
-                return (payloadSB.ToString(), requestParametersVarName);
+                return (payloadSB.ToString(), RequestParametersVarName);
             }
             return (default, default);
         }
@@ -130,7 +130,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
         private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterLowerCase();
-        private const string requestBodyVarName = "requestBody";
+        private const string RequestBodyVarName = "requestBody";
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
@@ -141,23 +141,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant())
             {
                 case "application/json":
-                    if (!string.IsNullOrEmpty(snippetModel.RequestBody) &&
-                        !"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
+                    if (!"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
                         using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody))
                         {
                             var schema = snippetModel.RequestSchema;
                             var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-                            payloadSB.AppendLine($"var {requestBodyVarName} = new {className}()");
-                            WriteJsonObjectValue(requestBodyVarName, payloadSB, parsedBody.RootElement, schema, indentManager);
+                            payloadSB.AppendLine($"var {RequestBodyVarName} = new {className}()");
+                            WriteJsonObjectValue(RequestBodyVarName, payloadSB, parsedBody.RootElement, schema, indentManager);
                         }
                     break;
                 case "application/octect-stream":
-                    payloadSB.AppendLine($"using var {requestBodyVarName} = new WebStream(); //stream to upload");
+                    payloadSB.AppendLine($"using var {RequestBodyVarName} = new WebStream();");
                     break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
             }
-            return (payloadSB.ToString(), requestBodyVarName);
+            return (payloadSB.ToString(), RequestBodyVarName);
         }
 
         private static void WriteAnonymousObjectValues(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true)
@@ -274,14 +273,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static string GetMethodName(HttpMethod method)
         {
-            // can't use pattern matching with switch as it's not an enum but a bunch of static values
-            HttpMethod[] methods = { HttpMethod.Get, HttpMethod.Post, HttpMethod.Put, HttpMethod.Delete, HttpMethod.Patch, HttpMethod.Head, HttpMethod.Options, HttpMethod.Trace };
-            var supportedMethods = new HashSet<HttpMethod>(methods);
-
-            if (supportedMethods.Contains(method))
-                return method.ToString().ToLower();
-            else
-                throw new InvalidOperationException($"Unsupported HTTP method: {method}");
+            if (method == null) throw new ArgumentNullException("Argument method cannot be null");
+            return method.ToString().ToLower();
         }
     }
 }
