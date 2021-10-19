@@ -100,7 +100,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             return (default, default);
         }
-        private static Regex nestedStatementRegex = new(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
+        private static Regex nestedStatementRegex = new(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase|RegexOptions.Compiled);
         private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams)
         {
             var replacements = new Dictionary<string, string>();
