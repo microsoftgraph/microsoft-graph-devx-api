@@ -21,7 +21,7 @@ namespace OpenAPIService.Interfaces
 
         MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions);
 
-        Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh);
+        Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, bool validateFromDocs = false);
 
         OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources);
 
@@ -29,7 +29,7 @@ namespace OpenAPIService.Interfaces
 
         OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument);
 
-        Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl);
+        Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl, bool shouldValidateFromDocs = false);
 
         OpenApiDocument FixReferences(OpenApiDocument document);
     }

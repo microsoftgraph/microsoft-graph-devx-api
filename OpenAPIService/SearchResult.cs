@@ -7,6 +7,7 @@ namespace OpenAPIService
     {
         public CurrentKeys CurrentKeys { get; set; }
         public OpenApiOperation Operation { get; set; }
+        public OpenApiPaths Paths { get; set; }
     }
 
 }

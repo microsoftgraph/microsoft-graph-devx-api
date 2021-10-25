@@ -481,7 +481,7 @@ namespace OpenAPIService
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
-        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
+        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, bool validateFromDocs = true)
         {
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
@@ -490,6 +490,7 @@ namespace OpenAPIService
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
 
+                doc = ValidateFromDocs(doc);
                 return doc;
             }
 
@@ -499,7 +500,7 @@ namespace OpenAPIService
                                          _openApiTraceProperties);
             _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
-            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
+            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref, validateFromDocs);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
@@ -582,13 +583,18 @@ namespace OpenAPIService
             return reader.Read(stream, out _);
         }
 
-        private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
+        private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref, bool validateFromDocs = true)
         {
-            var httpClient = CreateHttpClient();
+            Stream csdl = null;
+            if (csdlHref.Scheme.ToLowerInvariant().Equals("file"))
+            {
+                csdl = File.OpenRead(csdlHref.AbsolutePath);
+            } else {
+                var httpClient = CreateHttpClient();
+                csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
+            }
 
-            Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
-
-            OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
+            OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl, validateFromDocs);
 
             return document;
         }
@@ -598,7 +604,7 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="csdl">The CSDL stream.</param>
         /// <returns>An OpenAPI document.</returns>
-        public async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl)
+        public async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl, bool shouldValidateFromDocs = true)
         {
             _telemetryClient?.TrackTrace("Converting CSDL stream to an OpenApi document",
                                          SeverityLevel.Information,
@@ -624,11 +630,85 @@ namespace OpenAPIService
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
             document = FixReferences(document);
+            if (shouldValidateFromDocs)
+            {
+                document = ValidateFromDocs(document);
+            }
 
             _telemetryClient?.TrackTrace("Finished converting CSDL stream to an OpenApi document",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
+            return document;
+        }
+
+        private OpenApiDocument ValidateFromDocs(OpenApiDocument document)
+        {
+            // Load docs via APIDoctor.
+            string httpSnippetsDir = "F:\\tmp\\snippets\\Http";
+            var files = Directory.EnumerateFiles(httpSnippetsDir, "*-httpSnippet");
+
+            Parallel.ForEach(files, file =>
+            {
+                using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(File.ReadAllText(file))));
+                streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
+                try
+                {
+                    // This is a very fast operation, it is fine to make is synchronuous.
+                    // With the parallel foreach in the main method, processing all snippets for C# in both Beta and V1 takes about 7 seconds.
+                    // As of this writing, the code was processing 2650 snippets
+                    // Using async-await is costlier as this operation is all in-memory and task creation and scheduling overhead is high for that.
+                    // With async-await, the same operation takes 1 minute 7 seconds.
+                    using var message = streamContent.ReadAsHttpRequestMessageAsync().Result;
+
+                    // Process OpenAPI document.
+                    OperationType targetOperation = (OperationType)Enum.Parse(typeof(OperationType), message.Method.ToString());
+                    string path = $"^{Regex.Replace((message.RequestUri.AbsolutePath.Replace("/v1.0", string.Empty).Replace("/beta", string.Empty)), "(?<={)(.*?)(?=})", "(\\w*-\\w*|\\w*)")}$";
+                    var searchResults = FindPaths(document, (p) => p.Keys.Any(x => Regex.Match(x, path).Success) && p.Values.Any(x => x.Operations.Keys.Contains(targetOperation)));
+
+                    foreach (var result in searchResults)
+                    {
+                        var pathKVPair = result.Paths.FirstOrDefault();
+                        var updatedPath = pathKVPair.Value;
+
+                        // Loop through all APIDoctor paths & fix corresponding OpenAPI document. We will fix the following.
+                        // - Method.
+                        // - Headers.
+                        // - Response status code.
+                        //var originalOperation = updatedPath.Operations.FirstOrDefault().Value;
+                        //originalOperation.Responses.Cons
+                        //updatedPath.Operations.Clear();
+                        //updatedPath.Operations.Add(targetOperation, originalOperation);
+
+                        //document.Paths[pathKVPair.Key] = updatedPath;
+                        //    OpenApiPathItem pathItem;
+                        //    string pathKey = FormatPathFunctions(result.CurrentKeys.Path, result.Operation.Parameters);
+
+                        //    if (subset.Paths == null)
+                        //    {
+                        //        subset.Paths = new OpenApiPaths();
+                        //        pathItem = new OpenApiPathItem();
+                        //        subset.Paths.Add(pathKey, pathItem);
+                        //    }
+                        //    else
+                        //    {
+                        //        if (!subset.Paths.TryGetValue(pathKey, out pathItem))
+                        //        {
+                        //            pathItem = new OpenApiPathItem();
+                        //            subset.Paths.Add(pathKey, pathItem);
+                        //        }
+                        //    }
+
+                        //    pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}");
+                    return;
+                }
+            });
+            // return fixed document.
             return document;
         }
 
@@ -642,6 +722,14 @@ namespace OpenAPIService
             var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
 
             return doc;
+        }
+
+        private static IList<SearchResult> FindPaths(OpenApiDocument graphOpenApi, Func<OpenApiPaths, bool> predicate)
+        {
+            var search = new PathSearch(predicate);
+            var walker = new OpenApiWalker(search);
+            walker.Walk(graphOpenApi);
+            return search.SearchResults;
         }
 
         private static IList<SearchResult> FindOperations(OpenApiDocument graphOpenApi, Func<OpenApiOperation, bool> predicate)
