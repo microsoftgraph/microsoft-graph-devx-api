@@ -54,7 +54,7 @@ namespace GraphWebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetChangesAsync(
                                          [FromQuery] string requestUrl = null,
-                                         [FromQuery] string workload = null,
+                                         [FromQuery] string service = null,
                                          [FromQuery] double daysRange = 0,
                                          [FromQuery] DateTime? startDate = null, // yyyy-MM-ddTHH:mm:ss
                                          [FromQuery] DateTime? endDate = null, // yyyy-MM-ddTHH:mm:ss
@@ -63,11 +63,12 @@ namespace GraphWebApi.Controllers
                                          [FromQuery] string graphVersion = "v1.0")
         {
             // Options for searching, filtering and paging the changelog data
-            var searchOptions = new ChangeLogSearchOptions(requestUrl: requestUrl,
-                                                           workload: workload,
+            var searchOptions = new ChangeLogSearchOptions(requestUrl: requestUrl.BaseUriPath(),
+                                                           service: service,
                                                            daysRange: daysRange,
                                                            startDate: startDate,
-                                                           endDate: endDate)
+                                                           endDate: endDate,
+                                                           graphVersion: graphVersion)
             {
                 Page = page,
                 PageLimit = pageLimit
@@ -78,12 +79,10 @@ namespace GraphWebApi.Controllers
             var cultureInfo = cultureFeature.RequestCulture.Culture;
 
             _telemetryClient?.TrackTrace($"Request to fetch changelog records for the requested culture info '{cultureInfo}'",
-                                            SeverityLevel.Information,
-                                            _changesTraceProperties);
+                                         SeverityLevel.Information,
+                                         _changesTraceProperties);
             // Fetch the changelog records
             var changeLog = await _changesStore.FetchChangeLogRecordsAsync(cultureInfo);
-            await _changesStore.FetchWorkloadMappingsAsync();
-
 
             // Filter the changelog records
             if (changeLog.ChangeLogs.Any())
@@ -97,7 +96,8 @@ namespace GraphWebApi.Controllers
                     GraphVersion = graphVersion
                 };
 
-                changeLog = _changesService.FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
+                var workloadServiceMappings = await _changesStore.FetchWorkloadServiceMappingsAsync();
+                changeLog = _changesService.FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, workloadServiceMappings, _httpClientUtility);
             }
             else
             {
