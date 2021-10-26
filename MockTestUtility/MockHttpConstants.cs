@@ -6,7 +6,10 @@ using System.Collections.Generic;
 
 namespace MockTestUtility
 {
-    public static class MockConstants
+    /// <summary>
+    /// Contains constants used for Http tests
+    /// </summary>
+    public static class MockHttpConstants
     {
         public static readonly Dictionary<string, string> UriContentDictionary = new()
         {

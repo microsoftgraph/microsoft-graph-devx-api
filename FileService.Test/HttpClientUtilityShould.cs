@@ -26,7 +26,7 @@ namespace FileService.Test
         public async Task ReturnContentAsString()
         {
             var uri = "http://api/test";
-            var testContent = MockConstants.UriContentDictionary[uri];
+            var testContent = MockHttpConstants.UriContentDictionary[uri];
             HttpContent httpContent = new StringContent(testContent);
 
             HttpRequestMessage message = new HttpRequestMessage

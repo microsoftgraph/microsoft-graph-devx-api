@@ -23,9 +23,9 @@ namespace MockTestUtility
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             StringContent content;
-            if (!MockConstants.UriContentDictionary.TryGetValue(request.RequestUri.OriginalString, out string testContent))
+            if (!MockHttpConstants.UriContentDictionary.TryGetValue(request.RequestUri.OriginalString, out string testContent))
             {
-                content = new StringContent(MockConstants.HttpRequestError);
+                content = new StringContent(MockHttpConstants.HttpRequestError);
             }
             else
             {
