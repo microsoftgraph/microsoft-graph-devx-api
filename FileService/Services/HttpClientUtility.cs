@@ -39,12 +39,10 @@ namespace FileService.Services
             using var httpResponseMessage = await _httpClient?.SendAsync(requestMessage);
             if (httpResponseMessage == null)
             {
-                throw new InvalidOperationException("Invalid Http request message provided.");
+                throw new InvalidOperationException("Invalid HttpRequestMessage provided");
             }
 
-            var fileContents = await httpResponseMessage.Content?.ReadAsStringAsync();
-
-            return !httpResponseMessage.IsSuccessStatusCode ? throw new Exception("Unable to read file content from the Http Stream") : fileContents;
+            return await httpResponseMessage.Content?.ReadAsStringAsync();
         }
     }
 }
