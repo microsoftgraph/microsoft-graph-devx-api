@@ -15,6 +15,6 @@ namespace ChangesService.Interfaces
     public interface IChangesStore
     {
         Task<ChangeLogRecords> FetchChangeLogRecordsAsync(CultureInfo cultureInfo);
-        Task<IDictionary<string, string>> FetchWorkloadMappingsAsync();
+        Task<Dictionary<string, string>> FetchWorkloadServiceMappingsAsync();
     }
 }

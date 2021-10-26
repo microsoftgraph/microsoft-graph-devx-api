@@ -17,6 +17,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UtilityService;
@@ -24,7 +25,7 @@ using UtilityService;
 namespace ChangesService.Services
 {
     /// <summary>
-    /// Provides <see cref="ChangeLogRecords"/> from cache or uri source.
+    /// Provides changelog documents from cache or uri source.
     /// </summary>
     public class ChangesStore : IChangesStore
     {
@@ -148,52 +149,48 @@ namespace ChangesService.Services
         }
 
         /// <summary>
-        /// Gets or creates the localized permissions descriptions from the cache.
+        /// Gets or creates workload service mappings.
         /// </summary>
-        /// <param name="locale">The locale of the permissions decriptions file.</param>
         /// <returns>The localized instance of permissions descriptions.</returns>
-        public async Task<IDictionary<string, string>> FetchWorkloadMappingsAsync()
+        public async Task<Dictionary<string, string>> FetchWorkloadServiceMappingsAsync()
         {
-            _telemetryClient?.TrackTrace($"Retrieving workload mapping from in-memory cache 'WorkloadMapping'",
+            _telemetryClient?.TrackTrace($"Retrieving workload service mappings from in-memory cache 'WorkloadServiceMappings'",
                                          SeverityLevel.Information,
                                          _changesTraceProperties);
 
-            var workloadMappingDictionary = await _changeLogCache.GetOrCreateAsync("WorkloadMapping", cacheEntry =>
+            var workloadServiceMappings = await _changeLogCache.GetOrCreateAsync("WorkloadServiceMappings", cacheEntry =>
             {
-                _telemetryClient?.TrackTrace($"In-memory cache 'WorkloadMapping' empty. " +
-                                             $"Fetching the workload mapping file from Azure blob resource",
+                _telemetryClient?.TrackTrace($"In-memory cache 'WorkloadServiceMappings' empty. " +
+                                             $"Fetching the workload-mapping.json file from Azure blob resource",
                                              SeverityLevel.Information,
                                              _changesTraceProperties);
 
-                /* Localized copy of workload mapping
-                   is to be fetched by only one executing thread.
-                */
+                // Ensure workload-mapping.json file is fetched by only one executing thread.
                 lock (_changesLock)
                 {
                     /* Check whether a previous thread already fetched a
                      * copy of the file during the lock.
                      */
-                    var seededWorkloadMappingDictionary = _changeLogCache.Get<IDictionary<string, string>>("WorkloadMapping");
-                    var sourceMsg = $"Return workload mapping from in-memory cache 'WorkloadMapping'";
+                    var seededWorkloadServiceMappings = _changeLogCache.Get<Dictionary<string, string>>("WorkloadServiceMappings");
+                    var sourceMsg = $"Return workload mapping from in-memory cache 'WorkloadServiceMappings'";
 
-                    if (seededWorkloadMappingDictionary == null)
+                    if (seededWorkloadServiceMappings == null)
                     {
                         string relativeSourcePath = FileServiceHelper.GetLocalizedFilePathSource(_workloadMappingContainerName, _workloadMappingBlobName);
 
                         // Get file contents from source
                         string sourceJson = _fileUtility.ReadFromFile(relativeSourcePath).GetAwaiter().GetResult();
-                        _telemetryClient?.TrackTrace($"Successfully fetched workload mapping file from Azure blob resource",
+                        _telemetryClient?.TrackTrace($"Successfully fetched workload-mapping.json file from Azure blob resource",
                                                      SeverityLevel.Information,
                                                      _changesTraceProperties);
 
-                       // seededWorkloadMappingDictionary = CreateWorkloadMappingDictionary(sourceJson);
-                       var test = CreateWorkloadMappingDictionary(sourceJson);
+                        seededWorkloadServiceMappings = CreateWorkloadServiceMappings(sourceJson);
                         cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-                        sourceMsg = $"Return workload mapping from Azure blob resource";
+                        sourceMsg = $"Return workload-mapping.json file from Azure blob resource";
                     }
                     else
                     {
-                        _telemetryClient?.TrackTrace($"In-memory cache 'WorkloadMapping' " +
+                        _telemetryClient?.TrackTrace($"In-memory cache 'WorkloadServiceMappings' " +
                                                      $"already seeded by a concurrently running thread",
                                                      SeverityLevel.Information,
                                                      _changesTraceProperties);
@@ -203,26 +200,41 @@ namespace ChangesService.Services
                                                  SeverityLevel.Information,
                                                  _changesTraceProperties);
 
-                    return Task.FromResult(seededWorkloadMappingDictionary);
+                    return Task.FromResult(seededWorkloadServiceMappings);
                 }
             });
 
-            return workloadMappingDictionary;
+            return workloadServiceMappings;
         }
 
-        private IDictionary<string, object> CreateWorkloadMappingDictionary(string sourceJson)
+        /// <summary>
+        /// Creates the workload service mappings dictionary.
+        /// </summary>
+        /// <param name="sourceJson">The JSON string of the workload-mappings file.</param>
+        /// <returns>A dictionary of workload service mappings.</returns>
+        private static Dictionary<string, string> CreateWorkloadServiceMappings(string sourceJson)
         {
-            try
+            var workloadMappings = JsonConvert.DeserializeObject<JObject>(sourceJson)
+                     .Value<JObject>("workloadMappings")
+                     .ToObject<Dictionary<string, JObject>>();
+
+            var workloadServiceMappings = new Dictionary<string, string>();
+            foreach (var token in workloadMappings)
             {
-                JObject sourceToken = JsonConvert.DeserializeObject<JObject>(sourceJson);
-                var val = sourceToken.ToObject<Dictionary<string, object>>();
-                return val;
-            }
-            catch (Exception ex)
-            {
-                throw;
+                var workloadIds = token.Value.Properties()
+                    .Where(x => x.Name.Equals("workloads", StringComparison.OrdinalIgnoreCase))
+                    .SelectMany(x => x.Value).OfType<JObject>()
+                    .Properties().Where(x => x.Name.Equals("id", StringComparison.OrdinalIgnoreCase))
+                    .Select(x => x.Value)
+                    .Values<string>().Distinct().ToList();
+
+                foreach (var id in workloadIds)
+                {
+                    workloadServiceMappings.TryAdd(id, token.Key);
+                }
             }
 
+            return workloadServiceMappings;
         }
     }
 }

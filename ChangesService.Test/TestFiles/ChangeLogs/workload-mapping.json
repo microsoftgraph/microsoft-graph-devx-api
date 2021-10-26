@@ -595,10 +595,6 @@
           "SubArea": ""
         },
         {
-          "Id": "Microsoft.Teams.GraphSvc",
-          "SubArea": "Microsoft.Teams.Shifts"
-        },
-        {
           "Id": "Microsoft.Teams.Chat",
           "SubArea": ""
         }
