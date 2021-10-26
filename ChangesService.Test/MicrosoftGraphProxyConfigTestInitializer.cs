@@ -10,6 +10,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace ChangesService.Test
 {
+    /// <summary>
+    /// Class used to initialize the values of the MicrosoftGraphProxyConfigs class with test values.
+    /// </summary>
     public class MicrosoftGraphProxyConfigTestInitializer
     {
         private readonly IConfigurationRoot _configuration;
