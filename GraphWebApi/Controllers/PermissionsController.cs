@@ -5,12 +5,12 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using GraphExplorerPermissionsService.Interfaces;
-using GraphExplorerPermissionsService.Models;
 using GraphWebApi.Common;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Mvc;
+using PermissionsService.Interfaces;
+using PermissionsService.Models;
 using UtilityService;
 
 namespace GraphWebApi.Controllers

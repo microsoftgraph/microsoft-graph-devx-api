@@ -7,7 +7,7 @@ using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 
-namespace GraphExplorerSamplesService.Models
+namespace SamplesService.Models
 {
     /// <summary>
     /// Defines a representation of a sample query.

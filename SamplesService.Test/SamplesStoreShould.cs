@@ -3,9 +3,8 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using FileService.Interfaces;
-using GraphExplorerSamplesService.Interfaces;
-using GraphExplorerSamplesService.Models;
-using GraphExplorerSamplesService.Services;
+using SamplesService.Interfaces;
+using SamplesService.Models;
 using MemoryCache.Testing.Moq;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +13,7 @@ using MockTestUtility;
 using Xunit;
 using System.IO;
 using System;
+using SamplesService.Services;
 
 namespace SamplesService.Test
 {

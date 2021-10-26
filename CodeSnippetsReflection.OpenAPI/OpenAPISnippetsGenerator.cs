@@ -66,6 +66,7 @@ namespace CodeSnippetsReflection.OpenAPI
         private static ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> GetLanguageGenerator(string language) {
             return language.ToLowerInvariant() switch {
                 "c#" => new CSharpGenerator(),
+                "typescript" => new TypeScriptGenerator(),
                 _ => throw new ArgumentOutOfRangeException($"Language '{language}' is not supported"),
             };
         }

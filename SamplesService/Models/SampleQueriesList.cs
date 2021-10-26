@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace GraphExplorerSamplesService.Models
+namespace SamplesService.Models
 {
     /// <summary>
     /// Defines a list which holds a collection of <see cref="SampleQueryModel"/> objects.

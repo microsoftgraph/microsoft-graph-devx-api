@@ -1,14 +1,14 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using GraphExplorerSamplesService.Models;
 using Newtonsoft.Json;
+using SamplesService.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GraphExplorerSamplesService.Services
+namespace SamplesService.Services
 {
     /// <summary>
     /// Provides utility functions for manipulating <see cref="SampleQueriesList"/> and <see cref="SampleQueryModel"/> objects.

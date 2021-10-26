@@ -6,14 +6,14 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using GraphExplorerSamplesService.Models;
 using System.Linq;
 using GraphWebApi.Common;
-using GraphExplorerSamplesService.Interfaces;
 using Microsoft.ApplicationInsights.DataContracts;
 using UtilityService;
 using Microsoft.ApplicationInsights;
 using System.Diagnostics.CodeAnalysis;
+using SamplesService.Interfaces;
+using SamplesService.Models;
 
 namespace GraphWebApi.Controllers
 {
