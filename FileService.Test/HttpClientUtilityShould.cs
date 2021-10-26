@@ -25,8 +25,9 @@ namespace FileService.Test
         [Fact]
         public async Task ReturnContentAsString()
         {
-            HttpContent httpContent = new StringContent(Constants.HttpContent);
             var uri = "http://api/test";
+            var testContent = MockConstants.UriContentDictionary[uri];
+            HttpContent httpContent = new StringContent(testContent);
 
             HttpRequestMessage message = new HttpRequestMessage
             {
@@ -36,7 +37,7 @@ namespace FileService.Test
 
             var content = await _httpClientUtility.ReadFromDocumentAsync(message);
 
-            Assert.Equal(Constants.HttpContent, content);
+            Assert.Equal(testContent, content);
         }
 
         [Fact]
