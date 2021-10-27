@@ -3,11 +3,11 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using FileService.Interfaces;
-using GraphExplorerPermissionsService;
-using GraphExplorerPermissionsService.Interfaces;
 using MemoryCache.Testing.Moq;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using PermissionsService;
+using PermissionsService.Interfaces;
 using System;
 
 namespace MockTestUtility

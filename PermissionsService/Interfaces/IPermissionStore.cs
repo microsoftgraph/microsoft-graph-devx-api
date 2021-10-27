@@ -2,12 +2,12 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using GraphExplorerPermissionsService.Models;
+using PermissionsService.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UriMatchingService;
 
-namespace GraphExplorerPermissionsService.Interfaces
+namespace PermissionsService.Interfaces
 {
     /// <summary>
     /// Defines an interface that provides a method for fetching permissions scopes.

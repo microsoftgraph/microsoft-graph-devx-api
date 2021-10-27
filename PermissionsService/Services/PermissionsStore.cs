@@ -4,14 +4,14 @@
 
 using FileService.Common;
 using FileService.Interfaces;
-using GraphExplorerPermissionsService.Interfaces;
-using GraphExplorerPermissionsService.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PermissionsService.Interfaces;
+using PermissionsService.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 using UriMatchingService;
 using UtilityService;
 
-namespace GraphExplorerPermissionsService
+namespace PermissionsService
 {
     public class PermissionsStore : IPermissionsStore
     {

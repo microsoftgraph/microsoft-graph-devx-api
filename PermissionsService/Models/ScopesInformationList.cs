@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 
-namespace GraphExplorerPermissionsService.Models
+namespace PermissionsService.Models
 {
     /// <summary>
     /// Defines a list which holds a collection of delegated and application <see cref="ScopeInformation"/> objects.

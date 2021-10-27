@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MockTestUtility\MockTestUtility.csproj" />
+    <ProjectReference Include="..\PermissionsService\PermissionsService.csproj" />
     <ProjectReference Include="..\TelemetryService\TelemetrySanitizerService.csproj" />
   </ItemGroup>
 
