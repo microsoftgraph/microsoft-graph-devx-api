@@ -354,7 +354,7 @@ namespace PermissionsService
                                              .SelectMany(x => x).OfType<JProperty>()
                                              .Where(x => x.Name.Equals("GET"))
                                              .SelectMany(x => x).OfType<JProperty>()
-                                             .Where(x => x.Name.Equals("DelegatedWork"))
+                                             .Where(x => x.Name.Equals("DelegatedWork", StringComparison.OrdinalIgnoreCase))
                                              .SelectMany(x => x.Value)
                                              .Values<string>().Distinct().ToList();
 
