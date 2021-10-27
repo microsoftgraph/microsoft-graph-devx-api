@@ -352,7 +352,7 @@ namespace PermissionsService
 
                 var scopesTest = _scopesListTable.Values.OfType<JToken>()
                                              .SelectMany(x => x).OfType<JProperty>()
-                                             .Where(x => x.Name.Equals("GET"))
+                                             .Where(x => x.Name.Equals("GET", StringComparison.OrdinalIgnoreCase))
                                              .SelectMany(x => x).OfType<JProperty>()
                                              .Where(x => x.Name.Equals("DelegatedWork", StringComparison.OrdinalIgnoreCase))
                                              .SelectMany(x => x.Value)
