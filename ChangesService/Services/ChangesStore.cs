@@ -176,7 +176,7 @@ namespace ChangesService.Services
 
                     if (seededWorkloadServiceMappings == null)
                     {
-                        string relativeSourcePath = FileServiceHelper.GetLocalizedFilePathSource(_workloadMappingContainerName, _workloadMappingBlobName);
+                        var relativeSourcePath = FileServiceHelper.GetLocalizedFilePathSource(_workloadMappingContainerName, _workloadMappingBlobName);
 
                         // Get file contents from source
                         string sourceJson = _fileUtility.ReadFromFile(relativeSourcePath).GetAwaiter().GetResult();
