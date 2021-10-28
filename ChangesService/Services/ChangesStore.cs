@@ -176,10 +176,10 @@ namespace ChangesService.Services
 
                     if (seededWorkloadServiceMappings == null)
                     {
-                        string relativeSourcePath = FileServiceHelper.GetLocalizedFilePathSource(_workloadMappingContainerName, _workloadMappingBlobName);
+                        var relativeSourcePath = FileServiceHelper.GetLocalizedFilePathSource(_workloadMappingContainerName, _workloadMappingBlobName);
 
                         // Get file contents from source
-                        string sourceJson = _fileUtility.ReadFromFile(relativeSourcePath).GetAwaiter().GetResult();
+                        var sourceJson = _fileUtility.ReadFromFile(relativeSourcePath).GetAwaiter().GetResult();
                         _telemetryClient?.TrackTrace($"Successfully fetched workload-mapping.json file from Azure blob resource",
                                                      SeverityLevel.Information,
                                                      _changesTraceProperties);
