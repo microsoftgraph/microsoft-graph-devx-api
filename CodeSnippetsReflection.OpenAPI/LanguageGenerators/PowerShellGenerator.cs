@@ -23,18 +23,21 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static IList<PowerShellCommandInfo> psCommands;
         public PowerShellGenerator()
         {
-            // Load MgCommandMetadata file.
-            string latestVersion = Directory.GetDirectories(powerShellModulePath).Max();
-            string MgCommandMetadataPath = Directory.GetFiles($"{latestVersion}/custom/common", "MgCommandMetadata.json").FirstOrDefault();
-            string jsonString = File.ReadAllText(MgCommandMetadataPath);
-            psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
+            if (psCommands == null)
+            {
+                // Load MgCommandMetadata file.
+                string latestVersion = Directory.GetDirectories(powerShellModulePath).Max();
+                string MgCommandMetadataPath = Directory.GetFiles($"{latestVersion}/custom/common", "MgCommandMetadata.json").FirstOrDefault();
+                string jsonString = File.ReadAllText(MgCommandMetadataPath);
+                psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
+            }
         }
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
 
-            IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(snippetModel, snippetModel.Path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
+            IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(snippetModel, snippetModel.EndPathNode.Path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
             {
@@ -47,10 +50,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
                 snippetBuilder.Append($"{Environment.NewLine}{targetCommand.Command}");
 
-                // Get key segments for collections.
                 string keySegmentParameter = GetKeySegmentParameters(snippetModel.PathNodes);
                 if (!string.IsNullOrEmpty(keySegmentParameter))
-                    snippetBuilder.Append($" {keySegmentParameter}");
+                    snippetBuilder.Append($"{keySegmentParameter}");
 
                 var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
                 if (!string.IsNullOrEmpty(queryParamsPayload))
@@ -67,12 +69,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private string GetKeySegmentParameters(IEnumerable<OpenApiUrlTreeNode> pathNodes)
         {
             if (!pathNodes.Any()) return string.Empty;
-            return pathNodes.Where(x => x.Segment.IsCollectionIndex())?.Select(p =>
+            return pathNodes.Where(x => x.Segment.IsCollectionIndex()).Select(p =>
             {
                 string parameterName = (p.Segment.Replace("{", string.Empty).Replace("}", string.Empty).ToFirstCharacterUpperCaseAfterCharacter('-').Replace("-", string.Empty));
-                return $"-{parameterName.ToFirstCharacterLowerCase()} ${parameterName}";
-            }).Aggregate((x, y) => {
-                return $"{x}.{y}";
+                return $"-{parameterName.ToFirstCharacterUpperCase()} ${parameterName}";
+            }).Aggregate(string.Empty, (x, y) =>
+            {
+                return $"{x} {y}";
             });
         }
 
@@ -131,7 +134,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     return "CountVariable";
                 default:
                     return psParameterName;
-                    break;
             }
         }
 
@@ -153,12 +155,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private IList<PowerShellCommandInfo> GetCommandForRequest(SnippetModel snippetModel,string path, string method, string apiVersion)
         {
-            //TODO: Remove namespace from actions and functions for matches to succeed.
-            // Tokenize uri by substituting parameter values with "{.*}".
-            path = $"^{Regex.Replace(path, "(?<={)(.*?)(?=})", "(\\w*-\\w*|\\w*)")}$";
             if (psCommands.Count == 0)
                 return default;
 
+            path = path.Replace("\\", "/");
+            //TODO: Remove namespace from actions and functions for matches to succeed.
+            // Tokenize uri by substituting parameter values with "{.*}".
+            path = $"^{Regex.Replace(path, "(?<={)(.*?)(?=})", "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
         }
                                                                                                                  
@@ -183,6 +186,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         }
                     break;
                 case "application/octect-stream":
+                    // TODO: Handle streams. Support is limited.
                     //payloadSB.AppendLine($"using var {requestBodyVarName} = new MemoryStream(); //stream to upload");
                     break;
                 default:
@@ -211,10 +215,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (value.ValueKind)
             {
                 case JsonValueKind.String:
+                    // TODO: Update to reflect current state of PowerShell SDK.
                     if (propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
-                        payloadSB.AppendLine($"{propertyAssignment}Encoding.ASCII.GetBytes(\"{value.GetString()}\"){propertySuffix}");
+                        payloadSB.AppendLine($"{propertyAssignment}[System.Text.Encoding]::ASCII.GetBytes(\"{value.GetString()}\"){propertySuffix}");
                     else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
-                        payloadSB.AppendLine($"{propertyAssignment}DateTimeOffset.Parse(\"{value.GetString()}\"){propertySuffix}");
+                        payloadSB.AppendLine($"{propertyAssignment}[System.DateTimeOffset]::Parse(\"{value.GetString()}\"){propertySuffix}");
                     else
                         payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}");
                     break;
@@ -260,9 +265,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (schema == default) return default;
             return schema.Type switch
             {
-                "integer" when schema.Format.Equals("int64") => $"{value.GetInt64()}L",
-                _ when schema.Format.Equals("float") => $"{value.GetDecimal()}f",
-                _ when schema.Format.Equals("double") => $"{value.GetDouble()}d", //in MS Graph float & double are any of number, string and enum
+                "integer" when schema.Format.Equals("int64") => $"{value.GetInt64()}",
+                _ when schema.Format.Equals("float") => $"{value.GetDecimal()}",
+                _ when schema.Format.Equals("double") => $"{value.GetDouble()}",
                 _ => value.GetInt32().ToString(),
             };
         }

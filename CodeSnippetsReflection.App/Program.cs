@@ -133,9 +133,17 @@ namespace CodeSnippetsReflection.App
                 Console.Error.WriteLine($"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}");
                 return;
             }
-            var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
-            Console.WriteLine($"Writing snippet: {filePath}");
-            File.WriteAllText(filePath, snippet);
+
+            if (snippet != string.Empty)
+            {
+                var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
+                Console.WriteLine($"Writing snippet: {filePath}");
+                File.WriteAllText(filePath, snippet);
+            }
+            else
+            {
+                Console.WriteLine($"Failed to generate {language} snippets for {file}.");
+            }
         }
     }
 }
