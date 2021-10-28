@@ -99,25 +99,22 @@ namespace ChangesService.Services
                 enumerableChangeLog = FilterChangeLogRecordsByServiceName(changeLogRecords, serviceName, searchOptions.GraphVersion);
 
                 // Search for url segment values in the ChangeList Target property value
-                var urlSegments = searchOptions.RequestUrl.Split('/', StringSplitOptions.RemoveEmptyEntries);
-                enumerableChangeLog = enumerableChangeLog.Select(changeLog =>
+                var urlSegments = searchOptions.RequestUrl.Split('/', StringSplitOptions.RemoveEmptyEntries).ToList();
+                var changeLogList = enumerableChangeLog.ToList();
+                changeLogList.ForEach(changeLog =>
                 {
                     var changeList = new List<Change>();
-                    foreach (var segment in urlSegments)
+                    urlSegments.ForEach(segment =>
                     {
                         changeList.AddRange(changeLog.ChangeList
                             .Where(x => x.Target.ToLowerInvariant().Split(',', StringSplitOptions.RemoveEmptyEntries) // ChangeList Target property values are comma separated
                             .Contains(segment.ToLowerInvariant())));
-                    }
-
-                    if (!changeList.Any())
-                    {
-                        return null;
-                    }
+                    });
 
                     changeLog.ChangeList = changeList;
-                    return changeLog;
-                }).Where(x => x != null);
+                });
+
+                enumerableChangeLog = changeLogList.Where(x => x.ChangeList?.Any() ?? false);
             }
             else if (!string.IsNullOrEmpty(searchOptions.Service)) // filter by service
             {
