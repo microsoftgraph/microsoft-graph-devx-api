@@ -218,21 +218,14 @@ namespace ChangesService.Services
                      .Value<JObject>("workloadMappings")
                      .ToObject<Dictionary<string, JObject>>();
 
-            var workloadServiceMappings = new Dictionary<string, string>();
-            foreach (var token in workloadMappings)
-            {
-                var workloadIds = token.Value.Properties()
-                    .Where(x => x.Name.Equals("workloads", StringComparison.OrdinalIgnoreCase))
-                    .SelectMany(x => x.Value).OfType<JObject>()
-                    .Properties().Where(x => x.Name.Equals("id", StringComparison.OrdinalIgnoreCase))
-                    .Select(x => x.Value)
-                    .Values<string>().Distinct().ToList();
-
-                foreach (var id in workloadIds)
-                {
-                    workloadServiceMappings.TryAdd(id, token.Key);
-                }
-            }
+            var workloadServiceMappings = workloadMappings.Select(x =>x.Value.Properties()
+                       .Where(x => x.Name.Equals("workloads", StringComparison.OrdinalIgnoreCase))
+                       .SelectMany(x => x.Value).OfType<JObject>()
+                       .Properties().Where(x => x.Name.Equals("id", StringComparison.OrdinalIgnoreCase))
+                       .Select(x => x.Value)
+                       .Values<string>().Distinct().Select(y => (y, x.Key)).ToList())
+                    .SelectMany(x => x)
+                    .ToDictionary(x => x.Item1, x => x.Item2);
 
             return workloadServiceMappings;
         }
