@@ -1,0 +1,262 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using CodeSnippetsReflection.StringExtensions;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Services;
+
+namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
+    public class GoGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
+    {
+        private const string clientVarName = "graphClient";
+		private const string clientVarType = "GraphServiceClient";
+		private const string httpCoreVarName = "requestAdapter";
+        public string GenerateCodeSnippet(SnippetModel snippetModel)
+        {
+            var indentManager = new IndentManager();
+			var snippetBuilder = new StringBuilder(
+									"//THE GO SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
+									$"{clientVarName} := msgraphsdk.New{clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+			var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
+			snippetBuilder.Append(requestPayload);
+			var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "result, err := ";
+			var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
+			if(!string.IsNullOrEmpty(queryParamsPayload))
+				snippetBuilder.Append(queryParamsPayload);
+			var (requestHeadersPayload, requestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
+			if(!string.IsNullOrEmpty(requestHeadersPayload))
+				snippetBuilder.Append(requestHeadersPayload);
+			var (optionsPayload, optionsVarName) = GetOptionsParameter(snippetModel, indentManager, payloadVarName, queryParamsVarName, requestHeadersVarName);
+            if(!string.IsNullOrEmpty(optionsPayload))
+                snippetBuilder.Append(optionsPayload);
+            var pathParametersDeclaration = GetFluentApiPathVariablesDeclaration(snippetModel.PathNodes);
+            pathParametersDeclaration.ToList().ForEach(x => snippetBuilder.AppendLine(x));
+			snippetBuilder.AppendLine($"{responseAssignment}{clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}{GetMethodName(snippetModel.Method)}({optionsParameterVarName});");
+			return snippetBuilder.ToString();
+        }
+		private const string requestHeadersVarName = "headers";
+        private static (string, string) GetRequestHeaders(SnippetModel snippetModel, IndentManager indentManager) {
+			var payloadSB = new StringBuilder();
+			var filteredHeaders = snippetModel.RequestHeaders.Where(h => !h.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
+															.ToList();
+			if(filteredHeaders.Any()) {
+				payloadSB.AppendLine($"{indentManager.GetIndent()}{requestHeadersVarName} := map[string]string{{");
+				indentManager.Indent();
+				filteredHeaders.ForEach(h =>
+					payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Key}\": \"{h.Value.FirstOrDefault()}\"")
+				);
+				indentManager.Unindent();
+				payloadSB.AppendLine($"{indentManager.GetIndent()}}}");
+				return (payloadSB.ToString(), requestHeadersVarName);
+			}
+			return (default, default);
+		}
+        private const string optionsParameterVarName = "options";
+		private static (string, string) GetOptionsParameter(SnippetModel model, IndentManager indentManager, string payloadParam, string queryParamsParam, string headersParam) {
+			var nonEmptyParameters = new string[] { payloadParam, queryParamsParam, headersParam}.Where(p => !string.IsNullOrEmpty(p));
+			if(nonEmptyParameters.Any()) {
+                var className = $"{model.PathNodes.Last().GetClassName("RequestBuilder")}{model.Method.ToString().ToFirstCharacterUpperCase()}Options";
+    			var payloadSB = new StringBuilder();
+				payloadSB.AppendLine($"{indentManager.GetIndent()}{optionsParameterVarName} := &{className}{{");
+                indentManager.Indent();
+                if(!string.IsNullOrEmpty(payloadParam))
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}Body: {payloadParam},");
+                if(!string.IsNullOrEmpty(queryParamsParam))
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}Q: {queryParamsParam},");
+                if(!string.IsNullOrEmpty(headersParam))
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}H: {headersParam},");
+                indentManager.Unindent();
+				payloadSB.AppendLine($"{indentManager.GetIndent()}}}");
+				return (payloadSB.ToString(), optionsParameterVarName);
+            } else return (string.Empty, "nil");
+		}
+		private const string requestParametersVarName = "requestParameters";
+		private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager) {
+			var payloadSB = new StringBuilder();
+			if(!string.IsNullOrEmpty(model.QueryString)) {
+                var className = $"{model.PathNodes.Last().GetClassName("RequestBuilder")}{model.Method.ToString().ToFirstCharacterUpperCase()}QueryParameters";
+				payloadSB.AppendLine($"{indentManager.GetIndent()}{requestParametersVarName} := &{className}{{");
+                payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
+				indentManager.Indent();
+				var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
+				foreach(var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)) {
+					if(queryParam.Contains("=")) {
+						var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])}: {GetQueryParameterValue(kvPair[1], replacements)},");
+					} else
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)}: \"\",");
+				}
+				indentManager.Unindent();
+				payloadSB.AppendLine($"{indentManager.GetIndent()}}}");
+				return (payloadSB.ToString(), requestParametersVarName);
+			}
+			return (default, default);
+		}
+		private static Regex nestedStatementRegex = new(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
+		private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams) {
+			var replacements = new Dictionary<string, string>();
+			var matches = nestedStatementRegex.Matches(queryParams);
+			if(matches.Any())
+				foreach(Match match in matches) {
+					var key = match.Groups[1].Value;
+					var value = match.Groups[2].Value;
+					replacements.Add(key, value);
+					queryParams = queryParams.Replace(value, string.Empty);
+				}
+			return (queryParams, replacements);
+		}
+		private static string GetQueryParameterValue(string originalValue, Dictionary<string, string> replacements) {
+			if(originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
+				return originalValue.ToLowerInvariant();
+			else if(int.TryParse(originalValue, out var intValue))
+				return intValue.ToString();
+			else {
+				var valueWithNested = originalValue.Split(',')
+													.Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
+													.Aggregate((a, b) => $"{a},{b}");
+				return $"\"{valueWithNested}\"";
+			}
+		}
+		private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterUpperCase();
+		private const string requestBodyVarName = "requestBody";
+		private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
+			if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
+				return (default, default);
+			if(indentManager == null) throw new ArgumentNullException(nameof(indentManager));
+
+			var payloadSB = new StringBuilder();
+			switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant()) {
+				case "application/json":
+					if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
+						!"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
+						using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody)) {
+							var schema = snippetModel.RequestSchema;
+							var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
+							payloadSB.AppendLine($"{requestBodyVarName} := msgraphsdk.New{className}()");
+							WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, variableName: requestBodyVarName);
+						}
+				break;
+				case "application/octect-stream":
+					payloadSB.AppendLine($"{requestBodyVarName} := make([]byte, 0); //binary array to upload");
+				break;
+				default:
+					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
+			}
+			return (payloadSB.ToString(), requestBodyVarName);
+		}
+		private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true, string variableName = default) {
+			if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
+            indentManager.Indent();
+			var propertiesAndSchema = value.EnumerateObject()
+											.Select(x => new Tuple<JsonProperty, OpenApiSchema>(x, schema.GetPropertySchema(x.Name)));
+			foreach(var propertyAndSchema in propertiesAndSchema.Where(x => x.Item2 != null)) {
+				var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
+				var propertyAssignment = includePropertyAssignment ? $"{indentManager.GetIndent()}{propertyName} := " : string.Empty;
+				WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment);
+			}
+			var propertiesWithoutSchema = propertiesAndSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
+			if(propertiesWithoutSchema.Any()) {
+				payloadSB.AppendLine($"{indentManager.GetIndent()}{variableName}.SetAdditionalData(map[string]interface{{}}{{");
+				indentManager.Indent();
+				foreach(var property in propertiesWithoutSchema) {
+					var propertyAssignment = $"{indentManager.GetIndent()}\"{property.Name}\": ";
+					WriteProperty(payloadSB, property.Value, null, indentManager, propertyAssignment);
+				}
+				indentManager.Unindent();
+				payloadSB.AppendLine($"{indentManager.GetIndent()}}}");
+			}
+			indentManager.Unindent();
+		}
+		private static void WriteProperty(StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default) {
+			switch (value.ValueKind) {// TODO: this function needs to be splat between declaring the properties and assigning them with pointers
+				case JsonValueKind.String:
+					if(propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
+						payloadSB.AppendLine($"{propertyAssignment}[]byte(\"{value.GetString()}\"){propertySuffix},");
+					else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
+						payloadSB.AppendLine($"{propertyAssignment}time.Parse(time.RFC3339, \"{value.GetString()}\"){propertySuffix},");
+                    else if (propSchema?.Format?.Equals("guid", StringComparison.OrdinalIgnoreCase) ?? false)
+						payloadSB.AppendLine($"{propertyAssignment}uuid.MustParse(\"{value.GetString()}\"){propertySuffix},");
+					else
+						payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix},");
+					break;
+				case JsonValueKind.Number:
+					payloadSB.AppendLine($"{propertyAssignment}{GetNumberLiteral(propSchema, value)}{propertySuffix},");
+					break;
+				case JsonValueKind.False:
+				case JsonValueKind.True:
+					payloadSB.AppendLine($"{propertyAssignment}{value.GetBoolean().ToString().ToLowerInvariant()}{propertySuffix},");
+					break;
+				case JsonValueKind.Null:
+					payloadSB.AppendLine($"{propertyAssignment}nil{propertySuffix},");
+					break;
+				case JsonValueKind.Object:
+					if(propSchema != null) {
+						payloadSB.AppendLine($"{propertyAssignment}msgraphsdk.New{propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}");
+                        payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
+						WriteJsonObjectValue(payloadSB, value, propSchema, indentManager);
+						payloadSB.AppendLine($"{indentManager.GetIndent()}}}{propertySuffix},");
+					}
+					break;
+				case JsonValueKind.Array:
+					WriteJsonArrayValue(payloadSB, value, propSchema, indentManager, propertyAssignment);
+				break;
+				default:
+					throw new NotImplementedException($"Unsupported JsonValueKind: {value.ValueKind}");
+			}
+		}
+		private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment) {
+			var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? value.EnumerateArray().First().ValueKind.ToString();
+			payloadSB.AppendLine($"{propertyAssignment} []{genericType} {{");
+			indentManager.Indent();
+			foreach(var item in value.EnumerateArray())
+				WriteProperty(payloadSB, item, schema, indentManager, indentManager.GetIndent());
+			indentManager.Unindent();
+			payloadSB.AppendLine($"{indentManager.GetIndent()}}}");
+		}
+		private static string GetNumberLiteral(OpenApiSchema schema, JsonElement value) {
+			if(schema == default) return default;
+			return schema.Type switch {
+				"integer" when schema.Format.Equals("int32") => $"int32({value.GetInt32()})",
+				"integer" when schema.Format.Equals("int64") => $"int64({value.GetInt64()})",
+				_ when schema.Format.Equals("float") || schema.Format.Equals("float32") => $"float32({value.GetDecimal()})",
+				_ when schema.Format.Equals("float64") => $"float64({value.GetDecimal()})",
+				_ when schema.Format.Equals("double") => $"float64({value.GetDouble()})", //in MS Graph float & double are any of number, string and enum
+				_ => value.GetInt32().ToString(),
+			};
+		}
+        private static IEnumerable<string> GetFluentApiPathVariablesDeclaration(IEnumerable<OpenApiUrlTreeNode> nodes) {
+            return nodes.Where(x => x.Segment.IsCollectionIndex())
+                    .Select(x => x.Segment.TrimStart('{').TrimEnd('}'))
+                    .Select(x => $"{idCleanupRegex.Replace(x, m => m.Groups[1].Value.ToFirstCharacterUpperCase())} := \"{x}\"");
+        }
+        private static Regex idCleanupRegex = new Regex(@"-(\w)", RegexOptions.Compiled);
+		private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes) {
+			if(!(nodes?.Any() ?? false)) return string.Empty;
+			return nodes.Select(x => {
+										if(x.Segment.IsCollectionIndex())
+											return idCleanupRegex.Replace(x.Segment.Replace("{", "ById(&").Replace("}", ")"), m => m.Groups[1].Value.ToFirstCharacterUpperCase()) + ".";
+										else if (x.Segment.IsFunction())
+											return x.Segment.Split('.').Last().ToFirstCharacterUpperCase() + "().";//TODO parameters if any
+										return x.Segment.ToFirstCharacterUpperCase() + "().";
+									})
+						.Aggregate((x, y) => $"{x}{y}")
+                        .Replace("().ById(", "ById(");
+		}
+		private static string GetMethodName(HttpMethod method) {
+			// can't use pattern matching with switch as it's not an enum but a bunch of static values
+			if(method == HttpMethod.Get) return "Get";
+			else if(method == HttpMethod.Post) return "Post";
+			else if(method == HttpMethod.Put) return "Put";
+			else if(method == HttpMethod.Delete) return "Delete";
+			else if(method == HttpMethod.Patch) return "Patch";
+			else if(method == HttpMethod.Head) return "Head";
+			else if(method == HttpMethod.Options) return "Options";
+			else if(method == HttpMethod.Trace) return "Trace";
+			else throw new InvalidOperationException($"Unsupported HTTP method: {method}");
+		}
+    }
+}

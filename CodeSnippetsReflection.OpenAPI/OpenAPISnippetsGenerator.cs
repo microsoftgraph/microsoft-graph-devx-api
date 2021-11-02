@@ -67,6 +67,7 @@ namespace CodeSnippetsReflection.OpenAPI
             return language.ToLowerInvariant() switch {
                 "c#" => new CSharpGenerator(),
                 "typescript" => new TypeScriptGenerator(),
+                "go" => new GoGenerator(),
                 _ => throw new ArgumentOutOfRangeException($"Language '{language}' is not supported"),
             };
         }
