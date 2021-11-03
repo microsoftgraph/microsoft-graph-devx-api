@@ -940,7 +940,7 @@ namespace CodeSnippetsReflection.Test
             const string expectedSnippet = "var attachment = new FileAttachment\r\n" + // Use the FileAttachment class rather than the Attachment superclass from metadata
                                            "{\r\n" +
                                            "\tName = \"smile\",\r\n" +
-                                           "\tContentBytes = Encoding.ASCII.GetBytes(\"R0lGODdhEAYEAA7\")\r\n" +
+                                           "\tContentBytes = Convert.FromBase64String(\"R0lGODdhEAYEAA7\")\r\n" +
                                            "};\r\n" +
 
                                            "\r\nawait graphClient.Me.Messages[\"AAMkpsDRVK\"].Attachments\r\n" +

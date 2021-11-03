@@ -138,7 +138,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Encoding.ASCII.GetBytes", result);
+            Assert.Contains("Convert.FromBase64String", result);
         }
         [Fact]
         public async Task GeneratesADateTimeOffsetPayload() {
