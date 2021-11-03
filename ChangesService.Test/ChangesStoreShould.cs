@@ -46,10 +46,11 @@ namespace ChangesService.Test
         {
             /* Act and Assert */
 
-            Assert.Throws<ArgumentNullException>(() => new ChangesStore(null, _changesCache, _changesService, _httpClientUtility)); // null configuration
-            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, null, _changesService, _httpClientUtility)); // null changesCache
-            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, _changesCache, null, _httpClientUtility)); // null changesService
-            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, _changesCache, _changesService, null)); // null httpClientUtility
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(null, _changesCache, _changesService, _httpClientUtility, _fileUtility)); // null configuration
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, null, _changesService, _httpClientUtility, _fileUtility)); // null changesCache
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, _changesCache, null, _httpClientUtility, _fileUtility)); // null changesService
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, _changesCache, _changesService, null, _fileUtility)); // null httpClientUtility
+            Assert.Throws<ArgumentNullException>(() => new ChangesStore(_configuration, _changesCache, _changesService, _httpClientUtility, null)); // null fileUtility
         }
 
         [Fact]

@@ -46,7 +46,7 @@ namespace ChangesService.Services
         private const string WorkloadMappingBlobConfig = "BlobStorage:Blobs:WorkloadMapping";
 
         public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IChangesService changesService,
-                            IHttpClientUtility httpClientUtility, IFileUtility fileUtility = null,
+                            IHttpClientUtility httpClientUtility, IFileUtility fileUtility,
                             TelemetryClient telemetryClient = null)
         {
             _telemetryClient = telemetryClient;
