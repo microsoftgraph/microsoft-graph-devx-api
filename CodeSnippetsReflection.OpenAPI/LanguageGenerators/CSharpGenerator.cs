@@ -161,7 +161,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			switch (value.ValueKind) {
 				case JsonValueKind.String:
 					if(propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
-						payloadSB.AppendLine($"{propertyAssignment}Encoding.ASCII.GetBytes(\"{value.GetString()}\"){propertySuffix},");
+						payloadSB.AppendLine($"{propertyAssignment}Convert.FromBase64String(\"{value.GetString()}\"){propertySuffix},");
 					else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
 						payloadSB.AppendLine($"{propertyAssignment}DateTimeOffset.Parse(\"{value.GetString()}\"){propertySuffix},");
 					else
