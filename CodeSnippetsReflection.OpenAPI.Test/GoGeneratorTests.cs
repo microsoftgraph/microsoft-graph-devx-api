@@ -91,9 +91,9 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("msgraphsdk.NewUser", result);
-            Assert.Contains("SetAccountEnabled(true)", result);
-            Assert.Contains("SetPasswordProfile = new PasswordProfile", result);
-            Assert.Contains("SetDisplayName(\"displayName-value\")", result);
+            Assert.Contains("SetAccountEnabled(&accountEnabled)", result);
+            Assert.Contains("passwordProfile := msgraphsdk.NewPasswordProfile()", result);
+            Assert.Contains("displayName := \"displayName-value\"", result);
         }
         [Fact]
         public async Task WritesALongAndFindsAnAction() {
@@ -148,7 +148,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(",err := time.Parse(time.RFC3339,", result);
+            Assert.Contains(", err := time.Parse(time.RFC3339,", result);
         }
         [Fact]
         public async Task GeneratesAnArrayPayloadInAdditionalData() {
