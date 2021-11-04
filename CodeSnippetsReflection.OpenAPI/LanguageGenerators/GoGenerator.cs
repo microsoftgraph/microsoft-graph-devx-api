@@ -59,7 +59,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 		private static (string, string) GetOptionsParameter(SnippetModel model, IndentManager indentManager, string payloadParam, string queryParamsParam, string headersParam) {
 			var nonEmptyParameters = new string[] { payloadParam, queryParamsParam, headersParam}.Where(p => !string.IsNullOrEmpty(p));
 			if(nonEmptyParameters.Any()) {
-                var className = $"{model.PathNodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.Method.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}Options";
+                var className = $"msgraphsdk.{model.PathNodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.Method.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}Options";
     			var payloadSB = new StringBuilder();
 				payloadSB.AppendLine($"{indentManager.GetIndent()}{optionsParameterVarName} := &{className}{{");
                 indentManager.Indent();
@@ -121,7 +121,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			}
 		}
 		private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterUpperCase();
-		private const string requestBodyVarName = "requestBody";
+		private const string RequestBodyVarName = "requestBody";
 		private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
 			if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
 				return (default, default);
@@ -135,17 +135,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 						using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody)) {
 							var schema = snippetModel.RequestSchema;
 							var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-							payloadSB.AppendLine($"{requestBodyVarName} := msgraphsdk.New{className}()");
-							WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, variableName: requestBodyVarName);
+							payloadSB.AppendLine($"{RequestBodyVarName} := msgraphsdk.New{className}()");
+							WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, variableName: RequestBodyVarName);
 						}
 				break;
-				case "application/octect-stream":
-					payloadSB.AppendLine($"{requestBodyVarName} := make([]byte, 0); //binary array to upload");
+				case "application/octet-stream":
+					payloadSB.AppendLine($"{RequestBodyVarName} := make([]byte, 0); //binary array to upload");
 				break;
 				default:
 					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
 			}
-			return (payloadSB.ToString(), requestBodyVarName);
+            var result = payloadSB.ToString();
+			return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
 		}
 		private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true, string variableName = default) {
 			if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");

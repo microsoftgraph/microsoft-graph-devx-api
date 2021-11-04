@@ -105,7 +105,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			}
 		}
 		private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterUpperCase();
-		private const string requestBodyVarName = "requestBody";
+		private const string RequestBodyVarName = "requestBody";
 		private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
 			if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
 				return (default, default);
@@ -119,19 +119,20 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 						using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody)) {
 							var schema = snippetModel.RequestSchema;
 							var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-							payloadSB.AppendLine($"var {requestBodyVarName} = new {className}");
+							payloadSB.AppendLine($"var {RequestBodyVarName} = new {className}");
                             payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
 							WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
 							payloadSB.AppendLine("};");
 						}
 				break;
-				case "application/octect-stream":
-					payloadSB.AppendLine($"using var {requestBodyVarName} = new MemoryStream(); //stream to upload");
+				case "application/octet-stream":
+					payloadSB.AppendLine($"using var {RequestBodyVarName} = new MemoryStream(); //stream to upload");
 				break;
 				default:
 					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
 			}
-			return (payloadSB.ToString(), requestBodyVarName);
+			var result = payloadSB.ToString();
+			return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
 		}
 		private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true) {
 			if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");

@@ -150,13 +150,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             WriteJsonObjectValue(RequestBodyVarName, payloadSB, parsedBody.RootElement, schema, indentManager);
                         }
                     break;
-                case "application/octect-stream":
+                case "application/octet-stream":
                     payloadSB.AppendLine($"using var {RequestBodyVarName} = new WebStream();");
                     break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
             }
-            return (payloadSB.ToString(), RequestBodyVarName);
+            var result = payloadSB.ToString();
+			return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
         }
 
         private static void WriteAnonymousObjectValues(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true)
