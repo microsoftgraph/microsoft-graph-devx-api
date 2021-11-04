@@ -100,9 +100,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			var replacements = new Dictionary<string, string>();
 			var matches = nestedStatementRegex.Matches(queryParams);
 			if(matches.Any())
-				foreach(Match match in matches) {
-					var key = match.Groups[1].Value;
-					var value = match.Groups[2].Value;
+				foreach(GroupCollection groupCollection in matches.Select(x => x.Groups)) {
+					var key = groupCollection[1].Value;
+					var value = groupCollection[2].Value;
 					replacements.Add(key, value);
 					queryParams = queryParams.Replace(value, string.Empty);
 				}
@@ -245,8 +245,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			return nodes.Select(x => {
 										if(x.Segment.IsCollectionIndex())
 											return idCleanupRegex.Replace(x.Segment.Replace("{", "ById(&").Replace("}", ")"), m => m.Groups[1].Value.ToFirstCharacterUpperCase()) + ".";
-										else if (x.Segment.IsFunction())
-											return x.Segment.Split('.').Last().ToFirstCharacterUpperCase() + "().";//TODO parameters if any
+										else if (x.Segment.IsFunction()) {
+                                            var parameters = x.PathItems[OpenApiSnippetsGenerator.treeNodeLabel]
+                                                .Parameters
+                                                .Where(y => y.In == ParameterLocation.Path)
+                                                .Select(y => y.Name)
+                                                .ToList();
+                                            var paramSet = string.Join(", ", parameters);
+											return x.Segment.Split('.').Last().ToFirstCharacterUpperCase() + $"({paramSet}).";
+                                        }
 										return x.Segment.ToFirstCharacterUpperCase() + "().";
 									})
 						.Aggregate((x, y) => $"{x}{y}")
