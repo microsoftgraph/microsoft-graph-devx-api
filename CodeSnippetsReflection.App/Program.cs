@@ -85,13 +85,19 @@ namespace CodeSnippetsReflection.App
             if(string.IsNullOrEmpty(generation))
                 generation = "odata";
 
-            var generator = GetSnippetsGenerator(generation, customMetadataPathArg);
             var files = Directory.EnumerateFiles(httpSnippetsDir, "*-httpSnippet");
 
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
 
+            var originalGeneration = generation;
+
             Parallel.ForEach(supportedLanguages, language =>
             {
+                if(language.Equals("go", StringComparison.OrdinalIgnoreCase))
+                    generation = "openapi";
+                else
+                    generation = originalGeneration;
+                var generator = GetSnippetsGenerator(generation, customMetadataPathArg);
                 Parallel.ForEach(files, file =>
                 {
                     ProcessFile(generator, language, file);
