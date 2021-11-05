@@ -63,7 +63,7 @@ namespace CodeSnippetsReflection.App
             // splits language list into supported and unsupported languages
             // where key "true" holds supported and key "false" holds unsupported languages
             var languageGroups = languages
-                .GroupBy(l => ODataSnippetsGenerator.SupportedLanguages.Contains(l.ToLowerInvariant()))
+                .GroupBy(l => ODataSnippetsGenerator.SupportedLanguages.Contains(l) || OpenApiSnippetsGenerator.SupportedLanguages.Contains(l))
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var supportedLanguages = languageGroups.ContainsKey(true) ? languageGroups[true] : null;
