@@ -349,16 +349,6 @@ namespace PermissionsService
                                                     .SelectMany(x => x.Value)
                                                     .Values<string>().Distinct().ToList();
 
-
-                var scopesTest = _scopesListTable.Values.OfType<JToken>()
-                                             .SelectMany(x => x).OfType<JProperty>()
-                                             .Where(x => x.Name.Equals("GET", StringComparison.OrdinalIgnoreCase))
-                                             .SelectMany(x => x).OfType<JProperty>()
-                                             .Where(x => x.Name.Equals("DelegatedWork", StringComparison.OrdinalIgnoreCase))
-                                             .SelectMany(x => x.Value)
-                                             .Values<string>().Distinct().ToList();
-
-
                 scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType, true);
 
                 _telemetryClient?.TrackTrace("Return all permissions",
