@@ -10,12 +10,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 {
     public class GoGeneratorTests {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
+        private const string ServiceRootBetaUrl = "https://graph.microsoft.com/beta";
         private static OpenApiUrlTreeNode _v1TreeNode;
+        private static OpenApiUrlTreeNode _betaTreeNode;
         private static async Task<OpenApiUrlTreeNode> GetV1TreeNode() {
             if(_v1TreeNode == null) {
                 _v1TreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
             }
             return _v1TreeNode;
+        }
+        private static async Task<OpenApiUrlTreeNode> GetBetaTreeNode() {
+            if(_betaTreeNode == null) {
+                _betaTreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/beta/openapi.yaml");
+            }
+            return _betaTreeNode;
         }
         private readonly GoGenerator _generator = new();
         [Fact]
@@ -209,6 +217,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("\"ConsistencyLevel\": \"eventual\"", result);
             Assert.Contains("H: headers", result);
+        }
+        [Fact]
+        public async Task SupportsODataOldIndexFormat() {
+            const string userJsonObject = "{\r\n\"@odata.type\": \"#microsoft.graph.fileAttachment\",\r\n\"name\": \"menu.txt\",\r\n\"contentBytes\": \"bWFjIGFuZCBjaGVlc2UgdG9kYXk=\"\r\n}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootBetaUrl}/me/events('AAMkAGI1AAAt9AHjAAA=')/attachments") {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("graphClient.Me().EventsById(&eventId).Attachments().Post(options)", result);
         }
         //TODO test for DateTimeOffset
     }

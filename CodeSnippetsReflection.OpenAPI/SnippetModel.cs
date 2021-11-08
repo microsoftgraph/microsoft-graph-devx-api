@@ -19,13 +19,22 @@ namespace CodeSnippetsReflection.OpenAPI
         {
             if (treeNode == null) throw new ArgumentNullException(nameof(treeNode));
 
-            var splatPath = requestPayload.RequestUri
+            var splatPath = ReplaceIndexParametersByPathSegment(requestPayload.RequestUri
                                         .AbsolutePath
-                                        .TrimStart(pathSeparator)
+                                        .TrimStart(pathSeparator))
                                         .Split(pathSeparator)
                                         .Skip(1); //skipping the version
             LoadPathNodes(treeNode, splatPath);
             InitializeModel(requestPayload);
+        }
+        private static Regex oDataIndexReplacementRegex = new(@"\('([\w=]+)'\)", RegexOptions.Compiled);
+        /// <summary>
+        /// Replaces OData style ids to path segments
+        /// events('AAMkAGI1AAAt9AHjAAA=') to events/AAMkAGI1AAAt9AHjAAA=
+        /// </summary>
+        private static string ReplaceIndexParametersByPathSegment(string original) {
+            if (string.IsNullOrEmpty(original)) return original;
+            return oDataIndexReplacementRegex.Replace(original, match => $"/{match.Groups[1].Value}");
         }
         private const string defaultContentType = "application/json";
         private OpenApiSchema _responseSchema;
