@@ -292,7 +292,7 @@ paths:
             type: string
             default: v1.0
           description: The target Microsoft Graph API version.
-        - name: workload
+        - name: service
           in: query
           required: false
           schema:
