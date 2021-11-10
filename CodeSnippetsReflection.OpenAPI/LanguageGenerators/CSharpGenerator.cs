@@ -114,26 +114,37 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			var payloadSB = new StringBuilder();
 			switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant()) {
 				case "application/json":
-					if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
-						!"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
-						using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody)) {
-							var schema = snippetModel.RequestSchema;
-							var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-							payloadSB.AppendLine($"var {RequestBodyVarName} = new {className}");
-                            payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
-							WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
-							payloadSB.AppendLine("};");
-						}
+					TryParseBody(snippetModel, payloadSB, indentManager);
 				break;
 				case "application/octet-stream":
 					payloadSB.AppendLine($"using var {RequestBodyVarName} = new MemoryStream(); //stream to upload");
 				break;
 				default:
-					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
+                    if(TryParseBody(snippetModel, payloadSB, indentManager)) //in case the content type header is missing but we still have a json payload
+                        break;
+                    else
+					    throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
 			}
 			var result = payloadSB.ToString();
 			return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
 		}
+        private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager) {
+            if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
+                !"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
+                try {
+                    using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody);
+                    var schema = snippetModel.RequestSchema;
+                    var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
+                    payloadSB.AppendLine($"var {RequestBodyVarName} = new {className}");
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
+                    WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
+                    payloadSB.AppendLine("};");
+
+                } catch (Exception ex) when (ex is JsonException || ex is ArgumentException) {
+                    // the payload wasn't json or poorly formatted
+                }
+            return false;
+        }
 		private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true) {
 			if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
             indentManager.Indent();
