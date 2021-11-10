@@ -12,9 +12,12 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UtilityService;
@@ -22,12 +25,13 @@ using UtilityService;
 namespace ChangesService.Services
 {
     /// <summary>
-    /// Provides <see cref="ChangeLogRecords"/> from cache or uri source.
+    /// Provides changelog documents from cache or uri source.
     /// </summary>
     public class ChangesStore : IChangesStore
     {
         private readonly object _changesLock = new();
         private readonly IHttpClientUtility _httpClientUtility;
+        private readonly IFileUtility _fileUtility;
         private readonly IMemoryCache _changeLogCache;
         private readonly IConfiguration _configuration;
         private readonly Dictionary<string, string> _changesTraceProperties =
@@ -36,9 +40,14 @@ namespace ChangesService.Services
         private readonly int _defaultRefreshTimeInHours;
         private readonly TelemetryClient _telemetryClient;
         private readonly IChangesService _changesService;
+        private readonly string _workloadMappingContainerName;
+        private readonly string _workloadMappingBlobName;
+        private const string WorkloadMappingContainerConfig = "BlobStorage:Containers:Changelog";
+        private const string WorkloadMappingBlobConfig = "BlobStorage:Blobs:WorkloadMapping";
 
         public ChangesStore(IConfiguration configuration, IMemoryCache changeLogCache, IChangesService changesService,
-                            IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient = null)
+                            IHttpClientUtility httpClientUtility, IFileUtility fileUtility,
+                            TelemetryClient telemetryClient = null)
         {
             _telemetryClient = telemetryClient;
             _changesService = changesService ?? throw new ArgumentNullException(nameof(changesService),
@@ -49,8 +58,14 @@ namespace ChangesService.Services
                 $"{ ChangesServiceConstants.ValueNullError }: { nameof(changeLogCache) }");
             _httpClientUtility = httpClientUtility ?? throw new ArgumentNullException(nameof(httpClientUtility),
                 $"{ChangesServiceConstants.ValueNullError}: { nameof(httpClientUtility) }");
+            _fileUtility = fileUtility
+                ?? throw new ArgumentNullException(nameof(fileUtility), $"{ ChangesServiceConstants.ValueNullError }: { nameof(fileUtility) }");
             _changeLogRelativeUrl = configuration[ChangesServiceConstants.ChangelogRelativeUrlConfigPath]
                 ?? throw new ArgumentNullException(nameof(ChangesServiceConstants.ChangelogRelativeUrlConfigPath), "Config path missing");
+            _workloadMappingContainerName = configuration[WorkloadMappingContainerConfig]
+                ?? throw new ArgumentNullException(nameof(WorkloadMappingContainerConfig), $"Config path missing: { WorkloadMappingContainerConfig }");
+            _workloadMappingBlobName = configuration[WorkloadMappingBlobConfig]
+                ?? throw new ArgumentNullException(nameof(WorkloadMappingBlobConfig), $"Config path missing: { WorkloadMappingBlobConfig }");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[ChangesServiceConstants.ChangelogRefreshTimeConfigPath]);
         }
 
@@ -131,6 +146,88 @@ namespace ChangesService.Services
             });
 
             return changeLogRecords;
+        }
+
+        /// <summary>
+        /// Gets or creates workload service mappings.
+        /// </summary>
+        /// <returns>The localized instance of permissions descriptions.</returns>
+        public async Task<Dictionary<string, string>> FetchWorkloadServiceMappingsAsync()
+        {
+            _telemetryClient?.TrackTrace($"Retrieving workload service mappings from in-memory cache 'WorkloadServiceMappings'",
+                                         SeverityLevel.Information,
+                                         _changesTraceProperties);
+
+            var workloadServiceMappings = await _changeLogCache.GetOrCreateAsync("WorkloadServiceMappings", cacheEntry =>
+            {
+                _telemetryClient?.TrackTrace($"In-memory cache 'WorkloadServiceMappings' empty. " +
+                                             $"Fetching the workload-mapping.json file from Azure blob resource",
+                                             SeverityLevel.Information,
+                                             _changesTraceProperties);
+
+                // Ensure workload-mapping.json file is fetched by only one executing thread.
+                lock (_changesLock)
+                {
+                    /* Check whether a previous thread already fetched a
+                     * copy of the file during the lock.
+                     */
+                    var seededWorkloadServiceMappings = _changeLogCache.Get<Dictionary<string, string>>("WorkloadServiceMappings");
+                    var sourceMsg = $"Return workload mapping from in-memory cache 'WorkloadServiceMappings'";
+
+                    if (seededWorkloadServiceMappings == null)
+                    {
+                        var relativeSourcePath = FileServiceHelper.GetLocalizedFilePathSource(_workloadMappingContainerName, _workloadMappingBlobName);
+
+                        // Get file contents from source
+                        var sourceJson = _fileUtility.ReadFromFile(relativeSourcePath).GetAwaiter().GetResult();
+                        _telemetryClient?.TrackTrace($"Successfully fetched workload-mapping.json file from Azure blob resource",
+                                                     SeverityLevel.Information,
+                                                     _changesTraceProperties);
+
+                        seededWorkloadServiceMappings = CreateWorkloadServiceMappings(sourceJson);
+                        cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+                        sourceMsg = $"Return workload-mapping.json file from Azure blob resource";
+                    }
+                    else
+                    {
+                        _telemetryClient?.TrackTrace($"In-memory cache 'WorkloadServiceMappings' " +
+                                                     $"already seeded by a concurrently running thread",
+                                                     SeverityLevel.Information,
+                                                     _changesTraceProperties);
+                    }
+
+                    _telemetryClient?.TrackTrace(sourceMsg,
+                                                 SeverityLevel.Information,
+                                                 _changesTraceProperties);
+
+                    return Task.FromResult(seededWorkloadServiceMappings);
+                }
+            });
+
+            return workloadServiceMappings;
+        }
+
+        /// <summary>
+        /// Creates the workload service mappings dictionary.
+        /// </summary>
+        /// <param name="sourceJson">The JSON string of the workload-mappings file.</param>
+        /// <returns>A dictionary of workload service mappings.</returns>
+        private static Dictionary<string, string> CreateWorkloadServiceMappings(string sourceJson)
+        {
+            var workloadMappings = JsonConvert.DeserializeObject<JObject>(sourceJson)
+                     .Value<JObject>("workloadMappings")
+                     .ToObject<Dictionary<string, JObject>>();
+
+            var workloadServiceMappings = workloadMappings.Select(x =>x.Value.Properties()
+                       .Where(x => x.Name.Equals("workloads", StringComparison.OrdinalIgnoreCase))
+                       .SelectMany(x => x.Value).OfType<JObject>()
+                       .Properties().Where(x => x.Name.Equals("id", StringComparison.OrdinalIgnoreCase))
+                       .Select(x => x.Value)
+                       .Values<string>().Distinct().Select(y => (y, x.Key)).ToList())
+                    .SelectMany(x => x)
+                    .ToDictionary(x => x.Item1, x => x.Item2);
+
+            return workloadServiceMappings;
         }
     }
 }

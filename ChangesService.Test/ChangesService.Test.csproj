@@ -4,7 +4,11 @@
     <TargetFramework>net5.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
-  </PropertyGroup> 
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="TestFiles\ChangeLogs\workload-mapping.json" />
+  </ItemGroup> 
 
   <ItemGroup>
     <Content Include="TestFiles\appsettingstest.json">
@@ -22,6 +26,9 @@
     <EmbeddedResource Include="TestFiles\ChangeLogs\fr-fr\ChangeLog.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="TestFiles\ChangeLogs\workload-mapping.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
@@ -29,7 +36,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
     <PackageReference Include="xunit" Version="2.4.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
     <PackageReference Include="coverlet.collector" Version="3.1.0" />

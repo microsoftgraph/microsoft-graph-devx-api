@@ -726,7 +726,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                         return $"new Duration({specialClassString})";
 
                     case "Binary":
-                        return $"Encoding.ASCII.GetBytes({specialClassString})";
+                        return $"Convert.FromBase64String({specialClassString})";
 
                     case "Double":
                         return $"(double){stringParameter}";
