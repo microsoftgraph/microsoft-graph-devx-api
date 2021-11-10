@@ -128,26 +128,37 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			if(indentManager == null) throw new ArgumentNullException(nameof(indentManager));
 
 			var payloadSB = new StringBuilder();
-			switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant()) {
+			switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant()) {
 				case "application/json":
-					if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
-						!"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
-						using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody)) {
-							var schema = snippetModel.RequestSchema;
-							var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-							payloadSB.AppendLine($"{RequestBodyVarName} := msgraphsdk.New{className}()");
-							WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, variableName: RequestBodyVarName);
-						}
+					TryParseBody(snippetModel, payloadSB, indentManager);
 				break;
 				case "application/octet-stream":
 					payloadSB.AppendLine($"{RequestBodyVarName} := make([]byte, 0); //binary array to upload");
 				break;
 				default:
-					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
+					if(TryParseBody(snippetModel, payloadSB, indentManager)) //in case the content type header is missing but we still have a json payload
+                        break;
+                    else
+					    throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
 			}
             var result = payloadSB.ToString();
 			return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
 		}
+        private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager) {
+            if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
+                !"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
+                try {
+                    using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody);
+                    var schema = snippetModel.RequestSchema;
+                    var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
+                    payloadSB.AppendLine($"{RequestBodyVarName} := msgraphsdk.New{className}()");
+                    WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, variableName: RequestBodyVarName);
+                    return true;
+                } catch (Exception ex) when (ex is JsonException || ex is ArgumentException) {
+                    // the payload wasn't json or poorly formatted
+                }
+            return false;
+        }
 		private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true, string variableName = default) {
 			if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
 			var propertiesAndSchema = value.EnumerateObject()
@@ -156,7 +167,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                 variableName += ".";
 			foreach(var propertyAndSchema in propertiesAndSchema.Where(x => x.Item2 != null)) {
 				var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
-				var propertyAssignment = includePropertyAssignment ? $"{variableName}Set{indentManager.GetIndent()}{propertyName}(" : string.Empty;
+				var propertyAssignment = includePropertyAssignment ? $"{indentManager.GetIndent()}{variableName}Set{propertyName}(" : string.Empty;
 				WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment, propertyName.ToFirstCharacterLowerCase(), ")");
 			}
 			var propertiesWithoutSchema = propertiesAndSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
@@ -216,7 +227,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			}
 		}
 		private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment) {
-			var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? value.EnumerateArray().First().ValueKind.ToString();
+			var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ??
+                            (value.EnumerateArray().Any() ?
+                                value.EnumerateArray().First().ValueKind.ToString() :
+                                schema.Items?.Type); // it's an empty array of primitives
 			payloadSB.AppendLine($"{propertyAssignment} []{genericType} {{");
 			indentManager.Indent();
 			foreach(var item in value.EnumerateArray())

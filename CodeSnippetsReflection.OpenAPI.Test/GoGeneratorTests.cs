@@ -228,6 +228,26 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("graphClient.Me().EventsById(&eventId).Attachments().Post(options)", result);
         }
+        [Fact]
+        public async Task ParsesThePayloadEvenIfContentTypeIsMissing() {
+            const string messageObject = "{\r\n\"createdDateTime\":\"2019-02-04T19:58:15.511Z\",\r\n\"from\":{\r\n\"user\":{\r\n\"id\":\"id-value\",\r\n\"displayName\":\"Joh Doe\",\r\n\"userIdentityType\":\"aadUser\"\r\n}\r\n},\r\n\"body\":{\r\n\"contentType\":\"html\",\r\n\"content\":\"Hello World\"\r\n}\r\n}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/teams/57fb72d0-d811-46f4-8947-305e6072eaa5/channels/19:4b6bed8d24574f6a9e436813cb2617d8@thread.tacv2/messages") {
+                Content = new StringContent(messageObject, Encoding.UTF8)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("graphClient.TeamsById(&teamId).ChannelsById(&channelId).Messages().Post(options)", result);
+        }
+        [Fact]
+        public async Task WritesEmptyPrimitiveArrays() {
+            const string messageObject = "{\r\n\"displayName\": \"Demo app for documentation\",\r\n\"state\": \"disabled\",\r\n\"conditions\": {\r\n\"signInRiskLevels\": [\r\n\"high\",\r\n\"medium\"\r\n],\r\n\"clientAppTypes\": [\r\n\"mobileAppsAndDesktopClients\",\r\n\"exchangeActiveSync\",\r\n\"other\"\r\n],\r\n\"applications\": {\r\n\"includeApplications\": [\r\n\"All\"\r\n],\r\n\"excludeApplications\": [\r\n\"499b84ac-1321-427f-aa17-267ca6975798\",\r\n\"00000007-0000-0000-c000-000000000000\",\r\n\"de8bc8b5-d9f9-48b1-a8ad-b748da725064\",\r\n\"00000012-0000-0000-c000-000000000000\",\r\n\"797f4846-ba00-4fd7-ba43-dac1f8f63013\",\r\n\"05a65629-4c1b-48c1-a78b-804c4abdd4af\",\r\n\"7df0a125-d3be-4c96-aa54-591f83ff541c\"\r\n],\r\n\"includeUserActions\": []\r\n},\r\n\"users\": {\r\n\"includeUsers\": [\r\n\"a702a13d-a437-4a07-8a7e-8c052de62dfd\"\r\n],\r\n\"excludeUsers\": [\r\n\"124c5b6a-ffa5-483a-9b88-04c3fce5574a\",\r\n\"GuestsOrExternalUsers\"\r\n],\r\n\"includeGroups\": [],\r\n\"excludeGroups\": [],\r\n\"includeRoles\": [\r\n\"9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3\",\r\n\"cf1c38e5-3621-4004-a7cb-879624dced7c\",\r\n\"c4e39bd9-1100-46d3-8c65-fb160da0071f\"\r\n],\r\n\"excludeRoles\": [\r\n\"b0f54661-2d74-4c50-afa3-1ec803f12efe\"\r\n]\r\n},\r\n\"platforms\": {\r\n\"includePlatforms\": [\r\n\"all\"\r\n],\r\n\"excludePlatforms\": [\r\n\"iOS\",\r\n\"windowsPhone\"\r\n]\r\n},\r\n\"locations\": {\r\n\"includeLocations\": [\r\n\"AllTrusted\"\r\n],\r\n\"excludeLocations\": [\r\n\"00000000-0000-0000-0000-000000000000\",\r\n\"d2136c9c-b049-47ae-b9cf-316e04ef7198\"\r\n]\r\n},\r\n\"deviceStates\": {\r\n\"includeStates\": [\r\n\"All\"\r\n],\r\n\"excludeStates\": [\r\n\"Compliant\"\r\n]\r\n}\r\n},\r\n\"grantControls\": {\r\n\"operator\": \"OR\",\r\n\"builtInControls\": [\r\n\"mfa\",\r\n\"compliantDevice\",\r\n\"domainJoinedDevice\",\r\n\"approvedApplication\",\r\n\"compliantApplication\"\r\n],\r\n\"customAuthenticationFactors\": [],\r\n\"termsOfUse\": [\r\n\"ce580154-086a-40fd-91df-8a60abac81a0\",\r\n\"7f29d675-caff-43e1-8a53-1b8516ed2075\"\r\n]\r\n},\r\n\"sessionControls\": {\r\n\"applicationEnforcedRestrictions\": null,\r\n\"persistentBrowser\": null,\r\n\"cloudAppSecurity\": {\r\n\"cloudAppSecurityType\": \"blockDownloads\",\r\n\"isEnabled\": true\r\n},\r\n\"signInFrequency\": {\r\n\"value\": 4,\r\n\"type\": \"hours\",\r\n\"isEnabled\": true\r\n}\r\n}\r\n}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootBetaUrl}/identity/conditionalAccess/policies") {
+                Content = new StringContent(messageObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("SetIncludeUserActions", result);
+        }
         //TODO test for DateTimeOffset
     }
 }
