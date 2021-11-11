@@ -22,7 +22,7 @@ namespace CodeSnippetsReflection.OpenAPI
             var splatPath = ReplaceIndexParametersByPathSegment(requestPayload.RequestUri
                                         .AbsolutePath
                                         .TrimStart(pathSeparator))
-                                        .Split(pathSeparator)
+                                        .Split(pathSeparator, StringSplitOptions.RemoveEmptyEntries)
                                         .Skip(1); //skipping the version
             LoadPathNodes(treeNode, splatPath);
             InitializeModel(requestPayload);
@@ -100,6 +100,12 @@ namespace CodeSnippetsReflection.OpenAPI
             if (node.Children.TryGetValue(pathSegment, out var childNode))
             {
                 LoadNextNode(childNode, pathSegments);
+                return;
+            }
+            if (node.Children.Keys.Any(x => x.Equals(pathSegment, StringComparison.OrdinalIgnoreCase)))
+            { // the casing in the description might be different than the casing in the snippet and this dictionary is CS
+                var caseChildNode = node.Children.First(x => x.Key.Equals(pathSegment, StringComparison.OrdinalIgnoreCase)).Value;
+                LoadNextNode(caseChildNode, pathSegments);
                 return;
             }
             if (node.Children.Keys.Any(x => x.IsFunction()))

@@ -248,6 +248,27 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("SetIncludeUserActions", result);
         }
+        [Fact]
+        public async Task DoesntReplaceODataFunctionCalls() {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/devices/{{objectId}}/usageRights?$filter=state in ('active', 'suspended') and serviceIdentifier in ('ABCD')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("state%20in%20('active',%20'suspended')%20and%20serviceIdentifier%20in%20('ABCD')", result);
+        }
+        [Fact]
+        public async Task FindsPathItemsWithDifferentCasing() {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("graphClient.Directory().DeletedItemsById(&directoryObjectId).Get(options)", result);
+        }
+        [Fact]
+        public async Task DoesntFailOnTerminalSlash() {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/me/messages/AAMkADYAAAImV_jAAA=/?$expand=microsoft.graph.eventMessage/event");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("raphClient.Me().MessagesById(&messageId).Get(options)", result);
+        }
         //TODO test for DateTimeOffset
     }
 }

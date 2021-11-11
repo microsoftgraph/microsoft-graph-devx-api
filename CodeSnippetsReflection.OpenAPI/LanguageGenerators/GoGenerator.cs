@@ -35,7 +35,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                 snippetBuilder.Append(optionsPayload);
             var pathParametersDeclaration = GetFluentApiPathVariablesDeclaration(snippetModel.PathNodes);
             pathParametersDeclaration.ToList().ForEach(x => snippetBuilder.AppendLine(x));
-			snippetBuilder.AppendLine($"{responseAssignment}{clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}{GetMethodName(snippetModel.Method)}({optionsParameterVarName});");
+			snippetBuilder.AppendLine($"{responseAssignment}{clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}{GetMethodName(snippetModel.Method)}({optionsParameterVarName})");
 			return snippetBuilder.ToString();
         }
 		private const string requestHeadersVarName = "headers";
@@ -103,8 +103,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 				foreach(GroupCollection groupCollection in matches.Select(x => x.Groups)) {
 					var key = groupCollection[1].Value;
 					var value = groupCollection[2].Value;
-					replacements.Add(key, value);
-					queryParams = queryParams.Replace(value, string.Empty);
+                    if(value.Contains("=") && replacements.TryAdd(key, value)) // otherwise it might be a function call
+					    queryParams = queryParams.Replace(value, string.Empty);
 				}
 			return (queryParams, replacements);
 		}
