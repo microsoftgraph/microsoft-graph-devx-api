@@ -27,6 +27,8 @@ using PermissionsService.Interfaces;
 using SamplesService.Interfaces;
 using PermissionsService;
 using SamplesService.Services;
+using TourStepsService.Interfaces;
+using TourStepsService.Services;
 
 namespace GraphWebApi
 {
@@ -81,6 +83,7 @@ namespace GraphWebApi
             services.AddSingleton<IKnownIssuesService, KnownIssuesService.Services.KnownIssuesService>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
             services.AddControllers().AddNewtonsoftJson();
+            services.AddSingleton<ITourStepsStore, TourStepsStore>();
 
             // Localization
             services.Configure<RequestLocalizationOptions>(options =>
