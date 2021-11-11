@@ -58,6 +58,7 @@ namespace GraphWebApi.Controllers
 
             if(!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
             {
+                Debug.WriteLine("Fetching from github");
                 tourStepsList = await _tourStepsStore.FetchTourStepsListAsync(locale, org, branchName);
             }
             else

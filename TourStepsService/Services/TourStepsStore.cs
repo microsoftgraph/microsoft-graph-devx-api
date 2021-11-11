@@ -137,6 +137,7 @@ namespace TourStepsService.Services
             _telemetryClient?.TrackTrace($"Retrieving tour steps list for locale '{locale}' from GitHub repository.",
                                         SeverityLevel.Information,
                                         TourStepsTraceProperties);
+
             string host = _configuration["BlobStorage:GithubHost"];
             string repo = _configuration["BlobStorage:RepoName"];
             // Fetch the requisite sample path source based on the locale
