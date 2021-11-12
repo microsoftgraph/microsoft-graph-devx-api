@@ -21,23 +21,22 @@ namespace ChangesService.Test
     {
         private readonly MicrosoftGraphProxyConfigs _graphProxyConfigs;
         private readonly IChangesService _changesService;
-        private readonly ChangeLogRecordsModelShould _changeLogRecordsModel;
-        private readonly ChangesStoreShould _changesStore;
-        private readonly Dictionary<string, string> _workloadServiceMappings = new();
+        private readonly ChangeLogRecordsModelShould _changeLogRecordsModel = new();
+        private readonly ChangesStoreShould _changesStore = new();
+        private readonly Dictionary<string, string> _workloadServiceMappings = GetWorkloadServiceMappingsFile();
         private readonly HttpClient _httpClientMock;
         private readonly IHttpClientUtility _httpClientUtility;
+        private readonly ChangeLogRecords _changeLogRecords = new();
 
 
         public ChangesServiceShould()
         {
             _changesService = new Services.ChangesService();
-            _changeLogRecordsModel = new ChangeLogRecordsModelShould();
-            _changesStore = new ChangesStoreShould();
-            _workloadServiceMappings = _changesStore.GetWorkloadServiceMappingsFile().GetAwaiter().GetResult();
             _httpClientMock = new HttpClient(new MockHttpMessageHandler());
             _httpClientUtility = new HttpClientUtility(_httpClientMock);
             var graphProxyConfigsInitializer = new MicrosoftGraphProxyConfigTestInitializer("v1.0");
             _graphProxyConfigs = graphProxyConfigsInitializer.GraphProxyConfigs;
+            _changeLogRecords.ChangeLogs = _changeLogRecordsModel.GetChangeLogRecords().ChangeLogs;
         }
 
         [Fact]
@@ -87,15 +86,10 @@ namespace ChangesService.Test
         public void FilterChangeLogRecordsByWorkload()
         {
             // Arrange
-            var changeLogRecords = new ChangeLogRecords
-            {
-                ChangeLogs = _changeLogRecordsModel.GetChangeLogRecords().ChangeLogs
-            };
-
             var searchOptions = new ChangeLogSearchOptions(service: "Compliance", graphVersion: "beta");
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -189,16 +183,12 @@ namespace ChangesService.Test
         public void FilterChangeLogRecordsByDates()
         {
             // Arrange
-            var changeLogRecords = new ChangeLogRecords
-            {
-                ChangeLogs = _changeLogRecordsModel.GetChangeLogRecords().ChangeLogs
-            };
             var startDate = DateTime.Parse("2020-01-01");
             var endDate = DateTime.Parse("2020-10-01");
             var searchOptions = new ChangeLogSearchOptions(startDate: startDate, endDate: endDate);
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -239,7 +229,6 @@ namespace ChangesService.Test
         public void FilterChangeLogRecordsByDaysRange()
         {
             // Arrange
-
             DateTime varDate = DateTime.Today.AddDays(-30);
             var changeLogRecords = new ChangeLogRecords
             {
@@ -276,16 +265,11 @@ namespace ChangesService.Test
         public void FilterChangeLogRecordsByStartDateAndDaysRange()
         {
             // Arrange
-            var changeLogRecords = new ChangeLogRecords
-            {
-                ChangeLogs = _changeLogRecordsModel.GetChangeLogRecords().ChangeLogs
-            };
             var startDate = DateTime.Parse("2020-06-01");
-
             var searchOptions = new ChangeLogSearchOptions(startDate: startDate, daysRange: 120);
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -326,16 +310,11 @@ namespace ChangesService.Test
         public void FilterChangeLogRecordsByEndDateAndDaysRange()
         {
             // Arrange
-            var changeLogRecords = new ChangeLogRecords
-            {
-                ChangeLogs = _changeLogRecordsModel.GetChangeLogRecords().ChangeLogs
-            };
             var endDate = DateTime.Parse("2021-01-01");
-
             var searchOptions = new ChangeLogSearchOptions(endDate: endDate, daysRange: 30);
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -361,11 +340,6 @@ namespace ChangesService.Test
         public void PaginateChangeLogRecordsFirstPage()
         {
             // Arrange
-            var changeLogRecords = new ChangeLogRecords
-            {
-                ChangeLogs = _changeLogRecordsModel.GetChangeLogRecords().ChangeLogs
-            };
-
             var searchOptions = new ChangeLogSearchOptions
             {
                 Page = 1,
@@ -373,7 +347,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert -- fetch first two items from the changelog sample
             Assert.NotNull(filteredChangeLogRecords);
@@ -414,11 +388,6 @@ namespace ChangesService.Test
         public void PaginateChangeLogRecordsMiddlePage()
         {
             // Arrange
-            var changeLogRecords = new ChangeLogRecords
-            {
-                ChangeLogs = _changeLogRecordsModel.GetChangeLogRecords().ChangeLogs
-            };
-
             var searchOptions = new ChangeLogSearchOptions
             {
                 Page = 2,
@@ -426,7 +395,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert -- fetch middle item from the changelog sample
             Assert.NotNull(filteredChangeLogRecords);
@@ -452,11 +421,6 @@ namespace ChangesService.Test
         public void PaginateChangeLogRecordsLastPage()
         {
             // Arrange
-            var changeLogRecords = new ChangeLogRecords
-            {
-                ChangeLogs = _changeLogRecordsModel.GetChangeLogRecords().ChangeLogs
-            };
-
             var searchOptions = new ChangeLogSearchOptions
             {
                 Page = 2,
@@ -464,7 +428,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert -- fetch last item from the changelog sample
             Assert.NotNull(filteredChangeLogRecords);
@@ -484,6 +448,15 @@ namespace ChangesService.Test
                             Assert.Equal("relyingPartyDetailedSummary,listing", item.Target);
                         });
                 });
+        }
+
+        private static Dictionary<string, string> GetWorkloadServiceMappingsFile()
+        {
+            return new Dictionary<string, string>
+            {
+                {"Microsoft.Exchange.Places", "Calendar" },
+                {"Microsoft.Exchange", "Calendar, mail, personal contacts" }
+            };
         }
     }
 }
