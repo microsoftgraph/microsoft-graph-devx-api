@@ -22,7 +22,7 @@ namespace ChangesService.Test
         private readonly MicrosoftGraphProxyConfigs _graphProxyConfigs;
         private readonly IChangesService _changesService;
         private readonly ChangeLogRecordsModelShould _changeLogRecordsModel;
-       // private readonly ChangesStoreShould _changesStore;
+        private readonly ChangesStoreShould _changesStore;
         private readonly Dictionary<string, string> _workloadServiceMappings = GetWorkloadServiceMappingsFile();
         private readonly HttpClient _httpClientMock;
         private readonly IHttpClientUtility _httpClientUtility;
@@ -32,8 +32,7 @@ namespace ChangesService.Test
         {
             _changesService = new Services.ChangesService();
             _changeLogRecordsModel = new ChangeLogRecordsModelShould();
-           // _changesStore = new ChangesStoreShould();
-           // _workloadServiceMappings = _changesStore.GetWorkloadServiceMappingsFile().GetAwaiter().GetResult();
+            _changesStore = new ChangesStoreShould();
             _httpClientMock = new HttpClient(new MockHttpMessageHandler());
             _httpClientUtility = new HttpClientUtility(_httpClientMock);
             var graphProxyConfigsInitializer = new MicrosoftGraphProxyConfigTestInitializer("v1.0");
@@ -117,73 +116,73 @@ namespace ChangesService.Test
                 });
         }
 
-        //[Fact]
-        //public async Task FilterChangeLogRecordsByRequestUrlReturnsRecordsForExistingChanges()
-        //{
-        //    // Arrange
-        //    var changeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
+        [Fact]
+        public async Task FilterChangeLogRecordsByRequestUrlReturnsRecordsForExistingChanges()
+        {
+            // Arrange
+            var changeLogRecords = _changesStore.FetchChangeLogRecords(new CultureInfo("en-US"));
 
-        //    var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/calendar", graphVersion: "v1.0");
+            var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/calendar", graphVersion: "v1.0");
 
-        //    // Act
-        //    var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
+            // Act
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
 
-        //    // Assert
-        //    Assert.NotNull(filteredChangeLogRecords);
-        //    Assert.Equal(2, filteredChangeLogRecords.ChangeLogs.Count());
-        //    Assert.Collection(filteredChangeLogRecords.ChangeLogs,
-        //        item =>
-        //        {
-        //            Assert.Equal(4, item.ChangeList.Count());
-        //        },
-        //        item =>
-        //        {
-        //            Assert.Single(item.ChangeList);
-        //        });
-        //}
+            // Assert
+            Assert.NotNull(filteredChangeLogRecords);
+            Assert.Equal(2, filteredChangeLogRecords.ChangeLogs.Count());
+            Assert.Collection(filteredChangeLogRecords.ChangeLogs,
+                item =>
+                {
+                    Assert.Equal(4, item.ChangeList.Count());
+                },
+                item =>
+                {
+                    Assert.Single(item.ChangeList);
+                });
+        }
 
-        //[Fact]
-        //public async Task FilterChangeLogRecordsByRequestUrlReturnsNoChangeLogsForNonExistingChanges()
-        //{
-        //    // Arrange
-        //    var changeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
+        [Fact]
+        public void FilterChangeLogRecordsByRequestUrlReturnsNoChangeLogsForNonExistingChanges()
+        {
+            // Arrange
+            var changeLogRecords = _changesStore.FetchChangeLogRecords(new CultureInfo("en-US"));
 
-        //    var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/messages", graphVersion: "v1.0");
+            var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/messages", graphVersion: "v1.0");
 
-        //    // Act
-        //    var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
+            // Act
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
 
-        //    // Assert
-        //    Assert.NotNull(filteredChangeLogRecords);
-        //    Assert.False(filteredChangeLogRecords.ChangeLogs.Any());
-        //    Assert.Equal(0, filteredChangeLogRecords.TotalItems);
-        //}
+            // Assert
+            Assert.NotNull(filteredChangeLogRecords);
+            Assert.False(filteredChangeLogRecords.ChangeLogs.Any());
+            Assert.Equal(0, filteredChangeLogRecords.TotalItems);
+        }
 
-        //[Fact]
-        //public async Task ThrowExceptionWhenServiceNameIsNotFoundForReturnedWorkloadId()
-        //{
-        //    // Arrange
-        //    var changeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
+        [Fact]
+        public void ThrowExceptionWhenServiceNameIsNotFoundForReturnedWorkloadId()
+        {
+            // Arrange
+            var changeLogRecords = _changesStore.FetchChangeLogRecords(new CultureInfo("en-US"));
 
-        //    var searchOptions = new ChangeLogSearchOptions(requestUrl: "/appCatalogs/teamsApps", graphVersion: "v1.0");
+            var searchOptions = new ChangeLogSearchOptions(requestUrl: "/appCatalogs/teamsApps", graphVersion: "v1.0");
 
-        //    // Act and Assert
-        //    Assert.Throws<Exception>(() =>
-        //    _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
-        //}
+            // Act and Assert
+            Assert.Throws<Exception>(() =>
+            _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
+        }
 
-        //[Fact]
-        //public async Task ThrowInvalidOperationExceptionWhenFetchWorkloadInfoFromGraphReturnsError()
-        //{
-        //    // Arrange
-        //    var changeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
+        [Fact]
+        public void ThrowInvalidOperationExceptionWhenFetchWorkloadInfoFromGraphReturnsError()
+        {
+            // Arrange
+            var changeLogRecords = _changesStore.FetchChangeLogRecords(new CultureInfo("en-US"));
 
-        //    var searchOptions = new ChangeLogSearchOptions(requestUrl: "/admin/windows/updates", graphVersion: "v1.0");
+            var searchOptions = new ChangeLogSearchOptions(requestUrl: "/admin/windows/updates", graphVersion: "v1.0");
 
-        //    // Act and Assert
-        //    Assert.Throws<InvalidOperationException>(() =>
-        //    _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
-        //}
+            // Act and Assert
+            Assert.Throws<InvalidOperationException>(() =>
+            _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
+        }
 
         [Fact]
         public void FilterChangeLogRecordsByDates()
