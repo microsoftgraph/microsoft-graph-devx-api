@@ -22,7 +22,6 @@ namespace ChangesService.Test
         private readonly MicrosoftGraphProxyConfigs _graphProxyConfigs;
         private readonly IChangesService _changesService;
         private readonly ChangeLogRecordsModelShould _changeLogRecordsModel = new();
-        private readonly ChangesStoreShould _changesStore = new();
         private readonly Dictionary<string, string> _workloadServiceMappings = GetWorkloadServiceMappingsFile();
         private readonly HttpClient _httpClientMock;
         private readonly IHttpClientUtility _httpClientUtility;
@@ -112,11 +111,9 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public async Task FilterChangeLogRecordsByRequestUrlReturnsRecordsForExistingChanges()
+        public void FilterChangeLogRecordsByRequestUrlReturnsRecordsForExistingChanges()
         {
             // Arrange
-            var changeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
-
             var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/calendar/events", graphVersion: "v1.0");
 
             // Act
