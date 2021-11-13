@@ -9,10 +9,8 @@ using FileService.Services;
 using MockTestUtility;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace ChangesService.Test
@@ -438,6 +436,20 @@ namespace ChangesService.Test
                             Assert.Equal("delta", item.Target);
                         });
                 });
+
+            // Arrange
+            searchOptions = new ChangeLogSearchOptions
+            {
+                Page = 3,
+                PageLimit = 3
+            };
+
+            // Act
+            filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+
+            // Assert
+            Assert.NotNull(filteredChangeLogRecords);
+            Assert.Equal(2, filteredChangeLogRecords.ChangeLogs.Count());
         }
 
         private static Dictionary<string, string> GetWorkloadServiceMappingsFile()
