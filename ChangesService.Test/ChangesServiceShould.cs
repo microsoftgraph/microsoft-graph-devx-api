@@ -117,10 +117,10 @@ namespace ChangesService.Test
             // Arrange
             var changeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
 
-            var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/calendar", graphVersion: "v1.0");
+            var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/calendar/events", graphVersion: "v1.0");
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -128,7 +128,7 @@ namespace ChangesService.Test
             Assert.Collection(filteredChangeLogRecords.ChangeLogs,
                 item =>
                 {
-                    Assert.Equal(4, item.ChangeList.Count());
+                    Assert.Single(item.ChangeList);
                 },
                 item =>
                 {
@@ -137,15 +137,13 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public async Task FilterChangeLogRecordsByRequestUrlReturnsNoChangeLogsForNonExistingChanges()
+        public void FilterChangeLogRecordsByRequestUrlReturnsNoChangeLogsForNonExistingChanges()
         {
             // Arrange
-            var changeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
-
             var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/messages", graphVersion: "v1.0");
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -154,29 +152,25 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public async Task ThrowExceptionWhenServiceNameIsNotFoundForReturnedWorkloadId()
+        public void ThrowExceptionWhenServiceNameIsNotFoundForReturnedWorkloadId()
         {
             // Arrange
-            var changeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
-
             var searchOptions = new ChangeLogSearchOptions(requestUrl: "/appCatalogs/teamsApps", graphVersion: "v1.0");
 
             // Act and Assert
             Assert.Throws<Exception>(() =>
-            _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
+            _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
         }
 
         [Fact]
-        public async Task ThrowInvalidOperationExceptionWhenFetchWorkloadInfoFromGraphReturnsError()
+        public void ThrowInvalidOperationExceptionWhenFetchWorkloadInfoFromGraphReturnsError()
         {
             // Arrange
-            var changeLogRecords = await _changesStore.FetchChangeLogRecordsAsync(new CultureInfo("en-US"));
-
             var searchOptions = new ChangeLogSearchOptions(requestUrl: "/admin/windows/updates", graphVersion: "v1.0");
 
             // Act and Assert
             Assert.Throws<InvalidOperationException>(() =>
-            _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
+            _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
         }
 
         [Fact]
@@ -184,7 +178,7 @@ namespace ChangesService.Test
         {
             // Arrange
             var startDate = DateTime.Parse("2020-01-01");
-            var endDate = DateTime.Parse("2020-10-01");
+            var endDate = DateTime.Parse("2020-09-01");
             var searchOptions = new ChangeLogSearchOptions(startDate: startDate, endDate: endDate);
 
             // Act
@@ -423,8 +417,8 @@ namespace ChangesService.Test
             // Arrange
             var searchOptions = new ChangeLogSearchOptions
             {
-                Page = 2,
-                PageLimit = 2
+                Page = 8,
+                PageLimit = 1
             };
 
             // Act
@@ -435,17 +429,16 @@ namespace ChangesService.Test
             Assert.Collection(filteredChangeLogRecords.ChangeLogs,
                 item =>
                 {
-                    Assert.Equal("dca6467b-d026-4316-8353-2c6c02598af3", item.Id);
-                    Assert.Equal("Reports", item.WorkloadArea);
-                    Assert.Equal("Identity and access reports", item.SubArea);
+                    Assert.Equal("13064a4f-262d-40eb-ac18-5c6396974ed7", item.Id);
+                    Assert.Equal("Calendar", item.WorkloadArea);
                     Assert.Collection(item.ChangeList,
                         item =>
                         {
-                            Assert.Equal("dca6467b-d026-4316-8353-2c6c02598af3", item.Id);
+                            Assert.Equal("13064a4f-262d-40eb-ac18-5c6396974ed7", item.Id);
                             Assert.Equal("Resource", item.ApiChange);
-                            Assert.Equal("relyingPartyDetailedSummary,listing", item.ChangedApiName);
+                            Assert.Equal("delta", item.ChangedApiName);
                             Assert.Equal("Addition", item.ChangeType);
-                            Assert.Equal("relyingPartyDetailedSummary,listing", item.Target);
+                            Assert.Equal("delta", item.Target);
                         });
                 });
         }

@@ -28,8 +28,8 @@ namespace ChangesService.Test
             };
 
             // 1st Assert
-            Assert.Equal(3, changeLogRecords.TotalItems);
-            Assert.Equal(3, changeLogRecords.ChangeLogs.Count());
+            Assert.Equal(8, changeLogRecords.TotalItems);
+            Assert.Equal(8, changeLogRecords.ChangeLogs.Count());
 
             /* Take only first two changelog items from list,
              * e.g. in a pagination scenario.
@@ -39,7 +39,7 @@ namespace ChangesService.Test
                                        .ToList();
 
             // 2nd Assert - TotalItems value should not change
-            Assert.Equal(3, changeLogRecords.TotalItems);
+            Assert.Equal(8, changeLogRecords.TotalItems);
             Assert.Equal(2, changeLogRecords.ChangeLogs.Count());
         }
 
@@ -55,7 +55,7 @@ namespace ChangesService.Test
             /* 1st Assert - CurrentItems should always be equal
              * to the current count of changelog items in list.
             */
-            Assert.Equal(3, changeLogRecords.CurrentItems);
+            Assert.Equal(8, changeLogRecords.CurrentItems);
             Assert.Equal(changeLogRecords.CurrentItems, changeLogRecords.ChangeLogs.Count());
 
             /* Take only first two changelog items from list,
@@ -85,13 +85,13 @@ namespace ChangesService.Test
             changeLogRecords.PageLimit = 1;
 
             // Assert
-            Assert.Equal(3, changeLogRecords.TotalPages);
+            Assert.Equal(8, changeLogRecords.TotalPages);
 
             // Act
             changeLogRecords.PageLimit = 2;
 
             // Assert
-            Assert.Equal(2, changeLogRecords.TotalPages);
+            Assert.Equal(4, changeLogRecords.TotalPages);
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace ChangesService.Test
                    ""Id"": ""2d94636a-2d78-44d6-8b08-ff2a9121214b"",
                    ""Cloud"": ""prd"",
                    ""Version"": ""v1.0"",
-                   ""CreatedDateTime"": ""2020-09-15T00:00:00.000Z"",
+                   ""CreatedDateTime"": ""2020-08-15T00:00:00.000Z"",
                    ""WorkloadArea"": ""Extensions"",
                    ""SubArea"": ""Schema extensions""
                  },
@@ -160,9 +160,123 @@ namespace ChangesService.Test
                    ""CreatedDateTime"": ""variableDate"",
                    ""WorkloadArea"": ""Reports"",
                    ""SubArea"": ""Identity and access reports""
-                 }
-               ]
-            }";
+                 },
+                 {
+                  ""ChangeList"": [
+                     {
+                        ""Id"": ""937000e6-2cab-4a40-a5ea-58e20dab9fbb"",
+                        ""ApiChange"": ""Resource"",
+                        ""ChangedApiName"": ""Scoping application permissions to specific Exchange Online mailboxes"",
+                        ""ChangeType"": ""Ajout"",
+                        ""Description"": ""Added the capability for administrators to limit app access to only specific mailboxes, even when an app has been granted application permissions to mail, mailbox settings, calendars, or contacts. For more details, see [Scoping application permissions to specific Exchange Online mailboxes](auth-limit-mailbox-access.md)."",
+                        ""Target"": ""Scoping application permissions to specific Exchange Online mailboxes""
+                     }
+                    ],
+                    ""Id"": ""937000e6-2cab-4a40-a5ea-58e20dab9fbb"",
+                    ""Cloud"": ""prd"",
+                    ""Version"": ""v1.0"",
+                    ""CreatedDateTime"": ""2019-11-01T00:00:00.000Z"",
+                    ""WorkloadArea"": ""Calendar, mail, personal contacts"",
+                    ""SubArea"": """"
+                 },
+                 {
+                      ""ChangeList"": [
+                         {
+                            ""Id"": ""656072a4-9a39-4731-8322-13932419895a"",
+                            ""ApiChange"": ""Property"",
+                            ""ChangedApiName"": ""transactionId"",
+                            ""ChangeType"": ""Addition"",
+                            ""Description"": ""Added the **transactionId** property to the [event](https://docs.microsoft.com/en-us/graph/api/resources/event?view=graph-rest-1.0) entity."",
+                            ""Target"": ""events""
+                          }
+                         ],
+                        ""Id"": ""656072a4-9a39-4731-8322-13932419895a"",
+                        ""Cloud"": ""prd"",
+                        ""Version"": ""v1.0"",
+                        ""CreatedDateTime"": ""2020-10-01T00:00:00.000Z"",
+                        ""WorkloadArea"": ""Calendar"",
+                        ""SubArea"": """"
+                        },
+                    {
+                      ""ChangeList"": [
+                        {
+                          ""Id"": ""8a32aa94-ac63-42d3-b323-5312bfc80a9d"",
+                          ""ApiChange"": ""Property"",
+                          ""ChangedApiName"": ""cancelledOccurrences,exceptionOccurrences,occurrenceId"",
+                          ""ChangeType"": ""Addition"",
+                          ""Description"": ""Added the **cancelledOccurrences**, **exceptionOccurrences**, and **occurrenceId** properties to the [event](https://docs.microsoft.com/en-us/graph/api/resources/event?view=graph-rest-beta) entity."",
+                          ""Target"": ""event""
+                        }
+                      ],
+                      ""Id"": ""8a32aa94-ac63-42d3-b323-5312bfc80a9d"",
+                      ""Cloud"": ""prd"",
+                      ""Version"": ""beta"",
+                      ""CreatedDateTime"": ""2020-10-01T00:00:00.000Z"",
+                      ""WorkloadArea"": ""Calendar"",
+                      ""SubArea"": """"
+                    },
+                    {
+                          ""ChangeList"": [
+                            {
+                                    ""Id"": ""f5824007-1349-4ab9-b1c3-1b294d2c5bd4"",
+                              ""ApiChange"": ""Property"",
+                              ""ChangedApiName"": ""allowNewTimeProposals"",
+                              ""ChangeType"": ""Addition"",
+                              ""Description"": ""Added the **allowNewTimeProposals** property to the [event](https://docs.microsoft.com/en-us/graph/api/resources/event?view=graph-rest-1.0) and [eventMessageRequest](https://docs.microsoft.com/en-us/graph/api/resources/eventmessagerequest?view=graph-rest-1.0) entities."",
+                              ""Target"": ""event,eventMessageRequest""
+                            },
+                            {
+                                    ""Id"": ""f5824007-1349-4ab9-b1c3-1b294d2c5bd4"",
+                              ""ApiChange"": ""Parameter"",
+                              ""ChangedApiName"": ""proposedNewTime,event"",
+                              ""ChangeType"": ""Addition"",
+                              ""Description"": ""Added the **proposedNewTime** optional parameter to the [tentativelyAccept](https://docs.microsoft.com/en-us/graph/api/event-tentativelyaccept?view=graph-rest-1.0) and [decline](https://docs.microsoft.com/en-us/graph/api/event-decline?view=graph-rest-1.0) methods of **event**."",
+                              ""Target"": ""tentativelyAccept,decline""
+                            },
+                            {
+                                    ""Id"": ""f5824007-1349-4ab9-b1c3-1b294d2c5bd4"",
+                              ""ApiChange"": ""Property"",
+                              ""ChangedApiName"": ""proposedNewTime,responseType"",
+                              ""ChangeType"": ""Addition"",
+                              ""Description"": ""Added the [eventMessageResponse](https://docs.microsoft.com/en-us/graph/api/resources/eventmessageresponse?view=graph-rest-1.0) entity that is based on [eventMessage](https://docs.microsoft.com/en-us/graph/api/resources/eventmessage?view=graph-rest-1.0), and in addition, includes the **proposedNewTime** and **responseType** properties."",
+                              ""Target"": ""eventMessageResponse,eventMessage""
+                            },
+                            {
+                                    ""Id"": ""f5824007-1349-4ab9-b1c3-1b294d2c5bd4"",
+                              ""ApiChange"": ""Property"",
+                              ""ChangedApiName"": ""proposedNewTime"",
+                              ""ChangeType"": ""Addition"",
+                              ""Description"": ""Added the **proposedNewTime** property to the [attendee](https://docs.microsoft.com/en-us/graph/api/resources/attendee?view=graph-rest-1.0) complex type."",
+                              ""Target"": ""calendar""
+                            }
+                          ],
+                          ""Id"": ""f5824007-1349-4ab9-b1c3-1b294d2c5bd4"",
+                          ""Cloud"": ""prd"",
+                          ""Version"": ""v1.0"",
+                          ""CreatedDateTime"": ""2020-10-01T00:00:00.000Z"",
+                          ""WorkloadArea"": ""Calendar"",
+                          ""SubArea"": """"
+                        },
+                        {
+                          ""ChangeList"": [
+                            {
+                              ""Id"": ""13064a4f-262d-40eb-ac18-5c6396974ed7"",
+                              ""ApiChange"": ""Resource"",
+                              ""ChangedApiName"": ""delta"",
+                              ""ChangeType"": ""Addition"",
+                              ""Description"": ""The [delta](https://docs.microsoft.com/en-us/graph/api/event-delta?view=graph-rest-beta) function supports an additional scenario to get incremental changes (new, updated, or removed) of events in a user calendar without necessarily being bounded by a date range."",
+                              ""Target"": ""delta""
+                            }
+                          ],
+                          ""Id"": ""13064a4f-262d-40eb-ac18-5c6396974ed7"",
+                          ""Cloud"": ""prd"",
+                          ""Version"": ""beta"",
+                          ""CreatedDateTime"": ""2020-10-01T00:00:00.000Z"",
+                          ""WorkloadArea"": ""Calendar"",
+                          ""SubArea"": """"
+                       }
+                     ]
+                   }";
 
             changeLogRecords = changeLogRecords.Replace("variableDate", variableDate);
 

@@ -213,6 +213,10 @@ namespace ChangesService.Services
                     changeLogRecords.Page = changeLogRecords.TotalPages;
 
                     int lastItems = changeLogRecords.ChangeLogs.Count() % searchOptions.PageLimit.Value;
+                    if (lastItems == 0)
+                    {
+                        lastItems = 1;
+                    }
                     enumerableChangeLogs = changeLogRecords.ChangeLogs
                                                             .TakeLast(lastItems);
                 }
