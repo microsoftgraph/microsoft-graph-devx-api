@@ -343,7 +343,7 @@ namespace ChangesService.Services
             }
             else
             {
-                throw new Exception($"Service name not found for the WorkloadId: {targetWorkloadId}");
+                throw new ArgumentOutOfRangeException($"Service name not found for the WorkloadId: {targetWorkloadId}");
             }
         }
     }

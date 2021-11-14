@@ -147,13 +147,13 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void ThrowExceptionWhenServiceNameIsNotFoundForReturnedWorkloadId()
+        public void ThrowArgumentOutOfRangeExceptionWhenServiceNameIsNotFoundForReturnedWorkloadId()
         {
             // Arrange
             var searchOptions = new ChangeLogSearchOptions(requestUrl: "/appCatalogs/teamsApps", graphVersion: "v1.0");
 
             // Act and Assert
-            Assert.Throws<Exception>(() =>
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
             _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
         }
 
