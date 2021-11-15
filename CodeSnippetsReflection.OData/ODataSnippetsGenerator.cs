@@ -37,7 +37,7 @@ namespace CodeSnippetsReflection.OData
         private CSharpExpressions CSharpExpressions { get; }
         private ObjectiveCExpressions ObjectiveCExpressions { get; }
         private JavaExpressions JavaExpressions { get; }
-        public static HashSet<string> SupportedLanguages { get; set; } = new()
+        public static HashSet<string> SupportedLanguages { get; set; } = new(StringComparer.OrdinalIgnoreCase)
         {
             "c#",
             "javascript",

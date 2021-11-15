@@ -30,6 +30,7 @@ paths:
               - Javascript
               - Java
               - Objective-C
+              - Go
             default: C#
         - name: generation
           in: query
