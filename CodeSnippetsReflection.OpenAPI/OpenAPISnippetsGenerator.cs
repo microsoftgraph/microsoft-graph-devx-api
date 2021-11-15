@@ -63,6 +63,12 @@ namespace CodeSnippetsReflection.OpenAPI
             var generator = GetLanguageGenerator(language);
             return generator.GenerateCodeSnippet(snippetModel);
         }
+        public static HashSet<string> SupportedLanguages { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "c#",
+            "typescript",
+            "go",
+        };
         private static ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> GetLanguageGenerator(string language) {
             return language.ToLowerInvariant() switch {
                 "c#" => new CSharpGenerator(),
