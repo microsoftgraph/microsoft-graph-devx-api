@@ -63,7 +63,7 @@ namespace CodeSnippetsReflection.App
             // splits language list into supported and unsupported languages
             // where key "true" holds supported and key "false" holds unsupported languages
             var languageGroups = languages
-                .GroupBy(l => ODataSnippetsGenerator.SupportedLanguages.Contains(l.ToLowerInvariant()))
+                .GroupBy(l => ODataSnippetsGenerator.SupportedLanguages.Contains(l) || OpenApiSnippetsGenerator.SupportedLanguages.Contains(l))
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var supportedLanguages = languageGroups.ContainsKey(true) ? languageGroups[true] : null;
@@ -85,13 +85,19 @@ namespace CodeSnippetsReflection.App
             if(string.IsNullOrEmpty(generation))
                 generation = "odata";
 
-            var generator = GetSnippetsGenerator(generation, customMetadataPathArg);
             var files = Directory.EnumerateFiles(httpSnippetsDir, "*-httpSnippet");
 
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
 
+            var originalGeneration = generation;
+
             Parallel.ForEach(supportedLanguages, language =>
             {
+                if(language.Equals("go", StringComparison.OrdinalIgnoreCase))
+                    generation = "openapi";
+                else
+                    generation = originalGeneration;
+                var generator = GetSnippetsGenerator(generation, customMetadataPathArg);
                 Parallel.ForEach(files, file =>
                 {
                     ProcessFile(generator, language, file);

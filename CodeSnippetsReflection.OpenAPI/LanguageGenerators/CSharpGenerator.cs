@@ -31,7 +31,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			if(!string.IsNullOrEmpty(requestHeadersPayload))
 				snippetBuilder.Append(requestHeadersPayload);
 			var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, requestHeadersVarName);
-			snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({parametersList});");
+            var methodName = snippetModel.Method.ToString().ToLower().ToFirstCharacterUpperCase() + "Async";
+			snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{methodName}({parametersList});");
 			return snippetBuilder.ToString();
 		}
 		private const string requestHeadersVarName = "headers";
@@ -105,7 +106,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			}
 		}
 		private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterUpperCase();
-		private const string requestBodyVarName = "requestBody";
+		private const string RequestBodyVarName = "requestBody";
 		private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
 			if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
 				return (default, default);
@@ -114,25 +115,37 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			var payloadSB = new StringBuilder();
 			switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant()) {
 				case "application/json":
-					if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
-						!"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
-						using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody)) {
-							var schema = snippetModel.RequestSchema;
-							var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-							payloadSB.AppendLine($"var {requestBodyVarName} = new {className}");
-                            payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
-							WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
-							payloadSB.AppendLine("};");
-						}
+					TryParseBody(snippetModel, payloadSB, indentManager);
 				break;
-				case "application/octect-stream":
-					payloadSB.AppendLine($"using var {requestBodyVarName} = new MemoryStream(); //stream to upload");
+				case "application/octet-stream":
+					payloadSB.AppendLine($"using var {RequestBodyVarName} = new MemoryStream(); //stream to upload");
 				break;
 				default:
-					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
+                    if(TryParseBody(snippetModel, payloadSB, indentManager)) //in case the content type header is missing but we still have a json payload
+                        break;
+                    else
+					    throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
 			}
-			return (payloadSB.ToString(), requestBodyVarName);
+			var result = payloadSB.ToString();
+			return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
 		}
+        private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager) {
+            if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
+                !"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
+                try {
+                    using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody);
+                    var schema = snippetModel.RequestSchema;
+                    var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
+                    payloadSB.AppendLine($"var {RequestBodyVarName} = new {className}");
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
+                    WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
+                    payloadSB.AppendLine("};");
+
+                } catch (Exception ex) when (ex is JsonException || ex is ArgumentException) {
+                    // the payload wasn't json or poorly formatted
+                }
+            return false;
+        }
 		private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true) {
 			if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
             indentManager.Indent();
@@ -226,18 +239,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 											".";
 							return $"{x}{dot}{y}";
 						});
-		}
-		private static string GetMethodName(HttpMethod method) {
-			// can't use pattern matching with switch as it's not an enum but a bunch of static values
-			if(method == HttpMethod.Get) return "GetAsync";
-			else if(method == HttpMethod.Post) return "PostAsync";
-			else if(method == HttpMethod.Put) return "PutAsync";
-			else if(method == HttpMethod.Delete) return "DeleteAsync";
-			else if(method == HttpMethod.Patch) return "PatchAsync";
-			else if(method == HttpMethod.Head) return "HeadAsync";
-			else if(method == HttpMethod.Options) return "OptionsAsync";
-			else if(method == HttpMethod.Trace) return "TraceAsync";
-			else throw new InvalidOperationException($"Unsupported HTTP method: {method}");
 		}
 	}
 }
