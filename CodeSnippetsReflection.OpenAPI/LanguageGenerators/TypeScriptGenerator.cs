@@ -45,7 +45,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             // add parameters
             var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, requestHeadersVarName);
-            snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{GetMethodName(snippetModel.Method)}({parametersList});");
+            var methodName = snippetModel.Method.ToString().ToLower();
+            snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{methodName}({parametersList});");
 
             return snippetBuilder.ToString();
         }
@@ -281,11 +282,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             ".";
                             return $"{x}{dot}{y}";
                         });
-        }
-        private static string GetMethodName(HttpMethod method)
-        {
-            if (method == null) throw new ArgumentNullException("Argument method cannot be null");
-            return method.ToString().ToLower();
         }
     }
 }

@@ -35,7 +35,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                 snippetBuilder.Append(optionsPayload);
             var pathParametersDeclaration = GetFluentApiPathVariablesDeclaration(snippetModel.PathNodes);
             pathParametersDeclaration.ToList().ForEach(x => snippetBuilder.AppendLine(x));
-			snippetBuilder.AppendLine($"{responseAssignment}{clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}{GetMethodName(snippetModel.Method)}({optionsParameterVarName})");
+            var methodName = snippetModel.Method.ToString().ToLower().ToFirstCharacterUpperCase();
+			snippetBuilder.AppendLine($"{responseAssignment}{clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}{methodName}({optionsParameterVarName})");
 			return snippetBuilder.ToString();
         }
 		private const string requestHeadersVarName = "headers";
@@ -273,18 +274,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 									})
 						.Aggregate((x, y) => $"{x}{y}")
                         .Replace("().ById(", "ById(");
-		}
-		private static string GetMethodName(HttpMethod method) {
-			// can't use pattern matching with switch as it's not an enum but a bunch of static values
-			if(method == HttpMethod.Get) return "Get";
-			else if(method == HttpMethod.Post) return "Post";
-			else if(method == HttpMethod.Put) return "Put";
-			else if(method == HttpMethod.Delete) return "Delete";
-			else if(method == HttpMethod.Patch) return "Patch";
-			else if(method == HttpMethod.Head) return "Head";
-			else if(method == HttpMethod.Options) return "Options";
-			else if(method == HttpMethod.Trace) return "Trace";
-			else throw new InvalidOperationException($"Unsupported HTTP method: {method}");
 		}
     }
 }
