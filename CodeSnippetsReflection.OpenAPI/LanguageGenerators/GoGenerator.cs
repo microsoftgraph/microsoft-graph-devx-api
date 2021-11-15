@@ -20,7 +20,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             var indentManager = new IndentManager();
 			var snippetBuilder = new StringBuilder(
 									"//THE GO SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-									$"{clientVarName} := msgraphsdk.New{clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+									$"{clientVarName} := msgraphsdk.New{clientVarType}({httpCoreVarName}){Environment.NewLine}{Environment.NewLine}");
 			var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
 			snippetBuilder.Append(requestPayload);
 			var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "result, err := ";
