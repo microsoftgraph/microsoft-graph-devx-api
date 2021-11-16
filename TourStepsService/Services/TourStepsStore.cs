@@ -5,8 +5,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using UtilityService;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using TourStepsService.Interfaces;
 using FileService.Common;
 using FileService.Interfaces;
@@ -45,8 +43,8 @@ namespace TourStepsService.Services
             };
 
 
-        public TourStepsStore(IHttpClientUtility httpClientUtility, IConfiguration configuration, IFileUtility fileUtility,
-            IMemoryCache tourStepsCache, TelemetryClient telemetryClient)
+        public TourStepsStore(IConfiguration configuration, IHttpClientUtility httpClientUtility, IFileUtility fileUtility,
+            IMemoryCache tourStepsCache, TelemetryClient telemetryClient = null)
         {
             _httpClientUtility = httpClientUtility;
             _telemetryClient = telemetryClient;
@@ -140,11 +138,11 @@ namespace TourStepsService.Services
 
             string host = _configuration["BlobStorage:GithubHost"];
             string repo = _configuration["BlobStorage:RepoName"];
+
             // Fetch the requisite sample path source based on the locale
             string localizedFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_tourStepsContainerName, _tourStepsBlobName, locale);
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
-            //var queriesFilePathSource = "https://raw.githubusercontent.com/Onokaev/microsoft-graph-devx-content/dev/ge-tour/steps.json";
-            Debug.WriteLine("Here is the path to the resource ", queriesFilePathSource);
+            
             
             using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
             string jsonFileContents = await _httpClientUtility.ReadFromDocumentAsync(httpRequestMessage);

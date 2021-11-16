@@ -14,7 +14,7 @@ namespace TourStepsService.Models
 
         public TourStepsList()
         {
-            TourSteps = new List<TourStepsModel>();
+           TourSteps = new List<TourStepsModel>();
         }
     } 
 }

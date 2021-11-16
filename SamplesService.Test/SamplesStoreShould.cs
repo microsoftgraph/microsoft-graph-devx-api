@@ -70,6 +70,7 @@ namespace SamplesService.Test
             Assert.Equal("mon profil", frenchSampleQueriesList.SampleQueries[0].HumanName);
         }
 
+        
         [Fact]
         public async Task ReturnNullIfSampleQueryFileIsEmpty()
         {
@@ -82,6 +83,7 @@ namespace SamplesService.Test
             // Assert
             Assert.Null(japaneseSampleQueriesList);
         }
+        
 
         [Fact]
         public async Task FetchSamplesFromGithub()

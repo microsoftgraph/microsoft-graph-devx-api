@@ -5,6 +5,7 @@
 
 using System;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 //to-do Add query to the data model
 namespace TourStepsService.Models
@@ -46,7 +47,7 @@ namespace TourStepsService.Models
             get => _docLink;
             set
             {
-                if (!Uri.IsWellFormedUriString(value, UriKind.Absolute))
+                if (value != "" && !Uri.IsWellFormedUriString(value, UriKind.Absolute))
                 {
                     throw new ArgumentException("URL must be absolute and valid.", nameof(DocLink));
                 }
@@ -103,5 +104,76 @@ namespace TourStepsService.Models
                 _expectedActionType = value.Trim(' ');
             }
         }
+
+        [JsonProperty("hideCloseButton")]
+        public bool HideCloseButton
+        {
+            get;set;
+        }
+
+        [JsonProperty("query", NullValueHandling = NullValueHandling.Ignore)]
+        public QueryObject Query
+        {
+            get
+            {
+                return new QueryObject();
+            }
+            set
+            {
+                
+            }
+        }
+
+        [JsonProperty("active")]
+        public bool Active
+        {
+            get; set;
+        }
+
+        public class QueryObject
+        {
+            [JsonProperty("selectedVerb")]
+            public string selectedVerb
+            {
+                get;
+                set;
+            }
+
+            [JsonProperty("selectedVersion")]
+            public string selectedVersion
+            {
+                get; set;
+            }
+            [JsonProperty("sampleUrl")]
+            public string sampleUrl
+            {
+                get;set;
+            }
+            
+            [JsonProperty("sampleHeaders", NullValueHandling = NullValueHandling.Ignore)]
+            public Header[] sampleHeaders
+            {
+                get;
+                set;
+                
+            }
+
+            public class Header
+            {
+                [JsonProperty(PropertyName = "name")]
+                public string Name
+                {
+                    get; set;
+                }
+                [JsonProperty(PropertyName = "value")]
+                public string Value
+                {
+                    get; set;
+                }
+            }
+        }
+
     }
+
+    
 }

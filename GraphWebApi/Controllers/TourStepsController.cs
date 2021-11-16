@@ -8,7 +8,6 @@ using Microsoft.ApplicationInsights.DataContracts;
 using UtilityService;
 using TourStepsService.Interfaces;
 using TourStepsService.Models;
-using System.Diagnostics;
 using Microsoft.ApplicationInsights;
 
 namespace GraphWebApi.Controllers
@@ -32,7 +31,6 @@ namespace GraphWebApi.Controllers
             UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
             _tourStepsStore = tourStepsStore;
             _telemetryClient = telemetryClient;
-            Debug.WriteLine("Running the constructor");
         }
 
         //Gets list of all steps
@@ -42,23 +40,20 @@ namespace GraphWebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTourStepsListAsync(string org, string branchName)
         {
-            Debug.WriteLine("Running this");
             TourStepsList tourStepsList = await FetchTourStepsListAsync(org, branchName);
             return Validate(tourStepsList);
         }
-
+    
         private async Task<TourStepsList> FetchTourStepsListAsync(string org, string branchName)
         {
             string locale = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
             _telemetryClient?.TrackTrace($"Request to fetch steps for locale '{locale}'",
                                         SeverityLevel.Information,
                                         _tourStepsTraceProperties);
-            Debug.WriteLine("Language is ", locale);
             TourStepsList tourStepsList = new TourStepsList();
 
             if(!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
             {
-                Debug.WriteLine("Fetching from github");
                 tourStepsList = await _tourStepsStore.FetchTourStepsListAsync(locale, org, branchName);
             }
             else
@@ -69,7 +64,6 @@ namespace GraphWebApi.Controllers
             _telemetryClient?.TrackTrace($"Fetched {tourStepsList?.TourSteps?.Count ?? 0} steps",
                                          SeverityLevel.Information,
                                          _tourStepsTraceProperties);
-            Debug.WriteLine(tourStepsList);
             return tourStepsList;
         }
 
