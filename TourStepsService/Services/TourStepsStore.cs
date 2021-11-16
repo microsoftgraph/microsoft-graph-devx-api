@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UtilityService;
-using System.Diagnostics;
 using TourStepsService.Interfaces;
 using FileService.Common;
 using FileService.Interfaces;
@@ -106,9 +105,6 @@ namespace TourStepsService.Services
                     _telemetryClient?.TrackTrace($"Successfully seeded tour steps list for locale '{lockedLocale}' from Azure Blob resource",
                                                 SeverityLevel.Information,
                                                 TourStepsTraceProperties);
-
-                    Debug.WriteLine("Completed fetch from blob/cache");
-
 
                     return Task.FromResult(DeserializeTourStepsList(jsonFileContents));
                 }
