@@ -34,7 +34,7 @@ namespace TourStepsService.Services
         {
             if (tourStepsList == null)
             {
-                throw new ArgumentNullException(nameof(tourStepsList), "The list of sample queries cannot be null.");
+                throw new ArgumentNullException(nameof(tourStepsList), "The list of tour steps cannot be null.");
             }
 
             string tourStepsJson = JsonConvert.SerializeObject(tourStepsList, Formatting.Indented);

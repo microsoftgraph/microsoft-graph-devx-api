@@ -22,7 +22,6 @@ namespace TourStepsService.Services
     public class TourStepsStore : ITourStepsStore
     {
         private readonly object _tourStepsLock = new();
-        private readonly string _tourStepsHost;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IConfiguration _configuration;
         private const string NullValueError = "Value cannot be null";
@@ -55,11 +54,11 @@ namespace TourStepsService.Services
             _tourStepsBlobName = _configuration["BlobStorage:Blobs:TourSteps"];
             _tourStepsCache = tourStepsCache
                 ?? throw new ArgumentNullException(nameof(tourStepsCache), $"{ NullValueError }: { nameof(tourStepsCache) }");
-            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours:SampleQueries"]);
+            _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration["FileCacheRefreshTimeInHours:TourSteps"]);
         }
 
         /// <summary>
-        /// Fetches the sample queries from the cache or a JSON file and returns a deserialized instance of a
+        /// Fetches the tour steps from the cache or a JSON file and returns a deserialized instance of a
         /// <see cref="TourStepsList"/> from this.
         /// </summary>
         /// <param name="locale">The language code for the preferred localized file.</param>
@@ -118,7 +117,7 @@ namespace TourStepsService.Services
         }
 
         /// <summary>
-        /// Fetches the sample query files from Github and returns a deserialized instance of a
+        /// Fetches the tour steps files from Github and returns a deserialized instance of a
         /// <see cref="TourStepsList"/> from this.
         /// </summary>
         /// <param name="locale">The language code for the preferred localized file.</param>

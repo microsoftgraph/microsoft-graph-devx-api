@@ -50,8 +50,8 @@ namespace GraphWebApi.Controllers
             _telemetryClient?.TrackTrace($"Request to fetch steps for locale '{locale}'",
                                         SeverityLevel.Information,
                                         _tourStepsTraceProperties);
-            TourStepsList tourStepsList = new TourStepsList();
 
+            TourStepsList tourStepsList = new TourStepsList();
             if(!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
             {
                 tourStepsList = await _tourStepsStore.FetchTourStepsListAsync(locale, org, branchName);
