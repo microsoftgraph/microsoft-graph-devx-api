@@ -79,6 +79,14 @@ namespace CodeSnippetsReflection.OpenAPI
                 return _requestSchema;
             }
         }
+        public bool IsRequestBodyValid { get {
+            return !string.IsNullOrEmpty(RequestBody) && !RandomGEEmptyValues.Contains(RequestBody);
+        }}
+        private static HashSet<string> RandomGEEmptyValues = new(StringComparer.OrdinalIgnoreCase)  {
+            "undefined",
+            "\"\"",
+            "{}"
+        }; // graph explorer sends these random values as request body for some reason
         private static OperationType GetOperationType(HttpMethod method)
         {
             if (method == HttpMethod.Get) return OperationType.Get;
