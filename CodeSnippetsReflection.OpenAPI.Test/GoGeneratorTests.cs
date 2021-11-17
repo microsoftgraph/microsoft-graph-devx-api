@@ -260,14 +260,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Directory().DeletedItemsById(&directoryObjectId).Get(options)", result);
+            Assert.Contains("graphClient.Directory().DeletedItemsById(&directoryObjectId).Get(nil)", result);
         }
         [Fact]
         public async Task DoesntFailOnTerminalSlash() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/me/messages/AAMkADYAAAImV_jAAA=/?$expand=microsoft.graph.eventMessage/event");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("raphClient.Me().MessagesById(&messageId).Get(options)", result);
+            Assert.Contains("graphClient.Me().MessagesById(&messageId).Get(options)", result);
         }
         //TODO test for DateTimeOffset
     }
