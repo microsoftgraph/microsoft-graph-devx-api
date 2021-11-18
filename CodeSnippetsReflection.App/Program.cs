@@ -90,15 +90,30 @@ namespace CodeSnippetsReflection.App
 
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
 
+            var pathNotFoundInOpenAPISB = new StringBuilder();
+            var snippetsFoundSB = new StringBuilder();
+            var commandNotFoundSB = new StringBuilder();
+
+            File.Delete("F:\\test\\PathNotFoundInOpenAPI.txt");
+            File.Delete("F:\\test\\SnippetsFound.txt");
+            File.Delete("F:\\test\\CommandNotFound.txt");
+
+
             Parallel.ForEach(supportedLanguages, language =>
             {
                 Parallel.ForEach(files, file =>
                 {
-                    ProcessFile(generator, language, file);
+                    ProcessFile(generator, language, file, pathNotFoundInOpenAPISB, snippetsFoundSB, commandNotFoundSB);
                 });
             });
-
             Console.WriteLine($"Processed {files.Count()} files.");
+            File.AppendAllText("F:\\test\\PathNotFoundInOpenAPI.txt", pathNotFoundInOpenAPISB.ToString());
+            File.AppendAllText("F:\\test\\SnippetsFound.txt", snippetsFoundSB.ToString());
+            File.AppendAllText("F:\\test\\CommandNotFound.txt", commandNotFoundSB.ToString());
+
+            pathNotFoundInOpenAPISB.Clear();
+            snippetsFoundSB.Clear();
+            commandNotFoundSB.Clear();
         }
 
         private static ISnippetsGenerator GetSnippetsGenerator(string generation, IConfigurationSection customMetadataSection) {
@@ -110,8 +125,12 @@ namespace CodeSnippetsReflection.App
             };
         }
 
-        private static void ProcessFile(ISnippetsGenerator generator, string language, string file)
+        private static void ProcessFile(ISnippetsGenerator generator, string language, string file, StringBuilder pathNotFoundInOpenAPISB, StringBuilder snippetsFoundSB, StringBuilder commandNotFoundSB)
         {
+        //}
+        
+        //private static void ProcessFile(ISnippetsGenerator generator, string language, string file)
+        //{
             // convert http request into a type that works with SnippetGenerator.ProcessPayloadRequest()
             // we are not altering the types as it should continue serving the HTTP endpoint as well
             using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(File.ReadAllText(file))));
@@ -131,6 +150,7 @@ namespace CodeSnippetsReflection.App
             catch (Exception e)
             {
                 Console.Error.WriteLine($"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}");
+                pathNotFoundInOpenAPISB.AppendLine(file);
                 return;
             }
 
@@ -139,10 +159,12 @@ namespace CodeSnippetsReflection.App
                 var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
                 Console.WriteLine($"Writing snippet: {filePath}");
                 File.WriteAllText(filePath, snippet);
+                snippetsFoundSB.AppendLine(filePath);
             }
             else
             {
                 Console.WriteLine($"Failed to generate {language} snippets for {file}.");
+                commandNotFoundSB.AppendLine(file);
             }
         }
     }

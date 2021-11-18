@@ -82,13 +82,31 @@ namespace CodeSnippetsReflection.OpenAPI
             else if (method == HttpMethod.Trace) return OperationType.Trace;
             else throw new ArgumentOutOfRangeException(nameof(method));
         }
+        private static Regex namespaceRegex = new Regex("^Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private string TrimNamespace(string path)
+        {
+            Match namespaceMatch = namespaceRegex.Match(path);
+            if (namespaceMatch.Success)
+            {
+                string fqnAction = namespaceMatch.Groups[0].Value;
+                // Trim nested namespace segments.
+                string[] nestedActionNamespaceSegments = namespaceMatch.Groups[1].Value.Split(".");
+                // Remove trailing '()' from functions.
+                string actionName = nestedActionNamespaceSegments[nestedActionNamespaceSegments.Length - 1].Replace("()", "");
+                path = Regex.Replace(path, Regex.Escape(fqnAction), actionName);
+            }
+            return path;
+        }
         private static readonly char pathSeparator = '/';
         private void LoadPathNodes(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments)
         {
             if (!pathSegments.Any())
                 return;
             var pathSegment = HttpUtility.UrlDecode(pathSegments.First());
-            if (node.Children.TryGetValue(pathSegment, out var childNode))
+            // TODO: Handle FQN for actions and functions. e.g., microsoft.graph.delta.
+            //  TryGetValue(pathSegment, out var childNode))
+            var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Equals(pathSegment)).Value;
+            if (childNode != null)
             {
                 LoadNextNode(childNode, pathSegments);
                 return;

@@ -21,6 +21,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string modelNameSpace = modulePrefix + ".PowerShell.Models";
         private const string powerShellModulePath = "C:/Program Files/WindowsPowerShell/Modules/Microsoft.Graph.Authentication"; // TODO: load dynamically from PowerShell module path. Can fetched from `$env:PSModulePath`.
         private static IList<PowerShellCommandInfo> psCommands;
+        private static Regex meSegmentRegex = new Regex("/me/", RegexOptions.Compiled);
         public PowerShellGenerator()
         {
             if (psCommands == null)
@@ -37,7 +38,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
 
-            IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(snippetModel, snippetModel.EndPathNode.Path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
+            string additionalKeySegmentParmeter = default;
+            var path = snippetModel.EndPathNode.Path.Replace("\\", "/");
+            if (path.StartsWith("/me/"))
+            {
+                path = meSegmentRegex.Replace(path, "/users/{user-id}/", 1);
+                additionalKeySegmentParmeter = $" -UserId $userId";
+            }
+            IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
             {
@@ -49,6 +57,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
 
                 snippetBuilder.Append($"{Environment.NewLine}{targetCommand.Command}");
+
+                if (!string.IsNullOrEmpty(additionalKeySegmentParmeter))
+                    snippetBuilder.Append($"{additionalKeySegmentParmeter}");
 
                 string keySegmentParameter = GetKeySegmentParameters(snippetModel.PathNodes);
                 if (!string.IsNullOrEmpty(keySegmentParameter))
@@ -85,17 +96,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var payloadSB = new StringBuilder();
             if (!string.IsNullOrEmpty(model.QueryString))
             {
-                var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
+                var (queryString, replacements) = ReplaceNestedOdataQueryParameters(Uri.UnescapeDataString(model.QueryString));
                 foreach (var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
                 {
                     if (queryParam.Contains("="))
                     {
                         var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
                         string parameterName = NormalizeQueryParameterName(kvPair[0]);
-                        payloadSB.Append($"-{parameterName} {GetQueryParameterValue(parameterName, kvPair[1], replacements)}");
+                        // Add -ConsistencyLevel eventual when CountVariable is present.
+                        payloadSB.Append($"-{parameterName} {GetQueryParameterValue(parameterName, kvPair[1], replacements)} ");
                     }
                     else
-                        payloadSB.Append($"-{NormalizeQueryParameterName(queryParam)} = {""}");
+                        payloadSB.Append($"-{NormalizeQueryParameterName(queryParam)} = {""} ");
                 }
                 return (payloadSB.ToString(), requestParametersVarName);
             }
@@ -153,16 +165,31 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return (queryParams, replacements);
         }
 
-        private IList<PowerShellCommandInfo> GetCommandForRequest(SnippetModel snippetModel,string path, string method, string apiVersion)
+        private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
         {
             if (psCommands.Count == 0)
                 return default;
-
-            path = path.Replace("\\", "/");
+            path = TrimNamespace(path);
             //TODO: Remove namespace from actions and functions for matches to succeed.
             // Tokenize uri by substituting parameter values with "{.*}".
             path = $"^{Regex.Replace(path, "(?<={)(.*?)(?=})", "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
+        }
+
+        private static Regex namespaceRegex = new Regex("\\/Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private string TrimNamespace(string path)
+        {
+            Match namespaceMatch = namespaceRegex.Match(path);
+            if (namespaceMatch.Success)
+            {
+                string fqnAction = namespaceMatch.Groups[0].Value;
+                // Trim nested namespace segments.
+                string[] nestedActionNamespaceSegments = namespaceMatch.Groups[1].Value.Split("/.");
+                // Remove trailing '()' from functions.
+                string actionName  = nestedActionNamespaceSegments[nestedActionNamespaceSegments.Length - 1].Replace("()", "");
+                path = Regex.Replace(path, Regex.Escape(fqnAction), $"/{actionName}");
+            }
+            return path;
         }
                                                                                                                  
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
@@ -177,7 +204,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case "application/json":
                     if (!string.IsNullOrEmpty(snippetModel.RequestBody) &&
                         !"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
-                        using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody))
+                        using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true }))
                         {
                             var schema = snippetModel.RequestSchema;
                             payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = @{{");
@@ -192,18 +219,20 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
             }
-            return (payloadSB.ToString(), $"@{requestBodyVarName}");
+            return (payloadSB.ToString(), $"-BodyParameter ${requestBodyVarName}");
         }
 
-        private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, Microsoft.OpenApi.Models.OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true)
+        private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true)
         {
             if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
             indentManager.Indent();
             var propertiesAndSchema = value.EnumerateObject()
-                                            .Select(x => new Tuple<JsonProperty, OpenApiSchema>(x, schema.GetPropertySchema(x.Name)));
+                                            .Select(x => new Tuple<JsonProperty, OpenApiSchema>(x, schema?.GetPropertySchema(x.Name)));
             foreach (var propertyAndSchema in propertiesAndSchema)
             {
                 var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
+                // Enclose in quotes if property name contains a non-word character.
+                if (Regex.IsMatch(propertyName, "\\W")) { propertyName = $"\"{propertyName}\""; }
                 var propertyAssignment = includePropertyAssignment ? $"{indentManager.GetIndent()}{propertyName} = " : string.Empty;
                 WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment);
             }
@@ -219,7 +248,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     if (propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
                         payloadSB.AppendLine($"{propertyAssignment}[System.Text.Encoding]::ASCII.GetBytes(\"{value.GetString()}\"){propertySuffix}");
                     else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
-                        payloadSB.AppendLine($"{propertyAssignment}[System.DateTimeOffset]::Parse(\"{value.GetString()}\"){propertySuffix}");
+                        payloadSB.AppendLine($"{propertyAssignment}[System.DateTime]::Parse(\"{value.GetString()}\"){propertySuffix}");
                     else
                         payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}");
                     break;
@@ -234,7 +263,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     payloadSB.AppendLine($"{propertyAssignment}$null{propertySuffix}");
                     break;
                 case JsonValueKind.Object:
-                    if (propSchema != null)
+                    // OpenTypes will have a null propSchemas. Lets see if the object contains '@odata.type'.
+                    if (propSchema != null || value.ToString().Contains("@odata.type"))
                     {
                         payloadSB.AppendLine($"{propertyAssignment}@{{");
                         WriteJsonObjectValue(payloadSB, value, propSchema, indentManager);
