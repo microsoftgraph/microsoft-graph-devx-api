@@ -52,7 +52,7 @@ namespace GraphWebApi.Controllers
                                         SeverityLevel.Information,
                                         _tourStepsTraceProperties);
 
-            var tourStepsList = new TourStepsList();
+            TourStepsList tourStepsList;
 
             if(!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
             {

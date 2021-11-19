@@ -17,7 +17,6 @@ namespace TourStepsService.Models
         private string _expectedActionType;
         private string _docsLink;
         private string _title;
-        private static QueryObject _queryObject;
 
         /*properties*/
 
@@ -96,13 +95,9 @@ namespace TourStepsService.Models
         }
 
         [JsonProperty("query", NullValueHandling = NullValueHandling.Ignore)]
-        public QueryObject Query
+        public static QueryObject Query
         {
-            get => _queryObject;
-            set
-            {
-                _queryObject = value;
-            }
+            get;set;
         }
 
         [JsonProperty("active")]
