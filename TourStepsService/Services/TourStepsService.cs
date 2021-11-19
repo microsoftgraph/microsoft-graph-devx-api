@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using System;
 using TourStepsService.Models;
 using Newtonsoft.Json;
 
@@ -13,7 +13,7 @@ namespace TourStepsService.Services
         /// <summary>
         /// Deserializes a JSON string into a list of <see cref="TourStepsModel"/> objects.
         /// </summary>
-        /// <param name="jsonString">The JSON string to be deserialized into a list of <see cref="TourStepsModel"/> objects.</param>       
+        /// <param name="jsonString">The JSON string to be deserialized into a list of <see cref="TourStepsModel"/> objects.</param>
         /// <returns>The deserialized list of <see cref="TourStepsModel"/> objects.</returns>
         public static TourStepsList DeserializeTourStepsList(string jsonString)
         {
@@ -21,7 +21,7 @@ namespace TourStepsService.Services
             {
                 throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null or empty.");
             }
-            TourStepsList tourStepsList = JsonConvert.DeserializeObject<TourStepsList>(jsonString);
+            var tourStepsList = JsonConvert.DeserializeObject<TourStepsList>(jsonString);
             return tourStepsList;
         }
 
@@ -40,5 +40,6 @@ namespace TourStepsService.Services
             string tourStepsJson = JsonConvert.SerializeObject(tourStepsList, Formatting.Indented);
             return tourStepsJson;
         }
+
     }
 }

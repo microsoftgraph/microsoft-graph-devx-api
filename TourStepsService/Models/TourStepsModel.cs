@@ -2,12 +2,11 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 using System;
 using Newtonsoft.Json;
-using System.Collections.Generic;
+using Newtonsoft.Json.Converters;
 
-//to-do Add query to the data model
+
 namespace TourStepsService.Models
 {
     public class TourStepsModel
@@ -16,7 +15,7 @@ namespace TourStepsService.Models
         private string _target;
         private string _content;
         private string _expectedActionType;
-        private string _docLink;
+        private string _docsLink;
         private string _title;
         private static QueryObject _queryObject;
 
@@ -28,7 +27,7 @@ namespace TourStepsService.Models
             get => _target;
             set
             {
-                _target = value.Trim(' '); //remove all leading and trailing white spaces
+                _target = value.Trim(' '); // remove all leading and trailing white spaces
             }
 
         }
@@ -42,49 +41,24 @@ namespace TourStepsService.Models
                 _content = value.Trim(' ');
             }
         }
-        [JsonProperty("docLink")]
-        public string DocLink
-        {
-            get => _docLink;
-            set
-            {
-                if (value != "" && !Uri.IsWellFormedUriString(value, UriKind.Absolute))
-                {
-                    throw new ArgumentException("URL must be absolute and valid.", nameof(DocLink));
-                }
 
-                _docLink = value.Trim(' '); // remove all leading and trailing whitespaces before assigning
-            }
-        }
         [JsonProperty(Required = Required.Always, PropertyName = "directionalHint")]
-        public int DirectionalHint
-        {
-            get; set;
-        }
+        public int DirectionalHint { get; set; }
 
         [JsonProperty("spotligtClicks")]
-        public bool SpotlightClicks
-        {
-            get; set;
-        }
+        public bool SpotlightClicks { get; set; }
+
+        [JsonProperty("hideCloseButton")]
+        public bool HideCloseButton { get; set; }
 
         [JsonProperty("autoNext")]
-        public bool AutoNext
-        {
-            get; set;
-        }
+        public bool AutoNext { get; set; }
 
         [JsonProperty("disableBeacon")]
-        public bool DisableBeacon
-        {
-            get; set;
-        }
+        public bool DisableBeacon { get; set; }
 
         [JsonProperty("advanced")]
-        public bool Advanced
-        {
-            get; set;
-        }
+        public bool Advanced { get; set; }
 
         [JsonProperty("title")]
         public string Title
@@ -106,10 +80,19 @@ namespace TourStepsService.Models
             }
         }
 
-        [JsonProperty("hideCloseButton")]
-        public bool HideCloseButton
+        [JsonProperty("docsLink")]
+        public string DocsLink
         {
-            get;set;
+            get => _docsLink;
+            set
+            {
+                _docsLink = value.Trim(' '); // remove all leading and trailing whitespaces before assigning
+
+                if (!string.IsNullOrEmpty(_docsLink) && !Uri.IsWellFormedUriString(_docsLink, UriKind.Absolute))
+                {
+                    throw new ArgumentException("URL must be absolute and valid.", nameof(DocsLink));
+                }
+            }
         }
 
         [JsonProperty("query", NullValueHandling = NullValueHandling.Ignore)]
@@ -120,59 +103,43 @@ namespace TourStepsService.Models
             {
                 _queryObject = value;
             }
-         
         }
 
         [JsonProperty("active")]
-        public bool Active
-        {
-            get; set;
-        }
+        public bool Active { get; set; }
 
         public class QueryObject
         {
             [JsonProperty("selectedVerb")]
-            public string selectedVerb
-            {
-                get;
-                set;
-            }
+            [JsonConverter(typeof(StringEnumConverter))]
+            public HttpMethods SelectedVerb { get; set; }
 
             [JsonProperty("selectedVersion")]
-            public string selectedVersion
-            {
-                get; set;
-            }
+            public string SelectedVersion { get; set; }
+
             [JsonProperty("sampleUrl")]
-            public string sampleUrl
-            {
-                get;set;
-            }
-            
+            public string SampleUrl { get; set; }
+
             [JsonProperty("sampleHeaders", NullValueHandling = NullValueHandling.Ignore)]
-            public Header[] sampleHeaders
-            {
-                get;
-                set;
-                
-            }
+            public Header[] SampleHeaders { get; set; }
 
             public class Header
             {
                 [JsonProperty(PropertyName = "name")]
-                public string Name
-                {
-                    get; set;
-                }
+                public string Name { get; set; }
+
                 [JsonProperty(PropertyName = "value")]
-                public string Value
-                {
-                    get; set;
-                }
+                public string Value  { get; set; }
+            }
+
+            public enum HttpMethods
+            {
+                GET,
+                PUT,
+                POST,
+                PATCH,
+                DELETE
             }
         }
-
     }
-
-    
 }

@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using TourStepsService.Services;
 using TourStepsService.Interfaces;
-using TourStepsService.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 using FileService.Interfaces;
@@ -20,7 +19,6 @@ namespace TourStepsService.Test
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private ITourStepsStore _tourStepsStore;
-        private IConfigurationRoot _githubFileConfiguration;
 
         public TourStepsStoreShould()
         {
@@ -30,33 +28,21 @@ namespace TourStepsService.Test
             _configuration = new ConfigurationBuilder()
                .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest.json"))
                .Build();
-            _githubFileConfiguration = new ConfigurationBuilder()
-               .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "GithubTestFiles", "appsettings-test.json"))
-               .Build();
         }
 
         [Fact]
         public async Task CorrectlySeedLocaleCachesOfTourStepsWhenMultipleRequestsReceived()
         {
-            //Arrange
+            // Arrange
             _tourStepsStore = new TourStepsStore(_configuration, _httpClientUtility, _fileUtility, _tourStepsCache);
 
-            //Act
+            // Act
 
-            //Fetch en-US tourSteps
-            TourStepsList englisthTourStepsList = await _tourStepsStore.FetchTourStepsListAsync("en-US");
-
-            //Fetch es-ES tourSteps
-            TourStepsList espanolTourStepsList = await _tourStepsStore.FetchTourStepsListAsync("es-ES");
-
-            //Fetch fr-FR tourSteps
-            TourStepsList frenchTourStepsList = await _tourStepsStore.FetchTourStepsListAsync("fr-FR");
+            // Fetch en-US tourSteps
+            var englisthTourStepsList = await _tourStepsStore.FetchTourStepsListAsync("en-US");
 
             /*Asert*/
-            //These might change
             Assert.Equal(26, englisthTourStepsList.TourSteps.Count);
-            //Assert.Equal(26, espanolTourStepsList.TourSteps.Count);
-            //Assert.Equal(26, frenchTourStepsList.TourSteps.Count);
         }
 
         [Fact]
@@ -66,13 +52,11 @@ namespace TourStepsService.Test
             _tourStepsStore = new TourStepsStore(_configuration, _httpClientUtility, _fileUtility, _tourStepsCache);
 
             // Act - Fetch ja-JP sample queries which is empty
-            TourStepsList japaneseTourStepsList = await _tourStepsStore.FetchTourStepsListAsync("ja-JP");
+            var japaneseTourStepsList = await _tourStepsStore.FetchTourStepsListAsync("ja-JP");
 
             // Assert
             Assert.Null(japaneseTourStepsList);
         }
-
-
 
         [Fact]
         public async Task FetchTourStepsFromGithub()
@@ -80,15 +64,15 @@ namespace TourStepsService.Test
             var configuration = new ConfigurationBuilder()
                            .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "GithubTestFiles", "appsettings-test.json"))
                            .Build();
-            string org = configuration["BlobStorage:Org"];
-            string branchName = configuration["BlobStorage:Branch"];
+            var org = configuration["BlobStorage:Org"];
+            var branchName = configuration["BlobStorage:Branch"];
 
             _tourStepsStore = new TourStepsStore(configuration, _httpClientUtility, _fileUtility, _tourStepsCache);
 
             /*Act*/
 
-            //Fetch en-US tour steps
-            TourStepsList englishTourStepsList = await _tourStepsStore.FetchTourStepsListAsync("en-US", org, branchName);
+            // Fetch en-US tour steps
+            var englishTourStepsList = await _tourStepsStore.FetchTourStepsListAsync("en-US", org, branchName);
 
             /*Assert*/
             Assert.NotNull(englishTourStepsList);
@@ -101,17 +85,16 @@ namespace TourStepsService.Test
             var configuration = new ConfigurationBuilder()
                            .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "GithubTestFiles", "appsettings-test.json"))
                            .Build();
-            string org = configuration["BlobStorage:Org"];
-            string branchName = configuration["BlobStorage:Branch"];
+            var org = configuration["BlobStorage:Org"];
+            var branchName = configuration["BlobStorage:Branch"];
 
             _tourStepsStore = new TourStepsStore(configuration, _httpClientUtility, _fileUtility, _tourStepsCache);
 
             // Act - Fetch ja-JP samples which is empty
-            TourStepsList japaneseTourStepsList = await  _tourStepsStore.FetchTourStepsListAsync("ja-JP", org, branchName);
+            var japaneseTourStepsList = await  _tourStepsStore.FetchTourStepsListAsync("ja-JP", org, branchName);
 
-            //Assert
+            // Assert
             Assert.NotNull(japaneseTourStepsList);
         }
-        
     }
 }

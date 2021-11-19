@@ -1,4 +1,7 @@
-﻿
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -31,14 +34,8 @@ namespace TourStepsService.Services
         private readonly IMemoryCache _tourStepsCache;
         private readonly int _defaultRefreshTimeInHours;
         private readonly TelemetryClient _telemetryClient;
-        private readonly Dictionary<string, string> TourStepsTraceProperties =
-            new()
-            {
-                {
-                    UtilityConstants.TelemetryPropertyKey_TourSteps,
-                    nameof(TourStepsStore)
-                }
-            };
+        private readonly Dictionary<string, string> _tourStepsTraceProperties =
+            new(){ { UtilityConstants.TelemetryPropertyKey_TourSteps, nameof(TourStepsStore)} };
 
 
         public TourStepsStore(IConfiguration configuration, IHttpClientUtility httpClientUtility, IFileUtility fileUtility,
@@ -68,18 +65,18 @@ namespace TourStepsService.Services
         {
             _telemetryClient?.TrackTrace($"Retrieving tour steps list from locale '{locale}' from in-memory cache '{locale}'",
                                          SeverityLevel.Information,
-                                         TourStepsTraceProperties);
+                                         _tourStepsTraceProperties);
             string sourceMsg = $"Return tour steps list for locale '{locale}' from in-memory cache '{locale}'";
 
             // Localized copy of steps is to be seeded by only one executing thread.
-            TourStepsList tourStepsList = await _tourStepsCache.GetOrCreateAsync(locale, cacheEntry =>
+            var tourStepsList = await _tourStepsCache.GetOrCreateAsync(locale, cacheEntry =>
             {
                 lock (_tourStepsLock)
                 {
                     /* Check whether a previous thread already seeded an
                      * instance of the localized steps during the lock.
                      */
-                    var lockedLocale = locale;
+                    string lockedLocale = locale;
                     var seededTourStepsList = _tourStepsCache?.Get<TourStepsList>(lockedLocale);
 
                     if (seededTourStepsList != null)
@@ -87,7 +84,7 @@ namespace TourStepsService.Services
                         _telemetryClient?.TrackTrace($"In-memory cache '{lockedLocale}' of tour steps list " +
                                                     $"already seeded by a concurrently running thread",
                                                     SeverityLevel.Information,
-                                                    TourStepsTraceProperties);
+                                                    _tourStepsTraceProperties);
                         sourceMsg = $"Return tour steps list for locale '{lockedLocale}' from in-memory cache '{lockedLocale}'";
                         return Task.FromResult(seededTourStepsList);
                     }
@@ -95,15 +92,15 @@ namespace TourStepsService.Services
                     cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
                     // Fetch the requisite steps path source based on the locale
-                    string queriesFilePathSource =
+                    var queriesFilePathSource =
                        FileServiceHelper.GetLocalizedFilePathSource(_tourStepsContainerName, _tourStepsBlobName, lockedLocale);
 
                     // Get the file contents from source
-                    string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
+                    var jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
 
                     _telemetryClient?.TrackTrace($"Successfully seeded tour steps list for locale '{lockedLocale}' from Azure Blob resource",
                                                 SeverityLevel.Information,
-                                                TourStepsTraceProperties);
+                                                _tourStepsTraceProperties);
 
                     return Task.FromResult(DeserializeTourStepsList(jsonFileContents));
                 }
@@ -111,8 +108,7 @@ namespace TourStepsService.Services
 
             _telemetryClient?.TrackTrace(sourceMsg,
                                         SeverityLevel.Information,
-                                        TourStepsTraceProperties);
-
+                                        _tourStepsTraceProperties);
             return tourStepsList;
         }
 
@@ -129,22 +125,22 @@ namespace TourStepsService.Services
         {
             _telemetryClient?.TrackTrace($"Retrieving tour steps list for locale '{locale}' from GitHub repository.",
                                         SeverityLevel.Information,
-                                        TourStepsTraceProperties);
+                                        _tourStepsTraceProperties);
 
-            string host = _configuration["BlobStorage:GithubHost"];
-            string repo = _configuration["BlobStorage:RepoName"];
+            var host = _configuration["BlobStorage:GithubHost"];
+            var repo = _configuration["BlobStorage:RepoName"];
 
             // Fetch the requisite sample path source based on the locale
-            string localizedFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_tourStepsContainerName, _tourStepsBlobName, locale);
+            var localizedFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_tourStepsContainerName, _tourStepsBlobName, locale);
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
-            
-            
-            using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
-            string jsonFileContents = await _httpClientUtility.ReadFromDocumentAsync(httpRequestMessage);
+
+
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
+            var jsonFileContents = await _httpClientUtility.ReadFromDocumentAsync(httpRequestMessage);
 
             _telemetryClient?.TrackTrace($"Return tour steps list for locale '{locale}' from GitHub repository",
                                         SeverityLevel.Information,
-                                        TourStepsTraceProperties);
+                                        _tourStepsTraceProperties);
 
             return DeserializeTourStepsList(jsonFileContents);
         }

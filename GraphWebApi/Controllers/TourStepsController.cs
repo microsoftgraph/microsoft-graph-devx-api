@@ -1,4 +1,7 @@
-﻿using System;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -17,13 +20,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly ITourStepsStore _tourStepsStore;
         private readonly Dictionary<string, string> _tourStepsTraceProperties =
-            new()
-            {
-                {
-                    UtilityConstants.TelemetryPropertyKey_TourSteps,
-                    nameof(TourStepsController)
-                }
-            };
+            new() { { UtilityConstants.TelemetryPropertyKey_TourSteps, nameof(TourStepsController)} };
         private readonly TelemetryClient _telemetryClient;
         public TourStepsController(ITourStepsStore tourStepsStore, TelemetryClient telemetryClient)
         {
@@ -33,17 +30,21 @@ namespace GraphWebApi.Controllers
             _telemetryClient = telemetryClient;
         }
 
-        //Gets list of all steps
-        [Route("api/graphexplorersteps")]
+        // Gets list of all steps
         [Route("toursteps")]
         [Produces("application/json")]
         [HttpGet]
-        public async Task<IActionResult> GetTourStepsListAsync(string org, string branchName)
+        public async Task<IActionResult> GetTourStepsListAsync(string org = default, string branchName = default)
         {
-            TourStepsList tourStepsList = await FetchTourStepsListAsync(org, branchName);
-            return Validate(tourStepsList);
+            var tourStepsList = await FetchTourStepsListAsync(org, branchName);
+
+            if (tourStepsList == null || !tourStepsList.TourSteps.Any())
+            {
+                return NoContent();
+            }
+            return Ok(tourStepsList);
         }
-    
+
         private async Task<TourStepsList> FetchTourStepsListAsync(string org, string branchName)
         {
             string locale = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
@@ -51,7 +52,8 @@ namespace GraphWebApi.Controllers
                                         SeverityLevel.Information,
                                         _tourStepsTraceProperties);
 
-            TourStepsList tourStepsList = new TourStepsList();
+            var tourStepsList = new TourStepsList();
+
             if(!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
             {
                 tourStepsList = await _tourStepsStore.FetchTourStepsListAsync(locale, org, branchName);
@@ -60,21 +62,12 @@ namespace GraphWebApi.Controllers
             {
                 tourStepsList = await _tourStepsStore.FetchTourStepsListAsync(locale);
             }
+
             _tourStepsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(TourStepsController));
             _telemetryClient?.TrackTrace($"Fetched {tourStepsList?.TourSteps?.Count ?? 0} steps",
                                          SeverityLevel.Information,
                                          _tourStepsTraceProperties);
             return tourStepsList;
         }
-
-        private IActionResult Validate(TourStepsList tourStepsList)
-        {
-            if (tourStepsList == null || !tourStepsList.TourSteps.Any())
-            {
-                return NoContent();
-            }
-            return Ok(tourStepsList);
-        }
-
     }
 }

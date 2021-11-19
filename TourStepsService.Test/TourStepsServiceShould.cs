@@ -10,15 +10,14 @@ namespace TourStepsService.Test
     public class TourStepsServiceShould
     {
 
-        #region Serialize Sample Queries List Tests
+        #region Serialize Tour Steps List Tests
         [Fact]
         public void SerializeListOfTourStepsIntoJsonString()
         {
             /* Arrange */
-            List<TourStepsModel> dummyList = new List<TourStepsModel>();            
 
-            //create list of two sample queries
-            List<TourStepsModel> tourSteps = new List<TourStepsModel>()
+            // create list of two tour-steps
+            var tourSteps = new List<TourStepsModel>()
             {
                 new TourStepsModel()
                 {
@@ -33,11 +32,11 @@ namespace TourStepsService.Test
                     Title= "Sign in",
                     ExpectedActionType= "PROFILE_REQUEST_SUCCESS",
                     Query = {
-                        selectedVerb = "GET",
-                        selectedVersion = "v1.0",
-                        sampleUrl = "https://graph.microsoft.com/v1.0"
+                        SelectedVerb = TourStepsModel.QueryObject.HttpMethods.GET,
+                        SelectedVersion = "v1.0",
+                        SampleUrl = "https://graph.microsoft.com/v1.0"
                     },
-                    DocLink= "",
+                    DocsLink= "",
                     Active= true
                 },
                 new TourStepsModel()
@@ -52,50 +51,50 @@ namespace TourStepsService.Test
                     DisableBeacon= true,
                     ExpectedActionType= "QUERY_GRAPH_SUCCESS",
                     Query = {
-                        selectedVerb = "GET",
-                        selectedVersion = "v1.0",
-                        sampleUrl = "https://graph.microsoft.com/v1.0"
+                        SelectedVerb = TourStepsModel.QueryObject.HttpMethods.GET,
+                        SelectedVersion = "v1.0",
+                        SampleUrl = "https://graph.microsoft.com/v1.0"
                     },
                     Advanced= true,
-                    DocLink="",
+                    DocsLink="",
                     Active= true
                 }
             };
 
-            TourStepsList tourStepsList = new TourStepsList()
+            var tourStepsList = new TourStepsList()
             {
                 TourSteps = tourSteps
             };
 
             //Act
 
-            //Get serialized JSON string of the list of sample queries
-            string newTourStepsJson = Services.TourStepsService.SerializetourStepsList(tourStepsList);
+            // Get serialized JSON string of the list of sample queries
+            var newTourStepsJson = Services.TourStepsService.SerializetourStepsList(tourStepsList);
 
-            //Assert
+            // Assert
             Assert.NotNull(newTourStepsJson);
         }
 
         [Fact]
         public void SerializeTourStepsListIfTourStepsListParameterIsEmptyCollection()
         {
-            //Arrange
-            TourStepsList emptyTourStepsList = new TourStepsList();
+            // Arrange
+            var emptyTourStepsList = new TourStepsList();
 
-            //Act
-            string tourStepsJson = Services.TourStepsService.SerializetourStepsList(emptyTourStepsList);
+            // Act
+            var tourStepsJson = Services.TourStepsService.SerializetourStepsList(emptyTourStepsList);
 
-            //Assert
+            // Assert
             Assert.NotNull(tourStepsJson);
         }
 
         [Fact]
         public void ThrowArgumentNullExceptionIfSerializeTourStepsListParameterisNull()
         {
-            //Arrange
+            // Arrange
             TourStepsList tourStepsList = null;
 
-            //Act and assert
+            // Act and assert
             Assert.Throws<ArgumentNullException>(() =>
                 Services.TourStepsService.SerializetourStepsList(tourStepsList));
         }
@@ -107,9 +106,9 @@ namespace TourStepsService.Test
         [Fact]
         public void DeserializeValidJsonStringIntoListofTourStepsModelObjects()
         {
-            //Arrange - tour steps list
-            string validJsonString = @"{
-                ""TourSteps"": 
+            // Arrange - tour steps list
+            var validJsonString = @"{
+                ""TourSteps"":
                 [
                     {
                         ""target"": "".sign-in-section"",
@@ -144,7 +143,6 @@ namespace TourStepsService.Test
                     {
                         ""target"": "".request-option"",
                         ""content"": ""You can perform GET, POST, PUT, PATCH and DELETE requests on Microsoft Graph. We will perform a GET request to Microsoft Graph for profile information. Click the drop down menu and select GET"",
-                        ""docsLink"": """",
                         ""directionalHint"": 9,
                         ""spotlightClicks"": true,
                         ""hideCloseButton"": true,
@@ -153,12 +151,14 @@ namespace TourStepsService.Test
                         ""expectedActionType"": ""SET_SAMPLE_QUERY_SUCCESS"",
                         ""title"": ""HTTP request method option"",
                         ""advanced"": true,
+                        ""docsLink"": """",
                         ""query"": {},
                         ""active"": true
                     },
                     {
                         ""target"": "".query-version"",
                         ""content"": ""Microsoft Graph beta endpoint has APIs that are in preview. v1.0 endpoint has APIs that are generally available. Choose v1.0 from the dropdown menu"",
+                        ""docsLink"": """",
                         ""directionalHint"": 5,
                         ""spotlightClicks"": true,
                         ""hideCloseButton"": false,
@@ -174,10 +174,10 @@ namespace TourStepsService.Test
                 ]
             }";
 
-            //Act
-            TourStepsList tourStepsList = Services.TourStepsService.DeserializeTourStepsList(validJsonString);
+            // Act
+            var tourStepsList = Services.TourStepsService.DeserializeTourStepsList(validJsonString);
 
-            //Assert that the tour steps list are returned as valid TourSteps objects
+            // Assert that the tour steps list are returned as valid TourSteps objects
 
             Assert.True(tourStepsList.TourSteps.Count == 4);
         }
@@ -185,8 +185,8 @@ namespace TourStepsService.Test
         [Fact]
         public void ThrowJsonReaderExceptionIfDeserializeTourStepsListJsonStringParameterIsInvalidJsonString()
         {
-            string validJsonString = @"{
-                ""TourSteps"": 
+            var validJsonString = @"{
+                ""TourSteps"":
                 [
                     {
                         ""target"": "".sign-in-section"",
@@ -199,10 +199,10 @@ namespace TourStepsService.Test
                         ""advanced"": true,
                         ""title"": ""Sign in"",
                         ""expectedActionType"": ""PROFILE_REQUEST_SUCCESS"",
-                        ""docsLink"": "",
+                        ""docsLink"": """",
                         ""query"": {},
                         ""active"": true
-                    
+
                     {
                         ""target"": "".settings-menu-button"",
                         ""content"": ""An Azure AD sandbox gives you access to sample data that you can use to test all queries."",
@@ -217,11 +217,11 @@ namespace TourStepsService.Test
                         ""docsLink"": ""https://developer.microsoft.com/en-US/office/dev-program"",
                         ""query"": {},
                         ""active"": true
-                    
+
                     {
                         ""target"": "".request-option"",
                         ""content"": ""You can perform GET, POST, PUT, PATCH and DELETE requests on Microsoft Graph. We will perform a GET request to Microsoft Graph for profile information. Click the drop down menu and select GET"",
-                        ""docsLink"": "",
+                        ""docsLink"": """",
                         ""directionalHint"": 9,
                         ""spotlightClicks"": true,
                         ""hideCloseButton"": true,
@@ -232,7 +232,7 @@ namespace TourStepsService.Test
                         ""advanced"": true,
                         ""query"": {},
                         ""active"": true
-                    
+
                     {
                         ""target"": "".query-version"",
                         ""content"": ""Microsoft Graph beta endpoint has APIs that are in preview. v1.0 endpoint has APIs that are generally available. Choose v1.0 from the dropdown menu"",
@@ -244,14 +244,14 @@ namespace TourStepsService.Test
                         ""advanced"": true,
                         ""title"": ""Microsoft Graph API Version option"",
                         ""expectedActionType"": ""SET_SAMPLE_QUERY_SUCCESS"",
-                        ""docsLink"": "",
+                        ""docsLink"": """",
                         ""query"": {},
                         ""active"": true
-                    
+
                 ]
             }";
 
-            //Act and assert
+            // Act and assert
             Assert.Throws<JsonReaderException>(() =>
                 Services.TourStepsService.DeserializeTourStepsList(validJsonString));
         }
@@ -259,10 +259,10 @@ namespace TourStepsService.Test
         [Fact]
         public void ThrowArgumentNullExceptionIfDeserializeSampleQueriesListJsonStringParameterIsNull()
         {
-            //Arrange
-            string nullArgument = "";
+            // Arrange
+            var nullArgument = "";
 
-            //Act and Assert
+            // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
                 Services.TourStepsService.DeserializeTourStepsList(nullArgument));
         }
@@ -270,13 +270,13 @@ namespace TourStepsService.Test
         [Fact]
         public void ReturnEmptyCollectionWhenJsonFileIsEmptyInDeserializeTourStepsListJsonStringParameter()
         {
-            //Arrange
-            string emptyJsonFileContent = "{}";
+            // Arrange
+            var emptyJsonFileContent = "{}";
 
-            //Act
-            TourStepsList tourStepsList = Services.TourStepsService.DeserializeTourStepsList(emptyJsonFileContent);
+            // Act
+            var tourStepsList = Services.TourStepsService.DeserializeTourStepsList(emptyJsonFileContent);
 
-            //Assert
+            // Assert
             Assert.Empty(tourStepsList.TourSteps);
         }
 

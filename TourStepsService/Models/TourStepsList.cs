@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using System.Collections.Generic;
 
 namespace TourStepsService.Models
 {
@@ -10,11 +14,6 @@ namespace TourStepsService.Models
         /// <summary>
         /// A list of <see cref="TourStepsModel"/> objects
         /// </summary>
-        public List<TourStepsModel> TourSteps { get; set; }
-
-        public TourStepsList()
-        {
-           TourSteps = new List<TourStepsModel>();
-        }
-    } 
+        public List<TourStepsModel> TourSteps { get; set; } = new();
+    }
 }

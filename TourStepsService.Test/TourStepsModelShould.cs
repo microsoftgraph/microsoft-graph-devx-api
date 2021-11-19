@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using System;
 using Xunit;
 using TourStepsService.Models;
 
@@ -14,13 +14,13 @@ namespace TourStepsService.Test
         [Fact]
         public void TrimAllLeadingAndTrailingWhiteSpacesFromTargetValueIfPresent()
         {
-            //Arrange
-            TourStepsModel tourStepsModel = new TourStepsModel();
+            // Arrange
+            var tourStepsModel = new TourStepsModel();
 
-            //Act
-            tourStepsModel.Target = " .signin-section "; //Leading and trailing white spaces
+            // Act
+            tourStepsModel.Target = " .signin-section "; // Leading and trailing white spaces
 
-            //Assert
+            // Assert
             Assert.False(tourStepsModel.Target.StartsWith(" "));
             Assert.False(tourStepsModel.Target.EndsWith(" "));
             Assert.Equal(".signin-section", tourStepsModel.Target);
@@ -33,12 +33,12 @@ namespace TourStepsService.Test
         public void TrimAllLeadingAndTrailingWhiteSpacesFromContentValueIfPresent()
         {
             // Arrange
-            TourStepsModel tourStepsModel = new TourStepsModel();
+            var tourStepsModel = new TourStepsModel();
 
             //Act
             tourStepsModel.Content = " Here is the response ";
 
-            //Assert
+            // Assert
             Assert.False(tourStepsModel.Content.StartsWith(" "));
             Assert.False(tourStepsModel.Content.EndsWith(" "));
             Assert.Equal("Here is the response", tourStepsModel.Content);
@@ -49,16 +49,16 @@ namespace TourStepsService.Test
         [Fact]
         public void TrimAllLeadingAndTrailingWhiteSpacesFromDocLinkValueIfPresent()
         {
-            //Arrange
-            TourStepsModel tourStepsModel = new TourStepsModel();
+            // Arrange
+            var tourStepsModel = new TourStepsModel();
 
-            //Act
-            tourStepsModel.DocLink = " https://developer.microsoft.com/en-US/office/dev-program ";
+            // Act
+            tourStepsModel.DocsLink = " https://developer.microsoft.com/en-US/office/dev-program ";
 
-            //Assert
-            Assert.False(tourStepsModel.DocLink.StartsWith(" "));
-            Assert.False(tourStepsModel.DocLink.EndsWith(" "));
-            Assert.Equal("https://developer.microsoft.com/en-US/office/dev-program", tourStepsModel.DocLink);
+            // Assert
+            Assert.False(tourStepsModel.DocsLink.StartsWith(" "));
+            Assert.False(tourStepsModel.DocsLink.EndsWith(" "));
+            Assert.Equal("https://developer.microsoft.com/en-US/office/dev-program", tourStepsModel.DocsLink);
 
         }
 
@@ -66,23 +66,21 @@ namespace TourStepsService.Test
         public void ThrowArgumentExceptionIfDocLinkPropertyIsSetToInvalidUriValue()
         {
             // Arrange
-            TourStepsModel tourStepsModel = new TourStepsModel();
+            var tourStepsModel = new TourStepsModel();
 
             // Act and Assert
             Assert.Throws<ArgumentException>(() =>
-                tourStepsModel.DocLink = "microsot/en-US/office/dev-program");
+                tourStepsModel.DocsLink = "microsot/en-US/office/dev-program");
         }
 
         [Fact]
-        public void ThrowArgumentExceptionIfDocLinkPropertyIsNotSetToAbsoluteUriValue()
+        public void ReturnEmptyStringIfDocsLinkIsEmpty()
         {
-            // Arrange
-            TourStepsModel tourStepsModel = new TourStepsModel();
-
-            // Act and Assert
-            Assert.Throws<ArgumentException>(() =>
-                tourStepsModel.DocLink = "developer.microsoft.com/en-US/office/dev-program");
+            var tourStepsModel = new TourStepsModel();
+            tourStepsModel.DocsLink = "";
+            Assert.Equal("", tourStepsModel.DocsLink);
         }
+
         #endregion
     }
 }

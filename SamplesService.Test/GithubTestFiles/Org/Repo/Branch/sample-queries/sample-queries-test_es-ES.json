@@ -6,7 +6,18 @@
       "method": "GET",
       "humanName": "mi perfil",
       "requestUrl": "/v1.0/me/",
-      "docLink": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/users",
+        "
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            ": "https://developer.microsoft.com/es-es/graph/docs/api-reference/v1.0/resources/users",
       "skipTest": false
     },
     {
