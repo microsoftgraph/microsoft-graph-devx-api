@@ -134,7 +134,6 @@ namespace TourStepsService.Services
             var localizedFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_tourStepsContainerName, _tourStepsBlobName, locale);
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
 
-
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, queriesFilePathSource);
             var jsonFileContents = await _httpClientUtility.ReadFromDocumentAsync(httpRequestMessage);
 

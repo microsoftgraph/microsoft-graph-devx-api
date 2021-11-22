@@ -3,7 +3,6 @@ using System;
 using Xunit;
 using System.Collections.Generic;
 using TourStepsService.Models;
-using System.Diagnostics;
 
 namespace TourStepsService.Test
 {
@@ -66,7 +65,7 @@ namespace TourStepsService.Test
                 TourSteps = tourSteps
             };
 
-            //Act
+            // Act
 
             // Get serialized JSON string of the list of sample queries
             var newTourStepsJson = Services.TourStepsService.SerializetourStepsList(tourStepsList);

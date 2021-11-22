@@ -12,10 +12,12 @@ using UtilityService;
 using TourStepsService.Interfaces;
 using TourStepsService.Models;
 using Microsoft.ApplicationInsights;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GraphWebApi.Controllers
 {
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class TourStepsController : ControllerBase
     {
         private readonly ITourStepsStore _tourStepsStore;

@@ -95,16 +95,14 @@ namespace TourStepsService.Models
         }
 
         [JsonProperty("query", NullValueHandling = NullValueHandling.Ignore)]
-        public static QueryObject Query
-        {
-            get;set;
-        }
+        public QueryObject Query { get; set; } = new();
 
         [JsonProperty("active")]
         public bool Active { get; set; }
 
         public class QueryObject
         {
+
             [JsonProperty("selectedVerb")]
             [JsonConverter(typeof(StringEnumConverter))]
             public HttpMethods SelectedVerb { get; set; }
