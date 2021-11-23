@@ -940,7 +940,7 @@ namespace CodeSnippetsReflection.Test
             const string expectedSnippet = "var attachment = new FileAttachment\r\n" + // Use the FileAttachment class rather than the Attachment superclass from metadata
                                            "{\r\n" +
                                            "\tName = \"smile\",\r\n" +
-                                           "\tContentBytes = Encoding.ASCII.GetBytes(\"R0lGODdhEAYEAA7\")\r\n" +
+                                           "\tContentBytes = Convert.FromBase64String(\"R0lGODdhEAYEAA7\")\r\n" +
                                            "};\r\n" +
 
                                            "\r\nawait graphClient.Me.Messages[\"AAMkpsDRVK\"].Attachments\r\n" +
@@ -1290,6 +1290,54 @@ namespace CodeSnippetsReflection.Test
             Assert.Contains(expectedType, result);
             Assert.Contains(controltype, result);
 
+        }
+
+        [Fact]
+        public void ShouldUseReferenceRequestBodyOverloadIfNavigationFromRootServiceIsNonTrivial()
+        {
+            // Arrange
+            var expressions = new CSharpExpressions();
+            const string jsonObject = @"{
+                ""@odata.id"":""https://graph.microsoft.com/beta/compliance/ediscovery/cases/47746044-fd0b-4a30-acfc-5272b691ba5b/custodians/ab3a628a383045eba344b3caecba3104/userSources/31423539-3846-4333-4136-353644383531""
+            }";
+            var requestPayload = new HttpRequestMessage(
+                HttpMethod.Post,
+                "https://graph.microsoft.com/beta/compliance/ediscovery/cases/47746044-fd0b-4a30-acfc-5272b691ba5b/sourceCollections/1a9b4145d8f84e39bc45a7f68c5c5119/custodianSources/$ref")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+            // Act
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+            // Assert
+            var expectedType = "var dataSourceReference = new ReferenceRequestBody";  // creates the ReferenceRequestBody 
+            var addedReference = ".AddAsync(dataSourceReference);";  // Adds the created type
+            Assert.Contains(expectedType, result);
+            Assert.Contains(addedReference, result);
+        }
+
+        [Fact]
+        public void ShouldNotUseReferenceRequestBodyOverloadIfNavigationFromRootServiceIsTrivial()
+        {
+            // Arrange
+            var expressions = new CSharpExpressions();
+            const string jsonObject = @"{
+                ""@odata.id"":""https://graph.microsoft.com/beta/policies/appManagementPolicies/{id}""
+            }";
+            var requestPayload = new HttpRequestMessage(
+                HttpMethod.Post,
+                "https://graph.microsoft.com/beta/applications/{id}/appManagementPolicies/$ref")
+            {
+                Content = new StringContent(jsonObject)
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrlBeta, _edmModelBeta.Value);
+            // Act
+            var result = new CSharpGenerator(_edmModelBeta.Value).GenerateCodeSnippet(snippetModel, expressions);
+            // Assert
+            var expectedType = "var appManagementPolicy = new AppManagementPolicy";  // creates the AppManagementPolicy 
+            var addedReference = ".AddAsync(appManagementPolicy);";  // Adds the created type
+            Assert.Contains(expectedType, result);
+            Assert.Contains(addedReference, result);
         }
     }
 }

@@ -19,13 +19,22 @@ namespace CodeSnippetsReflection.OpenAPI
         {
             if (treeNode == null) throw new ArgumentNullException(nameof(treeNode));
 
-            var splatPath = requestPayload.RequestUri
+            var splatPath = ReplaceIndexParametersByPathSegment(requestPayload.RequestUri
                                         .AbsolutePath
-                                        .TrimStart(pathSeparator)
-                                        .Split(pathSeparator)
+                                        .TrimStart(pathSeparator))
+                                        .Split(pathSeparator, StringSplitOptions.RemoveEmptyEntries)
                                         .Skip(1); //skipping the version
             LoadPathNodes(treeNode, splatPath);
             InitializeModel(requestPayload);
+        }
+        private static Regex oDataIndexReplacementRegex = new(@"\('([\w=]+)'\)", RegexOptions.Compiled);
+        /// <summary>
+        /// Replaces OData style ids to path segments
+        /// events('AAMkAGI1AAAt9AHjAAA=') to events/AAMkAGI1AAAt9AHjAAA=
+        /// </summary>
+        private static string ReplaceIndexParametersByPathSegment(string original) {
+            if (string.IsNullOrEmpty(original)) return original;
+            return oDataIndexReplacementRegex.Replace(original, match => $"/{match.Groups[1].Value}");
         }
         private const string defaultContentType = "application/json";
         private OpenApiSchema _responseSchema;
@@ -70,6 +79,14 @@ namespace CodeSnippetsReflection.OpenAPI
                 return _requestSchema;
             }
         }
+        public bool IsRequestBodyValid { get {
+            return !string.IsNullOrEmpty(RequestBody) && !RandomGEEmptyValues.Contains(RequestBody);
+        }}
+        private static HashSet<string> RandomGEEmptyValues = new(StringComparer.OrdinalIgnoreCase)  {
+            "undefined",
+            "\"\"",
+            "{}"
+        }; // graph explorer sends these random values as request body for some reason
         private static OperationType GetOperationType(HttpMethod method)
         {
             if (method == HttpMethod.Get) return OperationType.Get;
@@ -109,6 +126,12 @@ namespace CodeSnippetsReflection.OpenAPI
             if (childNode != null)
             {
                 LoadNextNode(childNode, pathSegments);
+                return;
+            }
+            if (node.Children.Keys.Any(x => x.Equals(pathSegment, StringComparison.OrdinalIgnoreCase)))
+            { // the casing in the description might be different than the casing in the snippet and this dictionary is CS
+                var caseChildNode = node.Children.First(x => x.Key.Equals(pathSegment, StringComparison.OrdinalIgnoreCase)).Value;
+                LoadNextNode(caseChildNode, pathSegments);
                 return;
             }
             if (node.Children.Keys.Any(x => x.IsFunction()))

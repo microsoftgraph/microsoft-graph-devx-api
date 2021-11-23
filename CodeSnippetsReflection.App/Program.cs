@@ -17,7 +17,7 @@ namespace CodeSnippetsReflection.App
     ///             one per file where the file name ends with -httpSnippet.
     /// Languages:   Languages, comma separated.
     ///             As of this writing, values are c#, javascript, objective-c, java
-    /// 
+    ///
     /// Output is generated in the same folder as the HTTP snippets. -httpSnippet part of the file name is
     /// replaced with ---language.
     /// </summary>
@@ -63,7 +63,7 @@ namespace CodeSnippetsReflection.App
             // splits language list into supported and unsupported languages
             // where key "true" holds supported and key "false" holds unsupported languages
             var languageGroups = languages
-                .GroupBy(l => ODataSnippetsGenerator.SupportedLanguages.Contains(l.ToLowerInvariant()))
+                .GroupBy(l => ODataSnippetsGenerator.SupportedLanguages.Contains(l) || OpenApiSnippetsGenerator.SupportedLanguages.Contains(l))
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             var supportedLanguages = languageGroups.ContainsKey(true) ? languageGroups[true] : null;
@@ -85,7 +85,6 @@ namespace CodeSnippetsReflection.App
             if(string.IsNullOrEmpty(generation))
                 generation = "odata";
 
-            var generator = GetSnippetsGenerator(generation, customMetadataPathArg);
             var files = Directory.EnumerateFiles(httpSnippetsDir, "*-httpSnippet");
 
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
@@ -98,9 +97,15 @@ namespace CodeSnippetsReflection.App
             File.Delete("F:\\test\\SnippetsFound.txt");
             File.Delete("F:\\test\\CommandNotFound.txt");
 
+            var originalGeneration = generation;
 
             Parallel.ForEach(supportedLanguages, language =>
             {
+                if(language.Equals("go", StringComparison.OrdinalIgnoreCase))
+                    generation = "openapi";
+                else
+                    generation = originalGeneration;
+                var generator = GetSnippetsGenerator(generation, customMetadataPathArg);
                 Parallel.ForEach(files, file =>
                 {
                     ProcessFile(generator, language, file, pathNotFoundInOpenAPISB, snippetsFoundSB, commandNotFoundSB);
@@ -128,7 +133,7 @@ namespace CodeSnippetsReflection.App
         private static void ProcessFile(ISnippetsGenerator generator, string language, string file, StringBuilder pathNotFoundInOpenAPISB, StringBuilder snippetsFoundSB, StringBuilder commandNotFoundSB)
         {
         //}
-        
+
         //private static void ProcessFile(ISnippetsGenerator generator, string language, string file)
         //{
             // convert http request into a type that works with SnippetGenerator.ProcessPayloadRequest()

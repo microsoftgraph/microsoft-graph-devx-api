@@ -15,13 +15,13 @@ namespace OpenAPIService.Test
     /// <summary>
     /// Mock class that creates a sample OpenAPI document.
     /// </summary>
-    public class OpenAPIDocumentCreatorMock
+    public class OpenApiDocumentCreatorMock
     {
-        private static readonly ConcurrentDictionary<string, OpenApiDocument> _OpenApiDocuments = new ConcurrentDictionary<string, OpenApiDocument>();
+        private static readonly ConcurrentDictionary<string, OpenApiDocument> _OpenApiDocuments = new();
         private readonly IOpenApiService _openApiService;
         private const string NullValueError = "Value cannot be null";
 
-        public OpenAPIDocumentCreatorMock(IOpenApiService openApiService)
+        public OpenApiDocumentCreatorMock(IOpenApiService openApiService)
         {
             _openApiService = openApiService
                 ?? throw new ArgumentNullException(nameof(openApiService), $"{ NullValueError }: { nameof(openApiService) }");

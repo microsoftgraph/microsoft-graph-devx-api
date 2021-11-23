@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Net.Http;
 using System.Xml;
@@ -9,25 +9,19 @@ using System.Collections.Generic;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
 using UtilityService;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CodeSnippetsReflection.OData
 {
     /// <summary>
     /// Snippets Generator Class with all the logic for code generation
     /// </summary>
+    [ExcludeFromCodeCoverage]
     public class ODataSnippetsGenerator : IODataSnippetsGenerator
     {
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
                     new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(ODataSnippetsGenerator) } };
-        public static HashSet<string> SupportedLanguages = new HashSet<string>
-        {
-            "c#",
-            "javascript",
-            "objective-c",
-            "java",
-            "powershell"
-        };
 
         private Lazy<IEdmModel> IedmModelV1 { get; set; }
         private Lazy<IEdmModel> IedmModelBeta { get; set; }
@@ -43,6 +37,14 @@ namespace CodeSnippetsReflection.OData
         private CSharpExpressions CSharpExpressions { get; }
         private ObjectiveCExpressions ObjectiveCExpressions { get; }
         private JavaExpressions JavaExpressions { get; }
+        public static HashSet<string> SupportedLanguages { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "c#",
+            "javascript",
+            "objective-c",
+            "java",
+            "powershell"
+        };
 
         /// <summary>
         /// Determines whether the snippet generation is running through the command line interface
@@ -70,14 +72,15 @@ namespace CodeSnippetsReflection.OData
         /// Load the IEdmModel for both V1 and Beta
         /// </summary>
         /// <param name="customMetadataPath">Full file path to the metadata</param>
+        [ExcludeFromCodeCoverage]
         private void LoadGraphMetadata(string customMetadataPath)
         {
-            ServiceRootV1 = new Uri("https://graph.microsoft.com/v1.0");
-            ServiceRootBeta = new Uri("https://graph.microsoft.com/beta");
+            ServiceRootV1 = new Uri(UtilityConstants.ServiceRootV1);
+            ServiceRootBeta = new Uri(UtilityConstants.ServiceRootBeta);
 
             // use clean metadata
-            IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_v10_metadata/cleanMetadataWithDescriptionsv1.0.xml")));
-            IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_beta_metadata/cleanMetadataWithDescriptionsbeta.xml")));
+            IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanV1Metadata)));
+            IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanBetaMetadata)));
 
             if (customMetadataPath == null)
             {
@@ -91,10 +94,8 @@ namespace CodeSnippetsReflection.OData
 
             CustomEdmModel = new Lazy<IEdmModel>(() =>
             {
-                using (var reader = File.OpenText(customMetadataPath))
-                {
-                    return CsdlReader.Parse(XmlReader.Create(reader));
-                }
+                using var reader = File.OpenText(customMetadataPath);
+                return CsdlReader.Parse(XmlReader.Create(reader));
             });
         }
 
@@ -102,12 +103,12 @@ namespace CodeSnippetsReflection.OData
         /// Entry point to generate snippets from the payload
         /// </summary>
         /// <param name="language"></param>
-        /// <param name="httpRequestMessage"></param>
+        /// <param name="requestPayload"></param>
         /// <returns>String of snippet generated</returns>
-        public string ProcessPayloadRequest(HttpRequestMessage httpRequestMessage, string language)
+        public string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language)
         {
-            var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(httpRequestMessage.RequestUri);
-            var snippetModel = new SnippetModel(httpRequestMessage, serviceRootUri.AbsoluteUri, edmModel);
+            var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(requestPayload.RequestUri);
+            var snippetModel = new SnippetModel(requestPayload, serviceRootUri.AbsoluteUri, edmModel);
 
             _telemetryClient?.TrackTrace($"Generating code snippet for '{language}' from the request payload",
                                          SeverityLevel.Information,
@@ -131,7 +132,7 @@ namespace CodeSnippetsReflection.OData
                     return javaGenerator.GenerateCodeSnippet(snippetModel, JavaExpressions);
 
                 default:
-                    throw new Exception("Invalid Language selected");
+                    throw new ArgumentOutOfRangeException($"Invalid Language {language} selected");
             }
         }
 
@@ -142,18 +143,12 @@ namespace CodeSnippetsReflection.OData
         /// <returns>Tuple of the Edm model and the URI of the service root</returns>
         private (IEdmModel, Uri) GetModelAndServiceUriTuple(Uri requestUri)
         {
-            switch (requestUri.Segments[1])
+            return requestUri.Segments[1] switch
             {
-                case "v1.0/":
-                    return ((CustomEdmModel ?? IedmModelV1).Value, ServiceRootV1);
-
-                case "beta/":
-                    return ((CustomEdmModel ?? IedmModelBeta).Value, ServiceRootBeta);
-
-                default:
-                    throw new Exception("Unsupported Graph version in url");
-            }
-
+                "v1.0/" => ((CustomEdmModel ?? IedmModelV1).Value, ServiceRootV1),
+                "beta/" => ((CustomEdmModel ?? IedmModelBeta).Value, ServiceRootBeta),
+                _ => throw new ArgumentOutOfRangeException(nameof(requestUri), "Unsupported Graph version in url"),
+            };
         }
     }
 }

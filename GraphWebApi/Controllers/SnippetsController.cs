@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ using UtilityService;
 using CodeSnippetsReflection.OData;
 using CodeSnippetsReflection.OpenAPI;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GraphWebApi.Controllers
 {
@@ -23,6 +24,7 @@ namespace GraphWebApi.Controllers
     [Route("api/graphexplorersnippets")]
     [Route("snippetgenerator")]
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class SnippetsController : ControllerBase
     {
         private readonly ISnippetsGenerator _oDataSnippetGenerator;

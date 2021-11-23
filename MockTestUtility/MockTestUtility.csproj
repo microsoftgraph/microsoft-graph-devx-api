@@ -6,12 +6,12 @@
 
   <ItemGroup>
     <PackageReference Include="MemoryCache.Testing.Moq" Version="1.2.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FileService\FileService.csproj" />
-    <ProjectReference Include="..\GraphExplorerPermissionsService\PermissionsService.csproj" />
+    <ProjectReference Include="..\PermissionsService\PermissionsService.csproj" />
   </ItemGroup>
 
 </Project>

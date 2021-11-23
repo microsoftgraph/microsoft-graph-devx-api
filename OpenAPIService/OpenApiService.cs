@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -24,6 +24,8 @@ using UtilityService;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
 using OpenAPIService.Interfaces;
+using System.Text.Json;
+using System.Collections.Immutable;
 
 namespace OpenAPIService
 {
@@ -38,7 +40,6 @@ namespace OpenAPIService
     public class OpenApiService : IOpenApiService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new();
-        private static OpenApiUrlTreeNode _openApiRootNode = OpenApiUrlTreeNode.Create();
         private static readonly Dictionary<string, string> _openApiTraceProperties =
                         new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
         private readonly TelemetryClient _telemetryClient;
@@ -87,7 +88,7 @@ namespace OpenAPIService
             };
             subset.Components.SecuritySchemes.Add("azureaadv2", aadv2Scheme);
 
-            subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, new string[] { } } });
+            subset.SecurityRequirements.Add(new OpenApiSecurityRequirement() { { aadv2Scheme, Array.Empty<string>() } });
 
             subset.Servers.Add(new OpenApiServer() { Description = "Core", Url = string.Format(Constants.GraphConstants.GraphUrl, graphVersion) });
 
@@ -140,7 +141,7 @@ namespace OpenAPIService
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A predicate.</returns>
         public Func<OpenApiOperation, bool> CreatePredicate(string operationIds, string tags, string url,
-            OpenApiDocument source, string graphVersion = "v1.0", bool forceRefresh = false)
+            OpenApiDocument source, string graphVersion = Constants.OpenApiConstants.GraphVersion_V1, bool forceRefresh = false)
         {
             string predicateSource = null;
             _telemetryClient?.TrackTrace("Creating predicate",
@@ -189,40 +190,13 @@ namespace OpenAPIService
             }
             else if (url != null)
             {
-                if (forceRefresh)
-                {
-                    _telemetryClient?.TrackTrace($"{nameof(forceRefresh)} requested; creating new OpenApiUrlTreeNode",
-                                                 SeverityLevel.Information,
-                                                 _openApiTraceProperties);
-
-                    _openApiRootNode = CreateOpenApiUrlTreeNode(source, graphVersion);
-
-                    _telemetryClient?.TrackTrace("Finished creating new OpenApiUrlTreeNode",
-                                                 SeverityLevel.Information,
-                                                 _openApiTraceProperties);
-                }
-                else if (!_openApiRootNode.PathItems.ContainsKey(graphVersion))
-                {
-                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-                    _telemetryClient?.TrackTrace($"Attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
-                                                 SeverityLevel.Information,
-                                                 _openApiTraceProperties);
-                    _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
-
-                    _openApiRootNode.Attach(source, graphVersion);
-
-                    _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-                    _telemetryClient?.TrackTrace($"Finished attaching '{graphVersion}' source document to the OpenApiUrlTreeNode",
-                                                 SeverityLevel.Information,
-                                                 _openApiTraceProperties);
-                    _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
-
-                }
+                var sources = new Dictionary<string, OpenApiDocument> { { graphVersion, source } };
+                var rootNode = CreateOpenApiUrlTreeNode(sources);
 
                 url = url.BaseUriPath()
                          .UriTemplatePathFormat();
 
-                OpenApiOperation[] openApiOps = GetOpenApiOperations(_openApiRootNode, url, graphVersion);
+                OpenApiOperation[] openApiOps = GetOpenApiOperations(rootNode, url, graphVersion);
 
                 if (!(openApiOps?.Any() ?? false))
                 {
@@ -249,14 +223,31 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Creates an <see cref="OpenApiUrlTreeNode"/> from an <see cref="OpenApiDocument"/>.
+        /// Creates an <see cref="OpenApiUrlTreeNode"/> from a collection of <see cref="OpenApiDocument"/>.
         /// </summary>
-        /// <param name="source">The target <see cref="OpenApiDocument"/>.</param>
-        /// <param name="label">Name tag for labelling the nodes in the directory structure.</param>
+        /// <param name="sources">Dictionary of labels and their corresponding <see cref="OpenApiDocument"/> objects.</param>
         /// <returns>The created <see cref="OpenApiUrlTreeNode"/>.</returns>
-        private static OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(OpenApiDocument source, string label)
+        public OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources)
         {
-            return source == null ? null : OpenApiUrlTreeNode.Create(source, label);
+            UtilityFunctions.CheckArgumentNull(sources, nameof(sources));
+
+            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            _telemetryClient?.TrackTrace("Creating OpenApiUrlTreeNode",
+                                         SeverityLevel.Information,
+                                         _openApiTraceProperties);
+
+            var rootNode = OpenApiUrlTreeNode.Create();
+            foreach (var source in sources)
+            {
+                rootNode.Attach(source.Value, source.Key);
+            }
+
+            _telemetryClient?.TrackTrace($"Finished creating OpenApiUrlTreeNode",
+                                         SeverityLevel.Information,
+                                         _openApiTraceProperties);
+            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+
+            return rootNode;
         }
 
         /// <summary>
@@ -278,13 +269,9 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            if (relativeUrl.Equals("/", StringComparison.Ordinal))
+            if (relativeUrl.Equals("/", StringComparison.Ordinal) && rootNode.HasOperations(label))
             {
-                // root path
-                if (rootNode.HasOperations(label))
-                {
-                    return rootNode.PathItems[label].Operations.Values.ToArray();
-                }
+                return rootNode.PathItems[label].Operations.Values.ToArray();
             }
 
             var urlSegments = relativeUrl.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
@@ -301,7 +288,7 @@ namespace OpenAPIService
 
             for (int i = 0; i < urlSegments?.Length; i++)
             {
-                var tempTargetChild = targetChild?.Children
+                var tempTargetChild = targetChild?.Children?
                                                   .FirstOrDefault(x => x.Key.Equals(urlSegments[i],
                                                                     StringComparison.OrdinalIgnoreCase)).Value;
 
@@ -321,7 +308,7 @@ namespace OpenAPIService
                      * between the relative url segment and the corresponding OpenApiUrlTreeNode segment name
                      * ex.: matching '/users/12345/messages' with '/users/{user-id}/messages'
                      */
-                    tempTargetChild = targetChild.Children
+                    tempTargetChild = targetChild?.Children?
                                                  .FirstOrDefault(x => x.Value.IsParameter).Value;
 
                     /* If no parameter segment exists in the children of the
@@ -377,17 +364,68 @@ namespace OpenAPIService
             return operations;
         }
 
-		/// <summary>
-		/// Create a representation of the OpenApiDocument to return from an API
-		/// </summary>
-		/// <param name="subset">OpenAPI document.</param>
-		/// <param name="styleOptions">The modal object containing the required styling options.</param>
-		/// <returns>A memory stream.</returns>
-		public MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
+        /// <summary>
+        /// Converts a <see cref="OpenApiUrlTreeNode"/> object to JSON text.
+        /// </summary>
+        /// <param name="rootNode">The target <see cref="OpenApiUrlTreeNode"/> root node.</param>
+        /// <param name="stream">The destination for writing the JSON text to.</param>
+        public void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream)
+        {
+            using Utf8JsonWriter writer = new Utf8JsonWriter(stream);
+            ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
+            writer.FlushAsync();
+        }
+
+        /// <summary>
+        /// Converts a <see cref="OpenApiUrlTreeNode"/> object to JSON text.
+        /// </summary>
+        /// <param name="writer">An instance of the <see cref="Utf8JsonWriter"/> class that
+        /// uses a specified stream to write the JSON output to.</param>
+        /// <param name="rootNode">The target <see cref="OpenApiUrlTreeNode"/> object.</param>
+        private static void ConvertOpenApiUrlTreeNodeToJson(Utf8JsonWriter writer, OpenApiUrlTreeNode rootNode)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("segment", rootNode.Segment);
+            writer.WriteStartArray("labels");
+
+            foreach (var pathItem in rootNode.PathItems)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("name", pathItem.Key);
+                writer.WriteStartArray("methods");
+                var methods = pathItem.Value.Operations.Select(x => x.Key.ToString()).ToList();
+                foreach (var method in methods)
+                {
+                    writer.WriteStringValue(method);
+                }
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+
+            if (rootNode.Children.Count > 0)
+            {
+                writer.WriteStartArray("children");
+                foreach (var childNode in rootNode.Children.ToImmutableSortedDictionary().Values)
+                {
+                    ConvertOpenApiUrlTreeNodeToJson(writer, childNode);
+                }
+                writer.WriteEndArray();
+            }
+            writer.WriteEndObject();
+        }
+
+        /// <summary>
+        /// Create a representation of the OpenApiDocument to return from an API
+        /// </summary>
+        /// <param name="subset">OpenAPI document.</param>
+        /// <param name="styleOptions">The modal object containing the required styling options.</param>
+        /// <returns>A memory stream.</returns>
+        public MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions)
         {
             _telemetryClient?.TrackTrace($"Serializing the subset OpenApiDocument document for '{styleOptions.OpenApiFormat}' format",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
+                                            SeverityLevel.Information,
+                                            _openApiTraceProperties);
 
             var stream = new MemoryStream();
             var sr = new StreamWriter(stream);
@@ -430,8 +468,8 @@ namespace OpenAPIService
             stream.Position = 0;
 
             _telemetryClient?.TrackTrace($"Finished serializing the subset OpenApiDocument document for '{styleOptions.OpenApiFormat}' format",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
+                                            SeverityLevel.Information,
+                                            _openApiTraceProperties);
 
             return stream;
         }
@@ -710,16 +748,13 @@ namespace OpenAPIService
             string evaluator(Match match)
             {
                 string output = match.ToString(); // e.g. ---> ={period}
-                string paramName = $"{output.Substring(2, output.Length - 3)}"; // e.g. ---> period
+                string paramName = $"{output[2..^1]}"; // e.g. ---> period
 
-                if (parameterTypes.TryGetValue(paramName, out string type))
+                if (parameterTypes.TryGetValue(paramName, out string type) && type.Equals("string", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (type.Equals("string", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Only format function parameters with string data types
-                        output = $"='{{{paramName}}}'";
-                        return output;
-                    }
+                    // Only format function parameters with string data types
+                    output = $"='{{{paramName}}}'";
+                    return output;
                 }
                 return output;
             }
@@ -737,13 +772,11 @@ namespace OpenAPIService
         /// <param name="components">The <see cref="OpenApiComponents"/> object with the target schema.</param>
         private static void EscapePoundCharacter(OpenApiComponents components)
         {
-            if (components.Schemas.TryGetValue("microsoft.graph.networkInterface", out OpenApiSchema parentSchema))
+            if (components.Schemas.TryGetValue("microsoft.graph.networkInterface", out OpenApiSchema parentSchema)
+                && parentSchema.Properties.TryGetValue("description", out OpenApiSchema descriptionSchema))
             {
-                if (parentSchema.Properties.TryGetValue("description", out OpenApiSchema descriptionSchema))
-                {
-                    // PowerShell uses ` to escape special characters
-                    descriptionSchema.Description = descriptionSchema.Description.Replace("<#>", "<#/>");
-                }
+                // PowerShell uses ` to escape special characters
+                descriptionSchema.Description = descriptionSchema.Description?.Replace("<#>", "<#/>");
             }
         }
     }

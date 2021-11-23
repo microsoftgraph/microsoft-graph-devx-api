@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +11,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
     public class CSharpGeneratorTests {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private static OpenApiUrlTreeNode _v1TreeNode;
-        private async static Task<OpenApiUrlTreeNode> GetV1TreeNode() {
+        private static async Task<OpenApiUrlTreeNode> GetV1TreeNode() {
             if(_v1TreeNode == null) {
                 _v1TreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
             }
@@ -37,7 +37,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("var graphClient = new GraphClient(httpCore)", result);
+            Assert.Contains("var graphClient = new GraphClient(requestAdapter)", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall() {
@@ -125,7 +125,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/applications/{{application-id}}/logo") {
                 Content = new ByteArrayContent(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 })
             };
-            requestPayload.Content.Headers.ContentType = new ("application/octect-stream");
+            requestPayload.Content.Headers.ContentType = new ("application/octet-stream");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("new MemoryStream", result);
@@ -138,7 +138,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Encoding.ASCII.GetBytes", result);
+            Assert.Contains("Convert.FromBase64String", result);
         }
         [Fact]
         public async Task GeneratesADateTimeOffsetPayload() {

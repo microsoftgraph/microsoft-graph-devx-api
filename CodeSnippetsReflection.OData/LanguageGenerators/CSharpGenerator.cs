@@ -1,4 +1,4 @@
-using Microsoft.OData.UriParser;
+﻿using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
@@ -24,7 +24,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         ///     such as String and Stream (System namespace)
         ///     or Duration, Date, TimeOfDay (Microsoft.Graph namespace)
         /// </summary>
-        private static readonly HashSet<string> EdmTypesNonNullableByDefault = new HashSet<string>{ "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
+        private static readonly HashSet<string> EdmTypesNonNullableByDefault = new() { "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
 
         /// <summary>
         /// Determines whether the snippet generation is running through the command line interface
@@ -82,14 +82,26 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                     {
                         case NavigationPropertySegment _:
                         case EntitySetSegment _:
-                        case NavigationPropertyLinkSegment _:
+                        case NavigationPropertyLinkSegment navigationPropertyLinkSegment when CommonGenerator.CanGetServiceCollectionNavigationPropertyForProperty(navigationPropertyLinkSegment):
                             if (string.IsNullOrEmpty(snippetModel.RequestBody))
                                 throw new Exception($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
 
                             snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
                             snippetBuilder.Append(CSharpGenerateObjectFromJson(segment, snippetModel.RequestBody, new List<string> { snippetModel.ResponseVariableName }));
                             snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+                            break;
 
+                        case NavigationPropertyLinkSegment _:
+                            if (string.IsNullOrEmpty(snippetModel.RequestBody))
+                                throw new InvalidOperationException($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
+
+                            if (JObject.Parse(snippetModel.RequestBody).TryGetValue("@odata.id",out JToken odataId))
+                            {
+                                snippetModel.ResponseVariableName += "Reference"; // append suffix
+                                snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = new ReferenceRequestBody\n{{\n");
+                                snippetBuilder.Append($"\tODataId = \"{odataId}\"\n}};\n\n");
+                                snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+                            }
                             break;
 
                         case OperationSegment os:
@@ -375,7 +387,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         {
             if (pathSegment is PropertySegment && pathSegment.EdmType?.FullTypeName() == "Edm.Stream")
             {
-                // special case where the full request body should be converted into a stream object	
+                // special case where the full request body should be converted into a stream object
                 var encodedMultilineString = jsonBody.Replace("\"", "\"\"");
                 return $"new System.IO.MemoryStream(Encoding.UTF8.GetBytes(@\"{encodedMultilineString}\"));\r\n\r\n";
             }
@@ -657,8 +669,8 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                     string proposedType;
                     // If type contains subnamespace of Microsoft.Graph e.g Microsoft.Graph.Ediscovery.LegalHold, prefix the namespace to the typeName
                     // else if type not in graph namespace e.g Microsoft.OutlookServices or is a type directly within the graph subnamespace e.g Microsoft.Graph.IdentitySet
-                    // then proposedType is the <typeName> without prefix 
-                    var graphSubspaces = value.StartsWith("#microsoft.graph.") ? value["#microsoft.graph.".Length..].Split(".".ToCharArray()) : new string[] {} ; 
+                    // then proposedType is the <typeName> without prefix
+                    var graphSubspaces = value.StartsWith("#microsoft.graph.") ? value["#microsoft.graph.".Length..].Split(".".ToCharArray()) : new string[] {} ;
                     if (graphSubspaces.Length > 1) {
                         // Remove the prefixed `#`, then uppercase the individual strings in the odata path
                         var namespacedTypeName = value.Split("#").Last().Split(".").Select((item, _) => CommonGenerator.UppercaseFirstLetter(item));
@@ -714,7 +726,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                         return $"new Duration({specialClassString})";
 
                     case "Binary":
-                        return $"Encoding.ASCII.GetBytes({specialClassString})";
+                        return $"Convert.FromBase64String({specialClassString})";
 
                     case "Double":
                         return $"(double){stringParameter}";

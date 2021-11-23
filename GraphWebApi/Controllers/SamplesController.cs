@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -6,17 +6,19 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using GraphExplorerSamplesService.Models;
 using System.Linq;
 using GraphWebApi.Common;
-using GraphExplorerSamplesService.Interfaces;
 using Microsoft.ApplicationInsights.DataContracts;
 using UtilityService;
 using Microsoft.ApplicationInsights;
+using System.Diagnostics.CodeAnalysis;
+using SamplesService.Interfaces;
+using SamplesService.Models;
 
 namespace GraphWebApi.Controllers
 {
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class SamplesController : ControllerBase
     {
         private readonly ISamplesStore _samplesStore;

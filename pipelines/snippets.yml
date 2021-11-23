@@ -33,7 +33,7 @@ variables:
   buildConfiguration: 'Release'
   apidoctorPath: 'apidoctor'
   apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
-  snippetLanguages: 'C#,JavaScript,Objective-C,Java'
+  snippetLanguages: 'C#,JavaScript,Objective-C,Java,Go'
 
 steps:
 - checkout: self

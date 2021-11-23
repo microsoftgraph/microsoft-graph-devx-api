@@ -1,4 +1,4 @@
-using Microsoft.OData.Edm;
+﻿using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using System;
@@ -124,6 +124,45 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         {
             var (edmType, _) = GetEdmTypeFromIdentifierAndNavigationProperty(oDataPathSegment, path);
             return edmType;
+        }
+
+        /// <summary>
+        /// This function is meant to simulate the function located at the link below to provide consistent generation with the SDK
+        /// https://github.com/microsoftgraph/MSGraph-SDK-Code-Generator/blob/aa09c93658b984377a646ba046c9f63fd8a6a6e6/src/GraphODataTemplateWriter/Extensions/OdcmModelExtensions.cs#L227
+        /// It returns true if any of the conditions below are met
+        /// 1. If a navigation property specifies "ContainsTarget='true'", it is self-contained. 
+        ///    Generate a direct path to the item (ie "parent/child").
+        /// 2. If a navigation property does not specify ContainsTarget but there is a defined EntitySet 
+        ///    of the given type, it is a reference relationship. Generate a reference path to the item (ie "item/$ref").
+        /// 3. If a navigation property does not have a defined EntitySet but there is a Singleton which has 
+        ///    a self-contained reference to the given type, we can make a relationship to the implied EntitySet of 
+        ///    the singleton(i.e. the entity collection contained by the singleton). Generate a reference path to the item (ie "singleton/item/$ref").
+        /// 4. Otherwise return false so that the generator can find another way to generate snippets   
+        /// </summary>
+        /// <param name="navigationPropertyLinkSegment">The navigation property link to test</param>
+        /// <returns></returns>
+        public bool CanGetServiceCollectionNavigationPropertyForProperty(NavigationPropertyLinkSegment navigationPropertyLinkSegment)
+        {
+            if (navigationPropertyLinkSegment == null)
+                throw new ArgumentNullException(nameof(navigationPropertyLinkSegment));
+
+            if (navigationPropertyLinkSegment.NavigationProperty.ContainsTarget)
+                return true;
+
+            // Check if its defined directly in an the entitySet
+            var isDirectlyInEntitySet = Model.EntityContainer.EntitySets()
+                .Any(entitySet => entitySet.EntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName(), StringComparison.OrdinalIgnoreCase));
+
+            if (isDirectlyInEntitySet)
+                return true;
+
+            // check the navBindings/nav Properties on singletons
+            var isImplicitFromSingleton = Model.EntityContainer.Singletons()
+                            .SelectMany(singleton => singleton.NavigationPropertyBindings.Select(navPropertyBindings => navPropertyBindings.NavigationProperty)// get the nav propertyBinding from the singleton
+                                                                .Concat( singleton.EntityType().NavigationProperties()))    // Append the nav properties from the singleton type
+                            .Any(property => property.ContainsTarget && property.ToEntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName(), StringComparison.OrdinalIgnoreCase));
+            
+            return isImplicitFromSingleton;   
         }
 
         /// <summary>

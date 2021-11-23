@@ -4,26 +4,26 @@
 
 using FileService.Common;
 using FileService.Interfaces;
-using GraphExplorerSamplesService.Interfaces;
-using GraphExplorerSamplesService.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using SamplesService.Interfaces;
+using SamplesService.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UtilityService;
 
-namespace GraphExplorerSamplesService.Services
+namespace SamplesService.Services
 {
     /// <summary>
     /// Retrieves or adds localized sample queries to and from a memory cache or a remote source.
     /// </summary>
     public class SamplesStore : ISamplesStore
     {
-        private readonly object _samplesLock = new object();
+        private readonly object _samplesLock = new();
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _samplesCache;
@@ -167,7 +167,7 @@ namespace GraphExplorerSamplesService.Services
         /// <param name="fileContents">The json files to be deserialized.</param>
         /// <param name="locale">The language code for the preferred localized file.</param>
         /// <returns>The deserialized instance of a <see cref="SampleQueriesList"/>.</returns>
-        private SampleQueriesList DeserializeSamplesList(string fileContents, string locale)
+        private static SampleQueriesList DeserializeSamplesList(string fileContents, string locale)
         {
             /* Current business process only supports ordering of the English
                translation of the sample queries.

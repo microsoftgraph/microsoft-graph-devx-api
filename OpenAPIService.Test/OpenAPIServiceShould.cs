@@ -1,27 +1,31 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Services;
 using OpenAPIService.Interfaces;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Xunit;
 
 namespace OpenAPIService.Test
 {
-    public class OpenAPIServiceShould
+    public class OpenApiServiceShould
     {
         private const string Title = "Partial Graph API";
         private const string GraphVersion = "mock";
         private readonly OpenApiDocument _graphMockSource = null;
         private readonly IOpenApiService _openApiService;
-        private readonly OpenAPIDocumentCreatorMock _openAPIDocumentCreatorMock;
+        private readonly OpenApiDocumentCreatorMock _openAPIDocumentCreatorMock;
 
-        public OpenAPIServiceShould()
+        public OpenApiServiceShould()
         {
             _openApiService = new OpenApiService();
-            _openAPIDocumentCreatorMock = new OpenAPIDocumentCreatorMock(_openApiService);
+            _openAPIDocumentCreatorMock = new OpenApiDocumentCreatorMock(_openApiService);
 
             // Create OpenAPI document with default OpenApiStyle = Plain
             _graphMockSource = _openAPIDocumentCreatorMock.GetGraphOpenApiDocument("Mock", false);
@@ -395,6 +399,34 @@ namespace OpenAPIService.Test
 
             // Assert
             Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operationId);
+        }
+
+        [Fact]
+        public void GetOpenApiTreeNode()
+        {
+            // Arrange
+            var sources = new Dictionary<string, OpenApiDocument>() { { GraphVersion, _graphMockSource } };
+
+            // Act
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
+            using MemoryStream stream = new();
+            ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
+
+            // Assert
+            var jsonPayload = Encoding.ASCII.GetString(stream.ToArray());
+            var expectedPayloadContent = "{\"segment\":\"/\",\"labels\":[{\"name\":\"mock\",\"methods\":[\"Get\"]}],\"children\":[{\"segment\":\"administrativeUnits\",\"labels\":[]," +
+                "\"children\":[{\"segment\":\"{administrativeUnit-id}\",\"labels\":[],\"children\":[{\"segment\":\"microsoft.graph.restore\",";
+
+            Assert.NotEmpty(jsonPayload);
+            Assert.NotNull(jsonPayload);
+            Assert.Contains(expectedPayloadContent, jsonPayload);
+        }
+
+        private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
+        {
+            Assert.NotNull(node);
+            _openApiService.ConvertOpenApiUrlTreeNodeToJson(node, stream);
+            Assert.True(stream.Length > 0);
         }
     }
 }

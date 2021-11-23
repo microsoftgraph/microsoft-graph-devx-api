@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using ChangesService.Models;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 
@@ -14,5 +15,6 @@ namespace ChangesService.Interfaces
     public interface IChangesStore
     {
         Task<ChangeLogRecords> FetchChangeLogRecordsAsync(CultureInfo cultureInfo);
+        Task<Dictionary<string, string>> FetchWorkloadServiceMappingsAsync();
     }
 }
