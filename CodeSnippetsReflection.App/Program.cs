@@ -7,6 +7,7 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using CodeSnippetsReflection.OData;
 using CodeSnippetsReflection.OpenAPI;
+using System.Collections.Generic;
 
 namespace CodeSnippetsReflection.App
 {
@@ -99,9 +100,15 @@ namespace CodeSnippetsReflection.App
 
             var originalGeneration = generation;
 
+            var openApiLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "go",
+                "powershell",
+            };
+
             Parallel.ForEach(supportedLanguages, language =>
             {
-                if(language.Equals("go", StringComparison.OrdinalIgnoreCase))
+                if(openApiLanguages.Contains(language))
                     generation = "openapi";
                 else
                     generation = originalGeneration;

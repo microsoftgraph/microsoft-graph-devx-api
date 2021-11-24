@@ -1,16 +1,13 @@
-﻿using CodeSnippetsReflection.StringExtensions;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Services;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Management.Automation;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using CodeSnippetsReflection.StringExtensions;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Services;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {

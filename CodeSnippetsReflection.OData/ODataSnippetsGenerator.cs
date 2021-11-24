@@ -42,8 +42,7 @@ namespace CodeSnippetsReflection.OData
             "c#",
             "javascript",
             "objective-c",
-            "java",
-            "powershell"
+            "java"
         };
 
         /// <summary>
