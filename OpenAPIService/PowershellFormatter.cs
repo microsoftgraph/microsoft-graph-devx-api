@@ -150,7 +150,7 @@ namespace OpenAPIService
 
             var updatedOperationId = string.Join(".", segments);
 
-            // Remove hash suffix values from OperationIds of functions.
+            // Remove hash suffix values from OperationIds of function paths.
             // For example,
             // Default OperationId --> reports_getEmailActivityUserDetail-fe32
             // Resolved OperationId --> reports_getEmailActivityUserDetail
