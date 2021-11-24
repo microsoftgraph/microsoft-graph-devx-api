@@ -50,7 +50,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("const graphClient = new GraphClient(requestAdapter)", result);
+            Assert.Contains("const graphServiceClient = new GraphServiceClient(requestAdapter)", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall()
