@@ -116,16 +116,8 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Resolves action and function OperationIds by reverting their signatures
-        /// to how they were being defined in package Microsoft.OpenApi.OData ver. 1.0.6 and below.
+        /// Resolves the OperationIds of action and function paths.
         /// </summary>
-        /// <remarks>
-        /// This is to prevent change of cmdlet names already defined using the previous version's format.
-        /// </remarks>
-        /// <example>
-        /// Default OperationId --> communications.calls.call_keepAlive
-        /// Resolved OperationId --> communications.calls_keepAlive
-        /// </example>
         /// <param name="operation">The target OpenAPI operation.</param>
         /// <returns>The resolved OperationId.</returns>
         private static string ResolveActionFunctionOperationId(OpenApiOperation operation)
@@ -133,6 +125,12 @@ namespace OpenAPIService
             var operationId = operation.OperationId;
             var segments = operationId.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries).ToList();
 
+            // Remove ODataKeySegment values from OperationIds of actions and functions paths.
+            // This is to prevent breaking changes of OperationId values already
+            // defined using package Microsoft.OpenApi.OData ver. 1.0.6 and below.
+            // For example,
+            // Default OperationId --> communications.calls.call_keepAlive
+            // Resolved OperationId --> communications.calls_keepAlive
             foreach (var parameter in operation.Parameters)
             {
                 // Get the ODataKeySegment value.
@@ -150,7 +148,16 @@ namespace OpenAPIService
                 }
             }
 
-            return string.Join(".", segments);
+            var updatedOperationId = string.Join(".", segments);
+
+            // Remove hash suffix values from OperationIds of functions.
+            // For example,
+            // Default OperationId --> reports_getEmailActivityUserDetail-fe32
+            // Resolved OperationId --> reports_getEmailActivityUserDetail
+            var regex = new Regex(@"^[^-]+");
+            updatedOperationId = regex.Match(updatedOperationId).Value;
+
+            return updatedOperationId;
         }
     }
 }
