@@ -36,7 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             var pathParametersDeclaration = GetFluentApiPathVariablesDeclaration(snippetModel.PathNodes);
             pathParametersDeclaration.ToList().ForEach(x => snippetBuilder.AppendLine(x));
             var methodName = snippetModel.Method.ToString().ToLower().ToFirstCharacterUpperCase();
-            snippetBuilder.AppendLine($"{responseAssignment}{clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}{methodName}({optionsParameterVarName})");
+            snippetBuilder.AppendLine($"{responseAssignment}{clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}{methodName}({optionsVarName})");
             return snippetBuilder.ToString();
         }
         private const string requestHeadersVarName = "headers";
@@ -146,8 +146,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
         }
         private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager) {
-            if(!string.IsNullOrEmpty(snippetModel.RequestBody) &&
-                !"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
+            if(snippetModel.IsRequestBodyValid)
                 try {
                     using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody);
                     var schema = snippetModel.RequestSchema;

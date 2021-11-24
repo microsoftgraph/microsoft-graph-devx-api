@@ -93,7 +93,7 @@ namespace CodeSnippetsReflection.App
 
             Parallel.ForEach(supportedLanguages, language =>
             {
-                if(language.Equals("go", StringComparison.OrdinalIgnoreCase))
+                if(language.Equals("go", StringComparison.OrdinalIgnoreCase) || language.Equals("typescript", StringComparison.OrdinalIgnoreCase))
                     generation = "openapi";
                 else
                     generation = originalGeneration;
