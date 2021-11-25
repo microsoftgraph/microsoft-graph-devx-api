@@ -67,7 +67,7 @@ namespace TourStepsService.Test
 
             // Act
 
-            // Get serialized JSON string of the list of sample queries
+            // Get serialized JSON string of the list of tour steps
             var newTourStepsJson = Services.TourStepsService.SerializetourStepsList(tourStepsList);
 
             // Assert
@@ -256,7 +256,7 @@ namespace TourStepsService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfDeserializeSampleQueriesListJsonStringParameterIsNull()
+        public void ThrowArgumentNullExceptionIfDeserializeTourStepsListJsonStringParameterIsNull()
         {
             // Arrange
             var nullArgument = "";

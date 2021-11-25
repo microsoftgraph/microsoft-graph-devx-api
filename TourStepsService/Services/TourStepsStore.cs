@@ -130,7 +130,7 @@ namespace TourStepsService.Services
             var host = _configuration["BlobStorage:GithubHost"];
             var repo = _configuration["BlobStorage:RepoName"];
 
-            // Fetch the requisite sample path source based on the locale
+            // Fetch the requisite toursteps path source based on the locale
             var localizedFilePathSource = FileServiceHelper.GetLocalizedFilePathSource(_tourStepsContainerName, _tourStepsBlobName, locale);
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
 

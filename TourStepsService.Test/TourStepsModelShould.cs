@@ -76,8 +76,13 @@ namespace TourStepsService.Test
         [Fact]
         public void ReturnEmptyStringIfDocsLinkIsEmpty()
         {
+            // Arrange
             var tourStepsModel = new TourStepsModel();
+
+            // Act
             tourStepsModel.DocsLink = "";
+
+            // Assert
             Assert.Equal("", tourStepsModel.DocsLink);
         }
 

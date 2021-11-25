@@ -51,7 +51,7 @@ namespace TourStepsService.Test
             // Arrange
             _tourStepsStore = new TourStepsStore(_configuration, _httpClientUtility, _fileUtility, _tourStepsCache);
 
-            // Act - Fetch ja-JP sample queries which is empty
+            // Act - Fetch ja-JP tour steps which is empty
             var japaneseTourStepsList = await _tourStepsStore.FetchTourStepsListAsync("ja-JP");
 
             // Assert
@@ -90,7 +90,7 @@ namespace TourStepsService.Test
 
             _tourStepsStore = new TourStepsStore(configuration, _httpClientUtility, _fileUtility, _tourStepsCache);
 
-            // Act - Fetch ja-JP samples which is empty
+            // Act - Fetch ja-JP tour steps which is empty
             var japaneseTourStepsList = await  _tourStepsStore.FetchTourStepsListAsync("ja-JP", org, branchName);
 
             // Assert
