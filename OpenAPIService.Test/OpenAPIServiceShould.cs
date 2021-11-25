@@ -199,6 +199,28 @@ namespace OpenAPIService.Test
         }
 
         [Theory]
+        [InlineData("^users.", null, 3)]
+        [InlineData("users.user*", null, 2)]
+        [InlineData("^users.|^applications.", null, 5)]
+        [InlineData(null, "^users.", 3)]
+        [InlineData(null, "users.user*", 2)]
+        [InlineData(null, "^users.|^applications.", 5)]
+        public void SupportFilteringOpenApiDocumentByRegexOnOperationIdsAndTags(string operationIds, string tags, int pathCount)
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: operationIds,
+                                                          tags: tags,
+                                                          url: null,
+                                                          source: _graphMockSource,
+                                                          graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+
+            // Assert
+            Assert.Equal(pathCount, subsetOpenApiDocument.Paths.Count);
+        }
+
+        [Theory]
         [InlineData(OpenApiStyle.Plain, "/users/{user-id}", OperationType.Get)]
         [InlineData(OpenApiStyle.Plain, "/users/12345", OperationType.Get)]
         [InlineData(OpenApiStyle.GEAutocomplete, "/users(user-id)messages(message-id)", OperationType.Get)]

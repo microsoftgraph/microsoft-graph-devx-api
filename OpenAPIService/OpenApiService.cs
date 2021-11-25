@@ -160,13 +160,18 @@ namespace OpenAPIService
             Func<OpenApiOperation, bool> predicate;
             if (operationIds != null)
             {
-                if (operationIds == "*")
+                var operationIdsArray = operationIds.Split(',');
+                if (operationIds == "*") // Note: string literal "*" is not valid regex, so we are handling it separately
                 {
                     predicate = (o) => true;  // All operations
                 }
+                else if (operationIdsArray.Length == 1)
+                {
+                    var regex = new Regex(operationIdsArray[0]);
+                    predicate = (o) => regex.IsMatch(o.OperationId);
+                }
                 else
                 {
-                    var operationIdsArray = operationIds.Split(',');
                     predicate = (o) => operationIdsArray.Contains(o.OperationId);
                 }
 
