@@ -640,6 +640,60 @@ paths:
           description: Simplified OpenAPI document(s) rendered as an OpenApiUrlTreeNode document.
           content:
             application/vnd.oai.openapi+json: {} # JSON
+  /toursteps:
+    get:
+      tags:
+        - toursteps
+      summary: Tour steps
+      description: Get all Graph Explorer tour steps from Azure blob or a specified GitHub repository
+      parameters:
+        - name: org
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Organization that a GitHub repo belongs to.
+        - name: branchName
+          in: query
+          schema:
+            type: string
+          required: false
+          description: The target branch in the target GitHub repo.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/toursteps"
+              example:
+                TourSteps:
+                  - target: ".sign-in-section"
+                    content: "When you're signed in, you can run all queries with all request options. We recommend that you sign in with a sample Azure AD account where you are the tenant admin."
+                    directionalHint: 10
+                    spotlightClicks: true
+                    hideCloseButton: true
+                    autoNext: false
+                    disableBeacon: true
+                    advanced: true
+                    title: "Sign in"
+                    expectedActionType: "PROFILE_REQUEST_SUCCESS"
+                    docsLink: ""
+                    query: {
+                        selectedVerb: "GET",
+                        selectedVersion: "v1.0",
+                        sampleUrl: "https://graph.microsoft.com/v1.0",
+                        sampleHeaders: []
+                    }
+                    active: true
+        "204":
+          description: No content
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
 components:
   schemas:
     sample:
@@ -769,3 +823,54 @@ components:
             type: string
           link:
             type: string
+    toursteps:
+      type: array
+      items:
+        type: object
+        required:
+          - target
+          - content
+          - directionalHint
+        properties:
+          target:
+            type: string
+          content:
+            type: string
+          directionalHint:
+            type: number
+          spotlightClicks:
+            type: boolean
+          hideCloseButton:
+            type: boolean
+          title:
+            type: string
+          autoNext:
+            type: boolean
+          disableBeacon:
+            type: boolean
+          expectedActionType:
+            type: string
+          query:
+            type: object
+            properties:
+                selectedVerb:
+                    type: string
+                    enum:
+                        - GET
+                        - PUT
+                        - POST
+                        - DELETE
+                        - PATCH
+                selectedVersion:
+                    type: string
+                sampleUrl:
+                    type: string
+                sampleHeaders:
+                    type: object
+                    properties:
+                        name:
+                            type: string
+                        value:
+                            type: string
+          advanced:
+            type: boolean
