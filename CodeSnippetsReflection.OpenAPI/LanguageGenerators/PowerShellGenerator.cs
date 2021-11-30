@@ -16,16 +16,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
         private const string modelNameSpace = modulePrefix + ".PowerShell.Models";
-        private const string powerShellModulePath = "C:/Program Files/WindowsPowerShell/Modules/Microsoft.Graph.Authentication"; // TODO: load dynamically from PowerShell module path. Can fetched from `$env:PSModulePath`.
-        private static IList<PowerShellCommandInfo> psCommands;
+        private const string authModuleName = modulePrefix + ".Authentication";
+        private static IList<PowerShellCommandInfo> psCommands = default;
         private static Regex meSegmentRegex = new Regex("/me/", RegexOptions.Compiled);
         public PowerShellGenerator()
         {
-            if (psCommands == null)
+            if (psCommands == default)
             {
+                string authModulePath = default;
                 // Load MgCommandMetadata file.
-                string latestVersion = Directory.GetDirectories(powerShellModulePath).Max();
-                string MgCommandMetadataPath = Directory.GetFiles($"{latestVersion}/custom/common", "MgCommandMetadata.json").FirstOrDefault();
+                foreach(string modulePath in Environment.GetEnvironmentVariable("PSModulePath")?.Split(";")){
+                    if (Directory.Exists($"{modulePath}/{authModuleName}"))
+                        authModulePath = Directory.GetDirectories($"{modulePath}/{authModuleName}").Max();
+                }
+                if (authModulePath == default)
+                    throw new Exception("Microsoft.Graph PowerShell SDK could not be found on this machine. Please install the SDK using 'Install-Module Microsoft.Graph'.");
+                string MgCommandMetadataPath = Directory.GetFiles($"{authModulePath}/custom/common", "MgCommandMetadata.json").FirstOrDefault();
                 string jsonString = File.ReadAllText(MgCommandMetadataPath);
                 psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
             }
@@ -101,7 +107,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
                         string parameterName = NormalizeQueryParameterName(kvPair[0]);
                         // Add -ConsistencyLevel eventual when CountVariable is present.
-                        payloadSB.Append($"-{parameterName} {GetQueryParameterValue(parameterName, kvPair[1], replacements)} ");
+                        payloadSB.Append($"-{parameterName} {GetQueryParameterValue(parameterName, kvPair[1].Trim('"'), replacements)} ");
                     }
                     else
                         payloadSB.Append($"-{NormalizeQueryParameterName(queryParam)} = {""} ");
@@ -114,16 +120,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string GetQueryParameterValue(string normalizedParameterName, string originalValue, Dictionary<string, string> replacements)
         {
             if (normalizedParameterName.Equals("CountVariable"))
-            {
                 return "CountVar";
-            }
 
             if (originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
                 return originalValue.ToLowerInvariant();
             else if (int.TryParse(originalValue, out var intValue))
                 return intValue.ToString();
-            else
-            {
+            else {
                 var valueWithNested = originalValue.Split(',')
                                                     .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
                                                     .Aggregate((a, b) => $"{a},{b}");
@@ -133,17 +136,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string NormalizeQueryParameterName(string queryParam)
         {
             string psParameterName = queryParam.TrimStart('$').ToFirstCharacterUpperCase();
-            switch (psParameterName)
-            {
-                case "Select":
-                    return "Property";
-                case "Expand":
-                    return "ExpandProperty";
-                case "Count":
-                    return "CountVariable";
-                default:
-                    return psParameterName;
-            }
+            return psParameterName switch {
+                "Select" => "Property",
+                "Expand" => "ExpandProperty",
+                "Count" => "CountVariable",
+                _ => psParameterName
+            };
         }
 
         private static Regex nestedStatementRegex = new Regex(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
@@ -166,8 +164,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (psCommands.Count == 0)
                 return default;
-            path = TrimNamespace(path);
-            //TODO: Remove namespace from actions and functions for matches to succeed.
+            path = Regex.Escape(TrimNamespace(path));
             // Tokenize uri by substituting parameter values with "{.*}".
             path = $"^{Regex.Replace(path, "(?<={)(.*?)(?=})", "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
@@ -209,10 +206,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             payloadSB.AppendLine("}");
                         }
                     break;
-                case "application/octect-stream":
-                    // TODO: Handle streams. Support is limited.
-                    //payloadSB.AppendLine($"using var {requestBodyVarName} = new MemoryStream(); //stream to upload");
-                    break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
             }
@@ -241,7 +234,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (value.ValueKind)
             {
                 case JsonValueKind.String:
-                    // TODO: Update to reflect current state of PowerShell SDK.
                     if (propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
                         payloadSB.AppendLine($"{propertyAssignment}[System.Text.Encoding]::ASCII.GetBytes(\"{value.GetString()}\"){propertySuffix}");
                     else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
@@ -282,7 +274,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             payloadSB.AppendLine($"{propertyAssignment}@(");
             indentManager.Indent();
             foreach (var item in value.EnumerateArray())
-                WriteProperty(payloadSB, item, schema, indentManager, indentManager.GetIndent());
+                WriteProperty(payloadSB, item, schema?.Items, indentManager, indentManager.GetIndent());
             indentManager.Unindent();
             payloadSB.AppendLine($"{indentManager.GetIndent()})");
         }

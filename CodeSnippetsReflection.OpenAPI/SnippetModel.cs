@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -120,8 +120,6 @@ namespace CodeSnippetsReflection.OpenAPI
             if (!pathSegments.Any())
                 return;
             var pathSegment = HttpUtility.UrlDecode(pathSegments.First());
-            // TODO: Handle FQN for actions and functions. e.g., microsoft.graph.delta.
-            //  TryGetValue(pathSegment, out var childNode))
             var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Equals(pathSegment)).Value;
             if (childNode != null)
             {
