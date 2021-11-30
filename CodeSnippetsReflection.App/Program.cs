@@ -104,6 +104,7 @@ namespace CodeSnippetsReflection.App
             {
                 "go",
                 "powershell",
+                "typescript"
             };
 
             Parallel.ForEach(supportedLanguages, language =>

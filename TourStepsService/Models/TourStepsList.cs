@@ -4,21 +4,16 @@
 
 using System.Collections.Generic;
 
-namespace SamplesService.Models
+namespace TourStepsService.Models
 {
     /// <summary>
-    /// Defines a list which holds a collection of <see cref="SampleQueryModel"/> objects.
+    /// Defines a list which holds a collection of <see cref="TourStepsModel"/> objects.
     /// </summary>
-    public class SampleQueriesList
+    public class TourStepsList
     {
         /// <summary>
-        /// A list of <see cref="SampleQueryModel"/> objects
+        /// A list of <see cref="TourStepsModel"/> objects
         /// </summary>
-        public List<SampleQueryModel> SampleQueries { get; set; }
-
-        public SampleQueriesList()
-        {
-            SampleQueries = new List<SampleQueryModel>();
-        }
+        public List<TourStepsModel> TourSteps { get; set; } = new();
     }
 }

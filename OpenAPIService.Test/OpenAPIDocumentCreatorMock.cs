@@ -705,6 +705,72 @@ namespace OpenAPIService.Test
                             }
                         }
                     },
+                    ["/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        new OpenApiTag()
+                                        {
+                                            Name = "reports.Functions"
+                                        }
+                                    },
+                                    OperationId = "reports.getSharePointSiteUsageDetail-204b",
+                                    Summary = "Invoke function getSharePointSiteUsageDetail",
+                                    Parameters = new List<OpenApiParameter>
+                                    {
+                                        new OpenApiParameter()
+                                        {
+                                            Name = "period",
+                                            In = ParameterLocation.Path,
+                                            Description = "Usage: period={period}",
+                                            Required = true,
+                                            Schema = new OpenApiSchema()
+                                            {
+                                                Type = "string"
+                                            }
+                                        }
+                                    },
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200", new OpenApiResponse()
+                                            {
+                                                Description = "Success",
+                                                Content = new Dictionary<string, OpenApiMediaType>
+                                                {
+                                                    {
+                                                        applicationJsonMediaType,
+                                                        new OpenApiMediaType
+                                                        {
+                                                            Schema = new OpenApiSchema
+                                                            {
+                                                                Reference = new OpenApiReference
+                                                                {
+                                                                    Type = ReferenceType.Schema,
+                                                                    Id = "microsoft.graph.report"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("function")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     ["/applications/{application-id}/createdOnBehalfOf/$ref"] = new OpenApiPathItem()
                     {
                         Operations = new Dictionary<OperationType, OpenApiOperation>

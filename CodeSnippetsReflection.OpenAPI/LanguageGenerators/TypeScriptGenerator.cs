@@ -20,8 +20,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         /// <returns>String of the snippet in Javascript code</returns>
         /// 
 
-        private const string clientVarName = "graphClient";
-        private const string clientVarType = "GraphClient";
+        private const string clientVarName = "graphServiceClient";
+        private const string clientVarType = "GraphServiceClient";
         private const string httpCoreVarName = "requestAdapter";
 
         public string GenerateCodeSnippet(SnippetModel snippetModel)
@@ -46,7 +46,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             // add parameters
             var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, requestHeadersVarName);
             var methodName = snippetModel.Method.ToString().ToLower();
-            snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{methodName}({parametersList});");
+            snippetBuilder.AppendLine($"{responseAssignment}async () => {{");
+            indentManager.Indent();
+            snippetBuilder.AppendLine($"{indentManager.GetIndent()}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{methodName}({parametersList});");
+            indentManager.Unindent();
+            snippetBuilder.AppendLine($"}}");
 
             return snippetBuilder.ToString();
         }
