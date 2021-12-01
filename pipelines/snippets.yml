@@ -54,6 +54,7 @@ steps:
     arguments: '--configuration $(buildConfiguration)'
 
 - task: PowerShell@2
+  displayName: 'Download API doctor'
   inputs:
     targetType: 'filePath'
     filePath: microsoft-graph-devx-api/scripts/downloadApiDoctor.ps1
