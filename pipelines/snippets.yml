@@ -20,19 +20,12 @@ resources:
      endpoint: microsoftgraph
      name: microsoftgraph/microsoft-graph-docs
      ref: main
-   - repository: apidoctor
-     type: github
-     endpoint: microsoftgraph
-     name: microsoftgraph/apidoctor
-     ref: master
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
   buildConfiguration: 'Release'
-  apidoctorPath: 'apidoctor'
-  apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
   snippetLanguages: 'C#,JavaScript,Objective-C,Java,Go'
 
 steps:
@@ -44,12 +37,6 @@ steps:
 - checkout: microsoft-graph-docs
   displayName: checkout docs
   fetchDepth: 1
-  persistCredentials: true
-
-- checkout: apidoctor
-  displayName: checkout apidoctor
-  fetchDepth: 1
-  submodules: recursive
   persistCredentials: true
 
 - template: templates/git-config.yml
@@ -66,25 +53,14 @@ steps:
     projects: 'microsoft-graph-devx-api/CodeSnippetsReflection.App/CodeSnippetsReflection.App.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Restore packages for APIDoctor'
-  inputs:
-    command: 'restore'
-    projects: '$(Build.SourcesDirectory)/$(apidoctorProjects)'
-
-- task: DotNetCoreCLI@2
-  displayName: 'Build APIDoctor'
-  inputs:
-    command: 'build'
-    projects: '$(Build.SourcesDirectory)/$(apidoctorProjects)'
-    arguments: '--configuration $(buildConfiguration)'
+- pwsh: scripts/downloadApiDoctor.ps1
 
 - pwsh: |
     # release folder can change based on .NET core version, so search recursively in bin folder
     $snippetGeneratorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/CodeSnippetsReflection.App/bin/Release *App -Recurse).FullName
     Write-Host "Path to snippet generator tool: $snippetGeneratorPath"
 
-    $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
+    $apidoctorPath = (Get-ChildItem $env:ApiDoctorPath/tools apidoc.exe -Recurse).FullName
     Write-Host "Path to apidoctor tool: $apidoctorPath"
 
     . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "/bin/git"
