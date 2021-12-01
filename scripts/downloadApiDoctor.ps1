@@ -6,9 +6,10 @@
 $version = $csproj.Project.ItemGroup.PackageReference.Version
 
 $targetFile = [System.IO.Path]::GetTempPath() + "ApiDoctor.zip"
-$targetDirectory = $env:ApiDoctorPath
-if($null -eq $targetDirectory) {
-    Join-path ([System.IO.Path]::GetTempPath()) "ApiDoctor"
+$targetDirectory = $env:APIDOCTORPATH
+if($null -eq $targetDirectory -or $targetDirectory -eq "") {
+    Write-Information "APIDOCTORPATH environment variable is not set. Using default value."
+    $targetDirectory = Join-path ([System.IO.Path]::GetTempPath()) "ApiDoctor"
 }
 
 $url = "https://globalcdn.nuget.org/packages/apidoctor.$version.nupkg"
