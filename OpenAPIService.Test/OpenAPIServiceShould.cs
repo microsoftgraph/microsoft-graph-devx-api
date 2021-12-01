@@ -334,6 +334,7 @@ namespace OpenAPIService.Test
         [Theory]
         [InlineData("/communications/calls/{call-id}/microsoft.graph.keepAlive", OperationType.Post, "communications.calls_keepAlive")]
         [InlineData("/groups/{group-id}/events/{event-id}/calendar/events/microsoft.graph.delta", OperationType.Get, "groups.events.calendar.events_delta")]
+        [InlineData("/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})", OperationType.Get, "reports_getSharePointSiteUsageDetail")]
         public void ResolveActionFunctionOperationIdsForPowerShellStyle(string url, OperationType operationType, string expectedOperationId)
         {
 

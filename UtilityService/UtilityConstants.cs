@@ -19,6 +19,7 @@ namespace UtilityService
         public const string TelemetryPropertyKey_OpenApi = "OpenApi";
         public const string TelemetryPropertyKey_Snippets = "Snippets";
         public const string TelemetryPropertyKey_KnownIssues = "KnownIssues";
+        public const string TelemetryPropertyKey_TourSteps = "TourSteps";
 
         public const string ServiceRootV1 = "https://graph.microsoft.com/v1.0";
         public const string ServiceRootBeta = "https://graph.microsoft.com/beta";
