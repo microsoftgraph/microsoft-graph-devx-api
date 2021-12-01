@@ -6,13 +6,13 @@
 $version = $csproj.Project.ItemGroup.PackageReference.Version
 
 $targetFile = [System.IO.Path]::GetTempPath() + "ApiDoctor.zip"
-$targetDirectory = Join-path ([System.IO.Path]::GetTempPath()) "ApiDoctor"
+$targetDirectory = $env:ApiDoctorPath
+if($null -eq $targetDirectory) {
+    Join-path ([System.IO.Path]::GetTempPath()) "ApiDoctor"
+}
 
 $url = "https://globalcdn.nuget.org/packages/apidoctor.$version.nupkg"
 
 Invoke-WebRequest -Uri $url -OutFile $targetFile
 
 Expand-Archive -Path $targetFile -DestinationPath $targetDirectory -Verbose
-
-Write-Host "##vso[task.setvariable variable=ApiDoctorPath]$targetDirectory"
-Write-Host "Set environment variable to ($env:ApiDoctorPath)"
