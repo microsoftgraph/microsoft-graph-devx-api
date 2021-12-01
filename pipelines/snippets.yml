@@ -58,6 +58,7 @@ steps:
     targetType: 'filePath'
     filePath: microsoft-graph-devx-api/scripts/downloadApiDoctor.ps1
     pwsh: true
+    workingDirectory: microsoft-graph-devx-api
 
 - pwsh: |
     # release folder can change based on .NET core version, so search recursively in bin folder
