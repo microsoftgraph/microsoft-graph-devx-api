@@ -8,7 +8,7 @@ $version = $csproj.Project.ItemGroup.PackageReference.Version
 $targetFile = [System.IO.Path]::GetTempPath() + "ApiDoctor.zip"
 $targetDirectory = $env:APIDOCTORPATH
 if($null -eq $targetDirectory -or $targetDirectory -eq "") {
-    Write-Information "APIDOCTORPATH environment variable is not set. Using default value."
+    Write-Warning "APIDOCTORPATH environment variable is not set. Using default value."
     $targetDirectory = Join-path ([System.IO.Path]::GetTempPath()) "ApiDoctor"
 }
 
