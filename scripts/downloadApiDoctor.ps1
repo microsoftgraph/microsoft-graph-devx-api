@@ -12,7 +12,7 @@ $url = "https://globalcdn.nuget.org/packages/apidoctor.$version.nupkg"
 
 Invoke-WebRequest -Uri $url -OutFile $targetFile
 
-Expand-Archive -Path $targetFile -DestinationPath $targetDirectory
+Expand-Archive -Path $targetFile -DestinationPath $targetDirectory -Verbose
 
-Write-Host "##vso[task.setvariable variable=ApiDoctorPath;]$targetDirectory"
+Write-Host "##vso[task.setvariable variable=ApiDoctorPath]$targetDirectory"
 Write-Host "Set environment variable to ($env:ApiDoctorPath)"
