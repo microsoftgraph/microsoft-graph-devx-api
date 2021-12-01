@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using ChangesService.Models;
 using FileService.Interfaces;
 
@@ -12,10 +13,11 @@ namespace ChangesService.Interfaces
     {
         ChangeLogRecords DeserializeChangeLogRecords(string jsonString);
 
-        ChangeLogRecords FilterChangeLogRecords(ChangeLogRecords changeLogRecords,
-                                                ChangeLogSearchOptions searchOptions,
-                                                MicrosoftGraphProxyConfigs graphProxyConfigs,
-                                                Dictionary<string, string> workloadServiceMappings,
-                                                IHttpClientUtility httpClientUtility = null);
+        Task<ChangeLogRecords> FilterChangeLogRecordsByUrlAsync(string requestUrl,
+                                                                ChangeLogRecords changeLogRecords,
+                                                                MicrosoftGraphProxyConfigs graphProxyConfigs,
+                                                                Dictionary<string, string> workloadServiceMappings,
+                                                                IHttpClientUtility httpClientUtility);
+        (string GraphVersion, string RequestUrl) ExtractGraphVersionAndUrlValues(string requestUrl);
     }
 }

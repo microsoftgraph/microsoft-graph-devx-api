@@ -23,5 +23,9 @@ namespace ChangesService.Common
         public const string ValueNullError = "Value cannot be null.";
         public const string ValueZeroNegativeInteger = "Value cannot be zero or a negative integer.";
         public const string JsonStringNullOrEmpty = "The JSON string to be deserialized cannot be null or empty.";
+
+        // Graph versions constants
+        public const string GraphVersion_V1 = "v1.0";
+        public const string GraphVersion_Beta = "beta";
     }
 }

@@ -55,103 +55,57 @@ namespace ChangesService.Services
         }
 
         /// <summary>
-        /// Filters <see cref="ChangeLogRecods"/> by the specified filter options in the
-        /// <see cref="ChangeLogSearchOptions"/>
+        /// Filters <see cref="ChangeLogRecods"/> by a given request url.
         /// </summary>
+        /// <param name="requestUrl">The target url to filter the <see cref="ChangeLogRecods"/> by.</param>
         /// <param name="changeLogRecords">The <see cref="ChangeLogRecords"/> with the target
         /// <see cref="ChangeLog"/> entries.</param>
-        /// <param name="searchOptions">The <see cref="ChangeLogSearchOptions"/> containing options for filtering
-        /// and paginating the target <see cref="ChangeLog"/> entries.</param>
         /// <param name="graphProxyConfigs">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
         /// <param name="workloadServiceMappings">Workload service mappings dictionary.</param>
-        /// <param name="httpClientUtility">Optional. An implementation instance of <see cref="IHttpClientUtility"/>.</param>
+        /// <param name="httpClientUtility">An implementation instance of <see cref="IHttpClientUtility"/>.</param>
         /// <returns><see cref="ChangeLogRecords"/> containing the filtered and/or paginated
         /// <see cref="ChangeLog"/> entries.</returns>
-        public ChangeLogRecords FilterChangeLogRecords(ChangeLogRecords changeLogRecords,
-                                                       ChangeLogSearchOptions searchOptions,
-                                                       MicrosoftGraphProxyConfigs graphProxyConfigs,
-                                                       Dictionary<string, string> workloadServiceMappings,
-                                                       IHttpClientUtility httpClientUtility = null)
+        public async Task<ChangeLogRecords> FilterChangeLogRecordsByUrlAsync(string requestUrl,
+                                                                             ChangeLogRecords changeLogRecords,
+                                                                             MicrosoftGraphProxyConfigs graphProxyConfigs,
+                                                                             Dictionary<string, string> workloadServiceMappings,
+                                                                             IHttpClientUtility httpClientUtility)
         {
-            _telemetryClient?.TrackTrace("Filtering changelog records",
+            _telemetryClient?.TrackTrace($"Filtering changelog records by request url: {requestUrl}",
                                          SeverityLevel.Information,
                                          _changesTraceProperties);
 
-            string filterType = null;
-
+            UtilityFunctions.CheckArgumentNullOrEmpty(requestUrl, nameof(requestUrl));
             UtilityFunctions.CheckArgumentNull(changeLogRecords, nameof(changeLogRecords));
-            UtilityFunctions.CheckArgumentNull(searchOptions, nameof(searchOptions));
             UtilityFunctions.CheckArgumentNull(graphProxyConfigs, nameof(graphProxyConfigs));
             UtilityFunctions.CheckArgumentNull(workloadServiceMappings, nameof(workloadServiceMappings));
 
-            // Temp. var to hold cascading filtered results
-            IEnumerable<ChangeLog> enumerableChangeLog = changeLogRecords.ChangeLogs;
+            var enumerableChangeLog = changeLogRecords.ChangeLogs;
 
-            if (!string.IsNullOrEmpty(searchOptions.RequestUrl)) // filter by RequestUrl
+            // Retrieve the service name from the requestUrl
+            var serviceName = await RetrieveServiceNameFromUrlAsync(requestUrl, graphProxyConfigs, workloadServiceMappings, httpClientUtility);
+
+            // Search by the retrieved service name
+            enumerableChangeLog = changeLogRecords.ChangeLogs.Where(x => x.WorkloadArea.Equals(serviceName,
+                StringComparison.OrdinalIgnoreCase) && x.Version.Equals(graphProxyConfigs.GraphVersion, StringComparison.OrdinalIgnoreCase));
+
+            // Search for url segment values in the ChangeList Target property value
+            var urlSegments = requestUrl.Split('/', StringSplitOptions.RemoveEmptyEntries).ToList();
+            var changeLogList = enumerableChangeLog.ToList();
+            changeLogList.ForEach(changeLog =>
             {
-                filterType = $"'Request Url: {searchOptions.RequestUrl}'";
-
-                // Retrieve the service name from the requestUrl
-                var serviceName = RetrieveServiceNameFromRequestUrl(searchOptions, graphProxyConfigs, workloadServiceMappings, httpClientUtility)
-                                .GetAwaiter().GetResult();
-
-                // Search by the retrieved workload name
-                enumerableChangeLog = FilterChangeLogRecordsByServiceName(changeLogRecords, serviceName, searchOptions.GraphVersion);
-
-                // Search for url segment values in the ChangeList Target property value
-                var urlSegments = searchOptions.RequestUrl.Split('/', StringSplitOptions.RemoveEmptyEntries).ToList();
-                var changeLogList = enumerableChangeLog.ToList();
-                changeLogList.ForEach(changeLog =>
+                var changeList = new List<Change>();
+                urlSegments.ForEach(segment =>
                 {
-                    var changeList = new List<Change>();
-                    urlSegments.ForEach(segment =>
-                    {
-                        changeList.AddRange(changeLog.ChangeList
-                            .Where(x => x.Target.ToLowerInvariant().Split(',', StringSplitOptions.RemoveEmptyEntries) // ChangeList Target property values are comma separated
-                            .Contains(segment.ToLowerInvariant())));
-                    });
-
-                    changeLog.ChangeList = changeList;
+                    changeList.AddRange(changeLog.ChangeList
+                        .Where(x => x.Target.ToLowerInvariant().Split(',', StringSplitOptions.RemoveEmptyEntries) // ChangeList Target property values are comma separated
+                        .Contains(segment.ToLowerInvariant())));
                 });
 
-                enumerableChangeLog = changeLogList.Where(x => x.ChangeList?.Any() ?? false);
-            }
-            else if (!string.IsNullOrEmpty(searchOptions.Service)) // filter by service
-            {
-                filterType = $"'Service: {searchOptions.Service}'";
+                changeLog.ChangeList = changeList;
+            });
 
-                // Search by the provided service name
-                enumerableChangeLog = FilterChangeLogRecordsByServiceName(changeLogRecords, searchOptions.Service, searchOptions.GraphVersion);
-            }
-
-            if (searchOptions.StartDate != null && searchOptions.EndDate != null)
-            {
-                // Filter by StartDate & EndDate
-                enumerableChangeLog = FilterChangeLogRecordsByDates(changeLogRecords, searchOptions.StartDate.Value, searchOptions.EndDate.Value);
-            }
-            else if (searchOptions.StartDate != null && searchOptions.DaysRange > 0)
-            {
-                // Filter by StartDate & DaysRange (lookahead: Given StartDate, look ahead {DaysRange} days)
-                var endDate = searchOptions.StartDate.Value.AddDays(searchOptions.DaysRange);
-
-                enumerableChangeLog = FilterChangeLogRecordsByDates(changeLogRecords, searchOptions.StartDate.Value, endDate);
-            }
-            else if (searchOptions.EndDate != null && searchOptions.DaysRange > 0)
-            {
-                // Filter by EndDate & DaysRange (lookbehind: Given EndDate, look back {DaysRange} days)
-                var startDate = searchOptions.EndDate.Value.AddDays(-searchOptions.DaysRange);
-
-                enumerableChangeLog = FilterChangeLogRecordsByDates(changeLogRecords, startDate, searchOptions.EndDate.Value);
-            }
-            else if (searchOptions.DaysRange > 0)
-            {
-                // Filter by the number of days provided, up to the current date (negative lookahead: Given DaysRange, go back {DaysRange} days and find the StartDate)
-                var startDate = DateTime.Today.AddDays(-searchOptions.DaysRange);
-
-                enumerableChangeLog = enumerableChangeLog
-                                        .Where(x => x.CreatedDateTime >= startDate &&
-                                            x.CreatedDateTime <= DateTime.Today);
-            }
+            enumerableChangeLog = changeLogList.Where(x => x.ChangeList?.Any() ?? false);
 
             // Create the new filtered result
             ChangeLogRecords filteredChangeLogRecords = new()
@@ -159,103 +113,11 @@ namespace ChangesService.Services
                 ChangeLogs = enumerableChangeLog.ToList()
             };
 
-            _telemetryClient?.TrackTrace($"Completed filtering changelog records by '{filterType}'",
+            _telemetryClient?.TrackTrace($"Finished filtering changelog records by request url: {requestUrl}",
                                          SeverityLevel.Information,
                                          _changesTraceProperties);
 
-            return PaginateChangeLogRecords(filteredChangeLogRecords, searchOptions);
-        }
-
-        /// <summary>
-        /// Paginates <see cref="ChangeLogRecords"/>.
-        /// </summary>
-        /// <param name="changeLogRecords">The <see cref="ChangeLogRecords"/> with the target
-        /// <see cref="ChangeLog"/> entries to be paginated.</param>
-        /// <param name="searchOptions">The <see cref="ChangeLogSearchOptions"/> containing options for filtering
-        /// and paginating the target <see cref="ChangeLog"/> entries.</param>
-        /// <returns>The paginated <see cref="ChangeLogRecords"/>.</returns>
-        private static ChangeLogRecords PaginateChangeLogRecords(ChangeLogRecords changeLogRecords,
-                                                                 ChangeLogSearchOptions searchOptions)
-        {
-            if (changeLogRecords.ChangeLogs.Any() && searchOptions.PageLimit != null)
-            {
-                IEnumerable<ChangeLog> enumerableChangeLogs;
-                changeLogRecords.PageLimit = searchOptions.PageLimit;
-
-                if (searchOptions.Page == 1 || changeLogRecords.TotalPages == 1)
-                {
-                    /* The first page of several pages or
-                     * the first page of only one page
-                     */
-
-                    changeLogRecords.Page = 1;
-                    enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                            .Take(searchOptions.PageLimit.Value);
-                }
-                else if (searchOptions.Page < changeLogRecords.TotalPages)
-                {
-                    // Any of the pages between first page and last page
-
-                    changeLogRecords.Page = searchOptions.Page;
-
-                    // Skip the previous' pages data
-                    int skipItems = (searchOptions.Page - 1) * searchOptions.PageLimit.Value;
-                    enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                            .Skip(skipItems)
-                                                            .Take(searchOptions.PageLimit.Value);
-                }
-                else
-                {
-                    /* The last page or any page specified
-                     * greater than the total page count.
-                     */
-
-                    changeLogRecords.Page = changeLogRecords.TotalPages;
-
-                    int lastItems = changeLogRecords.ChangeLogs.Count() % searchOptions.PageLimit.Value;
-                    if (lastItems == 0)
-                    {
-                        lastItems = searchOptions.PageLimit.Value;
-                    }
-
-                    enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                            .TakeLast(lastItems);
-                }
-
-                changeLogRecords.ChangeLogs = enumerableChangeLogs.ToList();
-            }
-
-            return changeLogRecords;
-        }
-
-        /// <summary>
-        /// Filters <see cref="ChangeLogRecords"/> by the service name.
-        /// </summary>
-        /// <param name="changeLogRecords">The <see cref="ChangeLogRecords"/> with the target
-        /// <see cref="ChangeLog"/> entries.</param>
-        /// <param name="serviceName">Name of the target worload.</param>
-        /// <returns>The <see cref="ChangeLog"/> entries filtered by the provided workload name.</returns>
-        private static IEnumerable<ChangeLog> FilterChangeLogRecordsByServiceName(ChangeLogRecords changeLogRecords, string serviceName, string version)
-        {
-            return changeLogRecords.ChangeLogs
-                                .Where(x => x.WorkloadArea.Equals(serviceName,
-                                        StringComparison.OrdinalIgnoreCase) &&
-                                        x.Version.Equals(version, StringComparison.OrdinalIgnoreCase));
-        }
-
-        /// <summary>
-        /// Filters <see cref="ChangeLogRecords"/> by workload name
-        /// </summary>
-        /// <param name="changeLogRecords">The <see cref="ChangeLogRecords"/> with the target
-        /// <see cref="ChangeLog"/> entries.</param>
-        /// <param name="startDate">The start date for the changelog data.</param>
-        /// <param name="endDate">The end date for the changelog data.</param>
-        /// <returns>The <see cref="ChangeLog"/> entries filtered by the provided dates.</returns>
-        private static IEnumerable<ChangeLog> FilterChangeLogRecordsByDates(ChangeLogRecords changeLogRecords, DateTime startDate, DateTime endDate)
-        {
-            return changeLogRecords.ChangeLogs
-                                .Where(x => x.CreatedDateTime >= startDate &&
-                                    x.CreatedDateTime <= endDate);
+            return filteredChangeLogRecords;
         }
 
         /// <summary>
@@ -268,17 +130,17 @@ namespace ChangesService.Services
         /// <param name="workloadServiceMappings">Workload service mappings dictionary.</param>
         /// <param name="httpClientUtility">An implementation instance of <see cref="IFileUtility"/>.</param>
         /// <returns>The service name of the target request url.</returns>
-        private async Task<string> RetrieveServiceNameFromRequestUrl(ChangeLogSearchOptions searchOptions,
+        private async Task<string> RetrieveServiceNameFromUrlAsync(string requestUrl,
                                                                      MicrosoftGraphProxyConfigs graphProxy,
                                                                      Dictionary<string, string> workloadServiceMappings,
                                                                      IHttpClientUtility httpClientUtility)
         {
-            _telemetryClient?.TrackTrace($"Retrieving service name for url '{searchOptions.RequestUrl}'",
+            _telemetryClient?.TrackTrace($"Retrieving service name for url: {requestUrl}",
                                          SeverityLevel.Information,
                                          _changesTraceProperties);
 
             // Pull out the service name value if it was already cached
-            if (_urlServiceNameDict.TryGetValue(searchOptions.RequestUrl, out var serviceName))
+            if (_urlServiceNameDict.TryGetValue(requestUrl, out var serviceName))
             {
                 return serviceName;
             }
@@ -297,7 +159,7 @@ namespace ChangesService.Services
 
             // The proxy url helps fetch data from Microsoft Graph anonymously
             var relativeProxyUrl = string.Format(graphProxy.GraphProxyRelativeUrl, graphProxy.GraphVersion,
-                                    searchOptions.RequestUrl);
+                                    requestUrl);
 
             // Get the absolute uri
             var requestUri = graphProxy.GraphProxyBaseUrl + relativeProxyUrl;
@@ -331,9 +193,9 @@ namespace ChangesService.Services
             if (!string.IsNullOrEmpty(serviceName))
             {
                 // Cache the retrieved service name against the base url
-                _urlServiceNameDict.Add(searchOptions.RequestUrl, serviceName);
+                _urlServiceNameDict.Add(requestUrl, serviceName);
 
-                _telemetryClient?.TrackTrace($"Finished retrieving service name for request url '{searchOptions.RequestUrl}'. " +
+                _telemetryClient?.TrackTrace($"Finished retrieving service name for request url '{requestUrl}'. " +
                                              $"TargetWorkloadId: {serviceName}" +
                                              $"Corresponding service name: {serviceName}",
                                              SeverityLevel.Information,
@@ -345,6 +207,32 @@ namespace ChangesService.Services
             {
                 throw new ArgumentOutOfRangeException($"Service name not found for the WorkloadId: {targetWorkloadId}");
             }
+        }
+
+        public (string GraphVersion, string RequestUrl) ExtractGraphVersionAndUrlValues(string requestUrl)
+        {
+            UtilityFunctions.CheckArgumentNullOrEmpty(requestUrl, nameof(requestUrl));
+
+            string graphVersion;
+            var urlSegments = requestUrl.TrimStart('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            switch (urlSegments.FirstOrDefault())
+            {
+                case ChangesServiceConstants.GraphVersion_Beta:
+                    requestUrl = requestUrl.Replace(ChangesServiceConstants.GraphVersion_Beta, string.Empty);
+                    graphVersion = ChangesServiceConstants.GraphVersion_Beta;
+                    break;
+                default:
+                    requestUrl = requestUrl.Replace(ChangesServiceConstants.GraphVersion_V1, string.Empty);
+                    graphVersion = ChangesServiceConstants.GraphVersion_V1;
+                    break;
+            }
+
+            if (!requestUrl.StartsWith('/'))
+            {
+                requestUrl = $"/{requestUrl}";
+            }
+
+            return (requestUrl, graphVersion);
         }
     }
 }

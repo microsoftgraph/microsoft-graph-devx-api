@@ -284,52 +284,7 @@ paths:
           required: false
           schema:
             type: string # https://graph.microsoft.com/v1.0/me/
-          description: Microsoft Graph API endpoint url.
-        - name: graphVersion
-          in: query
-          required: false
-          schema:
-            type: string
-            default: v1.0
-          description: The target Microsoft Graph API version.
-        - name: service
-          in: query
-          required: false
-          schema:
-            type: string
-          description: The owning team of the target Microsoft Graph API endpoint.
-        - name: daysRange
-          in: query
-          required: false
-          schema:
-            type: number # 90
-            default: 0
-          description: The number of days in which to get the change log data for.
-        - name: startDate
-          in: query
-          required: false
-          schema:
-            type: string # YYYY-MM-DD
-          description: The start date for when to start fetching the change log data.
-        - name: endDate
-          in: query
-          required: false
-          schema:
-            type: string # YYYY-MM-DD
-          description: The end date for when to stop fetching the change log data.
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 1
-          description: The page number to return.
-        - name: pageLimit
-          in: query
-          required: false
-          schema:
-            type: integer
-          description: The number of change log entries to be included in a single page.
+          description: Microsoft Graph API endpoint url.       
       responses:
         "200":
           description: OK

@@ -29,6 +29,9 @@ using PermissionsService;
 using SamplesService.Services;
 using TourStepsService.Interfaces;
 using TourStepsService.Services;
+// using Microsoft.AspNetCore.OData;
+ using Microsoft.AspNet.OData.Extensions;
+// using Microsoft.AspNetCore.OData;
 
 namespace GraphWebApi
 {
@@ -84,6 +87,8 @@ namespace GraphWebApi
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
             services.AddControllers().AddNewtonsoftJson();
             services.AddSingleton<ITourStepsStore, TourStepsStore>();
+            //  services.AddControllers().AddOData(opt => opt.Select().Count().Filter().OrderBy().SetMaxTop(100).SkipToken());
+            services.AddOData();
 
             // Localization
             services.Configure<RequestLocalizationOptions>(options =>
@@ -134,6 +139,8 @@ namespace GraphWebApi
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.EnableDependencyInjection();
+                endpoints.Select().Count().Filter().OrderBy().MaxTop(100).SkipToken().Expand();
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");

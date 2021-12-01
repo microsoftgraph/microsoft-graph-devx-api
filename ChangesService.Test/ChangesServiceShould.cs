@@ -48,35 +48,70 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsIfChangeLogRecordsArgumentIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsByUrlAsyncIfRequestUrlArgumentIsNullOrEmpty()
         {
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() =>
-                _changesService.FilterChangeLogRecords(null, new ChangeLogSearchOptions(), new MicrosoftGraphProxyConfigs(), new Dictionary<string, string>()));
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _changesService.FilterChangeLogRecordsByUrlAsync(
+                    requestUrl: null,
+                    changeLogRecords: null,
+                    graphProxyConfigs: new MicrosoftGraphProxyConfigs(),
+                    workloadServiceMappings: new Dictionary<string, string>(),
+                    httpClientUtility: _httpClientUtility));
+
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+               _changesService.FilterChangeLogRecordsByUrlAsync(
+                   requestUrl: "",
+                   changeLogRecords: null,
+                   graphProxyConfigs: new MicrosoftGraphProxyConfigs(),
+                   workloadServiceMappings: new Dictionary<string, string>(),
+                   httpClientUtility: _httpClientUtility));
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsIfSearchOptionsArgumentIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsByUrlAsyncIfChangeLogRecordsArgumentIsNull()
         {
+            // Arrange
+            var requestUrl = "/v1.0/me";
+
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() =>
-                _changesService.FilterChangeLogRecords(new ChangeLogRecords(), null, new MicrosoftGraphProxyConfigs(), new Dictionary<string, string>()));
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _changesService.FilterChangeLogRecordsByUrlAsync(
+                    requestUrl: requestUrl,
+                    changeLogRecords: null,
+                    graphProxyConfigs: new MicrosoftGraphProxyConfigs(),
+                    workloadServiceMappings: new Dictionary<string, string>(),
+                    httpClientUtility: _httpClientUtility));
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsIfGraphProxyConfigsArgumentIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsByUrlAsyncIfGraphProxyConfigsArgumentIsNull()
         {
+            // Arrange
+            var requestUrl = "/v1.0/me";
+
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() =>
-                _changesService.FilterChangeLogRecords(new ChangeLogRecords(), new ChangeLogSearchOptions(), null, new Dictionary<string, string>()));
+            Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _changesService.FilterChangeLogRecordsByUrlAsync(
+                    requestUrl: requestUrl,
+                    changeLogRecords: new ChangeLogRecords(),
+                    graphProxyConfigs: null,
+                    workloadServiceMappings: new Dictionary<string, string>(),
+                    httpClientUtility: _httpClientUtility));
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsIfworkloadServiceMappingsIsNull()
+        public void ThrowArgumentNullExceptionOnFilterChangeLogRecordsByUrlAsyncIfworkloadServiceMappingsIsNull()
         {
             // Act and Assert
             Assert.Throws<ArgumentNullException>(() =>
-                _changesService.FilterChangeLogRecords(new ChangeLogRecords(), new ChangeLogSearchOptions(), new MicrosoftGraphProxyConfigs(), null));
+                _changesService.FilterChangeLogRecordsByUrlAsync(
+                    requestUrl: requestUrl,
+                    changeLogRecords: new ChangeLogRecords(),
+                    graphProxyConfigs: null,
+                    workloadServiceMappings: new Dictionary<string, string>(),
+                    httpClientUtility: _httpClientUtility));
+            new ChangeLogRecords(), new ChangeLogSearchOptions(), new MicrosoftGraphProxyConfigs(), null));
         }
 
         [Fact]
@@ -86,7 +121,7 @@ namespace ChangesService.Test
             var searchOptions = new ChangeLogSearchOptions(service: "Compliance", graphVersion: "beta");
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -115,7 +150,7 @@ namespace ChangesService.Test
             var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/calendar/events", graphVersion: "v1.0");
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -138,7 +173,7 @@ namespace ChangesService.Test
             var searchOptions = new ChangeLogSearchOptions(requestUrl: "/me/messages", graphVersion: "v1.0");
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -154,7 +189,7 @@ namespace ChangesService.Test
 
             // Act and Assert
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-            _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
+            _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
         }
 
         [Fact]
@@ -165,7 +200,7 @@ namespace ChangesService.Test
 
             // Act and Assert
             Assert.Throws<InvalidOperationException>(() =>
-            _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
+            _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings, _httpClientUtility));
         }
 
         [Fact]
@@ -177,7 +212,7 @@ namespace ChangesService.Test
             var searchOptions = new ChangeLogSearchOptions(startDate: startDate, endDate: endDate);
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -227,7 +262,7 @@ namespace ChangesService.Test
             var searchOptions = new ChangeLogSearchOptions(daysRange: 60);
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -258,7 +293,7 @@ namespace ChangesService.Test
             var searchOptions = new ChangeLogSearchOptions(startDate: startDate, daysRange: 120);
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -303,7 +338,7 @@ namespace ChangesService.Test
             var searchOptions = new ChangeLogSearchOptions(endDate: endDate, daysRange: 30);
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);
@@ -336,7 +371,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert -- fetch first two items from the changelog sample
             Assert.NotNull(filteredChangeLogRecords);
@@ -384,7 +419,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert -- fetch middle item from the changelog sample
             Assert.NotNull(filteredChangeLogRecords);
@@ -417,7 +452,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            var filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert -- fetch last item from the changelog sample
             Assert.NotNull(filteredChangeLogRecords);
@@ -445,7 +480,7 @@ namespace ChangesService.Test
             };
 
             // Act
-            filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+            filteredChangeLogRecords = _changesService.GetChangeLogRecordsFromUrl(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
 
             // Assert
             Assert.NotNull(filteredChangeLogRecords);

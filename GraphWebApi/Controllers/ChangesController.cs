@@ -13,11 +13,16 @@ using ChangesService.Models;
 using FileService.Interfaces;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.AspNet.OData;
+using Microsoft.AspNet.OData.Query;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+// using Microsoft.AspNetCore.OData.Query;
 using Microsoft.Extensions.Configuration;
 using UtilityService;
+using HttpGetAttribute = Microsoft.AspNetCore.Mvc.HttpGetAttribute;
+using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
 
 namespace GraphWebApi.Controllers
 {
@@ -51,29 +56,10 @@ namespace GraphWebApi.Controllers
         // Gets the changelog records
         [Route("changes")]
         [Produces("application/json")]
+        [EnableQuery]
         [HttpGet]
-        public async Task<IActionResult> GetChangesAsync(
-                                         [FromQuery] string requestUrl = null,
-                                         [FromQuery] string service = null,
-                                         [FromQuery] double daysRange = 0,
-                                         [FromQuery] DateTime? startDate = null, // yyyy-MM-ddTHH:mm:ss
-                                         [FromQuery] DateTime? endDate = null, // yyyy-MM-ddTHH:mm:ss
-                                         [FromQuery] int page = 1,
-                                         [FromQuery] int? pageLimit = null,
-                                         [FromQuery] string graphVersion = "v1.0")
+        public async Task<IActionResult> GetChangesAsync([FromQuery] string requestUrl = null)
         {
-            // Options for searching, filtering and paging the changelog data
-            var searchOptions = new ChangeLogSearchOptions(requestUrl: requestUrl.BaseUriPath(),
-                                                           service: service,
-                                                           daysRange: daysRange,
-                                                           startDate: startDate,
-                                                           endDate: endDate,
-                                                           graphVersion: graphVersion)
-            {
-                Page = page,
-                PageLimit = pageLimit
-            };
-
             // Get the requested culture info.
             var cultureFeature = HttpContext.Features.Get<IRequestCultureFeature>();
             var cultureInfo = cultureFeature.RequestCulture.Culture;
@@ -85,8 +71,35 @@ namespace GraphWebApi.Controllers
             var changeLog = await _changesStore.FetchChangeLogRecordsAsync(cultureInfo);
 
             // Filter the changelog records
-            if (changeLog.ChangeLogs.Any())
+            if (!changeLog.ChangeLogs.Any())
             {
+                // No records
+                return NoContent();
+            }
+
+            if (!string.IsNullOrEmpty(requestUrl))
+            {
+                //string graphVersion;
+                //var urlSegments = requestUrl.TrimStart('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+                //switch (urlSegments.FirstOrDefault())
+                //{
+                //    case ChangesServiceConstants.GraphVersion_Beta:
+                //        requestUrl = requestUrl.Replace(ChangesServiceConstants.GraphVersion_Beta, string.Empty);
+                //        graphVersion = ChangesServiceConstants.GraphVersion_Beta;
+                //        break;
+                //    default:
+                //        requestUrl = requestUrl.Replace(ChangesServiceConstants.GraphVersion_V1, string.Empty);
+                //        graphVersion = ChangesServiceConstants.GraphVersion_V1;
+                //        break;
+                //}
+
+                //if (!requestUrl.StartsWith('/'))
+                //{
+                //    requestUrl = $"/{requestUrl}";
+                //}
+
+                (var url, var graphVersion) = _changesService.ExtractGraphVersionAndUrlValues(requestUrl);
+
                 // Configs for fetching workload names from given requestUrl
                 var graphProxyConfigs = new MicrosoftGraphProxyConfigs()
                 {
@@ -97,27 +110,15 @@ namespace GraphWebApi.Controllers
                 };
 
                 var workloadServiceMappings = await _changesStore.FetchWorkloadServiceMappingsAsync();
-                changeLog = _changesService.FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, workloadServiceMappings, _httpClientUtility);
-            }
-            else
-            {
-                // No records
-                return NoContent();
+                changeLog = await _changesService.FilterChangeLogRecordsByUrlAsync(requestUrl, changeLog, graphProxyConfigs, workloadServiceMappings, _httpClientUtility);
             }
 
-            if (!changeLog.ChangeLogs.Any())
-            {
-                _telemetryClient?.TrackTrace($"Search options not found in: requestUrl, workload, daysRange, startDate, endDate properties of changelog records",
-                                                SeverityLevel.Error,
-                                                _changesTraceProperties);
-                // Filtered items yielded no result
-                return NotFound();
-            }
+
             _changesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(ChangesController));
             _telemetryClient?.TrackTrace($"Fetched {changeLog.CurrentItems} changes",
                                             SeverityLevel.Information,
                                             _changesTraceProperties);
-            return Ok(changeLog);
+            return Ok(changeLog.ChangeLogs);
         }
     }
 }
