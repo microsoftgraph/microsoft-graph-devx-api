@@ -64,7 +64,7 @@ steps:
 
 - pwsh: |
     # release folder can change based on .NET core version, so search recursively in bin folder
-    $snippetGeneratorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/CodeSnippetsReflection.App/bin/Release *App -Recurse).FullName
+    $snippetGeneratorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/CodeSnippetsReflection.App/bin/Release *App.exe -Recurse).FullName
     Write-Host "Path to snippet generator tool: $snippetGeneratorPath"
 
     $apidoctorPath = (Get-ChildItem (Join-Path "$(ApiDoctorPath)" "tools" "apidoc.exe") -Recurse).FullName
