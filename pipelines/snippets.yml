@@ -34,12 +34,12 @@ steps:
 - checkout: self
   displayName: checkout GE api
   fetchDepth: 1
+  submodules: recursive
   persistCredentials: true
 
 - checkout: microsoft-graph-docs
   displayName: checkout docs
   fetchDepth: 1
-  submodules: recursive
   persistCredentials: true
 
 - template: templates/git-config.yml
