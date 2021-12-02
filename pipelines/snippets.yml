@@ -20,18 +20,13 @@ resources:
      endpoint: microsoftgraph
      name: microsoftgraph/microsoft-graph-docs
      ref: main
-   - repository: apidoctor
-     type: github
-     endpoint: microsoftgraph
-     name: microsoftgraph/apidoctor
-     ref: master
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
   buildConfiguration: 'Release'
-  apidoctorPath: 'apidoctor'
+  apidoctorPath: 'microsoft-graph-devx-api/apidoctor'
   apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
   snippetLanguages: 'C#,JavaScript,Objective-C,Java,Go'
 
@@ -43,11 +38,6 @@ steps:
 
 - checkout: microsoft-graph-docs
   displayName: checkout docs
-  fetchDepth: 1
-  persistCredentials: true
-
-- checkout: apidoctor
-  displayName: checkout apidoctor
   fetchDepth: 1
   submodules: recursive
   persistCredentials: true
