@@ -17,7 +17,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string modulePrefix = "Microsoft.Graph";
         private const string authModuleName = modulePrefix + ".Authentication";
         private static IList<PowerShellCommandInfo> psCommands = default;
-        private static Regex meSegmentRegex = new Regex("/me/", RegexOptions.Compiled);
+        private static Regex meSegmentRegex = new Regex("^/me($|(?=/))", RegexOptions.Compiled);
         public PowerShellGenerator()
         {
             if (psCommands == default)
@@ -46,9 +46,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             string additionalKeySegmentParmeter = default;
             var path = snippetModel.EndPathNode.Path.Replace("\\", "/");
-            if (path.StartsWith("/me/"))
+            if (meSegmentRegex.IsMatch(path))
             {
-                path = meSegmentRegex.Replace(path, "/users/{user-id}/", 1);
+                path = meSegmentRegex.Replace(path, "/users/{user-id}");
                 additionalKeySegmentParmeter = $" -UserId $userId";
             }
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
@@ -138,11 +138,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static string NormalizeQueryParameterName(string queryParam)
         {
-            string psParameterName = queryParam.TrimStart('$').ToFirstCharacterUpperCase();
+            string psParameterName = queryParam.TrimStart('$').ToLower().ToFirstCharacterUpperCase();
             return psParameterName switch {
                 "Select" => "Property",
                 "Expand" => "ExpandProperty",
                 "Count" => "CountVariable",
+                "Orderby" => "Sort",
                 _ => psParameterName
             };
         }
@@ -191,7 +192,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                                                                                                  
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
-            if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
+            if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody) 
+                || "undefined".Equals(snippetModel?.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
                 return (default, default);
             if (indentManager == null) throw new ArgumentNullException(nameof(indentManager));
 
@@ -199,15 +201,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant())
             {
                 case "application/json":
-                    if (!string.IsNullOrEmpty(snippetModel.RequestBody) &&
-                        !"undefined".Equals(snippetModel.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
-                        using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true }))
-                        {
-                            var schema = snippetModel.RequestSchema;
-                            payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = @{{");
-                            WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
-                            payloadSB.AppendLine("}");
-                        }
+                    using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true }))
+                    {
+                        var schema = snippetModel.RequestSchema;
+                        payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = @{{");
+                        WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
+                        payloadSB.AppendLine("}");
+                    }
                     break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
