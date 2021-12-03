@@ -15,7 +15,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
-        private const string modelNameSpace = modulePrefix + ".PowerShell.Models";
         private const string authModuleName = modulePrefix + ".Authentication";
         private static IList<PowerShellCommandInfo> psCommands = default;
         private static Regex meSegmentRegex = new Regex("/me/", RegexOptions.Compiled);
@@ -25,9 +24,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 string authModulePath = default;
                 // Load MgCommandMetadata file.
-                foreach(string modulePath in Environment.GetEnvironmentVariable("PSModulePath")?.Split(";")){
-                    if (Directory.Exists($"{modulePath}/{authModuleName}"))
-                        authModulePath = Directory.GetDirectories($"{modulePath}/{authModuleName}").Max();
+                var psModuleInstallPaths = new[] {
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PowerShell\\Modules"),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "powershell\\7\\Modules")
+                };
+                foreach (string modulePath in psModuleInstallPaths) {
+                    if (Directory.Exists($"{modulePath}\\{authModuleName}"))
+                        authModulePath = Directory.GetDirectories($"{modulePath}\\{authModuleName}").Max();
                 }
                 if (authModulePath == default)
                     throw new Exception("Microsoft.Graph PowerShell SDK could not be found on this machine. Please install the SDK using 'Install-Module Microsoft.Graph'.");
