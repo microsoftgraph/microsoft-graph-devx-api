@@ -148,6 +148,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-CountVariable CountVar", result);
+            Assert.Contains("-ConsistencyLevel Eventual", result);
         }
 
         [Fact]
@@ -157,6 +158,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-UserId $userId -AppRoleAssignmentId $appRoleAssignmentId", result);
+        }
+
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithQueryParameters()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?customParameter=value");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-CustomParameter value", result);
         }
 
         [Theory]
@@ -243,6 +253,29 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 $"Password = \"2d79ba3a-b03a-9ed5-86dc-79544e262664\"{Environment.NewLine}\t\t" +
                 $"ForceChangePasswordNextSignIn = $false{Environment.NewLine}\t" +
                 $"}}{Environment.NewLine}" +
+                $"}}";
+            Assert.Contains(expectedParams, result);
+            Assert.Contains("-BodyParameter $params", result);
+        }
+
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithArrayInBody()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups")
+            {
+                Content = new StringContent(
+                    "{\"displayName\": \"Library Assist\",\"groupTypes\": [\"Unified\",\"DynamicMembership\"]",
+                    Encoding.UTF8,
+                    "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
+                $"DisplayName = \"Library Assist\"{Environment.NewLine}\t" +
+                $"GroupTypes = @({Environment.NewLine}\t\t" +
+                $"\"Unified\"{Environment.NewLine}\t\t" +
+                $"\"DynamicMembership\"{Environment.NewLine}\t" +
+                $"){Environment.NewLine}" +
                 $"}}";
             Assert.Contains(expectedParams, result);
             Assert.Contains("-BodyParameter $params", result);

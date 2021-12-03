@@ -100,7 +100,7 @@ namespace CodeSnippetsReflection.OpenAPI
             else throw new ArgumentOutOfRangeException(nameof(method));
         }
         private static Regex namespaceRegex = new Regex("^Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private string TrimNamespace(string path)
+        private static string TrimNamespace(string path)
         {
             Match namespaceMatch = namespaceRegex.Match(path);
             if (namespaceMatch.Success)

@@ -16,8 +16,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
         private const string authModuleName = modulePrefix + ".Authentication";
-        private static IList<PowerShellCommandInfo> psCommands = default;
-        private static Regex meSegmentRegex = new Regex("^/me($|(?=/))", RegexOptions.Compiled);
+        private IList<PowerShellCommandInfo> psCommands = default;
+        private Regex meSegmentRegex = new Regex("^/me($|(?=/))", RegexOptions.Compiled);
         public PowerShellGenerator()
         {
             if (psCommands == default)
@@ -33,7 +33,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         authModulePath = Directory.GetDirectories($"{modulePath}\\{authModuleName}").Max();
                 }
                 if (authModulePath == default)
-                    throw new Exception("Microsoft.Graph PowerShell SDK could not be found on this machine. Please install the SDK using 'Install-Module Microsoft.Graph'.");
+                    throw new ArgumentNullException("Microsoft.Graph PowerShell SDK could not be found on this machine. Please install the SDK using 'Install-Module Microsoft.Graph'.");
                 string MgCommandMetadataPath = Directory.GetFiles($"{authModulePath}/custom/common", "MgCommandMetadata.json").FirstOrDefault();
                 string jsonString = File.ReadAllText(MgCommandMetadataPath);
                 psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
@@ -71,7 +71,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (!string.IsNullOrEmpty(keySegmentParameter))
                     snippetBuilder.Append($"{keySegmentParameter}");
 
-                var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
+                var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel);
                 if (!string.IsNullOrEmpty(queryParamsPayload))
                     snippetBuilder.Append($" {queryParamsPayload}");
 
@@ -83,7 +83,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return snippetBuilder.ToString();
         }
 
-        private string GetKeySegmentParameters(IEnumerable<OpenApiUrlTreeNode> pathNodes)
+        private static string GetKeySegmentParameters(IEnumerable<OpenApiUrlTreeNode> pathNodes)
         {
             if (!pathNodes.Any()) return string.Empty;
             return pathNodes.Where(x => x.Segment.IsCollectionIndex()).Select(p =>
@@ -96,7 +96,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             });
         }
 
-        private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager)
+        private static (string, string) GetRequestQueryParameters(SnippetModel model)
         {
             string requestParametersVarName = "requestParameters";
             var payloadSB = new StringBuilder();
@@ -177,7 +177,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
 
         private static Regex namespaceRegex = new Regex("\\/Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private string TrimNamespace(string path)
+        private static string TrimNamespace(string path)
         {
             Match namespaceMatch = namespaceRegex.Match(path);
             if (namespaceMatch.Success)
