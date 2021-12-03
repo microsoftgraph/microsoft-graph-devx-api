@@ -109,8 +109,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     {
                         var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
                         string parameterName = NormalizeQueryParameterName(kvPair[0]);
-                        // Add -ConsistencyLevel eventual when CountVariable is present.
                         payloadSB.Append($"-{parameterName} {GetQueryParameterValue(parameterName, kvPair[1].Trim('"'), replacements)} ");
+                        if (parameterName.Equals("CountVariable"))
+                            payloadSB.Append("-ConsistencyLevel Eventual ");
                     }
                     else
                         payloadSB.Append($"-{NormalizeQueryParameterName(queryParam)} = {""} ");
@@ -133,7 +134,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var valueWithNested = originalValue.Split(',')
                                                     .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
                                                     .Aggregate((a, b) => $"{a},{b}");
-                return $"\"{valueWithNested}\"";
+                // Replace '$' with '`$' since '$' is a reserved character in powershell.
+                return $"\"{valueWithNested.Replace("$", "`$")}\"";
             }
         }
         private static string NormalizeQueryParameterName(string queryParam)
@@ -148,18 +150,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             };
         }
 
-        private static Regex nestedStatementRegex = new Regex(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
+        private static Regex nestedStatementRegex = new Regex(@"(\w+|\w+\/\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams)
         {
             var replacements = new Dictionary<string, string>();
             var matches = nestedStatementRegex.Matches(queryParams);
             if (matches.Any())
-                foreach (Match match in matches)
+                foreach (GroupCollection groupCollection in matches.Select(x => x.Groups))
                 {
-                    var key = match.Groups[1].Value;
-                    var value = match.Groups[2].Value;
-                    replacements.Add(key, value);
-                    queryParams = queryParams.Replace(value, string.Empty);
+                    var key = groupCollection[1].Value;
+                    var value = groupCollection[2].Value;
+                    if (value.Contains("=") && replacements.TryAdd(key, value))
+                        queryParams = queryParams.Replace(value, string.Empty);
                 }
             return (queryParams, replacements);
         }
