@@ -171,26 +171,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (psCommands.Count == 0)
                 return default;
-            path = Regex.Escape(TrimNamespace(path));
+            path = Regex.Escape(SnippetModel.TrimNamespace(path));
             // Tokenize uri by substituting parameter values with "{.*}".
             path = $"^{Regex.Replace(path, "(?<={)(.*?)(?=})", "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
-        }
-
-        private static Regex namespaceRegex = new Regex("\\/Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static string TrimNamespace(string path)
-        {
-            Match namespaceMatch = namespaceRegex.Match(path);
-            if (namespaceMatch.Success)
-            {
-                string fqnAction = namespaceMatch.Groups[0].Value;
-                // Trim nested namespace segments.
-                string[] nestedActionNamespaceSegments = namespaceMatch.Groups[1].Value.Split("/.");
-                // Remove trailing '()' from functions.
-                string actionName  = nestedActionNamespaceSegments[nestedActionNamespaceSegments.Length - 1].Replace("()", "");
-                path = Regex.Replace(path, Regex.Escape(fqnAction), $"/{actionName}");
-            }
-            return path;
         }
                                                                                                                  
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
