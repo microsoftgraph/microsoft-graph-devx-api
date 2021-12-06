@@ -147,7 +147,7 @@ namespace CodeSnippetsReflection.App
                 return;
             }
 
-            if (snippet != string.Empty)
+            if (!string.IsNullOrWhiteSpace(snippet))
             {
                 var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
                 Console.WriteLine($"Writing snippet: {filePath}");

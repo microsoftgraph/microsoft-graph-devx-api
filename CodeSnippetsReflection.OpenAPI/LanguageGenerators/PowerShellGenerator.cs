@@ -16,8 +16,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
         private const string authModuleName = modulePrefix + ".Authentication";
-        private IList<PowerShellCommandInfo> psCommands = default;
-        private Regex meSegmentRegex = new Regex("^/me($|(?=/))", RegexOptions.Compiled);
+        private readonly IList<PowerShellCommandInfo> psCommands = default;
+        private static  Regex meSegmentRegex = new Regex("^/me($|(?=/))", RegexOptions.Compiled);
         public PowerShellGenerator()
         {
             if (psCommands == default)
@@ -28,7 +28,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PowerShell\\Modules"),
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "powershell\\7\\Modules")
                 };
-                foreach (string modulePath in psModuleInstallPaths) {
+                foreach (string modulePath in psModuleInstallPaths)
+                {
                     if (Directory.Exists($"{modulePath}\\{authModuleName}"))
                         authModulePath = Directory.GetDirectories($"{modulePath}\\{authModuleName}").Max();
                 }
@@ -275,7 +276,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment)
         {
-            var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? value.EnumerateArray().First().ValueKind.ToString();
             payloadSB.AppendLine($"{propertyAssignment}@(");
             indentManager.Indent();
             foreach (var item in value.EnumerateArray())

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.OpenApi.Models;
@@ -8,7 +8,7 @@ namespace CodeSnippetsReflection.OpenAPI {
         public static IEnumerable<KeyValuePair<string, OpenApiSchema>> GetAllProperties(this OpenApiSchema schema) {
             if(schema == null) return Enumerable.Empty<KeyValuePair<string, OpenApiSchema>>();
 
-            if (schema.AllOf.Count == 0 && schema.AnyOf.Count == 0 && schema.OneOf.Count == 0)
+            if (!schema.AllOf.Any() && !schema.AnyOf.Any() && !schema.OneOf.Any())
             {
                 return schema.Properties
                         .Union(schema.AllOf.FlattenEmptyEntries(x => x.AllOf, 2).SelectMany(x => x.Properties))

@@ -131,7 +131,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
         private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager) {
             if(snippetModel.IsRequestBodyValid)
                 try {
-                    using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody);
+                    using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
                     var schema = snippetModel.RequestSchema;
                     var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
                     payloadSB.AppendLine($"var {RequestBodyVarName} = new {className}");

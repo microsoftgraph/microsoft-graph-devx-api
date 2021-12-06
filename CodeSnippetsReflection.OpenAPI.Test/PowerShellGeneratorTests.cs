@@ -102,7 +102,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=displayName)");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("-ExpandProperty \"members($select=displayName)\"", result);
+            Assert.Contains("-ExpandProperty \"members(`$select=displayName)\"", result);
         }
 
         [Fact]
@@ -166,7 +166,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?customParameter=value");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("-CustomParameter value", result);
+            Assert.Contains("-Customparameter \"value\"", result);
         }
 
         [Theory]
@@ -264,7 +264,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups")
             {
                 Content = new StringContent(
-                    "{\"displayName\": \"Library Assist\",\"groupTypes\": [\"Unified\",\"DynamicMembership\"]",
+                    "{\"displayName\": \"Library Assist\",\"groupTypes\": [\"Unified\",\"DynamicMembership\"]}",
                     Encoding.UTF8,
                     "application/json")
             };
