@@ -28,9 +28,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PowerShell\\Modules"),
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "powershell\\7\\Modules")
                 };
-                foreach (string modulePath in psModuleInstallPaths)
+                foreach (string modulePath in psModuleInstallPaths.Where(x => Directory.Exists($"{x}\\{authModuleName}")))
                 {
-                    if (Directory.Exists($"{modulePath}\\{authModuleName}"))
                         authModulePath = Directory.GetDirectories($"{modulePath}\\{authModuleName}").Max();
                 }
                 if (authModulePath == default)
