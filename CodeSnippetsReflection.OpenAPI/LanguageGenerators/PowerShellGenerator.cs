@@ -15,27 +15,23 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
-        private const string authModuleName = modulePrefix + ".Authentication";
+        private const string repoName = "microsoft-graph-devx-api";
+        private const string psRepoName = "msgraph-sdk-powershell";
+        private const string mgCommandMetadataRelativePath = @"src\Authentication\Authentication\custom\common\MgCommandMetadata.json";
         private readonly IList<PowerShellCommandInfo> psCommands = default;
         private static  Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
         public PowerShellGenerator()
         {
             if (psCommands == default)
             {
-                string authModulePath = default;
-                // Load MgCommandMetadata file.
-                var psModuleInstallPaths = new[] {
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "PowerShell\\Modules"),
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "powershell\\7\\Modules")
-                };
-                foreach (string modulePath in psModuleInstallPaths.Where(x => Directory.Exists($"{x}\\{authModuleName}")))
-                {
-                        authModulePath = Directory.GetDirectories($"{modulePath}\\{authModuleName}").Max();
-                }
-                if (authModulePath == default)
-                    throw new ArgumentNullException("Microsoft.Graph PowerShell SDK could not be found on this machine. Please install the SDK using 'Install-Module Microsoft.Graph'.");
-                string MgCommandMetadataPath = Directory.GetFiles($"{authModulePath}/custom/common", "MgCommandMetadata.json").FirstOrDefault();
-                string jsonString = File.ReadAllText(MgCommandMetadataPath);
+                string baseDir = System.AppContext.BaseDirectory;
+                string repoPath = baseDir.Remove(baseDir.IndexOf(repoName) + repoName.Length);
+                string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, mgCommandMetadataRelativePath);
+
+                if (!File.Exists(mgCommandMetadataPath))
+                    throw new ArgumentNullException($"{psRepoName} could not be in {repoPath}. Please ensure the repo is clone recursivelly.");
+
+                string jsonString = File.ReadAllText(mgCommandMetadataPath);
                 psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
             }
         }
