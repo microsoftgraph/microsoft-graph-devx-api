@@ -17,7 +17,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string modulePrefix = "Microsoft.Graph";
         private const string authModuleName = modulePrefix + ".Authentication";
         private readonly IList<PowerShellCommandInfo> psCommands = default;
-        private static  Regex meSegmentRegex = new Regex("^/me($|(?=/))", RegexOptions.Compiled);
+        private static  Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
         public PowerShellGenerator()
         {
             if (psCommands == default)
@@ -150,7 +150,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             };
         }
 
-        private static Regex nestedStatementRegex = new Regex(@"(\w+|\w+\/\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static Regex nestedStatementRegex = new(@"(\w+|\w+\/\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams)
         {
             var replacements = new Dictionary<string, string>();
@@ -166,13 +166,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return (queryParams, replacements);
         }
 
+        private static Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled);
         private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
         {
             if (psCommands.Count == 0)
                 return default;
             path = Regex.Escape(SnippetModel.TrimNamespace(path));
-            // Tokenize uri by substituting parameter values with "{.*}".
-            path = $"^{Regex.Replace(path, "(?<={)(.*?)(?=})", "(\\w*-\\w*|\\w*)")}$";
+            // Tokenize uri by substituting parameter values with "{.*}" e.g, "/users/{user-id}" to "/users/{.*}".
+            path = $"^{keyIndexRegex.Replace(path, "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
         }
                                                                                                                  

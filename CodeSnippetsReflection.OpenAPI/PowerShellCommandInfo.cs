@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CodeSnippetsReflection.OpenAPI
 {
-    internal class PowerShellCommandInfo
+    internal record PowerShellCommandInfo
     {
         public string Method { get; set; }
         public string OutputType { get; set; }
