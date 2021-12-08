@@ -29,7 +29,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, mgCommandMetadataRelativePath);
 
                 if (!File.Exists(mgCommandMetadataPath))
-                    throw new ArgumentNullException($"{psRepoName} could not be in {repoPath}. Please ensure the repo is clone recursivelly.");
+                    throw new ArgumentNullException($"{mgCommandMetadataPath} could not be in {repoPath}. Please ensure the repo is clone recursivelly.");
 
                 string jsonString = File.ReadAllText(mgCommandMetadataPath);
                 psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
@@ -67,36 +67,16 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (!string.IsNullOrEmpty(keySegmentParameter))
                     snippetBuilder.Append($"{keySegmentParameter}");
 
-                var queryParamsPayload = GetRequestQueryParameters(snippetModel);
+                var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel);
                 if (!string.IsNullOrEmpty(queryParamsPayload))
                     snippetBuilder.Append($" {queryParamsPayload}");
 
                 var parameterList = GetActionParametersList(payloadVarName);
                 if (!string.IsNullOrEmpty(parameterList))
                     snippetBuilder.Append($" {parameterList}");
-
-                var requestHeadersPayload = GetSupportedRequestHeaders(snippetModel);
-                if (!string.IsNullOrEmpty(requestHeadersPayload))
-                    snippetBuilder.Append(requestHeadersPayload);
             }
 
             return snippetBuilder.ToString();
-        }
-
-        private static string GetSupportedRequestHeaders(SnippetModel snippetModel)
-        {
-            var payloadSB = new StringBuilder();
-            if (Enum.TryParse(snippetModel.Method.Method, true, out OperationType method))
-            {
-                var operation = snippetModel.EndPathNode.PathItems.Select(p => p.Value.Operations[method]).FirstOrDefault();
-                foreach (var header in snippetModel.RequestHeaders)
-                {
-                    var parameter = operation.Parameters.FirstOrDefault(p => p.Name.Equals(header.Key, StringComparison.OrdinalIgnoreCase));
-                    if (parameter != null)
-                        payloadSB.AppendLine($"-{parameter.Name} {header.Value.FirstOrDefault()} ");
-                }
-            }
-            return payloadSB.ToString();
         }
 
         private static string GetKeySegmentParameters(IEnumerable<OpenApiUrlTreeNode> pathNodes)
@@ -112,8 +92,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             });
         }
 
-        private static string GetRequestQueryParameters(SnippetModel model)
+        private static (string, string) GetRequestQueryParameters(SnippetModel model)
         {
+            string requestParametersVarName = "requestParameters";
             var payloadSB = new StringBuilder();
             if (!string.IsNullOrEmpty(model.QueryString))
             {
@@ -125,13 +106,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
                         string parameterName = NormalizeQueryParameterName(kvPair[0]);
                         payloadSB.Append($"-{parameterName} {GetQueryParameterValue(parameterName, kvPair[1].Trim('"'), replacements)} ");
+                        if (parameterName.Equals("CountVariable") || parameterName.Equals("Search"))
+                            payloadSB.Append("-ConsistencyLevel Eventual ");
                     }
                     else
                         payloadSB.Append($"-{NormalizeQueryParameterName(queryParam)} = {""} ");
                 }
-                return payloadSB.ToString();
+                return (payloadSB.ToString(), requestParametersVarName);
             }
-            return default;
+            return (default, default);
         }
 
         private static string GetQueryParameterValue(string normalizedParameterName, string originalValue, Dictionary<string, string> replacements)
