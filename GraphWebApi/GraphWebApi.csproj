@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
     <UserSecretsId>2c8c1580-cbe8-4155-ac1a-4304a0632b26</UserSecretsId>
     <ApplicationInsightsResourceId>/subscriptions/68397ef5-9754-46e7-9572-9b15d12367f1/resourceGroups/Graph-Explorer-API/providers/microsoft.insights/components/DevX-API-AppInsights-Testing</ApplicationInsightsResourceId>
