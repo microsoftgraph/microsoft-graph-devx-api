@@ -75,7 +75,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$select=displayName,id");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("-Property DisplayName,Id", result);
+            Assert.Contains("-Property \"displayName,id\"", result);
         }
 
         [Fact]
@@ -145,10 +145,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesSnippetForRequestWithCountQueryOption()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-CountVariable CountVar", result);
-            Assert.Contains("-ConsistencyLevel Eventual", result);
+            Assert.Contains("-ConsistencyLevel eventual", result);
         }
 
         [Fact]
@@ -196,10 +197,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesSnippetForRequestWithSearchQueryOption()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:Megan\"");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Search \"displayName:Megan\"", result);
-            Assert.Contains("-ConsistencyLevel Eventual", result);
+            Assert.Contains("-ConsistencyLevel eventual", result);
         }
 
         [Fact]
@@ -240,8 +242,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     "\"city\":\"Seattle\"," +
                     "\"PasswordProfile\":{" +
                     "\"Password\":\"2d79ba3a-b03a-9ed5-86dc-79544e262664\"," +
-                    "\"ForceChangePasswordNextSignIn\": false}}", 
-                    Encoding.UTF8, 
+                    "\"ForceChangePasswordNextSignIn\": false}}",
+                    Encoding.UTF8,
                     "application/json")
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
