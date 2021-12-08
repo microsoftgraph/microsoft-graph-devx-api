@@ -15,17 +15,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
-        private const string repoName = "microsoft-graph-devx-api";
         private const string psRepoName = "msgraph-sdk-powershell";
         private const string mgCommandMetadataRelativePath = @"src\Authentication\Authentication\custom\common\MgCommandMetadata.json";
         private readonly IList<PowerShellCommandInfo> psCommands = default;
-        private static  Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
         public PowerShellGenerator()
         {
             if (psCommands == default)
             {
-                string baseDir = System.AppContext.BaseDirectory;
-                string repoPath = baseDir.Remove(baseDir.IndexOf(repoName) + repoName.Length);
+                string repoPath = Path.GetFullPath(@"..\..\..\..");
                 string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, mgCommandMetadataRelativePath);
 
                 if (!File.Exists(mgCommandMetadataPath))
@@ -39,14 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
-
-            string additionalKeySegmentParmeter = default;
-            var path = snippetModel.EndPathNode.Path.Replace("\\", "/");
-            if (meSegmentRegex.IsMatch(path))
-            {
-                path = meSegmentRegex.Replace(path, "/users/{user-id}");
-                additionalKeySegmentParmeter = $" -UserId $userId";
-            }
+            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(snippetModel.EndPathNode.Path.Replace("\\", "/"));
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
@@ -75,8 +65,35 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (!string.IsNullOrEmpty(parameterList))
                     snippetBuilder.Append($" {parameterList}");
             }
-
             return snippetBuilder.ToString();
+        }
+
+        private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
+        private static (string, string) SubstituteMeSegment(string path)
+        {
+            string additionalKeySegmentParmeter = default;
+            if (meSegmentRegex.IsMatch(path))
+            {
+                path = meSegmentRegex.Replace(path, "/users/{user-id}");
+                additionalKeySegmentParmeter = $" -UserId $userId";
+            }
+            return (path, additionalKeySegmentParmeter);
+        }
+
+        private static string GetSupportedRequestHeaders(SnippetModel snippetModel)
+        {
+            var payloadSB = new StringBuilder();
+            if (Enum.TryParse(snippetModel.Method.Method, true, out OperationType method))
+            {
+                var operation = snippetModel.EndPathNode.PathItems.Select(p => p.Value.Operations[method]).FirstOrDefault();
+                foreach (var header in snippetModel.RequestHeaders)
+                {
+                    var parameter = operation.Parameters.FirstOrDefault(p => p.Name.Equals(header.Key, StringComparison.OrdinalIgnoreCase));
+                    if (parameter != null)
+                        payloadSB.AppendLine($"-{parameter.Name} {header.Value.FirstOrDefault()} ");
+                }
+            }
+            return payloadSB.ToString();
         }
 
         private static string GetKeySegmentParameters(IEnumerable<OpenApiUrlTreeNode> pathNodes)
