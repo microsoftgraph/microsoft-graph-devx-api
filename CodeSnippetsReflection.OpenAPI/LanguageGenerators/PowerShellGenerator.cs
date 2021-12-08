@@ -19,7 +19,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string psRepoName = "msgraph-sdk-powershell";
         private const string mgCommandMetadataRelativePath = @"src\Authentication\Authentication\custom\common\MgCommandMetadata.json";
         private readonly IList<PowerShellCommandInfo> psCommands = default;
-        private static  Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
         public PowerShellGenerator()
         {
             if (psCommands == default)
@@ -39,14 +38,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
-
-            string additionalKeySegmentParmeter = default;
-            var path = snippetModel.EndPathNode.Path.Replace("\\", "/");
-            if (meSegmentRegex.IsMatch(path))
-            {
-                path = meSegmentRegex.Replace(path, "/users/{user-id}");
-                additionalKeySegmentParmeter = $" -UserId $userId";
-            }
+            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(snippetModel.EndPathNode.Path.Replace("\\", "/"));
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
@@ -79,8 +71,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (!string.IsNullOrEmpty(requestHeadersPayload))
                     snippetBuilder.Append(requestHeadersPayload);
             }
-
             return snippetBuilder.ToString();
+        }
+
+        private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
+        private static (string, string) SubstituteMeSegment(string path)
+        {
+            string additionalKeySegmentParmeter = default;
+            if (meSegmentRegex.IsMatch(path))
+            {
+                path = meSegmentRegex.Replace(path, "/users/{user-id}");
+                additionalKeySegmentParmeter = $" -UserId $userId";
+            }
+            return (path, additionalKeySegmentParmeter);
         }
 
         private static string GetSupportedRequestHeaders(SnippetModel snippetModel)

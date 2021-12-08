@@ -23,8 +23,8 @@ steps:
 - checkout: self
   clean: true
   fetchDepth: 1
-  submodules: true
-  
+  submodules: recursive
+
 - task: DotNetCoreCLI@2
   displayName: "Restore Nuget Packages"
   inputs:
@@ -47,6 +47,6 @@ steps:
   displayName: "Publish Test Results"
   inputs:
     testResultsFormat: xUnit
-    testResultsFiles: '**/*.trx' 
+    testResultsFiles: '**/*.trx'
     codeCoverageTool: 'cobertura'
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
