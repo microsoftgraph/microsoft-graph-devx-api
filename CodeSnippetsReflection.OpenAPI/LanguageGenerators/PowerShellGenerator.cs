@@ -123,7 +123,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var (queryString, replacements) = ReplaceNestedOdataQueryParameters(Uri.UnescapeDataString(model.QueryString));
                 foreach (var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
                 {
-                    if (queryParam.Contains("="))
+                    if (queryParam.Contains('='))
                     {
                         var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
                         string parameterName = NormalizeQueryParameterName(kvPair[0]);
@@ -176,7 +176,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 {
                     var key = groupCollection[1].Value;
                     var value = groupCollection[2].Value;
-                    if (value.Contains("=") && replacements.TryAdd(key, value))
+                    if (value.Contains('=') && replacements.TryAdd(key, value))
                         queryParams = queryParams.Replace(value, string.Empty);
                 }
             return (queryParams, replacements);
