@@ -17,7 +17,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string modulePrefix = "Microsoft.Graph";
         private const string projName = "CodeSnippetsReflection";
         private const string psRepoName = "msgraph-sdk-powershell";
-        private const string mgCommandMetadataRelativePath = @"src\Authentication\Authentication\custom\common\MgCommandMetadata.json";
+        private const string mgCommandMetadataRelativePath = @"src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
         private readonly IList<PowerShellCommandInfo> psCommands = default;
         public PowerShellGenerator()
         {
@@ -28,7 +28,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, mgCommandMetadataRelativePath);
 
                 if (!File.Exists(mgCommandMetadataPath))
-                    throw new ArgumentNullException($"{psRepoName} could not be in {repoPath}. Please ensure the repo is clone recursivelly.");
+                    throw new ArgumentNullException($"{psRepoName} could not be found in {repoPath}. Please ensure the repo is clone recursivelly.");
 
                 string jsonString = File.ReadAllText(mgCommandMetadataPath);
                 psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
@@ -123,7 +123,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var (queryString, replacements) = ReplaceNestedOdataQueryParameters(Uri.UnescapeDataString(model.QueryString));
                 foreach (var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
                 {
-                    if (queryParam.Contains("="))
+                    if (queryParam.Contains('='))
                     {
                         var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
                         string parameterName = NormalizeQueryParameterName(kvPair[0]);
@@ -176,7 +176,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 {
                     var key = groupCollection[1].Value;
                     var value = groupCollection[2].Value;
-                    if (value.Contains("=") && replacements.TryAdd(key, value))
+                    if (value.Contains('=') && replacements.TryAdd(key, value))
                         queryParams = queryParams.Replace(value, string.Empty);
                 }
             return (queryParams, replacements);
