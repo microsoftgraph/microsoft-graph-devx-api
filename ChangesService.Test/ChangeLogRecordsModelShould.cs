@@ -72,34 +72,6 @@ namespace ChangesService.Test
             Assert.Equal(changeLogRecords.CurrentItems, changeLogRecords.ChangeLogs.Count());
         }
 
-        [Fact]
-        public void UpdateTotalPagesOnPageLimitPropertySetter()
-        {
-            // Arrange & Act
-            var changeLogRecords = new ChangeLogRecords
-            {
-                ChangeLogs = GetChangeLogRecords().ChangeLogs
-            };
-
-            // Act
-            changeLogRecords.Top = 1;
-
-            // Assert
-            Assert.Equal(8, changeLogRecords.TotalPages);
-
-            // Act
-            changeLogRecords.Top = 2;
-
-            // Assert
-            Assert.Equal(4, changeLogRecords.TotalPages);
-
-            // Act
-            changeLogRecords.Top = 3;
-
-            // Assert
-            Assert.Equal(3, changeLogRecords.TotalPages);
-        }
-
         /// <summary>
         /// Gets a sample of <see cref="ChangeLogRecords"/>
         /// </summary>

@@ -40,28 +40,6 @@ namespace ChangesService.Models
         public int TotalItems { get; private set; }
 
         /// <summary>
-        /// The total page count.
-        /// </summary>
-        public int TotalPages
-        {
-            get
-            {
-                if (TotalItems > 0 && Top.HasValue)
-                {
-                    int extraPage = 0;
-                    if (TotalItems % Top > 0)
-                    {
-                        extraPage++;
-                    }
-
-                    return (TotalItems / Top.Value) + extraPage;
-                }
-
-                return 1;
-            }
-        }
-
-        /// <summary>
         /// Updates the TotalItems property.
         /// </summary>
         private void UpdateTotalItems()
