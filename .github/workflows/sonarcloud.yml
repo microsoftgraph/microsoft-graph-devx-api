@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup .NET 6
-        uses: actions/setup-dotnet@v1.8.2
+        uses: actions/setup-dotnet@v2
         with:
           dotnet-version: 6.0.x
       - name: Set up JDK 11
