@@ -10,22 +10,21 @@ namespace ChangesService.Test
 {
     public class ChangeLogPaginationModelShould
     {
-        readonly ChangeLogPagination _pagination = new ChangeLogPagination();
+        readonly ChangeLogQueryOptions _pagination = new ChangeLogQueryOptions();
 
         [Fact]
-        public void ThrowArgumentExceptionIfPageValueIsZeroOrNegativeInteger()
+        public void ThrowArgumentExceptionIfSkipValueIsNegativeInteger()
         {
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => _pagination.Page = 0);
-            Assert.Throws<ArgumentException>(() => _pagination.Page = -1);
+            Assert.Throws<ArgumentException>(() => _pagination.Skip = -1);
         }
 
         [Fact]
-        public void ThrowArgumentExceptionIfPageLimitValueIsZeroOrNegativeInteger()
+        public void ThrowArgumentExceptionIfTopValueIsZeroOrNegativeInteger()
         {
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => _pagination.PageLimit = 0);
-            Assert.Throws<ArgumentException>(() => _pagination.PageLimit = -1);
+            Assert.Throws<ArgumentException>(() => _pagination.Top = 0);
+            Assert.Throws<ArgumentException>(() => _pagination.Top = -1);
         }
     }
 }

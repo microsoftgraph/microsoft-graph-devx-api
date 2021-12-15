@@ -82,19 +82,19 @@ namespace ChangesService.Test
             };
 
             // Act
-            changeLogRecords.PageLimit = 1;
+            changeLogRecords.Top = 1;
 
             // Assert
             Assert.Equal(8, changeLogRecords.TotalPages);
 
             // Act
-            changeLogRecords.PageLimit = 2;
+            changeLogRecords.Top = 2;
 
             // Assert
             Assert.Equal(4, changeLogRecords.TotalPages);
 
             // Act
-            changeLogRecords.PageLimit = 3;
+            changeLogRecords.Top = 3;
 
             // Assert
             Assert.Equal(3, changeLogRecords.TotalPages);
