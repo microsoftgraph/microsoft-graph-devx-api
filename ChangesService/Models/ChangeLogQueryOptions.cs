@@ -9,48 +9,44 @@ using System;
 namespace ChangesService.Models
 {
     /// <summary>
-    /// Options for paging changelog data.
+    /// Options for slicing changelog data.
     /// </summary>
-    public record ChangeLogPagination
+    public record ChangeLogQueryOptions
     {
-        private int _page = 1;
-        private int? _pageLimit;
-
-        /// <summary>
-        /// The current page.
-        /// </summary>
-        [JsonProperty(PropertyName = "currentPage")]
-        public int Page
-        {
-            get => _page;
-            set
-            {
-                if (value < 1)
-                {
-                    throw new ArgumentException(ChangesServiceConstants.ValueZeroNegativeInteger, nameof(Page));
-                }
-                _page = value;
-            }
-        }
-
-        /// <summary>
-        /// The total page count.
-        /// </summary>
-        public int TotalPages { get; } = 1;
+        private int? _top;
+        private int _skip;
 
         /// <summary>
         /// The maximum number of items in a page.
         /// </summary>
-        public int? PageLimit
+        [JsonProperty(PropertyName = "top")]
+        public int? Top
         {
-            get => _pageLimit;
+            get => _top;
             set
             {
                 if (value < 1)
                 {
-                    throw new ArgumentException(ChangesServiceConstants.ValueZeroNegativeInteger, nameof(PageLimit));
+                    throw new ArgumentException(ChangesServiceConstants.ValueNegativeInteger, nameof(Top));
                 }
-                _pageLimit = value;
+                _top = value;
+            }
+        }
+
+        /// <summary>
+        /// Number of items skipped.
+        /// </summary>
+        [JsonProperty(PropertyName = "skip")]
+        public int Skip
+        {
+            get => _skip;
+            set
+            {
+                if (value < 1)
+                {
+                    throw new ArgumentException(ChangesServiceConstants.ValueZeroNegativeInteger, nameof(Skip));
+                }
+                _skip = value;
             }
         }
     }

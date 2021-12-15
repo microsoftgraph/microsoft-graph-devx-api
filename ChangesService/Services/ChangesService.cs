@@ -60,8 +60,8 @@ namespace ChangesService.Services
         /// </summary>
         /// <param name="changeLogRecords">The <see cref="ChangeLogRecords"/> with the target
         /// <see cref="ChangeLog"/> entries.</param>
-        /// <param name="searchOptions">The <see cref="ChangeLogSearchOptions"/> containing options for filtering
-        /// and paginating the target <see cref="ChangeLog"/> entries.</param>
+        /// <param name="searchOptions">The <see cref="ChangeLogSearchOptions"/> containing options for slicing
+        /// the target <see cref="ChangeLog"/> entries.</param>
         /// <param name="graphProxyConfigs">Configuration settings for connecting to the Microsoft Graph Proxy.</param>
         /// <param name="workloadServiceMappings">Workload service mappings dictionary.</param>
         /// <param name="httpClientUtility">Optional. An implementation instance of <see cref="IHttpClientUtility"/>.</param>
@@ -163,66 +163,49 @@ namespace ChangesService.Services
                                          SeverityLevel.Information,
                                          _changesTraceProperties);
 
-            return PaginateChangeLogRecords(filteredChangeLogRecords, searchOptions);
+            return ApplyChangeLogQueryOptions(filteredChangeLogRecords, searchOptions);
         }
 
         /// <summary>
-        /// Paginates <see cref="ChangeLogRecords"/>.
+        /// Applies <see cref="ChangeLogQueryOptions"/> to slice the <see cref="ChangeLogRecords"/>.
         /// </summary>
         /// <param name="changeLogRecords">The <see cref="ChangeLogRecords"/> with the target
-        /// <see cref="ChangeLog"/> entries to be paginated.</param>
-        /// <param name="searchOptions">The <see cref="ChangeLogSearchOptions"/> containing options for filtering
-        /// and paginating the target <see cref="ChangeLog"/> entries.</param>
-        /// <returns>The paginated <see cref="ChangeLogRecords"/>.</returns>
-        private static ChangeLogRecords PaginateChangeLogRecords(ChangeLogRecords changeLogRecords,
-                                                                 ChangeLogSearchOptions searchOptions)
+        /// <see cref="ChangeLog"/> entries to be sliced.</param>
+        /// <param name="searchOptions">The <see cref="ChangeLogSearchOptions"/> containing options for slicing
+        /// the target <see cref="ChangeLog"/> entries.</param>
+        /// <returns>The sliced <see cref="ChangeLogRecords"/>.</returns>
+        private static ChangeLogRecords ApplyChangeLogQueryOptions(ChangeLogRecords changeLogRecords,
+                                                                   ChangeLogSearchOptions searchOptions)
         {
-            if (changeLogRecords.ChangeLogs.Any() && searchOptions.PageLimit != null)
+            if (changeLogRecords.ChangeLogs.Any())
             {
-                IEnumerable<ChangeLog> enumerableChangeLogs;
-                changeLogRecords.PageLimit = searchOptions.PageLimit;
+                IEnumerable<ChangeLog> enumerableChangeLogs = null;
 
-                if (searchOptions.Page == 1 || changeLogRecords.TotalPages == 1)
+                if (searchOptions.Top != null && searchOptions.Skip > 0)
                 {
-                    /* The first page of several pages or
-                     * the first page of only one page
-                     */
-
-                    changeLogRecords.Page = 1;
+                    changeLogRecords.Skip = searchOptions.Skip;
+                    changeLogRecords.Top = searchOptions.Top;
                     enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                            .Take(searchOptions.PageLimit.Value);
+                                                           .Skip(searchOptions.Skip)
+                                                           .Take(searchOptions.Top.Value);
                 }
-                else if (searchOptions.Page < changeLogRecords.TotalPages)
+                else if (searchOptions.Top != null)
                 {
-                    // Any of the pages between first page and last page
-
-                    changeLogRecords.Page = searchOptions.Page;
-
-                    // Skip the previous' pages data
-                    int skipItems = (searchOptions.Page - 1) * searchOptions.PageLimit.Value;
+                    changeLogRecords.Top = searchOptions.Top;
                     enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                            .Skip(skipItems)
-                                                            .Take(searchOptions.PageLimit.Value);
+                                                           .Take(searchOptions.Top.Value);
                 }
-                else
+                else if (searchOptions.Skip > 0)
                 {
-                    /* The last page or any page specified
-                     * greater than the total page count.
-                     */
-
-                    changeLogRecords.Page = changeLogRecords.TotalPages;
-
-                    int lastItems = changeLogRecords.ChangeLogs.Count() % searchOptions.PageLimit.Value;
-                    if (lastItems == 0)
-                    {
-                        lastItems = searchOptions.PageLimit.Value;
-                    }
-
+                    changeLogRecords.Skip = searchOptions.Skip;
                     enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                            .TakeLast(lastItems);
+                                                           .Skip(searchOptions.Skip);
                 }
 
-                changeLogRecords.ChangeLogs = enumerableChangeLogs.ToList();
+                if (enumerableChangeLogs != null)
+                {
+                    changeLogRecords.ChangeLogs = enumerableChangeLogs.ToList();
+                }
             }
 
             return changeLogRecords;

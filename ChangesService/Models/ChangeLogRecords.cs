@@ -11,7 +11,7 @@ namespace ChangesService.Models
     /// <summary>
     /// Holds the <see cref="ChangeLog"/> records.
     /// </summary>
-    public record ChangeLogRecords : ChangeLogPagination
+    public record ChangeLogRecords : ChangeLogQueryOptions
     {
         private IEnumerable<ChangeLog> _changeLogs = new List<ChangeLog>();
 
@@ -42,19 +42,19 @@ namespace ChangesService.Models
         /// <summary>
         /// The total page count.
         /// </summary>
-        public new int TotalPages
+        public int TotalPages
         {
             get
             {
-                if (TotalItems > 0 && PageLimit.HasValue)
+                if (TotalItems > 0 && Top.HasValue)
                 {
                     int extraPage = 0;
-                    if (TotalItems % PageLimit > 0)
+                    if (TotalItems % Top > 0)
                     {
                         extraPage++;
                     }
 
-                    return (TotalItems / PageLimit.Value) + extraPage;
+                    return (TotalItems / Top.Value) + extraPage;
                 }
 
                 return 1;

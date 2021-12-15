@@ -58,8 +58,8 @@ namespace GraphWebApi.Controllers
                                          [FromQuery] double daysRange = 0,
                                          [FromQuery] DateTime? startDate = null, // yyyy-MM-ddTHH:mm:ss
                                          [FromQuery] DateTime? endDate = null, // yyyy-MM-ddTHH:mm:ss
-                                         [FromQuery] int page = 1,
-                                         [FromQuery] int? pageLimit = null,
+                                         [FromQuery] int? top = null, // items per page
+                                         [FromQuery] int skip = 0, // items per page
                                          [FromQuery] string graphVersion = "v1.0")
         {
             // Options for searching, filtering and paging the changelog data
@@ -70,8 +70,8 @@ namespace GraphWebApi.Controllers
                                                            endDate: endDate,
                                                            graphVersion: graphVersion)
             {
-                Page = page,
-                PageLimit = pageLimit
+                Top = top,
+                Skip = skip
             };
 
             // Get the requested culture info.
