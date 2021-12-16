@@ -13,7 +13,7 @@ namespace ChangesService.Models
     public record ChangeLogQueryOptions
     {
         private int? _top;
-        private int _skip = 0;
+        private int _skip;
 
         /// <summary>
         /// The maximum number of items in a page.
