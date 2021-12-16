@@ -3,7 +3,6 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using ChangesService.Common;
-using Newtonsoft.Json;
 using System;
 
 namespace ChangesService.Models
@@ -14,18 +13,17 @@ namespace ChangesService.Models
     public record ChangeLogQueryOptions
     {
         private int? _top;
-        private int _skip;
+        private int _skip = 0;
 
         /// <summary>
         /// The maximum number of items in a page.
         /// </summary>
-        [JsonProperty(PropertyName = "top")]
         public int? Top
         {
             get => _top;
             set
             {
-                if (value < 1)
+                if (value < 0)
                 {
                     throw new ArgumentException(ChangesServiceConstants.ValueNegativeInteger, nameof(Top));
                 }
@@ -36,15 +34,14 @@ namespace ChangesService.Models
         /// <summary>
         /// Number of items skipped.
         /// </summary>
-        [JsonProperty(PropertyName = "skip")]
         public int Skip
         {
             get => _skip;
             set
             {
-                if (value < 1)
+                if (value < 0)
                 {
-                    throw new ArgumentException(ChangesServiceConstants.ValueZeroNegativeInteger, nameof(Skip));
+                    throw new ArgumentException(ChangesServiceConstants.ValueNegativeInteger, nameof(Skip));
                 }
                 _skip = value;
             }
