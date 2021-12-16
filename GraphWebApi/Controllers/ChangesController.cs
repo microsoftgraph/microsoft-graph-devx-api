@@ -53,13 +53,13 @@ namespace GraphWebApi.Controllers
         [Produces("application/json")]
         [HttpGet]
         public async Task<IActionResult> GetChangesAsync(
-                                         [FromQuery] string requestUrl = null,
-                                         [FromQuery] string service = null,
-                                         [FromQuery] double daysRange = 0,
-                                         [FromQuery] DateTime? startDate = null, // yyyy-MM-ddTHH:mm:ss
-                                         [FromQuery] DateTime? endDate = null, // yyyy-MM-ddTHH:mm:ss
-                                         [FromQuery] int? top = null, // items per page
-                                         [FromQuery] int skip = 0, // items per page
+                                         [FromQuery] string requestUrl,
+                                         [FromQuery] string service,
+                                         [FromQuery] double daysRange,
+                                         [FromQuery] DateTime? startDate, // yyyy-MM-ddTHH:mm:ss
+                                         [FromQuery] DateTime? endDate, // yyyy-MM-ddTHH:mm:ss
+                                         [FromQuery] int? top, // items per page
+                                         [FromQuery] int skip, // items per page
                                          [FromQuery] string graphVersion = "v1.0")
         {
             // Options for searching, filtering and paging the changelog data
