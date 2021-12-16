@@ -11,7 +11,7 @@ namespace ChangesService.Models
     /// <summary>
     /// Holds the <see cref="ChangeLog"/> records.
     /// </summary>
-    public record ChangeLogRecords : ChangeLogQueryOptions
+    public record ChangeLogRecords
     {
         private IEnumerable<ChangeLog> _changeLogs = new List<ChangeLog>();
 
