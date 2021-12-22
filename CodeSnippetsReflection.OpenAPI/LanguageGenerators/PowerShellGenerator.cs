@@ -23,9 +23,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (psCommands == default)
             {
-                string baseDir = AppContext.BaseDirectory;
+                string baseDir = AppContext.BaseDirectory; 
                 string repoPath = baseDir.Remove(baseDir.IndexOf(projName));
-                string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, "src", "Authentication", "Authentication", "custom", "common", "MgCommandMetadata.json");
+                string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, mgCommandMetadataRelativePath);
 
                 if (!File.Exists(mgCommandMetadataPath))
                     throw new ArgumentNullException($"{psRepoName} could not be in {mgCommandMetadataPath}. Please ensure the repo is clone recursivelly. {baseDir}");
