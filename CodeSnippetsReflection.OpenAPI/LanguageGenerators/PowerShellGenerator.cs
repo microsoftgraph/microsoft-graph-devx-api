@@ -28,7 +28,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, mgCommandMetadataRelativePath);
 
                 if (!File.Exists(mgCommandMetadataPath))
-                    throw new ArgumentNullException($"{psRepoName} could not be in {repoPath}. Please ensure the repo is clone recursivelly.");
+                    throw new ArgumentNullException($"{psRepoName} could not be in {mgCommandMetadataPath}. Please ensure the repo is clone recursivelly.");
 
                 string jsonString = File.ReadAllText(mgCommandMetadataPath);
                 psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
