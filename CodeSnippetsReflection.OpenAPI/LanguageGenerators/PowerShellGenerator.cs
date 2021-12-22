@@ -28,7 +28,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, "src", "Authentication", "Authentication", "custom", "common", "MgCommandMetadata.json");
 
                 if (!File.Exists(mgCommandMetadataPath))
-                    throw new ArgumentNullException($"{psRepoName} could not be in {mgCommandMetadataPath}. Please ensure the repo is clone recursivelly.");
+                    throw new ArgumentNullException($"{psRepoName} could not be in {mgCommandMetadataPath}. Please ensure the repo is clone recursivelly. {baseDir}");
 
                 string jsonString = File.ReadAllText(mgCommandMetadataPath);
                 psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
