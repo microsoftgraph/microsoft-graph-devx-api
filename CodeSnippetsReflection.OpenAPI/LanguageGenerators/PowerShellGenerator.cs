@@ -17,7 +17,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string modulePrefix = "Microsoft.Graph";
         private const string projName = "CodeSnippetsReflection";
         private const string psRepoName = "msgraph-sdk-powershell";
-        private const string mgCommandMetadataRelativePath = @"src\Authentication\Authentication\custom\common\MgCommandMetadata.json";
+        private const string mgCommandMetadataRelativePath = @"src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
         private readonly IList<PowerShellCommandInfo> psCommands = default;
         public PowerShellGenerator()
         {
