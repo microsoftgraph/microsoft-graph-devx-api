@@ -17,7 +17,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string modulePrefix = "Microsoft.Graph";
         private const string projName = "CodeSnippetsReflection";
         private const string psRepoName = "msgraph-sdk-powershell";
-        private const string mgCommandMetadataRelativePath = @"src\Authentication\Authentication\custom\common\MgCommandMetadata.json";
+        private const string mgCommandMetadataRelativePath = @"src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
         private readonly IList<PowerShellCommandInfo> psCommands = default;
         public PowerShellGenerator()
         {
@@ -25,7 +25,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 string baseDir = AppContext.BaseDirectory;
                 string repoPath = baseDir.Remove(baseDir.IndexOf(projName));
-                string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, mgCommandMetadataRelativePath);
+                string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, "src", "Authentication", "Authentication", "custom", "common", "MgCommandMetadata.json");
 
                 if (!File.Exists(mgCommandMetadataPath))
                     throw new ArgumentNullException($"{psRepoName} could not be in {mgCommandMetadataPath}. Please ensure the repo is clone recursivelly.");
