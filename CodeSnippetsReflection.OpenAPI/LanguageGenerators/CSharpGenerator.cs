@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -113,7 +112,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 			if(indentManager == null) throw new ArgumentNullException(nameof(indentManager));
 
 			var payloadSB = new StringBuilder();
-			switch (snippetModel.ContentType.Split(';').First().ToLowerInvariant()) {
+			switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant()) {
 				case "application/json":
 					TryParseBody(snippetModel, payloadSB, indentManager);
 				break;
@@ -132,7 +131,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
         private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager) {
             if(snippetModel.IsRequestBodyValid)
                 try {
-                    using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody);
+                    using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
                     var schema = snippetModel.RequestSchema;
                     var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
                     payloadSB.AppendLine($"var {RequestBodyVarName} = new {className}");

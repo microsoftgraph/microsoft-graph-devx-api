@@ -77,6 +77,8 @@ namespace CodeSnippetsReflection
             var queryStrings = System.Web.HttpUtility.ParseQueryString(queryString);
             foreach (var key in queryStrings.AllKeys)
             {
+                // key can be null if HTTP request is not formated correctly e.g., '/users?&$OrderBy=DisplayName'
+                if (key == null) { continue; }
                 // in beta, $ is optional for OData queries.
                 // https://docs.microsoft.com/en-us/graph/query-parameters
                 if (key.Contains("filter", StringComparison.OrdinalIgnoreCase))
