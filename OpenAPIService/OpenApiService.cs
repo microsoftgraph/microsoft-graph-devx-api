@@ -231,7 +231,10 @@ namespace OpenAPIService
         {
             UtilityFunctions.CheckArgumentNull(sources, nameof(sources));
 
-            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            if (!_openApiTraceProperties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
+            {
+                _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            }
             _telemetryClient?.TrackTrace("Creating OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
