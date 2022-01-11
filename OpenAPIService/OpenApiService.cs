@@ -241,10 +241,7 @@ namespace OpenAPIService
                 rootNode.Attach(source.Value, source.Key);
             }
 
-            if (!_openApiTraceProperties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
-            {
-                _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-            }
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
             _telemetryClient?.TrackTrace($"Finished creating OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
@@ -496,7 +493,7 @@ namespace OpenAPIService
                 return doc;
             }
 
-            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
             _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
