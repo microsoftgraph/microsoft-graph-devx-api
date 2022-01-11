@@ -25,5 +25,15 @@ namespace ChangesService.Test
             // Act & Assert
             Assert.Throws<ArgumentException>(() => _queryOption.Top = -1);
         }
+
+        [Fact]
+        public void ValidateAndSetDefaultMaximumTopValue()
+        {
+            // Arrange & Act
+            _queryOption.Top = 1000;
+
+            // Assert
+            Assert.Equal(500, _queryOption.Top);
+        }
     }
 }

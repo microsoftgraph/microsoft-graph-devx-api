@@ -180,17 +180,9 @@ namespace ChangesService.Services
             if (changeLogRecords.ChangeLogs.Any())
             {
                 IEnumerable<ChangeLog> enumerableChangeLogs;
-                if (searchOptions.Top != null)
-                {
-                    enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                           .Skip(searchOptions.Skip)
-                                                           .Take(searchOptions.Top.Value);
-                }
-                else
-                {
-                    enumerableChangeLogs = changeLogRecords.ChangeLogs
-                                                           .Skip(searchOptions.Skip);
-                }
+                enumerableChangeLogs = changeLogRecords.ChangeLogs
+                                                       .Skip(searchOptions.Skip)
+                                                       .Take(searchOptions.Top);
 
                 changeLogRecords.ChangeLogs = enumerableChangeLogs.ToList();
             }

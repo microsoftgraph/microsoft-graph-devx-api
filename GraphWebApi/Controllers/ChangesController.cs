@@ -58,8 +58,8 @@ namespace GraphWebApi.Controllers
                                          [FromQuery] double daysRange,
                                          [FromQuery] DateTime? startDate, // yyyy-MM-ddTHH:mm:ss
                                          [FromQuery] DateTime? endDate, // yyyy-MM-ddTHH:mm:ss
-                                         [FromQuery] int? top, // items per page
-                                         [FromQuery] int skip, // items per page
+                                         [FromQuery] int skip, // Items to skip
+                                         [FromQuery] int top = 500, // Max page items
                                          [FromQuery] string graphVersion = "v1.0")
         {
             // Options for searching, filtering and paging the changelog data

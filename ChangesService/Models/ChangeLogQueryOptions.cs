@@ -12,13 +12,14 @@ namespace ChangesService.Models
     /// </summary>
     public record ChangeLogQueryOptions
     {
-        private int? _top;
+        private const int MaxTopValue = 500;
+        private int _top = MaxTopValue;
         private int _skip;
 
         /// <summary>
         /// The maximum number of items in a page.
         /// </summary>
-        public int? Top
+        public int Top
         {
             get => _top;
             set
@@ -27,7 +28,8 @@ namespace ChangesService.Models
                 {
                     throw new ArgumentException(ChangesServiceConstants.ValueNegativeInteger, nameof(Top));
                 }
-                _top = value;
+
+                _top = value > MaxTopValue ? MaxTopValue : value;
             }
         }
 
@@ -43,6 +45,7 @@ namespace ChangesService.Models
                 {
                     throw new ArgumentException(ChangesServiceConstants.ValueNegativeInteger, nameof(Skip));
                 }
+
                 _skip = value;
             }
         }
