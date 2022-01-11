@@ -8,24 +8,32 @@ using Xunit;
 
 namespace ChangesService.Test
 {
-    public class ChangeLogPaginationModelShould
+    public class ChangeLogQueryOptionsShould
     {
-        readonly ChangeLogPagination _pagination = new ChangeLogPagination();
+        readonly ChangeLogQueryOptions _queryOption = new();
 
         [Fact]
-        public void ThrowArgumentExceptionIfPageValueIsZeroOrNegativeInteger()
+        public void ThrowArgumentExceptionIfSkipValueIsNegativeInteger()
         {
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => _pagination.Page = 0);
-            Assert.Throws<ArgumentException>(() => _pagination.Page = -1);
+            Assert.Throws<ArgumentException>(() => _queryOption.Skip = -1);
         }
 
         [Fact]
-        public void ThrowArgumentExceptionIfPageLimitValueIsZeroOrNegativeInteger()
+        public void ThrowArgumentExceptionIfTopValueIsNegativeInteger()
         {
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => _pagination.PageLimit = 0);
-            Assert.Throws<ArgumentException>(() => _pagination.PageLimit = -1);
+            Assert.Throws<ArgumentException>(() => _queryOption.Top = -1);
+        }
+
+        [Fact]
+        public void ValidateAndSetDefaultMaximumTopValue()
+        {
+            // Arrange & Act
+            _queryOption.Top = 1000;
+
+            // Assert
+            Assert.Equal(500, _queryOption.Top);
         }
     }
 }

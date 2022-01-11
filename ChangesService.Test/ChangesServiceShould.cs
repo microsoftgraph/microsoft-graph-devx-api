@@ -326,13 +326,12 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void PaginateChangeLogRecordsFirstPage()
+        public void FilterChangeLogRecordswithTop()
         {
             // Arrange
             var searchOptions = new ChangeLogSearchOptions
             {
-                Page = 1,
-                PageLimit = 2
+                Top = 2
             };
 
             // Act
@@ -374,46 +373,12 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public void PaginateChangeLogRecordsMiddlePage()
+        public void PaginateChangeLogRecordsWithSkip()
         {
             // Arrange
             var searchOptions = new ChangeLogSearchOptions
             {
-                Page = 2,
-                PageLimit = 1
-            };
-
-            // Act
-            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
-
-            // Assert -- fetch middle item from the changelog sample
-            Assert.NotNull(filteredChangeLogRecords);
-            Assert.Collection(filteredChangeLogRecords.ChangeLogs,
-                item =>
-                {
-                    Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
-                    Assert.Equal("Extensions", item.WorkloadArea);
-                    Assert.Equal("Schema extensions", item.SubArea);
-                    Assert.Collection(item.ChangeList,
-                        item =>
-                        {
-                            Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
-                            Assert.Equal("Resource", item.ApiChange);
-                            Assert.Equal("schema extensions,Microsoft Cloud for US Government.", item.ChangedApiName);
-                            Assert.Equal("Addition", item.ChangeType);
-                            Assert.Equal("schema extensions,Microsoft Cloud for US Government", item.Target);
-                        });
-                });
-        }
-
-        [Fact]
-        public void PaginateChangeLogRecordsLastPage()
-        {
-            // Arrange
-            var searchOptions = new ChangeLogSearchOptions
-            {
-                Page = 8,
-                PageLimit = 1
+                Skip = 7
             };
 
             // Act
@@ -440,8 +405,8 @@ namespace ChangesService.Test
             // Arrange
             searchOptions = new ChangeLogSearchOptions
             {
-                Page = 3,
-                PageLimit = 3
+                Top = 3,
+                Skip = 6
             };
 
             // Act
@@ -451,6 +416,39 @@ namespace ChangesService.Test
             Assert.NotNull(filteredChangeLogRecords);
             Assert.Equal(2, filteredChangeLogRecords.ChangeLogs.Count());
         }
+
+        [Fact]
+        public void PaginateChangeLogRecordsWithTopAndSkip()
+        {
+            // Arrange
+            var searchOptions = new ChangeLogSearchOptions
+            {
+                Top = 1,
+                Skip = 1
+            };
+
+            // Act
+            var filteredChangeLogRecords = _changesService.FilterChangeLogRecords(_changeLogRecords, searchOptions, _graphProxyConfigs, _workloadServiceMappings);
+
+            // Assert -- fetch middle item from the changelog sample
+            Assert.NotNull(filteredChangeLogRecords);
+            Assert.Collection(filteredChangeLogRecords.ChangeLogs,
+                item =>
+                {
+                    Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
+                    Assert.Equal("Extensions", item.WorkloadArea);
+                    Assert.Equal("Schema extensions", item.SubArea);
+                    Assert.Collection(item.ChangeList,
+                        item =>
+                        {
+                            Assert.Equal("2d94636a-2d78-44d6-8b08-ff2a9121214b", item.Id);
+                            Assert.Equal("Resource", item.ApiChange);
+                            Assert.Equal("schema extensions,Microsoft Cloud for US Government.", item.ChangedApiName);
+                            Assert.Equal("Addition", item.ChangeType);
+                            Assert.Equal("schema extensions,Microsoft Cloud for US Government", item.Target);
+                        });
+                });
+        }        
 
         private static Dictionary<string, string> GetWorkloadServiceMappingsFile()
         {
