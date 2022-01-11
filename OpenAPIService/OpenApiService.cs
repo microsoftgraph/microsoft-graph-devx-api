@@ -230,8 +230,7 @@ namespace OpenAPIService
         public OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources)
         {
             UtilityFunctions.CheckArgumentNull(sources, nameof(sources));
-
-            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            
             _telemetryClient?.TrackTrace("Creating OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
@@ -242,6 +241,7 @@ namespace OpenAPIService
                 rootNode.Attach(source.Value, source.Key);
             }
 
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
             _telemetryClient?.TrackTrace($"Finished creating OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
@@ -493,7 +493,7 @@ namespace OpenAPIService
                 return doc;
             }
 
-            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
             _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);

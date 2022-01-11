@@ -255,7 +255,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("new ChatMessage", result);
-            Assert.Contains("requestBody.from.additionalData", result);
+            Assert.Contains("requestBody.from.user.additionalData", result);
         }
     }
 }

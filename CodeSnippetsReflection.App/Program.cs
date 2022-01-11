@@ -7,6 +7,7 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using CodeSnippetsReflection.OData;
 using CodeSnippetsReflection.OpenAPI;
+using System.Collections.Generic;
 
 namespace CodeSnippetsReflection.App
 {
@@ -17,7 +18,7 @@ namespace CodeSnippetsReflection.App
     ///             one per file where the file name ends with -httpSnippet.
     /// Languages:   Languages, comma separated.
     ///             As of this writing, values are c#, javascript, objective-c, java
-    /// 
+    ///
     /// Output is generated in the same folder as the HTTP snippets. -httpSnippet part of the file name is
     /// replaced with ---language.
     /// </summary>
@@ -91,9 +92,16 @@ namespace CodeSnippetsReflection.App
 
             var originalGeneration = generation;
 
+            var openApiLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "go",
+                "powershell",
+                "typescript"
+            };
+
             Parallel.ForEach(supportedLanguages, language =>
             {
-                if(language.Equals("go", StringComparison.OrdinalIgnoreCase) || language.Equals("typescript", StringComparison.OrdinalIgnoreCase))
+                if(openApiLanguages.Contains(language))
                     generation = "openapi";
                 else
                     generation = originalGeneration;
@@ -103,7 +111,6 @@ namespace CodeSnippetsReflection.App
                     ProcessFile(generator, language, file);
                 });
             });
-
             Console.WriteLine($"Processed {files.Count()} files.");
         }
 
@@ -133,15 +140,23 @@ namespace CodeSnippetsReflection.App
                 // With async-await, the same operation takes 1 minute 7 seconds.
                 using var message = streamContent.ReadAsHttpRequestMessageAsync().Result;
                 snippet = generator.ProcessPayloadRequest(message, language);
-            }
+             }
             catch (Exception e)
             {
                 Console.Error.WriteLine($"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}");
                 return;
             }
-            var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
-            Console.WriteLine($"Writing snippet: {filePath}");
-            File.WriteAllText(filePath, snippet);
+
+            if (!string.IsNullOrWhiteSpace(snippet))
+            {
+                var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
+                Console.WriteLine($"Writing snippet: {filePath}");
+                File.WriteAllText(filePath, snippet);
+            }
+            else
+            {
+                Console.WriteLine($"Failed to generate {language} snippets for {file}.");
+            }
         }
     }
 }
