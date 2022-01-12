@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -17,21 +18,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string modulePrefix = "Microsoft.Graph";
         private const string projName = "CodeSnippetsReflection";
         private const string psRepoName = "msgraph-sdk-powershell";
-        private const string mgCommandMetadataRelativePath = @"src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
+        private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
         private readonly IList<PowerShellCommandInfo> psCommands = default;
         public PowerShellGenerator()
         {
             if (psCommands == default)
             {
-                string baseDir = AppContext.BaseDirectory;
-                string repoPath = baseDir.Remove(baseDir.IndexOf(projName));
-                string mgCommandMetadataPath = Path.Join(repoPath, psRepoName, mgCommandMetadataRelativePath);
+                if(string.IsNullOrEmpty(mgCommandMetadataUrl)) throw new ArgumentNullException(nameof(mgCommandMetadataUrl));
 
-                if (!File.Exists(mgCommandMetadataPath))
-                    throw new ArgumentNullException($"{psRepoName} could not be found in {repoPath}. Please ensure the repo is clone recursivelly.");
-
-                string jsonString = File.ReadAllText(mgCommandMetadataPath);
-                psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(jsonString);
+                using var httpClient = new HttpClient();
+                using var stream = httpClient.GetStreamAsync(mgCommandMetadataUrl).GetAwaiter().GetResult();
+                psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
             }
         }
         public string GenerateCodeSnippet(SnippetModel snippetModel)
