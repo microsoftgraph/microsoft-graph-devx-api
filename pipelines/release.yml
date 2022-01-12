@@ -21,6 +21,7 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  msGraphPowerShellName: 'msgraph-sdk-powershell'
 
 steps:
 - checkout: self
@@ -50,7 +51,9 @@ steps:
   displayName: "Run Tests"
   inputs:
     command: test
-    projects: '**/*Test/*.csproj'
+    projects: |
+      '**/*Test/*.csproj'
+      !$(Build.SourcesDirectory)/$(msGraphPowerShellName)/**/*Test/*.csproj
     arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
 
 - task: PublishTestResults@2
