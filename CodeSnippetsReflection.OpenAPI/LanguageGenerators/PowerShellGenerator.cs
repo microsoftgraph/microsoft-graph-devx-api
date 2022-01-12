@@ -17,18 +17,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
         private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
-        private readonly IList<PowerShellCommandInfo> psCommands = default;
-        public PowerShellGenerator()
-        {
-            if (psCommands == default)
-            {
-                if(string.IsNullOrEmpty(mgCommandMetadataUrl)) throw new ArgumentNullException(nameof(mgCommandMetadataUrl));
-
+        private readonly Lazy<IList<PowerShellCommandInfo>> psCommands = new(
+            () => {
                 using var httpClient = new HttpClient();
                 using var stream = httpClient.GetStreamAsync(mgCommandMetadataUrl).GetAwaiter().GetResult();
-                psCommands = JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
+                return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
             }
-        }
+        );
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -180,12 +175,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled);
         private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
         {
-            if (psCommands.Count == 0)
+            if (psCommands.Value.Count == 0)
                 return default;
             path = Regex.Escape(SnippetModel.TrimNamespace(path));
             // Tokenize uri by substituting parameter values with "{.*}" e.g, "/users/{user-id}" to "/users/{.*}".
             path = $"^{keyIndexRegex.Replace(path, "(\\w*-\\w*|\\w*)")}$";
-            return psCommands.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
+            return psCommands.Value.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
         }
                                                                                                                  
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
