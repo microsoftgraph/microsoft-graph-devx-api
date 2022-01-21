@@ -51,23 +51,32 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (!string.IsNullOrEmpty(additionalKeySegmentParmeter))
                     snippetBuilder.Append($"{additionalKeySegmentParmeter}");
 
-                string keySegmentParameter = GetKeySegmentParameters(snippetModel.PathNodes);
-                if (!string.IsNullOrEmpty(keySegmentParameter))
-                    snippetBuilder.Append($"{keySegmentParameter}");
-
-                var queryParamsPayload = GetRequestQueryParameters(snippetModel);
-                if (!string.IsNullOrEmpty(queryParamsPayload))
-                    snippetBuilder.Append($" {queryParamsPayload}");
-
-                var parameterList = GetActionParametersList(payloadVarName);
-                if (!string.IsNullOrEmpty(parameterList))
-                    snippetBuilder.Append($" {parameterList}");
-
-                var requestHeadersPayload = GetSupportedRequestHeaders(snippetModel);
-                if (!string.IsNullOrEmpty(requestHeadersPayload))
-                    snippetBuilder.Append(requestHeadersPayload);
+                var commandParameters = GetCommandParameters(snippetModel, payloadVarName);
+                if (!string.IsNullOrEmpty(commandParameters))
+                    snippetBuilder.Append($"{commandParameters}");
             }
             return snippetBuilder.ToString();
+        }
+
+        private static string GetCommandParameters(SnippetModel snippetModel, string payloadVarName)
+        {
+            var payloadSB = new StringBuilder();
+            string keySegmentParameter = GetKeySegmentParameters(snippetModel.PathNodes);
+            if (!string.IsNullOrEmpty(keySegmentParameter))
+                payloadSB.Append($"{keySegmentParameter}");
+
+            var queryParamsPayload = GetRequestQueryParameters(snippetModel);
+            if (!string.IsNullOrEmpty(queryParamsPayload))
+                payloadSB.Append($" {queryParamsPayload}");
+
+            var parameterList = GetActionParametersList(payloadVarName);
+            if (!string.IsNullOrEmpty(parameterList))
+                payloadSB.Append($" {parameterList}");
+
+            var requestHeadersPayload = GetSupportedRequestHeaders(snippetModel);
+            if (!string.IsNullOrEmpty(requestHeadersPayload))
+                payloadSB.Append(requestHeadersPayload);
+            return payloadSB.ToString();
         }
 
         private static (string, string) SubstituteMeSegment(bool isMeSegment, string path)
