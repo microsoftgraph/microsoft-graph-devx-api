@@ -24,11 +24,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
             }
         );
+        private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
-            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(snippetModel.EndPathNode.Path.Replace("\\", "/"));
+            var cleanPath = snippetModel.EndPathNode.Path.Replace("\\", "/");
+            bool isMeSegment = meSegmentRegex.IsMatch(cleanPath);
+            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath);
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
@@ -39,6 +42,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
                 if (!string.IsNullOrEmpty(requestPayload))
                     snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
+
+                if (isMeSegment)
+                    snippetBuilder.Append($"{Environment.NewLine}# A UPN can also be used as -UserId.");
 
                 snippetBuilder.Append($"{Environment.NewLine}{targetCommand.Command}");
 
@@ -64,11 +70,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return snippetBuilder.ToString();
         }
 
-        private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
-        private static (string, string) SubstituteMeSegment(string path)
+        private static (string, string) SubstituteMeSegment(bool isMeSegment, string path)
         {
             string additionalKeySegmentParmeter = default;
-            if (meSegmentRegex.IsMatch(path))
+            if (isMeSegment)
             {
                 path = meSegmentRegex.Replace(path, "/users/{user-id}");
                 additionalKeySegmentParmeter = $" -UserId $userId";
@@ -182,7 +187,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             path = $"^{keyIndexRegex.Replace(path, "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Value.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
         }
-                                                                                                                 
+
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody) 
