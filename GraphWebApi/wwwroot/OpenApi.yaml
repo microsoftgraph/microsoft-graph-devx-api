@@ -30,7 +30,17 @@ paths:
               - Javascript
               - Java
               - Objective-C
+              - Go
+              - PowerShell
             default: C#
+        - name: generation
+          in: query
+          schema:
+            type: string
+            enum:
+              - odata
+              - openapi
+            default: odata
       requestBody:
         description: HTTP request message to be translated into code.
         content:
@@ -40,13 +50,13 @@ paths:
             examples:
               GetUserProfile:
                 value: |
-                  GET /v1.0/users/joe@tenant.com HTTP/1.1 
-                  Host: https://graph.microsoft.com  
+                  GET /v1.0/users/joe@tenant.com HTTP/1.1
+                  Host: https://graph.microsoft.com
                   Accept: application/json
               SendMail:
                 value: |
-                  POST /v1.0/me/sendMail 
-                  Host: https://graph.microsoft.com 
+                  POST /v1.0/me/sendMail
+                  Host: https://graph.microsoft.com
                   Content-type: application/json
                   {
                     "message": {
@@ -283,7 +293,7 @@ paths:
             type: string
             default: v1.0
           description: The target Microsoft Graph API version.
-        - name: workload
+        - name: service
           in: query
           required: false
           schema:
@@ -346,6 +356,35 @@ paths:
                     WorkloadArea: Compliance
                     SubArea: eDiscovery
 
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+  /knownissues:
+    get:
+      tags:
+        - knownissues
+      summary: Known Issues
+      description: Get all the Known Issues existing across different MS Graph APIs and keeping track of their statuses.
+      operationId: knownIssues.ListKnownIssues
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/knownIssue"
+              example:
+                KnownIssues:
+                  - Id: 9076,
+                    State: Active,
+                    Title: Accessing a shared calendar,
+                    Description: Notifications fail when an organization has several Bookings businesses,
+                    WorkloadArea: Notifications,
+                    Workaround: Upgrade Notifications,
+                    APIPathLink: https://docs.microsoft.com/en-us/graph/api/resources/calendar?view=graph-rest-1.0
         "404":
           description: Not found
         "500":
@@ -575,6 +614,87 @@ paths:
           description: OK
           content:
             text/html: {}
+  /openapi/tree:
+    get:
+      tags:
+        - openapi.tree
+      summary: Microsoft Graph OpenAPI document tree view.
+      description: Get the Microsoft Graph API metadata CSDL document as an OpenAPIUrlTreeNode document.
+      operationId: openapi.tree.GetUrlTreeNode
+      parameters:
+        - name: graphVersions
+          in: query
+          schema:
+            type: string
+            default: v1.0 and beta
+          required: false
+          description: The target Microsoft Graph API version. # Ex: ?graphVersions=v1.0 / ?graphVersions=beta / or ?graphVersions=* (for both)
+        - name: forceRefresh
+          in: query
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Reload the OpenAPI document(s).
+      responses:
+        "200":
+          description: Simplified OpenAPI document(s) rendered as an OpenApiUrlTreeNode document.
+          content:
+            application/vnd.oai.openapi+json: {} # JSON
+  /toursteps:
+    get:
+      tags:
+        - toursteps
+      summary: Tour steps
+      description: Get all Graph Explorer tour steps from Azure blob or a specified GitHub repository
+      parameters:
+        - name: org
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Organization that a GitHub repo belongs to.
+        - name: branchName
+          in: query
+          schema:
+            type: string
+          required: false
+          description: The target branch in the target GitHub repo.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/toursteps"
+              example:
+                TourSteps:
+                  - target: ".sign-in-section"
+                    content: "When you're signed in, you can run all queries with all request options. We recommend that you sign in with a sample Azure AD account where you are the tenant admin."
+                    directionalHint: 10
+                    spotlightClicks: true
+                    hideCloseButton: true
+                    autoNext: false
+                    disableBeacon: true
+                    advanced: true
+                    title: "Sign in"
+                    expectedActionType: "PROFILE_REQUEST_SUCCESS"
+                    docsLink: ""
+                    query: {
+                        selectedVerb: "GET",
+                        selectedVersion: "v1.0",
+                        sampleUrl: "https://graph.microsoft.com/v1.0",
+                        sampleHeaders: []
+                    }
+                    active: true
+        "204":
+          description: No content
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
 components:
   schemas:
     sample:
@@ -685,3 +805,73 @@ components:
           - createdDateTime
           - workloadArea
           - subArea
+    knownIssue:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          state:
+            type: string
+          title:
+            type: string
+          workloadArea:
+            type: string
+          description:
+            type: string
+          workAround:
+            type: string
+          link:
+            type: string
+    toursteps:
+      type: array
+      items:
+        type: object
+        required:
+          - target
+          - content
+          - directionalHint
+        properties:
+          target:
+            type: string
+          content:
+            type: string
+          directionalHint:
+            type: number
+          spotlightClicks:
+            type: boolean
+          hideCloseButton:
+            type: boolean
+          title:
+            type: string
+          autoNext:
+            type: boolean
+          disableBeacon:
+            type: boolean
+          expectedActionType:
+            type: string
+          query:
+            type: object
+            properties:
+                selectedVerb:
+                    type: string
+                    enum:
+                        - GET
+                        - PUT
+                        - POST
+                        - DELETE
+                        - PATCH
+                selectedVersion:
+                    type: string
+                sampleUrl:
+                    type: string
+                sampleHeaders:
+                    type: object
+                    properties:
+                        name:
+                            type: string
+                        value:
+                            type: string
+          advanced:
+            type: boolean

@@ -4,7 +4,7 @@
 
 namespace OpenAPIService.Common
 {
-    internal static class Constants
+    public static class Constants
     {
         internal static class GraphConstants
         {
@@ -13,7 +13,7 @@ namespace OpenAPIService.Common
             public static readonly string GraphUrl = "https://graph.microsoft.com/{0}/";
         }
 
-        internal static class OpenApiConstants
+        public static class OpenApiConstants
         {
             public const string OpenApiVersion_2 = "2";
             public const string OpenApiVersion_3 = "3";
@@ -22,5 +22,5 @@ namespace OpenAPIService.Common
             public const string Format_Yaml = "yaml";
             public const string Format_Json = "json";
         }
-    }    
+    }
 }

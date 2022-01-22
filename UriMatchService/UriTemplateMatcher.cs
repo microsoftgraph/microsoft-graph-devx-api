@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+#pragma warning disable S125 // Sections of code should not be commented out
 /* This code was partially ported from: https://github.com/tavis-software/Tavis.UriTemplates;
  * From the following classes: UriTemplateTable.cs and UriTemplate.cs
  * Some code refactoring and renaming have been applied.
@@ -14,6 +15,7 @@
  */
 
 using System;
+#pragma warning restore S125 // Sections of code should not be commented out
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

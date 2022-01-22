@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace OpenAPIService
 {
@@ -36,7 +37,7 @@ namespace OpenAPIService
 
                 if (operationId.Contains(DefaultPutPrefix))
                 {
-                    StringBuilder newOperationId = new StringBuilder(operationId);
+                    var newOperationId = new StringBuilder(operationId);
 
                     newOperationId.Replace(DefaultPutPrefix, NewPutPrefix);
                     pathItem.Operations[putOperation].OperationId = newOperationId.ToString();
@@ -73,16 +74,27 @@ namespace OpenAPIService
                 }
             }
 
-            int charPos = operationId.LastIndexOf('.', operationId.Length - 1);
+            var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 
             // Check whether Put operation id already got updated
             if (charPos >= 0 && !operationId.Contains(NewPutPrefix))
             {
-                StringBuilder newOperationId = new StringBuilder(operationId);
+                var newOperationId = new StringBuilder(operationId);
 
                 newOperationId[charPos] = '_';
-                operation.OperationId = newOperationId.ToString();
+                operationId = newOperationId.ToString();
             }
+
+            // Update $ref path operationId name
+            // Ref key word is enclosed between lower-cased and upper-cased letters
+            // Ex.: applications_GetRefCreatedOnBehalfOf to applications_GetCreatedOnBehalfOfByRef
+            var regex = new Regex("(?<=[a-z])Ref(?=[A-Z])");
+            if (regex.Match(operationId).Success)
+            {
+                operationId = $"{regex.Replace(operationId, string.Empty)}ByRef";
+            }
+
+            operation.OperationId = operationId;
         }
 
         /// <summary>
@@ -91,12 +103,7 @@ namespace OpenAPIService
         /// <param name="schema">The target <see cref="OpenApiSchema"/></param>
         public override void Visit(OpenApiSchema schema)
         {
-            if (_schemaLoop.Contains(schema))
-            {
-                return; // loop detected, this schema has already been walked.
-            }
-
-            if ("object".Equals(schema?.Type, StringComparison.OrdinalIgnoreCase))
+            if (schema != null && !_schemaLoop.Contains(schema) && "object".Equals(schema?.Type, StringComparison.OrdinalIgnoreCase))
             {
                 schema.AdditionalProperties = new OpenApiSchema() { Type = "object" }; // To make AutoREST happy
 
@@ -109,23 +116,21 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Resolves action and function OperationIds by reverting their signatures
-        /// to how they were being defined in package Microsoft.OpenApi.OData ver. 1.0.6 and below.
+        /// Resolves the OperationIds of action and function paths.
         /// </summary>
-        /// <remarks>
-        /// This is to prevent change of cmdlet names already defined using the previous version's format.
-        /// </remarks>
-        /// <example>
-        /// Default OperationId --> communications.calls.call_keepAlive
-        /// Resolved OperationId --> communications.calls_keepAlive
-        /// </example>
         /// <param name="operation">The target OpenAPI operation.</param>
         /// <returns>The resolved OperationId.</returns>
-        private string ResolveActionFunctionOperationId(OpenApiOperation operation)
+        private static string ResolveActionFunctionOperationId(OpenApiOperation operation)
         {
             var operationId = operation.OperationId;
             var segments = operationId.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries).ToList();
 
+            // Remove ODataKeySegment values from OperationIds of actions and functions paths.
+            // This is to prevent breaking changes of OperationId values already
+            // defined using package Microsoft.OpenApi.OData ver. 1.0.6 and below.
+            // For example,
+            // Default OperationId --> communications.calls.call_keepAlive
+            // Resolved OperationId --> communications.calls_keepAlive
             foreach (var parameter in operation.Parameters)
             {
                 // Get the ODataKeySegment value.
@@ -143,7 +148,16 @@ namespace OpenAPIService
                 }
             }
 
-            return string.Join(".", segments);
+            var updatedOperationId = string.Join(".", segments);
+
+            // Remove hash suffix values from OperationIds of function paths.
+            // For example,
+            // Default OperationId --> reports_getEmailActivityUserDetail-fe32
+            // Resolved OperationId --> reports_getEmailActivityUserDetail
+            var regex = new Regex(@"^[^-]+");
+            updatedOperationId = regex.Match(updatedOperationId).Value;
+
+            return updatedOperationId;
         }
     }
 }

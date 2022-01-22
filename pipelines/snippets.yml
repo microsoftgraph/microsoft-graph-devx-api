@@ -20,25 +20,21 @@ resources:
      endpoint: microsoftgraph
      name: microsoftgraph/microsoft-graph-docs
      ref: main
-   - repository: apidoctor
-     type: github
-     endpoint: microsoftgraph
-     name: microsoftgraph/apidoctor
-     ref: master
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
   buildConfiguration: 'Release'
-  apidoctorPath: 'apidoctor'
+  apidoctorPath: 'microsoft-graph-devx-api/apidoctor'
   apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
-  snippetLanguages: 'C#,JavaScript,Objective-C,Java'
+  snippetLanguages: 'C#,JavaScript,Objective-C,Java,Go,PowerShell'
 
 steps:
 - checkout: self
   displayName: checkout GE api
   fetchDepth: 1
+  submodules: recursive
   persistCredentials: true
 
 - checkout: microsoft-graph-docs
@@ -46,18 +42,17 @@ steps:
   fetchDepth: 1
   persistCredentials: true
 
-- checkout: apidoctor
-  displayName: checkout apidoctor
-  fetchDepth: 1
-  submodules: recursive
-  persistCredentials: true
-
 - template: templates/git-config.yml
 
 - task: UseDotNet@2
-  displayName: 'Install dotnet core SDK'
+  displayName: 'Install .NET Core SDK 5'
   inputs:
     version: 5.x
+
+- task: UseDotNet@2
+  displayName: 'Install .NET Core SDK 6'
+  inputs:
+    version: 6.0.x
 
 - task: DotNetCoreCLI@2
   displayName: 'Build snippet generator'
@@ -84,7 +79,7 @@ steps:
     $snippetGeneratorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/CodeSnippetsReflection.App/bin/Release *App -Recurse).FullName
     Write-Host "Path to snippet generator tool: $snippetGeneratorPath"
 
-    $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
+    $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
     Write-Host "Path to apidoctor tool: $apidoctorPath"
 
     . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "/bin/git"

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using ChangesService.Common;
@@ -21,6 +22,7 @@ using UtilityService;
 namespace GraphWebApi.Controllers
 {
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class ChangesController : ControllerBase
     {
         private readonly IChangesStore _changesStore;
@@ -34,6 +36,11 @@ namespace GraphWebApi.Controllers
         public ChangesController(IChangesStore changesStore, IConfiguration configuration, IChangesService changesService,
                                  IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient)
         {
+            UtilityFunctions.CheckArgumentNull(telemetryClient, nameof(telemetryClient));
+            UtilityFunctions.CheckArgumentNull(changesStore, nameof(changesStore));
+            UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
+            UtilityFunctions.CheckArgumentNull(changesService, nameof(changesService));
+            UtilityFunctions.CheckArgumentNull(httpClientUtility, nameof(httpClientUtility));
             _telemetryClient = telemetryClient;
             _changesStore = changesStore;
             _configuration = configuration;
@@ -46,91 +53,71 @@ namespace GraphWebApi.Controllers
         [Produces("application/json")]
         [HttpGet]
         public async Task<IActionResult> GetChangesAsync(
-                                         [FromQuery] string requestUrl = null,
-                                         [FromQuery] string workload = null,
-                                         [FromQuery] double daysRange = 0,
-                                         [FromQuery] DateTime? startDate = null, // yyyy-MM-ddTHH:mm:ss
-                                         [FromQuery] DateTime? endDate = null, // yyyy-MM-ddTHH:mm:ss
-                                         [FromQuery] int page = 1,
-                                         [FromQuery] int? pageLimit = null,
+                                         [FromQuery] string requestUrl,
+                                         [FromQuery] string service,
+                                         [FromQuery] double daysRange,
+                                         [FromQuery] DateTime? startDate, // yyyy-MM-ddTHH:mm:ss
+                                         [FromQuery] DateTime? endDate, // yyyy-MM-ddTHH:mm:ss
+                                         [FromQuery] int skip, // Items to skip
+                                         [FromQuery] int top = 500, // Max page items
                                          [FromQuery] string graphVersion = "v1.0")
         {
-            try
+            // Options for searching, filtering and paging the changelog data
+            var searchOptions = new ChangeLogSearchOptions(requestUrl: requestUrl.BaseUriPath(),
+                                                           service: service,
+                                                           daysRange: daysRange,
+                                                           startDate: startDate,
+                                                           endDate: endDate,
+                                                           graphVersion: graphVersion)
             {
-                // Options for searching, filtering and paging the changelog data
-                var searchOptions = new ChangeLogSearchOptions(requestUrl: requestUrl,
-                                                               workload: workload,
-                                                               daysRange: daysRange,
-                                                               startDate: startDate,
-                                                               endDate: endDate)
+                Top = top,
+                Skip = skip
+            };
+
+            // Get the requested culture info.
+            var cultureFeature = HttpContext.Features.Get<IRequestCultureFeature>();
+            var cultureInfo = cultureFeature.RequestCulture.Culture;
+
+            _telemetryClient?.TrackTrace($"Request to fetch changelog records for the requested culture info '{cultureInfo}'",
+                                         SeverityLevel.Information,
+                                         _changesTraceProperties);
+            // Fetch the changelog records
+            var changeLog = await _changesStore.FetchChangeLogRecordsAsync(cultureInfo);
+
+            // Filter the changelog records
+            if (changeLog.ChangeLogs.Any())
+            {
+                // Configs for fetching workload names from given requestUrl
+                var graphProxyConfigs = new MicrosoftGraphProxyConfigs()
                 {
-                    Page = page,
-                    PageLimit = pageLimit
+                    GraphProxyBaseUrl = _configuration[ChangesServiceConstants.GraphProxyBaseUrlConfigPath],
+                    GraphProxyRelativeUrl = _configuration[ChangesServiceConstants.GraphProxyRelativeUrlConfigPath],
+                    GraphProxyAuthorization = _configuration[ChangesServiceConstants.GraphProxyAuthorization],
+                    GraphVersion = graphVersion
                 };
 
-                // Get the requested culture info.
-                var cultureFeature = HttpContext.Features.Get<IRequestCultureFeature>();
-                var cultureInfo = cultureFeature.RequestCulture.Culture;
-
-                _telemetryClient?.TrackTrace($"Request to fetch changelog records for the requested culture info '{cultureInfo}'",
-                                             SeverityLevel.Information,
-                                             _changesTraceProperties);
-                // Fetch the changelog records
-                var changeLog = await _changesStore.FetchChangeLogRecordsAsync(cultureInfo);
-
-
-                // Filter the changelog records
-                if (changeLog.ChangeLogs.Any())
-                {
-                    // Configs for fetching workload names from given requestUrl
-                    var graphProxyConfigs = new MicrosoftGraphProxyConfigs()
-                    {
-                        GraphProxyBaseUrl = _configuration[ChangesServiceConstants.GraphProxyBaseUrlConfigPath],
-                        GraphProxyRelativeUrl = _configuration[ChangesServiceConstants.GraphProxyRelativeUrlConfigPath],
-                        GraphProxyAuthorization = _configuration[ChangesServiceConstants.GraphProxyAuthorization],
-                        GraphVersion = graphVersion
-                    };
-
-                    changeLog = _changesService.FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, _httpClientUtility);
-                }
-                else
-                {
-                    // No records
-                    return NoContent();
-                }
-
-                if (!changeLog.ChangeLogs.Any())
-                {
-                    _telemetryClient?.TrackTrace($"Search options not found in: requestUrl, workload, daysRange, startDate, endDate properties of changelog records",
-                                                 SeverityLevel.Error,
-                                                 _changesTraceProperties);
-                    // Filtered items yielded no result
-                    return NotFound();
-                }
-                _changesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(ChangesController));
-                _telemetryClient?.TrackTrace($"Fetched {changeLog.CurrentItems} changes",
-                                             SeverityLevel.Information,
-                                             _changesTraceProperties);
-                return Ok(changeLog);
+                var workloadServiceMappings = await _changesStore.FetchWorkloadServiceMappingsAsync();
+                changeLog = _changesService.FilterChangeLogRecords(changeLog, searchOptions, graphProxyConfigs, workloadServiceMappings, _httpClientUtility);
             }
-            catch (InvalidOperationException invalidOpsException)
+            else
             {
-                _telemetryClient?.TrackException(invalidOpsException,
-                                          _changesTraceProperties);
-                return new JsonResult(invalidOpsException.Message) { StatusCode = StatusCodes.Status500InternalServerError };
+                // No records
+                return NoContent();
             }
-            catch (ArgumentException argException)
+
+            if (!changeLog.ChangeLogs.Any())
             {
-                _telemetryClient?.TrackException(argException,
-                                          _changesTraceProperties);
-                return new JsonResult(argException.Message) { StatusCode = StatusCodes.Status404NotFound };
+                _telemetryClient?.TrackTrace($"Search options not found in: requestUrl, workload, daysRange, startDate, endDate properties of changelog records",
+                                                SeverityLevel.Error,
+                                                _changesTraceProperties);
+                // Filtered items yielded no result
+                return NotFound();
             }
-            catch (Exception exception)
-            {
-                _telemetryClient?.TrackException(exception,
-                                          _changesTraceProperties);
-                return new JsonResult(exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
-            }
+            _changesTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(ChangesController));
+            _telemetryClient?.TrackTrace($"Fetched {changeLog.CurrentItems} changes",
+                                            SeverityLevel.Information,
+                                            _changesTraceProperties);
+            return Ok(changeLog);
         }
     }
 }

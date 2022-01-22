@@ -3,15 +3,17 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using FileService.Interfaces;
-using GraphExplorerSamplesService.Interfaces;
-using GraphExplorerSamplesService.Models;
-using GraphExplorerSamplesService.Services;
+using SamplesService.Interfaces;
+using SamplesService.Models;
 using MemoryCache.Testing.Moq;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using MockTestUtility;
 using Xunit;
+using System.IO;
+using System;
+using SamplesService.Services;
 
 namespace SamplesService.Test
 {
@@ -29,7 +31,7 @@ namespace SamplesService.Test
             _httpClientUtility = new FileUtilityMock();
             _samplesCache = Create.MockedMemoryCache();
             _configuration = new ConfigurationBuilder()
-                .AddJsonFile(".\\TestFiles\\appsettingstest.json")
+                .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest.json"))
                 .Build();
         }
 
@@ -68,6 +70,7 @@ namespace SamplesService.Test
             Assert.Equal("mon profil", frenchSampleQueriesList.SampleQueries[0].HumanName);
         }
 
+
         [Fact]
         public async Task ReturnNullIfSampleQueryFileIsEmpty()
         {
@@ -81,12 +84,13 @@ namespace SamplesService.Test
             Assert.Null(japaneseSampleQueriesList);
         }
 
+
         [Fact]
         public async Task FetchSamplesFromGithub()
         {
             //Arrange
             var configuration = new ConfigurationBuilder()
-                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "GithubTestFiles", "appsettings-test.json"))
                             .Build();
 
             string org = configuration["BlobStorage:Org"];
@@ -118,7 +122,7 @@ namespace SamplesService.Test
         {
             //Arrange
             var configuration = new ConfigurationBuilder()
-                            .AddJsonFile(".\\GithubTestFiles\\appsettings-test.json")
+                            .AddJsonFile(Path.Combine(Environment.CurrentDirectory, "GithubTestFiles","appsettings-test.json"))
                             .Build();
 
             string org = configuration["BlobStorage:Org"];

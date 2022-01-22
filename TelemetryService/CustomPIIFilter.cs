@@ -1,12 +1,12 @@
-// -------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// -------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using GraphExplorerPermissionsService.Interfaces;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.DependencyInjection;
+using PermissionsService.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -19,7 +19,9 @@ namespace TelemetrySanitizerService
     /// <summary>
     /// Initializes a telemetry processor to sanitize telemetry data to remove sensitive data (PII).
     /// </summary>
+#pragma warning disable S101 // Types should be named in PascalCase
     public class CustomPIIFilter : ITelemetryProcessor
+#pragma warning restore S101 // Types should be named in PascalCase
     {
         private readonly ITelemetryProcessor _next;
         private readonly IServiceProvider _serviceProvider;
@@ -73,7 +75,7 @@ namespace TelemetrySanitizerService
         {
             _next = next
                 ?? throw new ArgumentNullException(nameof(next), $"{ next }: { nameof(next) }");
-            _serviceProvider = serviceProvider 
+            _serviceProvider = serviceProvider
                 ?? throw new ArgumentNullException(nameof(serviceProvider), $"{ serviceProvider }: { nameof(serviceProvider) }");
         }
 
@@ -95,16 +97,9 @@ namespace TelemetrySanitizerService
                 SanitizeTelemetry(request: request);
             }
 
-            if (item is TraceTelemetry trace)
+            if (item is TraceTelemetry trace && !trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
             {
-                /* Count properties contain custom
-                 * numerical telemetry not required to
-                 * be sanitized.
-                 */
-                if (!trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
-                {
-                    SanitizeTelemetry(trace: trace);
-                }
+                SanitizeTelemetry(trace: trace);
             }
 
             _next.Process(item);

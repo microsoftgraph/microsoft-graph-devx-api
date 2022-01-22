@@ -4,6 +4,7 @@
 
 using System;
 using System.Globalization;
+using System.IO;
 using FileService.Extensions;
 
 namespace FileService.Common
@@ -27,10 +28,10 @@ namespace FileService.Common
             string directoryName = null;
             string fileName = null;
 
-            if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) > 0)
+            if (filePathSource.IndexOfAny(new char[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar}) > -1)
             {
                 // File path source format --> directoryName\\fileName
-                string[] storageValues = filePathSource.Split(FileServiceConstants.DirectorySeparator);
+                var storageValues = filePathSource.Split(new char[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
                 directoryName = storageValues[0];
                 fileName = storageValues[1];
             }
@@ -54,7 +55,7 @@ namespace FileService.Common
             {
                 localeCode = localeCode.GetSupportedLocaleVariant();
 
-                if (defaultBlobName.IndexOf('.') > 0 && localeCode != "en-US")
+                if (defaultBlobName.Contains('.') && localeCode != "en-US")
                 {
                     /* All localized files have a consistent structure, e.g. sample-queries_fr-FR.json
                        except for 'en-Us' --> sample-queries.json or permissions-v1.0.json */
@@ -65,7 +66,7 @@ namespace FileService.Common
             }
 
             // File path source format --> directoryName\\fileName
-            return $"{containerName}{FileServiceConstants.DirectorySeparator}{defaultBlobName}";
+            return Path.Combine(containerName, defaultBlobName);
         }
 
         /// <summary>
@@ -79,8 +80,6 @@ namespace FileService.Common
             {
                 throw new ArgumentNullException(parameterName, "Value cannot be null or empty.");
             }
-
-            return;
         }
 
         /// <summary>

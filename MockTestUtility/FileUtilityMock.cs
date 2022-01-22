@@ -8,6 +8,8 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+using UtilityService;
 
 namespace MockTestUtility
 {
@@ -18,18 +20,12 @@ namespace MockTestUtility
     {
         public async Task<string> ReadFromFile(string filePathSource)
         {
-            if (string.IsNullOrEmpty(filePathSource))
-            {
-                throw new ArgumentNullException(nameof(filePathSource), "Value cannot be null");
-            }
-
-            if (filePathSource.IndexOf(FileServiceConstants.DirectorySeparator) < 1)
-            {
-                throw new ArgumentException("Improperly formatted file path source.", nameof(filePathSource));
-            }
+            UtilityFunctions.CheckArgumentNull(filePathSource, nameof(filePathSource));
 
             // Prepend the root directory notation since we're reading off of a relative folder location
-            filePathSource = $".\\{filePathSource}";
+            filePathSource = Path.Combine(Environment.CurrentDirectory, filePathSource);
+            if(!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) // path separator kinds are mixed on linux platforms because of the configuration files, which leads to failures
+                filePathSource = filePathSource.Replace('\\', Path.DirectorySeparatorChar);
 
             using StreamReader streamReader = new StreamReader(filePathSource);
             return await streamReader.ReadToEndAsync();
@@ -37,10 +33,8 @@ namespace MockTestUtility
 
         public async Task<string> ReadFromDocumentAsync(HttpRequestMessage requestMessage)
         {
-            if (requestMessage == null)
-            {
-                throw new ArgumentNullException(nameof(requestMessage), "Value cannot be null");
-            }
+            UtilityFunctions.CheckArgumentNull(requestMessage, nameof(requestMessage));
+
             // Mock reading from an HTTP source.
             return await ReadFromFile(requestMessage.RequestUri.OriginalString);
         }

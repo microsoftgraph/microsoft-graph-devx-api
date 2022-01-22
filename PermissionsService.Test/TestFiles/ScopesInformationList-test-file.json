@@ -829,7 +829,7 @@
                 "isAdmin":  false,
                 "consentDescription":  "Allows the app to read, update, create and delete events in your calendars. ",
                 "consentDisplayName":  "Have full access to your calendars  ",
-                "value":  "Calendars.ReadWrite"
+                "value":  "calendars.readWrite"
             },
             {
                 "adminConsentDescription":  "Allows the app to read user contacts.  ",

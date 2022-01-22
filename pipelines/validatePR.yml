@@ -23,27 +23,37 @@ steps:
 - checkout: self
   clean: true
   fetchDepth: 1
-  submodules: true
-  
-- task: NuGetToolInstaller@1
+  submodules: recursive
 
-- task: NuGetCommand@2
+- task: UseDotNet@2
+  displayName: 'Use .NET Core sdk'
   inputs:
-    restoreSolution: '$(solution)'
+    packageType: sdk
+    version: 6.0.x
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
-- task: VSBuild@1
+- task: DotNetCoreCLI@2
+  displayName: "Restore Nuget Packages"
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: 'restore'
+    feedsToUse: 'select'
 
-- task: VSTest@2
+- task: DotNetCoreCLI@2
+  displayName: "Build"
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-    testAssemblyVer2: |
-      **/net5.0/**.Test.dll
-      !**/*TestAdapter.dll
-      !**/obj/**
-    diagnosticsEnabled: true
+    command: 'build'
+
+- task: DotNetCoreCLI@2
+  displayName: "Run Tests"
+  inputs:
+    command: test
+    projects: '**/*Test/*.csproj'
+    arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
+
+- task: PublishTestResults@2
+  displayName: "Publish Test Results"
+  inputs:
+    testResultsFormat: xUnit
+    testResultsFiles: '**/*.trx'
+    codeCoverageTool: 'cobertura'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'

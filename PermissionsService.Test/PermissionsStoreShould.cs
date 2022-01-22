@@ -1,12 +1,13 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using GraphExplorerPermissionsService.Interfaces;
-using GraphExplorerPermissionsService.Models;
 using MockTestUtility;
+using PermissionsService.Interfaces;
+using PermissionsService.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Xunit;
 
 namespace PermissionsService.Test
@@ -14,7 +15,9 @@ namespace PermissionsService.Test
     public class PermissionsStoreShould
     {
         private readonly IPermissionsStore _permissionsStore;
-        private const string ConfigFilePath = ".\\TestFiles\\appsettingstest-valid.json";
+        private static string ConfigFilePath => Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest-valid.json");
+        private const string DelegatedWork = "DelegatedWork";
+        private const string Application = "Application";
 
         public PermissionsStoreShould()
         {
@@ -47,8 +50,8 @@ namespace PermissionsService.Test
         }
 
         [Theory]
-        [InlineData("DelegatedWork", 20)]
-        [InlineData("Application", 14)]
+        [InlineData(DelegatedWork, 115)]
+        [InlineData(Application, 66)]
         public void GetAllPermissionScopesGivenNoRequestUrl(string scopeType, int expectedCount)
         {
             // Act
@@ -57,6 +60,21 @@ namespace PermissionsService.Test
             // Assert
             Assert.NotEmpty(result);
             Assert.Equal(expectedCount, result.Count);
+
+            if (scopeType == DelegatedWork)
+            {
+                Assert.True(result.Exists(x => x.ScopeName.Equals("Financials.ReadWrite.All")));
+                Assert.True(result.Exists(x => x.ScopeName.Equals("identityriskyuser.read.all")));
+                Assert.True(result.Exists(x => x.ScopeName.Equals("Foobar.ReadWrite")));
+                Assert.True(result.Exists(x => x.ScopeName.Equals("LoremIpsum.ReadWrite")));
+            }
+            else if (scopeType == Application)
+            {
+                Assert.True(result.Exists(x => x.ScopeName.Equals("AdministrativeUnit.ReadWrite.All")));
+                Assert.True(result.Exists(x => x.ScopeName.Equals("Notes.ReadWrite.All")));
+                Assert.True(result.Exists(x => x.ScopeName.Equals("LoremIpsum.Read.All")));
+                Assert.True(result.Exists(x => x.ScopeName.Equals("LoremIpsum.ReadWrite.All")));
+            }
         }
 
         [Fact]
@@ -111,13 +129,13 @@ namespace PermissionsService.Test
             /* Act */
 
             List<ScopeInformation> result1 =
-                _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/users/{id}/calendars/{id}?$orderby=CreatedDate desc", method: "GET").GetAwaiter().GetResult(); // permission in ver1 doc.
+                _permissionsStore.GetScopesAsync(scopeType: DelegatedWork, requestUrl: "/users/{id}/calendars/{id}?$orderby=CreatedDate desc", method: "GET").GetAwaiter().GetResult(); // permission in ver1 doc.
             List<ScopeInformation> result2 =
-                _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/anonymousipriskevents/{id}", method: "GET").GetAwaiter().GetResult(); // permission in ver2 doc.
+                _permissionsStore.GetScopesAsync(scopeType: DelegatedWork, requestUrl: "/anonymousipriskevents/{id}", method: "GET").GetAwaiter().GetResult(); // permission in ver2 doc.
             List<ScopeInformation> result3 =
-                _permissionsStore.GetScopesAsync(scopeType: "Application", requestUrl: "/security/alerts/{id}", method: "PATCH").GetAwaiter().GetResult(); // permission in ver1 doc.
+                _permissionsStore.GetScopesAsync(scopeType: Application, requestUrl: "/security/alerts/{id}", method: "PATCH").GetAwaiter().GetResult(); // permission in ver1 doc.
             List<ScopeInformation> result4 =
-                _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork", requestUrl: "/me/photo/$value", method: "PATCH").GetAwaiter().GetResult(); // permission in ver1 doc.
+                _permissionsStore.GetScopesAsync(scopeType: DelegatedWork, requestUrl: "/me/photo/$value", method: "PATCH").GetAwaiter().GetResult(); // permission in ver1 doc.
 
             /* Assert */
 
@@ -171,9 +189,9 @@ namespace PermissionsService.Test
             // Act
             // RequestUrl in permission file: "/workbook/worksheets/{id}/charts/{id}/image(width=640)"
             List<ScopeInformation> result =
-                _permissionsStore.GetScopesAsync(scopeType: "DelegatedWork",
-                                                requestUrl: "/workbook/worksheets/{id}/charts/{id}/image",
-                                                method: "GET").GetAwaiter().GetResult();
+                _permissionsStore.GetScopesAsync(scopeType: DelegatedWork,
+                                                 requestUrl: "/workbook/worksheets/{id}/charts/{id}/image",
+                                                 method: "GET").GetAwaiter().GetResult();
 
             /* Assert */
 
@@ -199,14 +217,14 @@ namespace PermissionsService.Test
             Assert.Collection(result,
                 item =>
                 {
-                    Assert.Equal("LoremIpsum.Read.All", item.ScopeName);
+                    Assert.Equal("LoremIpsum.Read", item.ScopeName);
                     Assert.Equal("Consent name unavailable", item.DisplayName);
                     Assert.Equal("Consent description unavailable", item.Description);
                     Assert.False(item.IsAdmin);
                 },
                 item =>
                 {
-                    Assert.Equal("LoremIpsum.ReadWrite.All", item.ScopeName);
+                    Assert.Equal("LoremIpsum.ReadWrite", item.ScopeName);
                     Assert.Equal("Consent name unavailable", item.DisplayName);
                     Assert.Equal("Consent description unavailable", item.Description);
                     Assert.False(item.IsAdmin);
@@ -245,7 +263,7 @@ namespace PermissionsService.Test
         {
             /* Act & Assert */
 
-            Assert.Throws<InvalidOperationException>(() => PermissionStoreFactoryMock.GetPermissionStore(".\\TestFiles\\appsettingstest-empty.json"));
+            Assert.Throws<InvalidOperationException>(() => PermissionStoreFactoryMock.GetPermissionStore(Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest-empty.json")));
         }
 
         [Fact]

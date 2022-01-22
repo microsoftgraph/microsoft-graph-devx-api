@@ -119,8 +119,8 @@
     "/lorem/ipsum/{id}": {
       "GET": {
         "DelegatedWork": [
-          "LoremIpsum.Read.All",
-          "LoremIpsum.ReadWrite.All"
+          "LoremIpsum.Read",
+          "LoremIpsum.ReadWrite"
         ],
         "DelegatedPersonal": [],
         "Application": [

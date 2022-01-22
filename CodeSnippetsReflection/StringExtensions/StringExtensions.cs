@@ -18,5 +18,21 @@
                 .Replace("\"", doubleQuoteEscapeSequence)
                 .Replace("'", singleQuoteEscapeSequence);
         }
+        public static string ToFirstCharacterLowerCase(this string stringValue) {
+            if(string.IsNullOrEmpty(stringValue)) return stringValue;
+            return char.ToLower(stringValue[0]) + stringValue[1..];
+        }
+        public static string ToFirstCharacterUpperCase(this string stringValue) {
+            if(string.IsNullOrEmpty(stringValue)) return stringValue;
+            return char.ToUpper(stringValue[0]) + stringValue[1..];
+        }
+
+        public static string ToFirstCharacterUpperCaseAfterCharacter(this string stringValue, char character)
+        {
+            if (string.IsNullOrEmpty(stringValue)) return stringValue;
+            int charIndex = stringValue.IndexOf(character);
+            if (charIndex < 0) return stringValue;
+            return stringValue[0..charIndex] + char.ToUpper(stringValue[charIndex + 1]) + stringValue[(charIndex + 2)..].ToFirstCharacterUpperCaseAfterCharacter(character);
+        }
     }
 }
