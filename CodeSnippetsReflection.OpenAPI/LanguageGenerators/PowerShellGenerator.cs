@@ -24,11 +24,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
             }
         );
+        private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
-            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(snippetModel.EndPathNode.Path.Replace("\\", "/"));
+            var cleanPath = snippetModel.EndPathNode.Path.Replace("\\", "/");
+            bool isMeSegment = meSegmentRegex.IsMatch(cleanPath);
+            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath);
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
@@ -40,35 +43,46 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (!string.IsNullOrEmpty(requestPayload))
                     snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
 
+                if (isMeSegment)
+                    snippetBuilder.Append($"{Environment.NewLine}# A UPN can also be used as -UserId.");
+
                 snippetBuilder.Append($"{Environment.NewLine}{targetCommand.Command}");
 
                 if (!string.IsNullOrEmpty(additionalKeySegmentParmeter))
                     snippetBuilder.Append($"{additionalKeySegmentParmeter}");
 
-                string keySegmentParameter = GetKeySegmentParameters(snippetModel.PathNodes);
-                if (!string.IsNullOrEmpty(keySegmentParameter))
-                    snippetBuilder.Append($"{keySegmentParameter}");
-
-                var queryParamsPayload = GetRequestQueryParameters(snippetModel);
-                if (!string.IsNullOrEmpty(queryParamsPayload))
-                    snippetBuilder.Append($" {queryParamsPayload}");
-
-                var parameterList = GetActionParametersList(payloadVarName);
-                if (!string.IsNullOrEmpty(parameterList))
-                    snippetBuilder.Append($" {parameterList}");
-
-                var requestHeadersPayload = GetSupportedRequestHeaders(snippetModel);
-                if (!string.IsNullOrEmpty(requestHeadersPayload))
-                    snippetBuilder.Append(requestHeadersPayload);
+                var commandParameters = GetCommandParameters(snippetModel, payloadVarName);
+                if (!string.IsNullOrEmpty(commandParameters))
+                    snippetBuilder.Append($"{commandParameters}");
             }
             return snippetBuilder.ToString();
         }
 
-        private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
-        private static (string, string) SubstituteMeSegment(string path)
+        private static string GetCommandParameters(SnippetModel snippetModel, string payloadVarName)
+        {
+            var payloadSB = new StringBuilder();
+            string keySegmentParameter = GetKeySegmentParameters(snippetModel.PathNodes);
+            if (!string.IsNullOrEmpty(keySegmentParameter))
+                payloadSB.Append($"{keySegmentParameter}");
+
+            var queryParamsPayload = GetRequestQueryParameters(snippetModel);
+            if (!string.IsNullOrEmpty(queryParamsPayload))
+                payloadSB.Append($" {queryParamsPayload}");
+
+            var parameterList = GetActionParametersList(payloadVarName);
+            if (!string.IsNullOrEmpty(parameterList))
+                payloadSB.Append($" {parameterList}");
+
+            var requestHeadersPayload = GetSupportedRequestHeaders(snippetModel);
+            if (!string.IsNullOrEmpty(requestHeadersPayload))
+                payloadSB.Append(requestHeadersPayload);
+            return payloadSB.ToString();
+        }
+
+        private static (string, string) SubstituteMeSegment(bool isMeSegment, string path)
         {
             string additionalKeySegmentParmeter = default;
-            if (meSegmentRegex.IsMatch(path))
+            if (isMeSegment)
             {
                 path = meSegmentRegex.Replace(path, "/users/{user-id}");
                 additionalKeySegmentParmeter = $" -UserId $userId";
@@ -182,7 +196,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             path = $"^{keyIndexRegex.Replace(path, "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Value.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
         }
-                                                                                                                 
+
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody) 

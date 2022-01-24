@@ -186,6 +186,32 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-UserId $userId", result);
+            Assert.Contains("# A UPN can also be used as -UserId.", result);
+        }
+
+        [Theory]
+        [InlineData("/users")]
+        [InlineData("/users/48d31887-5fad-4d73-a9f5-3c356e68a038")]
+        public async Task GeneratesSnippetsForUserSegment(string path)
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{path}");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("-MgUser", result);
+            Assert.DoesNotContain("# A UPN can also be used as -UserId.", result);
+        }
+
+        [Theory]
+        [InlineData("/me/changePassword")]
+        [InlineData("/users/{user-id}/microsoft.graph.changePassword")]
+        public async Task GeneratesSnippetsForODataAction(string path)
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{path}");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-UserId $userId", result);
+            Assert.Contains("Update-MgUserPassword", result);
         }
 
         [Theory]
