@@ -1,6 +1,9 @@
-﻿using System;
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// -------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -198,7 +201,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
-            if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody) 
+            if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody)
                 || "undefined".Equals(snippetModel?.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
                 return (default, default);
             if (indentManager == null) throw new ArgumentNullException(nameof(indentManager));
