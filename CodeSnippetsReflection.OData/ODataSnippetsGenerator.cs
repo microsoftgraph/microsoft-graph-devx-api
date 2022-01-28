@@ -10,6 +10,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights;
 using UtilityService;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace CodeSnippetsReflection.OData
 {
@@ -78,8 +79,8 @@ namespace CodeSnippetsReflection.OData
             ServiceRootBeta = new Uri(UtilityConstants.ServiceRootBeta);
 
             // use clean metadata
-            IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanV1Metadata)));
-            IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanBetaMetadata)));
+            IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanV1Metadata)), LazyThreadSafetyMode.PublicationOnly);
+            IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanBetaMetadata)), LazyThreadSafetyMode.PublicationOnly);
 
             if (customMetadataPath == null)
             {

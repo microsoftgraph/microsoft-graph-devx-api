@@ -99,7 +99,7 @@ namespace CodeSnippetsReflection.OpenAPI
             else if (method == HttpMethod.Trace) return OperationType.Trace;
             else throw new ArgumentOutOfRangeException(nameof(method));
         }
-        private static Regex namespaceRegex = new Regex("^Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static Regex namespaceRegex = new Regex("Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         public static string TrimNamespace(string path)
         {
             Match namespaceMatch = namespaceRegex.Match(path);
