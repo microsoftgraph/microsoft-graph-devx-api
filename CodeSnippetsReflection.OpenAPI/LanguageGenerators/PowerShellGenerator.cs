@@ -30,7 +30,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
             var cleanPath = snippetModel.EndPathNode.Path.Replace("\\", "/");
-            var isMeSegment = meSegmentRegex.IsMatch(cleanPath);
+            bool isMeSegment = meSegmentRegex.IsMatch(cleanPath);
             var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath);
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
@@ -196,6 +196,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             path = $"^{keyIndexRegex.Replace(path, "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Value.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
         }
+
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody) 
