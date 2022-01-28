@@ -169,9 +169,9 @@ namespace OpenAPIService
 
                     // TESTING GROUNDS
                     var v1 = @"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Expanded\GraphOpenApiDescriptions_v1 (Expanded)_1.yaml";
-                    var beta = @"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Expanded\GraphOpenApiDescriptions_beta (Expanded)_5.yaml";
+                    var beta = @"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Expanded\GraphOpenApiDescriptions_beta (Expanded)_9.yaml";
 
-                    var betaSource = GetOpenApiDocumentFromFile(v1);
+                    var betaSource = GetOpenApiDocumentFromFile(beta);
                      _openApiRootNode.Attach(betaSource, "extended");
 
                     //using var stream = new MemoryStream();
@@ -393,7 +393,7 @@ namespace OpenAPIService
             var v1 = @"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Original\GraphOpenApiDescriptions_v1_1.yaml";
             var beta = @"C:\Users\v-irsund\Microsoft\Projects\Graph OpenAPI Docs\Original\GraphOpenApiDescriptions_beta_test2.yaml";
 
-            OpenApiDocument source = GetOpenApiDocumentFromFile(v1); // await CreateOpenApiDocumentAsync(csdlHref);
+            OpenApiDocument source =  await CreateOpenApiDocumentAsync(csdlHref); // GetOpenApiDocumentFromFile(v1);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
