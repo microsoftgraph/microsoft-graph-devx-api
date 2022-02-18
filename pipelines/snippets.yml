@@ -48,6 +48,8 @@ steps:
     $branchPrefix = if ("$env:LANGUAGES"::IsNullOrEmpty) { "snippet-generation" } else { "preview-snippet-generation" }
     Write-Host "##vso[task.setvariable variable=buildLanguages]$buildLanguages"
     Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
+    Write-Host "Branch prefix is $branchPrefix"
+    Write-Host "Branch languages to generate are $buildLanguages"
   displayName: 'Evaluate snippets to generate'
 
 - template: templates/git-config.yml
