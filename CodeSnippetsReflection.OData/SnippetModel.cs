@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -101,8 +101,11 @@ namespace CodeSnippetsReflection
                         break;
                     //its an expand query
                     case ExpandedNavigationSelectItem expandedNavigationSelectItem:
+                        if (!string.IsNullOrEmpty(ExpandFieldExpression))
+                            break; // multiple expand parameters will result in this case being processed multiple times. So don't do it again if we already did it the first time.
+
                         //get the string from the start of the navigation source name.
-                        ExpandFieldExpression = queryString.Substring(queryString.IndexOf( expandedNavigationSelectItem.NavigationSource.Name, StringComparison.Ordinal));
+                        ExpandFieldExpression = queryString.Substring(queryString.IndexOf( expandedNavigationSelectItem.PathToNavigationProperty.First().Identifier, StringComparison.Ordinal));
                         //check if there are other queries present and chunk them off to remain with only the expand parameter
                         var index = ExpandFieldExpression.IndexOf("&", StringComparison.Ordinal);
                         if (index > 0)
