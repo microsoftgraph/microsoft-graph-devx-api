@@ -151,7 +151,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
                     var schema = snippetModel.RequestSchema;
                     var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-                    if (string.IsNullOrEmpty(className) && schema.Properties.Any() && schema.Properties.Count == 1)
+                    if (string.IsNullOrEmpty(className) &&
+                        schema != null &&
+                        schema.Properties.Any() &&
+                        schema.Properties.Count == 1)
                         className = $"{schema.Properties.First().Key.ToFirstCharacterUpperCase()}RequestBody"; // edge case for odata actions with a single parameter
                     payloadSB.AppendLine($"{RequestBodyVarName} := msgraphsdk.New{className}()");
                     WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, variableName: RequestBodyVarName);
