@@ -875,7 +875,8 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         private static string GenerateCustomQuerySection(SnippetModel snippetModel)
         {
             if (!snippetModel.CustomQueryOptions.Any()
-            && string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
+            && string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken)
+            && !snippetModel.ODataUri.QueryCount.HasValue)
             {
                 return string.Empty;//nothing to do here
             }
@@ -893,6 +894,12 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
             {
                 stringBuilder.Append($"\tnew QueryOption(\"$skiptoken\", \"{snippetModel.ODataUri.SkipToken}\"),\r\n");
+            }
+
+            //Append any $count present
+            if (snippetModel.ODataUri.QueryCount.HasValue)
+            {
+                stringBuilder.Append($"\tnew QueryOption(\"$count\", \"{snippetModel.ODataUri.QueryCount.Value.ToString().ToLower()}\"),\r\n");
             }
 
             stringBuilder.Remove(stringBuilder.Length - 3, 1);//remove the trailing comma

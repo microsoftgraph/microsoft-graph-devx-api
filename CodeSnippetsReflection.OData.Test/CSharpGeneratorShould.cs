@@ -1339,5 +1339,26 @@ namespace CodeSnippetsReflection.Test
             Assert.Contains(expectedType, result);
             Assert.Contains(addedReference, result);
         }
+
+        [Fact]
+        public void ShouldSupportCountParameterAndNestedSelectAndExpand()
+        {
+            // Arrange
+            var expressions = new CSharpExpressions();
+            // Request example from https://docs.microsoft.com/en-us/graph/api/user-list-manager?view=graph-rest-1.0&tabs=http#request-1
+            var requestPayload = new HttpRequestMessage(
+                HttpMethod.Get,
+                "https://graph.microsoft.com/v1.0/me?$expand=directReports,manager($levels=max;$select=id,displayName)&$select=id,displayName&$count=true");
+            requestPayload.Headers.Add("ConsistencyLevel","eventual");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+            // Act
+            var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
+            // Assert
+            var countParameter = "new QueryOption(\"$count\", \"true\")";  // the count query option
+            var expandClause = ".Expand(\"directReports,manager($levels=max;$select=id,displayName)\")";  // Adds the created type
+            Assert.Contains(countParameter, result);
+            Assert.Contains(expandClause, result);
+        }
     }
 }
