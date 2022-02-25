@@ -269,6 +269,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("graphClient.Me().MessagesById(&messageId).Get(options)", result);
         }
+        [Fact]
+        public async Task IncludesRequestBodyClassName() {
+            const string payloadBody = "{\r\n  \"passwordCredential\": {\r\n    \"displayName\": \"Password friendly name\"\r\n  }\r\n}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/applications/{{id}}/addPassword") {
+                Content = new StringContent(payloadBody, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("NewPasswordCredentialRequestBody", result);
+        }
         //TODO test for DateTimeOffset
     }
 }
