@@ -26,6 +26,7 @@ using Microsoft.ApplicationInsights;
 using OpenAPIService.Interfaces;
 using System.Text.Json;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace OpenAPIService
 {
@@ -585,11 +586,14 @@ namespace OpenAPIService
 
         private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
         {
+            var stopwatch = new Stopwatch();
             var httpClient = CreateHttpClient();
 
+            stopwatch.Start();
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
+            stopwatch.Stop();
 
-            _telemetryClient?.TrackTrace("Success getting CSDL ",
+            _telemetryClient?.TrackTrace($"Success getting CSDL for {csdlHref} in {stopwatch.ElapsedMilliseconds}ms",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
