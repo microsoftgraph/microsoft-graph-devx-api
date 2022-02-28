@@ -190,7 +190,8 @@ namespace OpenAPIService
             }
             else if (url != null)
             {
-                var sources = new Dictionary<string, OpenApiDocument> { { graphVersion, source } };
+                var sources = new ConcurrentDictionary<string, OpenApiDocument>();
+                sources.TryAdd(graphVersion, source);
                 var rootNode = CreateOpenApiUrlTreeNode(sources);
 
                 url = url.BaseUriPath()
@@ -227,10 +228,10 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="sources">Dictionary of labels and their corresponding <see cref="OpenApiDocument"/> objects.</param>
         /// <returns>The created <see cref="OpenApiUrlTreeNode"/>.</returns>
-        public OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources)
+        public OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(ConcurrentDictionary<string, OpenApiDocument> sources)
         {
             UtilityFunctions.CheckArgumentNull(sources, nameof(sources));
-            
+
             _telemetryClient?.TrackTrace("Creating OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
@@ -587,6 +588,10 @@ namespace OpenAPIService
             var httpClient = CreateHttpClient();
 
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
+
+            _telemetryClient?.TrackTrace("Success getting CSDL ",
+                                         SeverityLevel.Information,
+                                         _openApiTraceProperties);
 
             OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
 
