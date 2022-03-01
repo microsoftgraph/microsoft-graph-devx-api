@@ -221,7 +221,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             indentManager.Unindent();
         }
-        private static void WriteProperty(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string terminateLine = ";", Boolean objectPropertyAssign = true)
+        private static void WriteProperty(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string terminateLine = ";", bool objectPropertyAssign = true)
         {
             switch (value.ValueKind)
             {
