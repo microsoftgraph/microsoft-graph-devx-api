@@ -193,6 +193,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("members", result); // property name hasn't been changed
         }
         [Fact]
+        public async Task GeneratesAnArrayOfObjectsPayloadData()
+        {
+            const string userJsonObject = "{ \"body\": { \"contentType\": \"HTML\"}, \"extensions\": [{ \"dealValue\": 10000}]}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/groups/{{group-id}}")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("const extension = new Extension();", result); // property is initialized on its own
+            Assert.Contains("extension.additionalData = new Map<string, unknown>([", result); // separate entity is assigned
+            Assert.Contains("requestBody.extensions = [", result); // property is added to list
+        }
+        [Fact]
         public async Task GeneratesSelectQueryParameters()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$select=displayName,id");
