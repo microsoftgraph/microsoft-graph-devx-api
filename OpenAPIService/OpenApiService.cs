@@ -230,7 +230,7 @@ namespace OpenAPIService
         public OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources)
         {
             UtilityFunctions.CheckArgumentNull(sources, nameof(sources));
-            
+
             _telemetryClient?.TrackTrace("Creating OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
@@ -733,8 +733,8 @@ namespace OpenAPIService
                 /* The Type and Format properties describe the data type of the function parameters.
                  * For string data types the Format property is usually undefined.
                  */
-                if (string.IsNullOrEmpty(parameter.Schema.Format) &&
-                    !string.IsNullOrEmpty(parameter.Schema.Type))
+                if (string.IsNullOrEmpty(parameter.Schema?.Format) &&
+                    !string.IsNullOrEmpty(parameter.Schema?.Type))
                 {
                     parameterTypes.Add(parameter.Name, parameter.Schema.Type);
                 }
