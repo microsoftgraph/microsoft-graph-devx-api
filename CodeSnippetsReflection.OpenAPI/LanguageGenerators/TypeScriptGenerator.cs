@@ -205,19 +205,23 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var propertiesWithoutSchema = propertiesAndSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
             if (propertiesWithoutSchema.Any())
             {
-                payloadSB.AppendLine($"{objectName}.additionalData = new Map([");
+                payloadSB.AppendLine($"{objectName}.additionalData = new Map<string, unknown>([");
                 indentManager.Indent();
+
+                int elementIndex = 0;
+                var lastIndex = propertiesWithoutSchema.Count() - 1;
                 foreach (var property in propertiesWithoutSchema)
                 {
                     var propertyAssignment = $"{indentManager.GetIndent()}[\"{property.Name}\", ";
-                    WriteProperty(objectName, payloadSB, property.Value, null, indentManager, propertyAssignment, "]");
+                    WriteProperty(objectName, payloadSB, property.Value, null, indentManager, propertyAssignment, "]", (lastIndex == elementIndex) ? default : ",");
+                    elementIndex++;
                 }
                 indentManager.Unindent();
                 payloadSB.AppendLine($"{indentManager.GetIndent()}]);");
             }
             indentManager.Unindent();
         }
-        private static void WriteProperty(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string terminateLine = ";")
+        private static void WriteProperty(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string terminateLine = ";", Boolean objectPropertyAssign = true)
         {
             switch (value.ValueKind)
             {
@@ -242,7 +246,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case JsonValueKind.Object:
                     if (propSchema != null)
                     {
-                        payloadSB.AppendLine($"{propertyAssignment}new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}(){terminateLine}");
+                        if(objectPropertyAssign)
+                            payloadSB.AppendLine($"{propertyAssignment}new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}(){terminateLine}");
+
                         WriteJsonObjectValue(objectName, payloadSB, value, propSchema, indentManager);
                     }
                     else
@@ -259,15 +265,46 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static void WriteJsonArrayValue(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment, string terminateLine)
         {
+            indentManager.Indent(2);
+
+            // for an array of objects the properties should be written after all the objects have be initiated and not before
+            var itemsBuilder = new StringBuilder();
+            var arrayListBuilder = new StringBuilder();
+
+            int elementIndex = 0;
+            var elements = value.EnumerateArray();
+            var lastIndex = elements.Count() - 1;
+            foreach (var item in elements)
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    var termination = (lastIndex == elementIndex) ? default : ",";
+
+                    var elementName = $"{schema.GetSchemaTitle().ToLowerInvariant()}{(elementIndex == 0 ? default : elementIndex.ToString())}";
+                    itemsBuilder.AppendLine($"const {elementName} = new {schema.GetSchemaTitle().ToFirstCharacterUpperCase()}();");
+
+                    // create a new object 
+                    WriteProperty(elementName, itemsBuilder, item, schema, indentManager, default, default, termination, false);
+                    arrayListBuilder.AppendLine($"{indentManager.GetIndent()}{elementName}{termination}");
+                }
+                else
+                {
+                    WriteProperty(objectName, arrayListBuilder, item, schema, indentManager, indentManager.GetIndent(), default, (lastIndex == elementIndex) ? default : ",");
+                }
+                elementIndex++;
+            }
+
+
+            payloadSB.Append(itemsBuilder.ToString());
+
             payloadSB.AppendLine($"{propertyAssignment}[");
-            indentManager.Indent();
-            indentManager.Indent();
-            foreach (var item in value.EnumerateArray())
-                WriteProperty(objectName, payloadSB, item, schema, indentManager, indentManager.GetIndent());
+            payloadSB.Append(arrayListBuilder.ToString());
             indentManager.Unindent();
             payloadSB.AppendLine($"{indentManager.GetIndent()}]");
             indentManager.Unindent();
-            payloadSB.AppendLine($"{indentManager.GetIndent()}{terminateLine}");
+
+
+
         }
         private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
