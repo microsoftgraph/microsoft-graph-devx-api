@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService.Interfaces;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -406,7 +407,8 @@ namespace OpenAPIService.Test
         public void GetOpenApiTreeNode()
         {
             // Arrange
-            var sources = new Dictionary<string, OpenApiDocument>() { { GraphVersion, _graphMockSource } };
+            var sources = new ConcurrentDictionary<string, OpenApiDocument>();
+            sources.TryAdd(GraphVersion, _graphMockSource);
 
             // Act
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
