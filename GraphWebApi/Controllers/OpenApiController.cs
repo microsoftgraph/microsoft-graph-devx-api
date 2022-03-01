@@ -11,6 +11,7 @@ using OpenAPIService;
 using OpenAPIService.Common;
 using OpenAPIService.Interfaces;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -113,7 +114,7 @@ namespace GraphWebApi.Controllers
                 graphVersionsList.Add(graphVersions.ToLower());
             }
 
-            var sources = new Dictionary<string, OpenApiDocument>();
+            var sources = new ConcurrentDictionary<string, OpenApiDocument>();
             foreach (var graphVersion in graphVersionsList)
             {
                 var graphUri = GetVersionUri(graphVersion);
@@ -122,7 +123,7 @@ namespace GraphWebApi.Controllers
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                sources.Add(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
+                sources.TryAdd(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
             }
 
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
