@@ -1,6 +1,6 @@
 steps:
 - pwsh: |
-    $branchName = "snippet-generation/$env:BUILD_BUILDID" # Match the spec in the GH Action
+    $branchName = "$env:BRANCHPREFIX/$env:BUILD_BUILDID" # Conditionally Match the spec in the GH Actions
     Write-Host "Branch path spec for the pull request will be $branchName"
     Write-Host "##vso[task.setvariable variable=branchName]$branchName"
   displayName: 'Calculate and set pipeline variables for this job'
