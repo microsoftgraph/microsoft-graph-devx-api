@@ -1,4 +1,4 @@
-﻿using Microsoft.OData.UriParser;
+using Microsoft.OData.UriParser;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
@@ -764,7 +764,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             //Generate the Resources path for Csharp
             stringBuilder.Append(CSharpGenerateResourcesPath(snippetModel));
             //check if there are any custom query options appended
-            stringBuilder.Append(snippetModel.CustomQueryOptions.Any() ? "\r\n\t.Request( queryOptions )" : "\r\n\t.Request()");
+            stringBuilder.Append(ShouldGenerateCustomQueryOptions(snippetModel) ? "\r\n\t.Request( queryOptions )" : "\r\n\t.Request()");
             //Append footers
             stringBuilder.Append(actions);
 
@@ -874,9 +874,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         /// <param name="snippetModel">Snippet model built from the request</param>
         private static string GenerateCustomQuerySection(SnippetModel snippetModel)
         {
-            if (!snippetModel.CustomQueryOptions.Any()
-            && string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken)
-            && !snippetModel.ODataUri.QueryCount.HasValue)
+            if (!ShouldGenerateCustomQueryOptions(snippetModel))
             {
                 return string.Empty;//nothing to do here
             }
@@ -906,6 +904,20 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             stringBuilder.Append("};\r\n\r\n");//closing brace
             //return custom query options section
             return stringBuilder.ToString();
+        }
+
+        /// <summary>
+        /// Determine if we should be using custom query options in C#
+        /// </summary>
+        /// <param name="snippetModel">Snippet model built from the request</param>
+        private static bool ShouldGenerateCustomQueryOptions(SnippetModel snippetModel)
+        {
+            if (!snippetModel.CustomQueryOptions.Any()
+                && string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken)
+                && !snippetModel.ODataUri.QueryCount.HasValue)
+                    return false;
+
+            return true;
         }
 
         /// <summary>

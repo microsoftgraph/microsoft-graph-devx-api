@@ -22,7 +22,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 									$"var {clientVarName} = new {clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
 			var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
 			snippetBuilder.Append(requestPayload);
-			var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "var result = ";
+            var responseAssignment = "var result = ";
+            // have a return type if we have a response schema that is not an error
+            if (snippetModel.ResponseSchema == null || (snippetModel.ResponseSchema.Properties.Count == 1 && snippetModel.ResponseSchema.Properties.First().Key.Equals("error",StringComparison.OrdinalIgnoreCase)))
+                responseAssignment = string.Empty;
+
 			var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
 			if(!string.IsNullOrEmpty(queryParamsPayload))
 				snippetBuilder.Append(queryParamsPayload);
