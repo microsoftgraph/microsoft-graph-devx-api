@@ -1085,7 +1085,7 @@ namespace CodeSnippetsReflection.Test
                                            "\r\n" +
                                            "await graphClient.Me.CalendarView\r\n" +
                                                 "\t.Delta()\r\n" +
-                                                "\t.Request()\r\n" +
+                                                "\t.Request( queryOptions )\r\n" +
                                                 "\t.PostAsync();";
 
             //Assert the snippet generated is as expected
@@ -1359,6 +1359,25 @@ namespace CodeSnippetsReflection.Test
             var expandClause = ".Expand(\"directReports,manager($levels=max;$select=id,displayName)\")";  // Adds the created type
             Assert.Contains(countParameter, result);
             Assert.Contains(expandClause, result);
+        }
+
+        [Fact]
+        public void ShouldUseGeneratedQueryOptions()
+        {
+            // Arrange
+            var expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get,"https://graph.microsoft.com/v1.0/applications?$count=true&$skip=10");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+            // Act
+            var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
+            // Assert
+            var countParameter = "new QueryOption(\"$count\", \"true\")";  // the count query option
+            var skipParameter = ".Skip(10)";  // the skip query option
+            var queryOptions = ".Request( queryOptions )";  // Adds the custom query options
+            Assert.Contains(countParameter, result);
+            Assert.Contains(queryOptions, result);
+            Assert.Contains(skipParameter, result);
         }
     }
 }
