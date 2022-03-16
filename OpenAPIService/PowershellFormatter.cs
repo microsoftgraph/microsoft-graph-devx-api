@@ -72,6 +72,11 @@ namespace OpenAPIService
                     // OperationIds to how they were being constructed in earlier versions of the lib.
                     operationId = ResolveActionFunctionOperationId(operation);
                 }
+
+                if ("function".Equals(operationType, StringComparison.OrdinalIgnoreCase))
+                {
+                    ResolveFunctionOperationParameterSchema(operation);
+                }
             }
 
             var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
@@ -158,6 +163,26 @@ namespace OpenAPIService
             updatedOperationId = regex.Match(updatedOperationId).Value;
 
             return updatedOperationId;
+        }
+
+        private static void ResolveFunctionOperationParameterSchema(OpenApiOperation operation)
+        {
+            foreach (var parameter in operation.Parameters)
+            {
+                if (parameter.Content != null)
+                {
+                    // Replace with schema object
+                    parameter.Content = null;
+                    parameter.Schema = new OpenApiSchema
+                    {
+                        Type = "array",
+                        Items = new OpenApiSchema
+                        {
+                            Type = "string"
+                        }
+                    };
+                }
+            }
         }
     }
 }
