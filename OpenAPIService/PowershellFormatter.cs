@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -71,6 +71,11 @@ namespace OpenAPIService
                     // To maintain pre-existing cmdlet names in PowerShell, we need to resolve their
                     // OperationIds to how they were being constructed in earlier versions of the lib.
                     operationId = ResolveActionFunctionOperationId(operation);
+                }
+
+                if ("function".Equals(operationType, StringComparison.OrdinalIgnoreCase))
+                {
+                    ResolveFunctionOperationParameterSchema(operation);
                 }
             }
 
@@ -158,6 +163,26 @@ namespace OpenAPIService
             updatedOperationId = regex.Match(updatedOperationId).Value;
 
             return updatedOperationId;
+        }
+
+        private static void ResolveFunctionOperationParameterSchema(OpenApiOperation operation)
+        {
+            foreach (var parameter in operation.Parameters)
+            {
+                if (parameter.Content?.Any() ?? false)
+                {
+                    // Replace with schema object
+                    parameter.Content = null;
+                    parameter.Schema = new OpenApiSchema
+                    {
+                        Type = "array",
+                        Items = new OpenApiSchema
+                        {
+                            Type = "string"
+                        }
+                    };
+                }
+            }
         }
     }
 }
