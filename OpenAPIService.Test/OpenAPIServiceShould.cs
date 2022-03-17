@@ -369,8 +369,17 @@ namespace OpenAPIService.Test
                                                            source: _graphMockSource,
                                                            graphVersion: GraphVersion);
 
+            var predicate2 = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: "/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})",
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            var subsetOpenApiDocument2 = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate2);
+
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument2 = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument2);
 
             var parameter = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
@@ -378,9 +387,18 @@ namespace OpenAPIService.Test
                               .Parameters
                               .FirstOrDefault();
 
+            var parameter2 = subsetOpenApiDocument2.Paths
+                              .FirstOrDefault().Value
+                              .Operations[OperationType.Get]
+                              .Parameters
+                              .FirstOrDefault();
+
             Assert.NotNull(parameter);
+            Assert.NotNull(parameter2);
 
             var json = parameter.SerializeAsJson(OpenApiSpecVersion.OpenApi3_0);
+            var json2 = parameter2.SerializeAsJson(OpenApiSpecVersion.OpenApi3_0);
+
             var expectedPayload = $@"{{
   ""name"": ""ids"",
   ""in"": ""query"",
@@ -394,8 +412,19 @@ namespace OpenAPIService.Test
   }}
 }}";
 
+            var expectedPayload2 = $@"{{
+  ""name"": ""period"",
+  ""in"": ""path"",
+  ""description"": ""Usage: period={{period}}"",
+  ""required"": true,
+  ""schema"": {{
+    ""type"": ""string""
+  }}
+}}";
+
             // Assert
             Assert.Equal(expectedPayload.ChangeLineBreaks(), json);
+            Assert.Equal(expectedPayload2.ChangeLineBreaks(), json2);
         }
 
         [Theory]
