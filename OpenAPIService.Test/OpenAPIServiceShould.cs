@@ -129,7 +129,7 @@ namespace OpenAPIService.Test
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
             // Act & Assert
-            var message = Assert.Throws<ArgumentException>(() => _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument)).Message;
+            var message = Assert.Throws<ArgumentException>(() => _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, false)).Message;
             Assert.Equal("No paths found for the supplied parameters.", message);
         }
 
@@ -222,7 +222,7 @@ namespace OpenAPIService.Test
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
-            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument, false);
 
             // Assert
             if (style == OpenApiStyle.GEAutocomplete || style == OpenApiStyle.Plain)
@@ -293,6 +293,44 @@ namespace OpenAPIService.Test
         }
 
         [Fact]
+        public void ReturnContentForGEAutoCompleteStyleIfReQuestBodyIsTrue()
+        {
+            // Arrange
+            var style = OpenApiStyle.GEAutocomplete;
+            var url = "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore";
+            var operationType = OperationType.Post;
+            var requestBody = true;
+
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: url,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument, requestBody);
+
+            // Assert
+            var requestBodyContent = subsetOpenApiDocument.Paths
+                            .FirstOrDefault().Value
+                            .Operations[operationType]
+                            .RequestBody                                
+                            .Content;
+
+            var responseContent = subsetOpenApiDocument.Paths
+                                .FirstOrDefault().Value
+                                .Operations[operationType]
+                                .Responses["200"]
+                                .Content;
+
+            Assert.Single(subsetOpenApiDocument.Paths);
+            Assert.NotEmpty(requestBodyContent);
+            Assert.NotEmpty(responseContent);
+        }
+
+        [Fact]
         public void RemoveRootPathFromOpenApiDocumentInApplyStyleForPowerShellOpenApiStyle()
         {
             // Act
@@ -303,7 +341,7 @@ namespace OpenAPIService.Test
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, false);
 
             // Assert
             Assert.False(subsetOpenApiDocument.Paths.ContainsKey("/")); // root path
@@ -323,7 +361,7 @@ namespace OpenAPIService.Test
                                                            graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, false);
 
             var parentSchema = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"];
             var descriptionSchema = parentSchema.Properties["description"];
@@ -347,7 +385,7 @@ namespace OpenAPIService.Test
                                                            graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, false);
             var operationId = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
                               .Operations[operationType]
@@ -372,7 +410,7 @@ namespace OpenAPIService.Test
                                                            graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument, false);
 
             var parameter = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
@@ -393,7 +431,7 @@ namespace OpenAPIService.Test
                                                            graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, false);
             var operationId = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
                               .Operations[OperationType.Get]
