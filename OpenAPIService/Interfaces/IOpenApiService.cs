@@ -28,7 +28,7 @@ namespace OpenAPIService.Interfaces
 
         void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream);
 
-        OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument);
+        OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool requestBody);
 
         Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl);
 
