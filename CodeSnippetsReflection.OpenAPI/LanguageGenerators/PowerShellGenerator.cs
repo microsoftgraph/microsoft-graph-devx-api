@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -25,7 +26,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 using var httpClient = new HttpClient();
                 using var stream = httpClient.GetStreamAsync(mgCommandMetadataUrl).GetAwaiter().GetResult();
                 return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
-            }
+            },
+            LazyThreadSafetyMode.PublicationOnly
         );
         private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
         public string GenerateCodeSnippet(SnippetModel snippetModel)
