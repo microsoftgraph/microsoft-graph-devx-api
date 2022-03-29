@@ -771,7 +771,7 @@ namespace OpenAPIService.Test
                             }
                         }
                     },
-                    ["/deviceManagement/microsoft.graph.getRoleScopeTagsByIds(ids=@ids)"] = new OpenApiPathItem()
+                    ["/deviceManagement/microsoft.graph.getRoleScopeTagsByIds(ids={ids})"] = new OpenApiPathItem()
                     {
                         Operations = new Dictionary<OperationType, OpenApiOperation>
                         {

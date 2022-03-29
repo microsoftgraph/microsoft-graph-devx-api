@@ -365,7 +365,7 @@ namespace OpenAPIService.Test
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
-                                                           url: "/deviceManagement/microsoft.graph.getRoleScopeTagsByIds(ids=@ids)",
+                                                           url: "/deviceManagement/microsoft.graph.getRoleScopeTagsByIds(ids={ids})",
                                                            source: _graphMockSource,
                                                            graphVersion: GraphVersion);
 
