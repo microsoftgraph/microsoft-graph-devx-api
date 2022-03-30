@@ -7,7 +7,6 @@ using Microsoft.OpenApi.Services;
 using OpenAPIService.Common;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
