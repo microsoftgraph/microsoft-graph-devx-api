@@ -593,9 +593,11 @@ namespace OpenAPIService
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
             stopwatch.Stop();
 
+            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
             _telemetryClient?.TrackTrace($"Success getting CSDL for {csdlHref} in {stopwatch.ElapsedMilliseconds}ms",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
+            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
             OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
 
@@ -742,8 +744,8 @@ namespace OpenAPIService
                 /* The Type and Format properties describe the data type of the function parameters.
                  * For string data types the Format property is usually undefined.
                  */
-                if (string.IsNullOrEmpty(parameter.Schema.Format) &&
-                    !string.IsNullOrEmpty(parameter.Schema.Type))
+                if (string.IsNullOrEmpty(parameter.Schema?.Format) &&
+                    !string.IsNullOrEmpty(parameter.Schema?.Type))
                 {
                     parameterTypes.Add(parameter.Name, parameter.Schema.Type);
                 }

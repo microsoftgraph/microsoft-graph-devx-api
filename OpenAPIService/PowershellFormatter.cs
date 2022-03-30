@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -71,6 +71,11 @@ namespace OpenAPIService
                     // To maintain pre-existing cmdlet names in PowerShell, we need to resolve their
                     // OperationIds to how they were being constructed in earlier versions of the lib.
                     operationId = ResolveActionFunctionOperationId(operation);
+                }
+
+                if ("function".Equals(operationType, StringComparison.OrdinalIgnoreCase))
+                {
+                    ResolveFunctionParameters(operation);
                 }
             }
 
@@ -158,6 +163,31 @@ namespace OpenAPIService
             updatedOperationId = regex.Match(updatedOperationId).Value;
 
             return updatedOperationId;
+        }
+
+        /// <summary>
+        /// Resolves structured or collection-valued function parameters.
+        /// </summary>
+        /// <param name="operation">The target OpenAPI operation of the function.</param>
+        private static void ResolveFunctionParameters(OpenApiOperation operation)
+        {
+            foreach (var parameter in operation.Parameters)
+            {
+                if (parameter.Content?.Any() ?? false)
+                {
+                    // Replace content with a schema object of type array
+                    // for structured or collection-valued function parameters
+                    parameter.Content = null;
+                    parameter.Schema = new OpenApiSchema
+                    {
+                        Type = "array",
+                        Items = new OpenApiSchema
+                        {
+                            Type = "string"
+                        }
+                    };
+                }
+            }
         }
     }
 }
