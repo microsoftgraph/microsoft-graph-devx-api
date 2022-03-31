@@ -630,7 +630,8 @@ namespace OpenAPIService
                 EnableDerivedTypesReferencesForRequestBody = false,
                 EnableDerivedTypesReferencesForResponses = false,
                 ShowRootPath = true,
-                ShowLinks = true
+                ShowLinks = true,
+                AddSingleQuotesForStringParameters = true
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
