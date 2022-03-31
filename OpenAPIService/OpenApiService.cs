@@ -621,17 +621,20 @@ namespace OpenAPIService
 
             var settings = new OpenApiConvertSettings()
             {
+                AddSingleQuotesForStringParameters = true,
+                AddEnumDescriptionExtension = true,
+                DeclarePathParametersOnPathItem = true,
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
+                ErrorResponsesAsDefault = false,
                 PrefixEntityTypeNameBeforeKey = true,
                 TagDepth = 2,
                 EnablePagination = true,
                 EnableDiscriminatorValue = false,
                 EnableDerivedTypesReferencesForRequestBody = false,
                 EnableDerivedTypesReferencesForResponses = false,
-                ShowRootPath = true,
-                ShowLinks = true,
-                AddSingleQuotesForStringParameters = true
+                ShowRootPath = false,
+                ShowLinks = false
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
