@@ -53,7 +53,7 @@ namespace GraphWebApi.Controllers
                                     [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
                                     [FromQuery]string format = null,
                                     [FromQuery]string graphVersion = null,
-                                    [FromQuery] bool requestBody = false,
+                                    [FromQuery]bool requestBody = false,
                                     [FromQuery]bool forceRefresh = false)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
