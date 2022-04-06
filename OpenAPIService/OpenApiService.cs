@@ -623,7 +623,6 @@ namespace OpenAPIService
             {
                 AddSingleQuotesForStringParameters = true,
                 AddEnumDescriptionExtension = true,
-                DeclarePathParametersOnPathItem = true,
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
                 ErrorResponsesAsDefault = false,
