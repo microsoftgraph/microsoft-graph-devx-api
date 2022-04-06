@@ -673,7 +673,10 @@ namespace OpenAPIService
             var httpClient = new HttpClient(new HttpClientHandler()
             {
                 AutomaticDecompression = DecompressionMethods.GZip
-            });
+            })
+            {
+                Timeout = TimeSpan.FromMinutes(5)
+            };
             httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
             httpClient.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("graphslice", "1.0"));
             return httpClient;
