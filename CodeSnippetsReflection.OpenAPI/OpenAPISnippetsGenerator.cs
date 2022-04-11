@@ -33,10 +33,10 @@ namespace CodeSnippetsReflection.OpenAPI
             if(string.IsNullOrEmpty(betaOpenApiDocumentUrl)) throw new ArgumentNullException(nameof(betaOpenApiDocumentUrl));
 
             _telemetryClient = telemetryClient;
-            _v1OpenApiDocument = new Lazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(v1OpenApiDocumentUrl).GetAwaiter().GetResult(), LazyThreadSafetyMode.PublicationOnly);
-            _betaOpenApiDocument = new Lazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(betaOpenApiDocumentUrl).GetAwaiter().GetResult(), LazyThreadSafetyMode.PublicationOnly);
+            _v1OpenApiDocument = new Lazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(v1OpenApiDocumentUrl).GetAwaiter().GetResult());
+            _betaOpenApiDocument = new Lazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(betaOpenApiDocumentUrl).GetAwaiter().GetResult());
             if(!string.IsNullOrEmpty(customOpenApiPathOrUrl))
-                _customOpenApiDocument = new Lazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(customOpenApiPathOrUrl).GetAwaiter().GetResult(), LazyThreadSafetyMode.PublicationOnly);
+                _customOpenApiDocument = new Lazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(customOpenApiPathOrUrl).GetAwaiter().GetResult());
         }
         private static async Task<OpenApiUrlTreeNode> GetOpenApiDocument(string url) {
             Stream stream;
