@@ -633,8 +633,8 @@ namespace OpenAPIService
                 EnableDiscriminatorValue = false,
                 EnableDerivedTypesReferencesForRequestBody = false,
                 EnableDerivedTypesReferencesForResponses = false,
-                ShowRootPath = false,
-                ShowLinks = false
+                ShowRootPath = true,
+                ShowLinks = true
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
