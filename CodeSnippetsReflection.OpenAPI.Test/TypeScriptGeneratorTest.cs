@@ -45,12 +45,12 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains(".me.messagesById(\"message-id\")", result);
         }
         [Fact]
-        public async Task GeneratesTheSnippetHeader()
+        public async Task GeneratesTheSnippetInitializationStatement()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("const graphServiceClient = new GraphServiceClient(requestAdapter)", result);
+            Assert.Contains("const graphServiceClient = GraphServiceClient.init({authProvider});", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall()
@@ -188,7 +188,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("\"members@odata.bind\", [", result);
+            Assert.Contains("\"members@odata.bind\" : [", result);
             Assert.Contains("requestBody.additionalData", result);
             Assert.Contains("members", result); // property name hasn't been changed
         }
@@ -203,7 +203,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("const extension = new Extension();", result); // property is initialized on its own
-            Assert.Contains("extension.additionalData = new Map<string, unknown>([", result); // separate entity is assigned
+            Assert.Contains("extension.additionalData = {", result); // additional data is initialized as a Record not mpa
             Assert.Contains("requestBody.extensions = [", result); // property is added to list
         }
         [Fact]
