@@ -22,7 +22,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private const string clientVarName = "graphServiceClient";
         private const string clientVarType = "GraphServiceClient";
-        private const string httpCoreVarName = "requestAdapter";
 
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
@@ -30,7 +29,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder(
                                     "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-                                    $"const {clientVarName} = new {clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+                                    $"const {clientVarName} = {clientVarType}.init({{authProvider}});{Environment.NewLine}{Environment.NewLine}");
             var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
             snippetBuilder.Append(requestPayload);
             var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "const result = ";
@@ -205,19 +204,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var propertiesWithoutSchema = propertiesAndSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
             if (propertiesWithoutSchema.Any())
             {
-                payloadSB.AppendLine($"{objectName}.additionalData = new Map<string, unknown>([");
+                payloadSB.AppendLine($"{objectName}.additionalData = {{");
                 indentManager.Indent();
 
                 int elementIndex = 0;
                 var lastIndex = propertiesWithoutSchema.Count() - 1;
                 foreach (var property in propertiesWithoutSchema)
                 {
-                    var propertyAssignment = $"{indentManager.GetIndent()}[\"{property.Name}\", ";
-                    WriteProperty(objectName, payloadSB, property.Value, null, indentManager, propertyAssignment, "]", (lastIndex == elementIndex) ? default : ",");
+                    var propertyAssignment = $"{indentManager.GetIndent()} \"{property.Name}\" : ";
+                    WriteProperty(objectName, payloadSB, property.Value, null, indentManager, propertyAssignment, "", (lastIndex == elementIndex) ? default : ",");
                     elementIndex++;
                 }
                 indentManager.Unindent();
-                payloadSB.AppendLine($"{indentManager.GetIndent()}]);");
+                payloadSB.AppendLine($"{indentManager.GetIndent()} }}");
             }
             indentManager.Unindent();
         }
