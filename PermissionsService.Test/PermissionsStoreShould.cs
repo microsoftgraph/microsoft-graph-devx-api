@@ -184,11 +184,15 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public void RemoveParameterParanthesesFromRequestUrlsDuringLoadingOfPermissionsFiles()
+        public void RemoveFunctionParametersFromRequestUrlsDuringLoadingAndQueryingOfPermissionsFiles()
         {
             // Act
             // RequestUrl in permission file: "/workbook/worksheets/{id}/charts/{id}/image(width=640)"
             List<ScopeInformation> result =
+                _permissionsStore.GetScopesAsync(scopeType: DelegatedWork,
+                                                 requestUrl: "/workbook/worksheets/{id}/charts/{id}/image(width=640)",
+                                                 method: "GET").GetAwaiter().GetResult();
+            List<ScopeInformation> result2 =
                 _permissionsStore.GetScopesAsync(scopeType: DelegatedWork,
                                                  requestUrl: "/workbook/worksheets/{id}/charts/{id}/image",
                                                  method: "GET").GetAwaiter().GetResult();
@@ -196,6 +200,15 @@ namespace PermissionsService.Test
             /* Assert */
 
             Assert.Collection(result,
+                item =>
+                {
+                    Assert.Equal("Files.ReadWrite", item.ScopeName);
+                    Assert.Equal("Have full access to your files", item.DisplayName);
+                    Assert.Equal("Allows the app to read, create, update, and delete your files.", item.Description);
+                    Assert.False(item.IsAdmin);
+                });
+
+            Assert.Collection(result2,
                 item =>
                 {
                     Assert.Equal("Files.ReadWrite", item.ScopeName);
