@@ -99,7 +99,7 @@ namespace OpenAPIService
             {
                 OpenApiPathItem pathItem;
                 var pathKey = result.CurrentKeys.Path;
-                if (result.Operation.Extensions.TryGetValue("x-ms-docs-operation-type", out var value) && value is OpenApiString oasString && oasString.Value.Equals("function"))
+                if (result.Operation.Extensions.TryGetValue("x-ms-docs-operation-type", out var value) && value is OpenApiString oasString && oasString.Value.Equals("function", StringComparison.Ordinal))
                 {
                     pathKey = FormatPathFunctions(pathKey, result.Operation.Parameters);
                 }
