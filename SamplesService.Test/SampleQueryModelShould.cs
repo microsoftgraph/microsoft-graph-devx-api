@@ -78,6 +78,18 @@ namespace SamplesService.Test
             Assert.Equal("/v1.0/me/photo/$value", sampleQueryModel.RequestUrl);
         }
 
+        [Fact]
+        public void ThrowArgumentExceptionIfRequestUrlHasWhiteSpaces()
+        {
+            // Arrange
+            SampleQueryModel sampleQueryModel = new SampleQueryModel();
+
+            // Act and Assert
+            Assert.Throws<ArgumentException>(() =>
+                sampleQueryModel.RequestUrl = "/v1.0/users/{id | userPrincipalName}/identities"); // there's space between id and userPrincipalName
+
+        }
+
         #endregion
 
         #region DocLink Property Test

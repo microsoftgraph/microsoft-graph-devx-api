@@ -57,8 +57,9 @@ namespace SamplesService.Models
             set
             {
                 string testValue = value;
+                string[] requestUrlSection = testValue.Split('?');
                 // Check if value starts with '/' and whether there are any subsequent '/'
-                if(!testValue.Trim(' ').StartsWith("/") || !testValue.TrimStart('/').Contains("/"))
+                if(!testValue.Trim(' ').StartsWith("/") || !testValue.TrimStart('/').Contains("/") || requestUrlSection[0].Trim().Contains(" "))
                 {
                     throw new ArgumentException("Invalid request url.\r\nEx.: /v1.0/me/messages", nameof(RequestUrl));
                 }
