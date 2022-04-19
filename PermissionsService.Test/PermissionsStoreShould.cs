@@ -183,18 +183,18 @@ namespace PermissionsService.Test
               });
         }
 
-        [Fact]
-        public void RemoveParameterParanthesesFromRequestUrlsDuringLoadingOfPermissionsFiles()
+        [Theory]
+        [InlineData("/workbook/worksheets/{id}/charts/{id}/image")]
+        [InlineData("/workbook/worksheets/{id}/charts/{id}/image(width={value})")]
+        public void RemoveFunctionParametersFromRequestUrlsDuringLoadingAndQueryingOfPermissionsFiles(string url)
         {
             // Act
-            // RequestUrl in permission file: "/workbook/worksheets/{id}/charts/{id}/image(width=640)"
             List<ScopeInformation> result =
                 _permissionsStore.GetScopesAsync(scopeType: DelegatedWork,
-                                                 requestUrl: "/workbook/worksheets/{id}/charts/{id}/image",
+                                                 requestUrl: url,
                                                  method: "GET").GetAwaiter().GetResult();
 
             /* Assert */
-
             Assert.Collection(result,
                 item =>
                 {

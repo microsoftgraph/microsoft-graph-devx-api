@@ -125,6 +125,13 @@ namespace UtilityService
 
                 if (segment.Contains(OpenParen) || segment.Contains(CloseParen))
                 {
+                    if (segment.Contains('='))
+                    {
+                        // Don't remove parentheses of namespace-simplified function parameters
+                        // ex: /reports/getemailactivityusercounts(period={value})
+                        continue;
+                    }
+
                     /* Resolve any possible parentheses as key instances
                      */
                     if (matchFunction?.Success ?? false)
