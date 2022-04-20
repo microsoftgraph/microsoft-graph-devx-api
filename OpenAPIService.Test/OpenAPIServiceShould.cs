@@ -292,14 +292,15 @@ namespace OpenAPIService.Test
             }
         }
 
-        [Fact]
-        public void ReturnContentForGEAutoCompleteStyleIfReQuestBodyIsTrue()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ReturnContentForGEAutoCompleteStyleIfRequestBodyIsTrue(bool requestBody)
         {
             // Arrange
             var style = OpenApiStyle.GEAutocomplete;
             var url = "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore";
             var operationType = OperationType.Post;
-            var requestBody = true;
 
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: null,
@@ -311,23 +312,30 @@ namespace OpenAPIService.Test
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
             subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument, requestBody);
-
-            // Assert
             var requestBodyContent = subsetOpenApiDocument.Paths
-                            .FirstOrDefault().Value
-                            .Operations[operationType]
-                            .RequestBody                                
-                            .Content;
-
+                .FirstOrDefault().Value
+                .Operations[operationType]
+                .RequestBody
+                .Content;
             var responseContent = subsetOpenApiDocument.Paths
                                 .FirstOrDefault().Value
                                 .Operations[operationType]
                                 .Responses["200"]
                                 .Content;
 
+            // Assert
             Assert.Single(subsetOpenApiDocument.Paths);
-            Assert.NotEmpty(requestBodyContent);
-            Assert.NotEmpty(responseContent);
+
+            if (requestBody)
+            {
+                Assert.NotEmpty(requestBodyContent);
+                Assert.NotEmpty(responseContent);
+            }
+            else
+            {
+                Assert.Empty(requestBodyContent);
+                Assert.Empty(responseContent);
+            }
         }
 
         [Fact]
