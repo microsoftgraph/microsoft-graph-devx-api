@@ -13,7 +13,7 @@ namespace CodeSnippetsReflection.OpenAPI
      * This is a bypass for the dotnet issue https://github.com/dotnet/runtime/issues/27421 for lazy initialization without exception caching
      * 
      */
-    class SimpleLazy<T> where T : class
+    public class SimpleLazy<T> where T : class
     {
         private readonly Func<T> valueFactory;
         private T instance;
