@@ -294,6 +294,52 @@ namespace OpenAPIService.Test
             }
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ReturnContentForGEAutoCompleteStyleIfRequestBodyIsTrue(bool includeRequestBody)
+        {
+            // Arrange
+            var style = OpenApiStyle.GEAutocomplete;
+            var url = "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore";
+            var operationType = OperationType.Post;
+
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: url,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument, includeRequestBody);
+            var requestBodyContent = subsetOpenApiDocument.Paths
+                .FirstOrDefault().Value
+                .Operations[operationType]
+                .RequestBody
+                .Content;
+            var responseContent = subsetOpenApiDocument.Paths
+                                .FirstOrDefault().Value
+                                .Operations[operationType]
+                                .Responses["200"]
+                                .Content;
+
+            // Assert
+            Assert.Single(subsetOpenApiDocument.Paths);
+
+            if (includeRequestBody)
+            {
+                Assert.NotEmpty(requestBodyContent);
+                Assert.NotEmpty(responseContent);
+            }
+            else
+            {
+                Assert.Empty(requestBodyContent);
+                Assert.Empty(responseContent);
+            }
+        }
+
         [Fact]
         public void RemoveRootPathFromOpenApiDocumentInApplyStyleForPowerShellOpenApiStyle()
         {
