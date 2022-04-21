@@ -295,7 +295,7 @@ namespace OpenAPIService.Test
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void IncludeRequestBody(bool requestBody)
+        public void ReturnContentForGEAutoCompleteStyleIfRequestBodyIsTrue(bool includeRequestBody)
         {
             // Arrange
             var style = OpenApiStyle.GEAutocomplete;
@@ -311,7 +311,7 @@ namespace OpenAPIService.Test
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
-            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument, requestBody);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument, includeRequestBody);
             var requestBodyContent = subsetOpenApiDocument.Paths
                 .FirstOrDefault().Value
                 .Operations[operationType]
@@ -326,7 +326,7 @@ namespace OpenAPIService.Test
             // Assert
             Assert.Single(subsetOpenApiDocument.Paths);
 
-            if (requestBody)
+            if (includeRequestBody)
             {
                 Assert.NotEmpty(requestBodyContent);
                 Assert.NotEmpty(responseContent);

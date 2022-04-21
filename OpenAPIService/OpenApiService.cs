@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -512,7 +512,7 @@ namespace OpenAPIService
         /// <param name="style">The OpenApiStyle value.</param>
         /// <param name="subsetOpenApiDocument">The subset of an OpenAPI document.</param>
         /// <returns>An OpenAPI doc with the respective style applied.</returns>
-        public OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool requestBody)
+        public OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody)
         {
             _telemetryClient?.TrackTrace($"Applying style for '{style}'",
                                          SeverityLevel.Information,
@@ -523,7 +523,7 @@ namespace OpenAPIService
                 // Clone doc before making changes
                 subsetOpenApiDocument = Clone(subsetOpenApiDocument);
 
-                if(!requestBody)
+                if(!includeRequestBody)
                 {
                     // The Content property and its schema $refs are unnecessary for autocomplete
                     RemoveContent(subsetOpenApiDocument);

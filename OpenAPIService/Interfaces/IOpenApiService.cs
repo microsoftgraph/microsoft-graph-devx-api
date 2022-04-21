@@ -7,7 +7,6 @@ using Microsoft.OpenApi.Services;
 using OpenAPIService.Common;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -28,7 +27,7 @@ namespace OpenAPIService.Interfaces
 
         void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream);
 
-        OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool requestBody = false);
+        OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody = false);
 
         Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl);
 
