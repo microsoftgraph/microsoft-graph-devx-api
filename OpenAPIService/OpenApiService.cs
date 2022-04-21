@@ -512,7 +512,7 @@ namespace OpenAPIService
         /// <param name="style">The OpenApiStyle value.</param>
         /// <param name="subsetOpenApiDocument">The subset of an OpenAPI document.</param>
         /// <returns>An OpenAPI doc with the respective style applied.</returns>
-        public OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument)
+        public OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody)
         {
             _telemetryClient?.TrackTrace($"Applying style for '{style}'",
                                          SeverityLevel.Information,
@@ -523,9 +523,13 @@ namespace OpenAPIService
                 // Clone doc before making changes
                 subsetOpenApiDocument = Clone(subsetOpenApiDocument);
 
-                // The Content property and its schema $refs are unnecessary for autocomplete
-                RemoveContent(subsetOpenApiDocument);
+                if(!includeRequestBody)
+                {
+                    // The Content property and its schema $refs are unnecessary for autocomplete
+                    RemoveContent(subsetOpenApiDocument);
+                }
             }
+
             else if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
                 /* For Powershell and PowerPlatform Styles */
