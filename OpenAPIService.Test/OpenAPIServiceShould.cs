@@ -295,7 +295,7 @@ namespace OpenAPIService.Test
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void ReturnContentForGEAutoCompleteStyleIfRequestBodyIsTrue(bool requestBody)
+        public void IncludeRequestBody(bool requestBody)
         {
             // Arrange
             var style = OpenApiStyle.GEAutocomplete;
