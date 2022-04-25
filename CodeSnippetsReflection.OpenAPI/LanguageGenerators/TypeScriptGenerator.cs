@@ -231,7 +231,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         payloadSB.AppendLine($"{propertyAssignment} new Date(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
                     else
                     {
-                        var enumSchema = propSchema.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
+                        var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
                         if(enumSchema == null)
                         {
                             payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}{terminateLine}");
