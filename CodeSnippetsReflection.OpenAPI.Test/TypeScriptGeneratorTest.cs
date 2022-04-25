@@ -36,6 +36,19 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains(".me.messages", result);
         }
+
+        [Fact]
+        public async Task GeneratesClassWithDefaultBodyWhenSchemaNotPresent()
+        {
+            const string userJsonObject = "{  \"decision\": \"Approve\",  \"justification\": \"All principals with access need continued access to the resource (Marketing Group) as all the principals are on the marketing team\",  \"resourceId\": \"a5c51e59-3fcd-4a37-87a1-835c0c21488a\"}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identityGovernance/accessReviews/definitions/e6cafba0-cbf0-4748-8868-0810c7f4cc06/instances/1234fba0-cbf0-6778-8868-9999c7f4cc06/batchRecordDecisions")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("const requestBody = new BatchRecordDecisionsRequestBody()", result);
+        }
         [Fact]
         public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollections()
         {
@@ -270,6 +283,19 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("new ChatMessage", result);
             Assert.Contains("requestBody.from.user.additionalData", result);
+        }
+
+        [Fact]
+        public async Task GeneratesEnumsWhenVariableIsEnum()
+        {
+            const string userJsonObject = "{  \"displayName\": \"Test create\",  \"settings\": {    \"recurrence\": {      \"pattern\": {        \"type\": \"weekly\",        \"interval\": 1      },      \"range\": {        \"type\": \"noEnd\",        \"startDate\": \"2020-09-08T12:02:30.667Z\"      }    }  }}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identityGovernance/accessReviews/definitions")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestBody.settings.recurrence.pattern.type = RecurrencePatternType.Weekly", result);
         }
     }
 }
