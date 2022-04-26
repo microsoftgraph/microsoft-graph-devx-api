@@ -592,7 +592,6 @@ namespace OpenAPIService
         {
             var stopwatch = new Stopwatch();
             var httpClient = CreateHttpClient();
-
             stopwatch.Start();
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
             stopwatch.Stop();
@@ -630,7 +629,6 @@ namespace OpenAPIService
                 DeclarePathParametersOnPathItem = true,
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
-                ErrorResponsesAsDefault = false,
                 PrefixEntityTypeNameBeforeKey = true,
                 TagDepth = 2,
                 EnablePagination = true,
