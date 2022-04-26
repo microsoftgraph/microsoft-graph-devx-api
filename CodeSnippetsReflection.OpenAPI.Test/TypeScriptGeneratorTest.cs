@@ -288,7 +288,21 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Fact]
         public async Task GeneratesEnumsWhenVariableIsEnum()
         {
-            const string userJsonObject = "{  \"displayName\": \"Test create\",  \"settings\": {    \"recurrence\": {      \"pattern\": {        \"type\": \"weekly\",        \"interval\": 1      },      \"range\": {        \"type\": \"noEnd\",        \"startDate\": \"2020-09-08T12:02:30.667Z\"      }    }  }}";
+            const string userJsonObject = @"{
+    ""displayName"": ""Test create"",
+    ""settings"": {
+        ""recurrence"": {
+            ""pattern"": {
+                ""type"": ""weekly"",
+                ""interval"": 1
+            },
+            ""range"": {
+                ""type"": ""noEnd"",
+                ""startDate"": ""2020-09-08T12:02:30.667Z""
+            }
+        }
+    }
+}";
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identityGovernance/accessReviews/definitions")
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
