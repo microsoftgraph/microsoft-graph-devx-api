@@ -630,7 +630,6 @@ namespace OpenAPIService
                 DeclarePathParametersOnPathItem = true,
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
-                ErrorResponsesAsDefault = false,
                 PrefixEntityTypeNameBeforeKey = true,
                 TagDepth = 2,
                 EnablePagination = true,
