@@ -65,7 +65,7 @@ namespace GraphWebApi.Controllers
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
 
-            var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+            var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions.ConvertSettings);
             return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody);
         }
 
@@ -86,7 +86,7 @@ namespace GraphWebApi.Controllers
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
 
-            var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+            var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions.ConvertSettings);
             await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                 graphOpenApi, Response.Body, styleOptions.Style);
 
@@ -116,6 +116,7 @@ namespace GraphWebApi.Controllers
             }
 
             var sources = new ConcurrentDictionary<string, OpenApiDocument>();
+            var styleOptions = new OpenApiStyleOptions(style: OpenApiStyle.Plain);
             foreach (var graphVersion in graphVersionsList)
             {
                 var graphUri = GetVersionUri(graphVersion);
@@ -124,7 +125,7 @@ namespace GraphWebApi.Controllers
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                sources.TryAdd(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
+                sources.TryAdd(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh, styleOptions.ConvertSettings));
             }
 
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
@@ -148,7 +149,7 @@ namespace GraphWebApi.Controllers
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-            var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
+            var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body, styleOptions.ConvertSettings);
             return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody);
         }
 

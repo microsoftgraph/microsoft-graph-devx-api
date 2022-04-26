@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.OpenApi.OData;
 
 namespace OpenAPIService.Common
 {
@@ -17,6 +18,17 @@ namespace OpenAPIService.Common
         public string GraphVersion { get; private set; }
         public string OpenApiFormat { get; private set; }
         public bool InlineLocalReferences { get; private set; } = false;
+        public OpenApiConvertSettings ConvertSettings { get; private set; } = new()
+        {
+            EnableKeyAsSegment = true,
+            EnableOperationId = true,
+            PrefixEntityTypeNameBeforeKey = true,
+            TagDepth = 2,
+            EnablePagination = true,
+            EnableDiscriminatorValue = false,
+            EnableDerivedTypesReferencesForRequestBody = false,
+            EnableDerivedTypesReferencesForResponses = false,
+        };
 
         public OpenApiStyleOptions(OpenApiStyle style, string openApiVersion = null, string graphVersion = null, string openApiFormat = null)
         {
@@ -54,6 +66,9 @@ namespace OpenAPIService.Common
             OpenApiVersion ??= Constants.OpenApiConstants.OpenApiVersion_2;
             GraphVersion ??= Constants.OpenApiConstants.GraphVersion_V1;
             OpenApiFormat ??= Constants.OpenApiConstants.Format_Yaml;
+            ConvertSettings.AddSingleQuotesForStringParameters = true;
+            ConvertSettings.AddEnumDescriptionExtension = true;
+            ConvertSettings.ErrorResponsesAsDefault = false;
         }
 
         private void SetPowerPlatformStyle()
@@ -77,6 +92,8 @@ namespace OpenAPIService.Common
             GraphVersion ??= Constants.OpenApiConstants.GraphVersion_V1;
             OpenApiFormat ??= Constants.OpenApiConstants.Format_Json;
             InlineLocalReferences = true;
+            ConvertSettings.ShowLinks = true;
+            ConvertSettings.ShowRootPath = true;
         }
     }
 }

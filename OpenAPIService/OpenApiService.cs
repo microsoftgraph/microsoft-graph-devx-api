@@ -482,8 +482,9 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
+        /// <param name="convertSettings">The OpenAPI conversion settings.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
-        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
+        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh, OpenApiConvertSettings convertSettings)
         {
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
@@ -501,7 +502,7 @@ namespace OpenAPIService
                                          _openApiTraceProperties);
             _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
-            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
+            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref, convertSettings);
             _OpenApiDocuments[csdlHref] = source;
             return source;
         }
@@ -588,7 +589,7 @@ namespace OpenAPIService
             return reader.Read(stream, out _);
         }
 
-        private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
+        private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref, OpenApiConvertSettings convertSettings)
         {
             var stopwatch = new Stopwatch();
             var httpClient = CreateHttpClient();
@@ -602,17 +603,18 @@ namespace OpenAPIService
                                          _openApiTraceProperties);
             _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
-            OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
+            OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl, convertSettings);
 
             return document;
         }
 
         /// <summary>
-        /// Converts CSDL to OpenAPI
+        /// Converts CSDL to OpenAPI.
         /// </summary>
         /// <param name="csdl">The CSDL stream.</param>
+        /// <param name="convertSettings">The OpenAPI conversion settings.</param>
         /// <returns>An OpenAPI document.</returns>
-        public async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl)
+        public async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl, OpenApiConvertSettings convertSettings)
         {
             _telemetryClient?.TrackTrace("Converting CSDL stream to an OpenApi document",
                                          SeverityLevel.Information,
@@ -621,24 +623,7 @@ namespace OpenAPIService
             using var reader = new StreamReader(csdl);
             var csdlTxt = await reader.ReadToEndAsync();
             var edmModel = CsdlReader.Parse(XElement.Parse(csdlTxt).CreateReader());
-
-            var settings = new OpenApiConvertSettings()
-            {
-                AddSingleQuotesForStringParameters = true,
-                AddEnumDescriptionExtension = true,
-                DeclarePathParametersOnPathItem = true,
-                EnableKeyAsSegment = true,
-                EnableOperationId = true,
-                PrefixEntityTypeNameBeforeKey = true,
-                TagDepth = 2,
-                EnablePagination = true,
-                EnableDiscriminatorValue = false,
-                EnableDerivedTypesReferencesForRequestBody = false,
-                EnableDerivedTypesReferencesForResponses = false,
-                ShowRootPath = true,
-                ShowLinks = true
-            };
-            OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
+            OpenApiDocument document = edmModel.ConvertToOpenApi(convertSettings);
 
             document = FixReferences(document);
 
