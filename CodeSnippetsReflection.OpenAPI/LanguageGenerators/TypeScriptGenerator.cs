@@ -164,8 +164,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 try {
                     using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
                     var schema = snippetModel.RequestSchema;
-                    var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-                    payloadSB.AppendLine($"const {RequestBodyVarName} = new {className}()");
+                    var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? $"{snippetModel.Path.Split("/").Last().ToFirstCharacterUpperCase()}RequestBody";
+                    payloadSB.AppendLine($"const {RequestBodyVarName} = new {className}();");
                     WriteJsonObjectValue(RequestBodyVarName, payloadSB, parsedBody.RootElement, schema, indentManager);
                     return true;
                 } catch (Exception ex) when (ex is JsonException || ex is ArgumentException) {
@@ -230,7 +230,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
                         payloadSB.AppendLine($"{propertyAssignment} new Date(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
                     else
-                        payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}{terminateLine}");
+                    {
+                        var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
+                        if(enumSchema == null)
+                        {
+                            payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}{terminateLine}");
+                        }
+                        else
+                        {
+                            payloadSB.AppendLine($"{propertyAssignment}{enumSchema.Title.ToFirstCharacterUpperCase()}.{value.GetString().ToFirstCharacterUpperCase()}{propertySuffix}{terminateLine}");
+                        }
+
+                    }
                     break;
                 case JsonValueKind.Number:
                     payloadSB.AppendLine($"{propertyAssignment}{value}{propertySuffix}{terminateLine}");
