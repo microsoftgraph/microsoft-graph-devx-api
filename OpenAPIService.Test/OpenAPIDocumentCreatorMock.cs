@@ -133,6 +133,12 @@ namespace OpenAPIService.Test
                                                 }
                                             }
                                         }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("function")
+                                        }
                                     }
                                 }
                             }
@@ -191,6 +197,12 @@ namespace OpenAPIService.Test
                                                     }
                                                 }
                                             }
+                                        }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("function")
                                         }
                                     }
                                 }

@@ -27,6 +27,7 @@ using OpenAPIService.Interfaces;
 using System.Text.Json;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using Microsoft.OpenApi.Any;
 
 namespace OpenAPIService
 {
@@ -97,7 +98,11 @@ namespace OpenAPIService
             foreach (var result in results)
             {
                 OpenApiPathItem pathItem;
-                string pathKey = FormatPathFunctions(result.CurrentKeys.Path, result.Operation.Parameters);
+                var pathKey = result.CurrentKeys.Path;
+                if (result.Operation.Extensions.TryGetValue("x-ms-docs-operation-type", out var value) && value is OpenApiString oasString && oasString.Value.Equals("function", StringComparison.Ordinal))
+                {
+                    pathKey = FormatPathFunctions(pathKey, result.Operation.Parameters);
+                }
 
                 if (subset.Paths == null)
                 {
@@ -627,10 +632,8 @@ namespace OpenAPIService
             {
                 AddSingleQuotesForStringParameters = true,
                 AddEnumDescriptionExtension = true,
-                DeclarePathParametersOnPathItem = true,
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
-                ErrorResponsesAsDefault = false,
                 PrefixEntityTypeNameBeforeKey = true,
                 TagDepth = 2,
                 EnablePagination = true,
