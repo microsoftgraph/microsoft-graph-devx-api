@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using CodeSnippetsReflection.StringExtensions;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 
@@ -232,13 +233,20 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     else
                     {
                         var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
-                        if(enumSchema == null)
+                        if (enumSchema == null)
                         {
                             payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}{terminateLine}");
                         }
                         else
                         {
-                            payloadSB.AppendLine($"{propertyAssignment}{enumSchema.Title.ToFirstCharacterUpperCase()}.{value.GetString().ToFirstCharacterUpperCase()}{propertySuffix}{terminateLine}");
+                            var enumName = value.GetString().ToFirstCharacterUpperCase();
+                            if (String.IsNullOrEmpty(enumName) && enumSchema.Enum.First() is OpenApiString)
+                            {
+                                enumName = (enumSchema.Enum.First() as OpenApiString).Value.ToFirstCharacterUpperCase();
+                            }
+
+
+                            payloadSB.AppendLine($"{propertyAssignment}{enumSchema.Title.ToFirstCharacterUpperCase()}.{enumName}{propertySuffix}{terminateLine}");
                         }
 
                     }

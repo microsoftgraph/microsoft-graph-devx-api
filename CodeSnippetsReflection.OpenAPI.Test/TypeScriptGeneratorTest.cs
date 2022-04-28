@@ -313,7 +313,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesPropertiesWithNestedScheamItemTypes()
+        public async Task GeneratesPropertiesWithSchemaPropertiesNestedInItemTypes()
         {
             const string userJsonObject = @"{
                                                 ""topic"": ""Take your wellness days and rest"",
