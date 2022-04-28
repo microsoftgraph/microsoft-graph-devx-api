@@ -311,5 +311,29 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("requestBody.settings.recurrence.pattern.type = RecurrencePatternType.Weekly", result);
         }
+
+        [Fact]
+        public async Task GeneratesPropertiesWithNestedScheamItemTypes()
+        {
+            const string userJsonObject = @"{
+                                                ""topic"": ""Take your wellness days and rest"",
+                                                ""posts"": [
+                                                    {
+                                                            ""body"": {
+                                                                ""contentType"": ""html"",
+                                                            ""content"": ""Waiting for the summer holidays.""
+                                                            }
+                                                        }
+                                                ]
+                                            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups/{{id}}/conversations/{{id}}/threads")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("post.body = new ItemBody()", result);
+            Assert.Contains("post.body.contentType = BodyType.Html;", result);
+        }
     }
 }
