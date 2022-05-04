@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ namespace KnownIssuesService.Test
         public async Task GetWorkItemsQuery()
         {
             //Arrange
-            int expectedNoOfWorkItems = 4;
+            int expectedNoOfWorkItems = 5;
 
             //Act
             WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync();
@@ -64,11 +64,11 @@ namespace KnownIssuesService.Test
         }
 
         [Fact]
-        public async Task QueryBugs()
+        public async Task ExcludeNewAndClosedKnownIssues()
         {
             //Arrange
-            int expectedNoOfWorkItems = 4;
-            KnownIssue contract = new KnownIssue()
+            int expectedNoOfWorkItems = 3;
+            var contract = new KnownIssue()
             {
                 Title = "Issue B",
                 State = "Active",

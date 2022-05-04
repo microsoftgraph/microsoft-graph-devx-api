@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -59,6 +59,15 @@ namespace KnownIssuesService.Test
                        {"System.Title","Issue F"},
                        {"Custom.MSGraphM365Workload","Mail"},
                        {"Custom.Workaround","Limit number of requests"}
+                    }
+                },
+                new WorkItem()
+                {  Id = 9079 , Url = "https://microsoftgraph.visualstudio.com/_apis/wit/workItems/9079",
+                    Fields = new Dictionary<string, object>() {
+                       {"System.State","New"},
+                       {"System.Title","Issue A"},
+                       {"Custom.MSGraphM365Workload","Calendar"},
+                       {"Custom.Workaround","Test"}
                     }
                 }
             };
