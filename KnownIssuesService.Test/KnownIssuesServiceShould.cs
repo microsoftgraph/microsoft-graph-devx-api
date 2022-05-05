@@ -74,7 +74,10 @@ namespace KnownIssuesService.Test
                 Title = "Issue B",
                 State = "Active",
                 WorkLoadArea = "Notifications",
-                WorkAround = "Test"
+                WorkAround = "Test",
+                Link = "/foo/bar",
+                CreatedDateTime = DateTime.Parse("01/06/2022 00:00:00"),
+                LastUpdatedDateTime = DateTime.Parse("01/07/2022 00:00:00")
             };
 
             //Act
@@ -92,6 +95,10 @@ namespace KnownIssuesService.Test
             Assert.Equal(contract.Title, items[1].Title);
             Assert.Equal(contract.State, items[1].State);            
             Assert.Equal(contract.WorkLoadArea, items[1].WorkLoadArea);
+            Assert.Equal(contract.WorkAround, items[1].WorkAround);
+            Assert.Equal(contract.CreatedDateTime, items[1].CreatedDateTime);
+            Assert.Equal(contract.LastUpdatedDateTime, items[1].LastUpdatedDateTime);
+            Assert.True(items[1].IsUpdated);
         }
     }
 }

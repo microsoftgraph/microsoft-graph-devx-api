@@ -163,8 +163,8 @@ namespace KnownIssuesService.Services
                 Description = x.Fields.TryGetValue("System.Description", out var description) ? description.ToString() : default,
                 WorkAround = x.Fields.TryGetValue("Custom.Workaround", out var workAround) ? workAround.ToString() : "Working on it",
                 Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default,
-                CreatedDateTime = x.Fields.TryGetValue("Custom.Dateissuewasraised", out DateTime createdDate) ? DateTime.Parse(createdDate.ToString()) : default,
-                LastUpdatedDateTime = x.Fields.TryGetValue("Custom.Lastupdate", out DateTime changedDate) ? DateTime.Parse(changedDate.ToString()) : default,
+                CreatedDateTime = x.Fields.TryGetValue("Custom.Dateissuewasraised", out DateTime createdDate) ? createdDate : default,
+                LastUpdatedDateTime = x.Fields.TryGetValue("Custom.Lastupdate", out DateTime changedDate) ? changedDate : default,
             }).ToList();
 
             foreach(var knownIssue in _knownIssuesList.ToList())

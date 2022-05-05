@@ -1,8 +1,9 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using System;
 using System.Collections.Generic;
 
 namespace KnownIssuesService.Test
@@ -41,7 +42,10 @@ namespace KnownIssuesService.Test
                        {"System.State","Active"},
                        {"System.Title","Issue B"},
                        {"Custom.MSGraphM365Workload","Notifications"},
-                       {"Custom.Workaround","Test"}
+                       {"Custom.Workaround","Test"},
+                       {"Custom.APIPathLink", "/foo/bar"},
+                       {"Custom.Dateissuewasraised", DateTime.Parse("01/06/2022 00:00:00")},
+                       {"Custom.Lastupdate", DateTime.Parse("01/07/2022 00:00:00")}
                     }
 
                 },
