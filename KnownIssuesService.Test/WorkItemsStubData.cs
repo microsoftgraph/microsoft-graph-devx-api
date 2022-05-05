@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using System;
 using System.Collections.Generic;
 
 namespace KnownIssuesService.Test
@@ -41,7 +42,10 @@ namespace KnownIssuesService.Test
                        {"System.State","Active"},
                        {"System.Title","Issue B"},
                        {"Custom.MSGraphM365Workload","Notifications"},
-                       {"Custom.Workaround","Test"}
+                       {"Custom.Workaround","Test"},
+                       {"Custom.APIPathLink", "/foo/bar"},
+                       {"Custom.Dateissuewasraised", DateTime.Parse("01/06/2022 00:00:00")},
+                       {"Custom.Lastupdate", DateTime.Parse("01/07/2022 00:00:00")}
                     }
 
                 },
@@ -59,6 +63,15 @@ namespace KnownIssuesService.Test
                        {"System.Title","Issue F"},
                        {"Custom.MSGraphM365Workload","Mail"},
                        {"Custom.Workaround","Limit number of requests"}
+                    }
+                },
+                new WorkItem()
+                {  Id = 9079 , Url = "https://microsoftgraph.visualstudio.com/_apis/wit/workItems/9079",
+                    Fields = new Dictionary<string, object>() {
+                       {"System.State","New"},
+                       {"System.Title","Issue A"},
+                       {"Custom.MSGraphM365Workload","Calendar"},
+                       {"Custom.Workaround","Test"}
                     }
                 }
             };
