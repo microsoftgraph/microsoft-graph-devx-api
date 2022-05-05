@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -72,15 +73,24 @@ namespace KnownIssuesService.Test
             {
                 Title = "Issue B",
                 State = "Active",
-                WorkLoadArea = "Notifications"
+                WorkLoadArea = "Notifications",
+                WorkAround = "Test"
             };
+
             //Act
             List<KnownIssue> items = await _knownIssuesService.QueryBugsAsync();
 
             //Assert
+            foreach (var item in items)
+            {
+                Assert.True(item.State != "New" || item.State != "Resolved");
+                Assert.IsType<DateTime>(item.CreatedDateTime);
+                Assert.IsType<DateTime>(item.LastUpdatedDateTime);
+            }
+
             Assert.Equal(expectedNoOfWorkItems, items.Count);
             Assert.Equal(contract.Title, items[1].Title);
-            Assert.Equal(contract.State, items[1].State);
+            Assert.Equal(contract.State, items[1].State);            
             Assert.Equal(contract.WorkLoadArea, items[1].WorkLoadArea);
         }
     }
