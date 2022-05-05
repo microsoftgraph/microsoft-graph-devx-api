@@ -54,7 +54,7 @@ namespace KnownIssuesService.Models
         /// <summary>
         /// Determines if the Last Update is current compared to the Created date
         /// </summary>
-        public bool IsDateUpdated { get; set; }
+        public bool IsUpdated => LastUpdatedDateTime > CreatedDateTime;
 
         /// <summary>
         /// Known Issues Status i.e New, Active,Resolved

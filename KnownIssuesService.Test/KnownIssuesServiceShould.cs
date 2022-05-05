@@ -64,7 +64,7 @@ namespace KnownIssuesService.Test
         }
 
         [Fact]
-        public async Task ExcludeNewAndClosedKnownIssues()
+        public async Task QueryBugs()
         {
             //Arrange
             int expectedNoOfWorkItems = 3;
