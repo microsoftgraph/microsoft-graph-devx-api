@@ -221,35 +221,41 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             indentManager.Unindent();
         }
+
+        private static void WriteStringProperty(StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string terminateLine = ";", bool objectPropertyAssign = true)
+        {
+            if (propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
+                payloadSB.AppendLine($"{propertyAssignment}btoa(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
+            else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
+                payloadSB.AppendLine($"{propertyAssignment} new Date(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
+            else
+            {
+                var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
+                if (enumSchema == null)
+                {
+                    payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}{terminateLine}");
+                }
+                else
+                {
+                    var enumName = value.GetString().ToFirstCharacterUpperCase();
+                    if (String.IsNullOrEmpty(enumName) && enumSchema.Enum.First() is OpenApiString)
+                    {
+                        enumName = (enumSchema.Enum.First() as OpenApiString).Value.ToFirstCharacterUpperCase();
+                    }
+
+
+                    payloadSB.AppendLine($"{propertyAssignment}{enumSchema.Title.ToFirstCharacterUpperCase()}.{enumName}{propertySuffix}{terminateLine}");
+                }
+
+            }
+        }
+
         private static void WriteProperty(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string terminateLine = ";", bool objectPropertyAssign = true)
         {
             switch (value.ValueKind)
             {
                 case JsonValueKind.String:
-                    if (propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
-                        payloadSB.AppendLine($"{propertyAssignment}btoa(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
-                    else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
-                        payloadSB.AppendLine($"{propertyAssignment} new Date(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
-                    else
-                    {
-                        var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
-                        if (enumSchema == null)
-                        {
-                            payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}{terminateLine}");
-                        }
-                        else
-                        {
-                            var enumName = value.GetString().ToFirstCharacterUpperCase();
-                            if (String.IsNullOrEmpty(enumName) && enumSchema.Enum.First() is OpenApiString)
-                            {
-                                enumName = (enumSchema.Enum.First() as OpenApiString).Value.ToFirstCharacterUpperCase();
-                            }
-
-
-                            payloadSB.AppendLine($"{propertyAssignment}{enumSchema.Title.ToFirstCharacterUpperCase()}.{enumName}{propertySuffix}{terminateLine}");
-                        }
-
-                    }
+                    WriteStringProperty(payloadSB,value,propSchema,indentManager,propertyAssignment,propertySuffix,terminateLine,objectPropertyAssign);
                     break;
                 case JsonValueKind.Number:
                     payloadSB.AppendLine($"{propertyAssignment}{value}{propertySuffix}{terminateLine}");
