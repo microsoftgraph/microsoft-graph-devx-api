@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/GraphWebApi/bin/Debug/net5.0/GraphWebApi.dll",
+            "program": "${workspaceFolder}/GraphWebApi/bin/Debug/net6.0/GraphWebApi.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
