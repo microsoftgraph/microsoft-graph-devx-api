@@ -154,22 +154,32 @@ namespace KnownIssuesService.Services
 			// get work items for the ids found in query
 			List<WorkItem> items = await GetWorkItemsQueryAsync(ids, result);
 
-			_knownIssuesList = items.Where(x => x!=null).Select(x => new KnownIssue
-			{
-				Id = x.Id,
-				State = x.Fields.TryGetValue("System.State", out var state) ? state.ToString(): default,
-				Title = x.Fields.TryGetValue("System.Title", out var title) ? title.ToString() : default,
-				WorkLoadArea = x.Fields.TryGetValue("Custom.MSGraphM365Workload", out var workLoadArea) ? workLoadArea.ToString() : default,
-				Description = x.Fields.TryGetValue("System.Description", out var description) ? description.ToString() : default,
-				WorkAround = x.Fields.TryGetValue("Custom.Workaround", out var workAround) ? workAround.ToString() : default,
-				Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default
-			}).ToList();
+            _knownIssuesList = items.Where(x => x != null).Select(x => new KnownIssue
+            {
+                Id = x.Id,
+                State = x.Fields.TryGetValue("System.State", out var state) ? state.ToString(): default,
+                Title = x.Fields.TryGetValue("System.Title", out var title) ? title.ToString() : default,
+                WorkLoadArea = x.Fields.TryGetValue("Custom.MSGraphM365Workload", out var workLoadArea) ? workLoadArea.ToString() : default,
+                Description = x.Fields.TryGetValue("System.Description", out var description) ? description.ToString() : default,
+                WorkAround = x.Fields.TryGetValue("Custom.Workaround", out var workAround) ? workAround.ToString() : "Working on it",
+                Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default,
+                CreatedDateTime = x.Fields.TryGetValue("Custom.Dateissuewasraised", out DateTime createdDate) ? createdDate : default,
+                LastUpdatedDateTime = x.Fields.TryGetValue("Custom.Lastupdate", out DateTime changedDate) ? changedDate : default,
+            }).ToList();
 
-			_telemetryClient?.TrackTrace("Return a list of Known Issues",
+            foreach(var knownIssue in _knownIssuesList.ToList())
+            {
+                if(knownIssue.State == "New" || knownIssue.State == "Closed")
+                {
+                    _knownIssuesList.Remove(knownIssue);
+                }
+            }
+
+            _telemetryClient?.TrackTrace("Return a list of Known Issues",
 										 SeverityLevel.Information,
 										 _knownIssuesTraceProperties);
-
-			return _knownIssuesList;
+            
+            return _knownIssuesList;
 		}
 	}
 }
