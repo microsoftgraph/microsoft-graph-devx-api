@@ -5,12 +5,19 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace CodeSnippetsReflection.OpenAPI.Test
 {
     public class SimpleLazyTest
     {
+        private readonly ITestOutputHelper _testOutputHelper;
         private static Random random = new Random();
+
+        public SimpleLazyTest(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
 
         // return a random string or throw an exception
         private String chaoticService()
@@ -24,7 +31,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task NoExceptionCaching()
+        public void NoExceptionCaching()
         {
             var responseProvider = new SimpleLazy<String>(() => chaoticService());
 
@@ -50,7 +57,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine(ex.ToString());
+                            _testOutputHelper.WriteLine(ex.ToString());
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +12,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 	public class CSharpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 	{
 		private const string clientVarName = "graphClient";
-		private const string clientVarType = "GraphClient";
+		private const string clientVarType = "GraphServiceClient";
 		private const string httpCoreVarName = "requestAdapter";
 		public string GenerateCodeSnippet(SnippetModel snippetModel)
 		{
@@ -27,34 +27,47 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             if (snippetModel.ResponseSchema == null || (snippetModel.ResponseSchema.Properties.Count == 1 && snippetModel.ResponseSchema.Properties.First().Key.Equals("error",StringComparison.OrdinalIgnoreCase)))
                 responseAssignment = string.Empty;
 
-			var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
-			if(!string.IsNullOrEmpty(queryParamsPayload))
-				snippetBuilder.Append(queryParamsPayload);
-			var (requestHeadersPayload, requestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
-			if(!string.IsNullOrEmpty(requestHeadersPayload))
-				snippetBuilder.Append(requestHeadersPayload);
-			var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, requestHeadersVarName);
+            var requestConfigurationPayload = GetRequestConfiguration(snippetModel, indentManager);
+            
+            var parametersList = GetActionParametersList(payloadVarName,requestConfigurationPayload);
             var methodName = snippetModel.Method.ToString().ToLower().ToFirstCharacterUpperCase() + "Async";
 			snippetBuilder.AppendLine($"{responseAssignment}await {clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}.{methodName}({parametersList});");
 			return snippetBuilder.ToString();
 		}
-		private const string requestHeadersVarName = "headers";
-		private static (string, string) GetRequestHeaders(SnippetModel snippetModel, IndentManager indentManager) {
+		private const string requestHeadersPropertyName = "Headers";
+		private const string requestConfigurationVarName = "requestConfiguration";
+
+        private static string GetRequestConfiguration(SnippetModel snippetModel, IndentManager indentManager)
+        {
+            var payloadSB = new StringBuilder();
+            var queryParamsPayload = GetRequestQueryParameters(snippetModel, indentManager);
+            var requestHeadersPayload = GetRequestHeaders(snippetModel, indentManager);
+
+            if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload))
+            {
+                payloadSB.AppendLine($"({requestConfigurationVarName}) =>");
+                payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
+                payloadSB.Append(queryParamsPayload);
+                payloadSB.Append(requestHeadersPayload);
+                payloadSB.Append($"{indentManager.GetIndent()}}}");
+            }
+            
+            return payloadSB.Length > 0 ? payloadSB.ToString() : default;
+        }
+
+        private static string GetRequestHeaders(SnippetModel snippetModel, IndentManager indentManager) {
 			var payloadSB = new StringBuilder();
 			var filteredHeaders = snippetModel.RequestHeaders.Where(h => !h.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
 															.ToList();
 			if(filteredHeaders.Any()) {
-				payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestHeadersVarName} = (h) =>");
-                payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
 				indentManager.Indent();
 				filteredHeaders.ForEach(h =>
-					payloadSB.AppendLine($"{indentManager.GetIndent()}h.Add(\"{h.Key}\", \"{h.Value.FirstOrDefault()}\");")
+					payloadSB.AppendLine($"{indentManager.GetIndent()}{requestConfigurationVarName}.{requestHeadersPropertyName}.Add(\"{h.Key}\", \"{h.Value.FirstOrDefault()}\");")
 				);
 				indentManager.Unindent();
-				payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
-				return (payloadSB.ToString(), requestHeadersVarName);
+				return payloadSB.ToString();
 			}
-			return (default, default);
+			return default;
 		}
 		private static string GetActionParametersList(params string[] parameters) {
 			var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
@@ -62,28 +75,26 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 				return string.Join(", ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}"));
 			else return string.Empty;
 		}
-		private const string requestParametersVarName = "requestParameters";
-		private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager) {
+		private const string requestParametersPropertyName = "QueryParameters";
+		private static string GetRequestQueryParameters(SnippetModel model, IndentManager indentManager) {
 			var payloadSB = new StringBuilder();
 			if(!string.IsNullOrEmpty(model.QueryString)) {
-				payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestParametersVarName} = (q) =>");
-                payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
 				indentManager.Indent();
 				var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
 				foreach(var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)) {
-					if(queryParam.Contains("=")) {
+					if(queryParam.Contains('=')) {
 						var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
-						payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)};");
+                        var isCollection = kvPair[0].Contains("select") || kvPair[0].Contains("expand") || kvPair[0].Contains("orderby");
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{requestConfigurationVarName}.{requestParametersPropertyName}.{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements, isCollection)};");
 					} else
-						payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = string.Empty;");
+						payloadSB.AppendLine($"{indentManager.GetIndent()}{requestConfigurationVarName}.{requestParametersPropertyName}.{NormalizeQueryParameterName(queryParam)} = string.Empty;");
 				}
 				indentManager.Unindent();
-				payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
-				return (payloadSB.ToString(), requestParametersVarName);
+				return (payloadSB.ToString());
 			}
-			return (default, default);
+			return default;
 		}
-		private static Regex nestedStatementRegex = new(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
+		private static readonly Regex nestedStatementRegex = new(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 		private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams) {
 			var replacements = new Dictionary<string, string>();
 			var matches = nestedStatementRegex.Matches(queryParams);
@@ -96,18 +107,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 				}
 			return (queryParams, replacements);
 		}
-		private static string GetQueryParameterValue(string originalValue, Dictionary<string, string> replacements) {
-			if(originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
+		private static string GetQueryParameterValue(string originalValue, Dictionary<string, string> replacements,bool isCollection)
+        {
+            // boolean - true or false
+            if(originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
 				return originalValue.ToLowerInvariant();
-			else if(int.TryParse(originalValue, out var intValue))
-				return intValue.ToString();
-			else {
-				var valueWithNested = originalValue.Split(',')
-													.Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
-													.Aggregate((a, b) => $"{a},{b}");
-				return $"\"{valueWithNested}\"";
-			}
-		}
+            // try to parse as number
+            if(int.TryParse(originalValue, out var intValue))
+                return intValue.ToString();
+            // its a string value with more info inside
+            var valueWithNested = originalValue.Split(',')
+                .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v) // rejoin nested query parameter if present
+                .Select(a => $"\"{a}\"") // surround the string with double quotes
+                .Aggregate((a, b) => $"{a} , {b}"); // multiple elements are comma separated
+
+            return isCollection ? $"new [] {{ {valueWithNested} }}" : valueWithNested;
+        }
 		private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterUpperCase();
 		private const string RequestBodyVarName = "requestBody";
 		private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
@@ -138,6 +153,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
                     var schema = snippetModel.RequestSchema;
                     var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
+                    if (string.IsNullOrEmpty(className) && schema != null && schema.Properties.Count == 1)
+                        className = $"{schema.Properties.First().Key.ToFirstCharacterUpperCase()}RequestBody"; // edge case for odata actions with a single parameter
+                    if (string.IsNullOrEmpty(className))
+                        className = $"{snippetModel.ResponseVariableName.ToFirstCharacterUpperCase()}RequestBody"; // default to the cleaned up url path node as class name
                     payloadSB.AppendLine($"var {RequestBodyVarName} = new {className}");
                     payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
                     WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
@@ -203,7 +222,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 				case JsonValueKind.Array:
 					WriteJsonArrayValue(payloadSB, value, propSchema, indentManager, propertyAssignment);
 				break;
-				default:
+                case JsonValueKind.Undefined:
+                default:
 					throw new NotImplementedException($"Unsupported JsonValueKind: {value.ValueKind}");
 			}
 		}
