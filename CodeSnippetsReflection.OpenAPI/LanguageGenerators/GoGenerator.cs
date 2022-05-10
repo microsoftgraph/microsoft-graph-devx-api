@@ -22,7 +22,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                                     "//THE GO SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
                                     $"{clientVarName} := msgraphsdk.New{clientVarType}({httpCoreVarName}){Environment.NewLine}{Environment.NewLine}");
             var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
-            snippetBuilder.Append(requestPayload);
+            if(!string.IsNullOrEmpty(requestPayload))
+                snippetBuilder.Append(requestPayload);
             var responseAssignment = "result, err := ";
             // have a return type if we have a response schema that is not an error
             if (snippetModel.ResponseSchema == null || (snippetModel.ResponseSchema.Properties.Count == 1 && snippetModel.ResponseSchema.Properties.First().Key.Equals("error", StringComparison.OrdinalIgnoreCase)))
@@ -33,13 +34,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             var (requestHeadersPayload, requestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
             if(!string.IsNullOrEmpty(requestHeadersPayload))
                 snippetBuilder.Append(requestHeadersPayload);
-            var (optionsPayload, optionsVarName) = GetOptionsParameter(snippetModel, indentManager, payloadVarName, queryParamsVarName, requestHeadersVarName);
-            if(!string.IsNullOrEmpty(optionsPayload))
-                snippetBuilder.Append(optionsPayload);
+            var (configPayload, configVarName) = GetConfigurationParameter(snippetModel, indentManager, queryParamsVarName, requestHeadersVarName);
+            if(!string.IsNullOrEmpty(configPayload))
+                snippetBuilder.Append(configPayload);
             var pathParametersDeclaration = GetFluentApiPathVariablesDeclaration(snippetModel.PathNodes);
             pathParametersDeclaration.ToList().ForEach(x => snippetBuilder.AppendLine(x));
             var methodName = snippetModel.Method.ToString().ToLower().ToFirstCharacterUpperCase();
-            snippetBuilder.AppendLine($"{responseAssignment}{clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}{methodName}({optionsVarName})");
+            if(!string.IsNullOrEmpty(configPayload))
+            {
+                methodName += $"WithRequestConfigurationAndResponseHandler";
+                configVarName += ", nil";
+            }
+            var argumentSeparation = !string.IsNullOrEmpty(requestPayload) && !string.IsNullOrEmpty(configPayload) ? ", " : string.Empty;
+            snippetBuilder.AppendLine($"{responseAssignment}{clientVarName}.{GetFluentApiPath(snippetModel.PathNodes)}{methodName}({payloadVarName}{argumentSeparation}{configVarName})");
             return snippetBuilder.ToString();
         }
         private const string requestHeadersVarName = "headers";
@@ -60,23 +67,21 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             return (default, default);
         }
         private const string optionsParameterVarName = "options";
-        private static (string, string) GetOptionsParameter(SnippetModel model, IndentManager indentManager, string payloadParam, string queryParamsParam, string headersParam) {
-            var nonEmptyParameters = new string[] { payloadParam, queryParamsParam, headersParam}.Where(p => !string.IsNullOrEmpty(p));
+        private static (string, string) GetConfigurationParameter(SnippetModel model, IndentManager indentManager, string queryParamsParam, string headersParam) {
+            var nonEmptyParameters = new string[] { queryParamsParam, headersParam}.Where(p => !string.IsNullOrEmpty(p));
             if(nonEmptyParameters.Any()) {
-                var className = $"msgraphsdk.{model.PathNodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.Method.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}Options";
+                var className = $"msgraphsdk.{model.PathNodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.Method.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
                 var payloadSB = new StringBuilder();
                 payloadSB.AppendLine($"{indentManager.GetIndent()}{optionsParameterVarName} := &{className}{{");
                 indentManager.Indent();
-                if(!string.IsNullOrEmpty(payloadParam))
-                    payloadSB.AppendLine($"{indentManager.GetIndent()}Body: {payloadParam},");
                 if(!string.IsNullOrEmpty(queryParamsParam))
-                    payloadSB.AppendLine($"{indentManager.GetIndent()}Q: {queryParamsParam},");
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}QueryParameters: {queryParamsParam},");
                 if(!string.IsNullOrEmpty(headersParam))
-                    payloadSB.AppendLine($"{indentManager.GetIndent()}H: {headersParam},");
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}Headers: {headersParam},");
                 indentManager.Unindent();
                 payloadSB.AppendLine($"{indentManager.GetIndent()}}}");
                 return (payloadSB.ToString(), optionsParameterVarName);
-            } else return (string.Empty, "nil");
+            } else return (string.Empty, string.Empty);
         }
         private const string requestParametersVarName = "requestParameters";
         private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager) {
