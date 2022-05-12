@@ -17,7 +17,7 @@ namespace CodeSnippetsReflection.App
     /// SnippetPath: Full path to a directory which holds HTTP snippets. HTTP snippets are expected to appear
     ///             one per file where the file name ends with -httpSnippet.
     /// Languages:   Languages, comma separated.
-    ///             As of this writing, values are c#, javascript, objective-c, java
+    ///             As of this writing, values are c#, javascript, java
     ///
     /// Output is generated in the same folder as the HTTP snippets. -httpSnippet part of the file name is
     /// replaced with ---language.
