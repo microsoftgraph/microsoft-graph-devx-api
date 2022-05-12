@@ -2,14 +2,17 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService.Interfaces;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text;
+using UtilityService;
 using Xunit;
 
 namespace OpenAPIService.Test
@@ -291,6 +294,52 @@ namespace OpenAPIService.Test
             }
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void ReturnContentForGEAutoCompleteStyleIfRequestBodyIsTrue(bool includeRequestBody)
+        {
+            // Arrange
+            var style = OpenApiStyle.GEAutocomplete;
+            var url = "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore";
+            var operationType = OperationType.Post;
+
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: url,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument, includeRequestBody);
+            var requestBodyContent = subsetOpenApiDocument.Paths
+                .FirstOrDefault().Value
+                .Operations[operationType]
+                .RequestBody
+                .Content;
+            var responseContent = subsetOpenApiDocument.Paths
+                                .FirstOrDefault().Value
+                                .Operations[operationType]
+                                .Responses["200"]
+                                .Content;
+
+            // Assert
+            Assert.Single(subsetOpenApiDocument.Paths);
+
+            if (includeRequestBody)
+            {
+                Assert.NotEmpty(requestBodyContent);
+                Assert.NotEmpty(responseContent);
+            }
+            else
+            {
+                Assert.Empty(requestBodyContent);
+                Assert.Empty(responseContent);
+            }
+        }
+
         [Fact]
         public void RemoveRootPathFromOpenApiDocumentInApplyStyleForPowerShellOpenApiStyle()
         {
@@ -356,6 +405,74 @@ namespace OpenAPIService.Test
             Assert.Equal(expectedOperationId, operationId);
         }
 
+        [Fact]
+        public void ResolveStructuredAndCollectionValuedFunctionParameters()
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: "/deviceManagement/microsoft.graph.getRoleScopeTagsByIds(ids={ids})",
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var predicate2 = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: "/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})",
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            var subsetOpenApiDocument2 = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate2);
+
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument2 = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument2);
+
+            var parameter = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
+                              .Operations[OperationType.Get]
+                              .Parameters
+                              .FirstOrDefault();
+
+            var parameter2 = subsetOpenApiDocument2.Paths
+                              .FirstOrDefault().Value
+                              .Operations[OperationType.Get]
+                              .Parameters
+                              .FirstOrDefault();
+
+            Assert.NotNull(parameter);
+            Assert.NotNull(parameter2);
+
+            var json = parameter.SerializeAsJson(OpenApiSpecVersion.OpenApi3_0);
+            var json2 = parameter2.SerializeAsJson(OpenApiSpecVersion.OpenApi3_0);
+
+            var expectedPayload = $@"{{
+  ""name"": ""ids"",
+  ""in"": ""query"",
+  ""description"": ""Usage: ids={{ids}}"",
+  ""required"": true,
+  ""schema"": {{
+    ""type"": ""array"",
+    ""items"": {{
+      ""type"": ""string""
+    }}
+  }}
+}}";
+
+            var expectedPayload2 = $@"{{
+  ""name"": ""period"",
+  ""in"": ""path"",
+  ""description"": ""Usage: period={{period}}"",
+  ""required"": true,
+  ""schema"": {{
+    ""type"": ""string""
+  }}
+}}";
+
+            // Assert
+            Assert.Equal(expectedPayload.ChangeLineBreaks(), json);
+            Assert.Equal(expectedPayload2.ChangeLineBreaks(), json2);
+        }
+
         [Theory]
         [InlineData(OpenApiStyle.GEAutocomplete)]
         [InlineData(OpenApiStyle.Plain)]
@@ -406,7 +523,8 @@ namespace OpenAPIService.Test
         public void GetOpenApiTreeNode()
         {
             // Arrange
-            var sources = new Dictionary<string, OpenApiDocument>() { { GraphVersion, _graphMockSource } };
+            var sources = new ConcurrentDictionary<string, OpenApiDocument>();
+            sources.TryAdd(GraphVersion, _graphMockSource);
 
             // Act
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);

@@ -22,7 +22,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private const string clientVarName = "graphServiceClient";
         private const string clientVarType = "GraphServiceClient";
-        private const string httpCoreVarName = "requestAdapter";
 
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
@@ -30,7 +29,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder(
                                     "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-                                    $"const {clientVarName} = new {clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+                                    $"const {clientVarName} = {clientVarType}.init({{authProvider}});{Environment.NewLine}{Environment.NewLine}");
             var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
             snippetBuilder.Append(requestPayload);
             var responseAssignment = snippetModel.ResponseSchema == null ? string.Empty : "const result = ";
@@ -165,8 +164,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 try {
                     using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
                     var schema = snippetModel.RequestSchema;
-                    var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-                    payloadSB.AppendLine($"const {RequestBodyVarName} = new {className}()");
+                    var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? $"{snippetModel.Path.Split("/").Last().ToFirstCharacterUpperCase()}RequestBody";
+                    payloadSB.AppendLine($"const {RequestBodyVarName} = new {className}();");
                     WriteJsonObjectValue(RequestBodyVarName, payloadSB, parsedBody.RootElement, schema, indentManager);
                     return true;
                 } catch (Exception ex) when (ex is JsonException || ex is ArgumentException) {
@@ -205,19 +204,23 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var propertiesWithoutSchema = propertiesAndSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
             if (propertiesWithoutSchema.Any())
             {
-                payloadSB.AppendLine($"{objectName}.additionalData = new Map([");
+                payloadSB.AppendLine($"{objectName}.additionalData = {{");
                 indentManager.Indent();
+
+                int elementIndex = 0;
+                var lastIndex = propertiesWithoutSchema.Count() - 1;
                 foreach (var property in propertiesWithoutSchema)
                 {
-                    var propertyAssignment = $"{indentManager.GetIndent()}[\"{property.Name}\", ";
-                    WriteProperty(objectName, payloadSB, property.Value, null, indentManager, propertyAssignment, "]");
+                    var propertyAssignment = $"{indentManager.GetIndent()} \"{property.Name}\" : ";
+                    WriteProperty(objectName, payloadSB, property.Value, null, indentManager, propertyAssignment, "", (lastIndex == elementIndex) ? default : ",");
+                    elementIndex++;
                 }
                 indentManager.Unindent();
-                payloadSB.AppendLine($"{indentManager.GetIndent()}]);");
+                payloadSB.AppendLine($"{indentManager.GetIndent()} }}");
             }
             indentManager.Unindent();
         }
-        private static void WriteProperty(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string terminateLine = ";")
+        private static void WriteProperty(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string terminateLine = ";", bool objectPropertyAssign = true)
         {
             switch (value.ValueKind)
             {
@@ -227,7 +230,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
                         payloadSB.AppendLine($"{propertyAssignment} new Date(\"{value.GetString()}\"){propertySuffix}{terminateLine}");
                     else
-                        payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}{terminateLine}");
+                    {
+                        var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
+                        if(enumSchema == null)
+                        {
+                            payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}{terminateLine}");
+                        }
+                        else
+                        {
+                            payloadSB.AppendLine($"{propertyAssignment}{enumSchema.Title.ToFirstCharacterUpperCase()}.{value.GetString().ToFirstCharacterUpperCase()}{propertySuffix}{terminateLine}");
+                        }
+
+                    }
                     break;
                 case JsonValueKind.Number:
                     payloadSB.AppendLine($"{propertyAssignment}{value}{propertySuffix}{terminateLine}");
@@ -242,7 +256,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case JsonValueKind.Object:
                     if (propSchema != null)
                     {
-                        payloadSB.AppendLine($"{propertyAssignment}new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}(){terminateLine}");
+                        if(objectPropertyAssign)
+                            payloadSB.AppendLine($"{propertyAssignment}new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}(){terminateLine}");
+
                         WriteJsonObjectValue(objectName, payloadSB, value, propSchema, indentManager);
                     }
                     else
@@ -259,15 +275,46 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static void WriteJsonArrayValue(String objectName, StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment, string terminateLine)
         {
+            indentManager.Indent(2);
+
+            // for an array of objects the properties should be written after all the objects have be initiated and not before
+            var itemsBuilder = new StringBuilder();
+            var arrayListBuilder = new StringBuilder();
+
+            int elementIndex = 0;
+            var elements = value.EnumerateArray();
+            var lastIndex = elements.Count() - 1;
+            foreach (var item in elements)
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    var termination = (lastIndex == elementIndex) ? default : ",";
+
+                    var elementName = $"{schema.GetSchemaTitle().ToLowerInvariant()}{(elementIndex == 0 ? default : elementIndex.ToString())}";
+                    itemsBuilder.AppendLine($"const {elementName} = new {schema.GetSchemaTitle().ToFirstCharacterUpperCase()}();");
+
+                    // create a new object 
+                    WriteProperty(elementName, itemsBuilder, item, schema, indentManager, default, default, termination, false);
+                    arrayListBuilder.AppendLine($"{indentManager.GetIndent()}{elementName}{termination}");
+                }
+                else
+                {
+                    WriteProperty(objectName, arrayListBuilder, item, schema, indentManager, indentManager.GetIndent(), default, (lastIndex == elementIndex) ? default : ",");
+                }
+                elementIndex++;
+            }
+
+
+            payloadSB.Append(itemsBuilder.ToString());
+
             payloadSB.AppendLine($"{propertyAssignment}[");
-            indentManager.Indent();
-            indentManager.Indent();
-            foreach (var item in value.EnumerateArray())
-                WriteProperty(objectName, payloadSB, item, schema, indentManager, indentManager.GetIndent());
+            payloadSB.Append(arrayListBuilder.ToString());
             indentManager.Unindent();
             payloadSB.AppendLine($"{indentManager.GetIndent()}]");
             indentManager.Unindent();
-            payloadSB.AppendLine($"{indentManager.GetIndent()}{terminateLine}");
+
+
+
         }
         private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
         {

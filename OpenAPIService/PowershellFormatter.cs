@@ -75,7 +75,7 @@ namespace OpenAPIService
 
                 if ("function".Equals(operationType, StringComparison.OrdinalIgnoreCase))
                 {
-                    ResolveFunctionOperationParameterSchema(operation);
+                    ResolveFunctionParameters(operation);
                 }
             }
 
@@ -165,13 +165,18 @@ namespace OpenAPIService
             return updatedOperationId;
         }
 
-        private static void ResolveFunctionOperationParameterSchema(OpenApiOperation operation)
+        /// <summary>
+        /// Resolves structured or collection-valued function parameters.
+        /// </summary>
+        /// <param name="operation">The target OpenAPI operation of the function.</param>
+        private static void ResolveFunctionParameters(OpenApiOperation operation)
         {
             foreach (var parameter in operation.Parameters)
             {
                 if (parameter.Content?.Any() ?? false)
                 {
-                    // Replace with schema object
+                    // Replace content with a schema object of type array
+                    // for structured or collection-valued function parameters
                     parameter.Content = null;
                     parameter.Schema = new OpenApiSchema
                     {

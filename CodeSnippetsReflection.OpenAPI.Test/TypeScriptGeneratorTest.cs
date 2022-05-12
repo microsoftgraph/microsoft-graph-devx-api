@@ -36,6 +36,19 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains(".me.messages", result);
         }
+
+        [Fact]
+        public async Task GeneratesClassWithDefaultBodyWhenSchemaNotPresent()
+        {
+            const string userJsonObject = "{  \"decision\": \"Approve\",  \"justification\": \"All principals with access need continued access to the resource (Marketing Group) as all the principals are on the marketing team\",  \"resourceId\": \"a5c51e59-3fcd-4a37-87a1-835c0c21488a\"}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identityGovernance/accessReviews/definitions/e6cafba0-cbf0-4748-8868-0810c7f4cc06/instances/1234fba0-cbf0-6778-8868-9999c7f4cc06/batchRecordDecisions")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("const requestBody = new BatchRecordDecisionsRequestBody()", result);
+        }
         [Fact]
         public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollections()
         {
@@ -45,12 +58,12 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains(".me.messagesById(\"message-id\")", result);
         }
         [Fact]
-        public async Task GeneratesTheSnippetHeader()
+        public async Task GeneratesTheSnippetInitializationStatement()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("const graphServiceClient = new GraphServiceClient(requestAdapter)", result);
+            Assert.Contains("const graphServiceClient = GraphServiceClient.init({authProvider});", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall()
@@ -188,9 +201,23 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("\"members@odata.bind\", [", result);
+            Assert.Contains("\"members@odata.bind\" : [", result);
             Assert.Contains("requestBody.additionalData", result);
             Assert.Contains("members", result); // property name hasn't been changed
+        }
+        [Fact]
+        public async Task GeneratesAnArrayOfObjectsPayloadData()
+        {
+            const string userJsonObject = "{ \"body\": { \"contentType\": \"HTML\"}, \"extensions\": [{ \"dealValue\": 10000}]}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/groups/{{group-id}}")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("const extension = new Extension();", result); // property is initialized on its own
+            Assert.Contains("extension.additionalData = {", result); // additional data is initialized as a Record not mpa
+            Assert.Contains("requestBody.extensions = [", result); // property is added to list
         }
         [Fact]
         public async Task GeneratesSelectQueryParameters()
@@ -256,6 +283,33 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("new ChatMessage", result);
             Assert.Contains("requestBody.from.user.additionalData", result);
+        }
+
+        [Fact]
+        public async Task GeneratesEnumsWhenVariableIsEnum()
+        {
+            const string userJsonObject = @"{
+    ""displayName"": ""Test create"",
+    ""settings"": {
+        ""recurrence"": {
+            ""pattern"": {
+                ""type"": ""weekly"",
+                ""interval"": 1
+            },
+            ""range"": {
+                ""type"": ""noEnd"",
+                ""startDate"": ""2020-09-08T12:02:30.667Z""
+            }
+        }
+    }
+}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identityGovernance/accessReviews/definitions")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestBody.settings.recurrence.pattern.type = RecurrencePatternType.Weekly", result);
         }
     }
 }

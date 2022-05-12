@@ -26,6 +26,8 @@ using Microsoft.ApplicationInsights;
 using OpenAPIService.Interfaces;
 using System.Text.Json;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using Microsoft.OpenApi.Any;
 
 namespace OpenAPIService
 {
@@ -96,7 +98,11 @@ namespace OpenAPIService
             foreach (var result in results)
             {
                 OpenApiPathItem pathItem;
-                string pathKey = FormatPathFunctions(result.CurrentKeys.Path, result.Operation.Parameters);
+                var pathKey = result.CurrentKeys.Path;
+                if (result.Operation.Extensions.TryGetValue("x-ms-docs-operation-type", out var value) && value is OpenApiString oasString && oasString.Value.Equals("function", StringComparison.Ordinal))
+                {
+                    pathKey = FormatPathFunctions(pathKey, result.Operation.Parameters);
+                }
 
                 if (subset.Paths == null)
                 {
@@ -190,7 +196,8 @@ namespace OpenAPIService
             }
             else if (url != null)
             {
-                var sources = new Dictionary<string, OpenApiDocument> { { graphVersion, source } };
+                var sources = new ConcurrentDictionary<string, OpenApiDocument>();
+                sources.TryAdd(graphVersion, source);
                 var rootNode = CreateOpenApiUrlTreeNode(sources);
 
                 url = url.BaseUriPath()
@@ -227,7 +234,7 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="sources">Dictionary of labels and their corresponding <see cref="OpenApiDocument"/> objects.</param>
         /// <returns>The created <see cref="OpenApiUrlTreeNode"/>.</returns>
-        public OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(Dictionary<string, OpenApiDocument> sources)
+        public OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(ConcurrentDictionary<string, OpenApiDocument> sources)
         {
             UtilityFunctions.CheckArgumentNull(sources, nameof(sources));
 
@@ -510,7 +517,7 @@ namespace OpenAPIService
         /// <param name="style">The OpenApiStyle value.</param>
         /// <param name="subsetOpenApiDocument">The subset of an OpenAPI document.</param>
         /// <returns>An OpenAPI doc with the respective style applied.</returns>
-        public OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument)
+        public OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody)
         {
             _telemetryClient?.TrackTrace($"Applying style for '{style}'",
                                          SeverityLevel.Information,
@@ -521,9 +528,13 @@ namespace OpenAPIService
                 // Clone doc before making changes
                 subsetOpenApiDocument = Clone(subsetOpenApiDocument);
 
-                // The Content property and its schema $refs are unnecessary for autocomplete
-                RemoveContent(subsetOpenApiDocument);
+                if(!includeRequestBody)
+                {
+                    // The Content property and its schema $refs are unnecessary for autocomplete
+                    RemoveContent(subsetOpenApiDocument);
+                }
             }
+
             else if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
                 /* For Powershell and PowerPlatform Styles */
@@ -584,9 +595,18 @@ namespace OpenAPIService
 
         private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
         {
+            var stopwatch = new Stopwatch();
             var httpClient = CreateHttpClient();
 
+            stopwatch.Start();
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
+            stopwatch.Stop();
+
+            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            _telemetryClient?.TrackTrace($"Success getting CSDL for {csdlHref} in {stopwatch.ElapsedMilliseconds}ms",
+                                         SeverityLevel.Information,
+                                         _openApiTraceProperties);
+            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
             OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
 
@@ -610,6 +630,8 @@ namespace OpenAPIService
 
             var settings = new OpenApiConvertSettings()
             {
+                AddSingleQuotesForStringParameters = true,
+                AddEnumDescriptionExtension = true,
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
                 PrefixEntityTypeNameBeforeKey = true,

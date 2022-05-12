@@ -11,6 +11,7 @@ using OpenAPIService;
 using OpenAPIService.Common;
 using OpenAPIService.Interfaces;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -52,6 +53,7 @@ namespace GraphWebApi.Controllers
                                     [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
                                     [FromQuery]string format = null,
                                     [FromQuery]string graphVersion = null,
+                                    [FromQuery]bool includeRequestBody = false,
                                     [FromQuery]bool forceRefresh = false)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
@@ -64,7 +66,7 @@ namespace GraphWebApi.Controllers
             }
 
             var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
-            return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh);
+            return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody);
         }
 
         [Route("openapi/operations")]
@@ -113,7 +115,7 @@ namespace GraphWebApi.Controllers
                 graphVersionsList.Add(graphVersions.ToLower());
             }
 
-            var sources = new Dictionary<string, OpenApiDocument>();
+            var sources = new ConcurrentDictionary<string, OpenApiDocument>();
             foreach (var graphVersion in graphVersionsList)
             {
                 var graphUri = GetVersionUri(graphVersion);
@@ -122,7 +124,7 @@ namespace GraphWebApi.Controllers
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
 
-                sources.Add(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
+                sources.TryAdd(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
             }
 
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
@@ -141,24 +143,25 @@ namespace GraphWebApi.Controllers
                                               [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
                                               [FromQuery] string format = null,
                                               [FromQuery] string graphVersion = null,
-                                              [FromQuery] bool forceRefresh = false)
+                                              [FromQuery] bool forceRefresh = false,
+                                              [FromQuery] bool includeRequestBody = false)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
             var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body);
-            return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh);
+            return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody);
         }
 
         private FileStreamResult CreateSubsetOpenApiDocument(string operationIds, string tags,
                                                              string url, OpenApiDocument source,
                                                              string title, OpenApiStyleOptions styleOptions,
-                                                             bool forceRefresh)
+                                                             bool forceRefresh, bool includeRequestBody)
         {
             var predicate = _openApiService.CreatePredicate(operationIds, tags, url, source, styleOptions.GraphVersion, forceRefresh);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
-            subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument, includeRequestBody);
 
             var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
 

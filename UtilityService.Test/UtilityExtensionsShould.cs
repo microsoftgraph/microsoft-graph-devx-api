@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -71,6 +71,8 @@ namespace UtilityService.Test
                     "/permissions?requesturl=/students/'MeganB@M365x214355.onmicrosoft.com'/classes")]
         [InlineData("/permissions?requesturl=/students/('MeganB@M365x214355.onmicrosoft.com')/classes",
                     "/permissions?requesturl=/students/'MeganB@M365x214355.onmicrosoft.com'/classes")]
+        [InlineData("/reports/getemailactivityusercounts(period={value})",
+                    "/reports/getemailactivityusercounts(period={value})")]
         public void GetUriTemplatePathFormatWithSimplifyNamespaceTrue(string targetString, string expectedString)
         {
             // Arrange and Act
@@ -91,6 +93,8 @@ namespace UtilityService.Test
                     "worksheets/range/microsoft.graph.range(address={address})")]
         [InlineData("/drive/list/items(listItem-id)microsoft.graph.getActivitiesByInterval()",
                     "/drive/list/items/listItem-id/microsoft.graph.getActivitiesByInterval()")]
+        [InlineData("/reports/getemailactivityusercounts(period={value})",
+                    "/reports/getemailactivityusercounts(period={value})")]
         public void GetUriTemplatePathFormatWithSimplifyNamespaceFalse(string targetString, string expectedString)
         {
             // Arrange and Act

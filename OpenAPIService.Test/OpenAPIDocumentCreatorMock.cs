@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -133,6 +133,12 @@ namespace OpenAPIService.Test
                                                 }
                                             }
                                         }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("function")
+                                        }
                                     }
                                 }
                             }
@@ -191,6 +197,12 @@ namespace OpenAPIService.Test
                                                     }
                                                 }
                                             }
+                                        }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("function")
                                         }
                                     }
                                 }
@@ -427,6 +439,30 @@ namespace OpenAPIService.Test
                                                 Schema = new OpenApiSchema()
                                                 {
                                                     Type = "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    RequestBody = new OpenApiRequestBody()
+                                    {
+                                        Description = "Invoke action restore",
+                                        Content = new Dictionary<string, OpenApiMediaType>
+                                        {
+                                            {
+                                                applicationJsonMediaType,
+                                                new OpenApiMediaType
+                                                {
+                                                    Schema = new OpenApiSchema
+                                                    {
+                                                        AnyOf = new List<OpenApiSchema>
+                                                        {
+                                                            new OpenApiSchema
+                                                            {
+                                                                Type = "string"
+                                                            }
+                                                        },
+                                                        Nullable = true
+                                                    }
                                                 }
                                             }
                                         }
@@ -753,6 +789,105 @@ namespace OpenAPIService.Test
                                                                 {
                                                                     Type = ReferenceType.Schema,
                                                                     Id = "microsoft.graph.report"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("function")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/deviceManagement/microsoft.graph.getRoleScopeTagsByIds(ids={ids})"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        new OpenApiTag()
+                                        {
+                                            Name = "deviceManagement.Functions"
+                                        }
+                                    },
+                                    OperationId = "deviceManagement.getRoleScopeTagsByIds",
+                                    Summary = "Invoke function getRoleScopeTagsByIds",
+                                    Parameters = new List<OpenApiParameter>
+                                    {
+                                        new OpenApiParameter()
+                                        {
+                                            Name = "ids",
+                                            In = ParameterLocation.Query,
+                                            Description = "Usage: ids={ids}",
+                                            Required = true,
+                                            Content = new Dictionary<string, OpenApiMediaType>
+                                            {
+                                                {
+                                                    applicationJsonMediaType,
+                                                    new OpenApiMediaType
+                                                    {
+                                                        Schema = new OpenApiSchema
+                                                        {
+                                                            Type = "array",
+                                                            Items = new OpenApiSchema
+                                                            {
+                                                                Type = "string"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200", new OpenApiResponse()
+                                            {
+                                                Description = "Success",
+                                                Content = new Dictionary<string, OpenApiMediaType>
+                                                {
+                                                    {
+                                                        applicationJsonMediaType,
+                                                        new OpenApiMediaType
+                                                        {
+                                                            Schema = new OpenApiSchema
+                                                            {
+                                                                Title = "Collection of deviceManagement",
+                                                                Type = "object",
+                                                                Properties = new Dictionary<string, OpenApiSchema>
+                                                                {
+                                                                    {
+                                                                        "value", new OpenApiSchema
+                                                                        {
+                                                                            Type = "array",
+                                                                            Items = new OpenApiSchema
+                                                                            {
+                                                                                AnyOf = new List<OpenApiSchema>
+                                                                                {
+                                                                                    new OpenApiSchema
+                                                                                    {
+                                                                                        Reference = new OpenApiReference
+                                                                                        {
+                                                                                            Type = ReferenceType.Schema,
+                                                                                            Id = "microsoft.graph.roleScopeTag"
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
                                                                 }
                                                             }
                                                         }

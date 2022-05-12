@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Microsoft.ApplicationInsights;
@@ -19,9 +20,9 @@ namespace CodeSnippetsReflection.OpenAPI
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
                     new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(OpenApiSnippetsGenerator) } };
-        private readonly Lazy<OpenApiUrlTreeNode> _v1OpenApiDocument;
-        private readonly Lazy<OpenApiUrlTreeNode> _betaOpenApiDocument;
-        private readonly Lazy<OpenApiUrlTreeNode> _customOpenApiDocument;
+        private readonly SimpleLazy<OpenApiUrlTreeNode> _v1OpenApiDocument;
+        private readonly SimpleLazy<OpenApiUrlTreeNode> _betaOpenApiDocument;
+        private readonly SimpleLazy<OpenApiUrlTreeNode> _customOpenApiDocument;
         public OpenApiSnippetsGenerator(
             string v1OpenApiDocumentUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml",
             string betaOpenApiDocumentUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/beta/openapi.yaml",
@@ -32,10 +33,10 @@ namespace CodeSnippetsReflection.OpenAPI
             if(string.IsNullOrEmpty(betaOpenApiDocumentUrl)) throw new ArgumentNullException(nameof(betaOpenApiDocumentUrl));
 
             _telemetryClient = telemetryClient;
-            _v1OpenApiDocument = new Lazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(v1OpenApiDocumentUrl).GetAwaiter().GetResult());
-            _betaOpenApiDocument = new Lazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(betaOpenApiDocumentUrl).GetAwaiter().GetResult());
+            _v1OpenApiDocument = new SimpleLazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(v1OpenApiDocumentUrl).GetAwaiter().GetResult());
+            _betaOpenApiDocument = new SimpleLazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(betaOpenApiDocumentUrl).GetAwaiter().GetResult());
             if(!string.IsNullOrEmpty(customOpenApiPathOrUrl))
-                _customOpenApiDocument = new Lazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(customOpenApiPathOrUrl).GetAwaiter().GetResult());
+                _customOpenApiDocument = new SimpleLazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(customOpenApiPathOrUrl).GetAwaiter().GetResult());
         }
         private static async Task<OpenApiUrlTreeNode> GetOpenApiDocument(string url) {
             Stream stream;

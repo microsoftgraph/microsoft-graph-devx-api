@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -11,22 +10,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
     public class CSharpGeneratorTests {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private static OpenApiUrlTreeNode _v1TreeNode;
-        private static async Task<OpenApiUrlTreeNode> GetV1TreeNode() {
-            if(_v1TreeNode == null) {
-                _v1TreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
-            }
-            return _v1TreeNode;
+        private static async Task<OpenApiUrlTreeNode> GetV1TreeNode()
+        {
+            return _v1TreeNode ??= await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
         }
         private readonly CSharpGenerator _generator = new();
         [Fact]
-        public async Task GeneratesTheCorrectFluentAPIPath() {
+        public async Task GeneratesTheCorrectFluentApiPath() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains(".Me.Messages", result);
         }
         [Fact]
-        public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollections() {
+        public async Task GeneratesTheCorrectFluentApiPathForIndexedCollections() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -37,7 +34,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("var graphClient = new GraphClient(requestAdapter)", result);
+            Assert.Contains("var graphClient = new GraphServiceClient(requestAdapter)", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall() {
@@ -106,6 +103,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("10L", result);
+            Assert.Contains("SendActivityNotificationRequestBody", result);
             Assert.DoesNotContain("microsoft.graph", result);
         }
         [Fact]
@@ -168,7 +166,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("displayName", result);
-            Assert.Contains("(q) =>", result);
+            Assert.Contains("(requestConfiguration) =>", result);
+            Assert.Contains("requestConfiguration.QueryParameters.Select", result);
         }
         [Fact]
         public async Task GeneratesCountBooleanQueryParameters() {
@@ -202,8 +201,18 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Add(\"ConsistencyLevel\", \"eventual\");", result);
-            Assert.Contains("(h) =>", result);
+            Assert.Contains("requestConfiguration.Headers.Add(\"ConsistencyLevel\", \"eventual\");", result);
+            Assert.Contains("(requestConfiguration) =>", result);
+        }
+        [Fact]
+        public async Task GeneratesFilterParameters() {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestConfiguration.QueryParameters.Count", result);
+            Assert.Contains("requestConfiguration.QueryParameters.Filter", result);
+            Assert.Contains("requestConfiguration.QueryParameters.Select", result);
+            Assert.Contains("requestConfiguration.QueryParameters.OrderBy", result);
         }
         //TODO test for DateTimeOffset
     }

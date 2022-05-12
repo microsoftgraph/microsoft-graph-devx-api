@@ -32,6 +32,7 @@ paths:
               - Objective-C
               - Go
               - PowerShell
+              - TypeScript
             default: C#
         - name: generation
           in: query
