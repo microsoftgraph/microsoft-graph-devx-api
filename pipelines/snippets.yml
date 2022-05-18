@@ -28,7 +28,7 @@ variables:
   buildConfiguration: 'Release'
   apidoctorPath: 'microsoft-graph-devx-api/apidoctor'
   apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
-  snippetLanguages: 'C#,JavaScript,Objective-C,Java,Go,PowerShell'
+  snippetLanguages: 'C#,JavaScript,Java,Go,PowerShell'
 
 steps:
 - checkout: self

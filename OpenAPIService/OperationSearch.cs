@@ -30,6 +30,9 @@ namespace OpenAPIService
         {
             if (_predicate(operation))
             {
+                // Remove the operation description.
+                // This is temporary until some of the invalid/incorrect texts coming from the CSDL are fixed.
+                operation.Description = null;
                 _searchResults.Add(new SearchResult()
                 {
                     Operation = operation,
