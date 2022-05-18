@@ -542,7 +542,7 @@ namespace OpenAPIService.Test
         }
 
         [Fact]
-        public void RemoveOperationDescriptionsInPowerShellStyle()
+        public void RemoveOperationDescriptionsInCreateFilteredDocument()
         {
             // Arrange
             var predicate = _openApiService.CreatePredicate(operationIds: null,
@@ -552,15 +552,10 @@ namespace OpenAPIService.Test
                                                            graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
-            var description = subsetOpenApiDocument.Paths
-                              .FirstOrDefault().Value
-                              .Operations[OperationType.Get]
-                              .Description;
-            Assert.NotNull(description);
 
             // Act
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
-            description = subsetOpenApiDocument.Paths
+            var description = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
                               .Operations[OperationType.Get]
                               .Description;
