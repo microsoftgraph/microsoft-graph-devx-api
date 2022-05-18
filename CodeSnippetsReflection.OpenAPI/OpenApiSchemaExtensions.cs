@@ -13,7 +13,8 @@ namespace CodeSnippetsReflection.OpenAPI {
                 return schema.Properties
                         .Union(schema.AllOf.FlattenEmptyEntries(x => x.AllOf, 2).SelectMany(x => x.Properties))
                         .Union(schema.AnyOf.SelectMany(x => x.Properties))
-                        .Union(schema.OneOf.SelectMany(x => x.Properties));
+                        .Union(schema.OneOf.SelectMany(x => x.Properties))
+                        .Union(schema.Items != null ? schema.Items.AllOf.SelectMany(x => x.Properties) : Enumerable.Empty<KeyValuePair<string, OpenApiSchema>>());
             }
             return schema.AllOf.Union(schema.AnyOf).Union(schema.OneOf).SelectMany(x => x.GetAllProperties());
         }
