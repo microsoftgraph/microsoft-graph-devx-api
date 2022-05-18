@@ -541,6 +541,34 @@ namespace OpenAPIService.Test
             Assert.Contains(expectedPayloadContent, jsonPayload);
         }
 
+        [Fact]
+        public void RemoveOperationDescriptionsInPowerShellStyle()
+        {
+            // Arrange
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: "/users/{user-id}/messages/{message-id}",
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            var description = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
+                              .Operations[OperationType.Get]
+                              .Description;
+            Assert.NotNull(description);
+
+            // Act
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            description = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
+                              .Operations[OperationType.Get]
+                              .Description;
+
+            // Assert
+            Assert.Null(description);
+        }
+
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
         {
             Assert.NotNull(node);

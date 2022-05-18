@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -100,6 +100,10 @@ namespace OpenAPIService
             }
 
             operation.OperationId = operationId;
+
+            // Remove the operation description.
+            // This is temporarily until some of the invalid/incorrect texts coming from the CSDL are fixed.
+            operation.Description = null;
         }
 
         /// <summary>
