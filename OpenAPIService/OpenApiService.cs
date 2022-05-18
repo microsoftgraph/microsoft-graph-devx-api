@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -641,7 +641,8 @@ namespace OpenAPIService
                 EnableDerivedTypesReferencesForRequestBody = false,
                 EnableDerivedTypesReferencesForResponses = false,
                 ShowRootPath = true,
-                ShowLinks = true
+                ShowLinks = true,
+                ExpandDerivedTypesNavigationProperties = false
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
