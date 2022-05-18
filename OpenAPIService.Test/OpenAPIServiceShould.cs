@@ -541,8 +541,12 @@ namespace OpenAPIService.Test
             Assert.Contains(expectedPayloadContent, jsonPayload);
         }
 
-        [Fact]
-        public void RemoveOperationDescriptionsInCreateFilteredDocument()
+        [Theory]
+        [InlineData(OpenApiStyle.PowerPlatform)]
+        [InlineData(OpenApiStyle.PowerShell)]
+        [InlineData(OpenApiStyle.Plain)]
+        [InlineData(OpenApiStyle.GEAutocomplete)]
+        public void RemoveOperationDescriptionsInCreateFilteredDocument(OpenApiStyle style)
         {
             // Arrange
             var predicate = _openApiService.CreatePredicate(operationIds: null,
@@ -554,7 +558,7 @@ namespace OpenAPIService.Test
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
             // Act
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument);
             var description = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
                               .Operations[OperationType.Get]
