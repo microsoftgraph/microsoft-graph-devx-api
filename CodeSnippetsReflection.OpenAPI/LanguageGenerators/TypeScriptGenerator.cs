@@ -147,6 +147,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 builder.AppendLine($"}};");
             }
         }
+
+        private static string NormalizeJsonName(string Name)
+        {
+            if (Name.Contains(".")) return $"\"{Name}\"";
+
+            return Name;
+        }
         
         private static void WriteCodePropertyObject(StringBuilder builder, CodeProperty codeProperty, IndentManager indentManager)
         {
@@ -162,7 +169,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         }
                         else
                         {
-                            builder.AppendLine($"{indentManager.GetIndent()}{child.Name.ToFirstCharacterLowerCase()} : {{");
+                            builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} : {{");
                         }
 
                         indentManager.Indent();
@@ -173,7 +180,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         break;
                     case PropertyType.Array:
 
-                        builder.AppendLine($"{indentManager.GetIndent()}{child.Name} : [");
+                        builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name)} : [");
                         indentManager.Indent();
                         WriteCodePropertyObject(builder, child, indentManager);
                         indentManager.Unindent();
@@ -181,8 +188,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
                         break;
                     case PropertyType.String:
-                        var propName = codeProperty.PropertyType == PropertyType.Map ? $"\"{child.Name.ToFirstCharacterLowerCase()}\"" : child.Name.ToFirstCharacterLowerCase();
-                        builder.AppendLine($"{indentManager.GetIndent()}{propName} : \"{child.Value}\",");
+                        var propName = codeProperty.PropertyType == PropertyType.Map ? $"\"{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())}\"" : child.Name.ToFirstCharacterLowerCase();
+                        if (String.IsNullOrWhiteSpace(propName))
+                        {
+                            builder.AppendLine($"{indentManager.GetIndent()}\"{child.Value}\",");
+                        }
+                        else
+                        {
+                            builder.AppendLine($"{indentManager.GetIndent()}{propName} : \"{child.Value}\",");
+                        }
                         break;
                     case PropertyType.Enum:
                         builder.AppendLine($"{indentManager.GetIndent()}{child.Name.ToFirstCharacterLowerCase()} : {child.Value},");
