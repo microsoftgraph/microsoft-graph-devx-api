@@ -19,8 +19,6 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         private static readonly Regex nestedStatementRegex = new(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private static readonly CodeProperty EMPTY_PROPERTY = new() { Name = null , Value = null , Children = null,  PropertyType = PropertyType.Default };
-        
-        private static readonly CodeProperty BINARY_PROPERTY = new() { Name = null, Value = null, Children = null, PropertyType = PropertyType.Binary };
 
         public static SnippetCodeGraph BuildCodeGraph(SnippetModel snippetModel)
         {
@@ -30,14 +28,14 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 Nodes = snippetModel.PathNodes,
                 Headers = parseHeaders(snippetModel),
                 Options = parseOptions(snippetModel),
-                Parameters = buildParameters(snippetModel),
-                Body = buildBody(snippetModel)
+                Parameters = parseParameters(snippetModel),
+                Body = parseBody(snippetModel)
             };
         }
 
-        /***
-         * Returns headers filtering `Host` out
-         */
+        ///
+        /// Parses Headers Filtering Out 'Host'
+        ///
         private static IEnumerable<CodeProperty> parseHeaders(SnippetModel snippetModel)
         {
             return snippetModel.RequestHeaders.Where(h => !h.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
@@ -52,7 +50,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         }
 
 
-        private static List<CodeProperty> buildParameters(SnippetModel snippetModel)
+        private static List<CodeProperty> parseParameters(SnippetModel snippetModel)
         {
             var parameters = new List<CodeProperty>();
             if (!string.IsNullOrEmpty(snippetModel.QueryString))
@@ -63,10 +61,10 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                     if (queryParam.Contains("="))
                     {
                         var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
-                        parameters.Add(new() { Name = NormalizeQueryParameterName(kvPair[0]), Value = GetQueryParameterValue(kvPair[1], replacements) });
+                        parameters.Add(new() { Name = NormalizeQueryParameterName(kvPair[0]), Value = GetQueryParameterValue(kvPair[1], replacements), PropertyType = PropertyType.String });
                     }
                     else
-                        parameters.Add(new() { Name = NormalizeQueryParameterName(queryParam), Value = GetQueryParameterValue("undefined", replacements) });
+                        parameters.Add(new() { Name = NormalizeQueryParameterName(queryParam), Value = GetQueryParameterValue("undefined", replacements), PropertyType = PropertyType.String });
                 }
 
             }
@@ -98,14 +96,13 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 return intValue.ToString();
             else
             {
-                var valueWithNested = originalValue.Split(',')
-                                                    .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
-                                                    .Aggregate((a, b) => $"{a},{b}");
-                return $"\"{valueWithNested}\"";
+                return originalValue.Split(',')
+                    .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
+                    .Aggregate((a, b) => $"{a},{b}");
             }
         }
 
-        private static CodeProperty buildBody(SnippetModel snippetModel)
+        private static CodeProperty parseBody(SnippetModel snippetModel)
         {
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
                 return EMPTY_PROPERTY;
@@ -115,7 +112,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 case "application/json":
                     return TryParseBody(snippetModel);
                 case "application/octet-stream":
-                    return BINARY_PROPERTY;
+                    return new() { Name = null, Value = null, Children = null, PropertyType = PropertyType.Binary };
                 default:
                     return TryParseBody(snippetModel);//in case the content type header is missing but we still have a json payload
             }

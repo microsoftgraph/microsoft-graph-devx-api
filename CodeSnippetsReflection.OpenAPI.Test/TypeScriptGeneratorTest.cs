@@ -111,22 +111,29 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Fact]
         public async Task WritesTheRequestPayload()
         {
-            const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
-                                          "\"displayName\": \"displayName-value\",\r\n  " +
-                                          "\"mailNickname\": \"mailNickname-value\",\r\n  " +
-                                          "\"userPrincipalName\": \"upn-value@tenant-value.onmicrosoft.com\",\r\n " +
-                                          " \"passwordProfile\" : {\r\n    \"forceChangePasswordNextSignIn\": true,\r\n    \"password\": \"password-value\"\r\n  }\r\n}";//nested passwordProfile Object
+            var sampleJson = @"
+                        {
+                            ""accountEnabled"": true,
+                            ""displayName"": ""displayName-value"",
+                            ""mailNickname"": ""mailNickname-value"",
+                            ""userPrincipalName"": ""upn-value@tenant-value.onmicrosoft.com"",
+                            "" passwordProfile"": {
+                                ""forceChangePasswordNextSignIn"": true,
+                                ""password"": ""password-value""
+                            }
+                        }
+                        ";
 
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users")
             {
-                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("new User", result);
-            Assert.Contains("requestBody.accountEnabled = true;", result);
-            Assert.Contains("requestBody.passwordProfile = new PasswordProfile", result);
-            Assert.Contains("requestBody.displayName = \"displayName-value\"", result);
+
+            Assert.Contains("const requestBody : User = {", result);
+            Assert.Contains("accountEnabled : true", result);
+            Assert.Contains("passwordProfile : {", result);
         }
         [Fact]
         public async Task WritesALongAndFindsAnAction()
