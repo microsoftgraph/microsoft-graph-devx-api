@@ -144,10 +144,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
             var result = ModelGraphBuilder.BuildCodeGraph(snippetModel);
 
-
-            Assert.NotNull(result.Body);
             Assert.Equal(PropertyType.Binary, result.Body.PropertyType);
-
         }
 
         [Fact]

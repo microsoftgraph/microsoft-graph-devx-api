@@ -87,7 +87,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!codeGraph.HasOptions()) return;
 
             if (codeGraph.HasHeaders())
-                builder.Append(",");
+                builder.Append(',');
 
             builder.AppendLine($"{indentManager.GetIndent()}{RequestOptionsVarName} : {{");
             indentManager.Indent();
@@ -102,7 +102,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!codeGraph.HasParameters()) return;
 
             if (codeGraph.HasHeaders() || codeGraph.HasOptions())
-                builder.Append(",");
+                builder.Append(',');
 
             builder.AppendLine($"{indentManager.GetIndent()}{RequestParametersVarName} : {{");
             indentManager.Indent();
@@ -149,7 +149,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string NormalizeJsonName(string Name)
         {
-            return (!String.IsNullOrWhiteSpace(Name) && Name.Substring(1) != "\"") && (Name.Contains(".") || Name.Contains("-")) ? $"\"{Name}\"" : Name;
+            return (!String.IsNullOrWhiteSpace(Name) && Name.Substring(1) != "\"") && (Name.Contains('.') || Name.Contains('-')) ? $"\"{Name}\"" : Name;
         }
         
         private static void WriteCodePropertyObject(StringBuilder builder, CodeProperty codeProperty, IndentManager indentManager)
