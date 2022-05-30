@@ -8,7 +8,7 @@ using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using Microsoft.OpenApi.Services;
 using Xunit;
 
-namespace CodeSnippetsReflection.OpenAPI.Test.ModelGraph
+namespace CodeSnippetsReflection.OpenAPI.Test
 {
     public class ModelGraphBuilderTests
     {
@@ -168,7 +168,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test.ModelGraph
             var result = ModelGraphBuilder.BuildCodeGraph(snippetModel);
             ;
 
-            var expectedObject = new CodeProperty { Name = "MessagesRequestBody", Value = null, PropertyType = PropertyType.Object, Children = new List<CodeProperty>() };
+            var expectedObject = new CodeProperty { Name = "MessagesPostRequestBody", Value = null, PropertyType = PropertyType.Object, Children = new List<CodeProperty>() };
 
             Assert.Equal(expectedObject.Name, result.Body.Name);
             Assert.Equal(expectedObject.Value, result.Body.Value);

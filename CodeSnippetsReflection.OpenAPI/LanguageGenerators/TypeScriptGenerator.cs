@@ -135,7 +135,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             if (codeGraph.Body.PropertyType == PropertyType.Binary)
             {
-                builder.AppendLine($"{indentManager.GetIndent()}const {RequestBodyVarName} = new WebStream();");
+                builder.AppendLine($"{indentManager.GetIndent()}const {RequestBodyVarName} = new ArrayBuffer({codeGraph.Body.Value.Length});");
             }
             else
             {
