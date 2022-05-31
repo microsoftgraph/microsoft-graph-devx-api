@@ -120,10 +120,10 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             var replacements = new Dictionary<string, string>();
             var matches = nestedStatementRegex.Matches(queryParams);
             if (matches.Any())
-                foreach (Match match in matches)
+                foreach (var groups in matches.Select(m => m.Groups)))
                 {
-                    var key = match.Groups[1].Value;
-                    var value = match.Groups[2].Value;
+                    var key = groups[1].Value;
+                    var value = groups[2].Value;
                     replacements.Add(key, value);
                     queryParams = queryParams.Replace(value, string.Empty);
                 }
