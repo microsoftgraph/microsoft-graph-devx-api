@@ -120,7 +120,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             var replacements = new Dictionary<string, string>();
             var matches = nestedStatementRegex.Matches(queryParams);
             if (matches.Any())
-                foreach (var groups in matches.Select(m => m.Groups)))
+                foreach (var groups in matches.Select(m => m.Groups))
                 {
                     var key = groups[1].Value;
                     var value = groups[2].Value;
