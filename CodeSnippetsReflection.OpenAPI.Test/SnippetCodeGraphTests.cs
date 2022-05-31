@@ -10,7 +10,7 @@ using Xunit;
 
 namespace CodeSnippetsReflection.OpenAPI.Test
 {
-    public class ModelGraphBuilderTests
+    public class SnippetCodeGraphTests
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private static OpenApiUrlTreeNode _v1TreeNode;
@@ -77,7 +77,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             request.Headers.Add("Prefer", "outlook.timezone=\"Pacific Standard Time\"");
 
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var result = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var result = new SnippetCodeGraph(snippetModel);
             var header = result.Headers.First();
 
             Assert.True(result.HasHeaders());
@@ -94,7 +94,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             request.Headers.Add("Host", "graph.microsoft.com");
 
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var result = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var result = new SnippetCodeGraph(snippetModel);
 
             Assert.False(result.HasHeaders());
         }
@@ -105,7 +105,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/19:4b6bed8d24574f6a9e436813cb2617d8?$select=displayName,givenName,postalCode,identities");
 
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var result = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var result = new SnippetCodeGraph(snippetModel);
             var parameter = result.Parameters.First();
 
             Assert.True(result.HasParameters());
@@ -122,12 +122,32 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
+        public async Task ParsesQueryParametersWithSpaces()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/roleManagement/directory/roleAssignments?$filter=roleDefinitionId eq '62e90394-69f5-4237-9190-012177145e10'&$expand=principal");
+
+            var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
+            var result = new SnippetCodeGraph(snippetModel);
+            var parameter = result.Parameters.First();
+
+            Assert.True(result.HasParameters());
+            Assert.Equal(2, result.Parameters.Count());
+
+            var expectedProperty1 = new CodeProperty { Name = "filter", Value = "roleDefinitionId eq '62e90394-69f5-4237-9190-012177145e10'", PropertyType = PropertyType.String, Children = null };
+            Assert.Equal(expectedProperty1, result.Parameters.First());
+
+            var expectedProperty2 = new CodeProperty { Name = "expand", Value = "principal", PropertyType = PropertyType.String, Children = null };
+            Assert.Equal(expectedProperty2, result.Parameters.Skip(1).Take(1).First());
+
+        }
+
+        [Fact]
         public async Task HasParametersIsFalseWhenNoParamterExists()
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/19:4b6bed8d24574f6a9e436813cb2617d8");
 
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var result = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var result = new SnippetCodeGraph(snippetModel);
 
             Assert.False(result.HasParameters());
         }
@@ -142,7 +162,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             request.Content.Headers.ContentType = new("application/octet-stream");
 
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var result = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var result = new SnippetCodeGraph(snippetModel);
 
             Assert.Equal(PropertyType.Binary, result.Body.PropertyType);
         }
@@ -162,8 +182,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 Content = new StringContent(sampleBody, Encoding.UTF8) // snippet missing content type
             };
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var result = ModelGraphBuilder.BuildCodeGraph(snippetModel);
-            ;
+            var result = new SnippetCodeGraph(snippetModel);
 
             var expectedObject = new CodeProperty { Name = "MessagesPostRequestBody", Value = null, PropertyType = PropertyType.Object, Children = new List<CodeProperty>() };
 
@@ -196,7 +215,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 Content = new StringContent(TypesSample, Encoding.UTF8)
             };
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var snippetCodeGraph = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
             // meetingDuration should be a string
             var property = findProperyInSnipet(snippetCodeGraph.Body, "meetingDuration");
@@ -214,7 +233,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 Content = new StringContent(TypesSample, Encoding.UTF8)
             };
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var snippetCodeGraph = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
             var property = findProperyInSnipet(snippetCodeGraph.Body, "minimumAttendeePercentage");
 
@@ -231,7 +250,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 Content = new StringContent(TypesSample, Encoding.UTF8)
             };
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var snippetCodeGraph = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
             var property = findProperyInSnipet(snippetCodeGraph.Body, "suggestLocation");
 
@@ -248,7 +267,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 Content = new StringContent(TypesSample, Encoding.UTF8)
             };
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var snippetCodeGraph = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
             var property = findProperyInSnipet(snippetCodeGraph.Body, "locationConstraint");
 
@@ -264,7 +283,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 Content = new StringContent(TypesSample, Encoding.UTF8)
             };
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var snippetCodeGraph = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
             var property = findProperyInSnipet(snippetCodeGraph.Body, "attendees");
 
@@ -280,7 +299,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 Content = new StringContent(TypesSample, Encoding.UTF8)
             };
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
-            var snippetCodeGraph = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
             var property = findProperyInSnipet(snippetCodeGraph.Body, "additionalData");
 

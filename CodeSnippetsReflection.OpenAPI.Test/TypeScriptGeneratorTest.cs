@@ -44,10 +44,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             }
             ";
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -76,10 +73,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -99,10 +93,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -130,10 +121,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -149,10 +137,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -168,10 +153,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -199,10 +181,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -250,10 +229,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -299,11 +275,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             }
             ";
 
-
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -327,10 +299,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             }
             ";
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -357,10 +326,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -387,10 +353,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -427,11 +390,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             ";
 
-
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -468,10 +427,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     }
                     ";
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -495,11 +451,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             }
             ";
 
-
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -525,10 +477,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             ";
 
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -551,12 +500,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 	            await graphServiceClient.users.get(configuration);
             }
             ";
-
-
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -592,10 +537,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             }
             ";
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -650,10 +592,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             }
             ";
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
@@ -705,10 +644,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             }
             ";
 
-            Assert.Contains(
-                expected.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty),
-                result.Replace(" ", String.Empty).Replace(Environment.NewLine, String.Empty)
-            );
+            AssertUtil.ContainsIgnoreWhiteSpace(expected, result);
         }
     }
 }

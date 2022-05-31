@@ -33,7 +33,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (snippetModel == null) throw new ArgumentNullException("Argument snippetModel cannot be null");
 
-            var codeGraph = ModelGraphBuilder.BuildCodeGraph(snippetModel);
+            var codeGraph = new SnippetCodeGraph(snippetModel);
             var snippetBuilder = new StringBuilder(
                                     "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
                                     $"const {ClientVarName} = {ClientVarType}.init({{authProvider}});{Environment.NewLine}{Environment.NewLine}");
@@ -78,7 +78,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             builder.AppendLine($"{indentManager.GetIndent()}{RequestHeadersVarName} : {{");
             indentManager.Indent();
             foreach (var param in codeGraph.Headers)
-                builder.AppendLine($"{indentManager.GetIndent()}\"{param.Name}\": \"{param.Value.Replace("\"", "\\\"")}\",");
+                builder.AppendLine($"{indentManager.GetIndent()}\"{param.Name}\": \"{param.Value.EscapeQuotes()}\",");
             indentManager.Unindent();
             builder.AppendLine($"{indentManager.GetIndent()}}}");
         }
@@ -92,7 +92,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             builder.AppendLine($"{indentManager.GetIndent()}{RequestOptionsVarName} : {{");
             indentManager.Indent();
             foreach (var param in codeGraph.Options)
-                builder.AppendLine($"{indentManager.GetIndent()}\"{param.Name}\": \"{param.Value.Replace("\"", "\\\"")}\",");
+                builder.AppendLine($"{indentManager.GetIndent()}\"{param.Name}\": \"{param.Value.EscapeQuotes()}\",");
             indentManager.Unindent();
             builder.AppendLine($"{indentManager.GetIndent()}}}");
         }
@@ -107,7 +107,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             builder.AppendLine($"{indentManager.GetIndent()}{RequestParametersVarName} : {{");
             indentManager.Indent();
             foreach (var param in codeGraph.Parameters)
-                builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(param.Name)}: \"{param.Value.Replace("\"", "\\\"")}\",");
+                builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(param.Name)}: \"{param.Value.EscapeQuotes()}\",");
             indentManager.Unindent();
             builder.AppendLine($"{indentManager.GetIndent()}}}");
         }
