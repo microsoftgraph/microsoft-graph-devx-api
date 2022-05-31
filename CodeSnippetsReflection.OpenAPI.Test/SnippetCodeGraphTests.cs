@@ -199,8 +199,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 foreach (var param in codeProperty.Children)
                 {
-                    var result = findProperyInSnipet(param, name);
-                    if (result != null) return result;
+                    if(findProperyInSnipet(param, name) is CodeProperty result) return result;
                 }
             }
 
