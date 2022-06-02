@@ -191,7 +191,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Equal(expectedObject.PropertyType, result.Body.PropertyType);
         }
 
-        private CodeProperty FindPropertyInSnippet(CodeProperty codeProperty, string name)
+        private CodeProperty? FindPropertyInSnippet(CodeProperty codeProperty, string name)
         {
             if (codeProperty.Name == name) return codeProperty;
 
@@ -203,7 +203,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 }
             }
 
-            throw new ArgumentException("Property does not containt child " + name);
+            return null;
         }
 
         [Fact]
@@ -217,7 +217,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
             // meetingDuration should be a string
-            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "meetingDuration");
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "meetingDuration").Value;
 
             Assert.Equal(PropertyType.String, property.PropertyType);
             Assert.Equal("PT1H", property.Value);
@@ -233,7 +233,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
             var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
-            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "minimumAttendeePercentage");
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "minimumAttendeePercentage").Value;
 
             Assert.Equal(PropertyType.Number, property.PropertyType);
             Assert.Equal("100" , property.Value);
@@ -249,7 +249,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
             var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
-            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "suggestLocation");
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "suggestLocation").Value;
 
             Assert.Equal(PropertyType.Boolean, property.PropertyType);
             Assert.Equal("False", property.Value);
@@ -265,7 +265,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
             var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
-            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "locationConstraint");
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "locationConstraint").Value;
 
             Assert.Equal(PropertyType.Object, property.PropertyType);
         }
@@ -280,7 +280,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
             var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
-            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "attendees");
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "attendees").Value;
 
             Assert.Equal(PropertyType.Array, property.PropertyType);
         }
@@ -295,7 +295,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
             var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
 
-            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "additionalData");
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "additionalData").Value;
 
             Assert.Equal(PropertyType.Map, property.PropertyType);
         }
