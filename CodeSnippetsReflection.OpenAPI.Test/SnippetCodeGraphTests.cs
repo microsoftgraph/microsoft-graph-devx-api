@@ -88,7 +88,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task HasHeadeIsFalseWhenNoneIsInRequest()
+        public async Task HasHeadersIsFalseWhenNoneIsInRequest()
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users");
             request.Headers.Add("Host", "graph.microsoft.com");
