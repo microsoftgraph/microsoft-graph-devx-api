@@ -7,7 +7,7 @@ using Xunit;
 
 namespace CodeSnippetsReflection.OpenAPI.Test
 {
-    public static class AssertUtil
+    public static class AssertExtensions
     {
         public static void ContainsIgnoreWhiteSpace(string expectedSubstring, string actualString)
         {
