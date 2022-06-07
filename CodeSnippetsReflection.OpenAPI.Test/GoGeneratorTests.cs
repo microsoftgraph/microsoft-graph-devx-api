@@ -296,7 +296,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Directory().DeletedItemsById(&directoryObjectId).Get()", result);
+            Assert.Contains("graphClient.Directory().DeletedItems().Group().Get()", result);
         }
         [Fact]
         public async Task DoesntFailOnTerminalSlash() {

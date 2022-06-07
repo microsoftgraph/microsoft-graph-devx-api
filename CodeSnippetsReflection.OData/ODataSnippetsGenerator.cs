@@ -36,13 +36,11 @@ namespace CodeSnippetsReflection.OData
         private Uri ServiceRootBeta { get; set; }
         private JavascriptExpressions JavascriptExpressions { get; }
         private CSharpExpressions CSharpExpressions { get; }
-        private ObjectiveCExpressions ObjectiveCExpressions { get; }
         private JavaExpressions JavaExpressions { get; }
         public static HashSet<string> SupportedLanguages { get; set; } = new(StringComparer.OrdinalIgnoreCase)
         {
             "c#",
             "javascript",
-            "objective-c",
             "java"
         };
 
@@ -64,7 +62,6 @@ namespace CodeSnippetsReflection.OData
             LoadGraphMetadata(customMetadataPath);
             JavascriptExpressions = new JavascriptExpressions();
             CSharpExpressions = new CSharpExpressions();
-            ObjectiveCExpressions = new ObjectiveCExpressions();
             JavaExpressions = new JavaExpressions();
         }
 
@@ -122,10 +119,6 @@ namespace CodeSnippetsReflection.OData
 
                 case "javascript":
                     return JavaScriptGenerator.GenerateCodeSnippet(snippetModel, JavascriptExpressions);
-
-                case "objective-c":
-                    var objectiveCGenerator = new ObjectiveCGenerator(edmModel);
-                    return objectiveCGenerator.GenerateCodeSnippet(snippetModel, ObjectiveCExpressions);
 
                 case "java":
                     var javaGenerator = new JavaGenerator(edmModel);
