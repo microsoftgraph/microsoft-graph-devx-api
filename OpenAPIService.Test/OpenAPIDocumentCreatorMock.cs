@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -133,6 +133,12 @@ namespace OpenAPIService.Test
                                                 }
                                             }
                                         }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("function")
+                                        }
                                     }
                                 }
                             }
@@ -191,6 +197,12 @@ namespace OpenAPIService.Test
                                                     }
                                                 }
                                             }
+                                        }
+                                    },
+                                    Extensions = new Dictionary<string, IOpenApiExtension>
+                                    {
+                                        {
+                                            "x-ms-docs-operation-type", new OpenApiString("function")
                                         }
                                     }
                                 }
@@ -427,6 +439,30 @@ namespace OpenAPIService.Test
                                                 Schema = new OpenApiSchema()
                                                 {
                                                     Type = "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    RequestBody = new OpenApiRequestBody()
+                                    {
+                                        Description = "Invoke action restore",
+                                        Content = new Dictionary<string, OpenApiMediaType>
+                                        {
+                                            {
+                                                applicationJsonMediaType,
+                                                new OpenApiMediaType
+                                                {
+                                                    Schema = new OpenApiSchema
+                                                    {
+                                                        AnyOf = new List<OpenApiSchema>
+                                                        {
+                                                            new OpenApiSchema
+                                                            {
+                                                                Type = "string"
+                                                            }
+                                                        },
+                                                        Nullable = true
+                                                    }
                                                 }
                                             }
                                         }

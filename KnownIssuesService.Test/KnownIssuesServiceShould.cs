@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -52,7 +53,7 @@ namespace KnownIssuesService.Test
         public async Task GetWorkItemsQuery()
         {
             //Arrange
-            int expectedNoOfWorkItems = 4;
+            int expectedNoOfWorkItems = 5;
 
             //Act
             WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync();
@@ -67,21 +68,37 @@ namespace KnownIssuesService.Test
         public async Task QueryBugs()
         {
             //Arrange
-            int expectedNoOfWorkItems = 4;
-            KnownIssue contract = new KnownIssue()
+            int expectedNoOfWorkItems = 3;
+            var contract = new KnownIssue()
             {
                 Title = "Issue B",
                 State = "Active",
-                WorkLoadArea = "Notifications"
+                WorkLoadArea = "Notifications",
+                WorkAround = "Test",
+                Link = "/foo/bar",
+                CreatedDateTime = DateTime.Parse("01/06/2022 00:00:00"),
+                LastUpdatedDateTime = DateTime.Parse("01/07/2022 00:00:00")
             };
+
             //Act
             List<KnownIssue> items = await _knownIssuesService.QueryBugsAsync();
 
             //Assert
+            foreach (var item in items)
+            {
+                Assert.True(item.State != "New" || item.State != "Resolved");
+                Assert.IsType<DateTime>(item.CreatedDateTime);
+                Assert.IsType<DateTime>(item.LastUpdatedDateTime);
+            }
+
             Assert.Equal(expectedNoOfWorkItems, items.Count);
             Assert.Equal(contract.Title, items[1].Title);
-            Assert.Equal(contract.State, items[1].State);
+            Assert.Equal(contract.State, items[1].State);            
             Assert.Equal(contract.WorkLoadArea, items[1].WorkLoadArea);
+            Assert.Equal(contract.WorkAround, items[1].WorkAround);
+            Assert.Equal(contract.CreatedDateTime, items[1].CreatedDateTime);
+            Assert.Equal(contract.LastUpdatedDateTime, items[1].LastUpdatedDateTime);
+            Assert.True(items[1].IsUpdated);
         }
     }
 }

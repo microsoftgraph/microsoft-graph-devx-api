@@ -467,7 +467,8 @@ namespace PermissionsService
             }
 
             requestUrl = requestUrl.BaseUriPath() // remove any query params
-                                   .UriTemplatePathFormat(true);
+                                   .UriTemplatePathFormat(true)
+                                   .RemoveParentheses();
 
             /* Remove ${value} segments from paths,
              * ex: /me/photo/$value --> $value or /applications/{application-id}/owners/$ref --> $ref

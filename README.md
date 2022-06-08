@@ -20,8 +20,10 @@ The API takes in the HTTP request message to be sent to Microsoft Graph and the 
 The API currently supports the generation of snippets to the Microsoft Graph API in the following languages:
 - [C#](Documents/c-sharp-examples.md)
 - [Javascript](Documents/javascript-examples.md)
-- [Objective C](Documents/objective-c-examples.md)
 - [Java](Documents/java-examples.md)
+- Go
+- PowerShell
+- TypeScript
 
 ### 2. Samples
 This endpoint serves up the list of sample queries queryable by their *category name*, *human name* or *tip*.

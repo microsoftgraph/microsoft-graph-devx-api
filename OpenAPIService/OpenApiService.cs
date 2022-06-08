@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -27,6 +27,7 @@ using OpenAPIService.Interfaces;
 using System.Text.Json;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using Microsoft.OpenApi.Any;
 
 namespace OpenAPIService
 {
@@ -97,7 +98,11 @@ namespace OpenAPIService
             foreach (var result in results)
             {
                 OpenApiPathItem pathItem;
-                string pathKey = FormatPathFunctions(result.CurrentKeys.Path, result.Operation.Parameters);
+                var pathKey = result.CurrentKeys.Path;
+                if (result.Operation.Extensions.TryGetValue("x-ms-docs-operation-type", out var value) && value is OpenApiString oasString && oasString.Value.Equals("function", StringComparison.Ordinal))
+                {
+                    pathKey = FormatPathFunctions(pathKey, result.Operation.Parameters);
+                }
 
                 if (subset.Paths == null)
                 {
@@ -512,7 +517,7 @@ namespace OpenAPIService
         /// <param name="style">The OpenApiStyle value.</param>
         /// <param name="subsetOpenApiDocument">The subset of an OpenAPI document.</param>
         /// <returns>An OpenAPI doc with the respective style applied.</returns>
-        public OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument)
+        public OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody)
         {
             _telemetryClient?.TrackTrace($"Applying style for '{style}'",
                                          SeverityLevel.Information,
@@ -523,9 +528,13 @@ namespace OpenAPIService
                 // Clone doc before making changes
                 subsetOpenApiDocument = Clone(subsetOpenApiDocument);
 
-                // The Content property and its schema $refs are unnecessary for autocomplete
-                RemoveContent(subsetOpenApiDocument);
+                if(!includeRequestBody)
+                {
+                    // The Content property and its schema $refs are unnecessary for autocomplete
+                    RemoveContent(subsetOpenApiDocument);
+                }
             }
+
             else if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
                 /* For Powershell and PowerPlatform Styles */
@@ -623,18 +632,17 @@ namespace OpenAPIService
             {
                 AddSingleQuotesForStringParameters = true,
                 AddEnumDescriptionExtension = true,
-                DeclarePathParametersOnPathItem = true,
                 EnableKeyAsSegment = true,
                 EnableOperationId = true,
-                ErrorResponsesAsDefault = false,
                 PrefixEntityTypeNameBeforeKey = true,
                 TagDepth = 2,
                 EnablePagination = true,
                 EnableDiscriminatorValue = false,
                 EnableDerivedTypesReferencesForRequestBody = false,
                 EnableDerivedTypesReferencesForResponses = false,
-                ShowRootPath = false,
-                ShowLinks = false
+                ShowRootPath = true,
+                ShowLinks = true,
+                ExpandDerivedTypesNavigationProperties = false
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
