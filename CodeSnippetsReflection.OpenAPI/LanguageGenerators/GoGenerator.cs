@@ -122,6 +122,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
         private static string evaluateParameter(CodeProperty param){
             if(param.PropertyType == PropertyType.Array)
                 return $"[] string {{{string.Join(",", param.Children.Select(x =>  $"\"{x.Value}\"" ).ToList())}}}";
+            else if (param.PropertyType == PropertyType.Boolean || param.PropertyType == PropertyType.Int32)
+                return param.Value;
             else
                 return $"\"{param.Value.EscapeQuotes()}\"";
         }
@@ -195,7 +197,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             }
             
             var typeName = NativeTypes.Contains(codeProperty.TypeDefinition?.ToLower()?.Trim()) ? codeProperty.TypeDefinition : $"graphmodels.{codeProperty.TypeDefinition }able" ;
-            builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := [] {typeName} {{");
+            builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := []{typeName} {{");
             builder.AppendLine(contentBuilder.ToString());
             builder.AppendLine($"{indentManager.GetIndent()}}}");
             if(parentProperty.PropertyType == PropertyType.Object)
@@ -263,7 +265,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     }
                     break;
                 case PropertyType.Date:
-                    builder.AppendLine($"{propertyName} , err  := time.Parse(time.RFC3339, \"{child.Value}\")");
+                    builder.AppendLine($"{propertyName} , err := time.Parse(time.RFC3339, \"{child.Value}\")");
                     builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
                     break;
                 case PropertyType.Int32:
@@ -312,7 +314,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     }
                     break;
                 case PropertyType.Base64Url:
-                    builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} := \"{child.Value.ToFirstCharacterLowerCase()}\"");
+                    builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} := []byte(\"{child.Value.ToFirstCharacterLowerCase()}\")");
                     builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
                     break;
                 default:

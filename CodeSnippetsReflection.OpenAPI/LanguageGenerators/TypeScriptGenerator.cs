@@ -115,6 +115,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string evaluateParameter(CodeProperty param){
             if(param.PropertyType == PropertyType.Array)
                 return $"[{string.Join(",", param.Children.Select(x =>  $"\"{x.Value}\"" ).ToList())}]";
+            else if (param.PropertyType == PropertyType.Boolean || param.PropertyType == PropertyType.Int32)
+                return param.Value;
             else
                 return $"\"{param.Value.EscapeQuotes()}\"";
         }
@@ -198,7 +200,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         break;
                     case PropertyType.Enum:
                         if (!String.IsNullOrWhiteSpace(child.Value)) { 
-                            builder.AppendLine($"{indentManager.GetIndent()}&{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} : {child.Value},");
+                            builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} : {child.Value},");
                         }
                         break;
                     case PropertyType.Date:
