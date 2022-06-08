@@ -18,7 +18,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         /// Formulates the requested Graph snippets and returns it as string for TypeScript
         /// </summary>
         /// <param name="snippetModel">Model of the Snippets info <see cref="SnippetModel"/></param>
-        /// <returns>String of the snippet in Javascript code</returns>
+        /// <returns>String of the snippet in TypeScript code</returns>
         ///
 
         private const string ClientVarName = "graphServiceClient";
@@ -107,9 +107,16 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             builder.AppendLine($"{indentManager.GetIndent()}{RequestParametersVarName} : {{");
             indentManager.Indent();
             foreach (var param in codeGraph.Parameters)
-                builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(param.Name)}: \"{param.Value.EscapeQuotes()}\",");
+                builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(param.Name)}: {evaluateParameter(param)},");
             indentManager.Unindent();
             builder.AppendLine($"{indentManager.GetIndent()}}}");
+        }
+
+        private static string evaluateParameter(CodeProperty param){
+            if(param.PropertyType == PropertyType.Array)
+                return $"[{string.Join(",", param.Children.Select(x =>  $"\"{x.Value}\"" ).ToList())}]";
+            else
+                return $"\"{param.Value.EscapeQuotes()}\"";
         }
 
         private static void WriteExecutionStatement(SnippetCodeGraph codeGraph, StringBuilder builder, params string[] parameters)
@@ -181,6 +188,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         builder.AppendLine($"{indentManager.GetIndent()}],");
 
                         break;
+                    case PropertyType.Guid:
                     case PropertyType.String:
                         var propName = codeProperty.PropertyType == PropertyType.Map ? $"\"{child.Name.ToFirstCharacterLowerCase()}\"" : NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
                         if (isArray || String.IsNullOrWhiteSpace(propName))
@@ -190,7 +198,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         break;
                     case PropertyType.Enum:
                         if (!String.IsNullOrWhiteSpace(child.Value)) { 
-                            builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} : {child.Value},");
+                            builder.AppendLine($"{indentManager.GetIndent()}&{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} : {child.Value},");
                         }
                         break;
                     case PropertyType.Date:

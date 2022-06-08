@@ -88,6 +88,21 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
+        public async Task ParsesParametersWithExpressionsCorrectly()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$filter=groupTypes/any(c:c+eq+'Unified')");
+            request.Headers.Add("Host", "graph.microsoft.com");
+
+            var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
+            var result = new SnippetCodeGraph(snippetModel);
+
+            Assert.True(result.HasParameters());
+            var param = result.Parameters.First();
+            Assert.Equal("filter",param.Name);
+            Assert.Equal("groupTypes/any(c:c+eq+'Unified')",param.Value);
+        }
+
+        [Fact]
         public async Task HasHeadersIsFalseWhenNoneIsInRequest()
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users");
@@ -111,7 +126,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.True(result.HasParameters());
             Assert.Single(result.Parameters);
 
-            var expectedProperty = new CodeProperty { Name = "select", Value = "displayName,givenName,postalCode,identities", PropertyType = PropertyType.String, Children = null };
+            // creates an array of nested properties
+            var expectedProperty = new CodeProperty { Name = "select", Value = null, PropertyType = PropertyType.String, Children = null };
             Assert.Equal(expectedProperty, parameter);
 
             Assert.Equal("displayName,givenName,postalCode,identities", parameter.Value);
@@ -235,7 +251,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             var property = FindPropertyInSnippet(snippetCodeGraph.Body, "minimumAttendeePercentage").Value;
 
-            Assert.Equal(PropertyType.Number, property.PropertyType);
+            Assert.Equal(PropertyType.Int32, property.PropertyType);
             Assert.Equal("100" , property.Value);
         }
 

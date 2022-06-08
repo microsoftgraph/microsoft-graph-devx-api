@@ -39,5 +39,13 @@
         {
             return stringValue.Replace("\"", "\\\"");
         }
+
+        public static string AddQuotes(this string stringValue)
+        {
+            if (string.IsNullOrEmpty(stringValue)) return stringValue;
+            if (stringValue.Substring(0, 1) == "\"") return stringValue;
+
+            return $"\"{stringValue}\"";
+        }
     }
 }
