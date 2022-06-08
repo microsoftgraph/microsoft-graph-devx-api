@@ -177,11 +177,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             IndentManager indentManagerObjects = new IndentManager();
 
             indentManager.Indent();
-            var childPosition = 1;
+            var childPosition = 0;
             foreach (var child in codeProperty.Children){
                 if(child.PropertyType == PropertyType.Object){
                     WriteCodeProperty(propertyAssignment, objectBuilder, codeProperty, child , indentManagerObjects, childPosition);
-                    contentBuilder.AppendLine($"{indentManager.GetIndent()}{child.Name.ToFirstCharacterLowerCase()}{(childPosition > 1 ? childPosition : null)},");
+                    contentBuilder.AppendLine($"{indentManager.GetIndent()}{child.Name.ToFirstCharacterLowerCase()?.IndexSuffix(childPosition)},");
                 }else{
                     WriteCodeProperty(propertyAssignment, contentBuilder, codeProperty, child , indentManager, childPosition);
                 }
@@ -209,7 +209,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             var isMap = codeProperty.PropertyType == PropertyType.Map;
 
             var propertyName = NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
-            var objectName = isArray ? $"{propertyName}{(childPosition > 1 ? childPosition : null)}" : propertyName; // an indexed object name for  objects in an array
+            var objectName = isArray ? propertyName?.IndexSuffix(childPosition) : propertyName; // an indexed object name for  objects in an array
             switch (child.PropertyType)
             {
                 case PropertyType.Object:
@@ -324,12 +324,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
 
         private static void WriteCodePropertyObject(string propertyAssignment, StringBuilder builder, CodeProperty codeProperty, IndentManager indentManager)
         {
-            var childPosition = 1;
+            var childPosition = 0;
             foreach (var child in codeProperty.Children)
-            {
-                WriteCodeProperty(propertyAssignment,builder,codeProperty,child,indentManager,childPosition);
-                childPosition++;
-            }
+                WriteCodeProperty(propertyAssignment,builder,codeProperty,child,indentManager,childPosition++);
         }
 
         public string GenerateCodeSnippet(SnippetModel snippetModel)

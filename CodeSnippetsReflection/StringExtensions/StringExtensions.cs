@@ -47,5 +47,20 @@
 
             return $"\"{stringValue}\"";
         }
+
+
+       /// <summary>
+        /// Add an integer suffix to a string. All string from position 1 will have a suffix appended
+        /// </summary>
+        /// <param name="stringValue">The string value to escape</param>
+        /// <param name="position">Poistion of the string</param>
+        /// <param name="singleQuoteEscapeSequence">The string value to replace single-quotes</param>
+        /// <returns></returns>
+        public static string IndexSuffix(this string stringValue, int position)
+        {
+            if (string.IsNullOrEmpty(stringValue)) return stringValue;
+
+            return $"{stringValue}{(position > 0 ? position : null)}";
+        }
     }
 }
