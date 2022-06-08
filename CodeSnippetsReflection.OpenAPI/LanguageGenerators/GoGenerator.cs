@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
+using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -22,10 +22,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
         private const string requestOptionsVarName = "options";
         private const string requestParametersVarName = "requestParameters";
         private const string requestConfigurationVarName = "configuration";
+        private static IImmutableSet<string> NativeTypes;
 
         public string GenerateCodeSnippetNew(SnippetModel snippetModel)
         {
             if (snippetModel == null) throw new ArgumentNullException("Argument snippetModel cannot be null");
+
+            if (NativeTypes == null)
+                NativeTypes = ImmutableHashSet.Create("string", "int", "float");
 
             var codeGraph = new SnippetCodeGraph(snippetModel);
             var snippetBuilder = new StringBuilder(
@@ -165,154 +169,165 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             else return string.Empty;
         }
 
-        private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder builder, CodeProperty codeProperty, IndentManager indentManager){
-
-            
-            // if an array contains objects, create all the objects before adding them to the array statement
-            // string property can be generated inline. Object properties are genereted as commented code to allow code to compile - generating nested element properties are almost impossible
+        private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder builder, CodeProperty parentProperty, CodeProperty codeProperty, IndentManager indentManager){
             var contentBuilder = new StringBuilder();
             var propertyName = NormalizeJsonName(codeProperty.Name.ToFirstCharacterLowerCase());
 
-            //builder.AppendLine($"{propertyName} := \"{child.Value}\"");
+            var objectBuilder = new StringBuilder();
+            IndentManager indentManagerObjects = new IndentManager();
 
-
-            //WriteCodePropertyObject(propertyAssignment, contentBuilder, codeProperty, indentManager);
-            /*
-            builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name)} : [");
             indentManager.Indent();
-            WriteCodePropertyObject(propertyAssignment, builder, child, indentManager);
+            var childPosition = 1;
+            foreach (var child in codeProperty.Children){
+                if(child.PropertyType == PropertyType.Object){
+                    WriteCodeProperty(propertyAssignment, objectBuilder, codeProperty, child , indentManagerObjects, childPosition);
+                    contentBuilder.AppendLine($"{indentManager.GetIndent()}{child.Name.ToFirstCharacterLowerCase()}{(childPosition > 1 ? childPosition : null)},");
+                }else{
+                    WriteCodeProperty(propertyAssignment, contentBuilder, codeProperty, child , indentManager, childPosition);
+                }
+                childPosition++;
+            }
             indentManager.Unindent();
-            builder.AppendLine($"{indentManager.GetIndent()}],");
-            */
 
-            builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := [] graphmodels.{codeProperty.TypeDefinition}able {{");
+            if(objectBuilder.Length > 0){
+                builder.AppendLine("\n");
+                builder.AppendLine(objectBuilder.ToString());
+            }
+            
+            var typeName = NativeTypes.Contains(codeProperty.TypeDefinition?.ToLower()?.Trim()) ? codeProperty.TypeDefinition : $"graphmodels.{codeProperty.TypeDefinition }able" ;
+            builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := [] {typeName} {{");
             builder.AppendLine(contentBuilder.ToString());
-            builder.AppendLine("}");
-            builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}({objectName})");
+            builder.AppendLine($"{indentManager.GetIndent()}}}");
+            if(parentProperty.PropertyType == PropertyType.Object)
+                builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}({objectName})");
 
         }
         
-        private static void WriteCodePropertyObject(string propertyAssignment, StringBuilder builder, CodeProperty codeProperty, IndentManager indentManager)
+        private static void WriteCodeProperty(string propertyAssignment, StringBuilder builder, CodeProperty codeProperty, CodeProperty child, IndentManager indentManager, int childPosition = 0)
         {
             var isArray = codeProperty.PropertyType == PropertyType.Array;
             var isMap = codeProperty.PropertyType == PropertyType.Map;
 
+            var propertyName = NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
+            var objectName = isArray ? $"{propertyName}{(childPosition > 1 ? childPosition : null)}" : propertyName; // an indexed object name for  objects in an array
+            switch (child.PropertyType)
+            {
+                case PropertyType.Object:
+                    builder.AppendLine($"{objectName} := graphmodels.New{child.TypeDefinition}()");
+                    WriteCodePropertyObject(objectName, builder, child, indentManager);
+
+                    if (!isArray)
+                        builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}({objectName})");
+
+                    break;
+                case PropertyType.Map:
+                    builder.AppendLine($"{objectName} := map[string]interface{{}}{{");
+
+                    indentManager.Indent();
+                    WriteCodePropertyObject(propertyAssignment, builder, child, indentManager);
+                    indentManager.Unindent();
+
+                    builder.AppendLine("}");
+
+                    if (isArray)
+                        builder.AppendLine($"{indentManager.GetIndent()}{objectName}");
+                    else
+                        builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}({objectName})");
+
+                    break;
+                case PropertyType.Array:
+                    WriteArrayProperty(propertyAssignment, objectName, builder, codeProperty, child, indentManager);
+                    break;
+                case PropertyType.Guid:
+                    builder.AppendLine($"{propertyName} := uuid.MustParse(\"{child.Value}\")");
+                    builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    break;
+                case PropertyType.String:
+                    var propName = codeProperty.PropertyType == PropertyType.Map ? $"\"{child.Name.ToFirstCharacterLowerCase()}\"" : NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
+                    if (isArray || String.IsNullOrWhiteSpace(propName))
+                        builder.AppendLine($"{indentManager.GetIndent()}\"{child.Value}\",");
+                    else if (isMap)
+                        builder.AppendLine($"{indentManager.GetIndent()}{propertyName.AddQuotes()} : \"{child.Value}\", ");
+                    else
+                    {
+                        builder.AppendLine($"{propertyName} := \"{child.Value}\"");
+                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    }
+                    break;
+                case PropertyType.Enum:
+                    if (!String.IsNullOrWhiteSpace(child.Value))
+                    {
+                        var enumProperties = string.Join("_", child.Value.Split('.').Reverse().Select(x => x.ToUpper()));
+                        builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := graphmodels.{enumProperties} ");
+                        builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    }
+                    break;
+                case PropertyType.Date:
+                    builder.AppendLine($"{propertyName} , err  := time.Parse(time.RFC3339, \"{child.Value}\")");
+                    builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    break;
+                case PropertyType.Int32:
+                    if (isMap)
+                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : int32({child.Value}) , ");
+                    else
+                    {
+                        builder.AppendLine($"{propertyName} := int32({child.Value})");
+                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    }
+                    break;
+                case PropertyType.Int64:
+                    if (isMap)
+                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : int64({child.Value}) , ");
+                    else
+                    {
+                        builder.AppendLine($"{propertyName} := int64({child.Value})");
+                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    }
+                    break;
+                case PropertyType.Float32:
+                    if (isMap)
+                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : float32({child.Value}) , ");
+                    else
+                    {
+                        builder.AppendLine($"{propertyName} := float32({child.Value})");
+                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    }
+                    break;
+                case PropertyType.Float64:
+                    if (isMap)
+                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : float64({child.Value}) , ");
+                    else
+                    {
+                        builder.AppendLine($"{propertyName} := float64({child.Value})");
+                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    }
+                    break;
+                case PropertyType.Double:
+                    if (isMap)
+                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : float64({child.Value}) , ");
+                    else
+                    {
+                        builder.AppendLine($"{propertyName} := float64({child.Value})");
+                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    }
+                    break;
+                case PropertyType.Base64Url:
+                    builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} := \"{child.Value.ToFirstCharacterLowerCase()}\"");
+                    builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    break;
+                default:
+                    builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} := {child.Value.ToFirstCharacterLowerCase()}");
+                    builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    break;
+            }
+        }
+
+        private static void WriteCodePropertyObject(string propertyAssignment, StringBuilder builder, CodeProperty codeProperty, IndentManager indentManager)
+        {
             var childPosition = 1;
             foreach (var child in codeProperty.Children)
             {
-                var propertyName = NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
-                var objectName = isArray ? $"{propertyName}{(childPosition > 1 ? childPosition : null)}" : propertyName; // an indexed object name for  objects in an array
-                switch (child.PropertyType)
-                {
-                    case PropertyType.Object:
-                        builder.AppendLine($"{objectName} := graphmodels.New{child.TypeDefinition}()");
-                        WriteCodePropertyObject(objectName, builder, child, indentManager);
-
-                        if (isArray)
-                            builder.AppendLine($"{indentManager.GetIndent()}{objectName}");
-                        else
-                            builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}({objectName})");
-
-                        break;
-                    case PropertyType.Map:
-                        builder.AppendLine($"{objectName} := map[string]interface{{}}{{");
-
-                        indentManager.Indent();
-                        WriteCodePropertyObject(propertyAssignment, builder, child, indentManager);
-                        indentManager.Unindent();
-
-                        builder.AppendLine("}");
-
-                        if (isArray)
-                            builder.AppendLine($"{indentManager.GetIndent()}{objectName}");
-                        else
-                            builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}({objectName})");
-
-                        break;
-                    case PropertyType.Array:
-                        WriteArrayProperty(propertyAssignment,objectName, builder, child,indentManager);
-                        break;
-                    case PropertyType.Guid:
-                        builder.AppendLine($"{propertyName} := uuid.MustParse(\"{child.Value}\")");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        break;
-                    case PropertyType.String:
-                        var propName = codeProperty.PropertyType == PropertyType.Map ? $"\"{child.Name.ToFirstCharacterLowerCase()}\"" : NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
-                        if (isArray || String.IsNullOrWhiteSpace(propName))
-                            builder.AppendLine($"{indentManager.GetIndent()}\"{child.Value}\",");
-                        else if (isMap)
-                            builder.AppendLine($"{indentManager.GetIndent()}{propertyName.AddQuotes()} : \"{child.Value}\", ");
-                        else
-                        {
-                            builder.AppendLine($"{propertyName} := \"{child.Value}\"");
-                            builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        }
-                        break;
-                    case PropertyType.Enum:
-                        if (!String.IsNullOrWhiteSpace(child.Value)) {
-                            var enumProperties = string.Join("_",child.Value.Split('.').Reverse().Select(x => x.ToUpper()));
-                            builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := graphmodels.{enumProperties} ");
-                            builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        }
-                        break;
-                    case PropertyType.Date:
-                        builder.AppendLine($"{propertyName} , err  := time.Parse(time.RFC3339, \"{child.Value}\")");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        break;
-                    case PropertyType.Int32:
-                        if (isMap)
-                            builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : int32({child.Value}) , ");
-                        else
-                        {
-                            builder.AppendLine($"{propertyName} := int32({child.Value})");
-                            builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        }
-                        break;
-                    case PropertyType.Int64:
-                        if (isMap)
-                            builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : int64({child.Value}) , ");
-                        else
-                        {
-                            builder.AppendLine($"{propertyName} := int64({child.Value})");
-                            builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        }
-                        break;
-                    case PropertyType.Float32:
-                        if (isMap)
-                            builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : float32({child.Value}) , ");
-                        else
-                        {
-                            builder.AppendLine($"{propertyName} := float32({child.Value})");
-                            builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        }
-                        break;
-                    case PropertyType.Float64:
-                        if (isMap)
-                            builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : float64({child.Value}) , ");
-                        else
-                        {
-                            builder.AppendLine($"{propertyName} := float64({child.Value})");
-                            builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        }
-                        break;
-                    case PropertyType.Double:
-                        if (isMap)
-                            builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : float64({child.Value}) , ");
-                        else
-                        {
-                            builder.AppendLine($"{propertyName} := float64({child.Value})");
-                            builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        }
-                        break;
-                    case PropertyType.Base64Url:
-                        builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} := \"{child.Value.ToFirstCharacterLowerCase()}\"");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        break;
-                    default:
-                        builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} := {child.Value.ToFirstCharacterLowerCase()}");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                        break;
-                }
+                WriteCodeProperty(propertyAssignment,builder,codeProperty,child,indentManager,childPosition);
                 childPosition++;
             }
         }
