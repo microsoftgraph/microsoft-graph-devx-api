@@ -137,7 +137,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             return parameters;
         }
 
-        private static string NormalizeQueryParameterName(string queryParam) => System.Web.HttpUtility.UrlDecode(queryParam.TrimStart('$').ToFirstCharacterLowerCase());
+        private static string NormalizeQueryParameterName(string queryParam) => HttpUtility.UrlDecode(queryParam.TrimStart('$').ToFirstCharacterLowerCase());
 
         private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams)
         {
@@ -187,9 +187,14 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static string ComputeRequestBody(SnippetModel snippetModel)
         {
-            var nodes = snippetModel.PathNodes;
-            if (!(nodes?.Any() ?? false)) return string.Empty;
+            var name = snippetModel.RequestSchema?.Reference?.GetClassName() ?? snippetModel.ResponseSchema?.Reference?.GetClassName()?.Append("PostRequestBody");
 
+            if(!string.IsNullOrEmpty(name))
+                return name?.ToFirstCharacterUpperCase();
+
+           var nodes = snippetModel.PathNodes;
+            if (!(nodes?.Any() ?? false)) return string.Empty;
+                
             var nodeName = nodes.Where(x => !x.Segment.IsCollectionIndex())
                 .Select(x =>
                 {
@@ -206,8 +211,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             if (nodes.Last()?.Segment?.IsCollectionIndex() == true)
                 return singularNodeName;
             else
-                return $"{nodeName}PostRequestBody";
-
+                return nodeName?.Append("PostRequestBody");
         }
 
         private static CodeProperty TryParseBody(SnippetModel snippetModel)
@@ -263,7 +267,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
                 return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.Date, Children = new List<CodeProperty>() };
 
-            if (propSchema?.Format?.Equals("guid", StringComparison.OrdinalIgnoreCase) ?? false)
+            if ((propSchema?.Format?.Equals("guid", StringComparison.OrdinalIgnoreCase) ?? false) || (propSchema?.Format?.Equals("uuid", StringComparison.OrdinalIgnoreCase) ?? false))
                 return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.Guid, Children = new List<CodeProperty>() };
 
             var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
@@ -280,7 +284,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
              if(propSchema == null) 
                 return new CodeProperty { Name = propertyName, Value = $"{value}", PropertyType = PropertyType.Int32, Children = new List<CodeProperty>() };
                 
-            var ( propertyType, propertyValue) = propSchema?.Type switch
+            var (propertyType, propertyValue) = propSchema?.Type switch
             {
                 "integer" when propSchema.Format.Equals("int32") => (PropertyType.Int32 , value.GetInt32().ToString()),
                 "integer" when propSchema.Format.Equals("int64") => (PropertyType.Int64, value.GetInt64().ToString()),

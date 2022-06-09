@@ -40,8 +40,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("messageId := \"message-id\"", result);
-            Assert.Contains(".Me().MessagesById(&messageId)", result);
+            Assert.Contains(".Me().MessagesById(\"message-id\")", result);
         }
         [Fact]
         public async Task GeneratesTheSnippetHeader() {
@@ -122,9 +121,9 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("msgraphsdk.NewUser", result);
+            Assert.Contains("graphmodels.NewUser", result);
             Assert.Contains("SetAccountEnabled(&accountEnabled)", result);
-            Assert.Contains("passwordProfile := msgraphsdk.NewPasswordProfile()", result);
+            Assert.Contains("passwordProfile := graphmodels.NewPasswordProfile()", result);
             Assert.Contains("displayName := \"displayName-value\"", result);
         }
         [Fact]
@@ -201,11 +200,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$select=displayName,id");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Select: \"displayName", result);
+            Assert.Contains("Select: [] string {\"displayName\"", result);
             Assert.Contains("QueryParameters: ", result);
             Assert.Contains("MeRequestBuilderGetQueryParameters", result);
             Assert.Contains("MeRequestBuilderGetRequestConfiguration", result);
-            Assert.Contains("options :=", result);
+            Assert.Contains("configuration :=", result);
             Assert.Contains("requestParameters :=", result);
             Assert.Contains("WithRequestConfigurationAndResponseHandler", result);
             Assert.Contains("nil)", result);
@@ -233,7 +232,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
         [Fact]
         public async Task GeneratesSelectExpandQueryParameters() {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=id,displayName)");
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=id,displayName),teams($select=id,displayName)");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Expand", result);
@@ -261,7 +260,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Me().EventsById(&eventId).Attachments().Post(requestBody)", result);
+            Assert.Contains("graphClient.Me().EventsById(\"event-id\").Attachments().Post(requestBody)", result);
         }
         [Fact]
         public async Task ParsesThePayloadEvenIfContentTypeIsMissing() {
@@ -271,7 +270,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.TeamsById(&teamId).ChannelsById(&channelId).Messages().Post(requestBody)", result);
+            Assert.Contains("graphClient.TeamsById(\"team-id\").ChannelsById(\"channel-id\").Messages().Post(requestBody)", result);
         }
         [Fact]
         public async Task WritesEmptyPrimitiveArrays() {
@@ -283,6 +282,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("SetIncludeUserActions", result);
         }
+
         [Fact]
         public async Task DoesntReplaceODataFunctionCalls() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/devices/{{objectId}}/usageRights?$filter=state in ('active', 'suspended') and serviceIdentifier in ('ABCD')");
@@ -303,7 +303,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/me/messages/AAMkADYAAAImV_jAAA=/?$expand=microsoft.graph.eventMessage/event");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Me().MessagesById(&messageId).GetWithRequestConfigurationAndResponseHandler(options, nil)", result);
+            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").GetWithRequestConfigurationAndResponseHandler(configuration, nil)", result);
         }
         [Fact]
         public async Task IncludesRequestBodyClassName() {
@@ -313,7 +313,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("NewPasswordCredentialRequestBody", result);
+            Assert.Contains("NewPasswordCredentialPostRequestBody", result);
         }
         //TODO test for DateTimeOffset
     }

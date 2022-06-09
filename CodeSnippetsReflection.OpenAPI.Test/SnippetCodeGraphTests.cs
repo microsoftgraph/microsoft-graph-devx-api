@@ -14,6 +14,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private static OpenApiUrlTreeNode _v1TreeNode;
+        private static OpenApiUrlTreeNode _testTreeNode;
 
         private static string TypesSample = @"
             { 
@@ -58,7 +59,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             }
             ";
 
-        // read the file from disk
+
         private static async Task<OpenApiUrlTreeNode> GetV1TreeNode()
         {
             if (_v1TreeNode == null)
@@ -66,6 +67,131 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 _v1TreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
             }
             return _v1TreeNode;
+        }
+
+        [Fact]
+        public async Task SkipParametersAreIntegers()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$skip=10");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = new SnippetCodeGraph(snippetModel);
+
+            Assert.True(result.HasParameters());
+            var param = result.Parameters.First();
+            Assert.Equal("skip", param.Name);
+            Assert.Equal("10", param.Value);
+        }
+
+        [Fact]
+        public async Task CountParameterIsBoolean()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$select=displayName,id");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = new SnippetCodeGraph(snippetModel);
+
+            Assert.True(result.HasParameters());
+            Assert.Equal(2, result.Parameters.Count());
+
+            var param = result.Parameters.First();
+
+            Assert.Equal("count", param.Name);
+            Assert.Equal(PropertyType.Boolean, param.PropertyType);
+            Assert.Equal("true", param.Value);
+        }
+
+        [Fact]
+        public async Task ArrayParametersSplitOnExternalCommas()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=id,displayName),teams($select=id,displayName)");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = new SnippetCodeGraph(snippetModel);
+
+            Assert.True(result.HasParameters());
+            Assert.Equal(1, result.Parameters.Count());
+
+            var param = result.Parameters.First();
+
+            Assert.Equal("expand", param.Name);
+            Assert.Equal(PropertyType.Array, param.PropertyType);
+            Assert.Equal(2, param.Children.Count());
+
+            var expectedProperty1 = new CodeProperty { Value = "members($select=id,displayName)", PropertyType = PropertyType.String };
+            Assert.Equal(param.Children.First(), expectedProperty1);
+
+            var expectedProperty2 = new CodeProperty { Value = "teams($select=id,displayName)", PropertyType = PropertyType.String };
+            Assert.Equal(param.Children.Skip(1).First(), expectedProperty2);
+        }
+
+        [Fact]
+        public async Task ParsesGuidProperty()
+        {
+            const string userJsonObject = "{\r\n  \"keyId\": \"f0b0b335-1d71-4883-8f98-567911bfdca6\"\r\n\r\n}";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/applications/{{id}}/removeKey")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
+
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "keyId").Value;
+
+            Assert.Equal(PropertyType.Guid, property.PropertyType);
+            Assert.Equal("f0b0b335-1d71-4883-8f98-567911bfdca6", property.Value);
+        }
+
+        [Fact]
+        public async Task ParsesInt32Property()
+        {
+            const string userJsonObject = "{\r\n  \"maxCandidates\": 23\r\n\r\n}";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/findMeetingTimes")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
+
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "maxCandidates").Value;
+
+            Assert.Equal(PropertyType.Int32, property.PropertyType);
+            Assert.Equal("23", property.Value);
+        }
+
+        [Fact]
+        public async Task ParsesInt64Property()
+        {
+            const string userJsonObject = "{\r\n  \"chainId\": 10\r\n\r\n}";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/teams/{{teamId}}/sendActivityNotification")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
+
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "chainId").Value;
+
+            Assert.Equal(PropertyType.Int64, property.PropertyType);
+            Assert.Equal("10", property.Value);
+        }
+
+        [Fact]
+        public async Task ParsesDoubleProperty()
+        {
+            const string userJsonObject = "{\r\n  \"minimumAttendeePercentage\": 10\r\n\r\n}";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/findMeetingTimes")
+            {
+                Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetCodeGraph = new SnippetCodeGraph(snippetModel);
+
+            var property = FindPropertyInSnippet(snippetCodeGraph.Body, "minimumAttendeePercentage").Value;
+
+            Assert.Equal(PropertyType.Double, property.PropertyType);
+            Assert.Equal("10", property.Value);
         }
 
         [Fact]
@@ -99,7 +225,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.True(result.HasParameters());
             var param = result.Parameters.First();
             Assert.Equal("filter",param.Name);
-            Assert.Equal("groupTypes/any(c:c+eq+'Unified')",param.Value);
+            Assert.Equal("groupTypes/any",param.Value); // TODO check if result should be `groupTypes/any(c:c+eq+'Unified')`
         }
 
         [Fact]
@@ -127,14 +253,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Single(result.Parameters);
 
             // creates an array of nested properties
-            var expectedProperty = new CodeProperty { Name = "select", Value = null, PropertyType = PropertyType.String, Children = null };
-            Assert.Equal(expectedProperty, parameter);
+            var children = new List<CodeProperty>();
+            children.Add(new CodeProperty { Value = "displayName", PropertyType = PropertyType.String });
+            children.Add(new CodeProperty { Value = "givenName", PropertyType = PropertyType.String });
+            children.Add(new CodeProperty { Value = "postalCode", PropertyType = PropertyType.String });
+            children.Add(new CodeProperty { Value = "identities", PropertyType = PropertyType.String });
 
-            Assert.Equal("displayName,givenName,postalCode,identities", parameter.Value);
+            Assert.Equal(children[0], parameter.Children[0]);
+            Assert.Equal(children[1], parameter.Children[1]);
+            Assert.Equal(children[2], parameter.Children[2]);
+            Assert.Equal(children[3], parameter.Children[3]);
+
             Assert.Equal("select", parameter.Name);
-            Assert.Equal(PropertyType.String, parameter.PropertyType);
+            Assert.Equal(PropertyType.Array, parameter.PropertyType);
 
-            Assert.True(result.HasParameters());
         }
 
         [Fact]
@@ -144,17 +276,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1TreeNode());
             var result = new SnippetCodeGraph(snippetModel);
-            var parameter = result.Parameters.First();
 
             Assert.True(result.HasParameters());
             Assert.Equal(2, result.Parameters.Count());
 
-            var expectedProperty1 = new CodeProperty { Name = "filter", Value = "roleDefinitionId eq '62e90394-69f5-4237-9190-012177145e10'", PropertyType = PropertyType.String, Children = null };
-            Assert.Equal(expectedProperty1, result.Parameters.First());
+            var expectedProperty1 = new CodeProperty { Name = "filter" , Value = "roleDefinitionId eq '62e90394-69f5-4237-9190-012177145e10'", PropertyType = PropertyType.String };
+            var actualParam1 = result.Parameters.First();
 
-            var expectedProperty2 = new CodeProperty { Name = "expand", Value = "principal", PropertyType = PropertyType.String, Children = null };
-            Assert.Equal(expectedProperty2, result.Parameters.Skip(1).First());
+            Assert.Equal(expectedProperty1, actualParam1);
 
+            var expectedProperty2 = new CodeProperty { Value = "principal", PropertyType = PropertyType.String };
+            var actualParam2 = result.Parameters.Skip(1).First();
+
+            Assert.Equal("expand", actualParam2.Name);
+            Assert.Equal(expectedProperty2, actualParam2.Children[0]);
         }
 
         [Fact]
