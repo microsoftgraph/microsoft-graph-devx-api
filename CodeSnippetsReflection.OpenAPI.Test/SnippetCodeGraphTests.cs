@@ -107,7 +107,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = new SnippetCodeGraph(snippetModel);
 
             Assert.True(result.HasParameters());
-            Assert.Equal(1, result.Parameters.Count());
+            Assert.Single(result.Parameters);
 
             var param = result.Parameters.First();
 

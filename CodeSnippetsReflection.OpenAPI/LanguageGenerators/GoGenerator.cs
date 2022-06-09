@@ -22,11 +22,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
         private const string requestOptionsVarName = "options";
         private const string requestParametersVarName = "requestParameters";
         private const string requestConfigurationVarName = "configuration";
-        private static IImmutableSet<string> NativeTypes;
+        private static IImmutableSet<string> NativeTypes = GetNativeTypes();
 
-        static GoGenerator()
+        static IImmutableSet<string> GetNativeTypes()
         {
-            NativeTypes = ImmutableHashSet.Create("string", "int", "float");
+            return ImmutableHashSet.Create("string", "int", "float");
         }
 
         public string GenerateCodeSnippet(SnippetModel snippetModel)
@@ -247,16 +247,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
                     break;
                 case PropertyType.String:
-                    var propName = codeProperty.PropertyType == PropertyType.Map ? $"\"{child.Name.ToFirstCharacterLowerCase()}\"" : NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
-                    if (isArray || String.IsNullOrWhiteSpace(propName))
-                        builder.AppendLine($"{indentManager.GetIndent()}\"{child.Value}\",");
-                    else if (isMap)
-                        builder.AppendLine($"{indentManager.GetIndent()}{propertyName.AddQuotes()} : \"{child.Value}\", ");
-                    else
-                    {
-                        builder.AppendLine($"{propertyName} := \"{child.Value}\"");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                    }
+                    WriteStringProperty(propertyAssignment, codeProperty, builder, indentManager, child);
                     break;
                 case PropertyType.Enum:
                     if (!String.IsNullOrWhiteSpace(child.Value))
@@ -285,6 +276,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} := {child.Value.ToFirstCharacterLowerCase()}");
                     builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
                     break;
+            }
+        }
+        private static void WriteStringProperty(string propertyAssignment, CodeProperty codeProperty, StringBuilder builder, IndentManager indentManager, CodeProperty child){
+            
+            var isArray = codeProperty.PropertyType == PropertyType.Array;
+            var isMap = codeProperty.PropertyType == PropertyType.Map;
+
+            var propertyName = NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
+
+            var propName = isMap ? $"\"{child.Name.ToFirstCharacterLowerCase()}\"" : NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
+            if (isArray || String.IsNullOrWhiteSpace(propName))
+                builder.AppendLine($"{indentManager.GetIndent()}\"{child.Value}\",");
+            else if (isMap)
+                builder.AppendLine($"{indentManager.GetIndent()}{propertyName.AddQuotes()} : \"{child.Value}\", ");
+            else
+            {
+                builder.AppendLine($"{propertyName} := \"{child.Value}\"");
+                builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
             }
         }
 
