@@ -24,12 +24,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
         private const string requestConfigurationVarName = "configuration";
         private static IImmutableSet<string> NativeTypes;
 
+        static GoGenerator()
+        {
+            NativeTypes = ImmutableHashSet.Create("string", "int", "float");
+        }
+
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             if (snippetModel == null) throw new ArgumentNullException("Argument snippetModel cannot be null");
-
-            if (NativeTypes == null)
-                NativeTypes = ImmutableHashSet.Create("string", "int", "float");
 
             var codeGraph = new SnippetCodeGraph(snippetModel);
             var snippetBuilder = new StringBuilder(
@@ -269,49 +271,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
                     break;
                 case PropertyType.Int32:
-                    if (isMap)
-                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : int32({child.Value}) , ");
-                    else
-                    {
-                        builder.AppendLine($"{propertyName} := int32({child.Value})");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                    }
-                    break;
                 case PropertyType.Int64:
-                    if (isMap)
-                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : int64({child.Value}) , ");
-                    else
-                    {
-                        builder.AppendLine($"{propertyName} := int64({child.Value})");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                    }
-                    break;
                 case PropertyType.Float32:
-                    if (isMap)
-                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : float32({child.Value}) , ");
-                    else
-                    {
-                        builder.AppendLine($"{propertyName} := float32({child.Value})");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                    }
-                    break;
                 case PropertyType.Float64:
-                    if (isMap)
-                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : float64({child.Value}) , ");
-                    else
-                    {
-                        builder.AppendLine($"{propertyName} := float64({child.Value})");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                    }
-                    break;
                 case PropertyType.Double:
-                    if (isMap)
-                        builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : float64({child.Value}) , ");
-                    else
-                    {
-                        builder.AppendLine($"{propertyName} := float64({child.Value})");
-                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
-                    }
+                    WriteNumericProperty(propertyAssignment,isMap, builder, indentManager, child);
                     break;
                 case PropertyType.Base64Url:
                     builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} := []byte(\"{child.Value.ToFirstCharacterLowerCase()}\")");
@@ -321,6 +285,28 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} := {child.Value.ToFirstCharacterLowerCase()}");
                     builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
                     break;
+            }
+        }
+
+        private static void WriteNumericProperty(string propertyAssignment, bool isMap, StringBuilder builder, IndentManager indentManager, CodeProperty child)
+        {
+            var propertyType = child.PropertyType switch
+            {
+                PropertyType.Int32 => "int32",
+                PropertyType.Int64 => "int64",
+                PropertyType.Float32 => "float32",
+                PropertyType.Float64 => "float64",
+                PropertyType.Double => "float64",
+                _ => throw new ArgumentException("Unsupported child property")
+            };
+
+            var propertyName = NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
+            if (isMap)
+                builder.AppendLine($"{indentManager.GetIndent()}\"{propertyName}\" : {propertyType}({child.Value}) , ");
+            else
+            {
+                builder.AppendLine($"{propertyName} := {propertyType}({child.Value})");
+                builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
             }
         }
 

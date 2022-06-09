@@ -118,8 +118,6 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                     var name = NormalizeQueryParameterName(key);
                     var value = GetQueryParameterValue(queryCollection[key], replacements);
                     if(ArrayParameters.Contains(name.ToLower().Trim())){
-                        var maches = splitCommasExcludingBracketsRegex.Split(value);
-
                         var children = splitCommasExcludingBracketsRegex.Split(value)
                             .Where(x => !String.IsNullOrEmpty(x) && !x.StartsWith("(") && !x.Equals(","))
                             .Select(x => new CodeProperty() { Name = null, Value = x, PropertyType = PropertyType.String }).ToList();
@@ -187,7 +185,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static string ComputeRequestBody(SnippetModel snippetModel)
         {
-            var name = snippetModel.RequestSchema?.Reference?.GetClassName() ?? snippetModel.ResponseSchema?.Reference?.GetClassName()?.Append("PostRequestBody");
+            var name = snippetModel.RequestSchema?.Reference?.GetClassName() ?? snippetModel.ResponseSchema?.Reference?.GetClassName()?.Replace("ODataError","")?.Append("PostRequestBody");
 
             if(!string.IsNullOrEmpty(name))
                 return name?.ToFirstCharacterUpperCase();

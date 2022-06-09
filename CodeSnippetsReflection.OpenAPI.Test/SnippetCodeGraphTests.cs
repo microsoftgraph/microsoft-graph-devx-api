@@ -14,7 +14,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private static OpenApiUrlTreeNode _v1TreeNode;
-        private static OpenApiUrlTreeNode _testTreeNode;
 
         private static string TypesSample = @"
             { 
@@ -90,7 +89,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = new SnippetCodeGraph(snippetModel);
 
             Assert.True(result.HasParameters());
-            Assert.Equal(2, result.Parameters.Count());
+            var paramCount = result.Parameters.Count();
+            Assert.Equal(2, paramCount);
 
             var param = result.Parameters.First();
 
@@ -113,7 +113,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Equal("expand", param.Name);
             Assert.Equal(PropertyType.Array, param.PropertyType);
-            Assert.Equal(2, param.Children.Count());
+            Assert.Equal(2, param.Children.Count);
 
             var expectedProperty1 = new CodeProperty { Value = "members($select=id,displayName)", PropertyType = PropertyType.String };
             Assert.Equal(param.Children.First(), expectedProperty1);
