@@ -34,5 +34,10 @@
             if (charIndex < 0) return stringValue;
             return stringValue[0..charIndex] + char.ToUpper(stringValue[charIndex + 1]) + stringValue[(charIndex + 2)..].ToFirstCharacterUpperCaseAfterCharacter(character);
         }
+
+        public static string EscapeQuotes(this string stringValue)
+        {
+            return stringValue.Replace("\"", "\\\"");
+        }
     }
 }
