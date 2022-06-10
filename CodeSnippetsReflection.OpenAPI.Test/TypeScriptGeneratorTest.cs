@@ -67,7 +67,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 	            resourceId : ""a5c51e59-3fcd-4a37-87a1-835c0c21488a"",
             };
 
-            async () => {
+            const result = async () => {
 	            await graphServiceClient.identityGovernance.accessReviews.definitionsById(""accessReviewScheduleDefinition-id"").instancesById(""accessReviewInstance-id"").batchRecordDecisions.post(requestBody);
             }
             ";
