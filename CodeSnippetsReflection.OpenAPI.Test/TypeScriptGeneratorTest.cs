@@ -294,7 +294,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             const requestBody = new ArrayBuffer(16);
 
-            async () => {
+            const result = async () => {
 	            await graphServiceClient.applicationsById(""application-id"").logo.put(requestBody);
             }
             ";
