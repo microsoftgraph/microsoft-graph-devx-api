@@ -194,7 +194,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             indentManager.Unindent();
 
             if(objectBuilder.Length > 0){
-                builder.AppendLine("\n");
+                builder.AppendLine(Environment.NewLine);
                 builder.AppendLine(objectBuilder.ToString());
             }
             
