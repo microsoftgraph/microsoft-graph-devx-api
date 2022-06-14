@@ -10,7 +10,9 @@ namespace CodeSnippetsReflection.OpenAPI.Test;
 public class PhpGeneratorTests
 {
     private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
+    private const string ServiceRootBetaUrl = "https://graph.microsoft.com/beta";
     private static OpenApiUrlTreeNode _v1TreeNode;
+    private static OpenApiUrlTreeNode _betaTreeNode;
     private readonly PhpGenerator _generator = new();
     
     private static async Task<OpenApiUrlTreeNode> GetV1TreeNode()
@@ -20,6 +22,13 @@ public class PhpGeneratorTests
             _v1TreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
         }
         return _v1TreeNode;
+    }
+    
+    private static async Task<OpenApiUrlTreeNode> GetBetaTreeNode() {
+        if(_betaTreeNode == null) {
+            _betaTreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/beta/openapi.yaml");
+        }
+        return _betaTreeNode;
     }
     [Fact]
     public async Task GeneratesTheCorrectFluentApiPathForIndexedCollections()
@@ -49,7 +58,7 @@ public class PhpGeneratorTests
     }
     
     [Fact]
-    public async Task WritesADouble()
+    public async Task GeneratesObjectInitializationWithCallToSetters()
     {
         const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
                                       "\"displayName\": \"displayName-value\",\r\n  " +
@@ -64,6 +73,33 @@ public class PhpGeneratorTests
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("10", result);
+        Assert.Contains("$body = new User();", result);
+        Assert.Contains("$passwordProfile = new PasswordProfile();", result);
+    }
+    
+    [Fact]
+    public async Task IncludesRequestBodyClassName() {
+        const string payloadBody = "{\r\n  \"passwordCredential\": {\r\n    \"displayName\": \"Password friendly name\"\r\n  }\r\n}";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootBetaUrl}/applications/{{id}}/addPassword") {
+            Content = new StringContent(payloadBody, Encoding.UTF8, "application/json")
+        };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("PasswordCredentialRequestBody", result);
+    }
+    
+    [Fact]
+    public async Task FindsPathItemsWithDifferentCasing() {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$graphClient->directory()->deletedItems()->group()->get()", result);
+    }
+    [Fact]
+    public async Task DoesntFailOnTerminalSlash() {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/me/messages/AAMkADYAAAImV_jAAA=/?$expand=microsoft.graph.eventMessage/event");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("graphClient.Me().MessagesById(&messageId).GetWithRequestConfigurationAndResponseHandler(options, nil)", result);
     }
 }

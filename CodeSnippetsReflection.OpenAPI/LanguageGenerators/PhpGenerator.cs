@@ -39,21 +39,20 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         snippetBuilder.AppendLine($"{responseAssignment} {clientVarName}->{GetFluentApiPath(snippetModel.PathNodes)}->{methodName}({parametersList});");
         return snippetBuilder.ToString();
     }
-    
-    private const string requestParametersVarName = "$requestParameters";
+
+    private const string requestParametersVarName = "options";
     private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager) {
         var payloadSB = new StringBuilder();
         if(!string.IsNullOrEmpty(model.QueryString)) {
-            payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestParametersVarName} = (q) =>");
+            payloadSB.AppendLine($"{indentManager.GetIndent()}${requestParametersVarName} = ($q) =>");
             payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
-            indentManager.Indent();
             var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
             foreach(var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)) {
                 if(queryParam.Contains("=")) {
                     var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
-                    payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)};");
+                    payloadSB.AppendLine($"$q->{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)};");
                 } else
-                    payloadSB.AppendLine($"q.{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = string.Empty;");
+                    payloadSB.AppendLine($"$q->{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = string.Empty;");
             }
             indentManager.Unindent();
             payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
@@ -91,21 +90,21 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private static string GetActionParametersList(params string[] parameters) {
         var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
         if(nonEmptyParameters.Any())
-            return string.Join(", ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}"));
+            return string.Join(", ", nonEmptyParameters.Select(x => $"${x}").Aggregate((a, b) => $"{a}, {b}"));
         else return string.Empty;
     }
     
-    private const string requestHeadersVarName = "$headers";
+    private const string requestHeadersVarName = "headers";
     private static (string, string) GetRequestHeaders(SnippetModel snippetModel, IndentManager indentManager) {
         var payloadSB = new StringBuilder();
         var filteredHeaders = snippetModel.RequestHeaders.Where(h => !h.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
         if(filteredHeaders.Any()) {
-            payloadSB.AppendLine($"{indentManager.GetIndent()}var {requestHeadersVarName} = (h) =>");
+            payloadSB.AppendLine($"{indentManager.GetIndent()}${requestHeadersVarName} = ($h) =>");
             payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
             indentManager.Indent();
             filteredHeaders.ForEach(h =>
-                payloadSB.AppendLine($"{indentManager.GetIndent()}h.Add(\"{h.Key}\", \"{h.Value.FirstOrDefault()}\");")
+                payloadSB.AppendLine($"{indentManager.GetIndent()}$h.Add(\"{h.Key}\", \"{h.Value.FirstOrDefault()}\");")
             );
             indentManager.Unindent();
             payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
@@ -113,7 +112,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         }
         return (default, default);
     }
-    private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterUpperCase();
+    private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterLowerCase();
 	private const string RequestBodyVarName = "body";
 	private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
 		if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
@@ -143,6 +142,11 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
                 var schema = snippetModel.RequestSchema;
                 var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
+                if (string.IsNullOrEmpty(className) &&
+                    schema != null &&
+                    schema.Properties.Any() &&
+                    schema.Properties.Count == 1)
+                    className = $"{schema.Properties.First().Key.ToFirstCharacterUpperCase()}RequestBody"; 
                 payloadSB.AppendLine($"${RequestBodyVarName} = new {className}();");
                 payloadSB.AppendLine();
                 WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, true, RequestBodyVarName);
@@ -233,7 +237,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 if (x.Segment.IsCollectionIndex())
                     return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}";
                 if (x.Segment.IsFunction())
-                    return x.Segment.Split('.').Last().ToFirstCharacterLowerCase();
+                    return x.Segment.Split('.').Last().ToFirstCharacterLowerCase()+"()";
                 return x.Segment.ToFirstCharacterLowerCase()+"()";
             })
             .Aggregate((x, y) => {
