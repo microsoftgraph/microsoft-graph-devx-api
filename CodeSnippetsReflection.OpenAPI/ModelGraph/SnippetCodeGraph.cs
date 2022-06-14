@@ -22,6 +22,8 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static readonly CodeProperty EMPTY_PROPERTY = new() { Name = null, Value = null, Children = null, PropertyType = PropertyType.Default };
 
+        public SnippetCodeGraph(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiUrlTreeNode treeNode) : this(new SnippetModel(requestPayload, serviceRootUrl, treeNode)) {}
+
         public SnippetCodeGraph(SnippetModel snippetModel)
         {
             ResponseSchema = snippetModel.ResponseSchema;

@@ -72,7 +72,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task SkipParametersAreIntegers()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$skip=10");
-            var result = new SnippetCodeGraph(new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            var result = new SnippetCodeGraph(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 
             Assert.True(result.HasParameters());
             var param = result.Parameters.First();
@@ -84,7 +84,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task CountParameterIsBoolean()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$select=displayName,id");
-            var result = new SnippetCodeGraph(new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            var result = new SnippetCodeGraph(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 
             Assert.True(result.HasParameters());
             var paramCount = result.Parameters.Count();
@@ -101,7 +101,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task ArrayParametersSplitOnExternalCommas()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=id,displayName),teams($select=id,displayName)");
-            var result = new SnippetCodeGraph(new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            var result = new SnippetCodeGraph(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 
             Assert.True(result.HasParameters());
             Assert.Single(result.Parameters);
@@ -128,7 +128,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetCodeGraph = new SnippetCodeGraph(new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            var snippetCodeGraph = new SnippetCodeGraph(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 
             var property = FindPropertyInSnippet(snippetCodeGraph.Body, "keyId").Value;
 
@@ -145,7 +145,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetCodeGraph = new SnippetCodeGraph(new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            var snippetCodeGraph = new SnippetCodeGraph(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 
             var property = FindPropertyInSnippet(snippetCodeGraph.Body, "maxCandidates").Value;
 
@@ -162,7 +162,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetCodeGraph = new SnippetCodeGraph(new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            var snippetCodeGraph = new SnippetCodeGraph(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 
             var property = FindPropertyInSnippet(snippetCodeGraph.Body, "chainId").Value;
 
@@ -179,7 +179,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetCodeGraph = new SnippetCodeGraph(new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            var snippetCodeGraph = new SnippetCodeGraph(requestPayload, ServiceRootUrl, await GetV1TreeNode());
 
             var property = FindPropertyInSnippet(snippetCodeGraph.Body, "minimumAttendeePercentage").Value;
 
