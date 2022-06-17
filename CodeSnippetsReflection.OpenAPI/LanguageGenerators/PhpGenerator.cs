@@ -27,36 +27,34 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         // have a return type if we have a response schema that is not an error
         if (snippetModel.ResponseSchema == null || (snippetModel.ResponseSchema.Properties.Count == 1 && snippetModel.ResponseSchema.Properties.First().Key.Equals("error",StringComparison.OrdinalIgnoreCase)))
             responseAssignment = string.Empty;
-
-        var (queryParamsPayload, queryParamsVarName) = GetRequestQueryParameters(snippetModel, indentManager);
-        if(!string.IsNullOrEmpty(queryParamsPayload))
-            snippetBuilder.Append(queryParamsPayload);
-        var (requestHeadersPayload, requestHeadersVarName) = GetRequestHeaders(snippetModel, indentManager);
-        if(!string.IsNullOrEmpty(requestHeadersPayload))
-            snippetBuilder.Append(requestHeadersPayload);
-        var parametersList = GetActionParametersList(payloadVarName, queryParamsVarName, requestHeadersVarName);
+        var requestConfiguration = GetRequestConfiguration(snippetModel, indentManager);
+        if (!string.IsNullOrEmpty(requestConfiguration.Item1))
+            snippetBuilder.AppendLine(requestConfiguration.Item1);
+        var parametersList = GetActionParametersList(payloadVarName, requestConfiguration.Item2);
         var methodName = snippetModel.Method.ToString().ToLower();
         snippetBuilder.AppendLine($"{responseAssignment} {clientVarName}->{GetFluentApiPath(snippetModel.PathNodes)}->{methodName}({parametersList});");
         return snippetBuilder.ToString();
     }
 
     private const string requestParametersVarName = "options";
-    private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager) {
+    private const string queryParametersvarName = "queryParameters";
+    private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager, string requestConfigVarName) {
         var payloadSB = new StringBuilder();
-        if(!string.IsNullOrEmpty(model.QueryString)) {
-            payloadSB.AppendLine($"{indentManager.GetIndent()}${requestParametersVarName} = ($q) =>");
-            payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
+        if(!string.IsNullOrEmpty(model.QueryString))
+        {
+            var className = $"{model.PathNodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.Method.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
+            payloadSB.AppendLine($"${queryParametersvarName} = new {className}();");
             var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
             foreach(var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)) {
                 if(queryParam.Contains("=")) {
                     var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
-                    payloadSB.AppendLine($"$q->{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)};");
+                    payloadSB.AppendLine($"${queryParametersvarName}->{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)};");
                 } else
-                    payloadSB.AppendLine($"$q->{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = string.Empty;");
+                    payloadSB.AppendLine($"${queryParametersvarName}->{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = \"\";");
             }
             indentManager.Unindent();
-            payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
-            return (payloadSB.ToString(), requestParametersVarName);
+            payloadSB.AppendLine();
+            return (payloadSB.ToString(), queryParametersvarName);
         }
         return (default, default);
     }
@@ -75,6 +73,30 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return (queryParams, replacements);
     }
     
+    private const string requestHeadersPropertyName = "headers";
+    private const string requestConfigurationVarName = "requestConfiguration";
+    private static (string, string) GetRequestConfiguration(SnippetModel snippetModel, IndentManager indentManager)
+    {
+        var payloadSB = new StringBuilder();
+        var queryParamsPayload = GetRequestQueryParameters(snippetModel, indentManager, requestConfigurationVarName);
+        var requestHeadersPayload = GetRequestHeaders(snippetModel, indentManager);
+
+        if (!string.IsNullOrEmpty(queryParamsPayload.Item1) || !string.IsNullOrEmpty(requestHeadersPayload.Item1))
+        {
+            var className = $"{snippetModel.PathNodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{snippetModel.Method.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            payloadSB.AppendLine($"${requestConfigurationVarName} = new {className}();");
+            payloadSB.AppendLine();
+            payloadSB.Append(queryParamsPayload.Item1);
+            payloadSB.Append(requestHeadersPayload.Item1);
+            if (!string.IsNullOrEmpty(queryParamsPayload.Item1))
+                payloadSB.AppendLine($"${requestConfigurationVarName}->queryParameters = ${queryParamsPayload.Item2};");
+            if (!string.IsNullOrEmpty(requestHeadersPayload.Item1))
+                payloadSB.AppendLine($"${requestConfigurationVarName}->headers = ${requestHeadersPayload.Item2};");
+            payloadSB.AppendLine();
+        }
+        
+        return (payloadSB.Length > 0 ? (payloadSB.ToString(), requestConfigurationVarName) : (default, default));
+    }
     private static string GetQueryParameterValue(string originalValue, Dictionary<string, string> replacements) {
         if(originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
             return originalValue.ToLowerInvariant();
@@ -89,9 +111,10 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     }
     private static string GetActionParametersList(params string[] parameters) {
         var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
-        if(nonEmptyParameters.Any())
-            return string.Join(", ", nonEmptyParameters.Select(x => $"${x}").Aggregate((a, b) => $"{a}, {b}"));
-        else return string.Empty;
+        var emptyParameters = nonEmptyParameters.ToList();
+        if(emptyParameters.Any())
+            return string.Join(", ", emptyParameters.Select(x => $"${x}").Aggregate((a, b) => $"{a}, {b}"));
+        return string.Empty;
     }
     
     private const string requestHeadersVarName = "headers";
@@ -100,14 +123,14 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var filteredHeaders = snippetModel.RequestHeaders.Where(h => !h.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
         if(filteredHeaders.Any()) {
-            payloadSB.AppendLine($"{indentManager.GetIndent()}${requestHeadersVarName} = ($h) =>");
-            payloadSB.AppendLine($"{indentManager.GetIndent()}{{");
+            payloadSB.AppendLine($"{indentManager.GetIndent()}${requestHeadersVarName} = [");
             indentManager.Indent();
             filteredHeaders.ForEach(h =>
-                payloadSB.AppendLine($"{indentManager.GetIndent()}$h.Add(\"{h.Key}\", \"{h.Value.FirstOrDefault()}\");")
+                payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Key}\" => \"{h.Value.FirstOrDefault()}\",")
             );
             indentManager.Unindent();
-            payloadSB.AppendLine($"{indentManager.GetIndent()}}};");
+            payloadSB.AppendLine($"{indentManager.GetIndent()}];");
+            payloadSB.AppendLine();
             return (payloadSB.ToString(), requestHeadersVarName);
         }
         return (default, default);
@@ -161,52 +184,64 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         //indentManager.Indent();
 		var propertiesAndSchema = value.EnumerateObject()
 										.Select(x => new Tuple<JsonProperty, OpenApiSchema>(x, schema.GetPropertySchema(x.Name)));
-		foreach(var propertyAndSchema in propertiesAndSchema.Where(x => x.Item2 != null)) {
+        var andSchema = propertiesAndSchema.ToList();
+        int i = 0;
+        foreach(var propertyAndSchema in andSchema.Where(x => x.Item2 != null)) {
 			var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
-			var propertyAssignment = includePropertyAssignment ? $"${variableName.ToFirstCharacterLowerCase()}->set{indentManager.GetIndent()}{propertyName}(" : string.Empty;
-			WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment, string.Empty, propertyName);
+            var propertyAssignment = includePropertyAssignment ? $"${variableName.ToFirstCharacterLowerCase()}->set{indentManager.GetIndent()}{propertyName}(" : string.Empty;
+			WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment, ");", propertyName ?? $"{variableName}{++i}");
 		}
-		var propertiesWithoutSchema = propertiesAndSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
-		if(propertiesWithoutSchema.Any()) {
-			payloadSB.AppendLine($"{indentManager.GetIndent()}$additionalData = [");
-            payloadSB.AppendLine($"{indentManager.GetIndent()}[");
-			indentManager.Indent();
-			foreach(var property in propertiesWithoutSchema) {
-				var propertyAssignment = $"{indentManager.GetIndent()}[\"{property.Name}\", ";
-				WriteProperty(payloadSB, property.Value, null, indentManager, propertyAssignment , "]");
+		var propertiesWithoutSchema = andSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
+        var jsonProperties = propertiesWithoutSchema.ToList();
+        if(jsonProperties.Any())
+        {
+            var additionalDataVarName = $"${variableName.ToFirstCharacterLowerCase()}AdditionalData";
+			payloadSB.AppendLine($"{indentManager.GetIndent()}{additionalDataVarName} = [");
+            indentManager.Indent();
+            indentManager.Indent();
+			foreach(var property in jsonProperties) {
+				var propertyAssignment = $"{indentManager.GetIndent()}\"{property.Name}\" => ";
+				WriteProperty(payloadSB, property.Value, null, indentManager, propertyAssignment , ",");
 			}
 			indentManager.Unindent();
+			indentManager.Unindent();
 			payloadSB.AppendLine($"{indentManager.GetIndent()}]");
-		}
+            payloadSB.AppendLine($"${variableName.ToFirstCharacterLowerCase()}->setAdditionalData({additionalDataVarName})");
+        }
         
 		indentManager.Unindent();
     }
-	private static void WriteProperty(StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string propertyName = default) {
-		switch (value.ValueKind) {
+	private static void WriteProperty(StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string propertyName = default, Action<string> func = default)
+    {
+        func ??= delegate(string s)
+        {
+            payloadSB.AppendLine(s);
+        };
+        switch (value.ValueKind) {
 			case JsonValueKind.String:
 				if(propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
-					payloadSB.AppendLine($"{propertyAssignment}base64_decode(\"{value.GetString()}\"){propertySuffix});");
+					func?.Invoke($"{propertyAssignment}base64_decode(\"{value.GetString()}\"){propertySuffix});");
 				else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
-					payloadSB.AppendLine($"{propertyAssignment}new DateTime(\"{value.GetString()}\"){propertySuffix});");
+					func.Invoke($"{propertyAssignment}new DateTime(\"{value.GetString()}\"){propertySuffix}");
 				else
-					payloadSB.AppendLine($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix});");
+					func.Invoke($"{propertyAssignment}\"{value.GetString()}\"{propertySuffix}");
 				break;
 			case JsonValueKind.Number:
-				payloadSB.AppendLine($"{propertyAssignment}{propertySuffix});");
+				func.Invoke($"{propertyAssignment}{value.GetInt64()}{propertySuffix}");
 				break;
 			case JsonValueKind.False:
 			case JsonValueKind.True:
-				payloadSB.AppendLine($"{propertyAssignment}{value.GetBoolean().ToString().ToLowerInvariant()}{propertySuffix});");
+				func.Invoke($"{propertyAssignment}{value.GetBoolean()}{propertySuffix}");
 				break;
 			case JsonValueKind.Null:
-				payloadSB.AppendLine($"{propertyAssignment}null{propertySuffix});");
+				func.Invoke($"{propertyAssignment}null{propertySuffix}");
 				break;
 			case JsonValueKind.Object:
 				if(propSchema != null)
                 {
                     payloadSB.AppendLine();
-					payloadSB.AppendLine($"${propertyName?.ToFirstCharacterLowerCase()} = new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}();");
-                    payloadSB.AppendLine($"{propertyAssignment}${propertyName.ToFirstCharacterLowerCase()});");
+					func.Invoke($"${propertyName?.ToFirstCharacterLowerCase()} = new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}();");
+                    func.Invoke($"{propertyAssignment}${propertyName.ToFirstCharacterLowerCase()});");
                     WriteJsonObjectValue(payloadSB, value, propSchema, indentManager, true, propertyName);
                     payloadSB.AppendLine();
                 }
@@ -216,18 +251,17 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 			break;
 			default:
 				throw new NotImplementedException($"Unsupported JsonValueKind: {value.ValueKind}");
-		}
+        }
 	}
     private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment) 
     {
         var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? value.EnumerateArray().First().ValueKind.ToString();
-        payloadSB.AppendLine($"{propertyAssignment} []");
-        payloadSB.AppendLine($"{indentManager.GetIndent()}[");
+        payloadSB.AppendLine($"{propertyAssignment} [");
         indentManager.Indent();
         foreach(var item in value.EnumerateArray())
-            WriteProperty(payloadSB, item, schema, indentManager, indentManager.GetIndent());
+            WriteProperty(payloadSB, item, schema, indentManager, indentManager.GetIndent(), ",", null, s => payloadSB.Append(s.Trim()));
         indentManager.Unindent();
-        payloadSB.AppendLine($"{indentManager.GetIndent()}]");
+        payloadSB.AppendLine($"{indentManager.GetIndent()}],");
     }
     
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
@@ -235,7 +269,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if (!(nodes?.Any() ?? false)) return string.Empty;
         return nodes.Select(x => {
                 if (x.Segment.IsCollectionIndex())
-                    return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}";
+                    return $"ById{x.Segment.Replace("{", "(\"").Replace("}", "\")")}";
                 if (x.Segment.IsFunction())
                     return x.Segment.Split('.').Last().ToFirstCharacterLowerCase()+"()";
                 return x.Segment.ToFirstCharacterLowerCase()+"()";
