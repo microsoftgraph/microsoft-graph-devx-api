@@ -145,13 +145,13 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 		var payloadSB = new StringBuilder();
 		switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant()) {
 			case "application/json":
-				TryParseBody(snippetModel, payloadSB, indentManager);
+				TryParseBody(snippetModel, payloadSB, indentManager, RequestBodyVarName);
 			break;
 			case "application/octet-stream":
 				payloadSB.AppendLine($"{RequestBodyVarName} = new MemoryStream(); //stream to upload");
 			break;
 			default:
-                if(TryParseBody(snippetModel, payloadSB, indentManager)) //in case the content type header is missing but we still have a json payload
+                if(TryParseBody(snippetModel, payloadSB, indentManager, RequestBodyVarName)) //in case the content type header is missing but we still have a json payload
                     break;
                 else
 					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
@@ -159,20 +159,19 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 		var result = payloadSB.ToString();
 		return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
 	}
-    private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager) {
+    private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager, string varName = default) {
         if(snippetModel.IsRequestBodyValid)
             try {
                 using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
                 var schema = snippetModel.RequestSchema;
                 var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-                if (string.IsNullOrEmpty(className) &&
-                    schema != null &&
-                    schema.Properties.Any() &&
-                    schema.Properties.Count == 1)
-                    className = $"{schema.Properties.First().Key.ToFirstCharacterUpperCase()}RequestBody"; 
-                payloadSB.AppendLine($"${RequestBodyVarName} = new {className}();");
+                if (string.IsNullOrEmpty(className) && schema != null && schema.Properties.Count == 1)
+                    className = $"{schema.Properties.First().Key.ToFirstCharacterUpperCase()}RequestBody"; // edge case for odata actions with a single parameter
+                if (string.IsNullOrEmpty(className))
+                    className = $"{snippetModel.ResponseVariableName.ToFirstCharacterUpperCase()}RequestBody";
+                payloadSB.AppendLine($"${className.ToFirstCharacterLowerCase()} = new {className}();");
                 payloadSB.AppendLine();
-                WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, true, RequestBodyVarName);
+                WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, true, className.ToFirstCharacterLowerCase());
             } catch (Exception ex) when (ex is JsonException || ex is ArgumentException) {
                 // the payload wasn't json or poorly formatted
             }
@@ -201,7 +200,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             indentManager.Indent();
 			foreach(var property in jsonProperties) {
 				var propertyAssignment = $"{indentManager.GetIndent()}\"{property.Name}\" => ";
-				WriteProperty(payloadSB, property.Value, null, indentManager, propertyAssignment , ",");
+				WriteProperty(payloadSB, property.Value, null, indentManager, propertyAssignment , ",", variableName);
 			}
 			indentManager.Unindent();
 			indentManager.Unindent();
@@ -241,27 +240,48 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 {
                     payloadSB.AppendLine();
 					func.Invoke($"${propertyName?.ToFirstCharacterLowerCase()} = new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}();");
-                    func.Invoke($"{propertyAssignment}${propertyName.ToFirstCharacterLowerCase()});");
+                    //func.Invoke($"{propertyAssignment}${propertyName.ToFirstCharacterLowerCase()});");
                     WriteJsonObjectValue(payloadSB, value, propSchema, indentManager, true, propertyName);
                     payloadSB.AppendLine();
                 }
 				break;
 			case JsonValueKind.Array:
-				WriteJsonArrayValue(payloadSB, value, propSchema, indentManager, propertyAssignment);
+				WriteJsonArrayValue(payloadSB, value, propSchema, indentManager, propertyAssignment, propertyName);
 			break;
 			default:
 				throw new NotImplementedException($"Unsupported JsonValueKind: {value.ValueKind}");
         }
 	}
-    private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment) 
+    private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment, string propertyName = default) 
     {
         var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? value.EnumerateArray().First().ValueKind.ToString();
-        payloadSB.AppendLine($"{propertyAssignment} [");
+        var hasSchema = !string.IsNullOrEmpty(schema.GetSchemaTitle());
+        var arrayName = $"{propertyName.ToFirstCharacterLowerCase()}Array";
+        if (hasSchema)
+        {
+            payloadSB.AppendLine($"${arrayName} = [];");
+        }
+        else
+        {
+            payloadSB.AppendLine($"{propertyAssignment} [");
+        }
+
         indentManager.Indent();
-        foreach(var item in value.EnumerateArray())
-            WriteProperty(payloadSB, item, schema, indentManager, indentManager.GetIndent(), ",", null, s => payloadSB.Append(s.Trim()));
+        int i = 0;
+        foreach (var item in value.EnumerateArray())
+        {
+            var propName = $"{propertyName.ToFirstCharacterLowerCase()}";
+            WriteProperty(payloadSB, item, schema, indentManager, indentManager.GetIndent(), ",",
+                $"{propName}{++i}", s => payloadSB.Append(s.Trim()));
+            if (hasSchema) 
+                payloadSB.AppendLine($"${arrayName} []= ${propName}{i};");
+        }
+
         indentManager.Unindent();
-        payloadSB.AppendLine($"{indentManager.GetIndent()}],");
+        if (!hasSchema)
+            payloadSB.AppendLine($"{indentManager.GetIndent()}],");
+        else
+            payloadSB.AppendLine($"{propertyAssignment}${arrayName});");
     }
     
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
