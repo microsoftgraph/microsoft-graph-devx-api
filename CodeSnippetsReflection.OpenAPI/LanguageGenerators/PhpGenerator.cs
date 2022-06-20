@@ -169,7 +169,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     className = $"{schema.Properties.First().Key.ToFirstCharacterUpperCase()}RequestBody"; // edge case for odata actions with a single parameter
                 if (string.IsNullOrEmpty(className))
                     className = $"{snippetModel.ResponseVariableName.ToFirstCharacterUpperCase()}RequestBody";
-                payloadSB.AppendLine($"${className.ToFirstCharacterLowerCase()} = new {className}();");
+                payloadSB.AppendLine($"${RequestBodyVarName.ToFirstCharacterLowerCase()} = new {className}();");
                 payloadSB.AppendLine();
                 WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, true, RequestBodyVarName);
             } catch (Exception ex) when (ex is JsonException || ex is ArgumentException) {
@@ -205,7 +205,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 			indentManager.Unindent();
 			indentManager.Unindent();
 			payloadSB.AppendLine($"{indentManager.GetIndent()}];");
-            payloadSB.AppendLine($"${variableName.ToFirstCharacterLowerCase()}->setAdditionalData({additionalDataVarName})");
+            payloadSB.AppendLine($"${variableName.ToFirstCharacterLowerCase()}->setAdditionalData({additionalDataVarName});");
         }
         
 		indentManager.Unindent();
