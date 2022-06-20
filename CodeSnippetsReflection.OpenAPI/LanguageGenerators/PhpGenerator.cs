@@ -187,7 +187,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         int i = 0;
         foreach(var propertyAndSchema in andSchema.Where(x => x.Item2 != null)) {
 			var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
-            var propertyAssignment = includePropertyAssignment ? $"${variableName.ToFirstCharacterLowerCase()}->set{indentManager.GetIndent()}{propertyName}(" : string.Empty;
+            var propertyAssignment = includePropertyAssignment ? $"${variableName.ToFirstCharacterLowerCase()}->set{propertyName}(" : string.Empty;
 			WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment, ");", propertyName ?? $"{variableName}{++i}");
 		}
 		var propertiesWithoutSchema = andSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
@@ -195,7 +195,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if(jsonProperties.Any())
         {
             var additionalDataVarName = $"${variableName.ToFirstCharacterLowerCase()}AdditionalData";
-			payloadSB.AppendLine($"{indentManager.GetIndent()}{additionalDataVarName} = [");
+			payloadSB.AppendLine($"{additionalDataVarName} = [");
             indentManager.Indent();
             indentManager.Indent();
 			foreach(var property in jsonProperties) {
@@ -204,7 +204,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 			}
 			indentManager.Unindent();
 			indentManager.Unindent();
-			payloadSB.AppendLine($"{indentManager.GetIndent()}]");
+			payloadSB.AppendLine($"{indentManager.GetIndent()}];");
             payloadSB.AppendLine($"${variableName.ToFirstCharacterLowerCase()}->setAdditionalData({additionalDataVarName})");
         }
         

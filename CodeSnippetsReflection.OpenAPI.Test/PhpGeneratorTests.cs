@@ -120,7 +120,7 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(
-            "graphClient.Me().MessagesById(&messageId).GetWithRequestConfigurationAndResponseHandler(options, nil)",
+            "$graphClient->me()->messagesById(\"message-id\")->get($requestConfiguration)",
             result);
     }
 
@@ -173,5 +173,15 @@ public class PhpGeneratorTests
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("$body = new User(j);", result);
             Assert.Contains("$passwordProfile = new PasswordProfile();", result);
+    }
+    
+    [Fact]
+    public async Task GeneratesDeleteRequest()
+    {
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$graphClient->me()->messagesById(\"message-id\")->delete()", result);
     }
 }
