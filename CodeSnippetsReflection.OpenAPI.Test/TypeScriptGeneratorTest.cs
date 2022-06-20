@@ -67,7 +67,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 	            resourceId : ""a5c51e59-3fcd-4a37-87a1-835c0c21488a"",
             };
 
-            async () => {
+            const result = async () => {
 	            await graphServiceClient.identityGovernance.accessReviews.definitionsById(""accessReviewScheduleDefinition-id"").instancesById(""accessReviewInstance-id"").batchRecordDecisions.post(requestBody);
             }
             ";
@@ -442,7 +442,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             const configuration = {
 	            queryParameters : {
-		            select: ""displayName,id"",
+		            select: [""displayName"",""id""],
 	            }
             };
 
@@ -466,8 +466,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             const configuration = {
 	            queryParameters : {
-		            count: ""true"",
-		            select: ""displayName,id"",
+		            count: true,
+		            select: [""displayName"",""id""],
 	            }
             };
 
@@ -492,7 +492,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             const configuration = {
 	            queryParameters : {
-		            skip: ""10"",
+		            skip: 10,
 	            }
             };
 

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 {
-    public record struct CodeProperty(string Name, string Value, List<CodeProperty> Children, PropertyType PropertyType = PropertyType.String);
+    
+    public record struct CodeProperty(string Name, string Value, List<CodeProperty> Children, PropertyType PropertyType = PropertyType.String, string TypeDefinition = null);
 
 }
