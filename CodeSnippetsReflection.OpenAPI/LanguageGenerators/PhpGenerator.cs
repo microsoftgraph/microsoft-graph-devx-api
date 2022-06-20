@@ -136,22 +136,22 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return (default, default);
     }
     private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterLowerCase();
-	private const string RequestBodyVarName = "body";
+	private const string RequestBodyVarName = "requestRequestBody";
 	private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
 		if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
 			return (default, default);
 		if(indentManager == null) throw new ArgumentNullException(nameof(indentManager));
 
 		var payloadSB = new StringBuilder();
-		switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant()) {
+        switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant()) {
 			case "application/json":
-				TryParseBody(snippetModel, payloadSB, indentManager, RequestBodyVarName);
+				TryParseBody(snippetModel, payloadSB, indentManager);
 			break;
 			case "application/octet-stream":
 				payloadSB.AppendLine($"{RequestBodyVarName} = new MemoryStream(); //stream to upload");
 			break;
 			default:
-                if(TryParseBody(snippetModel, payloadSB, indentManager, RequestBodyVarName)) //in case the content type header is missing but we still have a json payload
+                if(TryParseBody(snippetModel, payloadSB, indentManager)) //in case the content type header is missing but we still have a json payload
                     break;
                 else
 					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
@@ -159,7 +159,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 		var result = payloadSB.ToString();
 		return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
 	}
-    private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager, string varName = default) {
+    private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager) {
         if(snippetModel.IsRequestBodyValid)
             try {
                 using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
@@ -171,7 +171,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     className = $"{snippetModel.ResponseVariableName.ToFirstCharacterUpperCase()}RequestBody";
                 payloadSB.AppendLine($"${className.ToFirstCharacterLowerCase()} = new {className}();");
                 payloadSB.AppendLine();
-                WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, true, className.ToFirstCharacterLowerCase());
+                WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, true, RequestBodyVarName);
             } catch (Exception ex) when (ex is JsonException || ex is ArgumentException) {
                 // the payload wasn't json or poorly formatted
             }
