@@ -83,8 +83,8 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$body = new User(j);", result);
-        Assert.Contains("$passwordProfile = new PasswordProfile();", result);
+        Assert.Contains("$queryParameters = new UsersRequestBuilderPostQueryParameters();", result);
+        Assert.Contains("$requestConfiguration->queryParameters = $queryParameters;", result);
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(
-            "$graphClient->me()->messagesById(\"message-id\")->get($requestConfiguration)",
+            "$graphClient->me()->messagesById('message-id')->get($requestConfiguration)",
             result);
     }
 
@@ -131,7 +131,7 @@ public class PhpGeneratorTests
             $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$queryParameters.->count = true;", result);
+        Assert.Contains("$queryParameters->count = true;", result);
         Assert.Contains("$queryParameters->filter", result);
         Assert.Contains("$queryParameters->select", result);
         Assert.Contains("$queryParameters->orderBy", result);
@@ -171,8 +171,8 @@ public class PhpGeneratorTests
                 };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("$body = new User(j);", result);
-            Assert.Contains("$passwordProfile = new PasswordProfile();", result);
+            Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
+            Assert.Contains("$ccRecipientsArray []= $ccRecipients1;", result);
     }
     
     [Fact]
