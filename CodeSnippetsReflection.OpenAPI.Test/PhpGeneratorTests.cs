@@ -182,6 +182,6 @@ public class PhpGeneratorTests
             new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphClient->me()->messagesById(\"message-id\")->delete()", result);
+        Assert.Contains("$graphClient->me()->messagesById('message-id')->delete()", result);
     }
 }

@@ -249,10 +249,11 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 				throw new NotImplementedException($"Unsupported JsonValueKind: {value.ValueKind}");
         }
 	}
-    private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment, string propertyName = default) 
+    private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment, string propertyName = default)
     {
-        var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? value.EnumerateArray().First().ValueKind.ToString();
-        var hasSchema = !string.IsNullOrEmpty(schema.GetSchemaTitle());
+        var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
+        var hasSchema = !string.IsNullOrEmpty(genericType);
+        genericType ??= value.EnumerateArray().First().ValueKind.ToString();
         var arrayName = $"{propertyName.ToFirstCharacterLowerCase()}Array";
         if (hasSchema) 
             payloadSB.AppendLine($"${arrayName} = [];");
