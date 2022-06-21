@@ -106,7 +106,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var valueWithNested = originalValue.Split(',')
                 .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
                 .Aggregate((a, b) => $"{a},{b}");
-        return $"'{valueWithNested.Replace("'", "\'")}'";
+        return $"'{valueWithNested.Replace("'", "\\'")}'";
     }
     private static string GetActionParametersList(params string[] parameters) {
         var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
@@ -125,7 +125,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             payloadSB.AppendLine($"{indentManager.GetIndent()}${requestHeadersVarName} = [");
             indentManager.Indent();
             filteredHeaders.ForEach(h =>
-                payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Key}\" => \"{h.Value.FirstOrDefault()}\",")
+                payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Key}\" => \"{h.Value.FirstOrDefault().EscapeQuotes()}\",")
             );
             indentManager.Unindent();
             payloadSB.AppendLine($"{indentManager.GetIndent()}];");
@@ -183,6 +183,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 										.Select(x => new Tuple<JsonProperty, OpenApiSchema>(x, schema.GetPropertySchema(x.Name)));
         var andSchema = propertiesAndSchema.ToList();
         int i = 0;
+        payloadSB.AppendLine();
         foreach(var propertyAndSchema in andSchema.Where(x => x.Item2 != null)) {
 			var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
             var propertyAssignment = includePropertyAssignment ? $"${variableName.ToFirstCharacterLowerCase()}->set{propertyName}(" : string.Empty;
@@ -219,7 +220,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 				else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
 					func.Invoke($"{propertyAssignment}new DateTime(\"{value.GetString()}\"){propertySuffix}");
 				else
-					func.Invoke($"{propertyAssignment}'{value.GetString().Replace("'", "\'")}'{propertySuffix}");
+					func.Invoke($"{propertyAssignment}'{value.GetString()?.Replace("'", "\\'")}'{propertySuffix}");
 				break;
 			case JsonValueKind.Number:
 				func.Invoke($"{propertyAssignment}{value.GetInt64()}{propertySuffix}");
@@ -238,6 +239,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 					func.Invoke($"${propertyName?.ToFirstCharacterLowerCase()} = new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}();");
                     if (!fromCollection) 
                         payloadSB.AppendLine($"{propertyAssignment}${propertyName.ToFirstCharacterLowerCase()});");
+                    payloadSB.AppendLine();
                     WriteJsonObjectValue(payloadSB, value, propSchema, indentManager, true, propertyName);
                     payloadSB.AppendLine();
                 }

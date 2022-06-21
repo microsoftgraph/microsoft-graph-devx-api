@@ -160,7 +160,7 @@ public class PhpGeneratorTests
             "\"toRecipients\": [\r\n      {\r\n        " +
             "\"emailAddress\": {\r\n         " +
             " \"address\": \"fannyd@contoso.onmicrosoft.com\"\r\n        }\r\n      },\r\n        {\r\n        " +
-            "\"emailAddress\": {\r\n                      \"address\": \"jose@contoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ],\r\n   " +
+            "\"emailAddress\": {\r\n                      \"address\": \"jose@con'stoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ],\r\n   " +
             " \"ccRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          " +
             "\"address\": \"danas@contoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ]\r\n  },\r\n  \"saveToSentItems\": \"false\"\r\n}";
 
