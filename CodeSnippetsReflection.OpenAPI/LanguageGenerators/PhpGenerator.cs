@@ -210,7 +210,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         
 		indentManager.Unindent();
     }
-	private static void WriteProperty(StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string propertyName = default, Action<string> func = default)
+	private static void WriteProperty(StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string propertyName = default, Action<string> func = default, bool fromCollection = false)
     {
         func ??= delegate(string s)
         {
@@ -240,7 +240,9 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 {
                     payloadSB.AppendLine();
 					func.Invoke($"${propertyName?.ToFirstCharacterLowerCase()} = new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}();");
-                    //func.Invoke($"{propertyAssignment}${propertyName.ToFirstCharacterLowerCase()});");
+                    //TODO: Find the best way to handle this case.
+                    if (!fromCollection) 
+                        func.Invoke($"{propertyAssignment}${propertyName.ToFirstCharacterLowerCase()});");
                     WriteJsonObjectValue(payloadSB, value, propSchema, indentManager, true, propertyName);
                     payloadSB.AppendLine();
                 }
@@ -272,7 +274,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         {
             var propName = $"{propertyName.ToFirstCharacterLowerCase()}";
             WriteProperty(payloadSB, item, schema, indentManager, indentManager.GetIndent(), ",",
-                $"{propName}{++i}", s => payloadSB.Append(s.Trim()));
+                $"{propName}{++i}", s => payloadSB.Append(s.Trim()), true);
             if (hasSchema) 
                 payloadSB.AppendLine($"${arrayName} []= ${propName}{i};");
         }
