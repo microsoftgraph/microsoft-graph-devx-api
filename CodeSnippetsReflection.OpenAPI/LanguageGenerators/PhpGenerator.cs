@@ -253,7 +253,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
         var hasSchema = !string.IsNullOrEmpty(genericType);
-        genericType ??= value.EnumerateArray().First().ValueKind.ToString();
         var arrayName = $"{propertyName.ToFirstCharacterLowerCase()}Array";
         if (hasSchema) 
             payloadSB.AppendLine($"${arrayName} = [];");
