@@ -27,6 +27,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         // have a return type if we have a response schema that is not an error
         if (snippetModel.ResponseSchema == null || (snippetModel.ResponseSchema.Properties.Count == 1 && snippetModel.ResponseSchema.Properties.First().Key.Equals("error",StringComparison.OrdinalIgnoreCase)))
             responseAssignment = string.Empty;
+        if (string.IsNullOrEmpty(responseAssignment) && !string.IsNullOrEmpty(snippetModel.ResponseVariableName)) 
+            responseAssignment = "$result = ";
         var requestConfiguration = GetRequestConfiguration(snippetModel, indentManager);
         if (!string.IsNullOrEmpty(requestConfiguration.Item1))
             snippetBuilder.AppendLine(requestConfiguration.Item1);
@@ -167,7 +169,13 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 if (string.IsNullOrEmpty(className) && schema != null && schema.Properties.Count == 1)
                     className = $"{schema.Properties.First().Key.ToFirstCharacterUpperCase()}RequestBody"; // edge case for odata actions with a single parameter
                 if (string.IsNullOrEmpty(className))
-                    className = $"{snippetModel.ResponseVariableName.ToFirstCharacterUpperCase()}RequestBody";
+                {
+                    var responseVariable = snippetModel.ResponseVariableName;
+                    className = responseVariable.StartsWith("$")
+                        ? responseVariable.Trim('$').ToFirstCharacterUpperCase()
+                        : $"{responseVariable.ToFirstCharacterUpperCase()}{snippetModel.Method.Method.ToLower().ToFirstCharacterUpperCase()}RequestBody";
+                }
+
                 payloadSB.AppendLine($"${RequestBodyVarName.ToFirstCharacterLowerCase()} = new {className}();");
                 payloadSB.AppendLine();
                 WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, true, RequestBodyVarName);
@@ -219,9 +227,17 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 					func.Invoke($"{propertyAssignment}base64_decode(\"{value.GetString()}\"){propertySuffix});");
 				else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
 					func.Invoke($"{propertyAssignment}new DateTime(\"{value.GetString()}\"){propertySuffix}");
-				else
-					func.Invoke($"{propertyAssignment}'{value.GetString()?.Replace("'", "\\'")}'{propertySuffix}");
-				break;
+                else
+                {
+                    var val = value.GetString();
+                    // Hack to get enum value, will be doing more testing to make sure this is fool-proof.
+                    if (propSchema != null && propSchema.AnyOf.Count == 1 && propSchema.AnyOf.First().Enum.Count > 0) 
+                        val = $"new {propSchema.AnyOf.First().Title.ToFirstCharacterUpperCase()}('{val}')";
+                    else val = $"'{val?.Replace("'", "\\'")}'";
+                        func.Invoke($"{propertyAssignment}{val}{propertySuffix}");
+                }
+
+                break;
 			case JsonValueKind.Number:
 				func.Invoke($"{propertyAssignment}{value.GetInt64()}{propertySuffix}");
 				break;
@@ -293,7 +309,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 var dot = y.StartsWith("ById") ?
                     string.Empty :
                     "->";
-                return $"{x}{dot}{y}";
+                return $"{x.Trim('$')}{dot}{y.Trim('$')}";
             }).Replace("()ById(", "ById(");
     }
 }

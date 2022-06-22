@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -183,5 +184,45 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$graphClient->me()->messagesById('message-id')->delete()", result);
+    }
+    
+    [Fact]
+    public async Task GenerateForRequestBodyCornerCase()
+    {
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/messages/{{id}}/createReply")
+            {
+                Content = new StringContent("{\"field\":\"Nothinkg to be done\"}", Encoding.UTF8, "application/json")
+            };
+       var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+       var result = _generator.GenerateCodeSnippet(snippetModel);
+       Assert.Contains("$requestRequestBody = new CreateReplyPostRequestBody();", result);
+    }
+
+    [Fact]
+    public async Task GenerateForRefRequests()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
+            $"{ServiceRootBetaUrl}/applications/{{application-id}}/tokenIssuancePolicies/$ref");
+
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        Assert.Contains("->ref()", result);
+    }
+
+    [Fact]
+    public async Task GenerateForPostBodyWithEnums()
+    {
+        var body = "{\"state\": \"active\", \"serviceIdentifier\":\"id\", \"catalogId\":\"id\"}";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootBetaUrl}/users/{{user%2Did}}/usageRights")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestRequestBody->setState(new UsageRightState('active'));", result);
     }
 }
