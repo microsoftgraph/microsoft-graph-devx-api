@@ -195,7 +195,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         foreach(var propertyAndSchema in andSchema.Where(x => x.Item2 != null)) {
 			var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
             var propertyAssignment = includePropertyAssignment ? $"${variableName.ToFirstCharacterLowerCase()}->set{propertyName}(" : string.Empty;
-			WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment, ");", propertyName ?? $"{variableName}{++i}");
+			WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment, ");", propertyName ?? $"{variableName}{++i}", null, false, true);
 		}
 		var propertiesWithoutSchema = andSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
         var jsonProperties = propertiesWithoutSchema.ToList();
@@ -215,7 +215,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         
 		indentManager.Unindent();
     }
-	private static void WriteProperty(StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string propertyName = default, Action<string> func = default, bool fromCollection = false)
+	private static void WriteProperty(StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string propertyName = default, Action<string> func = default, bool fromCollection = false, bool fromObject = false)
     {
         func ??= delegate(string s)
         {
@@ -227,6 +227,10 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 					func.Invoke($"{propertyAssignment}base64_decode(\"{value.GetString()}\"){propertySuffix});");
 				else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
 					func.Invoke($"{propertyAssignment}new DateTime(\"{value.GetString()}\"){propertySuffix}");
+                else if (propSchema?.Format?.Equals("date", StringComparison.OrdinalIgnoreCase) ?? false)
+                    func.Invoke($"{propertyAssignment}new Date(\"{value.GetString()}\"){propertySuffix}");
+                else if (propSchema?.Format?.Equals("time", StringComparison.OrdinalIgnoreCase) ?? false)
+                    func.Invoke($"{propertyAssignment}new Time(\"{value.GetString()}\"){propertySuffix}");
                 else
                 {
                     var val = value.GetString();
@@ -261,13 +265,13 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 }
 				break;
 			case JsonValueKind.Array:
-				WriteJsonArrayValue(payloadSB, value, propSchema, indentManager, propertyAssignment, propertyName);
+				WriteJsonArrayValue(payloadSB, value, propSchema, indentManager, propertyAssignment, propertyName, fromObject);
 			break;
 			default:
 				throw new NotImplementedException($"Unsupported JsonValueKind: {value.ValueKind}");
         }
 	}
-    private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment, string propertyName = default)
+    private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment, string propertyName = default, bool fromObject = false)
     {
         var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
         var hasSchema = !string.IsNullOrEmpty(genericType);
@@ -275,21 +279,22 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if (hasSchema) 
             payloadSB.AppendLine($"${arrayName} = [];");
         else 
-            payloadSB.AppendLine($"{propertyAssignment} ["); 
-        indentManager.Indent();
+            payloadSB.Append($"{propertyAssignment}[");
         int i = 0;
         foreach (var item in value.EnumerateArray())
         {
             var propName = $"{propertyName.ToFirstCharacterLowerCase()}";
             WriteProperty(payloadSB, item, schema, indentManager, indentManager.GetIndent(), ",",
-                $"{propName}{++i}", s => payloadSB.Append(s.Trim()), true);
+                $"{propertyName.ToFirstCharacterLowerCase()}{propName}{++i}", s => payloadSB.Append(s.Trim()), true);
             if (hasSchema) 
-                payloadSB.AppendLine($"${arrayName} []= ${propName}{i};");
+                payloadSB.AppendLine($"${arrayName} []= ${propertyName.ToFirstCharacterLowerCase()}{propName}{i};");
         }
 
         indentManager.Unindent();
         if (!hasSchema)
-            payloadSB.AppendLine($"{indentManager.GetIndent()}],");
+        {
+            payloadSB.AppendLine($"{indentManager.GetIndent()}{(fromObject ? "]);" : "],")}");
+        }
         else
             payloadSB.AppendLine($"{propertyAssignment}${arrayName});");
     }

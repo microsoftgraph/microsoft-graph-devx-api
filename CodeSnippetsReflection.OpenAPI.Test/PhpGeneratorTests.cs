@@ -163,7 +163,8 @@ public class PhpGeneratorTests
             " \"address\": \"fannyd@contoso.onmicrosoft.com\"\r\n        }\r\n      },\r\n        {\r\n        " +
             "\"emailAddress\": {\r\n                      \"address\": \"jose@con'stoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ],\r\n   " +
             " \"ccRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          " +
-            "\"address\": \"danas@contoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ]\r\n  },\r\n  \"saveToSentItems\": \"false\"\r\n}";
+            "\"address\": \"danas@contoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ]\r\n," +
+            "\"categories\": [\"one\", \"category\", \"away\"]  },\r\n  \"saveToSentItems\": \"false\"\r\n}";
 
             using var requestPayload =
                 new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/sendMail")
@@ -173,7 +174,7 @@ public class PhpGeneratorTests
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
-            Assert.Contains("$ccRecipientsArray []= $ccRecipients1;", result);
+            Assert.Contains("$ccRecipientsArray []= $ccRecipientsccRecipients1;", result);
     }
     
     [Fact]
@@ -224,5 +225,16 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$requestRequestBody->setState(new UsageRightState('active'));", result);
+    }
+
+    [Fact]
+    public async Task GenerateForComplexCornerCase()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/identityGovernance/appConsent/appConsentRequests/{{id}}/userConsentRequests/filterByCurrentUser(on='reviewer')");
+
+        var betaTreeNode = await GetBetaTreeNode();
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, betaTreeNode);
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("appConsent", result);
     }
 }
