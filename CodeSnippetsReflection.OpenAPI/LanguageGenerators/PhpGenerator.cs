@@ -25,7 +25,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         snippetBuilder.Append(requestPayload);
         var responseAssignment = "$result = ";
         // have a return type if we have a response schema that is not an error
-        if (snippetModel.ResponseSchema == null || (snippetModel.ResponseSchema.Properties.Any() && snippetModel.ResponseSchema.Properties.First(x => x.Key.Equals("error",StringComparison.OrdinalIgnoreCase)))
+        if (snippetModel.ResponseSchema == null || (snippetModel.ResponseSchema.Properties.Any() && snippetModel.ResponseSchema.Properties.TryGetValue("error", out var error) && error == null))
             responseAssignment = string.Empty;
         if (string.IsNullOrEmpty(responseAssignment) && !string.IsNullOrEmpty(snippetModel.ResponseVariableName)) 
             responseAssignment = "$result = ";
