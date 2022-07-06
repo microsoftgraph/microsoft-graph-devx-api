@@ -138,7 +138,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private static void WriteObjectProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default)
     {
         var childPosition = 0;
-        payloadSb.AppendLine($"${childPropertyName ?? propertyAssignment} = new {codeProperty.TypeDefinition.ToFirstCharacterUpperCase()}();");
+        payloadSb.AppendLine($"${(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = new {codeProperty.TypeDefinition.ToFirstCharacterUpperCase()}();");
         foreach(CodeProperty child in codeProperty.Children)
         {
             var newChildName = (childPropertyName ?? "") + child.Name.ToFirstCharacterUpperCase();
@@ -180,16 +180,16 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 //WriteNullProperty(propertyAssignment, parent, payloadSb, indentManager, child);
                 break;
             case PropertyType.Object: 
-                WriteObjectProperty(propertyAssignment, payloadSb, child, indentManager, childPropertyName);
+                WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), payloadSb, child, indentManager, childPropertyName);
                 if (!fromArray)
                     payloadSb.AppendLine(
-                        $"${propertyAssignment}->set{child.Name.ToFirstCharacterUpperCase()}(${childPropertyName ?? propertyName});");
+                        $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{child.Name.ToFirstCharacterUpperCase()}(${(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()});");
                 break;
 			case PropertyType.Array:
-				WriteArrayProperty(propertyAssignment, child.Name, payloadSb, parent, child, indentManager); 
+				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, payloadSb, parent, child, indentManager); 
                 break;
             case PropertyType.Enum:
-                WriteEnumValue(payloadSb, propertyAssignment, parent, child);
+                WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child);
                 break;
             case PropertyType.Base64Url:
                 WriteBase64Url(payloadSb);
@@ -244,7 +244,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if (fromObject)
         {
             payloadSb.AppendLine(
-                $"${propertyAssignment}->set{NormalizeQueryParameterName(codeProperty.Name)?.ToFirstCharacterUpperCase()}('{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}');");
+                $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{NormalizeQueryParameterName(codeProperty.Name)?.ToFirstCharacterUpperCase()}('{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}');");
         }
     }
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
