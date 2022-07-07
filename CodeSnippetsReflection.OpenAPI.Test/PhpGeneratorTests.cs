@@ -173,7 +173,7 @@ public class PhpGeneratorTests
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
-            Assert.Contains("$ccRecipientsArray [s]= $ccRecipientsRecipient1;", result);
+            Assert.Contains("$ccRecipientsArray []= $ccRecipientsRecipient1;", result);
     }
     
     [Fact]

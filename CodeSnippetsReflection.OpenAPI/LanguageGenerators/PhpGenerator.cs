@@ -2,13 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Extensions;
-using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
