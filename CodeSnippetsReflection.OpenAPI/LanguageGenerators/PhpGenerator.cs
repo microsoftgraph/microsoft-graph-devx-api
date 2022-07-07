@@ -45,7 +45,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         payloadSb.AppendLine($"{returnVar}{clientVarName}->{GetFluentApiPath(codeGraph.Nodes)}->{method}({parameterList});");
     }
     private const string QueryParametersVarName = "queryParameters";
-    private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager, string requestConfigVarName) 
+    private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
     {
         var payloadSb = new StringBuilder();
         if (!model.HasParameters()) return default;
@@ -76,7 +76,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
     {
         var payloadSb = new StringBuilder();
-        var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager, RequestConfigurationVarName);
+        var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager);
         var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
 
         if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload.Item1))
@@ -114,13 +114,13 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return string.Empty;
     }
     
-    private const string requestHeadersVarName = "headers";
+    private const string RequestHeadersVarName = "headers";
     private static (string, string) GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager) {
         var payloadSB = new StringBuilder();
         var filteredHeaders = snippetModel.Headers?.Where(h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
         if(filteredHeaders != null && filteredHeaders.Any()) {
-            payloadSB.AppendLine($"{indentManager.GetIndent()}${requestHeadersVarName} = [");
+            payloadSB.AppendLine($"{indentManager.GetIndent()}${RequestHeadersVarName} = [");
             indentManager.Indent();
             filteredHeaders.ForEach(h =>
                 payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Name}\" => \"{h.Value.EscapeQuotes()}\",")
@@ -128,7 +128,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             indentManager.Unindent();
             payloadSB.AppendLine($"{indentManager.GetIndent()}];");
             payloadSB.AppendLine();
-            return (payloadSB.ToString(), requestHeadersVarName);
+            return (payloadSB.ToString(), RequestHeadersVarName);
         }
         return (default, default);
     }
@@ -149,12 +149,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     }
     private static void WriteCodeProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty parent, CodeProperty child, IndentManager indentManager, int childPosition = 0, string childPropertyName = default)
     {
-        Action<string> func;
-        var propertySuffix = string.Empty;
-        func = delegate(string s)
-        {
-            payloadSb.AppendLine(s);
-        };
         var isArray = parent.PropertyType == PropertyType.Array;
         var isMap = parent.PropertyType == PropertyType.Map;
         var fromArray = parent.PropertyType == PropertyType.Array;
@@ -187,7 +181,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 }
                 break;
 			case PropertyType.Null:
-                //WriteNullProperty(propertyAssignment, parent, payloadSb, indentManager, child);
+                WriteNullProperty(propertyAssignment, parent, payloadSb, indentManager, child);
                 break;
             case PropertyType.Object: 
                 WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), payloadSb, child, indentManager, childPropertyName);
@@ -199,7 +193,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, payloadSb, parent, child, indentManager); 
                 break;
             case PropertyType.Enum:
-                WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child);
+                WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), child);
                 break;
             case PropertyType.Base64Url:
                 WriteBase64Url(payloadSb);
@@ -211,6 +205,11 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 				throw new NotImplementedException($"Unsupported PropertyType: {child.PropertyType.GetDisplayName()}");
         }
 	}
+
+    private static void WriteNullProperty(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty child)
+    {
+        throw new NotImplementedException();
+    }
 
     private static void WriteMapValue(StringBuilder payloadSb, string propertyAssignment, CodeProperty parent, CodeProperty currentProperty, IndentManager indentManager)
     {
@@ -273,7 +272,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         indentManager.Unindent();
     }
 
-    private static void WriteEnumValue(StringBuilder payloadSb,string parentPropertyName, CodeProperty parent, CodeProperty currentProperty)
+    private static void WriteEnumValue(StringBuilder payloadSb,string parentPropertyName, CodeProperty currentProperty)
     {
         var enumParts = currentProperty.Value.Split('.');
         var enumClass = enumParts.First();
@@ -284,7 +283,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
     private static void WriteBase64Url(StringBuilder payloadSb)
     {
-        
+        throw new NotImplementedException();
     }
 
     private static void WriteStringProperty(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty codeProperty)
