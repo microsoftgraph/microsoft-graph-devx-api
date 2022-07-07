@@ -173,7 +173,7 @@ public class PhpGeneratorTests
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
-            Assert.Contains("$ccRecipientsArray []= $ccRecipientsRecipient1;", result);
+            Assert.Contains("$ccRecipientsArray [s]= $ccRecipientsRecipient1;", result);
     }
     
     [Fact]
@@ -196,7 +196,7 @@ public class PhpGeneratorTests
             };
        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
        var result = _generator.GenerateCodeSnippet(snippetModel);
-       Assert.Contains("$requestRequestBody = new CreateReplyPostRequestBody();", result);
+       Assert.Contains("$requestBody = new CreateReplyPostRequestBody();", result);
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public class PhpGeneratorTests
 
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("->ref(s)", result);
+        Assert.Contains("->ref()", result);
     }
 
     [Fact]
@@ -234,6 +234,21 @@ public class PhpGeneratorTests
         var betaTreeNode = await GetBetaTreeNode();
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, betaTreeNode);
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("appConsents", result);
+        Assert.Contains("appConsent", result);
+    }
+
+    [Fact]
+    public async Task GenerateComplexBodyName()
+    {
+        var url = "/devices/{id}/registeredUsers/$ref";
+        
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent("{\"field\":\"Nothing to be done\"}", Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestBody->setAdditionalData($additionalData);", result);
     }
 }

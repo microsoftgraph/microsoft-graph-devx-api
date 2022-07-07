@@ -159,8 +159,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         {
             payloadSb.AppendLine(s);
         };
-        var isArray = child.PropertyType == PropertyType.Array;
-        var isMap = child.PropertyType == PropertyType.Map;
+        var isArray = parent.PropertyType == PropertyType.Array;
+        var isMap = parent.PropertyType == PropertyType.Map;
         var fromArray = parent.PropertyType == PropertyType.Array;
 
         var propertyName = NormalizeQueryParameterName(child.Name.ToFirstCharacterLowerCase());
@@ -174,11 +174,22 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             case PropertyType.Double:
             case PropertyType.Float32:
             case PropertyType.Float64:
-                payloadSb.AppendLine($"{indentManager.GetIndent()}${propertyAssignment.ToFirstCharacterLowerCase()}->set{propertyName.ToFirstCharacterUpperCase()}({objectName});");
-				break;
+                if (!isMap && !isArray)
+                    payloadSb.AppendLine(
+                        $"{indentManager.GetIndent()}${propertyAssignment.ToFirstCharacterLowerCase()}->set{propertyName.ToFirstCharacterUpperCase()}({objectName});");
+                else
+                    payloadSb.Append($"{child.Value},");
+                break;
 			case PropertyType.Boolean:
-                payloadSb.AppendLine($"{indentManager.GetIndent()}${propertyAssignment.ToFirstCharacterLowerCase()}->set{propertyName.ToFirstCharacterUpperCase()}({child.Value.ToFirstCharacterLowerCase()});");
-				break;
+                if (!isMap && !isArray) {
+                    payloadSb.AppendLine(
+                        $"{indentManager.GetIndent()}${propertyAssignment.ToFirstCharacterLowerCase()}->set{propertyName.ToFirstCharacterUpperCase()}({child.Value.ToLower()});");
+                }
+                else
+                {
+                    payloadSb.Append($"{child.Value.ToLower()},");
+                }
+                break;
 			case PropertyType.Null:
                 //WriteNullProperty(propertyAssignment, parent, payloadSb, indentManager, child);
                 break;
@@ -198,29 +209,50 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 WriteBase64Url(payloadSb);
                 break;
             case PropertyType.Map:
+                WriteMapValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager);
                 break;
 			default:
 				throw new NotImplementedException($"Unsupported PropertyType: {child.PropertyType.GetDisplayName()}");
         }
 	}
+
+    private static void WriteMapValue(StringBuilder payloadSb, string propertyAssignment, CodeProperty parent, CodeProperty currentProperty, IndentManager indentManager)
+    {
+        payloadSb.AppendLine($"${currentProperty.Name} = [");
+        var childPosition = 0;
+        indentManager.Indent(2);
+        foreach (var child in currentProperty.Children)
+        {
+            payloadSb.Append($"\'{child.Name}\' => ");
+            WriteCodeProperty(propertyAssignment, payloadSb, currentProperty, child, indentManager, ++childPosition);
+            payloadSb.AppendLine();
+        }
+        indentManager.Unindent();
+        indentManager.Unindent();
+        payloadSb.AppendLine("];");
+        if (parent.PropertyType == PropertyType.Object)
+            payloadSb.AppendLine(
+                $"${propertyAssignment}->set{NormalizeVariableName(currentProperty.Name.ToFirstCharacterUpperCase())}(${NormalizeVariableName(currentProperty.Name).ToFirstCharacterLowerCase()});");
+        payloadSb.AppendLine();
+    }
     private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder payloadSb, CodeProperty parentProperty, CodeProperty codeProperty, IndentManager indentManager)
     {
-        var genericType = codeProperty.TypeDefinition.ToFirstCharacterUpperCase();
-        var hasSchema = parentProperty.PropertyType == PropertyType.Object;
+        var hasSchema = codeProperty.PropertyType == PropertyType.Object;
         var arrayName = $"{objectName.ToFirstCharacterLowerCase()}Array";
+        StringBuilder builder = new StringBuilder();
         if (hasSchema) 
-            payloadSb.AppendLine($"${arrayName} = [];");
-        else 
-            payloadSb.Append($"{propertyAssignment}[");
+            builder.AppendLine($"${arrayName} = [];");
+        else if (codeProperty.Children.Any() && codeProperty.Children.First().PropertyType != PropertyType.Object)
+             builder.Append('[');
         int childPosition = 0;
         CodeProperty lastProperty = default;
         foreach (var property in codeProperty.Children)
         {
-            var childPropertyName = $"{codeProperty.Name.ToFirstCharacterLowerCase()}{property.Name.ToFirstCharacterUpperCase()}{++childPosition}";
-            WriteCodeProperty(propertyAssignment, payloadSb, codeProperty, property, indentManager, childPosition, childPropertyName);
+            var childPropertyName = $"{NormalizeVariableName(codeProperty.Name.ToFirstCharacterLowerCase())}{property.Name.ToFirstCharacterUpperCase()}{++childPosition}";
+            WriteCodeProperty(propertyAssignment, builder, codeProperty, property, indentManager, childPosition, childPropertyName);
             if (property.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array)
             {
-                payloadSb.AppendLine($"${arrayName} []= ${childPropertyName};");
+                builder.AppendLine($"${arrayName} []= ${childPropertyName};");
             }
 
             lastProperty = property;
@@ -228,9 +260,20 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
         if (lastProperty.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array)
         {
-            payloadSb.AppendLine(
-                $"${propertyAssignment}->set{NormalizeQueryParameterName(codeProperty.Name).ToFirstCharacterUpperCase()}(${arrayName});");
+            builder.AppendLine(
+                $"${propertyAssignment}->set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}(${arrayName});");
+            payloadSb.AppendLine(builder.ToString());
         }
+        else
+        {
+            builder.Append(']');
+            if (parentProperty.PropertyType == PropertyType.Object)
+                payloadSb.AppendLine(
+                    $"${propertyAssignment}->set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}({builder.ToString()});");
+            else
+                payloadSb.Append($"{builder.ToString()},");
+        }
+
         indentManager.Unindent();
     }
 
@@ -240,7 +283,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var enumClass = enumParts.First();
         var enumValue = enumParts.Last().ToLower();
         payloadSb.AppendLine(
-            $"${parentPropertyName}->set{currentProperty.Name.ToFirstCharacterUpperCase()}(new {enumClass}('{enumValue}'));");
+            $"${parentPropertyName}->set{NormalizeVariableName(currentProperty.Name).ToFirstCharacterUpperCase()}(new {enumClass}('{enumValue}'));");
     }
 
     private static void WriteBase64Url(StringBuilder payloadSb)
@@ -255,9 +298,14 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if (fromObject)
         {
             payloadSb.AppendLine(
-                $"${indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}->set{NormalizeQueryParameterName(codeProperty.Name)?.ToFirstCharacterUpperCase()}('{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}');");
+                $"${indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}->set{NormalizeVariableName(codeProperty.Name)?.ToFirstCharacterUpperCase()}('{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}');");
         }
+        else
+            payloadSb.Append($"\'{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}\', ");
     }
+
+    private static string NormalizeVariableName(string variable) =>
+        variable.Replace(".", String.Empty).Replace("-", string.Empty);
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
     {
         var openApiUrlTreeNodes = nodes.ToList();

@@ -107,7 +107,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         {
 
             var ArrayParameters = ImmutableHashSet.Create("select", "expand", "orderby");
-            var NumberParameters = ImmutableHashSet.Create("skip");
+            var NumberParameters = ImmutableHashSet.Create("skip", "top");
 
             var parameters = new List<CodeProperty>();
             if (!string.IsNullOrEmpty(snippetModel.QueryString))
