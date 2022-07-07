@@ -99,7 +99,7 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("PasswordCredentialRequestBody", result);
+        Assert.Contains("PasswordCredentialPostRequestBody", result);
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public class PhpGeneratorTests
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
-            Assert.Contains("$ccRecipientsArray []= $ccRecipientsccRecipients1;", result);
+            Assert.Contains("$ccRecipientsArray []= $ccRecipientsRecipient1;", result);
     }
     
     [Fact]
@@ -209,7 +209,7 @@ public class PhpGeneratorTests
 
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("->ref()", result);
+        Assert.Contains("->ref(s)", result);
     }
 
     [Fact]
@@ -223,7 +223,7 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestRequestBody->setState(new UsageRightState('active'));", result);
+        Assert.Contains("$requestBody->setState(new UsageRightState('active'));", result);
     }
 
     [Fact]
@@ -234,6 +234,6 @@ public class PhpGeneratorTests
         var betaTreeNode = await GetBetaTreeNode();
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, betaTreeNode);
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("appConsent", result);
+        Assert.Contains("appConsents", result);
     }
 }
