@@ -28,8 +28,7 @@ variables:
   buildConfiguration: 'Release'
   apidoctorPath: 'microsoft-graph-devx-api/apidoctor'
   apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
-  snippetLanguages: 'C#,JavaScript,Java,Go,PowerShell,Php'
-  snippetLanguage: 'Php'
+  snippetLanguages: 'C#,JavaScript,Java,Go,PowerShell,PHP'
 
 steps:
 - checkout: self
@@ -45,7 +44,7 @@ steps:
 
 - pwsh: |
     # override build languag incase provided in pipeline
-    $buildLanguages = if ("$env:LANGUAGES") { "$(snippetLanguage)" } else { "$(snippetLanguages)" }
+    $buildLanguages = if ("$env:LANGUAGES") { "$env:LANGUAGES" } else { "$(snippetLanguages)" }
     $branchPrefix = if ("$env:LANGUAGES") { "preview-snippet-generation" } else { "snippet-generation" }
     Write-Host "##vso[task.setvariable variable=buildLanguages]$buildLanguages"
     Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
