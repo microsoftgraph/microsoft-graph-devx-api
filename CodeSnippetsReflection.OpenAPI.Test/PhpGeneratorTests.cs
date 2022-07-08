@@ -162,8 +162,8 @@ public class PhpGeneratorTests
             " \"address\": \"fannyd@contoso.onmicrosoft.com\"\r\n        }\r\n      },\r\n        {\r\n        " +
             "\"emailAddress\": {\r\n                      \"address\": \"jose@con'stoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ],\r\n   " +
             " \"ccRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          " +
-            "\"address\": \"danas@contoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ]\r\n," +
-            "\"categories\": [\"one\", \"category\", \"away\"]  },\r\n  \"saveToSentItems\": \"false\"\r\n}";
+            "\"address\": null\r\n        }\r\n      }\r\n    ]\r\n," +
+            "\"categories\": [\"one\", \"category\", \"away\", null]  },\r\n  \"saveToSentItems\": \"false\"\r\n}";
 
             using var requestPayload =
                 new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/sendMail")

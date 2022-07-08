@@ -184,19 +184,38 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), child);
                 break;
             case PropertyType.Base64Url:
-                WriteBase64Url(payloadSb);
+                WriteBase64Url(propertyAssignment, parent, payloadSb, indentManager, child);
                 break;
             case PropertyType.Map:
                 WriteMapValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager);
+                break;
+            case PropertyType.Date:
+                WriteDateTimeValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager);
                 break;
 			default:
 				throw new NotImplementedException($"Unsupported PropertyType: {child.PropertyType.GetDisplayName()}");
         }
 	}
 
+    private static void WriteDateTimeValue(StringBuilder payloadSb, string propertyAssignment, CodeProperty parent,
+        CodeProperty child, IndentManager indentManager)
+    {
+        var fromObject = parent.PropertyType == PropertyType.Object;
+        var assignmentValue = $"new DateTime(\'{child.Value}\')";
+        if (fromObject)
+            payloadSb.AppendLine(
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}({assignmentValue});");
+        else
+            payloadSb.Append($"{indentManager.GetIndent()}{assignmentValue},");
+    }
     private static void WriteNullProperty(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty child)
     {
-        throw new NotImplementedException();
+        var fromObject = parent.PropertyType == PropertyType.Object;
+        if (fromObject)
+            payloadSb.AppendLine(
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}(null);");
+        else
+            payloadSb.Append($"{indentManager.GetIndent()}null,");
     }
 
     private static void WriteMapValue(StringBuilder payloadSb, string propertyAssignment, CodeProperty parent, CodeProperty currentProperty, IndentManager indentManager)
@@ -269,9 +288,14 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             $"${parentPropertyName}->set{NormalizeVariableName(currentProperty.Name).ToFirstCharacterUpperCase()}(new {enumClass}('{enumValue}'));");
     }
 
-    private static void WriteBase64Url(StringBuilder payloadSb)
+    private static void WriteBase64Url(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty child)
     {
-        throw new NotImplementedException();
+        var fromObject = parent.PropertyType == PropertyType.Object;
+        if (fromObject)
+            payloadSb.AppendLine(
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}(base64_decode(\'{child.Value}\'));");
+        else
+            payloadSb.Append("null,");
     }
 
     private static void WriteStringProperty(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty codeProperty)
