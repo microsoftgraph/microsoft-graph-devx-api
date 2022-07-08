@@ -99,7 +99,7 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("PasswordCredentialRequestBody", result);
+        Assert.Contains("PasswordCredentialPostRequestBody", result);
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public class PhpGeneratorTests
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
-            Assert.Contains("$ccRecipientsArray []= $ccRecipientsccRecipients1;", result);
+            Assert.Contains("$ccRecipientsArray []= $ccRecipientsRecipient1;", result);
     }
     
     [Fact]
@@ -196,7 +196,7 @@ public class PhpGeneratorTests
             };
        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
        var result = _generator.GenerateCodeSnippet(snippetModel);
-       Assert.Contains("$requestRequestBody = new CreateReplyPostRequestBody();", result);
+       Assert.Contains("$requestBody = new CreateReplyPostRequestBody();", result);
     }
 
     [Fact]
@@ -223,7 +223,7 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestRequestBody->setState(new UsageRightState('active'));", result);
+        Assert.Contains("$requestBody->setState(new UsageRightState('active'));", result);
     }
 
     [Fact]
@@ -235,5 +235,20 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, betaTreeNode);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("appConsent", result);
+    }
+
+    [Fact]
+    public async Task GenerateComplexBodyName()
+    {
+        var url = "/devices/{id}/registeredUsers/$ref";
+        
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent("{\"field\":\"Nothing to be done\"}", Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestBody->setAdditionalData($additionalData);", result);
     }
 }

@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
+using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Services;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -18,86 +17,83 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
         var indentManager = new IndentManager();
-        var snippetBuilder = new StringBuilder(
+        var codeGraph = new SnippetCodeGraph(snippetModel);
+        var payloadSb = new StringBuilder(
             "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
             $"{clientVarName} = new {clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
-        var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
-        snippetBuilder.Append(requestPayload);
-        var responseAssignment = "$result = ";
-        // have a return type if we have a response schema that is not an error
-        if (snippetModel.ResponseSchema == null || (snippetModel.ResponseSchema.Properties.Any() && snippetModel.ResponseSchema.Properties.TryGetValue("error", out var error) && error == null))
-            responseAssignment = string.Empty;
-        if (string.IsNullOrEmpty(responseAssignment) && !string.IsNullOrEmpty(snippetModel.ResponseVariableName)) 
-            responseAssignment = "$result = ";
-        var requestConfiguration = GetRequestConfiguration(snippetModel, indentManager);
-        if (!string.IsNullOrEmpty(requestConfiguration.Item1))
-            snippetBuilder.AppendLine(requestConfiguration.Item1);
-        var parametersList = GetActionParametersList(payloadVarName, requestConfiguration.Item2);
-        var methodName = snippetModel.Method.ToString().ToLower();
-        snippetBuilder.AppendLine($"{responseAssignment} {clientVarName}->{GetFluentApiPath(snippetModel.PathNodes)}->{methodName}({parametersList});");
-        return snippetBuilder.ToString();
-    }
-    
-    private const string queryParametersvarName = "queryParameters";
-    private static (string, string) GetRequestQueryParameters(SnippetModel model, IndentManager indentManager, string requestConfigVarName) {
-        var payloadSB = new StringBuilder();
-        if(!string.IsNullOrEmpty(model.QueryString))
+        if (codeGraph.HasBody())
         {
-            var className = $"{model.PathNodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.Method.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
-            payloadSB.AppendLine($"${queryParametersvarName} = new {className}();");
-            var (queryString, replacements) = ReplaceNestedOdataQueryParameters(model.QueryString);
-            foreach(var queryParam in queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)) {
-                if(queryParam.Contains('=')) {
-                    var kvPair = queryParam.Split('=', StringSplitOptions.RemoveEmptyEntries);
-                    payloadSB.AppendLine($"${queryParametersvarName}->{indentManager.GetIndent()}{NormalizeQueryParameterName(kvPair[0])} = {GetQueryParameterValue(kvPair[1], replacements)};");
-                } else
-                    payloadSB.AppendLine($"${queryParametersvarName}->{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam)} = \"\";");
-            }
-            indentManager.Unindent();
-            payloadSB.AppendLine();
-            return (payloadSB.ToString(), queryParametersvarName);
+            WriteObjectProperty(RequestBodyVarName, payloadSb, codeGraph.Body, indentManager);
         }
-        return (default, default);
+        WriteRequestExecutionPath(codeGraph, payloadSb, indentManager);
+        return payloadSb.ToString();
     }
-    
-    private static Regex nestedStatementRegex = new(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase);
-    private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams) {
-        var replacements = new Dictionary<string, string>();
-        var matches = nestedStatementRegex.Matches(queryParams);
-        if (!matches.Any())
-            return (queryParams, replacements);
-        
-        foreach(Match match in matches) {
-            var key = match.Groups[1].Value;
-            var value = match.Groups[2].Value;
-            replacements.Add(key, value);
-            queryParams = queryParams.Replace(value, string.Empty);
-        }
-        return (queryParams, replacements);
-    }
-    
-    private const string requestConfigurationVarName = "requestConfiguration";
-    private static (string, string) GetRequestConfiguration(SnippetModel snippetModel, IndentManager indentManager)
-    {
-        var payloadSB = new StringBuilder();
-        var queryParamsPayload = GetRequestQueryParameters(snippetModel, indentManager, requestConfigurationVarName);
-        var requestHeadersPayload = GetRequestHeaders(snippetModel, indentManager);
 
-        if (!string.IsNullOrEmpty(queryParamsPayload.Item1) || !string.IsNullOrEmpty(requestHeadersPayload.Item1))
+    private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
+    {
+        var method = codeGraph.HttpMethod.Method.ToLower();
+        var configParameter = codeGraph.HasHeaders() || codeGraph.HasParameters()
+            ? $"{RequestConfigurationVarName}"
+            : string.Empty;
+        var bodyParameter = codeGraph.HasBody()
+            ? $"{RequestBodyVarName}"
+            : string.Empty;
+        var optionsParameter = codeGraph.HasOptions() ? "options" : string.Empty;
+        var returnVar = codeGraph.HasReturnedBody() ? "$requestResult = " : string.Empty;
+        var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
+        payloadSb.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
+        payloadSb.AppendLine($"{returnVar}{clientVarName}->{GetFluentApiPath(codeGraph.Nodes)}->{method}({parameterList});");
+    }
+    private const string QueryParametersVarName = "queryParameters";
+    private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
+    {
+        var payloadSb = new StringBuilder();
+        if (!model.HasParameters()) return default;
+
+        var className = $"{model.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
+        payloadSb.AppendLine($"${QueryParametersVarName} = new {className}();");
+        foreach(var queryParam in model.Parameters) {
+            payloadSb.AppendLine($"{indentManager.GetIndent()}${QueryParametersVarName}->{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()} = {EvaluateParameter(queryParam)};");
+        }
+        indentManager.Unindent();
+        payloadSb.AppendLine();
+        return payloadSb.ToString();
+
+    }
+    
+    private static string EvaluateParameter(CodeProperty param)
+    {
+        return param.PropertyType switch
         {
-            var className = $"{snippetModel.PathNodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{snippetModel.Method.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
-            payloadSB.AppendLine($"${requestConfigurationVarName} = new {className}();");
-            payloadSB.AppendLine();
-            payloadSB.Append(queryParamsPayload.Item1);
-            payloadSB.Append(requestHeadersPayload.Item1);
-            if (!string.IsNullOrEmpty(queryParamsPayload.Item1))
-                payloadSB.AppendLine($"${requestConfigurationVarName}->queryParameters = ${queryParamsPayload.Item2};");
+            PropertyType.Array =>
+                $"[{string.Join(",", param.Children.Select(x => $"\"{x.Value}\"").ToList())}]",
+            PropertyType.Boolean or PropertyType.Int32 => param.Value,
+            _ => $"\"{param.Value.EscapeQuotes()}\""
+        };
+    }
+    
+    private const string RequestConfigurationVarName = "requestConfiguration";
+    private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
+    {
+        var payloadSb = new StringBuilder();
+        var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager);
+        var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
+
+        if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload.Item1))
+        {
+            var className = $"{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            payloadSb.AppendLine($"${RequestConfigurationVarName} = new {className}();");
+            payloadSb.AppendLine();
+            payloadSb.Append(queryParamsPayload);
+            payloadSb.Append(requestHeadersPayload.Item1);
+            if (!string.IsNullOrEmpty(queryParamsPayload))
+                payloadSb.AppendLine($"${RequestConfigurationVarName}->queryParameters = ${QueryParametersVarName};");
             if (!string.IsNullOrEmpty(requestHeadersPayload.Item1))
-                payloadSB.AppendLine($"${requestConfigurationVarName}->headers = ${requestHeadersPayload.Item2};");
-            payloadSB.AppendLine();
+                payloadSb.AppendLine($"${RequestConfigurationVarName}->headers = ${requestHeadersPayload.Item2};");
+            payloadSb.AppendLine();
         }
         
-        return (payloadSB.Length > 0 ? (payloadSB.ToString(), requestConfigurationVarName) : (default, default));
+        return (payloadSb.Length > 0 ? payloadSb.ToString() : default);
     }
     private static string GetQueryParameterValue(string originalValue, Dictionary<string, string> replacements)
     {
@@ -118,187 +114,193 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return string.Empty;
     }
     
-    private const string requestHeadersVarName = "headers";
-    private static (string, string) GetRequestHeaders(SnippetModel snippetModel, IndentManager indentManager) {
+    private const string RequestHeadersVarName = "headers";
+    private static (string, string) GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager) {
         var payloadSB = new StringBuilder();
-        var filteredHeaders = snippetModel.RequestHeaders.Where(h => !h.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
+        var filteredHeaders = snippetModel.Headers?.Where(h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
-        if(filteredHeaders.Any()) {
-            payloadSB.AppendLine($"{indentManager.GetIndent()}${requestHeadersVarName} = [");
+        if(filteredHeaders != null && filteredHeaders.Any()) {
+            payloadSB.AppendLine($"{indentManager.GetIndent()}${RequestHeadersVarName} = [");
             indentManager.Indent();
             filteredHeaders.ForEach(h =>
-                payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Key}\" => \"{h.Value.FirstOrDefault().EscapeQuotes()}\",")
+                payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Name}\" => \"{h.Value.EscapeQuotes()}\",")
             );
             indentManager.Unindent();
             payloadSB.AppendLine($"{indentManager.GetIndent()}];");
             payloadSB.AppendLine();
-            return (payloadSB.ToString(), requestHeadersVarName);
+            return (payloadSB.ToString(), RequestHeadersVarName);
         }
         return (default, default);
     }
-    private static string NormalizeQueryParameterName(string queryParam) => queryParam.TrimStart('$').ToFirstCharacterLowerCase();
-	private const string RequestBodyVarName = "requestRequestBody";
-	private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager) {
-		if(string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
-			return (default, default);
-		if(indentManager == null) throw new ArgumentNullException(nameof(indentManager));
-
-		var payloadSB = new StringBuilder();
-        switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant()) {
-			case "application/json":
-				TryParseBody(snippetModel, payloadSB, indentManager);
-			break;
-			case "application/octet-stream":
-				payloadSB.AppendLine($"{RequestBodyVarName} = Utils::streamFrom(''); //stream to upload");
-			break;
-			default:
-                if(TryParseBody(snippetModel, payloadSB, indentManager)) //in case the content type header is missing but we still have a json payload
-                    break;
-                else
-					throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
-		}
-		var result = payloadSB.ToString();
-		return (result, string.IsNullOrEmpty(result) ? string.Empty : RequestBodyVarName);
-	}
-    private static bool TryParseBody(SnippetModel snippetModel, StringBuilder payloadSB, IndentManager indentManager) {
-        if(snippetModel.IsRequestBodyValid)
-            try {
-                using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
-                var schema = snippetModel.RequestSchema;
-                var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-                if (string.IsNullOrEmpty(className) && schema != null && schema.Properties.Count == 1)
-                    className = $"{schema.Properties.First().Key.ToFirstCharacterUpperCase()}RequestBody"; // edge case for odata actions with a single parameter
-                if (string.IsNullOrEmpty(className))
-                {
-                    var responseVariable = snippetModel.ResponseVariableName;
-                    className = responseVariable.StartsWith("$")
-                        ? responseVariable.Trim('$').ToFirstCharacterUpperCase()
-                        : $"{responseVariable.ToFirstCharacterUpperCase()}{snippetModel.Method.Method.ToLower().ToFirstCharacterUpperCase()}RequestBody";
-                }
-
-                payloadSB.AppendLine($"${RequestBodyVarName.ToFirstCharacterLowerCase()} = new {className}();");
-                payloadSB.AppendLine();
-                WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager, true, RequestBodyVarName);
-            } catch (Exception ex) when (ex is JsonException || ex is ArgumentException) {
-                // the payload wasn't json or poorly formatted
-            }
-        return false;
-    }
-    private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true, string variableName = default) 
+    private static string NormalizeQueryParameterName(string queryParam) => queryParam?.TrimStart('$').ToFirstCharacterLowerCase();
+	private const string RequestBodyVarName = "requestBody";
+    private static void WriteObjectProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default)
     {
-		if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
-		var propertiesAndSchema = value.EnumerateObject()
-										.Select(x => new Tuple<JsonProperty, OpenApiSchema>(x, schema.GetPropertySchema(x.Name)));
-        var andSchema = propertiesAndSchema.ToList();
-        int i = 0;
-        payloadSB.AppendLine();
-        foreach(var propertyAndSchema in andSchema.Where(x => x.Item2 != null)) {
-			var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
-            var propertyAssignment = includePropertyAssignment ? $"${variableName.ToFirstCharacterLowerCase()}->set{propertyName}(" : string.Empty;
-			WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment, ");", propertyName ?? $"{variableName}{++i}", null, false, true);
-		}
-		var propertiesWithoutSchema = andSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
-        var jsonProperties = propertiesWithoutSchema.ToList();
-        if(jsonProperties.Any())
+        var childPosition = 0;
+        payloadSb.AppendLine($"${(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = new {codeProperty.TypeDefinition.ToFirstCharacterUpperCase()}();");
+        foreach(CodeProperty child in codeProperty.Children)
         {
-            var additionalDataVarName = $"${variableName.ToFirstCharacterLowerCase()}AdditionalData";
-			payloadSB.AppendLine($"{additionalDataVarName} = [");
-            indentManager.Indent();
-            foreach(var property in jsonProperties) {
-				var propertyAssignment = $"{indentManager.GetIndent()}\"{property.Name}\" => ";
-				WriteProperty(payloadSB, property.Value, null, indentManager, propertyAssignment , ",", variableName);
-			}
-			indentManager.Unindent();
-            payloadSB.AppendLine($"{indentManager.GetIndent()}];");
-            payloadSB.AppendLine($"${variableName.ToFirstCharacterLowerCase()}->setAdditionalData({additionalDataVarName});");
+            var newChildName = (childPropertyName ?? "") + child.Name.ToFirstCharacterUpperCase();
+            WriteCodeProperty(childPropertyName ?? propertyAssignment, payloadSb, codeProperty, child, indentManager, ++childPosition, newChildName);
+            if (child.PropertyType != PropertyType.Object) 
+                payloadSb.AppendLine();
         }
-        
-		indentManager.Unindent();
+        payloadSb.AppendLine();
     }
-	private static void WriteProperty(StringBuilder payloadSB, JsonElement value, OpenApiSchema propSchema, IndentManager indentManager, string propertyAssignment, string propertySuffix = default, string propertyName = default, Action<string> func = default, bool fromCollection = false, bool fromObject = false)
+    private static void WriteCodeProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty parent, CodeProperty child, IndentManager indentManager, int childPosition = 0, string childPropertyName = default)
     {
-        func ??= delegate(string s)
-        {
-            payloadSB.AppendLine(s);
-        };
-        switch (value.ValueKind) {
-			case JsonValueKind.String:
-				if(propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
-					func.Invoke($"{propertyAssignment}base64_decode(\"{value.GetString()}\"){propertySuffix});");
-				else if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
-					func.Invoke($"{propertyAssignment}new DateTime(\"{value.GetString()}\"){propertySuffix}");
-                else if (propSchema?.Format?.Equals("date", StringComparison.OrdinalIgnoreCase) ?? false)
-                    func.Invoke($"{propertyAssignment}new Date(\"{value.GetString()}\"){propertySuffix}");
-                else if (propSchema?.Format?.Equals("time", StringComparison.OrdinalIgnoreCase) ?? false)
-                    func.Invoke($"{propertyAssignment}new Time(\"{value.GetString()}\"){propertySuffix}");
-                else
-                {
-                    var val = value.GetString();
-                    // Hack to get enum value, will be doing more testing to make sure this is fool-proof.
-                    if (propSchema != null && propSchema.AnyOf.Count == 1 && propSchema.AnyOf.First().Enum.Count > 0) 
-                        val = $"new {propSchema.AnyOf.First().Title.ToFirstCharacterUpperCase()}('{val}')";
-                    else val = $"'{val?.Replace("'", "\\'")}'";
-                        func.Invoke($"{propertyAssignment}{val}{propertySuffix}");
-                }
+        var isArray = parent.PropertyType == PropertyType.Array;
+        var isMap = parent.PropertyType == PropertyType.Map;
+        var fromArray = parent.PropertyType == PropertyType.Array;
 
+        var propertyName = NormalizeQueryParameterName(child.Name.ToFirstCharacterLowerCase());
+        var objectName = isArray ? propertyName?.IndexSuffix(childPosition) : propertyName;
+        switch (child.PropertyType) {
+			case PropertyType.String:
+                WriteStringProperty(propertyAssignment, parent, payloadSb, indentManager, child);
                 break;
-			case JsonValueKind.Number:
-				func.Invoke($"{propertyAssignment}{value.GetInt64()}{propertySuffix}");
-				break;
-			case JsonValueKind.False:
-			case JsonValueKind.True:
-				func.Invoke($"{propertyAssignment}{value.GetBoolean()}{propertySuffix}");
-				break;
-			case JsonValueKind.Null:
-				func.Invoke($"{propertyAssignment}null{propertySuffix}");
-				break;
-            case JsonValueKind.Object:
-				if(propSchema != null)
-                {
-                    payloadSB.AppendLine();
-					func.Invoke($"${propertyName?.ToFirstCharacterLowerCase()} = new {propSchema.GetSchemaTitle().ToFirstCharacterUpperCase()}();");
-                    if (!fromCollection) 
-                        payloadSB.AppendLine($"{propertyAssignment}${propertyName.ToFirstCharacterLowerCase()});");
-                    payloadSB.AppendLine();
-                    WriteJsonObjectValue(payloadSB, value, propSchema, indentManager, true, propertyName);
-                    payloadSB.AppendLine();
+			case PropertyType.Int32:
+            case PropertyType.Int64:
+            case PropertyType.Double:
+            case PropertyType.Float32:
+            case PropertyType.Float64:
+                if (!isMap && !isArray)
+                    payloadSb.AppendLine(
+                        $"{indentManager.GetIndent()}${propertyAssignment.ToFirstCharacterLowerCase()}->set{propertyName.ToFirstCharacterUpperCase()}({objectName});");
+                else
+                    payloadSb.Append($"{child.Value},");
+                break;
+			case PropertyType.Boolean:
+                if (!isMap && !isArray) {
+                    payloadSb.AppendLine(
+                        $"{indentManager.GetIndent()}${propertyAssignment.ToFirstCharacterLowerCase()}->set{propertyName.ToFirstCharacterUpperCase()}({child.Value.ToLower()});");
                 }
-				break;
-			case JsonValueKind.Array:
-				WriteJsonArrayValue(payloadSB, value, propSchema, indentManager, propertyAssignment, propertyName, fromObject);
-			break;
+                else
+                {
+                    payloadSb.Append($"{child.Value.ToLower()},");
+                }
+                break;
+			case PropertyType.Null:
+                WriteNullProperty(propertyAssignment, parent, payloadSb, indentManager, child);
+                break;
+            case PropertyType.Object: 
+                WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), payloadSb, child, indentManager, childPropertyName);
+                if (!fromArray)
+                    payloadSb.AppendLine(
+                        $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{child.Name.ToFirstCharacterUpperCase()}(${(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()});");
+                break;
+			case PropertyType.Array:
+				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, payloadSb, parent, child, indentManager); 
+                break;
+            case PropertyType.Enum:
+                WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), child);
+                break;
+            case PropertyType.Base64Url:
+                WriteBase64Url(payloadSb);
+                break;
+            case PropertyType.Map:
+                WriteMapValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager);
+                break;
 			default:
-				throw new NotImplementedException($"Unsupported JsonValueKind: {value.ValueKind}");
+				throw new NotImplementedException($"Unsupported PropertyType: {child.PropertyType.GetDisplayName()}");
         }
 	}
-    private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment, string propertyName = default, bool fromObject = false)
+
+    private static void WriteNullProperty(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty child)
     {
-        var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase();
-        var hasSchema = !string.IsNullOrEmpty(genericType);
-        var arrayName = $"{propertyName.ToFirstCharacterLowerCase()}Array";
-        if (hasSchema) 
-            payloadSB.AppendLine($"${arrayName} = [];");
-        else 
-            payloadSB.Append($"{propertyAssignment}[");
-        int i = 0;
-        foreach (var item in value.EnumerateArray())
+        throw new NotImplementedException();
+    }
+
+    private static void WriteMapValue(StringBuilder payloadSb, string propertyAssignment, CodeProperty parent, CodeProperty currentProperty, IndentManager indentManager)
+    {
+        payloadSb.AppendLine($"${currentProperty.Name} = [");
+        var childPosition = 0;
+        indentManager.Indent(2);
+        foreach (var child in currentProperty.Children)
         {
-            var propName = $"{propertyName.ToFirstCharacterLowerCase()}";
-            WriteProperty(payloadSB, item, schema, indentManager, indentManager.GetIndent(), ",",
-                $"{propertyName.ToFirstCharacterLowerCase()}{propName}{++i}", s => payloadSB.Append(s.Trim()), true);
-            if (hasSchema) 
-                payloadSB.AppendLine($"${arrayName} []= ${propertyName.ToFirstCharacterLowerCase()}{propName}{i};");
+            payloadSb.Append($"\'{child.Name}\' => ");
+            WriteCodeProperty(propertyAssignment, payloadSb, currentProperty, child, indentManager, ++childPosition);
+            payloadSb.AppendLine();
+        }
+        indentManager.Unindent();
+        indentManager.Unindent();
+        payloadSb.AppendLine("];");
+        if (parent.PropertyType == PropertyType.Object)
+            payloadSb.AppendLine(
+                $"${propertyAssignment}->set{NormalizeVariableName(currentProperty.Name.ToFirstCharacterUpperCase())}(${NormalizeVariableName(currentProperty.Name).ToFirstCharacterLowerCase()});");
+        payloadSb.AppendLine();
+    }
+    private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder payloadSb, CodeProperty parentProperty, CodeProperty codeProperty, IndentManager indentManager)
+    {
+        var hasSchema = codeProperty.PropertyType == PropertyType.Object;
+        var arrayName = $"{objectName.ToFirstCharacterLowerCase()}Array";
+        StringBuilder builder = new StringBuilder();
+        if (hasSchema) 
+            builder.AppendLine($"${arrayName} = [];");
+        else if (codeProperty.Children.Any() && codeProperty.Children.First().PropertyType != PropertyType.Object)
+             builder.Append('[');
+        int childPosition = 0;
+        CodeProperty lastProperty = default;
+        foreach (var property in codeProperty.Children)
+        {
+            var childPropertyName = $"{NormalizeVariableName(codeProperty.Name.ToFirstCharacterLowerCase())}{property.Name.ToFirstCharacterUpperCase()}{++childPosition}";
+            WriteCodeProperty(propertyAssignment, builder, codeProperty, property, indentManager, childPosition, childPropertyName);
+            if (property.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array)
+            {
+                builder.AppendLine($"${arrayName} []= ${childPropertyName};");
+            }
+
+            lastProperty = property;
+        }
+
+        if (lastProperty.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array)
+        {
+            builder.AppendLine(
+                $"${propertyAssignment}->set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}(${arrayName});");
+            payloadSb.AppendLine(builder.ToString());
+        }
+        else
+        {
+            builder.Append(']');
+            if (parentProperty.PropertyType == PropertyType.Object)
+                payloadSb.AppendLine(
+                    $"${propertyAssignment}->set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}({builder.ToString()});");
+            else
+                payloadSb.Append($"{builder.ToString()},");
         }
 
         indentManager.Unindent();
-        if (!hasSchema)
+    }
+
+    private static void WriteEnumValue(StringBuilder payloadSb,string parentPropertyName, CodeProperty currentProperty)
+    {
+        var enumParts = currentProperty.Value.Split('.');
+        var enumClass = enumParts.First();
+        var enumValue = enumParts.Last().ToLower();
+        payloadSb.AppendLine(
+            $"${parentPropertyName}->set{NormalizeVariableName(currentProperty.Name).ToFirstCharacterUpperCase()}(new {enumClass}('{enumValue}'));");
+    }
+
+    private static void WriteBase64Url(StringBuilder payloadSb)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static void WriteStringProperty(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty codeProperty)
+    {
+        var fromObject = parent.PropertyType == PropertyType.Object;
+
+        if (fromObject)
         {
-            payloadSB.AppendLine($"{indentManager.GetIndent()}{(fromObject ? "]);" : "],")}");
+            payloadSb.AppendLine(
+                $"${indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}->set{NormalizeVariableName(codeProperty.Name)?.ToFirstCharacterUpperCase()}('{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}');");
         }
         else
-            payloadSB.AppendLine($"{propertyAssignment}${arrayName});");
+            payloadSb.Append($"\'{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}\', ");
     }
-    
+
+    private static string NormalizeVariableName(string variable) =>
+        variable.Replace(".", String.Empty).Replace("-", string.Empty);
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
     {
         var openApiUrlTreeNodes = nodes.ToList();
