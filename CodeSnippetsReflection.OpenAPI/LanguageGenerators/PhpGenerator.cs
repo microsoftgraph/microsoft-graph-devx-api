@@ -11,16 +11,20 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 
 public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 {
-    private const string clientVarName = "$graphClient";
-    private const string clientVarType = "GraphClient";
-    private const string httpCoreVarName = "$requestAdapter";
+    private const string ClientVarName = "$graphClient";
+    private const string ClientVarType = "GraphClient";
+    private const string HttpCoreVarName = "$requestAdapter";
+    private const string RequestBodyVarName = "requestBody";
+    private const string QueryParametersVarName = "queryParameters";
+    private const string RequestConfigurationVarName = "requestConfiguration";
+    private const string RequestHeadersVarName = "headers";
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
         var indentManager = new IndentManager();
         var codeGraph = new SnippetCodeGraph(snippetModel);
         var payloadSb = new StringBuilder(
             "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-            $"{clientVarName} = new {clientVarType}({httpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+            $"{ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
         if (codeGraph.HasBody())
         {
             WriteObjectProperty(RequestBodyVarName, payloadSb, codeGraph.Body, indentManager);
@@ -42,9 +46,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var returnVar = codeGraph.HasReturnedBody() ? "$requestResult = " : string.Empty;
         var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
         payloadSb.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-        payloadSb.AppendLine($"{returnVar}{clientVarName}->{GetFluentApiPath(codeGraph.Nodes)}->{method}({parameterList});");
+        payloadSb.AppendLine($"{returnVar}{ClientVarName}->{GetFluentApiPath(codeGraph.Nodes)}->{method}({parameterList});");
     }
-    private const string QueryParametersVarName = "queryParameters";
     private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
     {
         var payloadSb = new StringBuilder();
@@ -71,8 +74,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             _ => $"\"{param.Value.EscapeQuotes()}\""
         };
     }
-    
-    private const string RequestConfigurationVarName = "requestConfiguration";
     private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
     {
         var payloadSb = new StringBuilder();
@@ -114,7 +115,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return string.Empty;
     }
     
-    private const string RequestHeadersVarName = "headers";
     private static (string, string) GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager) {
         var payloadSB = new StringBuilder();
         var filteredHeaders = snippetModel.Headers?.Where(h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
@@ -133,7 +133,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return (default, default);
     }
     private static string NormalizeQueryParameterName(string queryParam) => queryParam?.TrimStart('$').ToFirstCharacterLowerCase();
-	private const string RequestBodyVarName = "requestBody";
     private static void WriteObjectProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default)
     {
         var childPosition = 0;
