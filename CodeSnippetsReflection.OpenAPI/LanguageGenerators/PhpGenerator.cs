@@ -70,7 +70,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         {
             PropertyType.Array =>
                 $"[{string.Join(",", param.Children.Select(x => $"\"{x.Value}\"").ToList())}]",
-            PropertyType.Boolean or PropertyType.Int32 => param.Value,
+            PropertyType.Boolean or PropertyType.Int32 or PropertyType.Double or PropertyType.Float32 or PropertyType.Float64 or PropertyType.Int64 => param.Value,
             _ => $"\"{param.Value.EscapeQuotes()}\""
         };
     }
@@ -95,17 +95,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         }
         
         return (payloadSb.Length > 0 ? payloadSb.ToString() : default);
-    }
-    private static string GetQueryParameterValue(string originalValue, Dictionary<string, string> replacements)
-    {
-        if(originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
-            return originalValue.ToLowerInvariant();
-        if(int.TryParse(originalValue, out var intValue))
-            return intValue.ToString();
-        var valueWithNested = originalValue.Split(',')
-                .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
-                .Aggregate((a, b) => $"{a},{b}");
-        return $"'{valueWithNested.Replace("'", "\\'")}'";
     }
     private static string GetActionParametersList(params string[] parameters) {
         var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
