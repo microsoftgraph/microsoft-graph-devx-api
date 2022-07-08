@@ -80,17 +80,17 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager);
         var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
 
-        if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload.Item1))
+        if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload))
         {
             var className = $"{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             payloadSb.AppendLine($"${RequestConfigurationVarName} = new {className}();");
             payloadSb.AppendLine();
             payloadSb.Append(queryParamsPayload);
-            payloadSb.Append(requestHeadersPayload.Item1);
+            payloadSb.Append(requestHeadersPayload);
             if (!string.IsNullOrEmpty(queryParamsPayload))
                 payloadSb.AppendLine($"${RequestConfigurationVarName}->queryParameters = ${QueryParametersVarName};");
-            if (!string.IsNullOrEmpty(requestHeadersPayload.Item1))
-                payloadSb.AppendLine($"${RequestConfigurationVarName}->headers = ${requestHeadersPayload.Item2};");
+            if (!string.IsNullOrEmpty(requestHeadersPayload))
+                payloadSb.AppendLine($"${RequestConfigurationVarName}->headers = ${RequestHeadersVarName};");
             payloadSb.AppendLine();
         }
         
@@ -115,22 +115,22 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return string.Empty;
     }
     
-    private static (string, string) GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager) {
-        var payloadSB = new StringBuilder();
+    private static string GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager) {
+        var payloadSb = new StringBuilder();
         var filteredHeaders = snippetModel.Headers?.Where(h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
         if(filteredHeaders != null && filteredHeaders.Any()) {
-            payloadSB.AppendLine($"{indentManager.GetIndent()}${RequestHeadersVarName} = [");
+            payloadSb.AppendLine($"{indentManager.GetIndent()}${RequestHeadersVarName} = [");
             indentManager.Indent();
             filteredHeaders.ForEach(h =>
-                payloadSB.AppendLine($"{indentManager.GetIndent()}\"{h.Name}\" => \"{h.Value.EscapeQuotes()}\",")
+                payloadSb.AppendLine($"{indentManager.GetIndent()}\"{h.Name}\" => \"{h.Value.EscapeQuotes()}\",")
             );
             indentManager.Unindent();
-            payloadSB.AppendLine($"{indentManager.GetIndent()}];");
-            payloadSB.AppendLine();
-            return (payloadSB.ToString(), RequestHeadersVarName);
+            payloadSb.AppendLine($"{indentManager.GetIndent()}];");
+            payloadSb.AppendLine();
+            return payloadSb.ToString();
         }
-        return (default, default);
+        return default;
     }
     private static string NormalizeQueryParameterName(string queryParam) => queryParam?.TrimStart('$').ToFirstCharacterLowerCase();
     private static void WriteObjectProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default)
