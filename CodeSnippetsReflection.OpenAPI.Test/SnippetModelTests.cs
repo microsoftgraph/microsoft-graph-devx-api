@@ -1,6 +1,8 @@
-using System;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.OpenApi.Readers;
@@ -22,14 +24,22 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
         internal static async Task<OpenApiUrlTreeNode> GetTreeNode(string url)
         {
-            using var httpClient = new HttpClient();
-            using var response = await httpClient.GetAsync(url);
-            using var stream = await response.Content.ReadAsStreamAsync();
+            Stream stream;
+            if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                using var httpClient = new HttpClient();
+                stream = await httpClient.GetStreamAsync(url);
+            }
+            else
+            {
+                stream = File.OpenRead(url);
+            }
             var reader = new OpenApiStreamReader();
             var doc = reader.Read(stream, out var diags);
             await stream.DisposeAsync();
             return OpenApiUrlTreeNode.Create(doc, "default");
         }
+
         [Fact]
         public void DefensiveProgramming()
         {
