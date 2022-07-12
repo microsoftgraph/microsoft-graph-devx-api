@@ -271,11 +271,10 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.Guid, Children = new List<CodeProperty>() };
 
             var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
-            if (enumSchema == null)
+            if ((propSchema == null || propSchema.Enum.Count == 0) && enumSchema == null)
                 return new CodeProperty { Name = propertyName, Value = escapeSpecialCharacters(value.GetString()), PropertyType = PropertyType.String, Children = new List<CodeProperty>() };
-
-
-            var propValue = String.IsNullOrWhiteSpace(value.GetString()) ? null : $"{enumSchema.Title.ToFirstCharacterUpperCase()}.{value.GetString().ToFirstCharacterUpperCase()}";
+            enumSchema ??= propSchema;
+            var propValue = String.IsNullOrWhiteSpace(value.GetString()) ? null : $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{value.GetString().ToFirstCharacterUpperCase()}";
             return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = new List<CodeProperty>() };
         }
 
