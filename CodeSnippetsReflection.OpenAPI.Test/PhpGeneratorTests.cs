@@ -251,4 +251,13 @@ public class PhpGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$requestBody->setAdditionalData($additionalData);", result);
     }
+
+    [Fact]
+    public async Task GenerateFluentApiPathCornerCase()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("->me()->activities()->recent()->get()", result);
+    }
 }
