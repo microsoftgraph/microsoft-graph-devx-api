@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -120,6 +120,15 @@ namespace OpenAPIService
                 }
 
                 pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
+
+                if (result.Parameters?.Any() ?? false)
+                {
+                    foreach (var parameter in result.Parameters)
+                    {
+                        pathItem.Parameters.Add(parameter);
+                    }
+                }              
+
             }
 
             if (subset.Paths == null)
@@ -642,7 +651,8 @@ namespace OpenAPIService
                 EnableDerivedTypesReferencesForResponses = false,
                 ShowRootPath = true,
                 ShowLinks = true,
-                ExpandDerivedTypesNavigationProperties = false
+                ExpandDerivedTypesNavigationProperties = false,
+                DeclarePathParametersOnPathItem = true
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 

@@ -22,24 +22,44 @@ namespace OpenAPIService
             _predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
         }
 
+        public override void Visit(OpenApiPathItem pathItem)
+        {
+            foreach (var item in pathItem.Operations)
+            {
+                var operation = item.Value;
+                if (_predicate(operation))
+                {
+                    // Remove the operation description.
+                    // This is temporary until some of the invalid/incorrect texts coming from the CSDL are fixed.
+                    operation.Description = null;
+                    _searchResults.Add(new SearchResult()
+                    {
+                        Operation = operation,
+                        Parameters = pathItem.Parameters,
+                        CurrentKeys = CopyCurrentKeys(CurrentKeys),
+                    });
+                }
+            }
+        }
+
         /// <summary>
         /// Visits <see cref="OpenApiOperation"/>.
         /// </summary>
         /// <param name="operation">The target <see cref="OpenApiOperation"/>.</param>
-        public override void Visit(OpenApiOperation operation)
-        {
-            if (_predicate(operation))
-            {
-                // Remove the operation description.
-                // This is temporary until some of the invalid/incorrect texts coming from the CSDL are fixed.
-                operation.Description = null;
-                _searchResults.Add(new SearchResult()
-                {
-                    Operation = operation,
-                    CurrentKeys = CopyCurrentKeys(CurrentKeys)
-                });
-            }
-        }
+        //public override void Visit(OpenApiOperation operation)
+        //{
+        //    if (_predicate(operation))
+        //    {
+        //        // Remove the operation description.
+        //        // This is temporary until some of the invalid/incorrect texts coming from the CSDL are fixed.
+        //        operation.Description = null;
+        //        _searchResults.Add(new SearchResult()
+        //        {
+        //            Operation = operation,
+        //            CurrentKeys = CopyCurrentKeys(CurrentKeys)
+        //        });
+        //    }
+        //}
 
         /// <summary>
         /// Visits list of <see cref="OpenApiParameter"/>.
