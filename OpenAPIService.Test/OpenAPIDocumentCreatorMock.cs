@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -653,6 +653,43 @@ namespace OpenAPIService.Test
                     },
                     ["/groups/{group-id}/events/{event-id}/calendar/events/microsoft.graph.delta"] = new OpenApiPathItem()
                     {
+                        Parameters = new List<OpenApiParameter>
+                        {
+                            new OpenApiParameter()
+                            {
+                                Name = "group-id",
+                                In = ParameterLocation.Path,
+                                Description = "key: id of group",
+                                Required = true,
+                                Schema = new OpenApiSchema()
+                                {
+                                    Type = "string"
+                                },
+                                Extensions = new Dictionary<string, IOpenApiExtension>
+                                {
+                                    {
+                                        "x-ms-docs-key-type", new OpenApiString("group")
+                                    }
+                                }
+                            },
+                            new OpenApiParameter()
+                            {
+                                Name = "event-id",
+                                In = ParameterLocation.Path,
+                                Description = "key: id of event",
+                                Required = true,
+                                Schema = new OpenApiSchema()
+                                {
+                                    Type = "string"
+                                },
+                                Extensions = new Dictionary<string, IOpenApiExtension>
+                                {
+                                    {
+                                        "x-ms-docs-key-type", new OpenApiString("event")
+                                    }
+                                }
+                            }
+                        },
                         Operations = new Dictionary<OperationType, OpenApiOperation>
                         {
                             {
@@ -667,43 +704,6 @@ namespace OpenAPIService.Test
                                     },
                                     OperationId = "groups.group.events.event.calendar.events.delta",
                                     Summary = "Invoke function delta",
-                                    Parameters = new List<OpenApiParameter>
-                                    {
-                                        new OpenApiParameter()
-                                        {
-                                            Name = "group-id",
-                                            In = ParameterLocation.Path,
-                                            Description = "key: id of group",
-                                            Required = true,
-                                            Schema = new OpenApiSchema()
-                                            {
-                                                Type = "string"
-                                            },
-                                            Extensions = new Dictionary<string, IOpenApiExtension>
-                                            {
-                                                {
-                                                    "x-ms-docs-key-type", new OpenApiString("group")
-                                                }
-                                            }
-                                        },
-                                        new OpenApiParameter()
-                                        {
-                                            Name = "event-id",
-                                            In = ParameterLocation.Path,
-                                            Description = "key: id of event",
-                                            Required = true,
-                                            Schema = new OpenApiSchema()
-                                            {
-                                                Type = "string"
-                                            },
-                                            Extensions = new Dictionary<string, IOpenApiExtension>
-                                            {
-                                                {
-                                                    "x-ms-docs-key-type", new OpenApiString("event")
-                                                }
-                                            }
-                                        }
-                                    },
                                     Responses = new OpenApiResponses()
                                     {
                                         {
