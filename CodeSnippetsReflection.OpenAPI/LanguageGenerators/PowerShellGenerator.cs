@@ -59,9 +59,30 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var commandParameters = GetCommandParameters(snippetModel, payloadVarName);
                 if (!string.IsNullOrEmpty(commandParameters))
                     snippetBuilder.Append($"{commandParameters}");
+                if (RequiresMIMEContentOutPut(snippetModel,path))
+                {
+                    //Allows genration of an output file for MIME content of the message
+                    snippetBuilder.Append($" -OutFile $outFileId");
+                }
             }
             return snippetBuilder.ToString();
         }
+        /// <summary>
+        /// Checks if the path has an optional query parameter. e.g $value
+        /// The parameter can be used to get the mime content of a message
+        /// Mime content should be stored in a file, therefore powershell snippets will have '-OutFile $outFileId' appended at the end of the snipper body
+        /// </summary>
+        /// <param name="snippetModel"></param>
+        /// <param name="path"></param>
+        /// <returns>true/false</returns>
+        private bool RequiresMIMEContentOutPut(SnippetModel snippetModel, string path)
+        {
+            int lastIndex = path.LastIndexOf('/');
+            var lastValue = path.Substring(lastIndex + 1);
+            if (!lastValue.StartsWith("{") && snippetModel.Method == HttpMethod.Get) return true;
+            return false;
+        }
+
 
         private static string GetCommandParameters(SnippetModel snippetModel, string payloadVarName)
         {
