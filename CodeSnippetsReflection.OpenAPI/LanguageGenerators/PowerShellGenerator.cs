@@ -75,7 +75,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         /// <param name="snippetModel"></param>
         /// <param name="path"></param>
         /// <returns>true/false</returns>
-        private bool RequiresMIMEContentOutPut(SnippetModel snippetModel, string path)
+        private static bool RequiresMIMEContentOutPut(SnippetModel snippetModel, string path)
         {
             int lastIndex = path.LastIndexOf('/');
             var lastValue = path.Substring(lastIndex + 1);
