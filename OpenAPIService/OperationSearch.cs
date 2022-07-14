@@ -36,7 +36,7 @@ namespace OpenAPIService
                     {
                         Operation = operation,
                         Parameters = pathItem.Parameters,
-                        CurrentKeys = CopyCurrentKeys(CurrentKeys),
+                        CurrentKeys = CopyCurrentKeys(CurrentKeys, item.Key),
                     });
                 }
             }
@@ -80,12 +80,12 @@ namespace OpenAPIService
             base.Visit(parameters);
         }
 
-        private static CurrentKeys CopyCurrentKeys(CurrentKeys currentKeys)
+        private static CurrentKeys CopyCurrentKeys(CurrentKeys currentKeys, OperationType operationType)
         {
             return new CurrentKeys
             {
                 Path = currentKeys.Path,
-                Operation = currentKeys.Operation
+                Operation = operationType
             };
         }
     }
