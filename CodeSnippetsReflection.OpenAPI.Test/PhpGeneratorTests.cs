@@ -109,7 +109,7 @@ public class PhpGeneratorTests
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphClient->directory()->deletedItems()->group()->get()", result);
+        Assert.Contains("$graphServiceClient->directory()->deletedItems()->group()->get()", result);
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(
-            "$graphClient->me()->messagesById('message-id')->get($requestConfiguration)",
+            "$graphServiceClient->me()->messagesById('message-id')->get($requestConfiguration)",
             result);
     }
 
@@ -145,7 +145,7 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$headers = [", result);
-        Assert.Contains("\"ConsistencyLevel\" => \"eventual\",", result);
+        Assert.Contains("'ConsistencyLevel' => 'eventual',", result);
         Assert.Contains("$requestConfiguration = ", result);
     }
 
@@ -183,7 +183,7 @@ public class PhpGeneratorTests
             new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphClient->me()->messagesById('message-id')->delete()", result);
+        Assert.Contains("$graphServiceClient->me()->messagesById('message-id')->delete()", result);
     }
     
     [Fact]
