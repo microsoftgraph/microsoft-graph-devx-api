@@ -119,15 +119,21 @@ namespace OpenAPIService
                     }
                 }
 
-                pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
-
-                if (result.Parameters?.Any() ?? false)
+                if (result.CurrentKeys.Operation != null)
                 {
-                    foreach (var parameter in result.Parameters)
+                    pathItem.Operations.Add((OperationType)result.CurrentKeys.Operation, result.Operation);
+
+                    if (result.Parameters?.Any() ?? false)
                     {
-                        pathItem.Parameters.Add(parameter);
+                        foreach (var parameter in result.Parameters)
+                        {
+                            pathItem.Parameters.Add(parameter);
+                        }
                     }
-                }              
+
+                }
+
+
 
             }
 
