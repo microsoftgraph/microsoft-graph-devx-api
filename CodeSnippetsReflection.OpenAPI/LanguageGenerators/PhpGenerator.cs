@@ -11,8 +11,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 
 public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 {
-    private const string ClientVarName = "$graphClient";
-    private const string ClientVarType = "GraphClient";
+    private const string ClientVarName = "$graphServiceClient";
+    private const string ClientVarType = "GraphServiceClient";
     private const string HttpCoreVarName = "$requestAdapter";
     private const string RequestBodyVarName = "requestBody";
     private const string QueryParametersVarName = "queryParameters";
@@ -23,7 +23,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var indentManager = new IndentManager();
         var codeGraph = new SnippetCodeGraph(snippetModel);
         var payloadSb = new StringBuilder(
-            "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
+            "<?php" + Environment.NewLine + Environment.NewLine +
+            "// THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
             $"{ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
         if (codeGraph.HasBody())
         {
@@ -112,7 +113,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             payloadSb.AppendLine($"{indentManager.GetIndent()}${RequestHeadersVarName} = [");
             indentManager.Indent();
             filteredHeaders.ForEach(h =>
-                payloadSb.AppendLine($"{indentManager.GetIndent()}\"{h.Name}\" => \"{h.Value.EscapeQuotes()}\",")
+                payloadSb.AppendLine($"{indentManager.GetIndent()}'{h.Name}' => '{h.Value.Replace("\'", "\\'")}',")
             );
             indentManager.Unindent();
             payloadSb.AppendLine($"{indentManager.GetIndent()}];");
@@ -317,18 +318,21 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         var openApiUrlTreeNodes = nodes.ToList();
         if (!(openApiUrlTreeNodes?.Any() ?? false)) return string.Empty;
-        return openApiUrlTreeNodes.Select(x => {
+        var result = openApiUrlTreeNodes.Select(x =>
+            {
                 if (x.Segment.IsCollectionIndex())
                     return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}";
                 if (x.Segment.IsFunction())
                     return x.Segment.Split('.').Last().ToFirstCharacterLowerCase()+"()";
                 return x.Segment.ToFirstCharacterLowerCase()+"()";
             })
-            .Aggregate((x, y) => {
-                var dot = y.StartsWith("ById") ?
-                    string.Empty :
-                    "->";
+            .Aggregate((x, y) =>
+            {
+                var dot = y.StartsWith("ById") ? string.Empty : "->";
                 return $"{x.Trim('$')}{dot}{y.Trim('$')}";
-            }).Replace("()ById(", "ById(");
+            }).Replace("()ById(", "ById(")
+              .Replace("()()->", "()->");
+        
+        return result.EndsWith("()()") ? result[..^2] : result;
     }
 }
