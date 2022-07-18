@@ -42,16 +42,6 @@ steps:
   fetchDepth: 1
   persistCredentials: true
 
-- pwsh: |
-    # override build languag incase provided in pipeline
-    $buildLanguages = if ("$env:LANGUAGES") { "$env:LANGUAGES" } else { "$(snippetLanguages)" }
-    $branchPrefix = if ("$env:LANGUAGES") { "preview-snippet-generation" } else { "snippet-generation" }
-    Write-Host "##vso[task.setvariable variable=buildLanguages]$buildLanguages"
-    Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
-    Write-Host "Branch prefix is $branchPrefix"
-    Write-Host "Branch languages to generate are $buildLanguages"
-  displayName: 'Evaluate snippets to generate'
-
 - template: templates/git-config.yml
 
 - task: UseDotNet@2
@@ -92,7 +82,7 @@ steps:
     $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
     Write-Host "Path to apidoctor tool: $apidoctorPath"
 
-    . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $env:BUILDLANGUAGES --git-path "/bin/git"
+    . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "/bin/git"
   displayName: 'Generate snippets'
   workingDirectory: microsoft-graph-docs
 
