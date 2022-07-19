@@ -22,11 +22,15 @@ namespace OpenAPIService
             _predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
         }
 
-        public override void Visit(OpenApiPathItem pathItem)
+        public override void Visit(OpenApiPaths paths)
         {
+            var path = CurrentKeys.Path;
+            var pathItem =  paths[path];
             foreach (var item in pathItem.Operations)
             {
                 var operation = item.Value;
+                var operationType = item.Key;
+
                 if (_predicate(operation))
                 {
                     // Remove the operation description.
@@ -36,7 +40,32 @@ namespace OpenAPIService
                     {
                         Operation = operation,
                         Parameters = pathItem.Parameters,
-                        CurrentKeys = CopyCurrentKeys(CurrentKeys, item.Key),
+                        CurrentKeys = CopyCurrentKeys(CurrentKeys, operationType),
+                    });
+                }
+            }
+
+        }
+
+
+        public override void Visit(OpenApiPathItem pathItem)
+        {
+            var path = CurrentKeys.Path;
+
+            foreach (var item in pathItem.Operations)
+            {
+                var operation = item.Value;
+                var operationType = item.Key;
+                if (_predicate(operation))
+                {
+                    // Remove the operation description.
+                    // This is temporary until some of the invalid/incorrect texts coming from the CSDL are fixed.
+                    operation.Description = null;
+                    _searchResults.Add(new SearchResult()
+                    {
+                        Operation = operation,
+                        Parameters = pathItem.Parameters,
+                        CurrentKeys = CopyCurrentKeys(CurrentKeys, operationType),
                     });
                 }
             }

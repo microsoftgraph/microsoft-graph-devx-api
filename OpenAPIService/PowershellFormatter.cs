@@ -43,6 +43,11 @@ namespace OpenAPIService
                     pathItem.Operations[putOperation].OperationId = newOperationId.ToString();
                 }
             }
+
+            foreach (var item in pathItem.Operations)
+            {
+                ResolveOpenApiOperations(item.Value, pathItem.Parameters);
+            }
         }
 
         /// <summary>
@@ -53,7 +58,7 @@ namespace OpenAPIService
         /// This is replaced with an '_' to format the OperationId to allow for the creation of logical Powershell cmdlet names.
         /// </remarks>
         /// <param name="operation">The target <see cref="OpenApiOperation"/></param>
-        public override void Visit(OpenApiOperation operation)
+        public static void ResolveOpenApiOperations(OpenApiOperation operation, IList<OpenApiParameter> pathParameters)
         {
             var operationId = operation.OperationId;
 
@@ -70,7 +75,8 @@ namespace OpenAPIService
                     // in the above library changed how action and function OperationIds are constructed.
                     // To maintain pre-existing cmdlet names in PowerShell, we need to resolve their
                     // OperationIds to how they were being constructed in earlier versions of the lib.
-                    operationId = ResolveActionFunctionOperationId(operation);
+                    var parameters = (pathParameters?.Any() ?? false)  ? pathParameters : operation.Parameters;
+                    operationId = ResolveActionFunctionOperationId(operation.OperationId, parameters);
                 }
 
                 if ("function".Equals(operationType, StringComparison.OrdinalIgnoreCase))
@@ -125,9 +131,8 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="operation">The target OpenAPI operation.</param>
         /// <returns>The resolved OperationId.</returns>
-        private static string ResolveActionFunctionOperationId(OpenApiOperation operation)
+        private static string ResolveActionFunctionOperationId(string operationId, IList<OpenApiParameter> parameters)
         {
-            var operationId = operation.OperationId;
             var segments = operationId.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries).ToList();
 
             // Remove ODataKeySegment values from OperationIds of actions and functions paths.
@@ -136,7 +141,7 @@ namespace OpenAPIService
             // For example,
             // Default OperationId --> communications.calls.call_keepAlive
             // Resolved OperationId --> communications.calls_keepAlive
-            foreach (var parameter in operation.Parameters)
+            foreach (var parameter in parameters)
             {
                 // Get the ODataKeySegment value.
                 // Paths containing the above segment are
