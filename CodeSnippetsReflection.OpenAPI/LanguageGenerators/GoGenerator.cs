@@ -326,23 +326,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                 WriteCodeProperty(propertyAssignment,builder,codeProperty,child,indentManager,childPosition++);
         }
 
-        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes) {
-            if(!(nodes?.Any() ?? false)) return string.Empty;
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes){
+            if (!(nodes?.Any() ?? false)) return string.Empty;
             return nodes.Select(x => {
-                                        if(x.Segment.IsCollectionIndex())
-                                            return $"ById{x.Segment.Replace("{", "(\"").Replace("}", "\")")}.";
-                                        else if (x.Segment.IsFunction()) {
-                                            var parameters = x.PathItems[OpenApiSnippetsGenerator.treeNodeLabel]
-                                                .Parameters
-                                                .Where(y => y.In == ParameterLocation.Path)
-                                                .Select(y => y.Name)
-                                                .ToList();
-                                            var paramSet = string.Join(", ", parameters);
-                                            return x.Segment.Split('.').Last().ToFirstCharacterUpperCase() + $"({paramSet}).";
-                                        }
-                                        return x.Segment.ToFirstCharacterUpperCase() + "().";
-                                    })
-                        .Aggregate((x, y) => $"{x}{y}")
+                if (x.Segment.IsCollectionIndex())
+                    return $"ById{x.Segment.Replace("{", "(\"").Replace("}", "\")")}.";
+                else if (x.Segment.IsFunction())
+                    return x.Segment.Split('.').Last().ToFirstCharacterUpperCase() + "().";
+                return x.Segment.ToFirstCharacterUpperCase() + "().";
+            })
+                        .Aggregate((x, y) => {
+                            return $"{x}{y}";
+                        })
                         .Replace("().ById(", "ById(");
         }
     }
