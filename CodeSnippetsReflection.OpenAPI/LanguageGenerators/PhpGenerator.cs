@@ -11,8 +11,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 
 public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 {
-    private const string ClientVarName = "$graphClient";
-    private const string ClientVarType = "GraphClient";
+    private const string ClientVarName = "$graphServiceClient";
+    private const string ClientVarType = "GraphServiceClient";
     private const string HttpCoreVarName = "$requestAdapter";
     private const string RequestBodyVarName = "requestBody";
     private const string QueryParametersVarName = "queryParameters";
@@ -113,7 +113,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             payloadSb.AppendLine($"{indentManager.GetIndent()}${RequestHeadersVarName} = [");
             indentManager.Indent();
             filteredHeaders.ForEach(h =>
-                payloadSb.AppendLine($"{indentManager.GetIndent()}\"{h.Name}\" => \"{h.Value.EscapeQuotes()}\",")
+                payloadSb.AppendLine($"{indentManager.GetIndent()}'{h.Name}' => '{h.Value.Replace("\'", "\\'")}',")
             );
             indentManager.Unindent();
             payloadSb.AppendLine($"{indentManager.GetIndent()}];");
