@@ -204,7 +204,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("map[string]interface{}{", result);
-            Assert.Contains("[]String {", result);
+            Assert.Contains("[]string {", result);
             Assert.Contains("SetAdditionalData", result);
             Assert.Contains("members", result); // property name hasn't been changed
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
