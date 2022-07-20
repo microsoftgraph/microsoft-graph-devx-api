@@ -46,7 +46,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollectionsWithMultipleParams() {
             var sampleJson = @"
             {
-                ""comment"": Updating the latest guidelines
+                ""comment"": ""Updating the latest guidelines""
             }
             ";
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/drives/{{drive-id}}/items/{{item-id}}/checkin"){

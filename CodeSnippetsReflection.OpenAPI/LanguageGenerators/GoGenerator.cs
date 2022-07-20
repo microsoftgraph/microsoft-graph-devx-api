@@ -338,7 +338,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                         .Aggregate((x, y) => {
                             return $"{x}{y}";
                         })
-                        .Replace("().ById(", "ById(");
+                        .Replace("().ById(", "ById(")
+                        .Replace("()()", "()");
         }
     }
 }
