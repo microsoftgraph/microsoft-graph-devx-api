@@ -123,10 +123,11 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return default;
     }
     private static string NormalizeQueryParameterName(string queryParam) => queryParam?.TrimStart('$').ToFirstCharacterLowerCase();
-    private static void WriteObjectProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default)
+    private static void WriteObjectProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default, SnippetCodeGraph codeGraph = default)
     {
         var childPosition = 0;
-        payloadSb.AppendLine($"${(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = new {codeProperty.TypeDefinition.ToFirstCharacterUpperCase()}();");
+        var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToFirstCharacterUpperCase();
+        payloadSb.AppendLine($"${(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = new {objectType}();");
         foreach(CodeProperty child in codeProperty.Children)
         {
             var newChildName = (childPropertyName ?? "") + child.Name.ToFirstCharacterUpperCase();
@@ -143,7 +144,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var fromArray = parent.PropertyType == PropertyType.Array;
 
         var propertyName = NormalizeQueryParameterName(child.Name.ToFirstCharacterLowerCase());
-        var objectName = isArray ? propertyName?.IndexSuffix(childPosition) : propertyName;
         switch (child.PropertyType) {
 			case PropertyType.String:
                 WriteStringProperty(propertyAssignment, parent, payloadSb, indentManager, child);
@@ -155,7 +155,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             case PropertyType.Float64:
                 if (!isMap && !isArray)
                     payloadSb.AppendLine(
-                        $"{indentManager.GetIndent()}${propertyAssignment.ToFirstCharacterLowerCase()}->set{propertyName.ToFirstCharacterUpperCase()}({objectName});");
+                        $"{indentManager.GetIndent()}${propertyAssignment.ToFirstCharacterLowerCase()}->set{propertyName.ToFirstCharacterUpperCase()}({child.Value});");
                 else
                     payloadSb.Append($"{child.Value},");
                 break;
@@ -245,7 +245,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         StringBuilder builder = new StringBuilder();
         if (hasSchema) 
             builder.AppendLine($"${arrayName} = [];");
-        else if (codeProperty.Children.Any() && codeProperty.Children.First().PropertyType != PropertyType.Object)
+        else if (codeProperty.Children.FirstOrDefault().PropertyType != PropertyType.Object)
              builder.Append('[');
         int childPosition = 0;
         CodeProperty lastProperty = default;
