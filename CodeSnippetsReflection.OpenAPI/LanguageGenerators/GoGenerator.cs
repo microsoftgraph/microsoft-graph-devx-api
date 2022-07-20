@@ -198,7 +198,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                 builder.AppendLine(objectBuilder.ToString());
             }
             
-            var typeName = NativeTypes.Contains(codeProperty.TypeDefinition?.ToLower()?.Trim()) ? codeProperty.TypeDefinition : $"graphmodels.{codeProperty.TypeDefinition }able" ;
+            var typeName = NativeTypes.Contains(codeProperty.TypeDefinition?.ToLower()?.Trim()) ? codeProperty.TypeDefinition?.ToLower() : $"graphmodels.{codeProperty.TypeDefinition }able" ;
             builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := []{typeName} {{");
             builder.AppendLine(contentBuilder.ToString());
             builder.AppendLine($"{indentManager.GetIndent()}}}");
