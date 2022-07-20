@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -183,7 +183,7 @@ namespace OpenAPIService
                 var tagsArray = tags.Split(',');
                 if (tagsArray.Length == 1)
                 {
-                    var regex = new Regex(Regex.Escape(tagsArray[0]));
+                    var regex = new Regex(tagsArray[0]);
 
                     predicate = (o) => o.Tags.Any(t => regex.IsMatch(t.Name));
                 }
