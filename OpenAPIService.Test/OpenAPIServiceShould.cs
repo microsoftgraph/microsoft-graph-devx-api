@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using UtilityService;
 using Xunit;
 
@@ -172,6 +173,7 @@ namespace OpenAPIService.Test
         [Theory]
         [InlineData(null, null, "/users?$filter=startswith(displayName,'John Doe')")]
         [InlineData(null, "users.user", null)]
+        [InlineData(null, "^users.user$", null)]
         [InlineData("users.user.ListUser", null, null)]
         public void ReturnOpenApiDocumentInCreateFilteredDocumentWhenValidArgumentsAreSpecified(string operationIds, string tags, string url)
         {

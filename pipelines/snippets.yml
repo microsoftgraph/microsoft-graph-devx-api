@@ -24,11 +24,17 @@ resources:
 pool:
   vmImage: 'ubuntu-latest'
 
+
+parameters:
+  - name: snippetLanguages
+    default: 'C#,JavaScript,Java,Go,PowerShell,PHP'
+    displayName: 'Languages to generate snippets (comma separated list)'
+
 variables:
   buildConfiguration: 'Release'
   apidoctorPath: 'microsoft-graph-devx-api/apidoctor'
   apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
-  snippetLanguages: 'C#,JavaScript,Java,Go,PowerShell,PHP'
+  snippetLanguages: ${{ parameters.snippetLanguages }}
 
 steps:
 - checkout: self
@@ -43,14 +49,11 @@ steps:
   persistCredentials: true
 
 - pwsh: |
-    # override build languag incase provided in pipeline
-    $buildLanguages = if ("$env:LANGUAGES") { "$env:LANGUAGES" } else { "$(snippetLanguages)" }
-    $branchPrefix = if ("$env:LANGUAGES") { "preview-snippet-generation" } else { "snippet-generation" }
-    Write-Host "##vso[task.setvariable variable=buildLanguages]$buildLanguages"
+    # override branch prefix incase the run is manually triggered
+    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-snippet-generation" } else { "snippet-generation" }
     Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
     Write-Host "Branch prefix is $branchPrefix"
-    Write-Host "Branch languages to generate are $buildLanguages"
-  displayName: 'Evaluate snippets to generate'
+  displayName: 'Evaluate branch prefix to use'
 
 - template: templates/git-config.yml
 
@@ -92,7 +95,7 @@ steps:
     $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
     Write-Host "Path to apidoctor tool: $apidoctorPath"
 
-    . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $env:BUILDLANGUAGES --git-path "/bin/git"
+    . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "/bin/git"
   displayName: 'Generate snippets'
   workingDirectory: microsoft-graph-docs
 
