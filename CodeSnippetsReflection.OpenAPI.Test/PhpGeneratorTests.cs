@@ -289,7 +289,7 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setAdditionalData($additionalData);", result);
+        Assert.Contains("$requestBody->setCallOptions($callOptions);", result);
     }
     
     [Fact]
@@ -340,7 +340,8 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setAdditionalData($additionalData);", result);
+        Assert.Contains("new AttendeeBase();", result);
+        Assert.Contains("new LocationConstraintItem();", result);
     }
 
     [Fact]
@@ -388,6 +389,6 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$location = new Location();", result);
-        Assert.Contains("$requestBodys->setAttendees($attendeesArray);", result);
+        Assert.Contains("$requestBody->setAttendees($attendeesArray);", result);
     }
 }
