@@ -653,7 +653,7 @@ namespace OpenAPIService
                 Paths = new OpenApiPaths()
             };
 
-            document = FixReferences(document, newDocument, 0, 5000);
+            document = FixReferences(document, newDocument, 0, 3000);
 
             _telemetryClient?.TrackTrace("Finished converting CSDL stream to an OpenApi document",
                                          SeverityLevel.Information,
