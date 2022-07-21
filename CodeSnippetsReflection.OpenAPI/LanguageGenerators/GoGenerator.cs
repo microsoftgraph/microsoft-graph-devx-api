@@ -189,7 +189,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             else
             {
-                builder.AppendLine($"{indentManager.GetIndent()}{requestBodyVarName} := graphmodels.New{codeGraph.Body.Name}()");
+                builder.AppendLine($"{indentManager.GetIndent()}{requestBodyVarName} := graphmodels.New{codeGraph.Body.Name.ToFirstCharacterUpperCase()}()");
                 WriteCodePropertyObject(requestBodyVarName, builder, codeGraph.Body, indentManager);
             }
         }
