@@ -163,7 +163,7 @@ public class PhpGeneratorTests
             "\"emailAddress\": {\r\n                      \"address\": \"jose@con'stoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ],\r\n   " +
             " \"ccRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          " +
             "\"address\": null\r\n        }\r\n      }\r\n    ]\r\n," +
-            "\"categories\": [\"one\", \"category\", \"away\", null]  },\r\n  \"saveToSentItems\": \"false\"\r\n}";
+            "\"categories\": [\"one\", \"category\", \"away\", null]  },\r\n  \"saveToSentItems\": false\r\n}";
 
             using var requestPayload =
                 new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/sendMail")
@@ -259,5 +259,136 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("->me()->activities()->recent()->get()", result);
+    }
+
+    [Fact /*(Skip = "Should fail by default.")*/]
+    public async Task GenerateWithODataTypeAndODataId()
+    {
+        var url = "/communications/calls/{id}/answer";
+        var bodyContent = @"
+            {
+              ""callbackUri"": ""callbackUri-value"",
+                    ""mediaConfig"": {
+                        ""@odata.type"": ""#microsoft.graph.appHostedMediaConfig"",
+                        ""blob"": ""<Media Session Configuration Blob>""
+                    },
+                    ""acceptedModalities"": [
+                    ""audio""
+                        ],
+                    ""callOptions"": {
+                        ""@odata.type"": ""#microsoft.graph.incomingCallOptions"",
+                        ""isContentSharingNotificationEnabled"": true
+                    },
+                    ""participantCapacity"": 200
+                }
+            ";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootBetaUrl}{url}")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestBody->setCallOptions($callOptions);", result);
+    }
+    
+    [Fact]
+    public async Task GenerateFindMeetingTime()
+    {
+        var bodyContent = @"
+        {
+            ""attendees"": [
+                {
+                    ""emailAddress"": {
+                        ""address"": ""{user-mail}"",
+                        ""name"": ""Alex Darrow""
+                    },
+                    ""type"": ""Required""
+                }
+                ],
+                ""timeConstraint"": {
+                    ""timeslots"": [
+                    {
+                        ""start"": {
+                            ""dateTime"": ""2022-07-18T13:24:57.384Z"",
+                            ""timeZone"": ""Pacific Standard Time""
+                        },
+                        ""end"": {
+                            ""dateTime"": ""2022-07-25T13:24:57.384Z"",
+                            ""timeZone"": ""Pacific Standard Time""
+                        }
+                    }
+                    ]
+                },
+                ""locationConstraint"": {
+                    ""isRequired"": ""false"",
+                    ""suggestLocation"": ""true"",
+                    ""locations"": [
+                    {
+                        ""displayName"": ""Conf Room 32/1368"",
+                        ""locationEmailAddress"": ""conf32room1368@imgeek.onmicrosoft.com""
+                    }
+                    ]
+                },
+                ""meetingDuration"": ""PT1H""
+        }";
+        
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/findMeetingTimes")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("new AttendeeBase();", result);
+        Assert.Contains("new LocationConstraintItem();", result);
+    }
+
+    [Fact]
+    public async Task GenerateSnippetsWithArrayNesting()
+    {
+        var eventData = @"
+             {
+               ""subject"": ""Let's go for lunch"",
+                ""body"": {
+                    ""contentType"": ""HTML"",
+                    ""content"": ""Does noon work for you?""
+                },
+                ""start"": {
+                    ""dateTime"": ""2017-04-15T12:00:00"",
+                    ""timeZone"": ""Pacific Standard Time""
+                },
+                ""end"": {
+                    ""dateTime"": ""2017-04-15T14:00:00"",
+                    ""timeZone"": ""Pacific Standard Time""
+                },
+                ""location"":{
+                    ""displayName"":""Harry's Bar""
+                },
+                ""attendees"": [
+                {
+                    ""emailAddress"": {
+                        ""address"":""samanthab@contoso.onmicrosoft.com"",
+                        ""name"": ""Samantha Booth""
+                    },
+                    ""type"": ""required""
+                },
+                {
+                    ""emailAddress"": {
+                                    ""address"":""ss@contoso.com"", ""name"": ""Sorry Sir""}, ""type"":""Optional""
+                }
+                ],
+                ""allowNewTimeProposals"": true,
+                ""transactionId"":""7E163156-7762-4BEB-A1C6-729EA81755A7""
+           }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/events")
+            {
+                Content = new StringContent(eventData, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$location = new Location();", result);
+        Assert.Contains("$requestBody->setAttendees($attendeesArray);", result);
     }
 }
