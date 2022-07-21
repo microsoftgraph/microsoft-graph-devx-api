@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -28,6 +28,8 @@ using System.Text.Json;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Extensions;
 
 namespace OpenAPIService
 {
@@ -643,10 +645,15 @@ namespace OpenAPIService
                 ShowRootPath = true,
                 ShowLinks = true,
                 ExpandDerivedTypesNavigationProperties = false
-            };
+        };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
-            document = FixReferences(document);
+            OpenApiDocument newDocument = new()
+            {
+                Paths = new OpenApiPaths()
+            };
+
+            document = FixReferences(document, newDocument, 0, 5000);
 
             _telemetryClient?.TrackTrace("Finished converting CSDL stream to an OpenApi document",
                                          SeverityLevel.Information,
@@ -660,12 +667,84 @@ namespace OpenAPIService
             // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
             // So we write it out, and read it back in again to fix it up.
 
-            var sb = new StringBuilder();
-            document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
-            var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
+            long usedMemory = Process.GetCurrentProcess().PrivateMemorySize64;
 
-            return doc;
+            using (MemoryStream stream = new MemoryStream())
+            {
+                document.Serialize(stream, OpenApiSpecVersion.OpenApi3_0, OpenApiFormat.Yaml);
+                stream.Flush();
+                stream.Position = 0;
+                string openApi = new StreamReader(stream).ReadToEnd();
+
+                //var sb = new StringBuilder();
+                //document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));           
+
+                var doc = new OpenApiStringReader().Read(openApi, out _);
+
+                usedMemory = Process.GetCurrentProcess().PrivateMemorySize64;
+
+                return doc;
+            }
         }
+
+        public OpenApiDocument FixReferences(OpenApiDocument originalDocument, OpenApiDocument newDocument,
+            int skip = 0, int take = 3000)
+        {
+            // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
+            // So we write it out, and read it back in again to fix it up.
+            
+            if (originalDocument.Paths.Count == newDocument.Paths.Count)
+            {
+                return newDocument;
+            }
+
+            OpenApiDocument tempDoc = new()
+            {
+                Info = originalDocument.Info,
+                ExternalDocs = originalDocument.ExternalDocs,
+                Components = originalDocument.Components,
+                SecurityRequirements = originalDocument.SecurityRequirements,
+                Tags = originalDocument.Tags,
+                Workspace = originalDocument.Workspace,
+                Extensions = originalDocument.Extensions,
+                Paths = new()
+            };
+
+            var tempPaths = originalDocument.Paths.Skip(skip).Take(take).ToDictionary(k => k.Key, k => k.Value);
+
+            foreach (var path in tempPaths)
+            {
+                tempDoc.Paths.Add(path.Key, path.Value);
+            }
+
+            var sb = new StringBuilder();
+            tempDoc.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
+            tempDoc = new OpenApiStringReader().Read(sb.ToString(), out _);
+
+
+            foreach (var path in tempDoc.Paths)
+            {
+                newDocument.Paths.Add(path.Key, path.Value);
+            }
+
+            newDocument.Info = tempDoc.Info;
+            newDocument.ExternalDocs = tempDoc.ExternalDocs;
+            newDocument.Components = tempDoc.Components;
+            newDocument.SecurityRequirements = tempDoc.SecurityRequirements;
+            newDocument.Tags = tempDoc.Tags;
+            newDocument.Workspace = tempDoc.Workspace;
+            newDocument.Extensions = tempDoc.Extensions;
+
+            skip += take;
+            int leftoverPaths = originalDocument.Paths.Count - skip;
+            if (leftoverPaths < take)
+            {
+                take = leftoverPaths;
+            }
+
+            return FixReferences(originalDocument, newDocument, skip, take);
+        }
+
 
         private static IList<SearchResult> FindOperations(OpenApiDocument graphOpenApi, Func<OpenApiOperation, bool> predicate)
         {
