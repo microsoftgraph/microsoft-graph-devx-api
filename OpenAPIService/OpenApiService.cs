@@ -553,7 +553,7 @@ namespace OpenAPIService
                                              _openApiTraceProperties);
                 _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
-                OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
+                OpenApiDocument source = CreateOpenApiDocumentAsync(csdlHref).GetAwaiter().GetResult();
                 _OpenApiDocuments[csdlHref] = source;
                 _OpenApiDocumentsDateCreated[csdlHref] = DateTime.UtcNow;
                 return source;
