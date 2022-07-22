@@ -1,7 +1,9 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
@@ -25,6 +27,15 @@ namespace OpenAPIService.Test
         {
             _openApiService = openApiService
                 ?? throw new ArgumentNullException(nameof(openApiService), $"{ NullValueError }: { nameof(openApiService) }");
+        }
+
+        public static IOpenApiService GetOpenApiService(string configFilePath)
+        {
+            IConfigurationRoot configuration = new ConfigurationBuilder()
+                                                    .AddJsonFile(configFilePath)
+                                                    .Build();
+
+            return new OpenApiService(configuration);
         }
 
         /// <summary>

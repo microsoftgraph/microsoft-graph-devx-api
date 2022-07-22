@@ -43,6 +43,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains(".Me().MessagesById(\"message-id\")", result);
         }
         [Fact]
+        public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollectionsWithMultipleParams() {
+            var sampleJson = @"
+            {
+                ""comment"": ""Updating the latest guidelines""
+            }
+            ";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/drives/{{drive-id}}/items/{{item-id}}/checkin"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains(".DrivesById(\"drive-id\").ItemsById(\"driveItem-id\").Checkin().", result);
+        }
+        [Fact]
         public async Task GeneratesTheSnippetHeader() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
@@ -190,7 +204,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("map[string]interface{}{", result);
-            Assert.Contains("[]String {", result);
+            Assert.Contains("[]string {", result);
             Assert.Contains("SetAdditionalData", result);
             Assert.Contains("members", result); // property name hasn't been changed
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
