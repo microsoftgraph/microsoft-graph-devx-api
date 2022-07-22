@@ -12,7 +12,6 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using UtilityService;
 using Xunit;
 
@@ -25,7 +24,7 @@ namespace OpenAPIService.Test
         private readonly OpenApiDocument _graphMockSource = null;
         private readonly IOpenApiService _openApiService;
         private readonly OpenApiDocumentCreatorMock _openAPIDocumentCreatorMock;
-        private static string ConfigFilePath => Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest-valid.json");
+        private static string ConfigFilePath => Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest.json");
 
         public OpenApiServiceShould()
         {
