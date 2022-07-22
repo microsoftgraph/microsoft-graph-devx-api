@@ -50,7 +50,7 @@ namespace OpenAPIService
                         new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
         private readonly TelemetryClient _telemetryClient;
         private readonly IConfiguration _configuration;
-        private static readonly SemaphoreSlim semSlim = new(1, 1); // only 1 thread can be granted access at a time.
+        private static readonly SemaphoreSlim _openApiDocumentConversionAccess = new(1, 1); // only 1 thread can be granted access at a time.
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInMinutes:OpenAPIDocuments";
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
 
@@ -499,8 +499,7 @@ namespace OpenAPIService
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
-        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
-        
+        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)        
         {
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
@@ -515,7 +514,7 @@ namespace OpenAPIService
             /* OpenAPI document not cached;
              * Ensure only one thread is running the conversion process.
              */
-            await semSlim.WaitAsync();
+            await _openApiDocumentConversionAccess.WaitAsync();
             try
             {
                 // Check whether previous thread already cached the OpenAPI document.                
@@ -561,7 +560,7 @@ namespace OpenAPIService
             }
             finally
             {
-                semSlim.Release();                
+                _openApiDocumentConversionAccess.Release();                
             }            
         }
 
