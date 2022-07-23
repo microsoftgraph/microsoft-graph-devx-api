@@ -50,9 +50,10 @@ namespace OpenAPIService
                         new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
         private readonly TelemetryClient _telemetryClient;
         private readonly IConfiguration _configuration;
-        private static readonly SemaphoreSlim _openApiDocumentConversionAccess = new(1, 1); // only 1 thread can be granted access at a time.
+        private static readonly SemaphoreSlim _openApiDocumentConversionAccess = new(2, 2); // only 2 threads can be granted access at a time.
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInMinutes:OpenAPIDocuments";
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
+        private readonly HashSet<string> _graphUriHash = new();
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
@@ -534,7 +535,7 @@ namespace OpenAPIService
                     var minutesElapsed = (DateTime.UtcNow - dateCreated).Minutes;
                     if (minutesElapsed < _defaultForceRefreshTime)
                     {
-                        // Return the cached document
+                        // Return the cached document.
                         _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
                         _telemetryClient?.TrackTrace($"forceRefresh requested within {minutesElapsed} minutes." +
                                                      $"Retrieving cached document.",
@@ -546,6 +547,12 @@ namespace OpenAPIService
                     }
                 }
 
+                if (!_graphUriHash.Add(graphUri))
+                {
+                    // Only 1 thread per Graph version allowed to convert OpenAPI document.
+                    return await GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+                }
+
                 // Refresh the OpenAPI document.
                 _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
                 _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
@@ -553,9 +560,10 @@ namespace OpenAPIService
                                              _openApiTraceProperties);
                 _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
-                OpenApiDocument source = CreateOpenApiDocumentAsync(csdlHref).GetAwaiter().GetResult();
+                OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
                 _OpenApiDocuments[csdlHref] = source;
                 _OpenApiDocumentsDateCreated[csdlHref] = DateTime.UtcNow;
+                _graphUriHash.Remove(graphUri);
                 return source;
             }
             finally
