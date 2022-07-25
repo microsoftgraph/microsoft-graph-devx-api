@@ -536,7 +536,7 @@ namespace OpenAPIService
                     if (minutesElapsed < _defaultForceRefreshTime)
                     {
                         // Return the cached document.
-                        _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+                        _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
                         _telemetryClient?.TrackTrace($"forceRefresh requested within {minutesElapsed} minutes." +
                                                      $"Retrieving cached document.",
                                                      SeverityLevel.Information,
@@ -663,7 +663,7 @@ namespace OpenAPIService
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
             stopwatch.Stop();
 
-            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
             _telemetryClient?.TrackTrace($"Success getting CSDL for {csdlHref} in {stopwatch.ElapsedMilliseconds}ms",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
@@ -707,7 +707,7 @@ namespace OpenAPIService
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
-            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
             _telemetryClient?.TrackTrace("Finished converting CSDL stream to an OpenApi document. " +
                                         $"No. of paths: {document.Paths.Count}",
                                          SeverityLevel.Information,
