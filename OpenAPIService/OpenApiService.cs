@@ -735,7 +735,7 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            StringBuilder sb = null;
+            var sb = new StringBuilder();
             document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
             var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
 
