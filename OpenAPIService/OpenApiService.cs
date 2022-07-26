@@ -518,6 +518,10 @@ namespace OpenAPIService
             await _openApiDocumentConversionAccess.WaitAsync();
             try
             {
+                _telemetryClient?.TrackTrace("Conversion lock successfully acquired.",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
+
                 // Check whether previous thread already cached the OpenAPI document.                
                 if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out doc))
                 {
@@ -568,7 +572,10 @@ namespace OpenAPIService
             }
             finally
             {
-                _openApiDocumentConversionAccess.Release();                
+                _openApiDocumentConversionAccess.Release();
+                _telemetryClient?.TrackTrace("Conversion lock successfully released.",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
             }            
         }
 
@@ -724,15 +731,15 @@ namespace OpenAPIService
             // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
             // So we write it out, and read it back in again to fix it up.
 
-            _telemetryClient?.TrackTrace("Fixing references in the converted OpenApi document.",
+            _telemetryClient?.TrackTrace("Fixing references in the converted OpenAPI document.",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            var sb = new StringBuilder();
+            StringBuilder sb = null;
             document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
             var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
 
-            _telemetryClient?.TrackTrace("Finished fixing references in the converted OpenApi document.",
+            _telemetryClient?.TrackTrace("Finished fixing references in the converted OpenAPI document.",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
