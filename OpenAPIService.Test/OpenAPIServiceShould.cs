@@ -24,10 +24,11 @@ namespace OpenAPIService.Test
         private readonly OpenApiDocument _graphMockSource = null;
         private readonly IOpenApiService _openApiService;
         private readonly OpenApiDocumentCreatorMock _openAPIDocumentCreatorMock;
+        private static string ConfigFilePath => Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest.json");
 
         public OpenApiServiceShould()
         {
-            _openApiService = new OpenApiService();
+            _openApiService = OpenApiDocumentCreatorMock.GetOpenApiService(ConfigFilePath);
             _openAPIDocumentCreatorMock = new OpenApiDocumentCreatorMock(_openApiService);
 
             // Create OpenAPI document with default OpenApiStyle = Plain
@@ -172,6 +173,7 @@ namespace OpenAPIService.Test
         [Theory]
         [InlineData(null, null, "/users?$filter=startswith(displayName,'John Doe')")]
         [InlineData(null, "users.user", null)]
+        [InlineData(null, "^users.user$", null)]
         [InlineData("users.user.ListUser", null, null)]
         public void ReturnOpenApiDocumentInCreateFilteredDocumentWhenValidArgumentsAreSpecified(string operationIds, string tags, string url)
         {

@@ -15,6 +15,7 @@ namespace CodeSnippetsReflection.OpenAPI {
                         .Union(schema.AnyOf.SelectMany(x => x.Properties))
                         .Union(schema.OneOf.SelectMany(x => x.Properties))
                         .Union(schema.Items != null ? schema.Items.AllOf.SelectMany(x => x.Properties) : Enumerable.Empty<KeyValuePair<string, OpenApiSchema>>())
+                        .Union(schema.Items != null ? schema.Items.AnyOf.SelectMany(x => x.AllOf.SelectMany(y => y.GetAllProperties()).Union(x.AnyOf.SelectMany(y => y.GetAllProperties()))) : Enumerable.Empty<KeyValuePair<string, OpenApiSchema>>())
                         .Union(schema.Items != null ? schema.Items.AnyOf.SelectMany(x => x.Properties) : Enumerable.Empty<KeyValuePair<string, OpenApiSchema>>());
             }
             return schema.AllOf.Union(schema.AnyOf).Union(schema.OneOf).SelectMany(x => x.GetAllProperties());
