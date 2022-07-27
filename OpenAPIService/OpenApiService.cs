@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ namespace OpenAPIService
         private static readonly SemaphoreSlim _openApiDocumentConversionAccess = new(2, 2); // only 2 threads can be granted access at a time.
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInMinutes:OpenAPIDocuments";
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
-        private readonly HashSet<string> _graphUriHash = new();
+        private readonly Queue<string> _graphUriQueue = new();
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
@@ -500,7 +500,7 @@ namespace OpenAPIService
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
-        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)        
+        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)       
         {
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
@@ -525,8 +525,8 @@ namespace OpenAPIService
                 // Check whether previous thread already cached the OpenAPI document.                
                 if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out doc))
                 {
-                    _telemetryClient?.TrackTrace("OpenAPI document converted and cached by another thread." +
-                                                 "Retrieve the cached document.",
+                    _telemetryClient?.TrackTrace("OpenAPI document converted and cached by another thread. " +
+                                                 "Retrieving cached document.",
                                                  SeverityLevel.Information,
                                                  _openApiTraceProperties);
 
@@ -535,14 +535,14 @@ namespace OpenAPIService
 
                 // Check whether forceRefresh is requested before the allowable refresh period has elapsed.
                 if (_OpenApiDocumentsDateCreated.TryGetValue(csdlHref, out DateTime dateCreated))
-                {                    
+                {
                     var minutesElapsed = (DateTime.UtcNow - dateCreated).Minutes;
                     if (minutesElapsed < _defaultForceRefreshTime)
                     {
                         // Return the cached document.
                         _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-                        _telemetryClient?.TrackTrace($"forceRefresh requested within {minutesElapsed} minutes." +
-                                                     $"Retrieving cached document.",
+                        _telemetryClient?.TrackTrace($"forceRefresh requested within {minutesElapsed} minutes. " +
+                                                     $"Retrieving cached OpenAPI document.",
                                                      SeverityLevel.Information,
                                                      _openApiTraceProperties);
                         _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
@@ -551,9 +551,13 @@ namespace OpenAPIService
                     }
                 }
 
-                if (!_graphUriHash.Add(graphUri))
+                if (_graphUriQueue.Contains(graphUri))
                 {
                     // Only 1 thread per Graph version allowed to convert OpenAPI document.
+                    _telemetryClient?.TrackTrace("OpenAPI conversion attempted by a new thread while a separate thread is still " +
+                                                 "performing a conversion for a similar Graph version. New thread requeued.",
+                                                 SeverityLevel.Information,
+                                                 _openApiTraceProperties);
                     return await GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
                 }
 
@@ -564,14 +568,19 @@ namespace OpenAPIService
                                              _openApiTraceProperties);
                 _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
+                _graphUriQueue.Enqueue(graphUri);
                 OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
                 _OpenApiDocuments[csdlHref] = source;
                 _OpenApiDocumentsDateCreated[csdlHref] = DateTime.UtcNow;
-                _graphUriHash.Remove(graphUri);
                 return source;
             }
             finally
             {
+                if (_graphUriQueue.Any())
+                {
+                    _graphUriQueue.Dequeue();
+                }
+                
                 _openApiDocumentConversionAccess.Release();
                 _telemetryClient?.TrackTrace("Conversion lock successfully released.",
                                              SeverityLevel.Information,
