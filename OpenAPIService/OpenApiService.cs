@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -31,6 +31,9 @@ using Microsoft.OpenApi.Any;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
 using FileService.Common;
+using Microsoft.IO;
+using Microsoft.OpenApi.Extensions;
+using Microsoft.OpenApi;
 
 namespace OpenAPIService
 {
@@ -54,6 +57,7 @@ namespace OpenAPIService
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInMinutes:OpenAPIDocuments";
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
         private readonly Queue<string> _graphUriQueue = new();
+        private static readonly RecyclableMemoryStreamManager _streamManager = new ();
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
@@ -446,7 +450,7 @@ namespace OpenAPIService
                                             SeverityLevel.Information,
                                             _openApiTraceProperties);
 
-            var stream = new MemoryStream();
+            var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(SerializeOpenApiDocument)}");
             var sr = new StreamWriter(stream);
             OpenApiWriterBase writer;
 
@@ -603,7 +607,7 @@ namespace OpenAPIService
             if (style == OpenApiStyle.GEAutocomplete)
             {
                 // Clone doc before making changes
-                subsetOpenApiDocument = Clone(subsetOpenApiDocument);
+                subsetOpenApiDocument = CloneOpenApiDocument(subsetOpenApiDocument);
 
                 if(!includeRequestBody)
                 {
@@ -617,7 +621,7 @@ namespace OpenAPIService
                 /* For Powershell and PowerPlatform Styles */
 
                 // Clone doc before making changes
-                subsetOpenApiDocument = Clone(subsetOpenApiDocument);
+                subsetOpenApiDocument = CloneOpenApiDocument(subsetOpenApiDocument);
 
                 // Remove AnyOf
                 var anyOfRemover = new AnyOfRemover();
@@ -657,17 +661,6 @@ namespace OpenAPIService
                                          _openApiTraceProperties);
 
             return subsetOpenApiDocument;
-        }
-
-        private static OpenApiDocument Clone(OpenApiDocument subsetOpenApiDocument)
-        {
-            var stream = new MemoryStream();
-            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
-            subsetOpenApiDocument.SerializeAsV3(writer);
-            writer.Flush();
-            stream.Position = 0;
-            var reader = new OpenApiStreamReader();
-            return reader.Read(stream, out _);
         }
 
         private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
@@ -730,25 +723,28 @@ namespace OpenAPIService
                                          _openApiTraceProperties);
             _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
 
-            document = FixReferences(document);
+            // The output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance,
+            // so we write it out, and read it back in again to fix it up.
+            document = CloneOpenApiDocument(document);
 
             return document;
         }
 
-        public OpenApiDocument FixReferences(OpenApiDocument document)
+        public OpenApiDocument CloneOpenApiDocument(OpenApiDocument subsetOpenApiDocument)
         {
-            // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
-            // So we write it out, and read it back in again to fix it up.
-
-            _telemetryClient?.TrackTrace("Fixing references in the converted OpenAPI document.",
+            _telemetryClient?.TrackTrace("Cloning OpenAPI document.",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            var sb = new StringBuilder();
-            document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
-            var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
+            var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(CloneOpenApiDocument)}");
+            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
+            subsetOpenApiDocument.SerializeAsV3(writer);
+            writer.Flush();
+            stream.Position = 0;
+            var reader = new OpenApiStreamReader();
+            var doc = reader.Read(stream, out _);
 
-            _telemetryClient?.TrackTrace("Finished fixing references in the converted OpenAPI document.",
+            _telemetryClient?.TrackTrace("Finished cloning OpenAPI document.",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
