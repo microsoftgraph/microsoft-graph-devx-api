@@ -33,6 +33,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IOpenApiService _openApiService;
+        private readonly RecyclableMemoryStreamManager _streamManager = new();
 
         public OpenApiController(IConfiguration configuration, IOpenApiService openApiService)
         {
@@ -129,8 +130,7 @@ namespace GraphWebApi.Controllers
             }
 
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
-            var streamManager = new RecyclableMemoryStreamManager();
-            using var stream = streamManager.GetStream(nameof(OpenApiController));
+            using var stream = _streamManager.GetStream($"{nameof(OpenApiController)}.openapi_tree");
             _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
             return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
         }

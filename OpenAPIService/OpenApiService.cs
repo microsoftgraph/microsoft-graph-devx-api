@@ -18,7 +18,6 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using System.Text;
 using OpenAPIService.Common;
 using UtilityService;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -32,8 +31,6 @@ using System.Threading;
 using Microsoft.Extensions.Configuration;
 using FileService.Common;
 using Microsoft.IO;
-using Microsoft.OpenApi.Extensions;
-using Microsoft.OpenApi;
 
 namespace OpenAPIService
 {
@@ -57,7 +54,7 @@ namespace OpenAPIService
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInMinutes:OpenAPIDocuments";
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
         private readonly Queue<string> _graphUriQueue = new();
-        private static readonly RecyclableMemoryStreamManager _streamManager = new ();
+        private static readonly RecyclableMemoryStreamManager _streamManager = new();
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
