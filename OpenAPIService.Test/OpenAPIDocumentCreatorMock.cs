@@ -964,7 +964,7 @@ namespace OpenAPIService.Test
                 }
             };
 
-            return _openApiService.FixReferences(document);
+            return _openApiService.CloneOpenApiDocument(document);
         }
     }
 }
