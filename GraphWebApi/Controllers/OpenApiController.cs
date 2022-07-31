@@ -5,6 +5,7 @@
 using GraphWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IO;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService;
@@ -32,6 +33,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IOpenApiService _openApiService;
+        private readonly RecyclableMemoryStreamManager _streamManager = new();
 
         public OpenApiController(IConfiguration configuration, IOpenApiService openApiService)
         {
@@ -128,7 +130,7 @@ namespace GraphWebApi.Controllers
             }
 
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
-            using MemoryStream stream = new();
+            using var stream = _streamManager.GetStream($"{nameof(OpenApiController)}.openapi_tree");
             _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
             return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
         }
