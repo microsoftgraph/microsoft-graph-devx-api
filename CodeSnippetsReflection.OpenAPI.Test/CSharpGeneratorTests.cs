@@ -103,7 +103,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("10L", result);
-            Assert.Contains("SendActivityNotificationRequestBody", result);
+            Assert.Contains("SendActivityNotificationPostRequestBody", result);
             Assert.DoesNotContain("microsoft.graph", result);
         }
         [Fact]
