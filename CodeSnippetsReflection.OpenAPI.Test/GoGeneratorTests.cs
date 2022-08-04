@@ -386,8 +386,9 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("new AttendeeBase();", result);
-            Assert.Contains("new LocationConstraintItem();", result);
+            Assert.Contains("maxCandidates := int32(100)", result);
+            Assert.Contains("minimumAttendeePercentage := float64(200)", result);
+            Assert.Contains("isOrganizerOptional := false", result);
         }
         //TODO test for DateTimeOffset
     }
