@@ -82,14 +82,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             indentManager.Indent();
             foreach(var queryParam in snippetCodeGraph.Parameters) 
             {
-                stringBuilder.AppendLine($"{indentManager.GetIndent()}{RequestConfigurationVarName}.{RequestParametersPropertyName}.{queryParam.Name.ToFirstCharacterUpperCase()} = {GetQueryParameterValue(queryParam)};");
+                stringBuilder.AppendLine($"{indentManager.GetIndent()}{RequestConfigurationVarName}.{RequestParametersPropertyName}.{queryParam.Name.ToLower().ToFirstCharacterUpperCase()} = {GetQueryParameterValue(queryParam)};");
             }
             indentManager.Unindent();
         }
 
         private static string GetQueryParameterValue(CodeProperty queryParam)
         {
-            // boolean - true or false
             switch (queryParam.PropertyType)
             {
                 case PropertyType.Boolean:

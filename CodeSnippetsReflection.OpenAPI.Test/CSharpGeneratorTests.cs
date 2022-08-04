@@ -212,7 +212,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.QueryParameters.Count", result);
             Assert.Contains("requestConfiguration.QueryParameters.Filter", result);
             Assert.Contains("requestConfiguration.QueryParameters.Select", result);
-            Assert.Contains("requestConfiguration.QueryParameters.OrderBy", result);
+            Assert.Contains("requestConfiguration.QueryParameters.Orderby", result);
         }
         //TODO test for DateTimeOffset
     }
