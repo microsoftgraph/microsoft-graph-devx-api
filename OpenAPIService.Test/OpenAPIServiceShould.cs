@@ -173,7 +173,6 @@ namespace OpenAPIService.Test
         [Theory]
         [InlineData(null, null, "/users?$filter=startswith(displayName,'John Doe')")]
         [InlineData(null, "users.user", null)]
-        [InlineData(null, "^users.user$", null)]
         [InlineData("users.user.ListUser", null, null)]
         public void ReturnOpenApiDocumentInCreateFilteredDocumentWhenValidArgumentsAreSpecified(string operationIds, string tags, string url)
         {
@@ -201,6 +200,17 @@ namespace OpenAPIService.Test
             {
                 Assert.Single(subsetOpenApiDocument.Paths);
             }
+        }
+
+        [Fact]
+        public void ShouldFailWhenARegexIsPassedAsTag()
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(tags: "^users.user$",
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            Assert.Throws<ArgumentException>(() => _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate));
         }
 
         [Theory]
