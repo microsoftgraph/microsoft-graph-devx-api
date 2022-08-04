@@ -193,11 +193,25 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             case PropertyType.Date:
                 WriteDateTimeValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager);
                 break;
+            case PropertyType.Duration:
+                WriteDurationValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child,
+                    indentManager);
+                break;
 			default:
 				throw new NotImplementedException($"Unsupported PropertyType: {child.PropertyType.GetDisplayName()}");
         }
 	}
-
+    
+    private static void WriteDurationValue(StringBuilder payloadSb, string propertyAssignment, CodeProperty parent,
+        CodeProperty child, IndentManager indentManager) {
+        var fromObject = parent.PropertyType == PropertyType.Object;
+        var assignmentValue = $"new \\DateInterval(\'{child.Value}\')";
+        if (fromObject)
+            payloadSb.AppendLine(
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}({assignmentValue});");
+        else
+            payloadSb.Append($"{indentManager.GetIndent()}{assignmentValue},");
+    }
     private static void WriteDateTimeValue(StringBuilder payloadSb, string propertyAssignment, CodeProperty parent,
         CodeProperty child, IndentManager indentManager)
     {

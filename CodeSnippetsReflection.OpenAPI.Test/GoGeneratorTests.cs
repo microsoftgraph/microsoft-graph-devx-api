@@ -334,6 +334,62 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("NewPasswordCredentialPostRequestBody", result);
         }
+        
+        [Fact]
+        public async Task GenerateFindMeetingTime()
+        {
+            var bodyContent = @"
+            {
+                ""attendees"": [
+                    {
+                        ""emailAddress"": {
+                            ""address"": ""{user-mail}"",
+                            ""name"": ""Alex Darrow""
+                        },
+                        ""type"": ""Required""
+                    }
+                    ],
+                    ""timeConstraint"": {
+                        ""timeslots"": [
+                        {
+                            ""start"": {
+                                ""dateTime"": ""2022-07-18T13:24:57.384Z"",
+                                ""timeZone"": ""Pacific Standard Time""
+                            },
+                            ""end"": {
+                                ""dateTime"": ""2022-07-25T13:24:57.384Z"",
+                                ""timeZone"": ""Pacific Standard Time""
+                            }
+                        }
+                        ]
+                    },
+                    ""locationConstraint"": {
+                        ""isRequired"": ""false"",
+                        ""suggestLocation"": ""true"",
+                        ""locations"": [
+                        {
+                            ""displayName"": ""Conf Room 32/1368"",
+                            ""locationEmailAddress"": ""conf32room1368@imgeek.onmicrosoft.com""
+                        }
+                        ]
+                    },
+                    ""meetingDuration"": ""PT1H"",
+                    ""maxCandidates"": ""100"",
+                    ""isOrganizerOptional"": ""false"",
+                    ""minimumAttendeePercentage"": ""200""
+            }";
+            
+            using var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/findMeetingTimes")
+                {
+                    Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("maxCandidates := int32(100)", result);
+            Assert.Contains("minimumAttendeePercentage := float64(200)", result);
+            Assert.Contains("isOrganizerOptional := false", result);
+        }
         //TODO test for DateTimeOffset
     }
 }
