@@ -206,7 +206,9 @@ namespace OpenAPIService.Test
         public void ShouldFailWhenARegexIsPassedAsTag()
         {
             // Act
-            var predicate = _openApiService.CreatePredicate(tags: "^users.user$",
+            var predicate = _openApiService.CreatePredicate(operationIds: null, 
+                                                                                            tags: "^users.user$",
+                                                                                            url: null,
                                                            source: _graphMockSource,
                                                            graphVersion: GraphVersion);
 
