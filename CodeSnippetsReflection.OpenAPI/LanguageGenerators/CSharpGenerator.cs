@@ -143,7 +143,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Object:
-                    snippetBuilder.AppendLine($"{propertyAssignment}new {codeProperty.Name.ToFirstCharacterUpperCase()}");
+                    snippetBuilder.AppendLine($"{propertyAssignment}new {codeProperty.TypeDefinition.ToFirstCharacterUpperCase()}");
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
                     codeProperty.Children.ForEach( child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager));
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}{assignmentSuffix}");
@@ -162,9 +162,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}}},");
                     break;
                 case PropertyType.Array :
-                    snippetBuilder.AppendLine(isParentMap
-                        ? $"{propertyAssignment}new List<{codeProperty.TypeDefinition.ToFirstCharacterUpperCase()}>"
-                        : $"{propertyAssignment}new List<{codeProperty.Name.ToFirstCharacterUpperCase()}>");
+                    snippetBuilder.AppendLine($"{propertyAssignment}new List<{codeProperty.Children.FirstOrDefault().TypeDefinition.ToFirstCharacterUpperCase()}>");
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
                     codeProperty.Children.ForEach(child =>
                     {
@@ -174,8 +172,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     break;
                 case PropertyType.Guid:
                 case PropertyType.String:
-                case PropertyType.Enum:
                     snippetBuilder.AppendLine($"{propertyAssignment}\"{codeProperty.Value}\"{assignmentSuffix}");
+                    break;
+                case PropertyType.Enum:
+                    var segments = codeProperty.Value.Split('.');
+                    snippetBuilder.AppendLine($"{propertyAssignment}{segments.First()}.{segments.Last().ToLower().ToFirstCharacterUpperCase()}{assignmentSuffix}");
                     break;
                 case PropertyType.Date:
                     snippetBuilder.AppendLine($"{propertyAssignment}DateTimeOffset.Parse(\"{codeProperty.Value}\"){assignmentSuffix}");
@@ -193,11 +194,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.Double:
                     snippetBuilder.AppendLine($"{propertyAssignment}{codeProperty.Value}d{assignmentSuffix}");
                     break;
+                case PropertyType.Null:
+                case PropertyType.Int32:
                 case PropertyType.Boolean:
                     snippetBuilder.AppendLine($"{propertyAssignment}{codeProperty.Value.ToFirstCharacterLowerCase()}{assignmentSuffix}");
                     break;
-                case PropertyType.Int32:
-                case PropertyType.Null:
                 case PropertyType.Binary:
                 case PropertyType.Default:
                 default:

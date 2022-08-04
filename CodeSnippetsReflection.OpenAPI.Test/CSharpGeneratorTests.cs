@@ -214,6 +214,55 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.QueryParameters.Select", result);
             Assert.Contains("requestConfiguration.QueryParameters.Orderby", result);
         }
-        //TODO test for DateTimeOffset
+        [Fact]
+        public async Task GenerateSnippetsWithArrayNesting()
+        {
+            var eventData = @"
+             {
+               ""subject"": ""Let's go for lunch"",
+                ""body"": {
+                    ""contentType"": ""Html"",
+                    ""content"": ""Does noon work for you?""
+                },
+                ""start"": {
+                    ""dateTime"": ""2017-04-15T12:00:00"",
+                    ""timeZone"": ""Pacific Standard Time""
+                },
+                ""end"": {
+                    ""dateTime"": ""2017-04-15T14:00:00"",
+                    ""timeZone"": ""Pacific Standard Time""
+                },
+                ""location"":{
+                    ""displayName"": null
+                },
+                ""attendees"": [
+                {
+                    ""emailAddress"": {
+                        ""address"":""samanthab@contoso.onmicrosoft.com"",
+                        ""name"": ""Samantha Booth""
+                    },
+                    ""type"": ""required""
+                },
+                {
+                    ""emailAddress"": {
+                                    ""address"":""ss@contoso.com"", ""name"": ""Sorry Sir""}, ""type"":""Optional""
+                }
+                ],
+                ""allowNewTimeProposals"": true,
+                ""transactionId"":""7E163156-7762-4BEB-A1C6-729EA81755A7""
+           }";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/events")
+            {
+                Content = new StringContent(eventData, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("ContentType = BodyType.Html", result);
+            Assert.Contains("Attendees = new List<Attendee>", result);
+            Assert.Contains("Start = new DateTimeTimeZone", result);
+            Assert.Contains("DisplayName = null,", result);
+        }
     }
 }
