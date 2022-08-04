@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,30 +6,31 @@ using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
 
-namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
-	public class CSharpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
-	{
-		private const string ClientVarName = "graphClient";
-		private const string ClientVarType = "GraphServiceClient";
-		private const string HttpCoreVarName = "requestAdapter";
+namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
+{
+    public class CSharpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
+    {
+        private const string ClientVarName = "graphClient";
+        private const string ClientVarType = "GraphServiceClient";
+        private const string HttpCoreVarName = "requestAdapter";
         private const string RequestBodyVarName = "requestBody";
         private const string RequestConfigurationVarName = "requestConfiguration";
         private const string RequestHeadersPropertyName = "Headers";
         private const string RequestParametersPropertyName = "QueryParameters";
-        
-		public string GenerateCodeSnippet(SnippetModel snippetModel)
-		{
-			var indentManager = new IndentManager();
+
+        public string GenerateCodeSnippet(SnippetModel snippetModel)
+        {
+            var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
-			var snippetBuilder = new StringBuilder(
-									"//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-									$"var {ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
-			
+            var snippetBuilder = new StringBuilder(
+                                    "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
+                                    $"var {ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
             return snippetBuilder.ToString();
-		}
-        
+        }
+
         private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
         {
             var responseAssignment = codeGraph.HasReturnedBody() ? "var result = " : string.Empty;
@@ -39,13 +40,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             var parametersList = GetActionParametersList(requestPayloadParameterName , requestConfigurationPayload);
             payloadSb.AppendLine($"{responseAssignment}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{methodName}({parametersList});");
         }
-        
-        
+
         private static string GetRequestConfiguration(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager)
         {
             if (!snippetCodeGraph.HasHeaders() && !snippetCodeGraph.HasParameters())
                 return default;
-                
+
             var requestConfigurationBuilder = new StringBuilder();
             requestConfigurationBuilder.AppendLine($"({RequestConfigurationVarName}) =>");
             requestConfigurationBuilder.AppendLine($"{indentManager.GetIndent()}{{");
@@ -54,25 +54,26 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
             requestConfigurationBuilder.Append($"{indentManager.GetIndent()}}}");
             return requestConfigurationBuilder.ToString();
         }
-        
-        private static string GetActionParametersList(params string[] parameters) {
+
+        private static string GetActionParametersList(params string[] parameters)
+        {
             var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
             return nonEmptyParameters.Any() ? string.Join(", ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}")) : string.Empty;
         }
 
-        private static void WriteRequestHeaders(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, StringBuilder stringBuilder) {
+        private static void WriteRequestHeaders(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, StringBuilder stringBuilder)
+        {
             if (!snippetCodeGraph.HasHeaders()) 
                 return ;
-            
+
             indentManager.Indent();
             foreach (var header in snippetCodeGraph.Headers)
             {
                 stringBuilder.AppendLine($"{indentManager.GetIndent()}{RequestConfigurationVarName}.{RequestHeadersPropertyName}.Add(\"{header.Name}\", \"{header.Value.EscapeQuotes()}\");");
             }
-			indentManager.Unindent();
+            indentManager.Unindent();
+        }
 
-		}
-        
         private static void WriteRequestQueryParameters(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, StringBuilder stringBuilder)
         {
             if (!snippetCodeGraph.HasParameters())
@@ -84,9 +85,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                 stringBuilder.AppendLine($"{indentManager.GetIndent()}{RequestConfigurationVarName}.{RequestParametersPropertyName}.{queryParam.Name.ToFirstCharacterUpperCase()} = {GetQueryParameterValue(queryParam)};");
             }
             indentManager.Unindent();
-		}
-        
-		private static string GetQueryParameterValue(CodeProperty queryParam)
+        }
+
+        private static string GetQueryParameterValue(CodeProperty queryParam)
         {
             // boolean - true or false
             switch (queryParam.PropertyType)
@@ -105,31 +106,32 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     return $"\"{queryParam.Value.EscapeQuotes()}\"";
             }
         }
-		
-		private static void WriteRequestPayloadAndVariableName(SnippetCodeGraph snippetCodeGraph, StringBuilder snippetBuilder, IndentManager indentManager)
+
+        private static void WriteRequestPayloadAndVariableName(SnippetCodeGraph snippetCodeGraph, StringBuilder snippetBuilder, IndentManager indentManager)
         {
             if (!snippetCodeGraph.HasBody())
                 return;// No body
-            
-			if(indentManager == null) 
+
+            if(indentManager == null) 
                 throw new ArgumentNullException(nameof(indentManager));
 
-			switch (snippetCodeGraph.Body.PropertyType) {
-				case PropertyType.Object:
+            switch (snippetCodeGraph.Body.PropertyType)
+            {
+                case PropertyType.Object:
                     snippetBuilder.AppendLine($"var {RequestBodyVarName} = new {snippetCodeGraph.Body.Name.ToFirstCharacterUpperCase()}");
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
                     snippetCodeGraph.Body.Children.ForEach( child => WriteObjectFromCodeProperty(snippetCodeGraph.Body, child, snippetBuilder, indentManager));
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}}};");
-				    break;
+                    break;
                 case PropertyType.Binary:
                     snippetBuilder.AppendLine($"using var {RequestBodyVarName} = new MemoryStream(); //stream to upload");
                     break;
                 default:
-					throw new InvalidOperationException($"Unsupported property type for request: {snippetCodeGraph.Body.PropertyType}");
-			}
-		}
-        
-		private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager) 
+                    throw new InvalidOperationException($"Unsupported property type for request: {snippetCodeGraph.Body.PropertyType}");
+            }
+        }
+
+        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager) 
         {
             indentManager.Indent();
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
@@ -204,25 +206,25 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators {
                     break;
             }
             indentManager.Unindent();
-		}
+        }
 
-		private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes) {
-			if(!(nodes?.Any() ?? false)) 
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
+        {
+            if(!(nodes?.Any() ?? false)) 
                 return string.Empty;
-			
+
             return nodes.Select(x => {
-										if(x.Segment.IsCollectionIndex())
-											return x.Segment.Replace("{", "[\"").Replace("}", "\"]");
+                                        if(x.Segment.IsCollectionIndex())
+                                            return x.Segment.Replace("{", "[\"").Replace("}", "\"]");
                                         if (x.Segment.IsFunction())
                                             return x.Segment.Split('.').Last().ToFirstCharacterUpperCase();
                                         return x.Segment.ToFirstCharacterUpperCase();
-									})
-						.Aggregate((x, y) => {
-							var dot = y.StartsWith("[") ?
-											string.Empty :
-											".";
-							return $"{x}{dot}{y}";
-						});
-		}
-	}
+                                      })
+                                .Aggregate((x, y) =>
+                                {
+                                    var dot = y.StartsWith("[") ? string.Empty : ".";
+                                    return $"{x}{dot}{y}";
+                                });
+        }
+    }
 }
