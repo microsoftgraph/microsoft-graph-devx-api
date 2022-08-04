@@ -199,6 +199,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.Boolean:
                     snippetBuilder.AppendLine($"{propertyAssignment}{codeProperty.Value.ToFirstCharacterLowerCase()}{assignmentSuffix}");
                     break;
+                case PropertyType.Duration:
+                    snippetBuilder.AppendLine($"{propertyAssignment}TimeSpan.Parse(\"{codeProperty.Value}\"){assignmentSuffix}");
+                    break;
                 case PropertyType.Binary:
                 case PropertyType.Default:
                 default:

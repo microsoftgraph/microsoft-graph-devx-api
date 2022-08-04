@@ -264,5 +264,56 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Start = new DateTimeTimeZone", result);
             Assert.Contains("DisplayName = null,", result);
         }
+        [Fact]
+        public async Task GenerateFindMeetingTime()
+        {
+            var bodyContent = @"
+            {
+                ""attendees"": [
+                    {
+                        ""emailAddress"": {
+                            ""address"": ""{user-mail}"",
+                            ""name"": ""Alex Darrow""
+                        },
+                        ""type"": ""Required""
+                    }
+                    ],
+                    ""timeConstraint"": {
+                        ""timeSlots"": [
+                        {
+                            ""start"": {
+                                ""dateTime"": ""2022-07-18T13:24:57.384Z"",
+                                ""timeZone"": ""Pacific Standard Time""
+                            },
+                            ""end"": {
+                                ""dateTime"": ""2022-07-25T13:24:57.384Z"",
+                                ""timeZone"": ""Pacific Standard Time""
+                            }
+                        }
+                        ]
+                    },
+                    ""locationConstraint"": {
+                        ""isRequired"": ""false"",
+                        ""suggestLocation"": ""true"",
+                        ""locations"": [
+                        {
+                            ""displayName"": ""Conf Room 32/1368"",
+                            ""locationEmailAddress"": ""conf32room1368@imgeek.onmicrosoft.com""
+                        }
+                        ]
+                    },
+                    ""meetingDuration"": ""PT1H""
+            }";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/findMeetingTimes")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("MeetingDuration = TimeSpan.Parse(\"PT1H\")", result);
+            Assert.Contains("IsRequired = false,", result);
+            Assert.Contains("LocationEmailAddress = \"conf32room1368@imgeek.onmicrosoft.com\",", result);
+        }
     }
 }
