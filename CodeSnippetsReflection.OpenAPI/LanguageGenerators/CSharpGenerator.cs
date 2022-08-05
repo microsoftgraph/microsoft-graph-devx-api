@@ -135,10 +135,16 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             indentManager.Indent();
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
             var isParentMap = parentProperty.PropertyType == PropertyType.Map;
-            var assignmentSuffix = isParentMap ? string.Empty : ",";
-            var propertyAssignment =   isParentMap     ? $"{indentManager.GetIndent()}\"{codeProperty.Name}\" , " : // if its in the additionalData assignments happen using string value keys
-                                            isParentArray   ? $"{indentManager.GetIndent()}" // no assignments as entries as added directly to the collection
-                                                            : $"{indentManager.GetIndent()}{codeProperty.Name.ToFirstCharacterUpperCase()} = "; // otherwise default to the usual "var x = xyz"
+            var assignmentSuffix = isParentMap ? string.Empty : ","; // no comma separator values for additionalData/maps
+            var propertyAssignment = $"{indentManager.GetIndent()}{codeProperty.Name.ToFirstCharacterUpperCase()} = "; // default assignments to the usual "var x = xyz"
+            if (isParentMap)
+            {
+                propertyAssignment = $"{indentManager.GetIndent()}\"{codeProperty.Name}\" , "; // if its in the additionalData assignments happen using string value keys
+            }
+            else if (isParentArray)
+            {
+                propertyAssignment = $"{indentManager.GetIndent()}"; // no assignments as entries as added directly to the collection/array
+            }
 
             switch (codeProperty.PropertyType)
             {
@@ -204,6 +210,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     break;
                 case PropertyType.Binary:
                 case PropertyType.Default:
+                    snippetBuilder.AppendLine($"{propertyAssignment}\"{codeProperty.Value}\"{assignmentSuffix}");
+                    break;
                 default:
                     snippetBuilder.AppendLine($"{propertyAssignment}\"{codeProperty.Value}\"{assignmentSuffix}");
                     break;
