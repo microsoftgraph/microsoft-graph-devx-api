@@ -120,7 +120,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var nonArrayParams = codeGraph.Parameters.Where(x => x.PropertyType != PropertyType.Array);
 
             if (nonArrayParams.Any())
-                builder.AppendLine("");
+                builder.AppendLine(string.Empty);
 
             foreach (var param in nonArrayParams)
             {
