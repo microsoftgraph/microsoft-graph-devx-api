@@ -128,7 +128,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
 
             if (nonArrayParams.Any())
-                builder.AppendLine("");
+                builder.AppendLine(string.Empty);
 
             var className = $"graphconfig.{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
             builder.AppendLine($"{indentManager.GetIndent()}{requestParametersVarName} := &{className}{{");
