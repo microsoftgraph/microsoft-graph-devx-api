@@ -18,7 +18,6 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using System.Text;
 using OpenAPIService.Common;
 using UtilityService;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -28,6 +27,10 @@ using System.Text.Json;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.OpenApi.Any;
+using System.Threading;
+using Microsoft.Extensions.Configuration;
+using FileService.Common;
+using Microsoft.IO;
 
 namespace OpenAPIService
 {
@@ -42,12 +45,22 @@ namespace OpenAPIService
     public class OpenApiService : IOpenApiService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new();
+        private static readonly ConcurrentDictionary<Uri, DateTime> _OpenApiDocumentsDateCreated = new();
         private static readonly Dictionary<string, string> _openApiTraceProperties =
                         new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
         private readonly TelemetryClient _telemetryClient;
+        private readonly IConfiguration _configuration;
+        private static readonly SemaphoreSlim _openApiDocumentConversionAccess = new(2, 2); // only 2 threads can be granted access at a time.
+        private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInMinutes:OpenAPIDocuments";
+        private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
+        private readonly Queue<string> _graphUriQueue = new();
+        private static readonly RecyclableMemoryStreamManager _streamManager = new();
 
-        public OpenApiService(TelemetryClient telemetryClient = null)
+        public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
+            _configuration = configuration
+               ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: {nameof(configuration)}");
+            _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(_configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;
         }
         /// <summary>
@@ -183,7 +196,7 @@ namespace OpenAPIService
                 var tagsArray = tags.Split(',');
                 if (tagsArray.Length == 1)
                 {
-                    var regex = new Regex(tagsArray[0]);
+                    var regex = new Regex(Regex.Escape(tagsArray[0]));
 
                     predicate = (o) => o.Tags.Any(t => regex.IsMatch(t.Name));
                 }
@@ -434,7 +447,7 @@ namespace OpenAPIService
                                             SeverityLevel.Information,
                                             _openApiTraceProperties);
 
-            var stream = new MemoryStream();
+            var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(SerializeOpenApiDocument)}");
             var sr = new StreamWriter(stream);
             OpenApiWriterBase writer;
 
@@ -488,7 +501,7 @@ namespace OpenAPIService
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
-        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)
+        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)       
         {
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
@@ -500,19 +513,84 @@ namespace OpenAPIService
                 return doc;
             }
 
-            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-            _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
-            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+            /* OpenAPI document not cached;
+             * Ensure only one thread is running the conversion process.
+             */
+            await _openApiDocumentConversionAccess.WaitAsync();
+            try
+            {
+                _telemetryClient?.TrackTrace("Conversion lock successfully acquired.",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
 
-            OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
-            _OpenApiDocuments[csdlHref] = source;
-            return source;
+                // Check whether previous thread already cached the OpenAPI document.                
+                if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out doc))
+                {
+                    _telemetryClient?.TrackTrace("OpenAPI document converted and cached by another thread. " +
+                                                 "Retrieving cached document.",
+                                                 SeverityLevel.Information,
+                                                 _openApiTraceProperties);
+
+                    return doc;
+                }
+
+                // Check whether forceRefresh is requested before the allowable refresh period has elapsed.
+                if (_OpenApiDocumentsDateCreated.TryGetValue(csdlHref, out DateTime dateCreated))
+                {
+                    var minutesElapsed = (DateTime.UtcNow - dateCreated).Minutes;
+                    if (minutesElapsed < _defaultForceRefreshTime)
+                    {
+                        // Return the cached document.
+                        _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+                        _telemetryClient?.TrackTrace($"forceRefresh requested within {minutesElapsed} minutes. " +
+                                                     $"Retrieving cached OpenAPI document.",
+                                                     SeverityLevel.Information,
+                                                     _openApiTraceProperties);
+                        _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+                        _OpenApiDocuments.TryGetValue(csdlHref, out doc);
+                        return doc;
+                    }
+                }
+
+                if (_graphUriQueue.Contains(graphUri))
+                {
+                    // Only 1 thread per Graph version allowed to convert OpenAPI document.
+                    _telemetryClient?.TrackTrace("OpenAPI conversion attempted by a new thread while a separate thread is still " +
+                                                 "performing a conversion for a similar Graph version. New thread requeued.",
+                                                 SeverityLevel.Information,
+                                                 _openApiTraceProperties);
+                    return await GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
+                }
+
+                // Refresh the OpenAPI document.
+                _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+                _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
+                _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+
+                _graphUriQueue.Enqueue(graphUri);
+                OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
+                _OpenApiDocuments[csdlHref] = source;
+                _OpenApiDocumentsDateCreated[csdlHref] = DateTime.UtcNow;
+                return source;
+            }
+            finally
+            {
+                if (_graphUriQueue.Any())
+                {
+                    _graphUriQueue.Dequeue();
+                }
+                
+                _openApiDocumentConversionAccess.Release();
+                _telemetryClient?.TrackTrace("Conversion lock successfully released.",
+                                             SeverityLevel.Information,
+                                             _openApiTraceProperties);
+            }            
         }
 
         /// <summary>
-        /// Update the OpenAPI document based on the style option
+        /// Update the OpenAPI document based on the style option.
         /// </summary>
         /// <param name="style">The OpenApiStyle value.</param>
         /// <param name="subsetOpenApiDocument">The subset of an OpenAPI document.</param>
@@ -526,7 +604,7 @@ namespace OpenAPIService
             if (style == OpenApiStyle.GEAutocomplete)
             {
                 // Clone doc before making changes
-                subsetOpenApiDocument = Clone(subsetOpenApiDocument);
+                subsetOpenApiDocument = CloneOpenApiDocument(subsetOpenApiDocument);
 
                 if(!includeRequestBody)
                 {
@@ -540,7 +618,7 @@ namespace OpenAPIService
                 /* For Powershell and PowerPlatform Styles */
 
                 // Clone doc before making changes
-                subsetOpenApiDocument = Clone(subsetOpenApiDocument);
+                subsetOpenApiDocument = CloneOpenApiDocument(subsetOpenApiDocument);
 
                 // Remove AnyOf
                 var anyOfRemover = new AnyOfRemover();
@@ -582,17 +660,6 @@ namespace OpenAPIService
             return subsetOpenApiDocument;
         }
 
-        private static OpenApiDocument Clone(OpenApiDocument subsetOpenApiDocument)
-        {
-            var stream = new MemoryStream();
-            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
-            subsetOpenApiDocument.SerializeAsV3(writer);
-            writer.Flush();
-            stream.Position = 0;
-            var reader = new OpenApiStreamReader();
-            return reader.Read(stream, out _);
-        }
-
         private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
         {
             var stopwatch = new Stopwatch();
@@ -602,7 +669,7 @@ namespace OpenAPIService
             Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
             stopwatch.Stop();
 
-            _openApiTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
             _telemetryClient?.TrackTrace($"Success getting CSDL for {csdlHref} in {stopwatch.ElapsedMilliseconds}ms",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
@@ -620,7 +687,7 @@ namespace OpenAPIService
         /// <returns>An OpenAPI document.</returns>
         public async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl)
         {
-            _telemetryClient?.TrackTrace("Converting CSDL stream to an OpenApi document",
+            _telemetryClient?.TrackTrace("Converting CSDL stream to an OpenApi document.",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
@@ -646,23 +713,37 @@ namespace OpenAPIService
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
-            document = FixReferences(document);
-
-            _telemetryClient?.TrackTrace("Finished converting CSDL stream to an OpenApi document",
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
+            _telemetryClient?.TrackTrace("Finished converting CSDL stream to an OpenApi document. " +
+                                        $"No. of paths: {document.Paths.Count}",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
+            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+
+            // The output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance,
+            // so we write it out, and read it back in again to fix it up.
+            document = CloneOpenApiDocument(document);
 
             return document;
         }
 
-        public OpenApiDocument FixReferences(OpenApiDocument document)
+        public OpenApiDocument CloneOpenApiDocument(OpenApiDocument subsetOpenApiDocument)
         {
-            // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
-            // So we write it out, and read it back in again to fix it up.
+            _telemetryClient?.TrackTrace("Cloning OpenAPI document.",
+                                         SeverityLevel.Information,
+                                         _openApiTraceProperties);
 
-            var sb = new StringBuilder();
-            document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
-            var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
+            var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(CloneOpenApiDocument)}");
+            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
+            subsetOpenApiDocument.SerializeAsV3(writer);
+            writer.Flush();
+            stream.Position = 0;
+            var reader = new OpenApiStreamReader();
+            var doc = reader.Read(stream, out _);
+
+            _telemetryClient?.TrackTrace("Finished cloning OpenAPI document.",
+                                         SeverityLevel.Information,
+                                         _openApiTraceProperties);
 
             return doc;
         }
