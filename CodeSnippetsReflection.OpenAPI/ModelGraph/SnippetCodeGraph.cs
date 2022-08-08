@@ -21,8 +21,6 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static readonly Regex splitCommasExcludingBracketsRegex = new(@"([^,\(\)]+(\(.*?\))*)+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        private static readonly Regex specialOdataPropertiesRegex = new(@"@+(.+)+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
         private static readonly CodeProperty EMPTY_PROPERTY = new() { Name = null, Value = null, Children = null, PropertyType = PropertyType.Default };
 
         private static Dictionary<string, PropertyType> _formatPropertyTypes = new (StringComparer.OrdinalIgnoreCase)
@@ -310,18 +308,8 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             return new CodeProperty { Name = propertyName, Value = propertyValue, PropertyType = propertyType, Children = new List<CodeProperty>() };
         }
 
-        private static string cleanPropertyName(string propertyName){
-            var match = specialOdataPropertiesRegex.Match(propertyName);
-            if(match.Success){
-                return string.Join("",match.Groups[1].Value.Split(".").Select(x => x.ToFirstCharacterUpperCase()));
-            }else{
-                return propertyName;
-            }
-        }
-
-        private static CodeProperty parseProperty(string propertyRawName, JsonElement value, OpenApiSchema propSchema)
+        private static CodeProperty parseProperty(string propertyName, JsonElement value, OpenApiSchema propSchema)
         {
-            var propertyName = cleanPropertyName(propertyRawName);
             switch (value.ValueKind)
             {
                 case JsonValueKind.String:

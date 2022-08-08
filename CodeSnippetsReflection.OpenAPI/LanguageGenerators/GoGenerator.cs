@@ -23,6 +23,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string requestOptionsVarName = "options";
         private const string requestParametersVarName = "requestParameters";
         private const string requestConfigurationVarName = "configuration";
+        
+        private static IImmutableSet<string> specialProperties = ImmutableHashSet.Create("@odata.type");
+        
         private static IImmutableSet<string> NativeTypes = GetNativeTypes();
 
         static IImmutableSet<string> GetNativeTypes()
@@ -361,7 +364,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static void WriteCodePropertyObject(string propertyAssignment, StringBuilder builder, CodeProperty codeProperty, IndentManager indentManager)
         {
             var childPosition = 0;
-            foreach (var child in codeProperty.Children)
+            foreach (var child in codeProperty.Children.Where(x => !specialProperties.Contains(x.Name.Trim())))
                 WriteCodeProperty(propertyAssignment, builder, codeProperty, child, indentManager, childPosition++);
         }
 
