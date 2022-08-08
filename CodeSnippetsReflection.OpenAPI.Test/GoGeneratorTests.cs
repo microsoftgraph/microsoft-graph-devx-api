@@ -296,6 +296,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("SetIncludeUserActions", result);
         }
+        [Fact]
+        public async Task WriteCorrectTypesForFilterParameters()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
+                $"{ServiceRootBetaUrl}/identityGovernance/accessReviews/definitions?$top=100&$skip=0");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestTop := int32(100)", result);
+            Assert.Contains("requestSkip := int32(0)", result);
+        }
 
         /**
          
