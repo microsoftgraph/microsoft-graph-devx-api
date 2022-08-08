@@ -278,7 +278,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         {
             if ((propSchema?.Type?.Equals("boolean", StringComparison.OrdinalIgnoreCase) ?? false))
                 return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.Boolean, Children = new List<CodeProperty>() };
-            var formatString = propSchema?.Format?.ToLower();
+            var formatString = propSchema?.Format;
             if (!string.IsNullOrEmpty(formatString) && _formatPropertyTypes.TryGetValue(formatString, out var type))
                 return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = type, Children = new List<CodeProperty>() };
             var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
