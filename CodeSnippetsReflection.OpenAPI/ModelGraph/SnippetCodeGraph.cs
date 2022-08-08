@@ -23,7 +23,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static readonly CodeProperty EMPTY_PROPERTY = new() { Name = null, Value = null, Children = null, PropertyType = PropertyType.Default };
 
-        private static Dictionary<string, PropertyType> _formatPropertyTypes = new ()
+        private static Dictionary<string, PropertyType> _formatPropertyTypes = new (StringComparer.OrdinalIgnoreCase)
         {
             {"int32", PropertyType.Int32},
             {"int64", PropertyType.Int64},
