@@ -25,6 +25,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         Base64Url,
         Binary,
         Array,
-        Map
+        Map,
+        Duration
     }
 }
