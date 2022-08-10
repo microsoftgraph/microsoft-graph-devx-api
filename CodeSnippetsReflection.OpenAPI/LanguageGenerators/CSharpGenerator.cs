@@ -136,7 +136,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
             var isParentMap = parentProperty.PropertyType == PropertyType.Map;
             var assignmentSuffix = isParentMap ? string.Empty : ","; // no comma separator values for additionalData/maps
-            var propertyAssignment = $"{indentManager.GetIndent()}{codeProperty.Name.ToFirstCharacterUpperCase()} = "; // default assignments to the usual "var x = xyz"
+            var propertyAssignment = $"{indentManager.GetIndent()}{codeProperty.Name.CleanupSymbolName().ToFirstCharacterUpperCase()} = "; // default assignments to the usual "var x = xyz"
             if (isParentMap)
             {
                 propertyAssignment = $"{indentManager.GetIndent()}\"{codeProperty.Name}\" , "; // if its in the additionalData assignments happen using string value keys
