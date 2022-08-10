@@ -229,7 +229,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             return x.Segment.Replace("{", "[\"").Replace("}", "\"]");
                                         if (x.Segment.IsFunction())
                                             return x.Segment.Split('.').Last().ToFirstCharacterUpperCase();
-                                        return x.Segment.ToFirstCharacterUpperCase();
+                                        return x.Segment.TrimStart('$').ToFirstCharacterUpperCase();
                                       })
                                 .Aggregate((x, y) =>
                                 {

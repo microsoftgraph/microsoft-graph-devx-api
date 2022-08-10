@@ -233,6 +233,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("OdataType = \"#microsoft.graph.socialIdentityProvider\",", result);
         }
         [Fact]
+        public async Task HandlesOdataReferenceSegmentsInUrl() {
+            var sampleJson = @"
+                {
+                ""@odata.id"": ""https://graph.microsoft.com/beta/users/alexd@contoso.com""
+                }
+            ";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups/id/acceptedSenders/$ref"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains(".AcceptedSenders.Ref.PostAsync(requestBody);", result);
+        }
+        [Fact]
         public async Task GenerateSnippetsWithArrayNesting()
         {
             var eventData = @"
