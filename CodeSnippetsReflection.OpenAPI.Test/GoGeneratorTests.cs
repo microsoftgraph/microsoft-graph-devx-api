@@ -57,6 +57,24 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains(".DrivesById(\"drive-id\").ItemsById(\"driveItem-id\").Checkin().", result);
         }
         [Fact]
+        public async Task IgnoreOdataTypeWhenGenerating() {
+            var sampleJson = @"
+                {
+                ""@odata.type"": ""microsoft.graph.socialIdentityProvider"",
+                ""displayName"": ""Login with Amazon"",
+                ""identityProviderType"": ""Amazon"",
+                ""clientId"": ""56433757-cadd-4135-8431-2c9e3fd68ae8"",
+                ""clientSecret"": ""000000000000""
+                }
+            ";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identity/identityProviders"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.DoesNotContain("@odata.type", result);
+        }
+        [Fact]
         public async Task GeneratesTheSnippetHeader() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
@@ -295,6 +313,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("SetIncludeUserActions", result);
+        }
+        [Fact]
+        public async Task WriteCorrectTypesForFilterParameters()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
+                $"{ServiceRootBetaUrl}/identityGovernance/accessReviews/definitions?$top=100&$skip=0");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestTop := int32(100)", result);
+            Assert.Contains("requestSkip := int32(0)", result);
         }
 
         /**
