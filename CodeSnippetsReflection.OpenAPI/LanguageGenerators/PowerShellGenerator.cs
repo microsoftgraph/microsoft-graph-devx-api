@@ -79,7 +79,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             int lastIndex = path.LastIndexOf('/');
             var lastValue = path.Substring(lastIndex + 1);
-            if (!lastValue.StartsWith("{") && snippetModel.Method == HttpMethod.Get) return true;
+            if (lastValue.Equals("$value") && snippetModel.Method == HttpMethod.Get) return true;
             return false;
         }
 
