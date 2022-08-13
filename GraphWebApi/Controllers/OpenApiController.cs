@@ -129,10 +129,12 @@ namespace GraphWebApi.Controllers
                 sources.TryAdd(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
             }
 
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
+            
             Response.ContentType = "application/json";
             Response.StatusCode = 200;
             await Response.StartAsync();
-            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
+            
             var writer = new Utf8JsonWriter(Response.BodyWriter, new JsonWriterOptions() { Indented = false });
             OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
             await writer.FlushAsync();
