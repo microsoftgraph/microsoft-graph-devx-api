@@ -34,8 +34,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IOpenApiService _openApiService;
-        private readonly RecyclableMemoryStreamManager _streamManager = new();
-
+ 
         public OpenApiController(IConfiguration configuration, IOpenApiService openApiService)
         {
             UtilityFunctions.CheckArgumentNull(openApiService, nameof(openApiService));
