@@ -18,6 +18,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using UtilityService;
 using Constants = OpenAPIService.Common.Constants;
@@ -97,7 +98,7 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/tree")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string graphVersions = "*",
+        public async Task Get([FromQuery] string graphVersions = "*",
                                              [FromQuery] bool forceRefresh = false)
         {
             if (string.IsNullOrEmpty(graphVersions))
@@ -129,10 +130,13 @@ namespace GraphWebApi.Controllers
                 sources.TryAdd(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, forceRefresh));
             }
 
+            Response.ContentType = "application/json";
+            Response.StatusCode = 200;
+            await Response.StartAsync();
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
-            using var stream = _streamManager.GetStream($"{nameof(OpenApiController)}.openapi_tree");
-            _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
-            return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
+            var writer = new Utf8JsonWriter(Response.BodyWriter, new JsonWriterOptions() { Indented = false });
+            OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
+            await writer.FlushAsync();
         }
 
         [Route("openapi")]
