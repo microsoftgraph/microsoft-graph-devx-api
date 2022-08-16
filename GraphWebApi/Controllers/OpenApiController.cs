@@ -5,7 +5,6 @@
 using GraphWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IO;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService;
@@ -37,8 +36,8 @@ namespace GraphWebApi.Controllers
  
         public OpenApiController(IConfiguration configuration, IOpenApiService openApiService)
         {
-            UtilityFunctions.CheckArgumentNull(openApiService, nameof(openApiService));
-            UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
+            ArgumentNullException.ThrowIfNull(openApiService, nameof(openApiService));
+            ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
             _configuration = configuration;
             _openApiService = openApiService;
         }
@@ -62,7 +61,7 @@ namespace GraphWebApi.Controllers
 
             var graphUri = GetVersionUri(styleOptions.GraphVersion);
 
-            if (graphUri == null)
+            if (string.IsNullOrEmpty(graphUri))
             {
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
@@ -83,7 +82,7 @@ namespace GraphWebApi.Controllers
 
             var graphUri = GetVersionUri(styleOptions.GraphVersion);
 
-            if (graphUri == null)
+            if (string.IsNullOrEmpty(graphUri))
             {
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
@@ -106,7 +105,7 @@ namespace GraphWebApi.Controllers
             }
 
             HashSet<string> graphVersionsList = new();
-            if (graphVersions == "*")
+            if ("*".Equals(graphVersions, StringComparison.OrdinalIgnoreCase))
             {
                 // Use both v1.0 and beta
                 graphVersionsList.Add(Constants.OpenApiConstants.GraphVersion_V1);
@@ -121,7 +120,7 @@ namespace GraphWebApi.Controllers
             foreach (var graphVersion in graphVersionsList)
             {
                 var graphUri = GetVersionUri(graphVersion);
-                if (graphUri == null)
+                if (string.IsNullOrEmpty(graphUri))
                 {
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
@@ -173,7 +172,7 @@ namespace GraphWebApi.Controllers
 
             var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
 
-            if (styleOptions.OpenApiFormat == "yaml")
+            if ("yaml".Equals(styleOptions.OpenApiFormat, StringComparison.OrdinalIgnoreCase))
             {
                 return new FileStreamResult(stream, "text/yaml");
             }
