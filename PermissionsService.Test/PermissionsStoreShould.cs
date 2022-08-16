@@ -263,7 +263,11 @@ namespace PermissionsService.Test
         {
             /* Act & Assert */
 
-            Assert.Throws<InvalidOperationException>(() => PermissionStoreFactoryMock.GetPermissionStore(Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest-empty.json")));
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                var store = PermissionStoreFactoryMock.GetPermissionStore(Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest-empty.json"));
+                store.GetUriTemplateMatcher();  // Permissions store defers loading of file until needed
+            });
         }
 
         [Fact]
