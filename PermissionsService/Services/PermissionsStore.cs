@@ -26,7 +26,7 @@ namespace PermissionsService
     public class PermissionsStore : IPermissionsStore
     {
         
-        private readonly IMemoryCache _Cache;
+        private readonly IMemoryCache _cache;
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IConfiguration _configuration;
@@ -67,7 +67,7 @@ namespace PermissionsService
             _telemetryClient = telemetryClient;
             _configuration = configuration
                ?? throw new ArgumentNullException(nameof(configuration), $"{NullValueError}: {nameof(configuration)}");
-            _Cache = permissionsCache
+            _cache = permissionsCache
                 ?? throw new ArgumentNullException(nameof(permissionsCache), $"{NullValueError}: {nameof(permissionsCache)}");
             _httpClientUtility = httpClientUtility
                 ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{NullValueError}: {nameof(httpClientUtility)}");
@@ -87,12 +87,12 @@ namespace PermissionsService
         {
             get
             {
-                if (!_Cache.TryGetValue<PermissionsDataInfo>("PermissionsData", out var permissionsData))
+                if (!_cache.TryGetValue<PermissionsDataInfo>("PermissionsData", out var permissionsData))
                 {
                     lock (_permissionsLock)
                     {
                         permissionsData = LoadPermissionsData();
-                        _Cache.Set("PermissionsData", permissionsData, new MemoryCacheEntryOptions
+                        _cache.Set("PermissionsData", permissionsData, new MemoryCacheEntryOptions
                         {
                             AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours)
                         });
@@ -180,7 +180,7 @@ namespace PermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
 
-            var scopesInformationDictionary = await _Cache.GetOrCreateAsync($"ScopesInfoList_{locale}", cacheEntry =>
+            var scopesInformationDictionary = await _cache.GetOrCreateAsync($"ScopesInfoList_{locale}", cacheEntry =>
             {
                 _telemetryClient?.TrackTrace($"In-memory cache 'ScopesInfoList_{locale}' empty. " +
                                              $"Seeding permissions for locale '{locale}' from Azure blob resource",
@@ -196,7 +196,7 @@ namespace PermissionsService
                      * instance of the localized permissions descriptions
                      * during the lock.
                      */
-                    var seededScopesInfoDictionary = _Cache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
+                    var seededScopesInfoDictionary = _cache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
                     var sourceMsg = $"Return locale '{locale}' permissions from in-memory cache 'ScopesInfoList_{locale}'";
 
                     if (seededScopesInfoDictionary == null)
