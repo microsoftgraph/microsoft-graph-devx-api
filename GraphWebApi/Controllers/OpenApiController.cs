@@ -138,6 +138,7 @@ namespace GraphWebApi.Controllers
             var writer = new Utf8JsonWriter(Response.BodyWriter, new JsonWriterOptions() { Indented = false });
             OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
             await writer.FlushAsync();
+            await Response.CompleteAsync();
         }
 
         [Route("openapi")]
