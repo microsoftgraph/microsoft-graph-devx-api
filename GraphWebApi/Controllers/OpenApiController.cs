@@ -5,7 +5,6 @@
 using GraphWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IO;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService;
@@ -18,6 +17,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using UtilityService;
 using Constants = OpenAPIService.Common.Constants;
@@ -33,12 +33,11 @@ namespace GraphWebApi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IOpenApiService _openApiService;
-        private readonly RecyclableMemoryStreamManager _streamManager = new();
-
+ 
         public OpenApiController(IConfiguration configuration, IOpenApiService openApiService)
         {
-            UtilityFunctions.CheckArgumentNull(openApiService, nameof(openApiService));
-            UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
+            ArgumentNullException.ThrowIfNull(openApiService, nameof(openApiService));
+            ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
             _configuration = configuration;
             _openApiService = openApiService;
         }
@@ -62,7 +61,7 @@ namespace GraphWebApi.Controllers
 
             var graphUri = GetVersionUri(styleOptions.GraphVersion);
 
-            if (graphUri == null)
+            if (string.IsNullOrEmpty(graphUri))
             {
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
@@ -83,7 +82,7 @@ namespace GraphWebApi.Controllers
 
             var graphUri = GetVersionUri(styleOptions.GraphVersion);
 
-            if (graphUri == null)
+            if (string.IsNullOrEmpty(graphUri))
             {
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
@@ -97,7 +96,7 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/tree")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string graphVersions = "*",
+        public async Task Get([FromQuery] string graphVersions = "*",
                                              [FromQuery] bool forceRefresh = false)
         {
             if (string.IsNullOrEmpty(graphVersions))
@@ -106,7 +105,7 @@ namespace GraphWebApi.Controllers
             }
 
             HashSet<string> graphVersionsList = new();
-            if (graphVersions == "*")
+            if ("*".Equals(graphVersions, StringComparison.OrdinalIgnoreCase))
             {
                 // Use both v1.0 and beta
                 graphVersionsList.Add(Constants.OpenApiConstants.GraphVersion_V1);
@@ -121,7 +120,7 @@ namespace GraphWebApi.Controllers
             foreach (var graphVersion in graphVersionsList)
             {
                 var graphUri = GetVersionUri(graphVersion);
-                if (graphUri == null)
+                if (string.IsNullOrEmpty(graphUri))
                 {
                     throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
                 }
@@ -130,9 +129,15 @@ namespace GraphWebApi.Controllers
             }
 
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
-            using var stream = _streamManager.GetStream($"{nameof(OpenApiController)}.openapi_tree");
-            _openApiService.ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
-            return Content(Encoding.ASCII.GetString(stream.ToArray()), "application/json");
+            
+            Response.ContentType = "application/json";
+            Response.StatusCode = 200;
+            await Response.StartAsync();
+            
+            var writer = new Utf8JsonWriter(Response.BodyWriter, new JsonWriterOptions() { Indented = false });
+            OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
+            await writer.FlushAsync();
+            await Response.CompleteAsync();
         }
 
         [Route("openapi")]
@@ -167,7 +172,7 @@ namespace GraphWebApi.Controllers
 
             var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
 
-            if (styleOptions.OpenApiFormat == "yaml")
+            if ("yaml".Equals(styleOptions.OpenApiFormat, StringComparison.OrdinalIgnoreCase))
             {
                 return new FileStreamResult(stream, "text/yaml");
             }

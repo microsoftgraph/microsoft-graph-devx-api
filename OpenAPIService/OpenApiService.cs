@@ -196,7 +196,7 @@ namespace OpenAPIService
                 var tagsArray = tags.Split(',');
                 if (tagsArray.Length == 1)
                 {
-                    var regex = new Regex(tagsArray[0]);
+                    var regex = new Regex(Regex.Escape(tagsArray[0]));
 
                     predicate = (o) => o.Tags.Any(t => regex.IsMatch(t.Name));
                 }
@@ -402,7 +402,7 @@ namespace OpenAPIService
         /// <param name="writer">An instance of the <see cref="Utf8JsonWriter"/> class that
         /// uses a specified stream to write the JSON output to.</param>
         /// <param name="rootNode">The target <see cref="OpenApiUrlTreeNode"/> object.</param>
-        private static void ConvertOpenApiUrlTreeNodeToJson(Utf8JsonWriter writer, OpenApiUrlTreeNode rootNode)
+        public static void ConvertOpenApiUrlTreeNodeToJson(Utf8JsonWriter writer, OpenApiUrlTreeNode rootNode)
         {
             writer.WriteStartObject();
             writer.WriteString("segment", rootNode.Segment);

@@ -103,7 +103,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("10L", result);
-            Assert.Contains("SendActivityNotificationRequestBody", result);
+            Assert.Contains("SendActivityNotificationPostRequestBody", result);
             Assert.DoesNotContain("microsoft.graph", result);
         }
         [Fact]
@@ -212,8 +212,140 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.QueryParameters.Count", result);
             Assert.Contains("requestConfiguration.QueryParameters.Filter", result);
             Assert.Contains("requestConfiguration.QueryParameters.Select", result);
-            Assert.Contains("requestConfiguration.QueryParameters.OrderBy", result);
+            Assert.Contains("requestConfiguration.QueryParameters.Orderby", result);
         }
-        //TODO test for DateTimeOffset
+        [Fact]
+        public async Task HandlesOdataTypeWhenGenerating() {
+            var sampleJson = @"
+                {
+                ""@odata.type"": ""#microsoft.graph.socialIdentityProvider"",
+                ""displayName"": ""Login with Amazon"",
+                ""identityProviderType"": ""Amazon"",
+                ""clientId"": ""56433757-cadd-4135-8431-2c9e3fd68ae8"",
+                ""clientSecret"": ""000000000000""
+                }
+            ";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identity/identityProviders"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("OdataType = \"#microsoft.graph.socialIdentityProvider\",", result);
+        }
+        [Fact]
+        public async Task HandlesOdataReferenceSegmentsInUrl() {
+            var sampleJson = @"
+                {
+                ""@odata.id"": ""https://graph.microsoft.com/beta/users/alexd@contoso.com""
+                }
+            ";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups/id/acceptedSenders/$ref"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains(".AcceptedSenders.Ref.PostAsync(requestBody);", result);
+        }
+        [Fact]
+        public async Task GenerateSnippetsWithArrayNesting()
+        {
+            var eventData = @"
+             {
+               ""subject"": ""Let's go for lunch"",
+                ""body"": {
+                    ""contentType"": ""Html"",
+                    ""content"": ""Does noon work for you?""
+                },
+                ""start"": {
+                    ""dateTime"": ""2017-04-15T12:00:00"",
+                    ""timeZone"": ""Pacific Standard Time""
+                },
+                ""end"": {
+                    ""dateTime"": ""2017-04-15T14:00:00"",
+                    ""timeZone"": ""Pacific Standard Time""
+                },
+                ""location"":{
+                    ""displayName"": null
+                },
+                ""attendees"": [
+                {
+                    ""emailAddress"": {
+                        ""address"":""samanthab@contoso.onmicrosoft.com"",
+                        ""name"": ""Samantha Booth""
+                    },
+                    ""type"": ""required""
+                },
+                {
+                    ""emailAddress"": {
+                                    ""address"":""ss@contoso.com"", ""name"": ""Sorry Sir""}, ""type"":""Optional""
+                }
+                ],
+                ""allowNewTimeProposals"": true,
+                ""transactionId"":""7E163156-7762-4BEB-A1C6-729EA81755A7""
+           }";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/events")
+            {
+                Content = new StringContent(eventData, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("ContentType = BodyType.Html", result);
+            Assert.Contains("Attendees = new List<Attendee>", result);
+            Assert.Contains("Start = new DateTimeTimeZone", result);
+            Assert.Contains("DisplayName = null,", result);
+        }
+        [Fact]
+        public async Task GenerateFindMeetingTime()
+        {
+            var bodyContent = @"
+            {
+                ""attendees"": [
+                    {
+                        ""emailAddress"": {
+                            ""address"": ""{user-mail}"",
+                            ""name"": ""Alex Darrow""
+                        },
+                        ""type"": ""Required""
+                    }
+                    ],
+                    ""timeConstraint"": {
+                        ""timeSlots"": [
+                        {
+                            ""start"": {
+                                ""dateTime"": ""2022-07-18T13:24:57.384Z"",
+                                ""timeZone"": ""Pacific Standard Time""
+                            },
+                            ""end"": {
+                                ""dateTime"": ""2022-07-25T13:24:57.384Z"",
+                                ""timeZone"": ""Pacific Standard Time""
+                            }
+                        }
+                        ]
+                    },
+                    ""locationConstraint"": {
+                        ""isRequired"": ""false"",
+                        ""suggestLocation"": ""true"",
+                        ""locations"": [
+                        {
+                            ""displayName"": ""Conf Room 32/1368"",
+                            ""locationEmailAddress"": ""conf32room1368@imgeek.onmicrosoft.com""
+                        }
+                        ]
+                    },
+                    ""meetingDuration"": ""PT1H""
+            }";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/findMeetingTimes")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("MeetingDuration = TimeSpan.Parse(\"PT1H\")", result);
+            Assert.Contains("IsRequired = false,", result);
+            Assert.Contains("LocationEmailAddress = \"conf32room1368@imgeek.onmicrosoft.com\",", result);
+        }
     }
 }

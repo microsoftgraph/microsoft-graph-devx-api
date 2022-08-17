@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
@@ -22,6 +23,20 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static readonly CodeProperty EMPTY_PROPERTY = new() { Name = null, Value = null, Children = null, PropertyType = PropertyType.Default };
 
+        private static Dictionary<string, PropertyType> _formatPropertyTypes = new (StringComparer.OrdinalIgnoreCase)
+        {
+            {"int32", PropertyType.Int32},
+            {"int64", PropertyType.Int64},
+            {"double", PropertyType.Double},
+            {"float32", PropertyType.Float32},
+            {"float64", PropertyType.Float64},
+            {"duration", PropertyType.Duration},
+            {"boolean", PropertyType.Boolean},
+            {"base64url", PropertyType.Base64Url},
+            {"guid", PropertyType.Guid},
+            {"uuid", PropertyType.Guid},
+            {"date-time", PropertyType.Date}
+        };
         public SnippetCodeGraph(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiUrlTreeNode treeNode) : this(new SnippetModel(requestPayload, serviceRootUrl, treeNode)) {}
 
         public SnippetCodeGraph(SnippetModel snippetModel)
@@ -179,7 +194,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 case "application/json":
                     return TryParseBody(snippetModel);
                 case "application/octet-stream":
-                    return new() { Name = null, Value = snippetModel.RequestBody?.ToString(), Children = null, PropertyType = PropertyType.Binary };
+                    return new() { Name = null, Value = snippetModel.RequestBody, Children = null, PropertyType = PropertyType.Binary };
                 default:
                     return TryParseBody(snippetModel);//in case the content type header is missing but we still have a json payload
             }
@@ -261,15 +276,11 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static CodeProperty evaluateStringProperty(string propertyName, JsonElement value, OpenApiSchema propSchema)
         {
-            if (propSchema?.Format?.Equals("base64url", StringComparison.OrdinalIgnoreCase) ?? false)
-                return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.Base64Url, Children = new List<CodeProperty>() };
-
-            if (propSchema?.Format?.Equals("date-time", StringComparison.OrdinalIgnoreCase) ?? false)
-                return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.Date, Children = new List<CodeProperty>() };
-
-            if ((propSchema?.Format?.Equals("guid", StringComparison.OrdinalIgnoreCase) ?? false) || (propSchema?.Format?.Equals("uuid", StringComparison.OrdinalIgnoreCase) ?? false))
-                return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.Guid, Children = new List<CodeProperty>() };
-
+            if ((propSchema?.Type?.Equals("boolean", StringComparison.OrdinalIgnoreCase) ?? false))
+                return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.Boolean, Children = new List<CodeProperty>() };
+            var formatString = propSchema?.Format;
+            if (!string.IsNullOrEmpty(formatString) && _formatPropertyTypes.TryGetValue(formatString, out var type))
+                return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = type, Children = new List<CodeProperty>() };
             var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
             if ((propSchema?.Enum.Count ?? 0) == 0 && enumSchema == null)
                 return new CodeProperty { Name = propertyName, Value = escapeSpecialCharacters(value.GetString()), PropertyType = PropertyType.String, Children = new List<CodeProperty>() };
