@@ -149,10 +149,7 @@ namespace TelemetrySanitizerService
         /// <returns>The string url with PII sanitized from its query path.</returns>
         private string SanitizeUrlQueryPath(string url)
         {
-            // use the service provider to lazily get an IPermissionsStore instance
-            var permissionsStore = _serviceProvider.GetRequiredService<IPermissionsStore>();
-            var uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
-
+            
             const char QueryValSeparator = '&';
             var queryPath = url?.Query();
 
@@ -160,6 +157,10 @@ namespace TelemetrySanitizerService
             {
                 return url;
             }
+
+            // use the service provider to lazily get an IPermissionsStore instance
+            var permissionsStore = _serviceProvider.GetRequiredService<IPermissionsStore>();
+            var uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
 
             var queryValues = queryPath.Split(QueryValSeparator, StringSplitOptions.RemoveEmptyEntries);
 
