@@ -601,15 +601,12 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            if (style == OpenApiStyle.GEAutocomplete)
+            if (style == OpenApiStyle.GEAutocomplete && !includeRequestBody)
             {
-                if(!includeRequestBody)
-                {
-                    // The Content property and its schema $refs are unnecessary for autocomplete
-                    RemoveContent(subsetOpenApiDocument);
-                }
+                // The Content property and its schema $refs are unnecessary for autocomplete
+                RemoveContent(subsetOpenApiDocument);
             }
-            else if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
+            if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
                 // Remove AnyOf
                 var anyOfRemover = new AnyOfRemover();
