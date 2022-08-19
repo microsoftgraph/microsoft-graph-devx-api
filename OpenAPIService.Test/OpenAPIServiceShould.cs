@@ -220,6 +220,7 @@ namespace OpenAPIService.Test
         [InlineData(OpenApiStyle.Plain, "/users/12345", OperationType.Get)]
         [InlineData(OpenApiStyle.GEAutocomplete, "/users(user-id)messages(message-id)", OperationType.Get)]
         [InlineData(OpenApiStyle.GEAutocomplete, "/users/12345/messages/abcde", OperationType.Get)]
+        [InlineData(OpenApiStyle.GEAutocomplete, "/", OperationType.Get)] // root path
         [InlineData(OpenApiStyle.PowerPlatform, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
         [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post, "administrativeUnits_restore")]
         [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch, "users.user_UpdateUser")]
@@ -355,20 +356,21 @@ namespace OpenAPIService.Test
         }
 
         [Fact]
-        public void RemoveRootPathFromOpenApiDocumentInApplyStyleForPowerShellOpenApiStyle()
+        public void RetrieveAllOperationsAndPaths()
         {
             // Act
-            var predicate = _openApiService.CreatePredicate(operationIds: "*",
+            var predicate = _openApiService.CreatePredicate(operationIds: "*", // fetch all paths/operations
                                                            tags: null,
                                                            url: null,
-                                                           source: _graphMockSource); // fetch all paths/operations
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
 
             // Assert
-            Assert.False(subsetOpenApiDocument.Paths.ContainsKey("/")); // root path
+            Assert.Equal(14, subsetOpenApiDocument.Paths.Count);
         }
 
         [Fact]
@@ -400,7 +402,6 @@ namespace OpenAPIService.Test
         [InlineData("/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})", OperationType.Get, "reports_getSharePointSiteUsageDetail")]
         public void ResolveActionFunctionOperationIdsForPowerShellStyle(string url, OperationType operationType, string expectedOperationId)
         {
-
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
