@@ -31,6 +31,6 @@ namespace OpenAPIService.Interfaces
 
         Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl);
 
-        OpenApiDocument CloneOpenApiDocument(OpenApiDocument subsetOpenApiDocument);
+        OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument);
     }
 }

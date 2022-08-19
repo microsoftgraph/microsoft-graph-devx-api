@@ -601,25 +601,13 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            if (style == OpenApiStyle.GEAutocomplete)
+            if (style == OpenApiStyle.GEAutocomplete && !includeRequestBody)
             {
-                // Clone doc before making changes
-                subsetOpenApiDocument = CloneOpenApiDocument(subsetOpenApiDocument);
-
-                if(!includeRequestBody)
-                {
-                    // The Content property and its schema $refs are unnecessary for autocomplete
-                    RemoveContent(subsetOpenApiDocument);
-                }
+                // The Content property and its schema $refs are unnecessary for autocomplete
+                RemoveContent(subsetOpenApiDocument);
             }
-
-            else if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
+            if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
-                /* For Powershell and PowerPlatform Styles */
-
-                // Clone doc before making changes
-                subsetOpenApiDocument = CloneOpenApiDocument(subsetOpenApiDocument);
-
                 // Remove AnyOf
                 var anyOfRemover = new AnyOfRemover();
                 var walker = new OpenApiWalker(anyOfRemover);
@@ -727,7 +715,7 @@ namespace OpenAPIService
             return document;
         }
 
-        public OpenApiDocument CloneOpenApiDocument(OpenApiDocument subsetOpenApiDocument)
+        public OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument)
         {
             _telemetryClient?.TrackTrace("Cloning OpenAPI document.",
                                          SeverityLevel.Information,
@@ -735,7 +723,7 @@ namespace OpenAPIService
 
             var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(CloneOpenApiDocument)}");
             var writer = new OpenApiYamlWriter(new StreamWriter(stream));
-            subsetOpenApiDocument.SerializeAsV3(writer);
+            openApiDocument.SerializeAsV3(writer);
             writer.Flush();
             stream.Position = 0;
             var reader = new OpenApiStreamReader();
