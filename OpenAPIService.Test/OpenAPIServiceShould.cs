@@ -561,7 +561,7 @@ namespace OpenAPIService.Test
         [InlineData(OpenApiStyle.PowerShell)]
         [InlineData(OpenApiStyle.Plain)]
         [InlineData(OpenApiStyle.GEAutocomplete)]
-        public void RemoveOperationDescriptionsInCreateFilteredDocument(OpenApiStyle style)
+        public void ShowOperationDescriptionsInCreateFilteredDocument(OpenApiStyle style)
         {
             // Arrange
             var predicate = _openApiService.CreatePredicate(operationIds: null,
@@ -580,7 +580,7 @@ namespace OpenAPIService.Test
                               .Description;
 
             // Assert
-            Assert.Null(description);
+            Assert.NotNull(description);
         }
 
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
