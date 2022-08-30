@@ -196,7 +196,8 @@ namespace OpenAPIService
                 var tagsArray = tags.Split(',');
                 if (tagsArray.Length == 1)
                 {
-                    var regex = new Regex(Regex.Escape(tagsArray[0]));
+                    // Specify timeout to prevent DOS. See https://docs.microsoft.com/en-us/dotnet/standard/base-types/best-practices.
+                    var regex = new Regex(tagsArray[0], RegexOptions.None, TimeSpan.FromSeconds(1));
 
                     predicate = (o) => o.Tags.Any(t => regex.IsMatch(t.Name));
                 }
