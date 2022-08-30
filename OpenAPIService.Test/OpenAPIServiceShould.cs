@@ -358,7 +358,7 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(14, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(15, subsetOpenApiDocument.Paths.Count);
         }
 
         [Fact]

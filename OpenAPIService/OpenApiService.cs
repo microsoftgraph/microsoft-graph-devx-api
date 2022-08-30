@@ -774,6 +774,20 @@ namespace OpenAPIService
         private static bool AddReferences(OpenApiComponents newComponents, OpenApiComponents target)
         {
             var moreStuff = false;
+            moreStuff = AddComponentsSchemas(newComponents, target, moreStuff);
+            moreStuff = AddComponentsParameters(newComponents, target, moreStuff);
+            moreStuff = AddComponentsResponses(newComponents, target, moreStuff);
+            moreStuff = AddComponentsRequestBodies(newComponents, target, moreStuff);
+            moreStuff = AddComponentsExamples(newComponents, target, moreStuff);
+            moreStuff = AddComponentsHeaders(newComponents, target, moreStuff);
+            moreStuff = AddComponentsSecuritySchemes(newComponents, target, moreStuff);
+            moreStuff = AddComponentsLinks(newComponents, target, moreStuff);
+            moreStuff = AddComponentsCallBacks(newComponents, target, moreStuff);
+            return moreStuff;
+        }
+
+        private static bool AddComponentsSchemas(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        {
             foreach (var item in newComponents.Schemas)
             {
                 if (!target.Schemas.ContainsKey(item.Key))
@@ -783,6 +797,11 @@ namespace OpenAPIService
                 }
             }
 
+            return moreStuff;
+        }
+
+        private static bool AddComponentsParameters(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        {
             foreach (var item in newComponents.Parameters)
             {
                 if (!target.Parameters.ContainsKey(item.Key))
@@ -791,7 +810,11 @@ namespace OpenAPIService
                     target.Parameters.Add(item);
                 }
             }
+            return moreStuff;
+        }
 
+        private static bool AddComponentsResponses(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        {
             foreach (var item in newComponents.Responses)
             {
                 if (!target.Responses.ContainsKey(item.Key))
@@ -800,7 +823,11 @@ namespace OpenAPIService
                     target.Responses.Add(item);
                 }
             }
+            return moreStuff;
+        }
 
+        private static bool AddComponentsRequestBodies(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        {
             foreach (var item in newComponents.RequestBodies)
             {
                 if (!target.RequestBodies.ContainsKey(item.Key))
@@ -809,7 +836,11 @@ namespace OpenAPIService
                     target.RequestBodies.Add(item);
                 }
             }
+            return moreStuff;
+        }
 
+        private static bool AddComponentsExamples(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        {
             foreach (var item in newComponents.Examples)
             {
                 if (!target.Examples.ContainsKey(item.Key))
@@ -818,7 +849,11 @@ namespace OpenAPIService
                     target.Examples.Add(item);
                 }
             }
+            return moreStuff;
+        }
 
+        private static bool AddComponentsHeaders(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        {
             foreach (var item in newComponents.Headers)
             {
                 if (!target.Headers.ContainsKey(item.Key))
@@ -827,7 +862,11 @@ namespace OpenAPIService
                     target.Headers.Add(item);
                 }
             }
+            return moreStuff;
+        }
 
+        private static bool AddComponentsSecuritySchemes(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        {
             foreach (var item in newComponents.SecuritySchemes)
             {
                 if (!target.SecuritySchemes.ContainsKey(item.Key))
@@ -836,7 +875,11 @@ namespace OpenAPIService
                     target.SecuritySchemes.Add(item);
                 }
             }
+            return moreStuff;
+        }
 
+        private static bool AddComponentsLinks(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        {
             foreach (var item in newComponents.Links)
             {
                 if (!target.Links.ContainsKey(item.Key))
@@ -845,7 +888,11 @@ namespace OpenAPIService
                     target.Links.Add(item);
                 }
             }
+            return moreStuff;
+        }
 
+        private static bool AddComponentsCallBacks(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        {
             foreach (var item in newComponents.Callbacks)
             {
                 if (!target.Callbacks.ContainsKey(item.Key))

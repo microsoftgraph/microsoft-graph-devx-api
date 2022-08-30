@@ -17,87 +17,43 @@ namespace OpenAPIService
 
         public override void Visit(IOpenApiReferenceable referenceable)
         {
+            EnsureComponentsExists();
             switch (referenceable)
             {
                 case OpenApiSchema schema:
-                    EnsureComponentsExists();
-                    EnsureSchemasExists();
-                    if (!Components.Schemas.ContainsKey(schema.Reference.Id))
-                    {
-                        Components.Schemas.Add(schema.Reference.Id, schema);
-                    }
+                    CopyComponentsSchemaReference(schema);
                     break;
 
                 case OpenApiParameter parameter:
-                    EnsureComponentsExists();
-                    EnsureParametersExists();
-                    if (!Components.Parameters.ContainsKey(parameter.Reference.Id))
-                    {
-                        Components.Parameters.Add(parameter.Reference.Id, parameter);
-                    }
+                    CopyComponentsParameterReference(parameter);
                     break;
 
                 case OpenApiResponse response:
-                    EnsureComponentsExists();
-                    EnsureResponsesExists();
-                    if (!Components.Responses.ContainsKey(response.Reference.Id))
-                    {
-                        Components.Responses.Add(response.Reference.Id, response);
-                    }
+                    CopyComponentsResponseReference(response);
                     break;
 
                 case OpenApiRequestBody requestBody:
-                    EnsureComponentsExists();
-                    EnsureResponsesExists();
-                    if (!Components.RequestBodies.ContainsKey(requestBody.Reference.Id))
-                    {
-                        Components.RequestBodies.Add(requestBody.Reference.Id, requestBody);
-                    }
+                    CopyComponentsRequestBodyReference(requestBody);
                     break;
 
                 case OpenApiExample example:
-                    EnsureComponentsExists();
-                    EnsureResponsesExists();
-                    if (!Components.Examples.ContainsKey(example.Reference.Id))
-                    {
-                        Components.Examples.Add(example.Reference.Id, example);
-                    }
+                    CopyComponentsExampleReference(example);
                     break;
 
                 case OpenApiHeader header:
-                    EnsureComponentsExists();
-                    EnsureResponsesExists();
-                    if (!Components.Headers.ContainsKey(header.Reference.Id))
-                    {
-                        Components.Headers.Add(header.Reference.Id, header);
-                    }
+                    CopyComponentsHeaderReference(header);
                     break;
 
                 case OpenApiSecurityScheme securityScheme:
-                    EnsureComponentsExists();
-                    EnsureResponsesExists();
-                    if (!Components.SecuritySchemes.ContainsKey(securityScheme.Reference.Id))
-                    {
-                        Components.SecuritySchemes.Add(securityScheme.Reference.Id, securityScheme);
-                    }
+                    CopyComponentsSecuritySchemeReference(securityScheme);
                     break;
 
                 case OpenApiLink link:
-                    EnsureComponentsExists();
-                    EnsureResponsesExists();
-                    if (!Components.Links.ContainsKey(link.Reference.Id))
-                    {
-                        Components.Links.Add(link.Reference.Id, link);
-                    }
+                    CopyComponentsLinkReference(link);
                     break;
 
                 case OpenApiCallback callBack:
-                    EnsureComponentsExists();
-                    EnsureResponsesExists();
-                    if (!Components.Callbacks.ContainsKey(callBack.Reference.Id))
-                    {
-                        Components.Callbacks.Add(callBack.Reference.Id, callBack);
-                    }
+                    CopyComponentsCallBackReference(callBack);
                     break;
 
                 default:
@@ -115,7 +71,7 @@ namespace OpenAPIService
                 EnsureSchemasExists();
                 if (!Components.Schemas.ContainsKey(schema.Reference.Id))
                 {
-                    Components.Schemas.Add(schema.Reference.Id, schema); 
+                    Components.Schemas.Add(schema.Reference.Id, schema);
                 }
             }
             base.Visit(schema);
@@ -123,33 +79,92 @@ namespace OpenAPIService
 
         private void EnsureComponentsExists()
         {
-            if (target.Components == null)
-            {
-                target.Components = new OpenApiComponents();
-            }
+            target.Components ??= new OpenApiComponents();
         }
 
         private void EnsureSchemasExists()
         {
-            if (target.Components.Schemas == null)
+            target.Components.Schemas ??= new Dictionary<string, OpenApiSchema>();
+        }
+
+        private void CopyComponentsCallBackReference(OpenApiCallback callBack)
+        {
+            target.Components.Callbacks ??= new Dictionary<string, OpenApiCallback>();
+            if (!Components.Callbacks.ContainsKey(callBack.Reference.Id))
             {
-                target.Components.Schemas = new Dictionary<string, OpenApiSchema>();
+                Components.Callbacks.Add(callBack.Reference.Id, callBack);
             }
         }
 
-        private void EnsureParametersExists()
+        private void CopyComponentsLinkReference(OpenApiLink link)
         {
-            if (target.Components.Parameters == null)
+            target.Components.Links ??= new Dictionary<string, OpenApiLink>();
+            if (!Components.Links.ContainsKey(link.Reference.Id))
             {
-                target.Components.Parameters = new Dictionary<string, OpenApiParameter>();
+                Components.Links.Add(link.Reference.Id, link);
             }
         }
 
-        private void EnsureResponsesExists()
+        private void CopyComponentsSecuritySchemeReference(OpenApiSecurityScheme securityScheme)
         {
-            if (target.Components.Responses == null)
+            target.Components.SecuritySchemes ??= new Dictionary<string, OpenApiSecurityScheme>();
+            if (!Components.SecuritySchemes.ContainsKey(securityScheme.Reference.Id))
             {
-                target.Components.Responses = new Dictionary<string, OpenApiResponse>();
+                Components.SecuritySchemes.Add(securityScheme.Reference.Id, securityScheme);
+            }
+        }
+
+        private void CopyComponentsHeaderReference(OpenApiHeader header)
+        {
+            target.Components.Headers ??= new Dictionary<string, OpenApiHeader>();
+            if (!Components.Headers.ContainsKey(header.Reference.Id))
+            {
+                Components.Headers.Add(header.Reference.Id, header);
+            }
+        }
+
+        private void CopyComponentsExampleReference(OpenApiExample example)
+        {
+            target.Components.Examples ??= new Dictionary<string, OpenApiExample>();
+            if (!Components.Examples.ContainsKey(example.Reference.Id))
+            {
+                Components.Examples.Add(example.Reference.Id, example);
+            }
+        }
+
+        private void CopyComponentsRequestBodyReference(OpenApiRequestBody requestBody)
+        {
+            target.Components.RequestBodies ??= new Dictionary<string, OpenApiRequestBody>();
+            if (!Components.RequestBodies.ContainsKey(requestBody.Reference.Id))
+            {
+                Components.RequestBodies.Add(requestBody.Reference.Id, requestBody);
+            }
+        }
+
+        private void CopyComponentsResponseReference(OpenApiResponse response)
+        {
+            target.Components.Responses ??= new Dictionary<string, OpenApiResponse>();
+            if (!Components.Responses.ContainsKey(response.Reference.Id))
+            {
+                Components.Responses.Add(response.Reference.Id, response);
+            }
+        }
+
+        private void CopyComponentsParameterReference(OpenApiParameter parameter)
+        {
+            target.Components.Parameters ??= new Dictionary<string, OpenApiParameter>();
+            if (!Components.Parameters.ContainsKey(parameter.Reference.Id))
+            {
+                Components.Parameters.Add(parameter.Reference.Id, parameter);
+            }
+        }
+
+        private void CopyComponentsSchemaReference(OpenApiSchema schema)
+        {
+            EnsureSchemasExists();
+            if (!Components.Schemas.ContainsKey(schema.Reference.Id))
+            {
+                Components.Schemas.Add(schema.Reference.Id, schema);
             }
         }
     }
