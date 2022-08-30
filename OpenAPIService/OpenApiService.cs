@@ -800,6 +800,60 @@ namespace OpenAPIService
                     target.Responses.Add(item);
                 }
             }
+
+            foreach (var item in newComponents.RequestBodies)
+            {
+                if (!target.RequestBodies.ContainsKey(item.Key))
+                {
+                    moreStuff = true;
+                    target.RequestBodies.Add(item);
+                }
+            }
+
+            foreach (var item in newComponents.Examples)
+            {
+                if (!target.Examples.ContainsKey(item.Key))
+                {
+                    moreStuff = true;
+                    target.Examples.Add(item);
+                }
+            }
+
+            foreach (var item in newComponents.Headers)
+            {
+                if (!target.Headers.ContainsKey(item.Key))
+                {
+                    moreStuff = true;
+                    target.Headers.Add(item);
+                }
+            }
+
+            foreach (var item in newComponents.SecuritySchemes)
+            {
+                if (!target.SecuritySchemes.ContainsKey(item.Key))
+                {
+                    moreStuff = true;
+                    target.SecuritySchemes.Add(item);
+                }
+            }
+
+            foreach (var item in newComponents.Links)
+            {
+                if (!target.Links.ContainsKey(item.Key))
+                {
+                    moreStuff = true;
+                    target.Links.Add(item);
+                }
+            }
+
+            foreach (var item in newComponents.Callbacks)
+            {
+                if (!target.Callbacks.ContainsKey(item.Key))
+                {
+                    moreStuff = true;
+                    target.Callbacks.Add(item);
+                }
+            }
             return moreStuff;
         }
 

@@ -46,6 +46,60 @@ namespace OpenAPIService
                     }
                     break;
 
+                case OpenApiRequestBody requestBody:
+                    EnsureComponentsExists();
+                    EnsureResponsesExists();
+                    if (!Components.RequestBodies.ContainsKey(requestBody.Reference.Id))
+                    {
+                        Components.RequestBodies.Add(requestBody.Reference.Id, requestBody);
+                    }
+                    break;
+
+                case OpenApiExample example:
+                    EnsureComponentsExists();
+                    EnsureResponsesExists();
+                    if (!Components.Examples.ContainsKey(example.Reference.Id))
+                    {
+                        Components.Examples.Add(example.Reference.Id, example);
+                    }
+                    break;
+
+                case OpenApiHeader header:
+                    EnsureComponentsExists();
+                    EnsureResponsesExists();
+                    if (!Components.Headers.ContainsKey(header.Reference.Id))
+                    {
+                        Components.Headers.Add(header.Reference.Id, header);
+                    }
+                    break;
+
+                case OpenApiSecurityScheme securityScheme:
+                    EnsureComponentsExists();
+                    EnsureResponsesExists();
+                    if (!Components.SecuritySchemes.ContainsKey(securityScheme.Reference.Id))
+                    {
+                        Components.SecuritySchemes.Add(securityScheme.Reference.Id, securityScheme);
+                    }
+                    break;
+
+                case OpenApiLink link:
+                    EnsureComponentsExists();
+                    EnsureResponsesExists();
+                    if (!Components.Links.ContainsKey(link.Reference.Id))
+                    {
+                        Components.Links.Add(link.Reference.Id, link);
+                    }
+                    break;
+
+                case OpenApiCallback callBack:
+                    EnsureComponentsExists();
+                    EnsureResponsesExists();
+                    if (!Components.Callbacks.ContainsKey(callBack.Reference.Id))
+                    {
+                        Components.Callbacks.Add(callBack.Reference.Id, callBack);
+                    }
+                    break;
+
                 default:
                     break;
             }

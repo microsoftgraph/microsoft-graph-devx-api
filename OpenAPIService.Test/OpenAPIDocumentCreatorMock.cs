@@ -936,6 +936,34 @@ namespace OpenAPIService.Test
                                 }
                             }
                         }
+                    },
+                    ["/applications/{application-id}/owners/$ref"] = new OpenApiPathItem
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Post, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        new OpenApiTag()
+                                        {
+                                            Name = "applications.directoryObject"
+                                        }
+                                    },
+                                    OperationId = "applications.CreateRefOwners",
+                                    Summary = "Create new navigation property ref to owners for applications",
+                                    RequestBody = new OpenApiRequestBody
+                                    {
+                                        Reference = new OpenApiReference
+                                        {
+                                            Type = ReferenceType.RequestBody,
+                                            Id = "refPostBody"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 Components = new OpenApiComponents
@@ -955,6 +983,45 @@ namespace OpenAPIService.Test
                                             Type = "string",
                                             Description = "Description of the NIC (e.g. Ethernet adapter, Wireless LAN adapter Local Area Connection <#>, etc.).",
                                             Nullable = true
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "ReferenceCreate", new OpenApiSchema
+                            {
+                                Type = "object",
+                                Properties = new Dictionary<string, OpenApiSchema>
+                                {
+                                    {
+                                        "@odata.id", new OpenApiSchema
+                                        {
+                                            Type = "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    RequestBodies = new Dictionary<string, OpenApiRequestBody>
+                    {
+                        {
+                            "refPostBody", new OpenApiRequestBody
+                            {
+                                Content = new Dictionary<string, OpenApiMediaType>
+                                {
+                                    {
+                                        "application/json", new OpenApiMediaType
+                                        {
+                                            Schema = new OpenApiSchema
+                                            {
+                                                Reference = new OpenApiReference
+                                                {
+                                                    Type = ReferenceType.Schema,
+                                                    Id = "ReferenceCreate"
+                                                }
+                                            }
                                         }
                                     }
                                 }
