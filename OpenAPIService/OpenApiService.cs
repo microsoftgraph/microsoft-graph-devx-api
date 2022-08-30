@@ -778,11 +778,6 @@ namespace OpenAPIService
             moreStuff = AddComponentsParameters(newComponents, target, moreStuff);
             moreStuff = AddComponentsResponses(newComponents, target, moreStuff);
             moreStuff = AddComponentsRequestBodies(newComponents, target, moreStuff);
-            moreStuff = AddComponentsExamples(newComponents, target, moreStuff);
-            moreStuff = AddComponentsHeaders(newComponents, target, moreStuff);
-            moreStuff = AddComponentsSecuritySchemes(newComponents, target, moreStuff);
-            moreStuff = AddComponentsLinks(newComponents, target, moreStuff);
-            moreStuff = AddComponentsCallBacks(newComponents, target, moreStuff);
             return moreStuff;
         }
 
@@ -834,71 +829,6 @@ namespace OpenAPIService
                 {
                     moreStuff = true;
                     target.RequestBodies.Add(item);
-                }
-            }
-            return moreStuff;
-        }
-
-        private static bool AddComponentsExamples(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
-        {
-            foreach (var item in newComponents.Examples)
-            {
-                if (!target.Examples.ContainsKey(item.Key))
-                {
-                    moreStuff = true;
-                    target.Examples.Add(item);
-                }
-            }
-            return moreStuff;
-        }
-
-        private static bool AddComponentsHeaders(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
-        {
-            foreach (var item in newComponents.Headers)
-            {
-                if (!target.Headers.ContainsKey(item.Key))
-                {
-                    moreStuff = true;
-                    target.Headers.Add(item);
-                }
-            }
-            return moreStuff;
-        }
-
-        private static bool AddComponentsSecuritySchemes(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
-        {
-            foreach (var item in newComponents.SecuritySchemes)
-            {
-                if (!target.SecuritySchemes.ContainsKey(item.Key))
-                {
-                    moreStuff = true;
-                    target.SecuritySchemes.Add(item);
-                }
-            }
-            return moreStuff;
-        }
-
-        private static bool AddComponentsLinks(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
-        {
-            foreach (var item in newComponents.Links)
-            {
-                if (!target.Links.ContainsKey(item.Key))
-                {
-                    moreStuff = true;
-                    target.Links.Add(item);
-                }
-            }
-            return moreStuff;
-        }
-
-        private static bool AddComponentsCallBacks(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
-        {
-            foreach (var item in newComponents.Callbacks)
-            {
-                if (!target.Callbacks.ContainsKey(item.Key))
-                {
-                    moreStuff = true;
-                    target.Callbacks.Add(item);
                 }
             }
             return moreStuff;

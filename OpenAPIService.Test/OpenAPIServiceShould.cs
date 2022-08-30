@@ -363,7 +363,6 @@ namespace OpenAPIService.Test
             Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);
             Assert.NotEmpty(subsetOpenApiDocument.Components.RequestBodies);
-            Assert.NotEmpty(subsetOpenApiDocument.Components.SecuritySchemes);
         }
 
         [Fact]

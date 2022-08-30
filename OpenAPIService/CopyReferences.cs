@@ -36,26 +36,6 @@ namespace OpenAPIService
                     CopyComponentsRequestBodyReference(requestBody);
                     break;
 
-                case OpenApiExample example:
-                    CopyComponentsExampleReference(example);
-                    break;
-
-                case OpenApiHeader header:
-                    CopyComponentsHeaderReference(header);
-                    break;
-
-                case OpenApiSecurityScheme securityScheme:
-                    CopyComponentsSecuritySchemeReference(securityScheme);
-                    break;
-
-                case OpenApiLink link:
-                    CopyComponentsLinkReference(link);
-                    break;
-
-                case OpenApiCallback callBack:
-                    CopyComponentsCallBackReference(callBack);
-                    break;
-
                 default:
                     break;
             }
@@ -85,51 +65,6 @@ namespace OpenAPIService
         private void EnsureSchemasExists()
         {
             target.Components.Schemas ??= new Dictionary<string, OpenApiSchema>();
-        }
-
-        private void CopyComponentsCallBackReference(OpenApiCallback callBack)
-        {
-            target.Components.Callbacks ??= new Dictionary<string, OpenApiCallback>();
-            if (!Components.Callbacks.ContainsKey(callBack.Reference.Id))
-            {
-                Components.Callbacks.Add(callBack.Reference.Id, callBack);
-            }
-        }
-
-        private void CopyComponentsLinkReference(OpenApiLink link)
-        {
-            target.Components.Links ??= new Dictionary<string, OpenApiLink>();
-            if (!Components.Links.ContainsKey(link.Reference.Id))
-            {
-                Components.Links.Add(link.Reference.Id, link);
-            }
-        }
-
-        private void CopyComponentsSecuritySchemeReference(OpenApiSecurityScheme securityScheme)
-        {
-            target.Components.SecuritySchemes ??= new Dictionary<string, OpenApiSecurityScheme>();
-            if (!Components.SecuritySchemes.ContainsKey(securityScheme.Reference.Id))
-            {
-                Components.SecuritySchemes.Add(securityScheme.Reference.Id, securityScheme);
-            }
-        }
-
-        private void CopyComponentsHeaderReference(OpenApiHeader header)
-        {
-            target.Components.Headers ??= new Dictionary<string, OpenApiHeader>();
-            if (!Components.Headers.ContainsKey(header.Reference.Id))
-            {
-                Components.Headers.Add(header.Reference.Id, header);
-            }
-        }
-
-        private void CopyComponentsExampleReference(OpenApiExample example)
-        {
-            target.Components.Examples ??= new Dictionary<string, OpenApiExample>();
-            if (!Components.Examples.ContainsKey(example.Reference.Id))
-            {
-                Components.Examples.Add(example.Reference.Id, example);
-            }
         }
 
         private void CopyComponentsRequestBodyReference(OpenApiRequestBody requestBody)
