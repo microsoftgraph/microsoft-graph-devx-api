@@ -49,7 +49,7 @@ namespace OpenAPIService
              * as used in Microsoft Graph implement explode: false
              * ex: $select=id,displayName,givenName
              */
-            foreach (var parameter in parameters.Where(x => x.Style == ParameterStyle.Form))
+            foreach (var parameter in parameters.Where(x => x?.Style == ParameterStyle.Form))
             {
                 parameter.Explode = false;
             }

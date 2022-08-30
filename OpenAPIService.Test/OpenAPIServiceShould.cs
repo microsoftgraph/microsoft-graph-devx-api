@@ -359,6 +359,11 @@ namespace OpenAPIService.Test
 
             // Assert
             Assert.Equal(15, subsetOpenApiDocument.Paths.Count);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.Schemas);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.RequestBodies);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.SecuritySchemes);
         }
 
         [Fact]
@@ -513,13 +518,16 @@ namespace OpenAPIService.Test
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
-            var operationId = subsetOpenApiDocument.Paths
+            var operation = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
-                              .Operations[OperationType.Get]
-                              .OperationId;
+                              .Operations[OperationType.Get];
+            var topParameter = operation.Parameters.FirstOrDefault(p => p.Reference.Id == "top");
+            var successResponse = operation.Responses.FirstOrDefault(r => r.Key == "200");
 
             // Assert
-            Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operationId);
+            Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operation.OperationId);
+            Assert.Contains(topParameter.Reference.Id, subsetOpenApiDocument.Components.Parameters.Keys);
+            Assert.Contains(successResponse.Value.Reference.Id, subsetOpenApiDocument.Components.Responses.Keys);
         }
 
         [Fact]

@@ -275,9 +275,46 @@ namespace OpenAPIService.Test
                                                             }
                                                         }
                                                     }
+                                                },
+                                                Links = new Dictionary<string, OpenApiLink>
+                                                {
+                                                    {
+                                                        "link-1", new OpenApiLink
+                                                        {
+                                                            Reference = new OpenApiReference
+                                                            {
+                                                                Type = ReferenceType.Link,
+                                                                Id = "link-1"
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
+                                    },
+                                    Parameters = new List<OpenApiParameter>
+                                    {
+                                        new OpenApiParameter
+                                            {
+                                                Reference = new OpenApiReference
+                                                {
+                                                    Type = ReferenceType.Header,
+                                                    Id = "ConsistencyLevel"
+                                                },
+                                                Examples = new Dictionary<string, OpenApiExample>
+                                                {
+                                                    {
+                                                        "eventual-consistency-example", new OpenApiExample
+                                                        {
+                                                            Reference = new OpenApiReference
+                                                            {
+                                                                Type = ReferenceType.Example,
+                                                                Id = "eventual-consistency-example"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                     }
                                 }
                             }
@@ -917,7 +954,7 @@ namespace OpenAPIService.Test
                             }
                         }
                     },
-                    ["/applications/{application-id}/createdOnBehalfOf/$ref"] = new OpenApiPathItem()
+                    ["/applications/{application-id}/createdOnBehalfOf/$ref"] = new OpenApiPathItem
                     {
                         Operations = new Dictionary<OperationType, OpenApiOperation>
                         {
@@ -932,7 +969,31 @@ namespace OpenAPIService.Test
                                         }
                                     },
                                     OperationId = "applications.GetRefCreatedOnBehalfOf",
-                                    Summary = "Get ref of createdOnBehalfOf from applications"
+                                    Summary = "Get ref of createdOnBehalfOf from applications",
+                                    Parameters = new List<OpenApiParameter>
+                                    {
+                                        new OpenApiParameter
+                                        {
+                                            Reference = new OpenApiReference
+                                            {
+                                                Type = ReferenceType.Parameter,
+                                                Id = "top"
+                                            }
+                                        }
+                                    },
+                                    Responses = new OpenApiResponses
+                                    {
+                                        {
+                                            "200", new OpenApiResponse
+                                            {
+                                                Reference = new OpenApiReference
+                                                {
+                                                    Type = ReferenceType.Response,
+                                                    Id = "StringCollectionResponse"
+                                                }
+                                            }
+                                        } 
+                                    }
                                 }
                             }
                         }
@@ -1002,6 +1063,25 @@ namespace OpenAPIService.Test
                                     }
                                 }
                             }
+                        },
+                        {
+                            "StringCollectionResponse", new OpenApiSchema
+                            {
+                                Type = "object",
+                                Properties = new Dictionary<string, OpenApiSchema>
+                                {
+                                    {
+                                        "value", new OpenApiSchema
+                                        {
+                                            Type = "array",
+                                            Items = new OpenApiSchema
+                                            {
+                                                Type = "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     },
                     RequestBodies = new Dictionary<string, OpenApiRequestBody>
@@ -1025,6 +1105,85 @@ namespace OpenAPIService.Test
                                         }
                                     }
                                 }
+                            }
+                        }
+                    },
+                    Parameters = new Dictionary<string, OpenApiParameter>
+                    {
+                        {
+                            "top", new OpenApiParameter
+                            {
+                                Name = "$top",
+                                In = ParameterLocation.Query,
+                                Schema = new OpenApiSchema
+                                {
+                                    Minimum = 0,
+                                    Type = "integer"
+                                }
+                            }
+                        }
+                    },
+                    Responses = new Dictionary<string, OpenApiResponse>
+                    {
+                        {
+                            "StringCollectionResponse", new OpenApiResponse
+                            {
+                                Content = new Dictionary<string, OpenApiMediaType>
+                                {
+                                    {
+                                        "application/json", new OpenApiMediaType
+                                        {
+                                            Schema = new OpenApiSchema
+                                            {
+                                                Reference = new OpenApiReference
+                                                {
+                                                    Type = ReferenceType.Schema,
+                                                    Id = "StringCollectionResponse"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    Examples = new Dictionary<string, OpenApiExample>
+                    {
+                        {
+                            "eventual-consistency-example", new OpenApiExample
+                            {
+                                Summary = "ConsistencyLevel header",
+                                Description = "Set the ConsistencyLevel HTTP header to 'eventual'."
+                            }
+                        }
+                    },
+                    Headers = new Dictionary<string, OpenApiHeader>
+                    {
+                        {
+                            "ConsistencyLevel", new OpenApiHeader
+                            {
+                                Schema = new OpenApiSchema
+                                {
+                                    Type = "string"
+                                }
+                            }
+                        }
+                    },
+                    SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>
+                    {
+                        {
+                            "azureaadv2", new OpenApiSecurityScheme
+                            {
+                                Type = SecuritySchemeType.OAuth2
+                            }
+                        }
+                    },
+                    Links = new Dictionary<string, OpenApiLink>
+                    {
+                        {
+                            "link-1", new OpenApiLink
+                            {
+                                OperationId = "users.user.ListUser"
                             }
                         }
                     }
