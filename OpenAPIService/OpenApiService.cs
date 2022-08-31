@@ -774,15 +774,16 @@ namespace OpenAPIService
         private static bool AddReferences(OpenApiComponents newComponents, OpenApiComponents target)
         {
             var moreStuff = false;
-            moreStuff = AddComponentsSchemas(newComponents, target, moreStuff);
-            moreStuff = AddComponentsParameters(newComponents, target, moreStuff);
-            moreStuff = AddComponentsResponses(newComponents, target, moreStuff);
-            moreStuff = AddComponentsRequestBodies(newComponents, target, moreStuff);
+            moreStuff |= AddComponentsSchemas(newComponents, target);
+            moreStuff |= AddComponentsParameters(newComponents, target);
+            moreStuff |= AddComponentsResponses(newComponents, target);
+            moreStuff |= AddComponentsRequestBodies(newComponents, target);
             return moreStuff;
         }
 
-        private static bool AddComponentsSchemas(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        private static bool AddComponentsSchemas(OpenApiComponents newComponents, OpenApiComponents target)
         {
+            bool moreStuff = false;
             foreach (var item in newComponents.Schemas)
             {
                 if (!target.Schemas.ContainsKey(item.Key))
@@ -791,12 +792,12 @@ namespace OpenAPIService
                     target.Schemas.Add(item);
                 }
             }
-
             return moreStuff;
         }
 
-        private static bool AddComponentsParameters(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        private static bool AddComponentsParameters(OpenApiComponents newComponents, OpenApiComponents target)
         {
+            bool moreStuff = false;
             foreach (var item in newComponents.Parameters)
             {
                 if (!target.Parameters.ContainsKey(item.Key))
@@ -808,8 +809,9 @@ namespace OpenAPIService
             return moreStuff;
         }
 
-        private static bool AddComponentsResponses(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        private static bool AddComponentsResponses(OpenApiComponents newComponents, OpenApiComponents target)
         {
+            bool moreStuff = false;
             foreach (var item in newComponents.Responses)
             {
                 if (!target.Responses.ContainsKey(item.Key))
@@ -821,8 +823,9 @@ namespace OpenAPIService
             return moreStuff;
         }
 
-        private static bool AddComponentsRequestBodies(OpenApiComponents newComponents, OpenApiComponents target, bool moreStuff)
+        private static bool AddComponentsRequestBodies(OpenApiComponents newComponents, OpenApiComponents target)
         {
+            bool moreStuff = false;
             foreach (var item in newComponents.RequestBodies)
             {
                 if (!target.RequestBodies.ContainsKey(item.Key))
