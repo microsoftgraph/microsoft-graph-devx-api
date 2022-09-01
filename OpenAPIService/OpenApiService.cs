@@ -46,8 +46,8 @@ namespace OpenAPIService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new();
         private static readonly ConcurrentDictionary<Uri, DateTime> _OpenApiDocumentsDateCreated = new();
-        private static readonly Dictionary<string, string> _openApiTraceProperties =
-                        new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
+        private static readonly ConcurrentDictionary<string, string> _openApiTraceProperties =
+                        new();
         private readonly TelemetryClient _telemetryClient;
         private readonly IConfiguration _configuration;
         private static readonly SemaphoreSlim _openApiDocumentConversionAccess = new(2, 2); // only 2 threads can be granted access at a time.
@@ -62,6 +62,7 @@ namespace OpenAPIService
                ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: {nameof(configuration)}");
             _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(_configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService));            
         }
         /// <summary>
         /// Create partial OpenAPI document based on the provided predicate.
@@ -196,8 +197,7 @@ namespace OpenAPIService
                 var tagsArray = tags.Split(',');
                 if (tagsArray.Length == 1)
                 {
-                    // Specify timeout to prevent DOS. See https://docs.microsoft.com/en-us/dotnet/standard/base-types/best-practices.
-                    var regex = new Regex(tagsArray[0], RegexOptions.None, TimeSpan.FromSeconds(1));
+                    var regex = new Regex(Regex.Escape(tagsArray[0]));
 
                     predicate = (o) => o.Tags.Any(t => regex.IsMatch(t.Name));
                 }
@@ -266,7 +266,7 @@ namespace OpenAPIService
             _telemetryClient?.TrackTrace($"Finished creating OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
-            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+            _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
             return rootNode;
         }
@@ -547,7 +547,7 @@ namespace OpenAPIService
                                                      $"Retrieving cached OpenAPI document.",
                                                      SeverityLevel.Information,
                                                      _openApiTraceProperties);
-                        _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+                        _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
                         _OpenApiDocuments.TryGetValue(csdlHref, out doc);
                         return doc;
                     }
@@ -568,7 +568,7 @@ namespace OpenAPIService
                 _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
-                _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+                _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
                 _graphUriQueue.Enqueue(graphUri);
                 OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
@@ -662,7 +662,7 @@ namespace OpenAPIService
             _telemetryClient?.TrackTrace($"Success getting CSDL for {csdlHref} in {stopwatch.ElapsedMilliseconds}ms",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
-            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+            _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
             OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
 
@@ -707,7 +707,7 @@ namespace OpenAPIService
                                         $"No. of paths: {document.Paths.Count}",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
-            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+            _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
             // The output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance,
             // so we write it out, and read it back in again to fix it up.
