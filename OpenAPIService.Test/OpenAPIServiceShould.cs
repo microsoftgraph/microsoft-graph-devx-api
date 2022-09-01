@@ -358,7 +358,11 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(14, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(15, subsetOpenApiDocument.Paths.Count);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.Schemas);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.RequestBodies);
         }
 
         [Fact]
@@ -513,13 +517,16 @@ namespace OpenAPIService.Test
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
-            var operationId = subsetOpenApiDocument.Paths
+            var operation = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
-                              .Operations[OperationType.Get]
-                              .OperationId;
+                              .Operations[OperationType.Get];
+            var topParameter = operation.Parameters.FirstOrDefault(p => p.Reference.Id == "top");
+            var successResponse = operation.Responses.FirstOrDefault(r => r.Key == "200");
 
             // Assert
-            Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operationId);
+            Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operation.OperationId);
+            Assert.Contains(topParameter.Reference.Id, subsetOpenApiDocument.Components.Parameters.Keys);
+            Assert.Contains(successResponse.Value.Reference.Id, subsetOpenApiDocument.Components.Responses.Keys);
         }
 
         [Fact]
@@ -569,6 +576,27 @@ namespace OpenAPIService.Test
 
             // Assert
             Assert.NotNull(description);
+        }
+
+        [Fact]
+        public void HaveRequestBodyForPostRefOperations()
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: "/applications/{application-id}/owners/$ref",
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            var requestBody = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
+                              .Operations[OperationType.Post]
+                              .RequestBody;
+
+            // Assert
+            Assert.Contains(requestBody.Reference.Id, subsetOpenApiDocument.Components.RequestBodies.Keys);
         }
 
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
