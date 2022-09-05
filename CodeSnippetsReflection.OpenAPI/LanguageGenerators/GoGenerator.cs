@@ -56,9 +56,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             WriteExecutionStatement(
                 codeGraph,
                 builder,
-                codeGraph.HasHeaders() || codeGraph.HasOptions() || codeGraph.HasParameters(),
                 codeGraph.HasBody() ? requestBodyVarName : default,
-                codeGraph.HasHeaders() || codeGraph.HasOptions() || codeGraph.HasParameters() ? requestConfigurationVarName : default
+                codeGraph.HasHeaders() || codeGraph.HasOptions() || codeGraph.HasParameters() ? requestConfigurationVarName : "nil"
             );
         }
 
@@ -166,18 +165,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return (!String.IsNullOrWhiteSpace(Name) && Name.Substring(1) != "\"") && (Name.Contains('.') || Name.Contains('-')) ? $"\"{Name}\"" : Name;
         }
 
-        private static void WriteExecutionStatement(SnippetCodeGraph codeGraph, StringBuilder builder, Boolean hasOptions, params string[] parameters)
+        private static void WriteExecutionStatement(SnippetCodeGraph codeGraph, StringBuilder builder, params string[] parameters)
         {
-            var methodName = $"{codeGraph.HttpMethod.ToString().ToLower().ToFirstCharacterUpperCase()}{(hasOptions ? "WithRequestConfigurationAndResponseHandler" : "")}";
+            var methodName = $"{codeGraph.HttpMethod.ToString().ToLower().ToFirstCharacterUpperCase()}";
 
             var parametersList = GetActionParametersList(parameters);
-            if (hasOptions)
-                parametersList += ", nil";
-
-            if (codeGraph.HasReturnedBody())
-                builder.AppendLine($"result, err := {clientVarName}.{GetFluentApiPath(codeGraph.Nodes)}{methodName}({parametersList})");
-            else
-                builder.AppendLine($"{clientVarName}.{GetFluentApiPath(codeGraph.Nodes)}{methodName}({parametersList})");
+            var returnStatement = codeGraph.HasReturnedBody() ? "result, err := " : "";
+            builder.AppendLine($"{returnStatement}{clientVarName}.{GetFluentApiPath(codeGraph.Nodes)}{methodName}(context.Background(), {parametersList})");
         }
 
         private static void WriteBody(SnippetCodeGraph codeGraph, StringBuilder builder)
