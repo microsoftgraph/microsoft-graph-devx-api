@@ -900,6 +900,12 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                 stringBuilder.Append($"\tnew QueryOption(\"$count\", \"{snippetModel.ODataUri.QueryCount.Value.ToString().ToLower()}\"),\r\n");
             }
 
+            //Append any $search present
+            if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
+            {
+                stringBuilder.Append($"\tnew QueryOption(\"$search\", \"\\\"{snippetModel.SearchExpression}\\\"\"),\r\n");
+            }
+
             stringBuilder.Remove(stringBuilder.Length - 3, 1);//remove the trailing comma
             stringBuilder.Append("};\r\n\r\n");//closing brace
             //return custom query options section
@@ -914,8 +920,9 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         {
             if (!snippetModel.CustomQueryOptions.Any()
                 && string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken)
-                && !snippetModel.ODataUri.QueryCount.HasValue)
-                    return false;
+                && !snippetModel.ODataUri.QueryCount.HasValue
+                && string.IsNullOrEmpty(snippetModel.SearchExpression))
+                return false;
 
             return true;
         }
@@ -972,7 +979,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
     internal class CSharpExpressions : LanguageExpressions
     {
         public override string FilterExpression => "\r\n\t.Filter(\"{0}\")";
-        public override string SearchExpression => "\r\n\t.Search(\"{0}\")";
+        public override string SearchExpression => string.Empty;
         public override string ExpandExpression => "\r\n\t.Expand(\"{0}\")";
         public override string SelectExpression => "\r\n\t.Select(\"{0}\")";
         public override string OrderByExpression => "\r\n\t.OrderBy(\"{0}\")";
