@@ -353,9 +353,9 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             enumSchema ??= propSchema;
             var propValue = String.IsNullOrWhiteSpace(value.GetString()) ? null : $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{value.GetString().ToFirstCharacterUpperCase()}";
             // Pass the list of options in the enum as children so that the language generators may use them for validation if need be, 
-            var enumValueOptions = enumSchema.Enum.Where(option => option is OpenApiString)
+            var enumValueOptions = enumSchema?.Enum.Where(option => option is OpenApiString)
                                                                 .Select(option => new CodeProperty{Name = ((OpenApiString)option).Value,Value = ((OpenApiString)option).Value,PropertyType = PropertyType.String})
-                                                                .ToList();
+                                                                .ToList() ?? new List<CodeProperty>();
             return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = enumValueOptions ,NamespaceName = GetNamespaceFromSchema(enumSchema)};
         }
 
