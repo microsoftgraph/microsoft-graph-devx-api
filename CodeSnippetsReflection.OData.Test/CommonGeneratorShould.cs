@@ -195,7 +195,7 @@ namespace CodeSnippetsReflection.Test
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
 
             //Assert string is empty
-            Assert.Equal("\r\n\t.Search(\"Irene McGowen\")", result);
+            Assert.Equal(string.Empty, result);
         }
 
         [Fact]

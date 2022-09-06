@@ -689,7 +689,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             //Append any search queries
             if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
             {
-                stringBuilder.Append(string.Format(requestOptionsPattern, "$search", snippetModel.SearchExpression));
+                stringBuilder.Append(string.Format(requestOptionsPattern, "$search", $"\\\"{snippetModel.SearchExpression}\\\""));
             }
 
             //return request options section with a new line appended
