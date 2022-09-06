@@ -457,6 +457,8 @@ namespace OpenAPIService.Test
   ""in"": ""query"",
   ""description"": ""Usage: ids={{ids}}"",
   ""required"": true,
+  ""style"": ""form"",
+  ""explode"": false,
   ""schema"": {{
     ""type"": ""array"",
     ""items"": {{
@@ -470,6 +472,7 @@ namespace OpenAPIService.Test
   ""in"": ""path"",
   ""description"": ""Usage: period={{period}}"",
   ""required"": true,
+  ""style"": ""simple"",
   ""schema"": {{
     ""type"": ""string""
   }}
