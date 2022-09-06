@@ -53,6 +53,7 @@ namespace GraphWebApi.Middleware
                 InvalidOperationException => StatusCodes.Status400BadRequest,
                 ArgumentException => StatusCodes.Status404NotFound,
                 EntryPointNotFoundException => StatusCodes.Status404NotFound,
+                OutOfMemoryException => StatusCodes.Status507InsufficientStorage,
                 Exception => StatusCodes.Status500InternalServerError
             };
 
