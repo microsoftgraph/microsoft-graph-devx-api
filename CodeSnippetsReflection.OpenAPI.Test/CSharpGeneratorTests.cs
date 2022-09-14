@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -206,7 +206,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
         [Fact]
         public async Task GeneratesFilterParameters() {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderby=displayName&$select=id,displayName,department");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("requestConfiguration.QueryParameters.Count", result);
@@ -346,6 +346,157 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("MeetingDuration = TimeSpan.Parse(\"PT1H\")", result);
             Assert.Contains("IsRequired = false,", result);
             Assert.Contains("LocationEmailAddress = \"conf32room1368@imgeek.onmicrosoft.com\",", result);
+        }
+        
+                [Fact]
+        public async Task FullyQualifiesActionRequestBodyType()
+        {
+            var bodyContent = @"{
+                    ""message"": {
+                    ""subject"": ""Meet for lunch?"",
+                    ""body"": {
+                        ""contentType"": ""Text"",
+                        ""content"": ""The new cafeteria is open.""
+                    },
+                    ""toRecipients"": [
+                    {
+                        ""emailAddress"": {
+                            ""address"": ""fannyd@contoso.onmicrosoft.com""
+                        }
+                    }
+                    ],
+                    ""ccRecipients"": [
+                    {
+                        ""emailAddress"": {
+                            ""address"": ""danas@contoso.onmicrosoft.com""
+                        }
+                    }
+                    ]
+                },
+                ""saveToSentItems"": ""false""
+            }";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users/{{id}}/sendMail")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("var requestBody = new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody", result);
+            Assert.Contains("ToRecipients = new List<Recipient>", result);
+        }
+        
+        [Fact]
+        public async Task TypeArgumentsForListArePlacedCorrectly()
+        {
+            var bodyContent = @"{
+                ""businessPhones"": [
+                    ""+1 425 555 0109""
+                        ],
+                    ""officeLocation"": ""18/2111""
+                }";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/users/{{id}}")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("new List<string>", result);
+        }
+        
+        [Fact]
+        public async Task ModelsInNestedNamespacesAreDisambiguated()
+        {
+            var bodyContent = @"{
+                ""id"": ""1431b9c38ee647f6a"",
+                ""type"": ""externalGroup"",
+            }";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/external/connections/contosohr/groups/31bea3d537902000/members")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("new Microsoft.Graph.Models.ExternalConnectors.Identity", result);
+            Assert.Contains("Type = Microsoft.Graph.Models.ExternalConnectors.IdentityType.ExternalGroup", result);
+        }
+        
+        [Fact]
+        public async Task ReplacesReservedTypeNames()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/directory/administrativeUnits/8a07f5a8-edc9-4847-bbf2-dde106594bf4/scopedRoleMembers");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            // Assert `Directory` is replaced with `DirectoryObject`
+            Assert.Contains("await graphClient.DirectoryObject.AdministrativeUnits[\"administrativeUnit-id\"].ScopedRoleMembers.GetAsync()", result);
+        }
+        
+        [Fact]
+        public async Task CorrectlyGeneratesEnumMember()
+        {
+            var bodyContent = @"{
+                ""id"": ""SHPR_eeab4fb1-20e5-48ca-ad9b-98119d94bee7"",
+                ""@odata.etag"": ""1a371e53-f0a6-4327-a1ee-e3c56e4b38aa"",
+                ""availability"": [
+                {
+                    ""recurrence"": {
+                        ""pattern"": {
+                            ""type"": ""Weekly"",
+                            ""interval"": 1
+                        },
+                        ""range"": {
+                            ""type"": ""noEnd""
+                        }
+                    },
+                    ""timeZone"": ""Pacific Standard Time"",
+                    ""timeSlots"": null
+                }
+                ]
+            }";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/users/871dbd5c-3a6a-4392-bfe1-042452793a50/settings/shiftPreferences")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("Type = RecurrencePatternType.Weekly,", result);
+            Assert.Contains("Type = RecurrenceRangeType.NoEnd,", result);
+        }
+        
+        [Fact]
+        public async Task CorrectlyGeneratesMultipleFlagsEnumMembers()
+        {
+            var bodyContent = @"{
+                ""clientContext"": ""clientContext-value"",
+                ""status"": ""notRecorDing | recording , failed""
+            }";
+
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/communications/calls/{{id}}/updateRecordingStatus")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("Status = RecordingStatus.NotRecording | RecordingStatus.Recording | RecordingStatus.Failed", result);
+        }
+        
+        [Fact]
+        public async Task CorrectlyOptionalRequestBodyParameter()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/teams/{{id}}/archive");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("await graphClient.Teams[\"team-id\"].Archive.PostAsync(null);", result);
         }
     }
 }

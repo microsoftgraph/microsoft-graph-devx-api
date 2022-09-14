@@ -1379,5 +1379,25 @@ namespace CodeSnippetsReflection.Test
             Assert.Contains(queryOptions, result);
             Assert.Contains(skipParameter, result);
         }
+        
+        [Fact]
+        public void ShouldUseGeneratedSearchQueryOptions()
+        {
+            // Arrange
+            var expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get,"https://graph.microsoft.com/v1.0/users?$search=\"displayName:wa\"&$orderby=displayName&$count=true");
+            requestPayload.Headers.Add("ConsistencyLevel","eventual");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel.Value);
+            // Act
+            var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
+            // Assert
+            var countParameter = "new QueryOption(\"$count\", \"true\")";  // the count query option
+            var searchParameter = "new QueryOption(\"$search\", \"\\\"displayName:wa\\\"\")";  // the search query option
+            var queryOptions = ".Request( queryOptions )";  // Adds the custom query options
+            Assert.Contains(countParameter, result);
+            Assert.Contains(searchParameter, result);
+            Assert.Contains(queryOptions, result);
+        }
     }
 }

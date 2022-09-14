@@ -1129,5 +1129,22 @@ namespace CodeSnippetsReflection.Test
             var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
             Assert.Contains("UserGetMailTipsParameterSet", result);
         }
+        [Fact]
+        public void ShouldUseGeneratedSearchQueryOptions()
+        {
+            // Arrange
+            var expressions = new CSharpExpressions();
+            var requestPayload = new HttpRequestMessage(HttpMethod.Get,"https://graph.microsoft.com/v1.0/users?$search=\"displayName:wa\"&$orderby=displayName&$count=true");
+            requestPayload.Headers.Add("ConsistencyLevel","eventual");
+
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            // Act
+            var result = new JavaGenerator(_edmModel).GenerateCodeSnippet(snippetModel, expressions);
+            // Assert
+            var searchParameter = "new QueryOption(\"$search\", \"\\\"displayName:wa\\\"\")";  // the search query option
+            var queryOptions = ".buildRequest( requestOptions )";  // Adds the custom query options
+            Assert.Contains(searchParameter, result);
+            Assert.Contains(queryOptions, result);
+        }
     }
 }
