@@ -699,7 +699,8 @@ namespace OpenAPIService
                 EnableDerivedTypesReferencesForResponses = false,
                 ShowRootPath = true,
                 ShowLinks = true,
-                ExpandDerivedTypesNavigationProperties = false
+                ExpandDerivedTypesNavigationProperties = false,
+                DeclarePathParametersOnPathItem = false
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
@@ -709,6 +710,7 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
             _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
+            document.SecurityRequirements = new List<OpenApiSecurityRequirement>();
 
             // The output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance,
             // so we write it out, and read it back in again to fix it up.
@@ -719,23 +721,26 @@ namespace OpenAPIService
 
         public OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument)
         {
-            _telemetryClient?.TrackTrace("Cloning OpenAPI document.",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
+            //_telemetryClient?.TrackTrace("Cloning OpenAPI document.",
+            //                             SeverityLevel.Information,
+            //                             _openApiTraceProperties);
 
-            var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(CloneOpenApiDocument)}");
-            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
-            openApiDocument.SerializeAsV3(writer);
-            writer.Flush();
-            stream.Position = 0;
-            var reader = new OpenApiStreamReader();
-            var doc = reader.Read(stream, out _);
 
-            _telemetryClient?.TrackTrace("Finished cloning OpenAPI document.",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
+            //var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(CloneOpenApiDocument)}");
+            //var writer = new OpenApiYamlWriter(new StreamWriter(stream));
+            //openApiDocument.SerializeAsV3(writer);
+            //writer.Flush();
+            //stream.Position = 0;
+            //var reader = new OpenApiStreamReader();
+            //var doc = reader.Read(stream, out _);
 
-            return doc;
+            //_telemetryClient?.TrackTrace("Finished cloning OpenAPI document.",
+            //                             SeverityLevel.Information,
+            //                             _openApiTraceProperties);
+
+            //return doc;
+
+             return new OpenApiDocument(openApiDocument);
         }
 
         private static IList<SearchResult> FindOperations(OpenApiDocument graphOpenApi, Func<OpenApiOperation, bool> predicate)

@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\OpenAPI.NET\src\Microsoft.OpenApi.Readers\Microsoft.OpenApi.Readers.csproj" />
     <ProjectReference Include="..\CodeSnippetsReflection\CodeSnippetsReflection.csproj" />
     <ProjectReference Include="..\UtilityService\UtilityService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.21.0" />
-    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.4.0" />
     <PackageReference Include="System.Text.Json" Version="6.0.5" />
   </ItemGroup>
 
