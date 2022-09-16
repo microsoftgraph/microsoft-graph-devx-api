@@ -288,7 +288,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
                     }
                     break;
-                case PropertyType.Date:
+                case PropertyType.DateTime:
                     builder.AppendLine($"{propertyName} , err := time.Parse(time.RFC3339, \"{child.Value}\")");
                     builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
                     break;

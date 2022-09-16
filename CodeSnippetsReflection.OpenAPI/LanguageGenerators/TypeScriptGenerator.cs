@@ -190,6 +190,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         builder.AppendLine($"{indentManager.GetIndent()}],");
 
                         break;
+                    case PropertyType.DateOnly:
                     case PropertyType.Guid:
                     case PropertyType.String:
                         var propName = codeProperty.PropertyType == PropertyType.Map ? $"\"{child.Name.ToFirstCharacterLowerCase()}\"" : NormalizeJsonName(child.Name.ToFirstCharacterLowerCase());
@@ -203,7 +204,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name.ToFirstCharacterLowerCase())} : {child.Value},");
                         }
                         break;
-                    case PropertyType.Date:
+                    case PropertyType.DateTime:
                         builder.AppendLine($"{indentManager.GetIndent()}{NormalizeJsonName(child.Name)} : new Date(\"{child.Value}\"),");
                         break;
                     case PropertyType.Base64Url:

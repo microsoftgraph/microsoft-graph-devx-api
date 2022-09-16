@@ -36,7 +36,9 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             {"base64url", PropertyType.Base64Url},
             {"guid", PropertyType.Guid},
             {"uuid", PropertyType.Guid},
-            {"date-time", PropertyType.Date}
+            {"date-time", PropertyType.DateTime},
+            {"time", PropertyType.TimeOnly},
+            {"date", PropertyType.DateOnly}
         };
         
         private static readonly char NamespaceNameSeparator = '.';
@@ -220,7 +222,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         private static string ComputeRequestBody(SnippetModel snippetModel)
         {
             var requestBodySuffix = $"{snippetModel.Method.Method.ToLower().ToFirstCharacterUpperCase()}RequestBody"; // calculate the suffix using the HttpMethod
-            var name = snippetModel.RequestSchema?.Reference?.GetClassName() ?? snippetModel.ResponseSchema?.Reference?.GetClassName()?.Replace("ODataError","")?.Append(requestBodySuffix);
+            var name = snippetModel.RequestSchema?.Reference?.GetClassName();
 
             if(!string.IsNullOrEmpty(name))
                 return name?.ToFirstCharacterUpperCase();
