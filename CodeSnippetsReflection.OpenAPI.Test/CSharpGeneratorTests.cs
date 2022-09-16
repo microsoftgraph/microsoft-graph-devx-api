@@ -498,5 +498,51 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("await graphClient.Teams[\"team-id\"].Archive.PostAsync(null);", result);
         }
+        
+        [Fact]
+        public async Task CorrectlyEvaluatesDatePropertyTypeRequestBodyParameter()
+        {
+            var bodyContent = @"{
+                ""subject"": ""Let's go for lunch"",
+                ""recurrence"": {
+                    ""range"": {
+                        ""type"": ""endDate"",
+                        ""startDate"": ""2017-09-04"",
+                        ""endDate"": ""2017-12-31""
+                    }
+                }
+            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/events")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("StartDate = new Date(DateTime.Parse(\"2017-09-04\")),", result);
+            Assert.Contains("EndDate = new Date(DateTime.Parse(\"2017-12-31\")),", result);
+        }
+        
+        [Fact]
+        public async Task CorrectlyEvaluatesOdataActionRequestBodyParameter()
+        {
+            var bodyContent = @"{
+                ""keyCredential"": {
+                        ""type"": ""AsymmetricX509Cert"",
+                        ""usage"": ""Verify"",
+                        ""key"": ""MIIDYDCCAki...""
+                    },
+                    ""passwordCredential"": null,
+                    ""proof"":""eyJ0eXAiOiJ...""
+                }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/applications/{{id}}/addKey")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("var requestBody = new Microsoft.Graph.Applications.Item.AddKey.AddKeyPostRequestBody", result);
+        }
     }
 }

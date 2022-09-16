@@ -99,7 +99,7 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("PasswordCredentialPostRequestBody", result);
+        Assert.Contains("AddPasswordPostRequestBody", result);
     }
 
     [Fact]

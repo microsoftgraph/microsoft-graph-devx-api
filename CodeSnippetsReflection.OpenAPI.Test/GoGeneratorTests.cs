@@ -360,7 +360,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("NewPasswordCredentialPostRequestBody", result);
+            Assert.Contains("NewAddPasswordPostRequestBody", result);
         }
         
         [Fact]
