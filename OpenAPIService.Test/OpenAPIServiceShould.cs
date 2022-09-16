@@ -620,6 +620,7 @@ namespace OpenAPIService.Test
             Assert.Null(averageAudioDegradationProperty.AnyOf);
             Assert.Equal("number", averageAudioDegradationProperty.Type);
             Assert.Equal("float", averageAudioDegradationProperty.Format);
+            Assert.True(averageAudioDegradationProperty.Nullable);
             Assert.Null(defaultPriceProperty.OneOf);
             Assert.Equal("number", defaultPriceProperty.Type);
             Assert.Equal("double", defaultPriceProperty.Format);
