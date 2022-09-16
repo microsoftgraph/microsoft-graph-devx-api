@@ -211,10 +211,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"{propertyAssignment}DateTimeOffset.Parse(\"{codeProperty.Value}\"){assignmentSuffix}");
                     break;
                 case PropertyType.DateOnly:
-                    snippetBuilder.AppendLine($"{propertyAssignment}new Date(DateTime.Parse(\"{codeProperty.Value}\")){assignmentSuffix}");
-                    break;
                 case PropertyType.TimeOnly:
-                    snippetBuilder.AppendLine($"{propertyAssignment}new Time(DateTime.Parse(\"{codeProperty.Value}\")){assignmentSuffix}");
+                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty, apiVersion)}(DateTime.Parse(\"{codeProperty.Value}\")){assignmentSuffix}");
                     break;
                 case PropertyType.Base64Url:
                     snippetBuilder.AppendLine($"{propertyAssignment}Convert.FromBase64String(\"{codeProperty.Value.EscapeQuotes()}\"){assignmentSuffix}");
@@ -265,6 +263,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     return "string";
                 case PropertyType.Enum:
                     return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString.Split('.').First())}?";
+                case PropertyType.DateOnly:
+                    return "Date";
+                case PropertyType.TimeOnly:
+                    return "Time";
                 default:
                     return ReplaceIfReservedTypeName(typeString);
             }
