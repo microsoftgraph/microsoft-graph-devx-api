@@ -1045,6 +1045,32 @@ namespace OpenAPIService.Test
                                             Description = "Description of the NIC (e.g. Ethernet adapter, Wireless LAN adapter Local Area Connection <#>, etc.).",
                                             Nullable = true
                                         }
+                                    },
+                                    {
+                                        "averageAudioDegradation", new OpenApiSchema
+                                        {
+                                            AnyOf = new List<OpenApiSchema>
+                                            {
+                                                new OpenApiSchema { Type = "number" },
+                                                new OpenApiSchema { Type = "string" }
+                                            },
+                                            Format = "float",
+                                            Nullable = true
+                                        }
+                                    },
+                                    {
+                                        "defaultPrice", new OpenApiSchema
+                                        {
+                                            OneOf = new List<OpenApiSchema>
+                                            {
+                                                new OpenApiSchema
+                                                {
+                                                    Type = "number",
+                                                    Format = "double"
+                                                },
+                                                new OpenApiSchema { Type = "string" }
+                                            }
+                                        }
                                     }
                                 }
                             }

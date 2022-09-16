@@ -610,8 +610,8 @@ namespace OpenAPIService
             }
             if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
-                // Remove AnyOf
-                var anyOfRemover = new AnyOfRemover();
+                // Remove AnyOf and OneOf since AutoREST does not support them. See https://github.com/Azure/autorest/issues/4118. 
+                var anyOfRemover = new AnyOfOneOfRemover();
                 var walker = new OpenApiWalker(anyOfRemover);
                 walker.Walk(subsetOpenApiDocument);
 
