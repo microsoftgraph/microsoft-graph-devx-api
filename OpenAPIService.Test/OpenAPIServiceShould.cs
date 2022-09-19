@@ -602,6 +602,29 @@ namespace OpenAPIService.Test
             Assert.Contains(requestBody.Reference.Id, subsetOpenApiDocument.Components.RequestBodies.Keys);
         }
 
+        [Fact]
+        public void RemoveAnyOfAndOneOfFromSchemas()
+        {
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                               tags: null,
+                                               url: "/security/hostSecurityProfiles",
+                                               source: _graphMockSource,
+                                               graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+
+            var averageAudioDegradationProperty = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"].Properties["averageAudioDegradation"];
+            var defaultPriceProperty = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"].Properties["defaultPrice"];
+
+            Assert.Null(averageAudioDegradationProperty.AnyOf);
+            Assert.Equal("number", averageAudioDegradationProperty.Type);
+            Assert.Equal("float", averageAudioDegradationProperty.Format);
+            Assert.True(averageAudioDegradationProperty.Nullable);
+            Assert.Null(defaultPriceProperty.OneOf);
+            Assert.Equal("number", defaultPriceProperty.Type);
+            Assert.Equal("double", defaultPriceProperty.Format);
+        }
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
         {
             Assert.NotNull(node);
