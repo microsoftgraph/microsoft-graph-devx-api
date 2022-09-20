@@ -11,7 +11,7 @@ public enum PropertyType
     Float32,
     Float64,
     Double,
-    Date ,
+    DateTime ,
     Boolean ,
     Null,
     Enum ,
@@ -20,5 +20,7 @@ public enum PropertyType
     Binary,
     Array,
     Map,
-    Duration
+    Duration,
+    DateOnly,
+    TimeOnly
 }

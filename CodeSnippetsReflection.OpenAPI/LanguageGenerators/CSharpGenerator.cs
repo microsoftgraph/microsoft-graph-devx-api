@@ -202,13 +202,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             var enumHint = x.Split('.').Last().Trim();
                             // the enum member may be invalid so default to generating the first value in case a look up fails.
                             var enumMember = codeProperty.Children.FirstOrDefault( member => member.Value.Equals(enumHint,StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
-                            return $"{enumTypeString}.{enumMember.ToFirstCharacterUpperCase()}";
+                            return $"{enumTypeString.TrimEnd('?')}.{enumMember.ToFirstCharacterUpperCase()}";
                         })
                         .Aggregate((x, y) => $"{x} | {y}");
                     snippetBuilder.AppendLine($"{propertyAssignment}{enumValues}{assignmentSuffix}");
                     break;
-                case PropertyType.Date:
+                case PropertyType.DateTime:
                     snippetBuilder.AppendLine($"{propertyAssignment}DateTimeOffset.Parse(\"{codeProperty.Value}\"){assignmentSuffix}");
+                    break;
+                case PropertyType.DateOnly:
+                case PropertyType.TimeOnly:
+                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty, apiVersion)}(DateTime.Parse(\"{codeProperty.Value}\")){assignmentSuffix}");
                     break;
                 case PropertyType.Base64Url:
                     snippetBuilder.AppendLine($"{propertyAssignment}Convert.FromBase64String(\"{codeProperty.Value.EscapeQuotes()}\"){assignmentSuffix}");
@@ -258,7 +262,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.String:
                     return "string";
                 case PropertyType.Enum:
-                    return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString.Split('.').First())}";
+                    return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString.Split('.').First())}?";
+                case PropertyType.DateOnly:
+                    return "Date";
+                case PropertyType.TimeOnly:
+                    return "Time";
                 default:
                     return ReplaceIfReservedTypeName(typeString);
             }
