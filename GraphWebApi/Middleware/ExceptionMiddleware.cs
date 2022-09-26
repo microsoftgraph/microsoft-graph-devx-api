@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -52,6 +52,8 @@ namespace GraphWebApi.Middleware
                 ArgumentNullException => StatusCodes.Status400BadRequest,
                 InvalidOperationException => StatusCodes.Status400BadRequest,
                 ArgumentException => StatusCodes.Status404NotFound,
+                EntryPointNotFoundException => StatusCodes.Status404NotFound,
+                OutOfMemoryException => StatusCodes.Status507InsufficientStorage,
                 Exception => StatusCodes.Status500InternalServerError
             };
 

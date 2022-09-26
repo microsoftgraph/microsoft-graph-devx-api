@@ -25,15 +25,14 @@ namespace PermissionsService
 {
     public class PermissionsStore : IPermissionsStore
     {
-        private UriTemplateMatcher _urlTemplateMatcher;
-        private IDictionary<int, object> _scopesListTable;
-        private readonly IMemoryCache _permissionsCache;
+        
+        private readonly IMemoryCache _cache;
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IConfiguration _configuration;
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _permissionsTraceProperties =
-            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(PermissionsStore)} };
+            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(PermissionsStore) } };
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
@@ -41,7 +40,6 @@ namespace PermissionsService
         private const string DefaultLocale = "en-US"; // default locale language
         private readonly object _permissionsLock = new();
         private readonly object _scopesLock = new();
-        private static bool _permissionsRefreshed = false;
         private const string Delegated = "Delegated";
         private const string Application = "Application";
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInHours:Permissions";
@@ -50,36 +48,68 @@ namespace PermissionsService
         private const string PermissionsContainerBlobConfig = "BlobStorage:Containers:Permissions";
         private const string NullValueError = "Value cannot be null";
 
+
+        private class PermissionsDataInfo
+        {
+            public UriTemplateMatcher UriTemplateMatcher
+            {
+                get; set;
+            }
+            public IDictionary<int, object> ScopesListTable 
+            {
+                get;set;
+            }
+
+        }
         public PermissionsStore(IConfiguration configuration, IHttpClientUtility httpClientUtility,
-                                IFileUtility fileUtility, IMemoryCache permissionsCache, TelemetryClient telemetryClient=null)
+                                IFileUtility fileUtility, IMemoryCache permissionsCache, TelemetryClient telemetryClient = null)
         {
             _telemetryClient = telemetryClient;
             _configuration = configuration
-               ?? throw new ArgumentNullException(nameof(configuration), $"{ NullValueError }: { nameof(configuration) }");
-            _permissionsCache = permissionsCache
-                ?? throw new ArgumentNullException(nameof(permissionsCache), $"{ NullValueError }: { nameof(permissionsCache) }");
+               ?? throw new ArgumentNullException(nameof(configuration), $"{NullValueError}: {nameof(configuration)}");
+            _cache = permissionsCache
+                ?? throw new ArgumentNullException(nameof(permissionsCache), $"{NullValueError}: {nameof(permissionsCache)}");
             _httpClientUtility = httpClientUtility
-                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{ NullValueError }: { nameof(httpClientUtility) }");
+                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{NullValueError}: {nameof(httpClientUtility)}");
             _fileUtility = fileUtility
-                ?? throw new ArgumentNullException(nameof(fileUtility), $"{ NullValueError }: { nameof(fileUtility) }");
+                ?? throw new ArgumentNullException(nameof(fileUtility), $"{NullValueError}: {nameof(fileUtility)}");
             _permissionsContainerName = configuration[PermissionsContainerBlobConfig]
-                ?? throw new ArgumentNullException(nameof(PermissionsContainerBlobConfig), $"Config path missing: { PermissionsContainerBlobConfig }");
+                ?? throw new ArgumentNullException(nameof(PermissionsContainerBlobConfig), $"Config path missing: {PermissionsContainerBlobConfig}");
             _permissionsBlobNames = configuration.GetSection(PermissionsNamesBlobConfig).Get<List<string>>()
-                ?? throw new ArgumentNullException(nameof(PermissionsNamesBlobConfig), $"Config path missing: { PermissionsNamesBlobConfig }");
+                ?? throw new ArgumentNullException(nameof(PermissionsNamesBlobConfig), $"Config path missing: {PermissionsNamesBlobConfig}");
             _scopesInformation = configuration[ScopesInfoBlobConfig]
-                ?? throw new ArgumentNullException(nameof(ScopesInfoBlobConfig), $"Config path missing: { ScopesInfoBlobConfig }");
+                ?? throw new ArgumentNullException(nameof(ScopesInfoBlobConfig), $"Config path missing: {ScopesInfoBlobConfig}");
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
 
-            InitializePermissions();
         }
+
+        private PermissionsDataInfo PermissionsData
+        {
+            get
+            {
+                if (!_cache.TryGetValue<PermissionsDataInfo>("PermissionsData", out var permissionsData))
+                {
+                    lock (_permissionsLock)
+                    {
+                        permissionsData = LoadPermissionsData();
+                        _cache.Set("PermissionsData", permissionsData, new MemoryCacheEntryOptions
+                        {
+                            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours)
+                        });
+                    }
+                }
+                
+                return permissionsData;
+            }
+         }
 
         /// <summary>
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
         /// </summary>
-        private void SeedPermissionsTables()
+        private PermissionsDataInfo LoadPermissionsData()
         {
-            _urlTemplateMatcher = new UriTemplateMatcher();
-            _scopesListTable = new Dictionary<int, object>();
+            var urlTemplateMatcher = new UriTemplateMatcher();
+            var scopesListTable = new Dictionary<int, object>();
 
             HashSet<string> uniqueRequestUrlsTable = new HashSet<string>();
             int count = 0;
@@ -120,20 +150,23 @@ namespace PermissionsService
                             count++;
 
                             // Add the request url
-                            _urlTemplateMatcher.Add(count.ToString(), requestUrl);
+                            urlTemplateMatcher.Add(count.ToString(), requestUrl);
 
                             // Add the permission scopes
-                            _scopesListTable.Add(count, property.Value);
+                            scopesListTable.Add(count, property.Value);
                         }
                     }
-
-                    _permissionsRefreshed = true;
                 }
             }
 
             _telemetryClient?.TrackTrace("Finished seeding permissions tables",
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
+            return new PermissionsDataInfo()
+            {
+                UriTemplateMatcher = urlTemplateMatcher,
+                ScopesListTable = scopesListTable
+            };
         }
 
         /// <summary>
@@ -147,7 +180,7 @@ namespace PermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
 
-            var scopesInformationDictionary = await _permissionsCache.GetOrCreateAsync($"ScopesInfoList_{locale}", cacheEntry =>
+            var scopesInformationDictionary = await _cache.GetOrCreateAsync($"ScopesInfoList_{locale}", cacheEntry =>
             {
                 _telemetryClient?.TrackTrace($"In-memory cache 'ScopesInfoList_{locale}' empty. " +
                                              $"Seeding permissions for locale '{locale}' from Azure blob resource",
@@ -163,7 +196,7 @@ namespace PermissionsService
                      * instance of the localized permissions descriptions
                      * during the lock.
                      */
-                    var seededScopesInfoDictionary = _permissionsCache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
+                    var seededScopesInfoDictionary = _cache.Get<IDictionary<string, IDictionary<string, ScopeInformation>>>($"ScopesInfoList_{locale}");
                     var sourceMsg = $"Return locale '{locale}' permissions from in-memory cache 'ScopesInfoList_{locale}'";
 
                     if (seededScopesInfoDictionary == null)
@@ -286,30 +319,6 @@ namespace PermissionsService
             };
         }
 
-        /// <summary>
-        /// Determines whether the permissions tables need to be refreshed with new data based on the elapsed time
-        /// duration since the previous refresh.
-        /// </summary>
-        /// <returns>true or false based on whether the elapsed time duration is greater or less than the specified
-        /// refresh time duration.</returns>
-        private bool RefreshPermissionsTables()
-        {
-            bool refresh = false;
-
-#pragma warning disable S1481 // Unused local variables should be removed
-            bool cacheState = _permissionsCache.GetOrCreate("PermissionsTablesState", entry =>
-#pragma warning restore S1481 // Unused local variables should be removed
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-#pragma warning disable S2696 // Instance members should not write to "static" fields
-                _permissionsRefreshed = false;
-#pragma warning restore S2696 // Instance members should not write to "static" fields
-                return refresh = true;
-            });
-
-            return refresh;
-        }
-
         ///<inheritdoc/>
         public async Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
                                                                  string locale = DefaultLocale,
@@ -319,10 +328,9 @@ namespace PermissionsService
                                                                  string branchName = null)
         {
 
-            InitializePermissions();
 
             IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary;
-
+            var permissionsData = PermissionsData;
             if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
             {
                 // Creates a dict of scopes information from GitHub files
@@ -342,7 +350,7 @@ namespace PermissionsService
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
 
-                var scopes = _scopesListTable.Values.OfType<JToken>()
+                var scopes = permissionsData.ScopesListTable.Values.OfType<JToken>()
                                                     .SelectMany(x => x).OfType<JProperty>()
                                                     .SelectMany(x => x.Value).OfType<JProperty>()
                                                     .Where(x => x.Name.Equals(scopeType))
@@ -365,7 +373,7 @@ namespace PermissionsService
                 requestUrl = CleanRequestUrl(requestUrl);
 
                 // Check if requestUrl is contained in our Url Template table
-                TemplateMatch resultMatch = _urlTemplateMatcher.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
+                TemplateMatch resultMatch = permissionsData.UriTemplateMatcher.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
 
                 if (resultMatch is null)
                 {
@@ -381,9 +389,9 @@ namespace PermissionsService
                     throw new InvalidOperationException($"Failed to parse '{resultMatch.Key}' to int.");
                 }
 
-                if (_scopesListTable[key] is not JToken resultValue)
+                if (permissionsData.ScopesListTable[key] is not JToken resultValue)
                 {
-                    _telemetryClient?.TrackTrace($"Key '{_scopesListTable[key]}' in the {nameof(_scopesListTable)} has a null value.",
+                    _telemetryClient?.TrackTrace($"Key '{permissionsData.ScopesListTable[key]}' in the {nameof(permissionsData.ScopesListTable)} has a null value.",
                                                  SeverityLevel.Error,
                                                  _permissionsTraceProperties);
 
@@ -415,39 +423,7 @@ namespace PermissionsService
             return scopesInfo;
         }
 
-        /// <summary>
-        /// Initializes Permissions.
-        /// </summary>
-        private void InitializePermissions()
-        {
-            /* Add multiple checks to ensure thread that
-             * populated scopes list information successfully
-             * completed seeding.
-            */
-            if (RefreshPermissionsTables() ||
-                _scopesListTable == null ||
-                !_scopesListTable.Any())
-            {
-                /* Permissions tables are not localized, so no need to keep different localized cached copies.
-                   Refresh tables only after the specified time duration has elapsed or no cached copy exists.
-                */
-                lock (_permissionsLock)
-                {
-                    /* Ensure permissions tables are seeded by only one executing thread,
-                       once per refresh cycle.
-                    */
-                    if (!_permissionsRefreshed)
-                    {
-                        _telemetryClient?.TrackTrace("Refreshing the permissions table",
-                                                     SeverityLevel.Information,
-                                                     _permissionsTraceProperties);
 
-                        SeedPermissionsTables();
-                        _permissionsRefreshed = true;
-                    }
-                }
-            }
-        }
 
         /// <summary>
         /// Cleans up the request url by applying string formatting operations
@@ -528,8 +504,7 @@ namespace PermissionsService
         ///<inheritdoc/>
         public UriTemplateMatcher GetUriTemplateMatcher()
         {
-            InitializePermissions();
-            return _urlTemplateMatcher;
+            return PermissionsData.UriTemplateMatcher;
         }
     }
 }

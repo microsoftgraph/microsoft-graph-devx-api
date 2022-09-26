@@ -72,9 +72,9 @@ namespace CodeSnippetsReflection.OpenAPI
                     var operation = GetOperation(operationType);
                     if(operation != default)
                         _requestSchema = operation
-                                            .RequestBody
-                                            .Content
-                                            .TryGetValue(contentType, out var mediaType) ? mediaType.Schema : null;
+                                            .RequestBody?
+                                            .Content?
+                                            .TryGetValue(contentType, out var mediaType) ?? false ? mediaType.Schema : null;
                 }
                 return _requestSchema;
             }

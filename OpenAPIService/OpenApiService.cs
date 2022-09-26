@@ -18,7 +18,6 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using System.Text;
 using OpenAPIService.Common;
 using UtilityService;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -31,6 +30,7 @@ using Microsoft.OpenApi.Any;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
 using FileService.Common;
+using Microsoft.IO;
 
 namespace OpenAPIService
 {
@@ -46,14 +46,15 @@ namespace OpenAPIService
     {
         private static readonly ConcurrentDictionary<Uri, OpenApiDocument> _OpenApiDocuments = new();
         private static readonly ConcurrentDictionary<Uri, DateTime> _OpenApiDocumentsDateCreated = new();
-        private static readonly Dictionary<string, string> _openApiTraceProperties =
-                        new() { { UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService)} };
+        private static readonly ConcurrentDictionary<string, string> _openApiTraceProperties =
+                        new();
         private readonly TelemetryClient _telemetryClient;
         private readonly IConfiguration _configuration;
         private static readonly SemaphoreSlim _openApiDocumentConversionAccess = new(2, 2); // only 2 threads can be granted access at a time.
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInMinutes:OpenAPIDocuments";
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
-        private readonly HashSet<string> _graphUriHash = new();
+        private readonly Queue<string> _graphUriQueue = new();
+        private static readonly RecyclableMemoryStreamManager _streamManager = new();
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
@@ -61,6 +62,7 @@ namespace OpenAPIService
                ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: {nameof(configuration)}");
             _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(_configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService));            
         }
         /// <summary>
         /// Create partial OpenAPI document based on the provided predicate.
@@ -145,7 +147,7 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            return subset;
+            return CloneOpenApiDocument(subset);
         }
 
         /// <summary>
@@ -195,7 +197,8 @@ namespace OpenAPIService
                 var tagsArray = tags.Split(',');
                 if (tagsArray.Length == 1)
                 {
-                    var regex = new Regex(tagsArray[0]);
+                    // Specify timeout to prevent DOS. See https://docs.microsoft.com/en-us/dotnet/standard/base-types/best-practices.
+                    var regex = new Regex(tagsArray[0], RegexOptions.None, TimeSpan.FromSeconds(1));
 
                     predicate = (o) => o.Tags.Any(t => regex.IsMatch(t.Name));
                 }
@@ -264,7 +267,7 @@ namespace OpenAPIService
             _telemetryClient?.TrackTrace($"Finished creating OpenApiUrlTreeNode",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
-            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+            _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
             return rootNode;
         }
@@ -401,7 +404,7 @@ namespace OpenAPIService
         /// <param name="writer">An instance of the <see cref="Utf8JsonWriter"/> class that
         /// uses a specified stream to write the JSON output to.</param>
         /// <param name="rootNode">The target <see cref="OpenApiUrlTreeNode"/> object.</param>
-        private static void ConvertOpenApiUrlTreeNodeToJson(Utf8JsonWriter writer, OpenApiUrlTreeNode rootNode)
+        public static void ConvertOpenApiUrlTreeNodeToJson(Utf8JsonWriter writer, OpenApiUrlTreeNode rootNode)
         {
             writer.WriteStartObject();
             writer.WriteString("segment", rootNode.Segment);
@@ -413,9 +416,15 @@ namespace OpenAPIService
                 writer.WriteString("name", pathItem.Key);
                 writer.WriteStartArray("methods");
                 var methods = pathItem.Value.Operations.Select(x => x.Key.ToString()).ToList();
+
                 foreach (var method in methods)
                 {
-                    writer.WriteStringValue(method);
+                    writer.WriteStartObject();
+                    writer.WriteString("name", method);
+                    var url = pathItem.Value.Operations.FirstOrDefault(x => x.Key.ToString().Equals(method) &&
+                        x.Value.ExternalDocs != null).Value?.ExternalDocs?.Url?.OriginalString;
+                    writer.WriteString("documentationUrl", url);
+                    writer.WriteEndObject();
                 }
                 writer.WriteEndArray();
                 writer.WriteEndObject();
@@ -446,7 +455,7 @@ namespace OpenAPIService
                                             SeverityLevel.Information,
                                             _openApiTraceProperties);
 
-            var stream = new MemoryStream();
+            var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(SerializeOpenApiDocument)}");
             var sr = new StreamWriter(stream);
             OpenApiWriterBase writer;
 
@@ -500,7 +509,7 @@ namespace OpenAPIService
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
-        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)        
+        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, bool forceRefresh)       
         {
             var csdlHref = new Uri(graphUri);
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out OpenApiDocument doc))
@@ -525,8 +534,8 @@ namespace OpenAPIService
                 // Check whether previous thread already cached the OpenAPI document.                
                 if (!forceRefresh && _OpenApiDocuments.TryGetValue(csdlHref, out doc))
                 {
-                    _telemetryClient?.TrackTrace("OpenAPI document converted and cached by another thread." +
-                                                 "Retrieve the cached document.",
+                    _telemetryClient?.TrackTrace("OpenAPI document converted and cached by another thread. " +
+                                                 "Retrieving cached document.",
                                                  SeverityLevel.Information,
                                                  _openApiTraceProperties);
 
@@ -535,25 +544,29 @@ namespace OpenAPIService
 
                 // Check whether forceRefresh is requested before the allowable refresh period has elapsed.
                 if (_OpenApiDocumentsDateCreated.TryGetValue(csdlHref, out DateTime dateCreated))
-                {                    
+                {
                     var minutesElapsed = (DateTime.UtcNow - dateCreated).Minutes;
                     if (minutesElapsed < _defaultForceRefreshTime)
                     {
                         // Return the cached document.
                         _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-                        _telemetryClient?.TrackTrace($"forceRefresh requested within {minutesElapsed} minutes." +
-                                                     $"Retrieving cached document.",
+                        _telemetryClient?.TrackTrace($"forceRefresh requested within {minutesElapsed} minutes. " +
+                                                     $"Retrieving cached OpenAPI document.",
                                                      SeverityLevel.Information,
                                                      _openApiTraceProperties);
-                        _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+                        _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
                         _OpenApiDocuments.TryGetValue(csdlHref, out doc);
                         return doc;
                     }
                 }
 
-                if (!_graphUriHash.Add(graphUri))
+                if (_graphUriQueue.Contains(graphUri))
                 {
                     // Only 1 thread per Graph version allowed to convert OpenAPI document.
+                    _telemetryClient?.TrackTrace("OpenAPI conversion attempted by a new thread while a separate thread is still " +
+                                                 "performing a conversion for a similar Graph version. New thread requeued.",
+                                                 SeverityLevel.Information,
+                                                 _openApiTraceProperties);
                     return await GetGraphOpenApiDocumentAsync(graphUri, forceRefresh);
                 }
 
@@ -562,16 +575,21 @@ namespace OpenAPIService
                 _telemetryClient?.TrackTrace($"Fetch the OpenApi document from the source: {graphUri}",
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
-                _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+                _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
+                _graphUriQueue.Enqueue(graphUri);
                 OpenApiDocument source = await CreateOpenApiDocumentAsync(csdlHref);
                 _OpenApiDocuments[csdlHref] = source;
                 _OpenApiDocumentsDateCreated[csdlHref] = DateTime.UtcNow;
-                _graphUriHash.Remove(graphUri);
                 return source;
             }
             finally
             {
+                if (_graphUriQueue.Any())
+                {
+                    _graphUriQueue.Dequeue();
+                }
+                
                 _openApiDocumentConversionAccess.Release();
                 _telemetryClient?.TrackTrace("Conversion lock successfully released.",
                                              SeverityLevel.Information,
@@ -591,27 +609,15 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            if (style == OpenApiStyle.GEAutocomplete)
+            if (style == OpenApiStyle.GEAutocomplete && !includeRequestBody)
             {
-                // Clone doc before making changes
-                subsetOpenApiDocument = Clone(subsetOpenApiDocument);
-
-                if(!includeRequestBody)
-                {
-                    // The Content property and its schema $refs are unnecessary for autocomplete
-                    RemoveContent(subsetOpenApiDocument);
-                }
+                // The Content property and its schema $refs are unnecessary for autocomplete
+                RemoveContent(subsetOpenApiDocument);
             }
-
-            else if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
+            if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
-                /* For Powershell and PowerPlatform Styles */
-
-                // Clone doc before making changes
-                subsetOpenApiDocument = Clone(subsetOpenApiDocument);
-
-                // Remove AnyOf
-                var anyOfRemover = new AnyOfRemover();
+                // Remove AnyOf and OneOf since AutoREST does not support them. See https://github.com/Azure/autorest/issues/4118. 
+                var anyOfRemover = new AnyOfOneOfRemover();
                 var walker = new OpenApiWalker(anyOfRemover);
                 walker.Walk(subsetOpenApiDocument);
 
@@ -650,17 +656,6 @@ namespace OpenAPIService
             return subsetOpenApiDocument;
         }
 
-        private static OpenApiDocument Clone(OpenApiDocument subsetOpenApiDocument)
-        {
-            var stream = new MemoryStream();
-            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
-            subsetOpenApiDocument.SerializeAsV3(writer);
-            writer.Flush();
-            stream.Position = 0;
-            var reader = new OpenApiStreamReader();
-            return reader.Read(stream, out _);
-        }
-
         private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
         {
             var stopwatch = new Stopwatch();
@@ -674,7 +669,7 @@ namespace OpenAPIService
             _telemetryClient?.TrackTrace($"Success getting CSDL for {csdlHref} in {stopwatch.ElapsedMilliseconds}ms",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
-            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+            _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
             OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl);
 
@@ -719,27 +714,30 @@ namespace OpenAPIService
                                         $"No. of paths: {document.Paths.Count}",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
-            _openApiTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+            _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
-            document = FixReferences(document);
+            // The output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance,
+            // so we write it out, and read it back in again to fix it up.
+            document = CloneOpenApiDocument(document);
 
             return document;
         }
 
-        public OpenApiDocument FixReferences(OpenApiDocument document)
+        public OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument)
         {
-            // This method is only needed because the output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance.
-            // So we write it out, and read it back in again to fix it up.
-
-            _telemetryClient?.TrackTrace("Fixing references in the converted OpenAPI document.",
+            _telemetryClient?.TrackTrace("Cloning OpenAPI document.",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            var sb = new StringBuilder();
-            document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
-            var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
+            var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(CloneOpenApiDocument)}");
+            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
+            openApiDocument.SerializeAsV3(writer);
+            writer.Flush();
+            stream.Position = 0;
+            var reader = new OpenApiStreamReader();
+            var doc = reader.Read(stream, out _);
 
-            _telemetryClient?.TrackTrace("Finished fixing references in the converted OpenAPI document.",
+            _telemetryClient?.TrackTrace("Finished cloning OpenAPI document.",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
@@ -783,6 +781,16 @@ namespace OpenAPIService
         private static bool AddReferences(OpenApiComponents newComponents, OpenApiComponents target)
         {
             var moreStuff = false;
+            moreStuff |= AddComponentsSchemas(newComponents, target);
+            moreStuff |= AddComponentsParameters(newComponents, target);
+            moreStuff |= AddComponentsResponses(newComponents, target);
+            moreStuff |= AddComponentsRequestBodies(newComponents, target);
+            return moreStuff;
+        }
+
+        private static bool AddComponentsSchemas(OpenApiComponents newComponents, OpenApiComponents target)
+        {
+            bool moreStuff = false;
             foreach (var item in newComponents.Schemas)
             {
                 if (!target.Schemas.ContainsKey(item.Key))
@@ -791,7 +799,12 @@ namespace OpenAPIService
                     target.Schemas.Add(item);
                 }
             }
+            return moreStuff;
+        }
 
+        private static bool AddComponentsParameters(OpenApiComponents newComponents, OpenApiComponents target)
+        {
+            bool moreStuff = false;
             foreach (var item in newComponents.Parameters)
             {
                 if (!target.Parameters.ContainsKey(item.Key))
@@ -800,13 +813,32 @@ namespace OpenAPIService
                     target.Parameters.Add(item);
                 }
             }
+            return moreStuff;
+        }
 
+        private static bool AddComponentsResponses(OpenApiComponents newComponents, OpenApiComponents target)
+        {
+            bool moreStuff = false;
             foreach (var item in newComponents.Responses)
             {
                 if (!target.Responses.ContainsKey(item.Key))
                 {
                     moreStuff = true;
                     target.Responses.Add(item);
+                }
+            }
+            return moreStuff;
+        }
+
+        private static bool AddComponentsRequestBodies(OpenApiComponents newComponents, OpenApiComponents target)
+        {
+            bool moreStuff = false;
+            foreach (var item in newComponents.RequestBodies)
+            {
+                if (!target.RequestBodies.ContainsKey(item.Key))
+                {
+                    moreStuff = true;
+                    target.RequestBodies.Add(item);
                 }
             }
             return moreStuff;

@@ -57,6 +57,24 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains(".DrivesById(\"drive-id\").ItemsById(\"driveItem-id\").Checkin().", result);
         }
         [Fact]
+        public async Task IgnoreOdataTypeWhenGenerating() {
+            var sampleJson = @"
+                {
+                ""@odata.type"": ""microsoft.graph.socialIdentityProvider"",
+                ""displayName"": ""Login with Amazon"",
+                ""identityProviderType"": ""Amazon"",
+                ""clientId"": ""56433757-cadd-4135-8431-2c9e3fd68ae8"",
+                ""clientSecret"": ""000000000000""
+                }
+            ";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identity/identityProviders"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.DoesNotContain("@odata.type", result);
+        }
+        [Fact]
         public async Task GeneratesTheSnippetHeader() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
@@ -70,7 +88,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.DoesNotContain("nil)", result);
+            Assert.Contains("result, err := graphClient.Me().Messages().Get(context.Background(), nil)", result);
         }
         [Fact]
         public async Task GeneratesThePostMethodCall() {
@@ -82,7 +100,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Post", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.DoesNotContain("nil)", result);
+            Assert.Contains("result, err := graphClient.Me().Messages().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesThePatchMethodCall() {
@@ -94,7 +112,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Patch", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.DoesNotContain("nil)", result);
+            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").Patch(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesThePutMethodCall() {
@@ -109,7 +127,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Put", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.DoesNotContain("nil)", result);
+            Assert.Contains("graphClient.ApplicationsById(\"application-id\").Logo().Put(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesTheDeleteMethodCall() {
@@ -119,7 +137,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Delete", result);
             Assert.DoesNotContain("result, err :=", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.DoesNotContain("nil)", result);
+            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").Delete(context.Background(), nil)", result);
         }
         [Fact]
         public async Task WritesTheRequestPayload() {
@@ -220,8 +238,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("MeRequestBuilderGetRequestConfiguration", result);
             Assert.Contains("configuration :=", result);
             Assert.Contains("requestParameters :=", result);
-            Assert.Contains("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("nil)", result);
+            Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
+            Assert.Contains("result, err := graphClient.Me().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesCountBooleanQueryParameters() {
@@ -231,8 +249,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("displayName", result);
             Assert.DoesNotContain("\"true\"", result);
             Assert.Contains("true", result);
-            Assert.Contains("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("nil)", result);
+            Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
+            Assert.Contains("result, err := graphClient.Users().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesSkipQueryParameters() {
@@ -241,8 +259,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.DoesNotContain("\"10\"", result);
             Assert.Contains("10", result);
-            Assert.Contains("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("nil)", result);
+            Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
+            Assert.Contains("result, err := graphClient.Users().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesSelectExpandQueryParameters() {
@@ -252,8 +270,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Expand", result);
             Assert.Contains("members($select=id,displayName)", result);
             Assert.DoesNotContain("Select", result);
-            Assert.Contains("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("nil)", result);
+            Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
+            Assert.Contains("result, err := graphClient.Groups().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesRequestHeaders() {
@@ -263,8 +281,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("\"ConsistencyLevel\": \"eventual\"", result);
             Assert.Contains("Headers: headers", result);
-            Assert.Contains("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("nil)", result);
+            Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
+            Assert.Contains("result, err := graphClient.Groups().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task SupportsODataOldIndexFormat() {
@@ -274,7 +292,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Me().EventsById(\"event-id\").Attachments().Post(requestBody)", result);
+            Assert.Contains("graphClient.Me().EventsById(\"event-id\").Attachments().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task ParsesThePayloadEvenIfContentTypeIsMissing() {
@@ -284,7 +302,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.TeamsById(\"team-id\").ChannelsById(\"channel-id\").Messages().Post(requestBody)", result);
+            Assert.Contains("graphClient.TeamsById(\"team-id\").ChannelsById(\"channel-id\").Messages().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task WritesEmptyPrimitiveArrays() {
@@ -295,6 +313,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("SetIncludeUserActions", result);
+        }
+        [Fact]
+        public async Task WriteCorrectTypesForFilterParameters()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
+                $"{ServiceRootBetaUrl}/identityGovernance/accessReviews/definitions?$top=100&$skip=0");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestTop := int32(100)", result);
+            Assert.Contains("requestSkip := int32(0)", result);
         }
 
         /**
@@ -315,14 +343,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Directory().DeletedItems().Group().Get()", result);
+            Assert.Contains("graphClient.Directory().DeletedItems().Group().Get(context.Background(), nil)", result);
         }
         [Fact]
         public async Task DoesntFailOnTerminalSlash() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/me/messages/AAMkADYAAAImV_jAAA=/?$expand=microsoft.graph.eventMessage/event");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").GetWithRequestConfigurationAndResponseHandler(configuration, nil)", result);
+            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task IncludesRequestBodyClassName() {
@@ -332,7 +360,63 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("NewPasswordCredentialPostRequestBody", result);
+            Assert.Contains("NewAddPasswordPostRequestBody", result);
+        }
+        
+        [Fact]
+        public async Task GenerateFindMeetingTime()
+        {
+            var bodyContent = @"
+            {
+                ""attendees"": [
+                    {
+                        ""emailAddress"": {
+                            ""address"": ""{user-mail}"",
+                            ""name"": ""Alex Darrow""
+                        },
+                        ""type"": ""Required""
+                    }
+                    ],
+                    ""timeConstraint"": {
+                        ""timeslots"": [
+                        {
+                            ""start"": {
+                                ""dateTime"": ""2022-07-18T13:24:57.384Z"",
+                                ""timeZone"": ""Pacific Standard Time""
+                            },
+                            ""end"": {
+                                ""dateTime"": ""2022-07-25T13:24:57.384Z"",
+                                ""timeZone"": ""Pacific Standard Time""
+                            }
+                        }
+                        ]
+                    },
+                    ""locationConstraint"": {
+                        ""isRequired"": ""false"",
+                        ""suggestLocation"": ""true"",
+                        ""locations"": [
+                        {
+                            ""displayName"": ""Conf Room 32/1368"",
+                            ""locationEmailAddress"": ""conf32room1368@imgeek.onmicrosoft.com""
+                        }
+                        ]
+                    },
+                    ""meetingDuration"": ""PT1H"",
+                    ""maxCandidates"": ""100"",
+                    ""isOrganizerOptional"": ""false"",
+                    ""minimumAttendeePercentage"": ""200""
+            }";
+            
+            using var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/findMeetingTimes")
+                {
+                    Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("maxCandidates := int32(100)", result);
+            Assert.Contains("minimumAttendeePercentage := float64(200)", result);
+            Assert.Contains("isOrganizerOptional := false", result);
         }
         //TODO test for DateTimeOffset
     }

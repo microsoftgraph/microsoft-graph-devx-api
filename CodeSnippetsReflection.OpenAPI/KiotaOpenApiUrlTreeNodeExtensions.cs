@@ -55,5 +55,26 @@ namespace CodeSnippetsReflection.OpenAPI {
                                         .Replace(requestParametersSectionChar.ToString(), string.Empty);
             return pathSegment;
         }
+        public static string GetNamespaceFromPath(this string currentPath, string prefix) => 
+            prefix + 
+            ((currentPath?.Contains(pathNameSeparator) ?? false) ?
+                (string.IsNullOrEmpty(prefix) ? string.Empty : ".")
+                + currentPath
+                    ?.Split(pathNameSeparator, StringSplitOptions.RemoveEmptyEntries)
+                    ?.Select(replaceSingleParameterSegmentByItem)
+                    ?.Select(static x => CleanupParametersFromPath((x ?? string.Empty).Split('.', StringSplitOptions.RemoveEmptyEntries)
+                        ?.Select(static x => x.TrimStart('$')) //$ref from OData
+                        .Last()))
+                    ?.Select(static x => x.CleanupSymbolName())
+                    ?.Aggregate(string.Empty, 
+                        static (x, y) => $"{x}{GetDotIfBothNotNullOfEmpty(x, y)}{y}") :
+                string.Empty)
+            .ReplaceValueIdentifier();
+        public static string GetNodeNamespaceFromPath(this OpenApiUrlTreeNode currentNode, string prefix) =>
+            currentNode?.Path?.GetNamespaceFromPath(prefix);
+        private static readonly char pathNameSeparator = '\\';
+        private static readonly Func<string, string> replaceSingleParameterSegmentByItem =
+            x => x.IsPathSegmentWithSingleSimpleParameter() ? "item" : x;
+        private static string GetDotIfBothNotNullOfEmpty(string x, string y) => string.IsNullOrEmpty(x) || string.IsNullOrEmpty(y) ? string.Empty : ".";
     }
 }

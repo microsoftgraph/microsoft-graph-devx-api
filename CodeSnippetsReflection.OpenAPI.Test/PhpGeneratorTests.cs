@@ -99,7 +99,7 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("PasswordCredentialPostRequestBody", result);
+        Assert.Contains("AddPasswordPostRequestBody", result);
     }
 
     [Fact]
@@ -330,7 +330,10 @@ public class PhpGeneratorTests
                     }
                     ]
                 },
-                ""meetingDuration"": ""PT1H""
+                ""meetingDuration"": ""PT1H"",
+                ""maxCandidates"": ""100"",
+                ""isOrganizerOptional"": ""false"",
+                ""minimumAttendeePercentage"": ""200""
         }";
         
         using var requestPayload =
@@ -390,5 +393,20 @@ public class PhpGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$location = new Location();", result);
         Assert.Contains("$requestBody->setAttendees($attendeesArray);", result);
+    }
+
+    [Fact (Skip = "This is still not passing. Keeping to use during fixing of bug related.")]
+    public async Task GenerateWithValidRequestBody()
+    {
+        var url = "/groups/{id}/acceptedSenders/$ref";
+        
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent("{\"@odata.id\":\"https://graph.microsoft.com/v1.0/users/alexd@contoso.com\"}", Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("= new DirectoryObject();", result);
     }
 }

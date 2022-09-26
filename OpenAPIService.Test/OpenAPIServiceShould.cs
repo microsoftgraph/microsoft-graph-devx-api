@@ -6,12 +6,15 @@ using Microsoft.OpenApi;
 using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Resources;
 using OpenAPIService.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using UtilityService;
 using Xunit;
 
@@ -208,6 +211,7 @@ namespace OpenAPIService.Test
         [InlineData(OpenApiStyle.Plain, "/users/12345", OperationType.Get)]
         [InlineData(OpenApiStyle.GEAutocomplete, "/users(user-id)messages(message-id)", OperationType.Get)]
         [InlineData(OpenApiStyle.GEAutocomplete, "/users/12345/messages/abcde", OperationType.Get)]
+        [InlineData(OpenApiStyle.GEAutocomplete, "/", OperationType.Get)] // root path
         [InlineData(OpenApiStyle.PowerPlatform, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
         [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post, "administrativeUnits_restore")]
         [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch, "users.user_UpdateUser")]
@@ -343,20 +347,25 @@ namespace OpenAPIService.Test
         }
 
         [Fact]
-        public void RemoveRootPathFromOpenApiDocumentInApplyStyleForPowerShellOpenApiStyle()
+        public void RetrieveAllOperationsAndPaths()
         {
             // Act
-            var predicate = _openApiService.CreatePredicate(operationIds: "*",
+            var predicate = _openApiService.CreatePredicate(operationIds: "*", // fetch all paths/operations
                                                            tags: null,
                                                            url: null,
-                                                           source: _graphMockSource); // fetch all paths/operations
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
 
             // Assert
-            Assert.False(subsetOpenApiDocument.Paths.ContainsKey("/")); // root path
+            Assert.Equal(15, subsetOpenApiDocument.Paths.Count);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.Schemas);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);
+            Assert.NotEmpty(subsetOpenApiDocument.Components.RequestBodies);
         }
 
         [Fact]
@@ -388,7 +397,6 @@ namespace OpenAPIService.Test
         [InlineData("/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})", OperationType.Get, "reports_getSharePointSiteUsageDetail")]
         public void ResolveActionFunctionOperationIdsForPowerShellStyle(string url, OperationType operationType, string expectedOperationId)
         {
-
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: null,
                                                            tags: null,
@@ -452,6 +460,8 @@ namespace OpenAPIService.Test
   ""in"": ""query"",
   ""description"": ""Usage: ids={{ids}}"",
   ""required"": true,
+  ""style"": ""form"",
+  ""explode"": false,
   ""schema"": {{
     ""type"": ""array"",
     ""items"": {{
@@ -465,6 +475,7 @@ namespace OpenAPIService.Test
   ""in"": ""path"",
   ""description"": ""Usage: period={{period}}"",
   ""required"": true,
+  ""style"": ""simple"",
   ""schema"": {{
     ""type"": ""string""
   }}
@@ -512,13 +523,16 @@ namespace OpenAPIService.Test
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
-            var operationId = subsetOpenApiDocument.Paths
+            var operation = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
-                              .Operations[OperationType.Get]
-                              .OperationId;
+                              .Operations[OperationType.Get];
+            var topParameter = operation.Parameters.FirstOrDefault(p => p.Reference.Id == "top");
+            var successResponse = operation.Responses.FirstOrDefault(r => r.Key == "200");
 
             // Assert
-            Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operationId);
+            Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operation.OperationId);
+            Assert.Contains(topParameter.Reference.Id, subsetOpenApiDocument.Components.Parameters.Keys);
+            Assert.Contains(successResponse.Value.Reference.Id, subsetOpenApiDocument.Components.Responses.Keys);
         }
 
         [Fact]
@@ -548,7 +562,7 @@ namespace OpenAPIService.Test
         [InlineData(OpenApiStyle.PowerShell)]
         [InlineData(OpenApiStyle.Plain)]
         [InlineData(OpenApiStyle.GEAutocomplete)]
-        public void RemoveOperationDescriptionsInCreateFilteredDocument(OpenApiStyle style)
+        public void ShowOperationDescriptionsInCreateFilteredDocument(OpenApiStyle style)
         {
             // Arrange
             var predicate = _openApiService.CreatePredicate(operationIds: null,
@@ -567,7 +581,72 @@ namespace OpenAPIService.Test
                               .Description;
 
             // Assert
-            Assert.Null(description);
+            Assert.NotNull(description);
+        }
+
+        [Fact]
+        public void HaveRequestBodyForPostRefOperations()
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: "/applications/{application-id}/owners/$ref",
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            var requestBody = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
+                              .Operations[OperationType.Post]
+                              .RequestBody;
+
+            // Assert
+            Assert.Contains(requestBody.Reference.Id, subsetOpenApiDocument.Components.RequestBodies.Keys);
+        }
+
+        [Fact]
+        public void RemoveAnyOfAndOneOfFromSchemas()
+        {
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                               tags: null,
+                                               url: "/security/hostSecurityProfiles",
+                                               source: _graphMockSource,
+                                               graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+
+            var averageAudioDegradationProperty = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"].Properties["averageAudioDegradation"];
+            var defaultPriceProperty = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"].Properties["defaultPrice"];
+
+            Assert.Null(averageAudioDegradationProperty.AnyOf);
+            Assert.Equal("number", averageAudioDegradationProperty.Type);
+            Assert.Equal("float", averageAudioDegradationProperty.Format);
+            Assert.True(averageAudioDegradationProperty.Nullable);
+            Assert.Null(defaultPriceProperty.OneOf);
+            Assert.Equal("number", defaultPriceProperty.Type);
+            Assert.Equal("double", defaultPriceProperty.Format);
+        }
+
+        [Fact]
+        public void ConvertOpenApiUrlTreeNodeToJsonRendersExternalDocs()
+        {
+            // Arrange
+            var openApiDocs = new ConcurrentDictionary<string, OpenApiDocument>();
+            openApiDocs.TryAdd(GraphVersion, _graphMockSource);
+            using MemoryStream stream = new();            
+            var writer = new Utf8JsonWriter(stream, new JsonWriterOptions() { Indented = false });
+
+            // Act
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(openApiDocs);
+            OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
+            writer.Flush();
+            stream.Position = 0;
+            var output = new StreamReader(stream).ReadToEnd();
+
+            // Assert
+            Assert.Contains("\"children\":[{\"segment\":\"{user-id}\",\"labels\":[{\"name\":\"mock\",\"methods\":[{\"name\":\"Get\",\"documentationUrl\":\"https://docs.microsoft.com/foobar\"}", output);
         }
 
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)

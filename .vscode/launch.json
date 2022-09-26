@@ -11,7 +11,7 @@
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/GraphWebApi/bin/Debug/net6.0/GraphWebApi.dll",
             "args": [],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/GraphWebApi/bin/Debug/net6.0",
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
