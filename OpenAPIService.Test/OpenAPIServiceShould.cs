@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Models;
@@ -596,7 +597,7 @@ namespace OpenAPIService.Test
 
             // Assert
             var jsonPayload = Encoding.ASCII.GetString(stream.ToArray());
-            var expectedPayloadContent = "{\"segment\":\"/\",\"labels\":[{\"name\":\"mock\",\"methods\":[\"Get\"]}],\"children\":[{\"segment\":\"administrativeUnits\",\"labels\":[]," +
+            var expectedPayloadContent = "{\"segment\":\"/\",\"labels\":[{\"name\":\"mock\",\"methods\":[{\"name\":\"Get\",\"documentationUrl\":null}]}],\"children\":[{\"segment\":\"administrativeUnits\",\"labels\":[]," +
                 "\"children\":[{\"segment\":\"{administrativeUnit-id}\",\"labels\":[],\"children\":[{\"segment\":\"microsoft.graph.restore\",";
 
             Assert.NotEmpty(jsonPayload);
@@ -676,7 +677,6 @@ namespace OpenAPIService.Test
             Assert.Equal("double", defaultPriceProperty.Format);
         }
 
-
         [Theory]
         [InlineData("/users/$count", OperationType.Get, "users_GetCount")]
         [InlineData("/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})", OperationType.Get, "reports_getSharePointSiteUsageDetail")]
@@ -698,6 +698,26 @@ namespace OpenAPIService.Test
 
             // Assert
             Assert.Equal(expectedOperationId, operationId);
+        }
+
+        [Fact]
+        public void ConvertOpenApiUrlTreeNodeToJsonRendersExternalDocs()
+        {
+            // Arrange
+            var openApiDocs = new ConcurrentDictionary<string, OpenApiDocument>();
+            openApiDocs.TryAdd(GraphVersion, _graphMockSource);
+            using MemoryStream stream = new();            
+            var writer = new Utf8JsonWriter(stream, new JsonWriterOptions() { Indented = false });
+
+            // Act
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(openApiDocs);
+            OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
+            writer.Flush();
+            stream.Position = 0;
+            var output = new StreamReader(stream).ReadToEnd();
+
+            // Assert
+            Assert.Contains("\"children\":[{\"segment\":\"{user-id}\",\"labels\":[{\"name\":\"mock\",\"methods\":[{\"name\":\"Get\",\"documentationUrl\":\"https://docs.microsoft.com/foobar\"}", output);
         }
 
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
