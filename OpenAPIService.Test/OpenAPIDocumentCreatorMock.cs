@@ -363,6 +363,10 @@ namespace OpenAPIService.Test
                                                 }
                                             }
                                         }
+                                    },
+                                    ExternalDocs = new OpenApiExternalDocs
+                                    {
+                                        Url = new Uri("https://docs.microsoft.com/foobar")
                                     }
                                 }
                             },

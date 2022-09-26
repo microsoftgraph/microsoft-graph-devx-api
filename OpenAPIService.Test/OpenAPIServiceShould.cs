@@ -6,12 +6,15 @@ using Microsoft.OpenApi;
 using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Resources;
 using OpenAPIService.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using UtilityService;
 using Xunit;
 
@@ -625,6 +628,27 @@ namespace OpenAPIService.Test
             Assert.Equal("number", defaultPriceProperty.Type);
             Assert.Equal("double", defaultPriceProperty.Format);
         }
+
+        [Fact]
+        public void ConvertOpenApiUrlTreeNodeToJsonRendersExternalDocs()
+        {
+            // Arrange
+            var openApiDocs = new ConcurrentDictionary<string, OpenApiDocument>();
+            openApiDocs.TryAdd(GraphVersion, _graphMockSource);
+            using MemoryStream stream = new();            
+            var writer = new Utf8JsonWriter(stream, new JsonWriterOptions() { Indented = false });
+
+            // Act
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(openApiDocs);
+            OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
+            writer.Flush();
+            stream.Position = 0;
+            var output = new StreamReader(stream).ReadToEnd();
+
+            // Assert
+            Assert.Contains("\"children\":[{\"segment\":\"{user-id}\",\"labels\":[{\"name\":\"mock\",\"methods\":[{\"name\":\"Get\",\"documentationUrl\":\"https://docs.microsoft.com/foobar\"}", output);
+        }
+
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
         {
             Assert.NotNull(node);

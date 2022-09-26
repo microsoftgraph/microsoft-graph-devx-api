@@ -416,9 +416,15 @@ namespace OpenAPIService
                 writer.WriteString("name", pathItem.Key);
                 writer.WriteStartArray("methods");
                 var methods = pathItem.Value.Operations.Select(x => x.Key.ToString()).ToList();
+
                 foreach (var method in methods)
                 {
-                    writer.WriteStringValue(method);
+                    writer.WriteStartObject();
+                    writer.WriteString("name", method);
+                    var url = pathItem.Value.Operations.FirstOrDefault(x => x.Key.ToString().Equals(method) &&
+                        x.Value.ExternalDocs != null).Value?.ExternalDocs?.Url?.OriginalString;
+                    writer.WriteString("documentationUrl", url);
+                    writer.WriteEndObject();
                 }
                 writer.WriteEndArray();
                 writer.WriteEndObject();
