@@ -458,7 +458,7 @@ namespace OpenAPIService
                 if (styleOptions.InlineLocalReferences)
                 {
                     writer = new OpenApiYamlWriter(sr,
-                        new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
+                        new OpenApiWriterSettings { InlineLocalReferences = true });
                 }
                 else
                 {
@@ -470,7 +470,7 @@ namespace OpenAPIService
                 if (styleOptions.InlineLocalReferences)
                 {
                     writer = new OpenApiJsonWriter(sr,
-                        new OpenApiWriterSettings { ReferenceInline = ReferenceInlineSetting.InlineLocalReferences });
+                        new OpenApiWriterSettings { InlineLocalReferences = true });
                 }
                 else
                 {
@@ -699,7 +699,8 @@ namespace OpenAPIService
                 EnableDerivedTypesReferencesForResponses = false,
                 ShowRootPath = true,
                 ShowLinks = true,
-                ExpandDerivedTypesNavigationProperties = false
+                ExpandDerivedTypesNavigationProperties = false,
+                RefBaseCollectionPaginationCountResponse = false
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
