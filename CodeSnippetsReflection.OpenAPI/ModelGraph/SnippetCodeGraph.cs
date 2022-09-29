@@ -366,7 +366,8 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
              if(propSchema == null) 
                 return new CodeProperty { Name = propertyName, Value = $"{value}", PropertyType = PropertyType.Int32, Children = new List<CodeProperty>() };
 
-            var format = (propSchema.AnyOf ?? Enumerable.Empty<OpenApiSchema>())
+            var format = propSchema.Format ??
+                (propSchema.AnyOf ?? Enumerable.Empty<OpenApiSchema>())
                 .Union(propSchema.AllOf ?? Enumerable.Empty<OpenApiSchema>())
                 .Union(propSchema.OneOf ?? Enumerable.Empty<OpenApiSchema>())
                 .FirstOrDefault(static x => !string.IsNullOrEmpty(x.Format))?.Format;

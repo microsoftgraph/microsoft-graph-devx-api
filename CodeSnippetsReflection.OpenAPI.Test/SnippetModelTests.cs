@@ -2,9 +2,9 @@
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
 using Moq;
@@ -103,7 +103,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             Assert.NotNull(snippetModel.ResponseSchema);
-            Assert.NotEmpty(snippetModel.ResponseSchema.Properties);
+
+            var properties = snippetModel.ResponseSchema.Properties ??
+                (snippetModel.ResponseSchema.AnyOf ?? Enumerable.Empty<OpenApiSchema>())
+                .Union(snippetModel.ResponseSchema.AllOf ?? Enumerable.Empty<OpenApiSchema>())
+                .Union(snippetModel.ResponseSchema.OneOf ?? Enumerable.Empty<OpenApiSchema>())
+                .FirstOrDefault(static x => x.Properties != null)?.Properties;
+
+            Assert.NotEmpty(properties);
         }
     }
 }
