@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -365,14 +365,19 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         {
              if(propSchema == null) 
                 return new CodeProperty { Name = propertyName, Value = $"{value}", PropertyType = PropertyType.Int32, Children = new List<CodeProperty>() };
-                
+
+            var format = (propSchema.AnyOf ?? Enumerable.Empty<OpenApiSchema>())
+                .Union(propSchema.AllOf ?? Enumerable.Empty<OpenApiSchema>())
+                .Union(propSchema.OneOf ?? Enumerable.Empty<OpenApiSchema>())
+                .FirstOrDefault(static x => !string.IsNullOrEmpty(x.Format))?.Format;
+
             var (propertyType, propertyValue) = propSchema?.Type switch
             {
-                "integer" when propSchema.Format.Equals("int32") => (PropertyType.Int32 , value.GetInt32().ToString()),
-                "integer" when propSchema.Format.Equals("int64") => (PropertyType.Int64, value.GetInt64().ToString()),
-                _ when propSchema.Format.Equals("float") || propSchema.Format.Equals("float32") => (PropertyType.Float32, value.GetDecimal().ToString()),
-                _ when propSchema.Format.Equals("float64") => (PropertyType.Float64, value.GetDecimal().ToString()),
-                _ when propSchema.Format.Equals("double") => (PropertyType.Double, value.GetDouble().ToString()), //in MS Graph float & double are any of number, string and enum
+                "integer" when "int32".Equals(format) => (PropertyType.Int32 , value.GetInt32().ToString()),
+                "integer" when "int64".Equals(format) => (PropertyType.Int64, value.GetInt64().ToString()),
+                _ when "float".Equals(format) || "float32".Equals(format) => (PropertyType.Float32, value.GetDecimal().ToString()),
+                _ when "float64".Equals(format) => (PropertyType.Float64, value.GetDecimal().ToString()),
+                _ when "double".Equals(format) => (PropertyType.Double, value.GetDouble().ToString()), //in MS Graph float & double are any of number, string and enum
                 _ => (PropertyType.Int32, $"{value.GetInt32()}"),
             };
 
