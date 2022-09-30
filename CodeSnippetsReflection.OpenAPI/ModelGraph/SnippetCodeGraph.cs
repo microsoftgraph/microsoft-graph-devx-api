@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -373,8 +373,8 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
              
              schemas.Add(propSchema);
 
-             var types = schemas.Select(item => item.Type).Where(x => !string.IsNullOrEmpty(x)).ToList();
-             var formats = schemas.Select(item => item.Format).Where(x => !string.IsNullOrEmpty(x)).ToList();
+             var types = schemas.Select(item => item.Type).Where(static x => !string.IsNullOrEmpty(x)).ToList();
+             var formats = schemas.Select(item => item.Format).Where(static x => !string.IsNullOrEmpty(x)).ToList();
                 
             var (propertyType, propertyValue) = types switch
             {
@@ -385,7 +385,6 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 _ when formats.Contains("double") => (PropertyType.Double, value.GetDouble().ToString()), //in MS Graph float & double are any of number, string and enum
                 _ => (PropertyType.Int32, $"{value.GetInt32()}"),
             };
-
 
             return new CodeProperty { Name = propertyName, Value = propertyValue, PropertyType = propertyType, Children = new List<CodeProperty>() };
         }
