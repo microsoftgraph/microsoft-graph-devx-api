@@ -404,7 +404,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     ""meetingDuration"": ""PT1H"",
                     ""maxCandidates"": ""100"",
                     ""isOrganizerOptional"": ""false"",
-                    ""minimumAttendeePercentage"": ""200""
+                    ""minimumAttendeePercentage"": 200
             }";
             
             using var requestPayload =

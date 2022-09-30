@@ -365,14 +365,24 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         {
              if(propSchema == null) 
                 return new CodeProperty { Name = propertyName, Value = $"{value}", PropertyType = PropertyType.Int32, Children = new List<CodeProperty>() };
+
+             var schemas = (propSchema.AnyOf ?? Enumerable.Empty<OpenApiSchema>())
+                 .Union(propSchema.AllOf ?? Enumerable.Empty<OpenApiSchema>())
+                 .Union(propSchema.OneOf ?? Enumerable.Empty<OpenApiSchema>())
+                 .ToList();
+             
+             schemas.Add(propSchema);
+
+             var types = schemas.Select(item => item.Type).Where(x => !string.IsNullOrEmpty(x)).ToList();
+             var formats = schemas.Select(item => item.Format).Where(x => !string.IsNullOrEmpty(x)).ToList();
                 
-            var (propertyType, propertyValue) = propSchema?.Type switch
+            var (propertyType, propertyValue) = types switch
             {
-                "integer" when propSchema.Format.Equals("int32") => (PropertyType.Int32 , value.GetInt32().ToString()),
-                "integer" when propSchema.Format.Equals("int64") => (PropertyType.Int64, value.GetInt64().ToString()),
-                _ when propSchema.Format.Equals("float") || propSchema.Format.Equals("float32") => (PropertyType.Float32, value.GetDecimal().ToString()),
-                _ when propSchema.Format.Equals("float64") => (PropertyType.Float64, value.GetDecimal().ToString()),
-                _ when propSchema.Format.Equals("double") => (PropertyType.Double, value.GetDouble().ToString()), //in MS Graph float & double are any of number, string and enum
+                _ when types.Contains("integer") && formats.Contains("int32") => (PropertyType.Int32 , value.GetInt32().ToString()),
+                _ when types.Contains("integer") && formats.Contains("int64") => (PropertyType.Int64 , value.GetInt64().ToString()),
+                _ when formats.Contains("float")  || formats.Contains("float32")  => (PropertyType.Float32, value.GetDecimal().ToString()),
+                _ when formats.Contains("float64") => (PropertyType.Float64, value.GetDecimal().ToString()),
+                _ when formats.Contains("double") => (PropertyType.Double, value.GetDouble().ToString()), //in MS Graph float & double are any of number, string and enum
                 _ => (PropertyType.Int32, $"{value.GetInt32()}"),
             };
 
