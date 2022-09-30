@@ -103,7 +103,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             Assert.NotNull(snippetModel.ResponseSchema);
-            Assert.NotEmpty(snippetModel.ResponseSchema.Properties);
+            Assert.True(snippetModel.ResponseSchema.Properties.Any() || snippetModel.ResponseSchema.AnyOf.Any() || snippetModel.ResponseSchema.AllOf.Any());
         }
     }
 }
