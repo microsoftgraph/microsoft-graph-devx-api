@@ -699,8 +699,7 @@ namespace OpenAPIService
                 EnableDerivedTypesReferencesForResponses = false,
                 ShowRootPath = true,
                 ShowLinks = true,
-                ExpandDerivedTypesNavigationProperties = false,
-                RefBaseCollectionPaginationCountResponse = false
+                ExpandDerivedTypesNavigationProperties = false
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
