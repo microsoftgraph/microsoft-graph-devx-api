@@ -32,7 +32,7 @@ public class GenerationController : ControllerBase, IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Route("generate")]
+    [Route("clientgenerator")]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody]GenerationOptions options, CancellationToken cancellationToken)
     {

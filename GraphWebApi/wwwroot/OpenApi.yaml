@@ -13,6 +13,77 @@ servers:
     description: Local test server
 
 paths:
+  /clientgenerator:
+    post:
+      tags:
+        - ClientGenerator
+      summary: Generate a client library
+      description: Generate a client library
+      operationId: GenerateClientLibrary
+      requestBody:
+        description: The request body
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                generationLanguage:
+                  enum:
+                    - CSharp
+                    - Java
+                    - TypeScript
+                    - Go
+                    - PHP
+                    - Python
+                    - Shell
+                    - Ruby
+                    - Swift
+                  description: The language of the client library
+                  example: CSharp
+                  type: string
+                version:
+                  description: The version of the service
+                  example: v1.0
+                  type: string
+                  enum:
+                    - v1.0
+                    - beta
+                includePatterns:
+                  description: The patterns to include
+                  example: ["/users"]
+                  type: array
+                  items:
+                    type: string
+                excludePatterns:
+                  description: The patterns to exclude
+                  example: ["/users/{id}/events"]
+                  type: array
+                  items:
+                    type: string
+                clientClassName:
+                  description: The name of the client class
+                  example: GraphServiceClient
+                  type: string
+                clientNamespaceName:
+                  description: The namespace of the client class
+                  example: Microsoft.Graph
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/zip: {}
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema: {}
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema: {}
   /snippetgenerator:
     post:
       tags:
