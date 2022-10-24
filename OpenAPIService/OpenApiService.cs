@@ -700,7 +700,7 @@ namespace OpenAPIService
                 ShowRootPath = true,
                 ShowLinks = true,
                 ExpandDerivedTypesNavigationProperties = false,
-                EnableODataAnnotationReferencesForResponses = false
+                RefBaseCollectionPaginationCountResponse = false
             };
             OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
 
