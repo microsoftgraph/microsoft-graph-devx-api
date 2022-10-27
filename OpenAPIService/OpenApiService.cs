@@ -187,7 +187,13 @@ namespace OpenAPIService
                 else
                 {
                     var operationIdsArray = operationIds.Split(',');
-                    predicate = (o) => operationIdsArray.Contains(o.OperationId);
+                    if (operationIdsArray.Length == 1)
+                    {
+                        var regex = new Regex(operationIdsArray[0], RegexOptions.None, TimeSpan.FromSeconds(1));
+                        predicate = (o) => regex.IsMatch(o.OperationId);
+                    }
+                    else
+                        predicate = (o) => operationIdsArray.Contains(o.OperationId);
                 }
 
                 predicateSource = $"operationIds: {operationIds}";
