@@ -343,8 +343,12 @@ namespace OpenAPIService.Test
             }
         }
 
-        [Fact]
-        public void RetrieveAllOperationsAndPaths()
+        [Theory]
+        [InlineData(OpenApiStyle.Plain, 15)]
+        [InlineData(OpenApiStyle.GEAutocomplete, 15)]        
+        [InlineData(OpenApiStyle.PowerShell, 14)] // no root path
+        [InlineData(OpenApiStyle.PowerPlatform, 15)]
+        public void RetrieveAllOperationsAndPaths(OpenApiStyle style, int pathCount)
         {
             // Act
             var predicate = _openApiService.CreatePredicate(operationIds: "*", // fetch all paths/operations
@@ -355,10 +359,10 @@ namespace OpenAPIService.Test
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
 
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(style, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(15, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(pathCount, subsetOpenApiDocument.Paths.Count);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Schemas);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);
