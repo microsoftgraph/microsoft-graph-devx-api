@@ -148,7 +148,8 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            return CloneOpenApiDocument(subset);
+            // return CloneOpenApiDocument(subset);
+            return new OpenApiDocument(subset);
         }
 
         /// <summary>
