@@ -50,6 +50,14 @@ steps:
     projects: '**/*Test/*.csproj'
     arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
 
+# CredScan
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@2
+  displayName: 'Run CredScan'
+  inputs:
+    toolMajorVersion: 'V2'
+    scanFolder: '$(Build.SourcesDirectory)'
+    debugMode: false
+
 - task: PublishTestResults@2
   displayName: "Publish Test Results"
   inputs:

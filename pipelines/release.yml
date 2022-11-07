@@ -53,6 +53,60 @@ steps:
     projects: '**/*Test/*.csproj'
     arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
 
+# CredScan
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@2
+  displayName: 'Run CredScan'
+  inputs:
+    toolMajorVersion: 'V2'
+    scanFolder: '$(Build.SourcesDirectory)'
+    debugMode: false
+
+- task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
+  displayName: 'ESRP CodeSigning'
+  inputs:  
+    ConnectedServiceName: 'microsoftgraph ESRP CodeSign DLL and NuGet (AKV)'
+    FolderPath: $(System.DefaultWorkingDirectory)
+    signConfigType: inlineSignParams
+    inlineOperation: |
+      [
+          {
+              "keyCode": "CP-230012",
+              "operationSetCode": "SigntoolSign",
+              "parameters": [
+              {
+                  "parameterName": "OpusName",
+                  "parameterValue": "Microsoft"
+              },
+              {
+                  "parameterName": "OpusInfo",
+                  "parameterValue": "http://www.microsoft.com"
+              },
+              {
+                  "parameterName": "FileDigest",
+                  "parameterValue": "/fd \"SHA256\""
+              },
+              {
+                  "parameterName": "PageHash",
+                  "parameterValue": "/NPH"
+              },
+              {
+                  "parameterName": "TimeStamp",
+                  "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+              }
+              ],
+              "toolName": "sign",
+              "toolVersion": "1.0"
+          },
+          {
+              "keyCode": "CP-230012",
+              "operationSetCode": "SigntoolVerify",
+              "parameters": [ ],
+              "toolName": "sign",
+              "toolVersion": "1.0"
+          }
+      ]
+    SessionTimeout: 20
+
 - task: PublishTestResults@2
   displayName: "Publish Test Results"
   condition: succeededOrFailed()
