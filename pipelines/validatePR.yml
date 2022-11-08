@@ -30,6 +30,7 @@ steps:
   inputs:
     packageType: sdk
     version: 7.0.x
+    performMultiLevelLookup: true
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: DotNetCoreCLI@2
