@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="MemoryCache.Testing.Moq" Version="1.2.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
