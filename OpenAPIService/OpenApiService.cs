@@ -745,7 +745,8 @@ namespace OpenAPIService
                 EnableDerivedTypesReferencesForResponses = false,
                 ShowRootPath = false,
                 ShowLinks = true,
-                ExpandDerivedTypesNavigationProperties = false
+                ExpandDerivedTypesNavigationProperties = true,
+                AppendBoundOperationsOnDerivedTypeCastSegments = true,                
             };
 
             _configuration.GetSection($"OpenAPI:ConvertSettings:{style}").Bind(globalConvertSettings);

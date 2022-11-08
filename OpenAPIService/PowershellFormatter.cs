@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace OpenAPIService
 {
@@ -55,8 +56,6 @@ namespace OpenAPIService
         /// <param name="operation">The target <see cref="OpenApiOperation"/></param>
         public override void Visit(OpenApiOperation operation)
         {
-            var operationId = operation.OperationId;
-
             if (operation.Extensions.TryGetValue("x-ms-docs-operation-type",
                                                   out var value) && value != null)
             {
@@ -70,7 +69,7 @@ namespace OpenAPIService
                     // in the above library changed how action and function OperationIds are constructed.
                     // To maintain pre-existing cmdlet names in PowerShell, we need to resolve their
                     // OperationIds to how they were being constructed in earlier versions of the lib.
-                    operationId = ResolveActionFunctionOperationId(operation);
+                    operation.OperationId = ResolveActionFunctionOperationId(operation);
                 }
 
                 if ("function".Equals(operationType, StringComparison.OrdinalIgnoreCase))
@@ -79,28 +78,28 @@ namespace OpenAPIService
                 }
             }
 
-            var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
+            var charPos = operation.OperationId.LastIndexOf('.', operation.OperationId.Length - 1);
 
             // Check whether Put operation id already got updated
-            if (charPos >= 0 && !operationId.Contains(NewPutPrefix))
+            if (charPos >= 0 && !operation.OperationId.Contains(NewPutPrefix))
             {
-                var newOperationId = new StringBuilder(operationId);
+                var newOperationId = new StringBuilder(operation.OperationId);
 
                 newOperationId[charPos] = '_';
-                operationId = newOperationId.ToString();
+                operation.OperationId = newOperationId.ToString();
             }
 
             // Update $ref path operationId name
             // Ref key word is enclosed between lower-cased and upper-cased letters
             // Ex.: applications_GetRefCreatedOnBehalfOf to applications_GetCreatedOnBehalfOfByRef
             var regex = new Regex("(?<=[a-z])Ref(?=[A-Z])");
-            if (regex.Match(operationId).Success)
+            if (regex.Match(operation.OperationId).Success)
             {
-                operationId = $"{regex.Replace(operationId, string.Empty)}ByRef";
+                operation.OperationId = $"{regex.Replace(operation.OperationId, string.Empty)}ByRef";
             }
 
-            operation.OperationId = operationId;
-        }
+            FormatODataTypeCastSegmentOperationId(operation);
+        }               
 
         /// <summary>
         /// Visits an <see cref="OpenApiSchema"/>
@@ -187,6 +186,24 @@ namespace OpenAPIService
                         }
                     };
                 }
+            }
+        }
+
+        private static void FormatODataTypeCastSegmentOperationId(OpenApiOperation operation)
+        {
+            // Replace fully qualified OData cast segments' namespace name with 'As'
+            var graphNamespace = "microsoft.graph.";
+            while (operation.OperationId.Contains(graphNamespace))
+            {
+                var namespaceIndex = operation.OperationId.IndexOf(graphNamespace);
+                var part1 = operation.OperationId.Substring(0, namespaceIndex);
+                var targetCharIndex = namespaceIndex + graphNamespace.Length;
+                var targetChar = operation.OperationId[targetCharIndex];
+                var part2 = operation.OperationId.Substring(targetCharIndex + 1);
+
+                targetChar = char.ToUpperInvariant(targetChar);
+
+                operation.OperationId = part1 + "As" + targetChar + part2;
             }
         }
     }
