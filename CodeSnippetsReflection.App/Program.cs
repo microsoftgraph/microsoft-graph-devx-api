@@ -96,7 +96,8 @@ namespace CodeSnippetsReflection.App
             var openApiLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "go",
-                "powershell",
+                "powershellv1",
+                "powershellv2",
                 "typescript",
                 "php"
             };

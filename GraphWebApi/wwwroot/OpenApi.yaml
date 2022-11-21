@@ -30,7 +30,8 @@ paths:
               - Javascript
               - Java
               - Go
-              - PowerShell
+              - PowerShellV1
+              - PowerShellV2
               - TypeScript
               - php
             default: C#
