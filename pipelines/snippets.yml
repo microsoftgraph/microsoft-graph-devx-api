@@ -10,7 +10,7 @@ schedules:
     displayName: Weekly Tuesday snippets updates
     branches:
       include:
-      - master
+      - powershell_v2_sdk_snippets
     always: true
 
 resources:
@@ -27,7 +27,7 @@ pool:
 
 parameters:
   - name: snippetLanguages
-    default: 'PowerShellV2'
+    default: 'PowerShellV1,PowerShellV2'
     displayName: 'Languages to generate snippets (comma separated list)'
 
 variables:
