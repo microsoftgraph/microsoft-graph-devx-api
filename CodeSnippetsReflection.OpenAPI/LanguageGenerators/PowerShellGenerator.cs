@@ -19,17 +19,34 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     public class PowerShellGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         private const string requestBodyVarName = "params";
+        private const string v1_mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
+        private const string v2_mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/features/2.0/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
         private const string modulePrefix = "Microsoft.Graph";
-        private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
-        private readonly Lazy<IList<PowerShellCommandInfo>> psCommands = new(
+        private readonly Lazy<IList<PowerShellCommandInfo>> psV1Commands = new(
             () => {
                 using var httpClient = new HttpClient();
-                using var stream = httpClient.GetStreamAsync(mgCommandMetadataUrl).GetAwaiter().GetResult();
+                using var stream = httpClient.GetStreamAsync(v1_mgCommandMetadataUrl).GetAwaiter().GetResult();
+                return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
+            },
+            LazyThreadSafetyMode.PublicationOnly
+        );
+
+        private readonly Lazy<IList<PowerShellCommandInfo>> psV2Commands = new(
+            () => {
+                using var httpClient = new HttpClient();
+                using var stream = httpClient.GetStreamAsync(v2_mgCommandMetadataUrl).GetAwaiter().GetResult();
                 return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
             },
             LazyThreadSafetyMode.PublicationOnly
         );
         private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
+
+        private string sdkversion;
+
+        public PowerShellGenerator(string version)
+        {
+            sdkversion = version;
+        }
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -37,10 +54,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var cleanPath = snippetModel.EndPathNode.Path.Replace("\\", "/");
             var isMeSegment = meSegmentRegex.IsMatch(cleanPath);
             var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath);
-            IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
+            IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion, sdkversion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
             {
+                var commandName = targetCommand.Command;
                 string moduleName = targetCommand.Module;
                 if (!string.IsNullOrEmpty(moduleName))
                     snippetBuilder.AppendLine($"Import-Module {modulePrefix}.{moduleName}");
@@ -51,7 +69,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (isMeSegment)
                     snippetBuilder.Append($"{Environment.NewLine}# A UPN can also be used as -UserId.");
 
-                snippetBuilder.Append($"{Environment.NewLine}{targetCommand.Command}");
+                snippetBuilder.Append($"{Environment.NewLine}{commandName}");
 
                 if (!string.IsNullOrEmpty(additionalKeySegmentParmeter))
                     snippetBuilder.Append($"{additionalKeySegmentParmeter}");
@@ -67,6 +85,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             return snippetBuilder.ToString();
         }
+
         /// <summary>
         /// Checks if the path has an optional query parameter. e.g $value
         /// The parameter can be used to get the mime content of a message
@@ -213,8 +232,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
 
         private static Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled);
-        private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
+
+        private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion, string sdkversion)
         {
+            var psCommands = string.Equals("V1", sdkversion, StringComparison.OrdinalIgnoreCase) ? psV1Commands: psV2Commands;
             if (psCommands.Value.Count == 0)
                 return default;
             path = Regex.Escape(SnippetModel.TrimNamespace(path));
