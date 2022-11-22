@@ -13,7 +13,7 @@ public class GraphCliGeneratorTests
     private readonly GraphCliGenerator _generator = new();
     private static async Task<OpenApiUrlTreeNode> GetV1TreeNode()
     {
-        _v1TreeNode ??= await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml", true);
+        _v1TreeNode ??= await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
         return _v1TreeNode;
     }
 

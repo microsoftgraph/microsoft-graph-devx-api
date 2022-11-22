@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
-using Microsoft.Win32.SafeHandles;
 using Moq;
 using Xunit;
 
@@ -23,59 +22,13 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             }
             return _v1TreeNode;
         }
-        internal static async Task<OpenApiUrlTreeNode> GetTreeNode(string url, bool cache = false)
+        internal static async Task<OpenApiUrlTreeNode> GetTreeNode(string url)
         {
             Stream stream;
             if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                var uri = new Uri(url);
-                var cacheFile = uri.Segments.LastOrDefault("schema-cache.yaml");
-                var cacheFileExists = File.Exists(cacheFile);
-                var cacheEnabled = cache;
-                var cacheStale = true;
-                try {
-                    if (cacheEnabled && cacheFileExists) {
-                        using var handle = File.OpenHandle(cacheFile, FileMode.Open, FileAccess.Read);
-                        var lastWritten = File.GetLastWriteTime(handle);
-                        // Cache for 7 days. Speeds up tests.
-                        cacheStale = lastWritten < DateTime.Today.AddDays(-7);
-                    }
-                } catch (Exception ex) {
-                    Console.Error.WriteLine($"Failed to access the cache file. Caching disabled.\n{ex.Message}");
-                    cacheEnabled = false;
-                }
-
-                if (cacheEnabled && cacheFileExists && !cacheStale) {
-                    stream = File.OpenRead(cacheFile);
-                } else {
-                    bool streamDirty = false;
-                    stream = await FetchContent(url);
-                    if (cacheEnabled) {
-                        try {
-                            var fs = File.Open(cacheFile, FileMode.Create, FileAccess.Write);
-                            // Check
-                            streamDirty = true;
-                            await stream.CopyToAsync(fs);
-                            if (!fs.CanSeek) {
-                                await fs.DisposeAsync();
-                                fs = File.OpenRead(cacheFile);
-                            } else {
-                                fs.Seek(0, SeekOrigin.Begin);
-                            }
-
-                            stream = fs;
-                        } catch(Exception ex) {
-                            // We couldn't open or write to the file.
-                            Console.Error.WriteLine($"Failed to write to the cache file. Content not cached.\n{ex.Message}");
-                            File.Delete(cacheFile);
-                            if (streamDirty)
-                            {
-                                // Retry the request
-                                stream = await FetchContent(url);
-                            }
-                        }
-                    }
-                }
+                using var httpClient = new HttpClient();
+                stream = await httpClient.GetStreamAsync(url);
             }
             else
             {
@@ -85,12 +38,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var doc = reader.Read(stream, out var diags);
             await stream.DisposeAsync();
             return OpenApiUrlTreeNode.Create(doc, "default");
-        }
-
-        private static async Task<Stream> FetchContent(string url)
-        {
-            using var httpClient = new HttpClient();
-            return await httpClient.GetStreamAsync(url);
         }
 
         [Fact]
