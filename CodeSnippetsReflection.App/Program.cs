@@ -60,7 +60,6 @@ namespace CodeSnippetsReflection.App
                 .Select(l => l.Trim())
                 .Where(l => l != string.Empty) // eliminate trailing, leading or consecutive commas
                 .Distinct();
-                var sdkversion  = "v1";
 
             // splits language list into supported and unsupported languages
             // where key "true" holds supported and key "false" holds unsupported languages
