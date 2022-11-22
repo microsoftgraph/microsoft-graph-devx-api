@@ -5,13 +5,13 @@
 
 trigger: none
 pr: none
-schedules:
-  - cron: "30 12 * * 2"
-    displayName: Weekly Tuesday snippets updates
-    branches:
-      include:
-      - powershell_v2_sdk_snippets
-    always: true
+# schedules:
+#   - cron: "30 12 * * 2"
+#     displayName: Weekly Tuesday snippets updates
+#     branches:
+#       include:
+#       - powershell_v2_sdk_snippets
+#     always: true
 
 resources:
  repositories:
