@@ -29,7 +29,9 @@ steps:
   displayName: 'Use .NET Core sdk'
   inputs:
     packageType: sdk
-    version: 6.0.x
+    version: 7.0.x
+    performMultiLevelLookup: true
+    includePreviewVersions: true
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: DotNetCoreCLI@2
@@ -49,6 +51,14 @@ steps:
     command: test
     projects: '**/*Test/*.csproj'
     arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
+
+# CredScan
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@2
+  displayName: 'Run CredScan'
+  inputs:
+    toolMajorVersion: 'V2'
+    scanFolder: '$(Build.SourcesDirectory)'
+    debugMode: false
 
 - task: PublishTestResults@2
   displayName: "Publish Test Results"
