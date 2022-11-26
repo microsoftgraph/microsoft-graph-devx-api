@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.AspNetCore.Http;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http.Headers;
 
@@ -30,6 +31,8 @@ namespace GraphWebApi.Common
                .OrderByDescending(s => s.Quality.GetValueOrDefault(1));
 
                 localeLanguage = languages.FirstOrDefault().ToString();
+                var localeSegments = localeLanguage.Split("-");
+                localeLanguage = $"{localeSegments[0]}-{localeSegments[1].ToUpper(CultureInfo.InvariantCulture)}";
             }
 
             return localeLanguage;
