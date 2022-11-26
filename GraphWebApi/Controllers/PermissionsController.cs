@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using FileService.Extensions;
 using GraphWebApi.Common;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -44,10 +45,19 @@ namespace GraphWebApi.Controllers
                                                              [FromQuery]string org = null,
                                                              [FromQuery]string branchName = null)
         {
-            string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
+            string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;         
             _telemetryClient?.TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
                                             SeverityLevel.Information,
                                             _permissionsTraceProperties);
+
+            var supportedLocaleCode = LocalizationExtensions.GetSupportedLocaleVariant(localeCode);
+            if (localeCode != supportedLocaleCode)
+            {
+                _telemetryClient?.TrackTrace($"Requested locale '{localeCode}' not supported; using locale '{supportedLocaleCode}'",
+                                            SeverityLevel.Information,
+                                            _permissionsTraceProperties);
+                localeCode = supportedLocaleCode;
+            }
 
             List<ScopeInformation> result = null;
 
