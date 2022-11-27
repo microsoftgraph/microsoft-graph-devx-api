@@ -121,7 +121,7 @@ namespace GraphWebApi.Controllers
             var supportedLocale = LocalizationExtensions.GetSupportedLocaleVariant(locale);
             if (locale != supportedLocale)
             {
-                _telemetryClient?.TrackTrace($"Requested locale '{locale}' not supported; using locale '{supportedLocale}'",
+                _telemetryClient?.TrackTrace($"Requested locale variant '{locale}' not supported; using '{supportedLocale}'",
                                             SeverityLevel.Information,
                                             _samplesTraceProperties);
                 locale = supportedLocale;
