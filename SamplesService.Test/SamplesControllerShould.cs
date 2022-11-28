@@ -40,7 +40,7 @@ namespace SamplesService.Test
         [Fact]
         public void ReturnExpectedStatusCodes()
         {
-            _telemetryClient = MockTelemetryClientProvider.MockTelemetryClient);
+            _telemetryClient = MockTelemetryClientProvider.MockTelemetryClient;
             _samplesStore = new SamplesStore(_configuration, _httpClientUtility, _fileUtility, _samplesCache, _telemetryClient);
             var controller = new SamplesController(_samplesStore, _telemetryClient);
             controller.Request.Headers.AcceptLanguage = new("en-US"); // TO-DO: need to fix this
