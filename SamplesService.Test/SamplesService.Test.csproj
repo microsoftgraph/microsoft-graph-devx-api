@@ -65,6 +65,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GraphWebApi\GraphWebApi.csproj" />
     <ProjectReference Include="..\MockTestUtility\MockTestUtility.csproj" />
     <ProjectReference Include="..\SamplesService\SamplesService.csproj" />
   </ItemGroup>
