@@ -356,6 +356,7 @@ namespace PermissionsService
                                                     .Where(x => x.Name.Equals(scopeType))
                                                     .SelectMany(x => x.Value)
                                                     .Values<string>().Distinct().ToList();
+                scopes.Remove("N/A");
 
                 scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType, true);
 
@@ -464,7 +465,7 @@ namespace PermissionsService
         /// <param name="scopeType">The type of scope from which to retrieve the scopes information for.</param>
         /// <param name="getAllPermissions">Optional: Whether to return all available permissions for a given <paramref name="scopeType"/>.</param>
         /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
-        private static List<ScopeInformation> GetScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
+        private List<ScopeInformation> GetScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
                                                                    List<string> scopes,
                                                                    string scopeType,
                                                                    bool getAllPermissions = false)
@@ -484,10 +485,25 @@ namespace PermissionsService
                 throw new ArgumentException($"'{nameof(scopeType)}' cannot be null or empty.", nameof(scopeType));
             }
 
-            var key = scopeType.Contains(Delegated) ? Delegated : Application;
+            var key = scopeType.Contains(Delegated, StringComparison.InvariantCultureIgnoreCase) ? Delegated : Application;
+            if (!scopesInformationDictionary[key].Values.Any())
+            {
+                var errMsg = $"{nameof(scopesInformationDictionary)}:[{key}] has no values.";
+                _telemetryClient?.TrackTrace(errMsg,
+                                             SeverityLevel.Error,
+                                             _permissionsTraceProperties);
+                throw new ArgumentException(errMsg);
+            }
+
             var scopesInfo = scopes.Select(scope =>
             {
-                scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
+                var success = scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
+                if (!success)
+                {
+                    _telemetryClient?.TrackTrace($"Unable to retrieve scope information for '{scope}' from {nameof(scopesInformationDictionary)}:[{key}]",
+                                             SeverityLevel.Error,
+                                             _permissionsTraceProperties);
+                }
                 return scopeInfo ?? new() { ScopeName = scope };
             }).ToList();
 
