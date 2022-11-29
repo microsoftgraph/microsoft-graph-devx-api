@@ -67,6 +67,7 @@ namespace PermissionsService.Test
                 Assert.True(result.Exists(x => x.ScopeName.Equals("identityriskyuser.read.all")));
                 Assert.True(result.Exists(x => x.ScopeName.Equals("Foobar.ReadWrite")));
                 Assert.True(result.Exists(x => x.ScopeName.Equals("LoremIpsum.ReadWrite")));
+                Assert.False(result.Exists(x => x.ScopeName.Equals("N/A")));
             }
             else if (scopeType == Application)
             {
@@ -74,6 +75,7 @@ namespace PermissionsService.Test
                 Assert.True(result.Exists(x => x.ScopeName.Equals("Notes.ReadWrite.All")));
                 Assert.True(result.Exists(x => x.ScopeName.Equals("LoremIpsum.Read.All")));
                 Assert.True(result.Exists(x => x.ScopeName.Equals("LoremIpsum.ReadWrite.All")));
+                Assert.False(result.Exists(x => x.ScopeName.Equals("N/A")));
             }
         }
 

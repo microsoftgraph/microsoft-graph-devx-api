@@ -242,7 +242,7 @@
     "/workbook/worksheets/{id}/charts/{id}": {
       "GET": {
         "DelegatedWork": [
-          "Files.ReadWrite"
+          "N/A"
         ],
         "DelegatedPersonal": [],
         "Application": []
