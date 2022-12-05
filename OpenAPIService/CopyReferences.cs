@@ -8,11 +8,13 @@ namespace OpenAPIService
     internal class CopyReferences : OpenApiVisitorBase
     {
         private readonly OpenApiDocument target;
-        public OpenApiComponents Components = new OpenApiComponents();
+        private readonly OpenApiComponents allComponents;
+        public OpenApiComponents Components = new();
 
-        public CopyReferences(OpenApiDocument target)
+        public CopyReferences(OpenApiDocument target, OpenApiComponents allComponents)
         {
             this.target = target;
+            this.allComponents = allComponents;
         }
 
         public override void Visit(IOpenApiReferenceable referenceable)
@@ -48,11 +50,7 @@ namespace OpenAPIService
             if (schema.Reference != null)
             {
                 EnsureComponentsExists();
-                EnsureSchemasExists();
-                if (!Components.Schemas.ContainsKey(schema.Reference.Id))
-                {
-                    Components.Schemas.Add(schema.Reference.Id, schema);
-                }
+                CopyComponentsSchemaReference(schema);
             }
             base.Visit(schema);
         }
@@ -72,7 +70,9 @@ namespace OpenAPIService
             target.Components.RequestBodies ??= new Dictionary<string, OpenApiRequestBody>();
             if (!Components.RequestBodies.ContainsKey(requestBody.Reference.Id))
             {
-                Components.RequestBodies.Add(requestBody.Reference.Id, requestBody);
+                Components.RequestBodies.Add(
+                    requestBody.Reference.Id,
+                    allComponents.RequestBodies[requestBody.Reference.Id]);
             }
         }
 
@@ -81,7 +81,9 @@ namespace OpenAPIService
             target.Components.Responses ??= new Dictionary<string, OpenApiResponse>();
             if (!Components.Responses.ContainsKey(response.Reference.Id))
             {
-                Components.Responses.Add(response.Reference.Id, response);
+                Components.Responses.Add(
+                    response.Reference.Id,
+                    allComponents.Responses[response.Reference.Id]);
             }
         }
 
@@ -90,7 +92,9 @@ namespace OpenAPIService
             target.Components.Parameters ??= new Dictionary<string, OpenApiParameter>();
             if (!Components.Parameters.ContainsKey(parameter.Reference.Id))
             {
-                Components.Parameters.Add(parameter.Reference.Id, parameter);
+                Components.Parameters.Add(
+                    parameter.Reference.Id,
+                    allComponents.Parameters[parameter.Reference.Id]);
             }
         }
 
@@ -99,7 +103,9 @@ namespace OpenAPIService
             EnsureSchemasExists();
             if (!Components.Schemas.ContainsKey(schema.Reference.Id))
             {
-                Components.Schemas.Add(schema.Reference.Id, schema);
+                Components.Schemas.Add(
+                    schema.Reference.Id,
+                    allComponents.Schemas[schema.Reference.Id]);
             }
         }
     }

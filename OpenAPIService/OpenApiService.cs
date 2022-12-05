@@ -142,13 +142,13 @@ namespace OpenAPIService
                 throw new ArgumentException("No paths found for the supplied parameters.");
             }
 
-            CopyReferences(subset);
+            CopyReferences(subset, source.Components);
 
             _telemetryClient?.TrackTrace("Finished creating subset OpenApi document",
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            return CloneOpenApiDocument(subset);
+            return subset;
         }
 
         /// <summary>
@@ -695,10 +695,6 @@ namespace OpenAPIService
                                          _openApiTraceProperties);
             _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
-            // The output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance,
-            // so we write it out, and read it back in again to fix it up.
-            document = CloneOpenApiDocument(document);
-
             return document;
         }
 
@@ -766,12 +762,12 @@ namespace OpenAPIService
             return httpClient;
         }
 
-        private static void CopyReferences(OpenApiDocument target)
+        private static void CopyReferences(OpenApiDocument target, OpenApiComponents sourceComponents)
         {
             bool morestuff;
             do
             {
-                var copy = new CopyReferences(target);
+                var copy = new CopyReferences(target, sourceComponents);
                 var walker = new OpenApiWalker(copy);
                 walker.Walk(target);
 
