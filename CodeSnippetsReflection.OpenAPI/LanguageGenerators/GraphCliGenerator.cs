@@ -16,16 +16,11 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
-        if (snippetModel == null)
-        {
-            return string.Empty;
-        }
-
         // Check if path item has the requested operation.
         var operation = GetMatchingOperation(snippetModel);
 
         // If operation does not exist, return an empty string
-        if (operation == null || snippetModel.ApiVersion == "beta")
+        if (operation == null)
         {
             return string.Empty;
         }
@@ -33,19 +28,27 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         // List has an initial capacity of 4. Reserve more based on the number of nodes.
         // Reduces reallocations at the expense of more memory used.
         var initialCapacity = Math.Max(snippetModel.PathNodes.Count, 20);
-        var command = new List<string>(initialCapacity)
+        var commandSegments = new List<string>(initialCapacity)
         {
             GetCommandName(snippetModel)
         };
 
         var parameters = new Dictionary<string, string>(capacity: initialCapacity);
 
+        // Adds command segment names to the commandSegments list then adds the
+        // parameters to the parameters dictionary.
+        ProcessCommandSegmentsAndParameters(snippetModel, ref commandSegments, ref operation, ref parameters);
+
+        return commandSegments.Aggregate("", (accum, val) => string.IsNullOrWhiteSpace(accum) ? val : $"{accum} {val}");
+    }
+
+    private static string GetOperationName([NotNull] in SnippetModel snippetModel) {
         // Check if the last node has a child that is a collection index.
         // Get & Post requests will be changed to list & create respectively)
         // If the last node is a collection index, the operation names are not
         // changed
         var isLastNodeCollection = !snippetModel.EndPathNode.Segment.IsCollectionIndex()
-                        && snippetModel.EndPathNode.Children.Any(c => c.Key.IsCollectionIndex()); ;
+                        && snippetModel.EndPathNode.Children.Any(c => c.Key.IsCollectionIndex());
 
         var matchedOperation = $"{snippetModel.Method}".ToLowerInvariant();
         var operationName = matchedOperation;
@@ -62,20 +65,45 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             }
         }
 
+        return operationName;
+    }
+
+    private static void ProcessCommandSegmentsAndParameters([NotNull] in SnippetModel snippetModel, [NotNull] ref List<string> commandSegments, [NotNull] ref OpenApiOperation operation, [NotNull] ref Dictionary<string, string> parameters)
+    {
+
         foreach (var node in snippetModel.PathNodes)
         {
             var segment = node.Segment.Replace("$value", "content").TrimStart('$');
             if (segment.IsCollectionIndex())
             {
-                command.Add("item");
+                commandSegments.Add("item");
                 AddParameterToDictionary(ref parameters, segment);
             }
             else
             {
-                command.Add(NormalizeToOption(segment));
+                commandSegments.Add(NormalizeToOption(segment));
             }
         }
 
+        // Adds query parameters from the request into the parameters dictionary
+        ProcessQueryParameters(snippetModel, operation, ref parameters);
+
+        var operationName = GetOperationName(snippetModel);
+
+        commandSegments.Add(operationName);
+
+        commandSegments.AddRange(parameters.Select(p => $"{p.Key} {p.Value}"));
+
+        // Gets the request payload
+        var payload = GetRequestPayLoad(snippetModel);
+        if (!string.IsNullOrWhiteSpace(payload))
+        {
+            commandSegments.Add(payload);
+        }
+    }
+
+    private static void ProcessQueryParameters([NotNull] in SnippetModel snippetModel, [NotNull] in OpenApiOperation operation, [NotNull] ref Dictionary<string, string> parameters)
+    {
         IEnumerable<(string, string)> splitQueryString = Array.Empty<(string, string)>();
         if (!string.IsNullOrWhiteSpace(snippetModel.QueryString))
         {
@@ -98,16 +126,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         {
             AddParameterToDictionary(ref parameters, param.Name);
         }
-
-        command.Add(operationName);
-
-        command.AddRange(parameters.Select(p => $"{p.Key} {p.Value}"));
-        var payload = GetRequestPayLoad(snippetModel);
-        if (!string.IsNullOrWhiteSpace(payload))
-        {
-            command.Add(payload);
-        }
-        return command.Aggregate("", (accum, val) => string.IsNullOrWhiteSpace(accum) ? val : $"{accum} {val}");
     }
 
     /// <summary>
@@ -118,7 +136,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// </remarks>
     /// <param name="parameters">The input dictionary.</param>
     /// <param name="name">The name of the new parameter.</param>
-    private static void AddParameterToDictionary(ref Dictionary<string, string> parameters, in string name)
+    private static void AddParameterToDictionary([NotNull] ref Dictionary<string, string> parameters, in string name)
     {
         // TODO: Should the snippets contain the values entered in the URL as well?
         // e.g. mgc tests --id 120 instead of mgc tests --id {id}
@@ -190,6 +208,11 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
     private static OpenApiOperation GetMatchingOperation(in SnippetModel snippetModel)
     {
+        if (snippetModel == null || snippetModel.ApiVersion == "beta")
+        {
+            return null;
+        }
+
         var pathItemOperations = snippetModel.EndPathNode.PathItems.SelectMany(p => p.Value.Operations);
         var httpMethod = $"{snippetModel.Method}";
 
@@ -199,12 +222,12 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         }).Value;
     }
 
-    private static string GetCommandName(in SnippetModel snippetModel)
+    private static string GetCommandName([NotNull] in SnippetModel snippetModel)
     {
         return snippetModel.ApiVersion switch
         {
             "v1.0" => "mgc",
-            "beta" => "mgc-beta", // Coverage on this will be possible once the beta CLI is ready. See L27.
+            "beta" => "mgc-beta", // Coverage on this will be possible once the beta CLI is ready. See L183.
             _ => throw new ArgumentException("Unsupported API version"),
         };
     }
