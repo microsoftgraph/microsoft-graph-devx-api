@@ -492,18 +492,11 @@ namespace PermissionsService
                 _telemetryClient?.TrackTrace(errMsg,
                                              SeverityLevel.Error,
                                              _permissionsTraceProperties);
-                throw new ArgumentException(errMsg);
             }
 
             var scopesInfo = scopes.Select(scope =>
             {
-                var success = scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
-                if (!success)
-                {
-                    _telemetryClient?.TrackTrace($"Unable to retrieve scope information for '{scope}' from {nameof(scopesInformationDictionary)}:[{key}]",
-                                             SeverityLevel.Error,
-                                             _permissionsTraceProperties);
-                }
+                scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);                
                 return scopeInfo ?? new() { ScopeName = scope };
             }).ToList();
 
