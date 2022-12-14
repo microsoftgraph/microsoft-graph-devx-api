@@ -179,6 +179,23 @@ public class GraphCliGeneratorTests
         Assert.Equal("mgc tests item results get --id {id}", result);
     }
 
+    [Theory]
+    [InlineData("?$select=name", " --select {$select}")]
+    [InlineData("?$filter=test&$select=name", " --filter {$filter} --select {$select}")]
+    public async Task GeneratesSnippetsForCommandWithODataParameters(string queryString, string commandOptions)
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/users{queryString}";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal($"mgc users list{commandOptions}", result);
+    }
+
     [Fact]
     public void GeneratesSnippetsForCommandWithEmptyParameterNames()
     {

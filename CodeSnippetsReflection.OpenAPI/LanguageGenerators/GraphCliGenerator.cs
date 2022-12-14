@@ -161,7 +161,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             addBraces.Item2 = false;
         }
 
-        var key = $"--{NormalizeToOption(paramName)}";
+        var key = $"--{NormalizeToOption(paramName.CleanupSymbolName())}";
         var value = $"{(addBraces.Item1 ? '{' : "")}{name}{(addBraces.Item2 ? '}' : "")}";
         if (parameters.ContainsKey(key))
         {
