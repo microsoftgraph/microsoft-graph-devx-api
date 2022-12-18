@@ -161,7 +161,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 else
                     return x.Segment.ToFirstCharacterUpperCase();
             })
-                        .Aggregate((x, y) =>
+                        .Aggregate(static (x, y) =>
                         {
                             var w = x.EndsWith("s") && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
                             return $"{w}{y}";
