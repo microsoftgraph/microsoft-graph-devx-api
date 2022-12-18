@@ -154,7 +154,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!(nodes?.Any() ?? false)) return string.Empty;
             // if the first element is a collection index skip it
             var fileterdNodes = (nodes.First().Segment.IsCollectionIndex()) ? nodes.Skip(1) : nodes;
-            return fileterdNodes.Select(x =>
+            return fileterdNodes.Select(static x =>
             {
                 if (x.Segment.IsCollectionIndex())
                     return "Item";
