@@ -33,6 +33,9 @@ namespace PermissionsService
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _permissionsTraceProperties =
             new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(PermissionsStore) } };
+        private readonly Dictionary<string, string> _permissionsTracePropertiesWithSanitizeIgnore =
+            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(PermissionsStore) },
+                    { UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore) } };
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
@@ -116,11 +119,9 @@ namespace PermissionsService
 
             foreach (string permissionFilePath in _permissionsBlobNames)
             {
-                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore));
                 _telemetryClient?.TrackTrace($"Seeding permissions table from file source '{permissionFilePath}'",
                                              SeverityLevel.Information,
-                                             _permissionsTraceProperties);
-                _permissionsTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+                                             _permissionsTracePropertiesWithSanitizeIgnore);
 
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, permissionFilePath);
                 string jsonString = _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
@@ -304,13 +305,11 @@ namespace PermissionsService
             var delegatedScopesInfoTable = scopesInformationList.DelegatedScopesList.ToDictionary(x => x.ScopeName);
             var applicationScopesInfoTable = scopesInformationList.ApplicationScopesList.ToDictionary(x => x.ScopeName);
 
-            _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore));
             _telemetryClient?.TrackTrace("Finished creating the scopes information tables. " +
                                          $"Delegated scopes count: {delegatedScopesInfoTable.Count}. " +
                                          $"Application scopes count: {applicationScopesInfoTable.Count}",
                                          SeverityLevel.Information,
-                                         _permissionsTraceProperties);
-            _permissionsTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+                                         _permissionsTracePropertiesWithSanitizeIgnore);
 
             return new Dictionary<string, IDictionary<string, ScopeInformation>>
             {
