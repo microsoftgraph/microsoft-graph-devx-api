@@ -206,7 +206,7 @@ namespace PermissionsService
 
                         // Get file contents from source
                         string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
-                        _telemetryClient?.TrackTrace($"Successfully seeded permissions for locale '{locale}' from Azure blob resource",
+                        _telemetryClient?.TrackTrace($"Successfully seeded permissions for locale '{locale}' from Azure blob resource, file length: {scopesInfoJson.Length}",
                                                      SeverityLevel.Information,
                                                      _permissionsTraceProperties);
 
@@ -302,6 +302,11 @@ namespace PermissionsService
                                          _permissionsTraceProperties);
 
             var scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+
+            _telemetryClient?.TrackTrace($"DelegatedScopesList count: {scopesInformationList.DelegatedScopesList.Count}, ApplicationScopesList count: {scopesInformationList.ApplicationScopesList.Count}",
+                                         SeverityLevel.Information,
+                                         _permissionsTraceProperties);
+
             var delegatedScopesInfoTable = scopesInformationList.DelegatedScopesList.ToDictionary(x => x.ScopeName);
             var applicationScopesInfoTable = scopesInformationList.ApplicationScopesList.ToDictionary(x => x.ScopeName);
 
