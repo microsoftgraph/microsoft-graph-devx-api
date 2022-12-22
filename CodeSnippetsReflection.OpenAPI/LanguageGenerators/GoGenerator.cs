@@ -9,6 +9,7 @@ using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
@@ -71,7 +72,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             WriteOptions(codeGraph, builder, indentManager);
             WriteParameters(codeGraph, builder, indentManager);
 
-            var className = $"graphconfig.{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            var className = $"graphconfig.{GetNestedObjectName(codeGraph.Nodes)}RequestBuilder{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             builder.AppendLine($"{requestConfigurationVarName} := &{className}{{");
             indentManager.Indent();
 
@@ -92,12 +93,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (!codeGraph.HasHeaders()) return;
 
-            builder.AppendLine($"{indentManager.GetIndent()}{requestHeadersVarName} := map[string]string{{");
-            indentManager.Indent();
+            builder.AppendLine($"{indentManager.GetIndent()}{requestHeadersVarName} := abstractions.NewRequestHeaders()");
+
             foreach (var param in codeGraph.Headers)
-                builder.AppendLine($"{indentManager.GetIndent()}\"{param.Name}\": \"{param.Value.EscapeQuotes()}\",");
-            indentManager.Unindent();
-            builder.AppendLine($"{indentManager.GetIndent()}}}");
+                builder.AppendLine($"{indentManager.GetIndent()}{requestHeadersVarName}.Add(\"{param.Name}\", \"{param.Value.EscapeQuotes()}\")");
+
+            builder.AppendLine($"{indentManager.GetIndent()}");
         }
 
         private static void WriteOptions(SnippetCodeGraph codeGraph, StringBuilder builder, IndentManager indentManager)
@@ -129,7 +130,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (nonArrayParams.Any())
                 builder.AppendLine(string.Empty);
 
-            var className = $"graphconfig.{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
+            var className = $"graphconfig.{GetNestedObjectName(codeGraph.Nodes)}RequestBuilder{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
             builder.AppendLine($"{indentManager.GetIndent()}{requestParametersVarName} := &{className}{{");
             indentManager.Indent();
 
@@ -146,6 +147,25 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             indentManager.Unindent();
             builder.AppendLine($"{indentManager.GetIndent()}}}");
+        }
+
+        private static string GetNestedObjectName(IEnumerable<OpenApiUrlTreeNode> nodes)
+        {
+            if (!(nodes?.Any() ?? false)) return string.Empty;
+            // if the first element is a collection index skip it
+            var fileterdNodes = (nodes.First().Segment.IsCollectionIndex()) ? nodes.Skip(1) : nodes;
+            return fileterdNodes.Select(static x =>
+            {
+                if (x.Segment.IsCollectionIndex())
+                    return "Item";
+                else
+                    return x.Segment.ToFirstCharacterUpperCase();
+            })
+                        .Aggregate(static (x, y) =>
+                        {
+                            var w = x.EndsWith("s") && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
+                            return $"{w}{y}";
+                        });
         }
 
         private static string evaluateParameter(CodeProperty param)

@@ -15,7 +15,7 @@ trigger:
 pr: none
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 variables:
   solution: '**/*.sln'
@@ -29,10 +29,15 @@ steps:
   submodules: true
 
 - task: UseDotNet@2
+  displayName: 'Use .NET 2' # needed for ESRP signing
+  inputs:
+    version: 2.x
+    
+- task: UseDotNet@2
   displayName: 'Use .NET Core sdk'
   inputs:
     packageType: sdk
-    version: 6.0.x
+    version: 7.0.x
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: DotNetCoreCLI@2
@@ -52,6 +57,60 @@ steps:
     command: test
     projects: '**/*Test/*.csproj'
     arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
+
+# CredScan
+- task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@2
+  displayName: 'Run CredScan'
+  inputs:
+    toolMajorVersion: 'V2'
+    scanFolder: '$(Build.SourcesDirectory)'
+    debugMode: false
+
+- task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
+  displayName: 'ESRP CodeSigning'
+  inputs:  
+    ConnectedServiceName: 'microsoftgraph ESRP CodeSign DLL and NuGet (AKV)'
+    FolderPath: $(System.DefaultWorkingDirectory)
+    signConfigType: inlineSignParams
+    inlineOperation: |
+      [
+          {
+              "keyCode": "CP-230012",
+              "operationSetCode": "SigntoolSign",
+              "parameters": [
+              {
+                  "parameterName": "OpusName",
+                  "parameterValue": "Microsoft"
+              },
+              {
+                  "parameterName": "OpusInfo",
+                  "parameterValue": "http://www.microsoft.com"
+              },
+              {
+                  "parameterName": "FileDigest",
+                  "parameterValue": "/fd \"SHA256\""
+              },
+              {
+                  "parameterName": "PageHash",
+                  "parameterValue": "/NPH"
+              },
+              {
+                  "parameterName": "TimeStamp",
+                  "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+              }
+              ],
+              "toolName": "sign",
+              "toolVersion": "1.0"
+          },
+          {
+              "keyCode": "CP-230012",
+              "operationSetCode": "SigntoolVerify",
+              "parameters": [ ],
+              "toolName": "sign",
+              "toolVersion": "1.0"
+          }
+      ]
+    SessionTimeout: 20
 
 - task: PublishTestResults@2
   displayName: "Publish Test Results"

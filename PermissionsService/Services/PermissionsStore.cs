@@ -33,6 +33,9 @@ namespace PermissionsService
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _permissionsTraceProperties =
             new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(PermissionsStore) } };
+        private readonly Dictionary<string, string> _permissionsTracePropertiesWithSanitizeIgnore =
+            new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(PermissionsStore) },
+                    { UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore) } };
         private readonly string _permissionsContainerName;
         private readonly List<string> _permissionsBlobNames;
         private readonly string _scopesInformation;
@@ -116,11 +119,9 @@ namespace PermissionsService
 
             foreach (string permissionFilePath in _permissionsBlobNames)
             {
-                _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore));
                 _telemetryClient?.TrackTrace($"Seeding permissions table from file source '{permissionFilePath}'",
                                              SeverityLevel.Information,
-                                             _permissionsTraceProperties);
-                _permissionsTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+                                             _permissionsTracePropertiesWithSanitizeIgnore);
 
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, permissionFilePath);
                 string jsonString = _fileUtility.ReadFromFile(relativePermissionPath).GetAwaiter().GetResult();
@@ -304,13 +305,11 @@ namespace PermissionsService
             var delegatedScopesInfoTable = scopesInformationList.DelegatedScopesList.ToDictionary(x => x.ScopeName);
             var applicationScopesInfoTable = scopesInformationList.ApplicationScopesList.ToDictionary(x => x.ScopeName);
 
-            _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore));
             _telemetryClient?.TrackTrace("Finished creating the scopes information tables. " +
                                          $"Delegated scopes count: {delegatedScopesInfoTable.Count}. " +
                                          $"Application scopes count: {applicationScopesInfoTable.Count}",
                                          SeverityLevel.Information,
-                                         _permissionsTraceProperties);
-            _permissionsTraceProperties.Remove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore);
+                                         _permissionsTracePropertiesWithSanitizeIgnore);
 
             return new Dictionary<string, IDictionary<string, ScopeInformation>>
             {
@@ -356,6 +355,7 @@ namespace PermissionsService
                                                     .Where(x => x.Name.Equals(scopeType))
                                                     .SelectMany(x => x.Value)
                                                     .Values<string>().Distinct().ToList();
+                scopes.Remove("N/A");
 
                 scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType, true);
 
@@ -464,7 +464,7 @@ namespace PermissionsService
         /// <param name="scopeType">The type of scope from which to retrieve the scopes information for.</param>
         /// <param name="getAllPermissions">Optional: Whether to return all available permissions for a given <paramref name="scopeType"/>.</param>
         /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
-        private static List<ScopeInformation> GetScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
+        private List<ScopeInformation> GetScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
                                                                    List<string> scopes,
                                                                    string scopeType,
                                                                    bool getAllPermissions = false)
@@ -484,10 +484,18 @@ namespace PermissionsService
                 throw new ArgumentException($"'{nameof(scopeType)}' cannot be null or empty.", nameof(scopeType));
             }
 
-            var key = scopeType.Contains(Delegated) ? Delegated : Application;
+            var key = scopeType.Contains(Delegated, StringComparison.InvariantCultureIgnoreCase) ? Delegated : Application;
+            if (!scopesInformationDictionary[key].Values.Any())
+            {
+                var errMsg = $"{nameof(scopesInformationDictionary)}:[{key}] has no values.";
+                _telemetryClient?.TrackTrace(errMsg,
+                                             SeverityLevel.Error,
+                                             _permissionsTraceProperties);
+            }
+
             var scopesInfo = scopes.Select(scope =>
             {
-                scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
+                scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);                
                 return scopeInfo ?? new() { ScopeName = scope };
             }).ToList();
 

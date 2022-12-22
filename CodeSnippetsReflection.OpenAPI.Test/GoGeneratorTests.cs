@@ -228,7 +228,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
         }
         [Fact]
-        public async Task GeneratesSelectQueryParameters() {
+        public async Task GeneratesSelectQueryParameters()
+        {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$select=displayName,id");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -240,6 +241,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestParameters :=", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
             Assert.Contains("result, err := graphClient.Me().Get(context.Background(), configuration)", result);
+        }
+        [Fact]
+        public async Task GeneratesNestedParameterNames()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{id}}?$select=displayName,givenName,postalCode,identities");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Select: [] string {\"displayName\",\"givenName\",\"postalCode\",\"identities\"}", result);
+            Assert.Contains("QueryParameters: ", result);
+            Assert.Contains("&graphconfig.UserItemRequestBuilderGetQueryParameters", result);
+            Assert.Contains("&graphconfig.UserItemRequestBuilderGetRequestConfiguration", result);
+            Assert.Contains("configuration :=", result);
+            Assert.Contains("requestParameters :=", result);
+            Assert.Contains("result, err := graphClient.UsersById(\"user-id\").Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesCountBooleanQueryParameters() {
@@ -279,7 +294,9 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("\"ConsistencyLevel\": \"eventual\"", result);
+            Assert.Contains("headers := abstractions.NewRequestHeaders()", result);
+            Assert.Contains("headers.Add(\"ConsistencyLevel\", \"eventual\")", result);
+            Assert.Contains("graphconfig.GroupsRequestBuilderGetRequestConfiguration", result);
             Assert.Contains("Headers: headers", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
             Assert.Contains("result, err := graphClient.Groups().Get(context.Background(), configuration)", result);
