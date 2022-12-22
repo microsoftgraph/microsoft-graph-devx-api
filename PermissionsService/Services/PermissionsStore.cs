@@ -316,6 +316,18 @@ namespace PermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTracePropertiesWithSanitizeIgnore);
 
+            if (delegatedScopesInfoTable.Count == 0 && applicationScopesInfoTable.Count == 0)
+            {
+                // sneak-peak into the scopes JSON if we didn't get any scopes
+                const int maxCharsToLog = 100;
+                var scopesInfoJsonToLog = scopesInfoJson[0..int.Max(maxCharsToLog, scopesInfoJson.Length)]
+                                                .Replace("\r", string.Empty, StringComparison.OrdinalIgnoreCase)
+                                                .Replace("\n", string.Empty, StringComparison.OrdinalIgnoreCase);
+                _telemetryClient?.TrackTrace($"Scopes information is empty. ScopesInfoJson start: {scopesInfoJsonToLog}",
+                                             SeverityLevel.Error,
+                                             _permissionsTracePropertiesWithSanitizeIgnore);
+            }
+
             return new Dictionary<string, IDictionary<string, ScopeInformation>>
             {
                 { Delegated, delegatedScopesInfoTable },
