@@ -498,11 +498,23 @@ namespace PermissionsService
                                              _permissionsTraceProperties);
             }
 
+            var scopeInfoMissing = false;
             var scopesInfo = scopes.Select(scope =>
             {
-                scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);                
-                return scopeInfo ?? new() { ScopeName = scope };
+                if (scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo))
+                {
+                    return scopeInfo;
+                }
+                else
+                {
+                    scopeInfoMissing = true;
+                    return new() { ScopeName = scope };
+                }
             }).ToList();
+
+            _telemetryClient?.TrackTrace($"scopesInformationDictionary hash code is: {scopesInformationDictionary.GetHashCode()}",
+                                                scopeInfoMissing ? SeverityLevel.Error : SeverityLevel.Information,
+                                                _permissionsTraceProperties);
 
             if (getAllPermissions)
             {
