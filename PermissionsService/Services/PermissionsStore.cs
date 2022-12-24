@@ -305,7 +305,7 @@ namespace PermissionsService
 
             _telemetryClient?.TrackTrace($"DelegatedScopesList count: {scopesInformationList.DelegatedScopesList.Count}, ApplicationScopesList count: {scopesInformationList.ApplicationScopesList.Count}",
                                          SeverityLevel.Information,
-                                         _permissionsTraceProperties);
+                                         _permissionsTracePropertiesWithSanitizeIgnore);
 
             var delegatedScopesInfoTable = scopesInformationList.DelegatedScopesList.ToDictionary(x => x.ScopeName);
             var applicationScopesInfoTable = scopesInformationList.ApplicationScopesList.ToDictionary(x => x.ScopeName);
@@ -525,8 +525,8 @@ namespace PermissionsService
             }).ToList();
 
             _telemetryClient?.TrackTrace($"scopesInformationDictionary hash code is: {scopesInformationDictionary.GetHashCode()}",
-                                                scopeInfoMissing ? SeverityLevel.Error : SeverityLevel.Information,
-                                                _permissionsTraceProperties);
+                                                scopeInfoMissing && !getAllPermissions ? SeverityLevel.Error : SeverityLevel.Information,
+                                                _permissionsTracePropertiesWithSanitizeIgnore);
 
             if (getAllPermissions)
             {
