@@ -120,16 +120,35 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         var matchingParams = operation.Parameters
                     .Where(p => p.In != ParameterLocation.Path && splitQueryString
                         .Any(s => s.Item1
-                            .Equals(p.Name, StringComparison.OrdinalIgnoreCase)));
+                            .Equals(p.Name, StringComparison.OrdinalIgnoreCase)))
+                    .Where(p => !string.IsNullOrWhiteSpace(p.Name));
 
         foreach (var param in matchingParams)
         {
-            AddParameterToDictionary(ref parameters, param.Name);
+            AddParameterToDictionary(ref parameters, $"{{{param.Name}}}");
         }
     }
 
     /// <summary>
     /// Adds a new parameter to the dictionary or replaces an existing one.
+    /// This function handles surrounding braces in the following ways:
+    /// <list type="number">
+    /// <item>
+    /// <description>
+    /// If the name has surrounding braces, then the dictionary entry's key
+    /// will have the braces trimmed and the value will contain the braces as
+    /// they appear. e.g. if <c>name</c> is <c>{test}</c>, then the key will be
+    /// <c>test</c> and the value will be <c>{test}</c>
+    /// </description>
+    /// </item>
+    /// <item>
+    /// <description>
+    /// If the name has no surrounding braces, then the dictionary entry's key
+    /// will appear as provided. e.g. if <c>name</c> is <c>test</c>, then the key will be
+    /// <c>test</c> and the value will be <c>test</c>
+    /// </description>
+    /// </item>
+    /// </list>
     /// </summary>
     /// <remarks>
     /// NOTE: This function modifies the input dictionary.
@@ -140,29 +159,18 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     {
         // TODO: Should the snippets contain the values entered in the URL as well?
         // e.g. mgc tests --id 120 instead of mgc tests --id {id}
-        // Remove surrounding braces i.e. { and }
         if (string.IsNullOrWhiteSpace(name))
         {
             return;
         }
 
-        var paramName = name;
-        var addBraces = (true, true);
-
-        if (paramName.StartsWith('{'))
-        {
-            paramName = paramName.Remove(0, 1);
-            addBraces.Item1 = false;
-        }
-
-        if (paramName.EndsWith('}'))
-        {
-            paramName = paramName.Remove(paramName.Length - 1, 1);
-            addBraces.Item2 = false;
-        }
-
+        // Remove surrounding braces i.e. { and }
+        var paramName = name.StartsWith('{') && name.EndsWith('}')
+                        ? name.TrimStart('{').TrimEnd('}')
+                        : name;
         var key = $"--{NormalizeToOption(paramName.CleanupSymbolName())}";
-        var value = $"{(addBraces.Item1 ? '{' : "")}{name}{(addBraces.Item2 ? '}' : "")}";
+        var value = $"{name}";
+
         if (parameters.ContainsKey(key))
         {
             // In the case of conflicting keys, this code will replace
