@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ using Microsoft.OpenApi.Services;
 namespace CodeSnippetsReflection.OpenAPI {
 
     public static class KiotaOpenApiUrlTreeNodeExtensions {
-        private static readonly Regex PathParametersRegex = new(@"(?:\w+)?=?'?\{(?<paramName>\w+)\}'?,?", RegexOptions.Compiled);
+        private static readonly Regex PathParametersRegex = new(@"(?:\w+)?=?'?\{(?<paramName>\w+)\}'?,?", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly char requestParametersChar = '{';
         private static readonly char requestParametersEndChar = '}';
         private static readonly char requestParametersSectionChar = '(';
@@ -22,7 +22,7 @@ namespace CodeSnippetsReflection.OpenAPI {
         private static readonly MatchEvaluator requestParametersMatchEvaluator = (match) => {
             return "With" + match.Groups["paramName"].Value.ToFirstCharacterUpperCase();
         };
-        private static readonly Regex idClassNameCleanup = new(@"Id\d?$", RegexOptions.Compiled);
+        private static readonly Regex idClassNameCleanup = new(@"Id\d?$", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         ///<summary>
         /// Returns the class name for the node with more or less precision depending on the provided arguments
         ///</summary>

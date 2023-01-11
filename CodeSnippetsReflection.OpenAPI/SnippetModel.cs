@@ -44,7 +44,7 @@ namespace CodeSnippetsReflection.OpenAPI
             LoadPathNodes(treeNode, splatPath);
             InitializeModel(requestPayload);
         }
-        private static Regex oDataIndexReplacementRegex = new(@"\('([\w=]+)'\)", RegexOptions.Compiled);
+        private static Regex oDataIndexReplacementRegex = new(@"\('([\w=]+)'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         /// <summary>
         /// Replaces OData style ids to path segments
         /// events('AAMkAGI1AAAt9AHjAAA=') to events/AAMkAGI1AAAt9AHjAAA=
@@ -116,7 +116,7 @@ namespace CodeSnippetsReflection.OpenAPI
             else if (method == HttpMethod.Trace) return OperationType.Trace;
             else throw new ArgumentOutOfRangeException(nameof(method));
         }
-        private static Regex namespaceRegex = new Regex("Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static Regex namespaceRegex = new Regex("Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public static string TrimNamespace(string path)
         {
             Match namespaceMatch = namespaceRegex.Match(path);
@@ -127,7 +127,7 @@ namespace CodeSnippetsReflection.OpenAPI
                 string[] nestedActionNamespaceSegments = namespaceMatch.Groups[1].Value.Split(".");
                 // Remove trailing '()' from functions.
                 string actionName = nestedActionNamespaceSegments[nestedActionNamespaceSegments.Length - 1].Replace("()", "");
-                path = Regex.Replace(path, Regex.Escape(fqnAction), actionName);
+                path = Regex.Replace(path, Regex.Escape(fqnAction), actionName, RegexOptions.None, TimeSpan.FromSeconds(5));
             }
             return path;
         }
@@ -186,7 +186,8 @@ namespace CodeSnippetsReflection.OpenAPI
                 : pathSegmentidentifier;
             return identifier.ToFirstCharacterLowerCase();
         }
-        private static readonly Regex searchValueRegex = new(@"\$?search=""([^\""]*)""", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        private static readonly Regex searchValueRegex = new(@"\$?search=""([^\""]*)""",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline, TimeSpan.FromSeconds(5));
 
         protected override string GetSearchExpression(string queryString)
         {

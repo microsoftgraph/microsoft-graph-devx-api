@@ -27,17 +27,17 @@ namespace TelemetrySanitizerService
         private readonly IServiceProvider _serviceProvider;
 
         private static readonly Regex _guidRegex = new(@"\b[A-F0-9]{8}(?:-[A-F0-9]{4}){3}-[A-F0-9]{12}\b",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         // Matches patterns like users('MeganB@M365x214355.onmicrosoft.com')
         private static readonly Regex _emailRegex = new(@"([a-zA-Z0-9_\.-]+)@([\da-zA-Z\.-]+)\.([a-zA-Z\.]{2,6})",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         private static readonly Regex _mobilePhoneRegex = new(@"^(\+\d{1,2}\s?)?1?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         private static readonly Regex _numberRegex = new(@"[0-9]+",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         private readonly List<Regex> _piiRegexes = new()
         {
@@ -276,10 +276,10 @@ namespace TelemetrySanitizerService
             foreach (var option in _odataFilterOptions)
             {
                 // Matches 'Milk' in example: /Products?$filter=Name eq 'Milk'
-                var regex_1 = new Regex(@$"(?<=\b{option}\s*)('(.*?)')", RegexOptions.IgnoreCase);
+                var regex_1 = new Regex(@$"(?<=\b{option}\s*)('(.*?)')", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(5));
 
                 // Matches ('Milk', 'Cheese') in example: /Products?$filter=Name in ('Milk', 'Cheese')
-                var regex_2 = new Regex(@$"(?<=\b{option}\s*)(\((.*?)\))", RegexOptions.IgnoreCase);
+                var regex_2 = new Regex(@$"(?<=\b{option}\s*)(\((.*?)\))", RegexOptions.IgnoreCase, TimeSpan.FromSeconds(5));
 
                 if (regex_1.IsMatch(filterableContent))
                 {

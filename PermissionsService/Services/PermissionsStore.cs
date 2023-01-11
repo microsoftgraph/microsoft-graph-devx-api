@@ -468,7 +468,7 @@ namespace PermissionsService
              * Because these segments are not accounted for in the permissions doc.
              * ${value} segments will always appear as the last segment in a path.
             */
-            return Regex.Replace(requestUrl, @"(\$.*)", string.Empty)
+            return Regex.Replace(requestUrl, @"(\$.*)", string.Empty, RegexOptions.None, TimeSpan.FromSeconds(5))
                         .TrimEnd('/')
                         .ToLowerInvariant();
         }

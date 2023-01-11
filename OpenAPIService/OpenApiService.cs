@@ -624,7 +624,7 @@ namespace OpenAPIService
                     walker.Walk(subsetOpenApiDocument);
 
                     var version = subsetOpenApiDocument.Info.Version;
-                    if (!new Regex("v\\d\\.\\d").Match(version).Success)
+                    if (!new Regex("v\\d\\.\\d", RegexOptions.None, TimeSpan.FromSeconds(5)).Match(version).Success)
                     {
                         subsetOpenApiDocument.Info.Version = "v1.0-" + version;
                     }
@@ -894,7 +894,7 @@ namespace OpenAPIService
                 }
                 return output;
             }
-            return Regex.Replace(pathKey, pattern, evaluator);
+            return Regex.Replace(pathKey, pattern, evaluator, RegexOptions.None, TimeSpan.FromSeconds(5));
         }
 
         /// <summary>
