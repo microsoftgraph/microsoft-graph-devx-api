@@ -12,7 +12,24 @@ namespace CodeSnippetsReflection.OpenAPI
 {
     public class SnippetModel : SnippetBaseModel<OpenApiUrlTreeNode>
     {
+        /// <summary>
+        /// An OpenAPI node that represents the last segment in the request URL.
+        /// </summary>
+        /// <remarks>
+        /// For example, if the request URL is /users/100 and it matches the
+        /// template <c>/users/{user-id}</c>, the <c>EndPathNode</c> will be a
+        /// node representing the <c>{user-id}</c> segment.
+        /// </remarks>
         public OpenApiUrlTreeNode EndPathNode => PathNodes.LastOrDefault();
+        
+        /// <summary>
+        /// An OpenAPI node that represents the root segment in the request URL.
+        /// </summary>
+        /// <remarks>
+        /// For example, if the request URL is /users/100 and it matches the
+        /// template <c>/users/{user-id}</c>, the <c>RootPathNode</c> will be a
+        /// node representing the <c>users</c> segment.
+        /// </remarks>
         public OpenApiUrlTreeNode RootPathNode => PathNodes.FirstOrDefault();
         public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
         public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiUrlTreeNode treeNode) : base(requestPayload, serviceRootUrl)
