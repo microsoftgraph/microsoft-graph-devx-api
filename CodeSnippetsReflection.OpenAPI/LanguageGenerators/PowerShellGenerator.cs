@@ -124,7 +124,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var operation = snippetModel.EndPathNode.PathItems.Select(p => p.Value.Operations[method]).FirstOrDefault();
                 foreach (var header in snippetModel.RequestHeaders)
                 {
-                    var parameter = operation.Parameters.FirstOrDefault(p => p.Name.Equals(header.Key, StringComparison.OrdinalIgnoreCase));
+                    var parameter = operation?.Parameters.FirstOrDefault(p => p.Name.Equals(header.Key, StringComparison.OrdinalIgnoreCase));
                     if (parameter != null)
                         payloadSB.AppendLine($"-{parameter.Name} {header.Value.FirstOrDefault()} ");
                 }
