@@ -27,7 +27,7 @@ namespace UtilityService
                 return uri;
             }
 
-            var regex = new Regex(@"^[^?]+");
+            var regex = new Regex(@"^[^?]+", RegexOptions.None, TimeSpan.FromSeconds(5));
             return regex.Match(uri).Value;
         }
 
@@ -46,7 +46,7 @@ namespace UtilityService
                 return uri;
             }
 
-            var regex = new Regex(@"(?<=\?)(.*)");
+            var regex = new Regex(@"(?<=\?)(.*)", RegexOptions.None, TimeSpan.FromSeconds(5));
             return regex.Match(uri).Value;
         }
 
@@ -66,7 +66,7 @@ namespace UtilityService
                 return value;
             }
 
-            return Regex.Replace(value, @"\(.*?\)", string.Empty);
+            return Regex.Replace(value, @"\(.*?\)", string.Empty, RegexOptions.None, TimeSpan.FromSeconds(5));
         }
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace UtilityService
                     else
                     {
                         // Capture a function --> ex: microsoft.graph.delta()
-                        matchFunction = Regex.Match(segment, @$"({GraphNamespace}).*\(.*\)");
+                        matchFunction = Regex.Match(segment, @$"({GraphNamespace}).*\(.*\)", RegexOptions.None, TimeSpan.FromSeconds(5));
                     }
                 }
 
