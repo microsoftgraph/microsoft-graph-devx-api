@@ -29,7 +29,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             },
             LazyThreadSafetyMode.PublicationOnly
         );
-        private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled);
+        private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -124,7 +124,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var operation = snippetModel.EndPathNode.PathItems.Select(p => p.Value.Operations[method]).FirstOrDefault();
                 foreach (var header in snippetModel.RequestHeaders)
                 {
-                    var parameter = operation.Parameters.FirstOrDefault(p => p.Name.Equals(header.Key, StringComparison.OrdinalIgnoreCase));
+                    var parameter = operation?.Parameters.FirstOrDefault(p => p.Name.Equals(header.Key, StringComparison.OrdinalIgnoreCase));
                     if (parameter != null)
                         payloadSB.AppendLine($"-{parameter.Name} {header.Value.FirstOrDefault()} ");
                 }
@@ -196,7 +196,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             };
         }
 
-        private static Regex nestedStatementRegex = new(@"(\w+|\w+\/\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static Regex nestedStatementRegex = new(@"(\w+|\w+\/\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams)
         {
             var replacements = new Dictionary<string, string>();
@@ -212,7 +212,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return (queryParams, replacements);
         }
 
-        private static Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled);
+        private static Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
         {
             if (psCommands.Value.Count == 0)
@@ -220,7 +220,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             path = Regex.Escape(SnippetModel.TrimNamespace(path));
             // Tokenize uri by substituting parameter values with "{.*}" e.g, "/users/{user-id}" to "/users/{.*}".
             path = $"^{keyIndexRegex.Replace(path, "(\\w*-\\w*|\\w*)")}$";
-            return psCommands.Value.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri, path).Success).ToList();
+            return psCommands.Value.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri,
+                path, RegexOptions.None, TimeSpan.FromSeconds(5)).Success).ToList();
         }
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
@@ -257,7 +258,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
                 // Enclose in quotes if property name contains a non-word character.
-                if (Regex.IsMatch(propertyName, "\\W")) { propertyName = $"\"{propertyName}\""; }
+                if (Regex.IsMatch(propertyName, "\\W", RegexOptions.None, TimeSpan.FromSeconds(5))) { propertyName = $"\"{propertyName}\""; }
                 var propertyAssignment = includePropertyAssignment ? $"{indentManager.GetIndent()}{propertyName} = " : string.Empty;
                 WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment);
             }

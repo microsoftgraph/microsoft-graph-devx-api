@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 using CodeSnippetsReflection.StringExtensions;
 
@@ -11,11 +12,11 @@ internal static class StringExtensions
     internal static bool IsFunction(this string pathSegment) => !string.IsNullOrEmpty(pathSegment) && pathSegment.Contains('.');
     internal static string ReplaceValueIdentifier(this string original) =>
         original?.Replace("$value", "Content");
-
+   
     internal static string Append(this string original, string suffix) =>
         string.IsNullOrEmpty(original) ? original : original + suffix;
         
-    private static readonly Regex PropertyCleanupRegex = new(@"[""\s!#$%&'()*+,./:;<=>?@\[\]\\^`{}|~-](?<followingLetter>\w)?", RegexOptions.Compiled);
+    private static readonly Regex PropertyCleanupRegex = new(@"[""\s!#$%&'()*+,./:;<=>?@\[\]\\^`{}|~-](?<followingLetter>\w)?", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private const string CleanupGroupName = "followingLetter";
     internal static string CleanupSymbolName(this string original)
     {

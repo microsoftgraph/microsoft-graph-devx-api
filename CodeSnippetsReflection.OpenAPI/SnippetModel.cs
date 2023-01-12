@@ -12,7 +12,24 @@ namespace CodeSnippetsReflection.OpenAPI
 {
     public class SnippetModel : SnippetBaseModel<OpenApiUrlTreeNode>
     {
+        /// <summary>
+        /// An OpenAPI node that represents the last segment in the request URL.
+        /// </summary>
+        /// <remarks>
+        /// For example, if the request URL is /users/100 and it matches the
+        /// template <c>/users/{user-id}</c>, the <c>EndPathNode</c> will be a
+        /// node representing the <c>{user-id}</c> segment.
+        /// </remarks>
         public OpenApiUrlTreeNode EndPathNode => PathNodes.LastOrDefault();
+        
+        /// <summary>
+        /// An OpenAPI node that represents the root segment in the request URL.
+        /// </summary>
+        /// <remarks>
+        /// For example, if the request URL is /users/100 and it matches the
+        /// template <c>/users/{user-id}</c>, the <c>RootPathNode</c> will be a
+        /// node representing the <c>users</c> segment.
+        /// </remarks>
         public OpenApiUrlTreeNode RootPathNode => PathNodes.FirstOrDefault();
         public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
         public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiUrlTreeNode treeNode) : base(requestPayload, serviceRootUrl)
@@ -27,7 +44,7 @@ namespace CodeSnippetsReflection.OpenAPI
             LoadPathNodes(treeNode, splatPath);
             InitializeModel(requestPayload);
         }
-        private static Regex oDataIndexReplacementRegex = new(@"\('([\w=]+)'\)", RegexOptions.Compiled);
+        private static Regex oDataIndexReplacementRegex = new(@"\('([\w=]+)'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         /// <summary>
         /// Replaces OData style ids to path segments
         /// events('AAMkAGI1AAAt9AHjAAA=') to events/AAMkAGI1AAAt9AHjAAA=
@@ -99,7 +116,7 @@ namespace CodeSnippetsReflection.OpenAPI
             else if (method == HttpMethod.Trace) return OperationType.Trace;
             else throw new ArgumentOutOfRangeException(nameof(method));
         }
-        private static Regex namespaceRegex = new Regex("Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static Regex namespaceRegex = new Regex("Microsoft.Graph.(.*)$", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public static string TrimNamespace(string path)
         {
             Match namespaceMatch = namespaceRegex.Match(path);
@@ -110,7 +127,7 @@ namespace CodeSnippetsReflection.OpenAPI
                 string[] nestedActionNamespaceSegments = namespaceMatch.Groups[1].Value.Split(".");
                 // Remove trailing '()' from functions.
                 string actionName = nestedActionNamespaceSegments[nestedActionNamespaceSegments.Length - 1].Replace("()", "");
-                path = Regex.Replace(path, Regex.Escape(fqnAction), actionName);
+                path = Regex.Replace(path, Regex.Escape(fqnAction), actionName, RegexOptions.None, TimeSpan.FromSeconds(5));
             }
             return path;
         }
@@ -169,7 +186,8 @@ namespace CodeSnippetsReflection.OpenAPI
                 : pathSegmentidentifier;
             return identifier.ToFirstCharacterLowerCase();
         }
-        private static readonly Regex searchValueRegex = new(@"\$?search=""([^\""]*)""", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        private static readonly Regex searchValueRegex = new(@"\$?search=""([^\""]*)""",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline, TimeSpan.FromSeconds(5));
 
         protected override string GetSearchExpression(string queryString)
         {

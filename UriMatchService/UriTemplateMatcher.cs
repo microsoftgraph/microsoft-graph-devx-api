@@ -102,7 +102,7 @@ namespace UriMatchingService
             if (parameterRegex == null)
             {
                 var matchingRegex = CreateMatchingRegex(template);
-                parameterRegex = new Regex(matchingRegex);
+                parameterRegex = new Regex(matchingRegex, RegexOptions.None, TimeSpan.FromSeconds(5));
             }
 
             var match = parameterRegex.Match(uri.OriginalString);
@@ -124,9 +124,9 @@ namespace UriMatchingService
 
         private string CreateMatchingRegex(string uriTemplate)
         {
-            var findParam = new Regex(Constants.VarSpec);
+            var findParam = new Regex(Constants.VarSpec, RegexOptions.None, TimeSpan.FromSeconds(5));
 
-            var template = new Regex(@"([^{]|^)\?").Replace(uriTemplate, @"$+\?");
+            var template = new Regex(@"([^{]|^)\?", RegexOptions.None, TimeSpan.FromSeconds(5)).Replace(uriTemplate, @"$+\?");
             var regex = findParam.Replace(template, delegate (Match m)
             {
                 var paramNames = m.Groups["lvar"].Captures.Cast<Capture>().Where(c => !string.IsNullOrEmpty(c.Value)).Select(c => c.Value).ToList();
@@ -147,7 +147,7 @@ namespace UriMatchingService
                         return GetExpression(paramNames);
                 }
             });
-
+            
             return "(?<!.)\\" + regex + "$"; // add negative lookbehind to strictly match this regex
         }
 
