@@ -92,8 +92,8 @@ namespace OpenAPIService
             // Update $ref path operationId name
             // Ref key word is enclosed between lower-cased and upper-cased letters
             // Ex.: applications_GetRefCreatedOnBehalfOf to applications_GetCreatedOnBehalfOfByRef
-            var regex = new Regex("(?<=[a-z])Ref(?=[A-Z])");
-            if (regex.Match(operation.OperationId).Success)
+            var regex = new Regex("(?<=[a-z])Ref(?=[A-Z])", RegexOptions.None, TimeSpan.FromSeconds(5));
+            if (regex.Match(operationId).Success)
             {
                 operation.OperationId = $"{regex.Replace(operation.OperationId, string.Empty)}ByRef";
             }
@@ -158,7 +158,7 @@ namespace OpenAPIService
             // For example,
             // Default OperationId --> reports_getEmailActivityUserDetail-fe32
             // Resolved OperationId --> reports_getEmailActivityUserDetail
-            var regex = new Regex(@"^[^-]+");
+            var regex = new Regex(@"^[^-]+", RegexOptions.None, TimeSpan.FromSeconds(5));
             updatedOperationId = regex.Match(updatedOperationId).Value;
 
             return updatedOperationId;

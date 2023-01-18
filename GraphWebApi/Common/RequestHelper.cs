@@ -30,7 +30,7 @@ namespace GraphWebApi.Common
                .Select(StringWithQualityHeaderValue.Parse)
                .OrderByDescending(s => s.Quality.GetValueOrDefault(1));
 
-                localeLanguage = languages.FirstOrDefault().ToString();
+                localeLanguage = languages.FirstOrDefault()?.ToString();
                 var localeSegments = localeLanguage.Split("-");
                 localeLanguage = $"{localeSegments[0]}-{localeSegments[1].ToUpper(CultureInfo.InvariantCulture)}";
             }
