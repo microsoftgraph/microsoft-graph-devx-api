@@ -56,6 +56,8 @@ namespace OpenAPIService
         /// <param name="operation">The target <see cref="OpenApiOperation"/></param>
         public override void Visit(OpenApiOperation operation)
         {
+            var operationId = operation.OperationId;
+
             if (operation.Extensions.TryGetValue("x-ms-docs-operation-type",
                                                   out var value) && value != null)
             {
@@ -69,7 +71,7 @@ namespace OpenAPIService
                     // in the above library changed how action and function OperationIds are constructed.
                     // To maintain pre-existing cmdlet names in PowerShell, we need to resolve their
                     // OperationIds to how they were being constructed in earlier versions of the lib.
-                    operation.OperationId = ResolveActionFunctionOperationId(operation);
+                    operationId = ResolveActionFunctionOperationId(operation);
                 }
 
                 if ("function".Equals(operationType, StringComparison.OrdinalIgnoreCase))
@@ -78,15 +80,15 @@ namespace OpenAPIService
                 }
             }
 
-            var charPos = operation.OperationId.LastIndexOf('.', operation.OperationId.Length - 1);
+            var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 
             // Check whether Put operation id already got updated
-            if (charPos >= 0 && !operation.OperationId.Contains(NewPutPrefix))
+            if (charPos >= 0 && !operationId.Contains(NewPutPrefix))
             {
-                var newOperationId = new StringBuilder(operation.OperationId);
+                var newOperationId = new StringBuilder(operationId);
 
                 newOperationId[charPos] = '_';
-                operation.OperationId = newOperationId.ToString();
+                operationId = newOperationId.ToString();
             }
 
             // Update $ref path operationId name
@@ -95,11 +97,12 @@ namespace OpenAPIService
             var regex = new Regex("(?<=[a-z])Ref(?=[A-Z])", RegexOptions.None, TimeSpan.FromSeconds(5));
             if (regex.Match(operationId).Success)
             {
-                operation.OperationId = $"{regex.Replace(operation.OperationId, string.Empty)}ByRef";
+                operationId = $"{regex.Replace(operationId, string.Empty)}ByRef";
             }
 
+            operation.OperationId = operationId;
             FormatODataTypeCastSegmentOperationId(operation);
-        }               
+        }
 
         /// <summary>
         /// Visits an <see cref="OpenApiSchema"/>
