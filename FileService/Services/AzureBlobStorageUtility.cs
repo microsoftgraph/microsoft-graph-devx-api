@@ -20,8 +20,6 @@ namespace FileService.Services
     {
         private readonly IConfiguration _configuration;
         private readonly string _connectionString;
-        private string _containerName;
-        private string _blobName;
 
         public AzureBlobStorageUtility(IConfiguration configuration)
         {
@@ -40,16 +38,16 @@ namespace FileService.Services
             FileServiceHelper.CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));
             CheckFileFormat(filePathSource);
 
-            (_containerName, _blobName) = FileServiceHelper.RetrieveFilePathSourceValues(filePathSource);
+            (var containerName, var blobName) = FileServiceHelper.RetrieveFilePathSourceValues(filePathSource);
 
             if (CloudStorageAccount.TryParse(_connectionString, out CloudStorageAccount storageAccount))
             {
                 CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
-                CloudBlobContainer container = blobClient.GetContainerReference(_containerName);
+                CloudBlobContainer container = blobClient.GetContainerReference(containerName);
 
                 if (await container.ExistsAsync())
                 {
-                    CloudBlockBlob blob = container.GetBlockBlobReference(_blobName);
+                    CloudBlockBlob blob = container.GetBlockBlobReference(blobName);
 
                     if (await blob.ExistsAsync())
                     {
@@ -57,12 +55,12 @@ namespace FileService.Services
                     }
                     else
                     {
-                        throw new IOException($"The '{_blobName}' blob doesn't exist.");
+                        throw new IOException($"The '{blobName}' blob doesn't exist.");
                     }
                 }
                 else
                 {
-                    throw new IOException($"The '{_containerName}' container doesn't exist.");
+                    throw new IOException($"The '{containerName}' container doesn't exist.");
                 }
             }
 

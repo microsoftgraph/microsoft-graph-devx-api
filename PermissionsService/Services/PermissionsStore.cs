@@ -206,7 +206,7 @@ namespace PermissionsService
 
                         // Get file contents from source
                         string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
-                        _telemetryClient?.TrackTrace($"Successfully seeded permissions for locale '{locale}' from Azure blob resource, file length: {scopesInfoJson.Length}",
+                        _telemetryClient?.TrackTrace($"Successfully seeded permissions for locale '{locale}' from Azure blob resource",
                                                      SeverityLevel.Information,
                                                      _permissionsTraceProperties);
 
@@ -302,11 +302,6 @@ namespace PermissionsService
                                          _permissionsTraceProperties);
 
             var scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
-
-            _telemetryClient?.TrackTrace($"DelegatedScopesList count: {scopesInformationList.DelegatedScopesList.Count}, ApplicationScopesList count: {scopesInformationList.ApplicationScopesList.Count}",
-                                         SeverityLevel.Information,
-                                         _permissionsTracePropertiesWithSanitizeIgnore);
-
             var delegatedScopesInfoTable = scopesInformationList.DelegatedScopesList.ToDictionary(x => x.ScopeName);
             var applicationScopesInfoTable = scopesInformationList.ApplicationScopesList.ToDictionary(x => x.ScopeName);
 
@@ -315,18 +310,6 @@ namespace PermissionsService
                                          $"Application scopes count: {applicationScopesInfoTable.Count}",
                                          SeverityLevel.Information,
                                          _permissionsTracePropertiesWithSanitizeIgnore);
-
-            if (delegatedScopesInfoTable.Count == 0 && applicationScopesInfoTable.Count == 0)
-            {
-                // sneak-peak into the scopes JSON if we didn't get any scopes
-                const int maxCharsToLog = 100;
-                var scopesInfoJsonToLog = scopesInfoJson[0..int.Max(maxCharsToLog, scopesInfoJson.Length)]
-                                                .Replace("\r", string.Empty, StringComparison.OrdinalIgnoreCase)
-                                                .Replace("\n", string.Empty, StringComparison.OrdinalIgnoreCase);
-                _telemetryClient?.TrackTrace($"Scopes information is empty. ScopesInfoJson start: {scopesInfoJsonToLog}",
-                                             SeverityLevel.Error,
-                                             _permissionsTracePropertiesWithSanitizeIgnore);
-            }
 
             return new Dictionary<string, IDictionary<string, ScopeInformation>>
             {
@@ -510,23 +493,11 @@ namespace PermissionsService
                                              _permissionsTraceProperties);
             }
 
-            var scopeInfoMissing = false;
             var scopesInfo = scopes.Select(scope =>
             {
-                if (scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo))
-                {
-                    return scopeInfo;
-                }
-                else
-                {
-                    scopeInfoMissing = true;
-                    return new() { ScopeName = scope };
-                }
+                scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);                
+                return scopeInfo ?? new() { ScopeName = scope };
             }).ToList();
-
-            _telemetryClient?.TrackTrace($"scopesInformationDictionary hash code is: {scopesInformationDictionary.GetHashCode()}",
-                                                scopeInfoMissing && !getAllPermissions ? SeverityLevel.Error : SeverityLevel.Information,
-                                                _permissionsTracePropertiesWithSanitizeIgnore);
 
             if (getAllPermissions)
             {
