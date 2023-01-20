@@ -140,8 +140,8 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         private static List<CodeProperty> parseParameters(SnippetModel snippetModel)
         {
 
-            var ArrayParameters = ImmutableHashSet.Create("select", "expand", "orderby");
-            var NumberParameters = ImmutableHashSet.Create("skip", "top");
+            var ArrayParameters = ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase,"select", "expand", "orderby");
+            var NumberParameters = ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase,"skip", "top");
 
             var parameters = new List<CodeProperty>();
             if (!string.IsNullOrEmpty(snippetModel.QueryString))
@@ -151,18 +151,18 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 NameValueCollection queryCollection = HttpUtility.ParseQueryString(queryString);
                 foreach (String key in queryCollection.AllKeys)
                 {
-                    var name = NormalizeQueryParameterName(key);
+                    var name = NormalizeQueryParameterName(key).Trim();
                     var value = GetQueryParameterValue(queryCollection[key], replacements);
-                    if(ArrayParameters.Contains(name.ToLower().Trim())){
+                    if(ArrayParameters.Contains(name)){
                         var children = splitCommasExcludingBracketsRegex.Split(value)
                             .Where(x => !String.IsNullOrEmpty(x) && !x.StartsWith("(") && !x.Equals(","))
                             .Select(x => new CodeProperty() { Name = null, Value = x, PropertyType = PropertyType.String }).ToList();
 
-                        parameters.Add(new() { Name = name, Value = null, PropertyType = PropertyType.Array , Children = children});
+                        parameters.Add(new() { Name = name.ToLower(), Value = null, PropertyType = PropertyType.Array , Children = children});
                     }else if (value.Equals("true", StringComparison.OrdinalIgnoreCase) || value.Equals("false", StringComparison.OrdinalIgnoreCase)){
-                        parameters.Add(new() { Name = name, Value = value, PropertyType = PropertyType.Boolean });
-                    }else if (NumberParameters.Contains(name.ToLower().Trim())){
-                        parameters.Add(new() { Name = name, Value = value, PropertyType = PropertyType.Int32 });
+                        parameters.Add(new() { Name = name.ToLower(), Value = value, PropertyType = PropertyType.Boolean });
+                    }else if (NumberParameters.Contains(name)){
+                        parameters.Add(new() { Name = name.ToLower(), Value = value, PropertyType = PropertyType.Int32 });
                     }else{
                         parameters.Add(new() { Name = name, Value = value, PropertyType = PropertyType.String });
                     }
