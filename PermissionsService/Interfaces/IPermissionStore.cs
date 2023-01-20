@@ -24,7 +24,7 @@ namespace PermissionsService.Interfaces
         /// <param name="org">Optional: The name of the org/owner of the repo.</param>
         /// <param name="branchName">Optional: The name of the branch containing the files.</param>
         /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
-        Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
+        Task<List<ScopeInformation>> GetScopesAsync(string scopeType = null,
                                                     string locale = null,
                                                     string requestUrl = null,
                                                     string method = null,
