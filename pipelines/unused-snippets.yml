@@ -35,6 +35,13 @@ steps:
   fetchDepth: 1
   persistCredentials: true
 
+- pwsh: |
+    # override branch prefix incase the run is manually triggered
+    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-snippet-generation" } else { "snippet-generation" }
+    Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
+    Write-Host "Branch prefix is $branchPrefix"
+  displayName: 'Evaluate branch prefix to use'
+  
 - template: templates/git-config.yml
 
 - pwsh: $(Build.SourcesDirectory)/microsoft-graph-devx-api/scripts/cleanupUnusedSnippets.ps1
