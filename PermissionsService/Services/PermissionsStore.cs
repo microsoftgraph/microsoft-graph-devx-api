@@ -25,7 +25,7 @@ namespace PermissionsService
 {
     public class PermissionsStore : IPermissionsStore
     {
-        
+
         private readonly IMemoryCache _cache;
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
@@ -58,9 +58,9 @@ namespace PermissionsService
             {
                 get; set;
             }
-            public IDictionary<int, object> ScopesListTable 
+            public IDictionary<int, object> ScopesListTable
             {
-                get;set;
+                get; set;
             }
 
         }
@@ -101,10 +101,10 @@ namespace PermissionsService
                         });
                     }
                 }
-                
+
                 return permissionsData;
             }
-         }
+        }
 
         /// <summary>
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
@@ -319,7 +319,7 @@ namespace PermissionsService
         }
 
         ///<inheritdoc/>
-        public async Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
+        public async Task<List<ScopeInformation>> GetScopesAsync(string scopeType,
                                                                  string locale = DefaultLocale,
                                                                  string requestUrl = null,
                                                                  string method = null,
@@ -349,12 +349,39 @@ namespace PermissionsService
                                              SeverityLevel.Information,
                                              _permissionsTraceProperties);
 
-                var scopes = permissionsData.ScopesListTable.Values.OfType<JToken>()
-                                                    .SelectMany(x => x).OfType<JProperty>()
-                                                    .SelectMany(x => x.Value).OfType<JProperty>()
-                                                    .Where(x => x.Name.Equals(scopeType))
-                                                    .SelectMany(x => x.Value)
-                                                    .Values<string>().Distinct().ToList();
+                List<string> scopes = new();
+                if (scopeType == "*")
+                {
+                    /* Fetch all permissions */
+
+                    // Fetch DelegatedWork and DelegatedPersonal
+                    var delegatedScopes = permissionsData.ScopesListTable.Values.OfType<JToken>()
+                                                                                .SelectMany(x => x).OfType<JProperty>()
+                                                                                .SelectMany(x => x.Value).OfType<JProperty>()
+                                                                                .Where(x => x.Name.StartsWith(Delegated, StringComparison.OrdinalIgnoreCase))
+                                                                                .SelectMany(x => x.Value)
+                                                                                .Values<string>().Distinct().ToList();
+
+                    // Fetch Applications
+                    var appScopes = permissionsData.ScopesListTable.Values.OfType<JToken>()
+                                                                           .SelectMany(x => x).OfType<JProperty>()
+                                                                           .SelectMany(x => x.Value).OfType<JProperty>()
+                                                                           .Where(x => x.Name.StartsWith(Application, StringComparison.OrdinalIgnoreCase))
+                                                                           .SelectMany(x => x.Value)
+                                                                           .Values<string>().Distinct().ToList();
+
+                    scopes = delegatedScopes.Union(appScopes).ToList();
+                }
+                else
+                {
+                    scopes = permissionsData.ScopesListTable.Values.OfType<JToken>()
+                                                                   .SelectMany(x => x).OfType<JProperty>()
+                                                                   .SelectMany(x => x.Value).OfType<JProperty>()
+                                                                   .Where(x => x.Name.Equals("DelegatedWork"))
+                                                                   .SelectMany(x => x.Value)
+                                                                   .Values<string>().Distinct().ToList();
+                }
+
                 scopes.Remove("N/A");
 
                 scopesInfo = GetScopesInformation(scopesInformationDictionary, scopes, scopeType, true);
@@ -398,12 +425,46 @@ namespace PermissionsService
                     return null;
                 }
 
-                var scopes = resultValue.OfType<JProperty>()
-                                        .Where(x => method.Equals(x.Name, StringComparison.OrdinalIgnoreCase))
-                                        .SelectMany(x => x.Value).OfType<JProperty>()
-                                        .FirstOrDefault(x => scopeType.Equals(x.Name, StringComparison.OrdinalIgnoreCase))
-                                        ?.Value?.ToObject<List<string>>().Distinct().ToList();
+                List<string> scopes = new();
+                List<Dictionary<string, List<string>>> scopesDictionary = new();
+                if (string.IsNullOrEmpty(scopeType))
+                {
+                    // Fetch all permissions
+                    _telemetryClient?.TrackTrace($"Request to fetch permissions for the url '{requestUrl}' and method '{method}'",
+                                                 SeverityLevel.Error,
+                                                 _permissionsTraceProperties);
 
+                    scopesDictionary = resultValue.OfType<JProperty>()
+                                                  .Where(x => method.Equals(x.Name, StringComparison.OrdinalIgnoreCase))
+                                                  .SelectMany(x => x.Value).OfType<JProperty>()
+                                                  ?.Select(x =>
+                                                  {
+                                                      return new Dictionary<string, List<string>>
+                                                      {
+                                                          { x.Name, x.Value.ToObject<List<string>>().Distinct().ToList() }
+                                                      };
+                                                  }).ToList();                   
+                }
+                else
+                {
+                    // Fetch permissions for a given scopeType
+                    _telemetryClient?.TrackTrace($"Request to fetch permissions for the url '{requestUrl}' and method '{method}' for scope type '{scopeType}'",
+                                                 SeverityLevel.Error,
+                                                 _permissionsTraceProperties);
+
+                    scopesDictionary = resultValue.OfType<JProperty>()
+                                    .Where(x => method.Equals(x.Name, StringComparison.OrdinalIgnoreCase))
+                                    .SelectMany(x => x.Value).OfType<JProperty>()
+                                    .FirstOrDefault(x => scopeType.Equals(x.Name, StringComparison.OrdinalIgnoreCase))
+                                   ?.Select(x =>
+                                   {
+                                       return new Dictionary<string, List<string>>
+                                       {
+                                           { scopeType, x.ToObject<List<string>>().Distinct().ToList() }
+                                       };
+                                   }).ToList();
+                }
+                
                 if (scopes is null)
                 {
                     _telemetryClient?.TrackTrace($"No '{scopeType}' permissions found for the url '{requestUrl}' and method '{method}'",
@@ -422,8 +483,6 @@ namespace PermissionsService
 
             return scopesInfo;
         }
-
-
 
         /// <summary>
         /// Cleans up the request url by applying string formatting operations
@@ -495,7 +554,7 @@ namespace PermissionsService
 
             var scopesInfo = scopes.Select(scope =>
             {
-                scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);                
+                scopesInformationDictionary[key].TryGetValue(scope, out var scopeInfo);
                 return scopeInfo ?? new() { ScopeName = scope };
             }).ToList();
 
