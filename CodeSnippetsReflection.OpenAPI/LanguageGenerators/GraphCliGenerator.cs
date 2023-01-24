@@ -42,7 +42,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         return commandSegments.Aggregate("", (accum, val) => string.IsNullOrWhiteSpace(accum) ? val : $"{accum} {val}");
     }
 
-    private static string GetOperationName([NotNull] in SnippetModel snippetModel) {
+    private static string GetOperationName([NotNull] in SnippetModel snippetModel)
+    {
         // Check if the last node has a child that is a collection index.
         // Get & Post requests will be changed to list & create respectively)
         // If the last node is a collection index, the operation names are not
@@ -125,7 +126,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
         foreach (var param in matchingParams)
         {
-            AddParameterToDictionary(ref parameters, $"{{{param.Name}}}");
+            AddParameterToDictionary(ref parameters, $"{{{param.Name}}}", param.In);
         }
     }
 
@@ -138,24 +139,42 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// If the name has surrounding braces, then the dictionary entry's key
     /// will have the braces trimmed and the value will contain the braces as
     /// they appear. e.g. if <c>name</c> is <c>{test}</c>, then the key will be
-    /// <c>test</c> and the value will be <c>{test}</c>
+    /// <c>--test</c> and the value will be <c>{test}</c>
     /// </description>
     /// </item>
     /// <item>
     /// <description>
     /// If the name has no surrounding braces, then the dictionary entry's key
     /// will appear as provided. e.g. if <c>name</c> is <c>test</c>, then the key will be
-    /// <c>test</c> and the value will be <c>test</c>
+    /// <c>--test</c> and the value will be <c>test</c>
     /// </description>
     /// </item>
     /// </list>
     /// </summary>
     /// <remarks>
     /// NOTE: This function modifies the input dictionary.
+    /// NOTE 2: If the parameters are duplicated, then this function applies a
+    /// deduplication logic so that all parameters will appear in the dictionary.
+    /// For example, if this function is called twice as follows:
+    /// <list type="number">
+    /// <item>
+    /// <description>
+    /// with name <c>test</c> and location in <c>Path</c>
+    /// </description>
+    /// </item>
+    /// <item>
+    /// <description>
+    /// with name <c>test</c> and location in <c>Query</c>
+    /// </description>
+    /// </item>
+    /// </list>
+    /// then the dictionary will contain the data:
+    /// <c>{"test": "test", "test-query": "test-query"}
     /// </remarks>
     /// <param name="parameters">The input dictionary.</param>
     /// <param name="name">The name of the new parameter.</param>
-    private static void AddParameterToDictionary([NotNull] ref Dictionary<string, string> parameters, in string name)
+    /// <param name="location">The location of the parameter. This is used to construct deduplicated CLI options</param>
+    private static void AddParameterToDictionary([NotNull] ref Dictionary<string, string> parameters, in string name, in ParameterLocation? location = ParameterLocation.Path)
     {
         // TODO: Should the snippets contain the values entered in the URL as well?
         // e.g. mgc tests --id 120 instead of mgc tests --id {id}
@@ -173,21 +192,60 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
         if (parameters.ContainsKey(key))
         {
-            // In the case of conflicting keys, this code will replace
-            // the value with the latest one.
-            // OpenAPI documents should not have duplicate path objects
-            // Each template expression in OpenAPI must have a
-            // corresponsing path parameter. Path parameters must also
-            // be unique on the name+location.
-            // TODO: is there a good way to handle duplicate names? The
-            // The CLI's current mapping of param name => option does
-            // not allow a way to have multiple parameters with the
-            // same name even when the locations of the 2 parameters
-            // are different.
+            // In the case of conflicting keys, this code will deduplicate
+            // the parameter names by adding a suffix to the non-path
+            // parameters.
+            // In the OpenAPI spec, parameters must be unique on the
+            // name+location fields.
+            // Due to this, kiota deduplicates the parameters by adding a
+            // suffix to the name.
+            // /users/{id}/tasks?id={id} should have 2 parameters in the CLI:
+            // --id for the path parameter, and --id-query for the location.
+            // The logic is: if any parameter conflicts with a path parameter,
+            // the CLI option becomes --{name}-{location} where location is
+            // either query or header.
             //
-            // So, /users/{id}/tasks?id={id} will result in 1 option on
-            // the CLI.
-            // See https://github.com/microsoftgraph/msgraph-cli/issues/206
+            // See https://github.com/microsoft/kiota/pull/2138
+            // Note: If the location is a path and the code is in this branch,
+            // then it means 2 paths have the same name+location which is
+            // forbidden in the OpenAPI spec. Additionally, if the location
+            // parameter is null, we can't create a deduplicated parameter. The
+            // location parameter being empty indicates a problem in the
+            // OpenAPI library since parameter locations are required in the OpenAPI spec.
+
+            var loc = location switch
+            {
+                ParameterLocation.Query => "query",
+                ParameterLocation.Header => "header",
+                _ => null,
+            };
+
+            // Don't attempt to deduplicate invalid parameters.
+            if (location == ParameterLocation.Path || string.IsNullOrEmpty(loc))
+            {
+                return;
+            }
+
+            // add the suffix
+            key = $"{key}-{loc}";
+
+            if (value.EndsWith('}'))
+            {
+                value = $"{value.TrimEnd('}')}-{loc}}}";
+            }
+            else
+            {
+                value = $"{value}-{loc}";
+            }
+
+            // Check if the deduplicated key already exists.
+            if (parameters.ContainsKey(key))
+            {
+                // Should this throw an exception instead of returning?
+                // Exceptions will need to be handled
+                return;
+            }
+
             parameters[key] = value;
         }
         else
