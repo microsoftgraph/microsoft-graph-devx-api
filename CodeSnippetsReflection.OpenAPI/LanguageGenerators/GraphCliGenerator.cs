@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -290,7 +290,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     {
         if (snippetModel == null || snippetModel.ApiVersion == "beta")
         {
-            return null;
+            throw new ArgumentException("Unsupported API version");
         }
 
         var pathItemOperations = snippetModel.EndPathNode.PathItems.SelectMany(p => p.Value.Operations);
