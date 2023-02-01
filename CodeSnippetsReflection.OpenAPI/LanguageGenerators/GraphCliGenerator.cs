@@ -87,7 +87,12 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         }
 
         // Adds query parameters from the request into the parameters dictionary
-        ProcessQueryParameters(snippetModel, operation, ref parameters);
+        var processedQuery = ProcessQueryParameters(snippetModel);
+        PostProcessParameters(processedQuery, operation, ParameterLocation.Query, ref parameters);
+
+        // Adds header parameters from the request into the parameters dictionary
+        var processedHeaders = ProcessHeaderParameters(snippetModel);
+        PostProcessParameters(processedHeaders, operation, ParameterLocation.Header, ref parameters);
 
         var operationName = GetOperationName(snippetModel);
 
@@ -103,9 +108,14 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         }
     }
 
-    private static void ProcessQueryParameters([NotNull] in SnippetModel snippetModel, [NotNull] in OpenApiOperation operation, [NotNull] ref Dictionary<string, string> parameters)
+    private static IDictionary<string, string> ProcessHeaderParameters([NotNull] in SnippetModel snippetModel)
     {
-        IEnumerable<(string, string)> splitQueryString = Array.Empty<(string, string)>();
+        return snippetModel.RequestHeaders.ToDictionary(x => x.Key, x=> string.Join(',',x.Value));
+    }
+
+    private static IDictionary<string, string> ProcessQueryParameters([NotNull] in SnippetModel snippetModel)
+    {
+        IDictionary<string, string> splitQueryString = new Dictionary<string, string>();
         if (!string.IsNullOrWhiteSpace(snippetModel.QueryString))
         {
             splitQueryString = snippetModel.QueryString
@@ -115,18 +125,25 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                     {
                         var x = q.Split('=');
                         return x.Length > 1 ? (x[0], x[1]) : (x[0], string.Empty);
-                    });
+                    })
+                    .Where(t => !string.IsNullOrWhiteSpace(t.Item2))
+                    .ToDictionary(t => t.Item1, t => t.Item2);
         }
 
+        return splitQueryString;
+    }
+
+    private static void PostProcessParameters([NotNull] in IDictionary<string, string> processedParameters, in OpenApiOperation operation, ParameterLocation? location, [NotNull] ref Dictionary<string, string> parameters) {
+        var processed = processedParameters;
         var matchingParams = operation.Parameters
-                    .Where(p => p.In != ParameterLocation.Path && splitQueryString
-                        .Any(s => s.Item1
+                    .Where(p => p.In == location && processed
+                        .Any(s => s.Key
                             .Equals(p.Name, StringComparison.OrdinalIgnoreCase)))
                     .Where(p => !string.IsNullOrWhiteSpace(p.Name));
 
         foreach (var param in matchingParams)
         {
-            AddParameterToDictionary(ref parameters, $"{{{param.Name}}}", param.In);
+            AddParameterToDictionary(ref parameters, $"{{{param.Name}}}", processed[param.Name], param.In);
         }
     }
 
@@ -173,10 +190,16 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// </remarks>
     /// <param name="parameters">The input dictionary.</param>
     /// <param name="name">The name of the new parameter.</param>
+    /// <param name="value">
+    /// The value of the new parameter. The value in the dictionary will
+    /// exactly match this value. If it's null or empty, the parameter is added
+    /// to the dictionary with a generated value.
+    /// </param>
     /// <param name="location">The location of the parameter. This is used to construct deduplicated CLI options</param>
-    private static void AddParameterToDictionary([NotNull] ref Dictionary<string, string> parameters, in string name, in ParameterLocation? location = ParameterLocation.Path)
+    private static void AddParameterToDictionary([NotNull] ref Dictionary<string, string> parameters, in string name, in string value = null, in ParameterLocation? location = ParameterLocation.Path)
     {
-        // TODO: Should the snippets contain the values entered in the URL as well?
+        // Snippet path parameter values are replaced with a placeholder, but
+        // other parameters aren't.
         // e.g. mgc tests --id 120 instead of mgc tests --id {id}
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -188,7 +211,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                         ? name.TrimStart('{').TrimEnd('}')
                         : name;
         var key = $"--{NormalizeToOption(paramName.CleanupSymbolName())}";
-        var value = $"{name}";
+        var paramValue = string.IsNullOrWhiteSpace(value) ? name : value;
 
         if (parameters.ContainsKey(key))
         {
@@ -229,15 +252,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             // add the suffix
             key = $"{key}-{loc}";
 
-            if (value.EndsWith('}'))
-            {
-                value = $"{value.TrimEnd('}')}-{loc}}}";
-            }
-            else
-            {
-                value = $"{value}-{loc}";
-            }
-
             // Check if the deduplicated key already exists.
             if (parameters.ContainsKey(key))
             {
@@ -246,11 +260,11 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                 return;
             }
 
-            parameters[key] = value;
+            parameters[key] = paramValue;
         }
         else
         {
-            parameters.Add(key, value);
+            parameters.Add(key, paramValue);
         }
     }
 
@@ -302,7 +316,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// Converts camel-case or delimited string to '-' delimited string for use as a command option
     /// </summary>
     /// <param name="input"></param>
-    /// <returns></returns>
+    /// <returns>A '-' delimited string for use as a command option</returns>
     private static string NormalizeToOption(in string input)
     {
         var result = camelCaseRegex.Replace(input, "-$1");

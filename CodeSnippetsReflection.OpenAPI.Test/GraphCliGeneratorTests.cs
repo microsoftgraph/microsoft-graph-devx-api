@@ -156,9 +156,9 @@ public class GraphCliGeneratorTests
     }
 
     [Theory]
-    [InlineData("?id=10", "--id {id} --id-query {id-query}")]
-    [InlineData("?id=", "--id {id} --id-query {id-query}")]
-    [InlineData("?id", "--id {id} --id-query {id-query}")]
+    [InlineData("?id=10", "--id {id} --id-query 10")]
+    [InlineData("?id=", "--id {id}")] // When the query parameter value is an empty string, the snippet generator ignores it
+    [InlineData("?id", "--id {id}")] // When the query parameter value is not provided, the snippet generator ignores it
     [InlineData(null, "--id {id}")]
     [InlineData("? ", "--id {id}")]
     public void GeneratesSnippetsForCommandWithConflictingParameterName(string queryString, string commandSuffix)
@@ -216,13 +216,32 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        // TODO: What should happen to the query parameter?
         Assert.Equal("mgc tests item results get --id {id}", result);
     }
 
+    [Fact]
+    public void GeneratesSnippetsForCommandWithConflictingPathAndHeaderParameterName()
+    {
+        // Given
+        // The cookie parameter will be skipped. not supported in the CLI
+        string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"header","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
+        var doc = new OpenApiStringReader().Read(schema, out _);
+        var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        string url = $"{ServiceRootUrl}/tests/1/results";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        requestPayload.Headers.Add("id", "test-header");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc tests item results get --id {id} --id-header test-header", result);
+    }
+
     [Theory]
-    [InlineData("?$select=name", " --select {$select}")]
-    [InlineData("?$filter=test&$select=name", " --filter {$filter} --select {$select}")]
+    [InlineData("?$select=name", " --select name")]
+    [InlineData("?$filter=test&$select=name", " --filter test --select name")]
     public async Task GeneratesSnippetsForCommandWithODataParameters(string queryString, string commandOptions)
     {
         // Given
@@ -272,7 +291,7 @@ public class GraphCliGeneratorTests
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal("mgc tests get --id {id}", result);
+        Assert.Equal("mgc tests get --id 10", result);
     }
 
     [Theory]
@@ -364,7 +383,7 @@ public class GraphCliGeneratorTests
     public async Task ThrowsExceptionOnUnsupportedApiVersion()
     {
         // Given
-        string rootUrl = "https://example.com/v2";
+        string rootUrl = "https://example.com/v303";
         string url = $"{rootUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         var snippetModel = new SnippetModel(requestPayload, rootUrl, await GetV1TreeNode());
