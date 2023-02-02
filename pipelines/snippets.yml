@@ -10,7 +10,7 @@ pr: none
 #     displayName: Weekly Tuesday snippets updates
 #     branches:
 #       include:
-#       - master
+#       - cli_preview
 #     always: true
 
 resources:
@@ -39,6 +39,7 @@ variables:
 steps:
 - checkout: self
   displayName: checkout GE api
+  ref: cli_preview
   fetchDepth: 1
   submodules: recursive
   persistCredentials: true
