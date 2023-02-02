@@ -5,13 +5,13 @@
 
 trigger: none
 pr: none
-schedules:
-  - cron: "30 12 * * 2"
-    displayName: Weekly Tuesday snippets updates
-    branches:
-      include:
-      - master
-    always: true
+# schedules:
+#   - cron: "30 12 * * 2"
+#     displayName: Weekly Tuesday snippets updates
+#     branches:
+#       include:
+#       - master
+#     always: true
 
 resources:
  repositories:
@@ -27,7 +27,7 @@ pool:
 
 parameters:
   - name: snippetLanguages
-    default: 'C#,JavaScript,Java,Go,PowerShell,PHP'
+    default: 'cli'
     displayName: 'Languages to generate snippets (comma separated list)'
 
 variables:
