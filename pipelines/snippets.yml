@@ -27,7 +27,7 @@ pool:
 
 parameters:
   - name: snippetLanguages
-    default: 'powershell'
+    default: 'cli'
     displayName: 'Languages to generate snippets (comma separated list)'
 
 variables:
