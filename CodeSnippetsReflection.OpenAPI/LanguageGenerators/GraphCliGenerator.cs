@@ -290,7 +290,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     {
         if (snippetModel == null || snippetModel.ApiVersion == "beta")
         {
-            throw new ArgumentException("Unsupported API version");
+            return null;
         }
 
         var pathItemOperations = snippetModel.EndPathNode.PathItems.SelectMany(p => p.Value.Operations);
