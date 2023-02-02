@@ -39,7 +39,6 @@ variables:
 steps:
 - checkout: self
   displayName: checkout GE api
-  ref: cli_preview
   fetchDepth: 1
   submodules: recursive
   persistCredentials: true
