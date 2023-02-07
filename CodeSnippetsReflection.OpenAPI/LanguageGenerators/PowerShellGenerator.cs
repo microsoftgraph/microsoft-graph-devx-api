@@ -171,13 +171,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (normalizedParameterName.Equals("CountVariable"))
                 return "CountVar";
-
+            if (normalizedParameterName.Equals("Search") & originalValue.Contains("+"))
+                return $"'\"{originalValue.Replace("+", " ")}\"'";
             if (originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
                 return originalValue.ToLowerInvariant();
             else if (int.TryParse(originalValue, out var intValue))
                 return intValue.ToString();
-            else if (originalValue.Contains("+OR+"))
-                return NestedValueWithORSeparator(originalValue);
             else
             {
                 var valueWithNested = originalValue.Split(',')
@@ -186,11 +185,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 // Replace '$' with '`$' since '$' is a reserved character in powershell.
                 return $"\"{valueWithNested.Replace("$", "`$")}\"";
             }
-        }
-        private static string NestedValueWithORSeparator(string originalValue)
-        {
-            originalValue = originalValue.Replace("+", " ");
-            return $"'\"{originalValue.Replace("$", "`$")}\"'";
         }
         private static string NormalizeQueryParameterName(string queryParam)
         {
