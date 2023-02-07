@@ -171,7 +171,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (normalizedParameterName.Equals("CountVariable"))
                 return "CountVar";
-            if (normalizedParameterName.Equals("Search") & originalValue.Contains("+"))
+            if (normalizedParameterName.Equals("Search"))
                 return $"'\"{originalValue.Replace("+", " ")}\"'";
             if (originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
                 return originalValue.ToLowerInvariant();
