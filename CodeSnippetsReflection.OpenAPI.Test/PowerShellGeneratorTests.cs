@@ -233,7 +233,27 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("-Search \"displayName:Megan\"", result);
+            Assert.Contains("-Search '\"displayName:Megan\"'", result);
+            Assert.Contains("-ConsistencyLevel eventual", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithORLogicalConjuction()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" OR \"displayName:al\"");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-Search '\"displayName:di\" OR \"displayName:al\"'", result);
+            Assert.Contains("-ConsistencyLevel eventual", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjuction()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" AND \"displayName:al\"");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-Search '\"displayName:di\" AND \"displayName:al\"'", result);
             Assert.Contains("-ConsistencyLevel eventual", result);
         }
 

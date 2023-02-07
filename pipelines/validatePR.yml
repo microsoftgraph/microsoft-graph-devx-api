@@ -11,8 +11,7 @@ pr:
     - dev
     - master
 
-pool:
-  vmImage: 'windows-latest'
+pool: 1es-windows-latest
 
 variables:
   solution: '**/*.sln'
