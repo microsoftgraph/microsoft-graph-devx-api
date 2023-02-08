@@ -129,17 +129,17 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
 
             // Remove the quotation marks from the JSON keys
             // EXCEPT ones with punctuation in them (like @odata.id)
-            javascriptObject = Regex.Replace(javascriptObject, @"""(\w*?)"" *: *", "$1: ");
+            javascriptObject = Regex.Replace(javascriptObject, @"""(\w*?)"" *: *", "$1: ", RegexOptions.None, TimeSpan.FromSeconds(5));
 
             // Replace double-quotes in any remaining keys with
             // single quotes
-            javascriptObject = Regex.Replace(javascriptObject, @"""(.*?)"" *:", "'$1':");
+            javascriptObject = Regex.Replace(javascriptObject, @"""(.*?)"" *:", "'$1':", RegexOptions.None, TimeSpan.FromSeconds(5));
 
             // Replace double quotes in all values with single-quotes (')
             // Yes this Regex looks insane - it's there to weed out any escaped double-quotes
             // (like in the value "Bob says \"Hello!\""
             javascriptObject = Regex.Replace(javascriptObject,
-                @"(?<!\\)(?:\\\\)*""(.*?)(?<!\\)(?:\\\\)*""", "'$1'");
+                @"(?<!\\)(?:\\\\)*""(.*?)(?<!\\)(?:\\\\)*""", "'$1'", RegexOptions.None, TimeSpan.FromSeconds(5));
 
             stringBuilder.Append($"const {variableName} = {javascriptObject};");
             stringBuilder.Append("\r\n\r\n");

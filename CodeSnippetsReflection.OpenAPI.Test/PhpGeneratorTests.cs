@@ -134,7 +134,7 @@ public class PhpGeneratorTests
         Assert.Contains("$queryParameters->count = true;", result);
         Assert.Contains("$queryParameters->filter", result);
         Assert.Contains("$queryParameters->select", result);
-        Assert.Contains("$queryParameters->orderBy", result);
+        Assert.Contains("$queryParameters->orderby", result);
     }
     
     [Fact]

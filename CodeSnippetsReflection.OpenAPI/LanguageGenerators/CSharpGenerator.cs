@@ -20,7 +20,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string ModelNamespacePrefixToTrim = $"Models.{DefaultNamespace}";
         private const string DefaultNamespace = "Microsoft.Graph";
         
-        private static readonly HashSet<string> ReservedTypeNames = new(StringComparer.OrdinalIgnoreCase)
+        private static HashSet<string> GetSystemTypeNames()
+        {
+            return typeof(string).Assembly.GetTypes()
+                .Where(static type => type.Namespace == "System" 
+                                      && type.IsPublic // get public(we can only import public type in external code)
+                                      && !type.IsGenericType)// non generic types(generic type names have special character like `)
+                .Select(static type => type.Name)
+                .ToHashSet();
+        }
+        
+        private static readonly HashSet<string> CustomDefinedValues = new(StringComparer.OrdinalIgnoreCase)
         {
             "file", //system.io static types
             "directory",
@@ -28,7 +38,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             "environment",
             "task",
             "thread",
+            "integer"
         };
+        
+        private static readonly Lazy<HashSet<string>> ReservedNames = new(static () =>
+        {
+            CustomDefinedValues.UnionWith(GetSystemTypeNames());
+            return CustomDefinedValues;
+        });
         
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
@@ -191,6 +208,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}{assignmentSuffix}");
                     break;
                 case PropertyType.Guid:
+                    snippetBuilder.AppendLine($"{propertyAssignment}Guid.Parse(\"{codeProperty.Value}\"){assignmentSuffix}");
+                    break;
                 case PropertyType.String:
                     snippetBuilder.AppendLine($"{propertyAssignment}\"{codeProperty.Value}\"{assignmentSuffix}");
                     break;
@@ -254,7 +273,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Array:
-                    return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(GetTypeString(codeProperty.Children.First(),apiVersion))}>";
+                    return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{GetTypeString(codeProperty.Children.First(),apiVersion)}>";
                 case PropertyType.Object:
                     return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString)}";
                 case PropertyType.Map:
@@ -291,7 +310,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             apiVersion.Equals("beta", StringComparison.OrdinalIgnoreCase) ?  $"{DefaultNamespace}.Beta" : DefaultNamespace;
         
         private static string ReplaceIfReservedTypeName(string originalString, string suffix = "Object")
-            => ReservedTypeNames.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
+            => ReservedNames.Value.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
         private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
@@ -305,7 +324,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             return x.Segment.Split('.').Last().ToFirstCharacterUpperCase();
                                         return x.Segment.ReplaceValueIdentifier().TrimStart('$').ToFirstCharacterUpperCase();
                                       })
-                                .Select( x => ReplaceIfReservedTypeName(x))
                                 .Aggregate((x, y) =>
                                 {
                                     var dot = y.StartsWith("[") ? string.Empty : ".";
