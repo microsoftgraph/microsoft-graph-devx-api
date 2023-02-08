@@ -39,7 +39,9 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         // parameters to the parameters dictionary.
         ProcessCommandSegmentsAndParameters(snippetModel, ref commandSegments, ref operation, ref parameters);
 
-        return commandSegments.Aggregate("", (accum, val) => string.IsNullOrWhiteSpace(accum) ? val : $"{accum} {val}");
+        return commandSegments.Aggregate("", (accum, val) => string.IsNullOrWhiteSpace(accum) ? val : $"{accum} {val}")
+                    .Replace("\n", "\\\n")
+                    .Replace("\r\n", "\\\r\n");
     }
 
     private static string GetOperationName([NotNull] in SnippetModel snippetModel)
