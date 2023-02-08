@@ -392,4 +392,20 @@ public class GraphCliGeneratorTests
         // Then
         Assert.Throws<ArgumentException>(() => _generator.GenerateCodeSnippet(snippetModel));
     }
+    
+    [Fact]
+    public async Task GeneratesEscapedSnippetsForMultilineCommand()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/users";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, url);
+        requestPayload.Content = new StringContent("{\n  \"name\": \"test\"\n}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc users create --body '{\\\n  \"name\": \"test\"\\\n}'", result);
+    }
 }
