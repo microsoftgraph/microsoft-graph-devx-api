@@ -257,6 +257,25 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("result, err := graphClient.UsersById(\"user-id\").Get(context.Background(), configuration)", result);
         }
         [Fact]
+        public async Task GeneratesODataTypesAreEscaped()
+        {
+            const string jsonObject = @"
+{
+  ""@odata.id"": ""https://graph.microsoft.com/v1.0/directoryObjects/{id}""
+}
+";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups/{{group-id}}/members/$ref")
+            {
+                Content = new StringContent(jsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestBody := graphmodels.NewReferenceCreate()", result);
+            Assert.Contains("requestBody.SetOdataId(&odataId)", result);
+            Assert.Contains("odataId := \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"", result);
+            Assert.Contains("graphClient.GroupsById(\"group-id\").Members().Ref().Post(context.Background(), requestBody, nil)", result);
+        }
+        [Fact]
         public async Task GeneratesCountBooleanQueryParameters() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$select=displayName,id");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
