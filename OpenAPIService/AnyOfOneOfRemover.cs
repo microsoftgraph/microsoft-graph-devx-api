@@ -4,6 +4,7 @@
 
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace OpenAPIService
@@ -12,11 +13,11 @@ namespace OpenAPIService
     {
         public override void Visit(OpenApiSchema schema)
         {
+            // Replace AnyOf with AllOf
             if (schema.AnyOf?.Any() ?? false)
             {
-                var newSchema = schema.AnyOf.FirstOrDefault();
+                schema.AllOf = new List<OpenApiSchema>(schema.AnyOf); 
                 schema.AnyOf = null;
-                FlattenSchema(schema, newSchema);
             }
 
             if (schema.OneOf?.Any() ?? false)
