@@ -383,7 +383,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("var requestBody = new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody", result);
+            Assert.Contains("var requestBody = new Microsoft.Graph.Users.Item.MicrosoftGraphSendMail.SendMailPostRequestBody", result);
             Assert.Contains("ToRecipients = new List<Recipient>", result);
         }
         
@@ -496,7 +496,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.Teams[\"team-id\"].Archive.PostAsync(null);", result);
+            Assert.Contains("await graphClient.Teams[\"team-id\"].MicrosoftGraphArchive.PostAsync(null);", result);
         }
         
         [Fact]
@@ -542,7 +542,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("var requestBody = new Microsoft.Graph.Applications.Item.AddKey.AddKeyPostRequestBody", result);
+            Assert.Contains("var requestBody = new Microsoft.Graph.Applications.Item.MicrosoftGraphAddKey.AddKeyPostRequestBody", result);
         }
         [Fact]
         public async Task CorrectlyEvaluatesGuidInRequestBodyParameter()
