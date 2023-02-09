@@ -323,7 +323,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                         if (x.Segment.IsFunction())
                                             return x.Segment.Split('.')
                                                 .Select(static s => s.ToFirstCharacterUpperCase())
-                                                .Aggregate((a, b) => $"{a}{b}");
+                                                .Aggregate(static (a, b) => $"{a}{b}");
                                         return x.Segment.ReplaceValueIdentifier().TrimStart('$').ToFirstCharacterUpperCase();
                                       })
                                 .Aggregate((x, y) =>
