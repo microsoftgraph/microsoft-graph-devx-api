@@ -117,7 +117,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (!codeGraph.HasParameters()) return;
 
-            var nonArrayParams = codeGraph.Parameters.Where(x => x.PropertyType != PropertyType.Array);
+            var nonArrayParams = codeGraph.Parameters.Where(static x => x.PropertyType != PropertyType.Array);
 
             if (nonArrayParams.Any())
                 builder.AppendLine(string.Empty);
@@ -171,7 +171,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string evaluateParameter(CodeProperty param)
         {
             if (param.PropertyType == PropertyType.Array)
-                return $"[] string {{{string.Join(",", param.Children.Select(x => $"\"{x.Value}\"").ToList())}}}";
+                return $"[] string {{{string.Join(",", param.Children.Select(static x => $"\"{x.Value}\"").ToList())}}}";
             else if (param.PropertyType == PropertyType.Boolean)
                 return param.Value;
             else if (param.PropertyType == PropertyType.Int32)
@@ -212,9 +212,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static string GetActionParametersList(params string[] parameters)
         {
-            var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
+            var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
             if (nonEmptyParameters.Any())
-                return string.Join(", ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}"));
+                return string.Join(", ", nonEmptyParameters.Aggregate(static (a, b) => $"{a}, {b}"));
             else return string.Empty;
         }
 
@@ -303,7 +303,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.Enum:
                     if (!String.IsNullOrWhiteSpace(child.Value))
                     {
-                        var enumProperties = string.Join("_", child.Value.Split('.').Reverse().Select(x => x.ToUpper()));
+                        var enumProperties = string.Join("_", child.Value.Split('.').Reverse().Select(static x => x.ToUpper()));
                         builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := graphmodels.{enumProperties} ");
                         builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
                     }
@@ -378,25 +378,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static void WriteCodePropertyObject(string propertyAssignment, StringBuilder builder, CodeProperty codeProperty, IndentManager indentManager)
         {
             var childPosition = 0;
-            foreach (var child in codeProperty.Children.Where(x => !specialProperties.Contains(x.Name.Trim())))
+            foreach (var child in codeProperty.Children.Where(static x => !specialProperties.Contains(x.Name.Trim())))
                 WriteCodeProperty(propertyAssignment, builder, codeProperty, child, indentManager, childPosition++);
         }
 
         private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
-            return nodes.Select(x =>
+            return nodes.Select(static x =>
             {
                 if (x.Segment.IsCollectionIndex())
                     return $"ById{x.Segment.Replace("{", "(\"").Replace("}", "\")")}.";
                 else if (x.Segment.IsFunction())
-                    return x.Segment.Split('.').Last().ToFirstCharacterUpperCase() + "().";
+                    return x.Segment.Split('.')
+                                    .Select(static s => s.ToFirstCharacterUpperCase())
+                                    .Aggregate(static (a, b) => $"{a}{b}") + "().";
                 return x.Segment.ToFirstCharacterUpperCase() + "().";
             })
-                        .Aggregate((x, y) =>
-                        {
-                            return $"{x}{y}";
-                        })
+                        .Aggregate(static (x, y) => $"{x}{y}")
                         .Replace("().ById(", "ById(")
                         .Replace("()()", "()");
         }
