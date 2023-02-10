@@ -114,7 +114,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string evaluateParameter(CodeProperty param){
             if(param.PropertyType == PropertyType.Array)
-                return $"[{string.Join(",", param.Children.Select(x =>  $"\"{x.Value}\"" ).ToList())}]";
+                return $"[{string.Join(",", param.Children.Select(static x =>  $"\"{x.Value}\"" ).ToList())}]";
             else if (param.PropertyType == PropertyType.Boolean || param.PropertyType == PropertyType.Int32)
                 return param.Value;
             else
@@ -219,23 +219,25 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetActionParametersList(params string[] parameters)
         {
-            var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
+            var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
             if (nonEmptyParameters.Any())
-                return string.Join(", ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}"));
+                return string.Join(", ", nonEmptyParameters.Aggregate(static (a, b) => $"{a}, {b}"));
             else return string.Empty;
         }
 
         private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
-            return nodes.Select(x => {
+            return nodes.Select(static x => {
                 if (x.Segment.IsCollectionIndex())
                     return $"ById{x.Segment.Replace("{", "(\"").Replace("}", "\")")}";
                 else if (x.Segment.IsFunction())
-                    return x.Segment.Split('.').Last().ToFirstCharacterLowerCase();
+                    return x.Segment.Split('.')
+                            .Select(static s => s.ToFirstCharacterUpperCase())
+                            .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterLowerCase();
                 return x.Segment.ToFirstCharacterLowerCase();
             })
-                        .Aggregate((x, y) => {
+                        .Aggregate(static (x, y) => {
                             var dot = y.StartsWith("ById") ?
                                             string.Empty :
                                             ".";

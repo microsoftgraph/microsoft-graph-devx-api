@@ -109,7 +109,7 @@ public class PhpGeneratorTests
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphServiceClient->directory()->deletedItems()->group()->get()", result);
+        Assert.Contains("$graphServiceClient->directory()->deletedItems()->microsoftGraphGroup()->get()", result);
     }
 
     [Fact]
@@ -258,7 +258,7 @@ public class PhpGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->activities()->recent()->get()", result);
+        Assert.Contains("->me()->activities()->microsoftGraphRecent()->get()", result);
     }
 
     [Fact /*(Skip = "Should fail by default.")*/]
