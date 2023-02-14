@@ -50,7 +50,7 @@ steps:
 
 - pwsh: |
     # override branch prefix incase the run is manually triggered
-    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-snippet-generation" } else { "snippet-generation" }
+    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-cli-snippet-generation" } else { "cli-snippet-generation" }
     Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
     Write-Host "Branch prefix is $branchPrefix"
   displayName: 'Evaluate branch prefix to use'
