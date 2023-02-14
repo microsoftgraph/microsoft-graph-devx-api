@@ -5,21 +5,21 @@
 
 trigger: none
 pr: none
-# schedules:
-#   - cron: "30 12 * * 2"
-#     displayName: Weekly Tuesday snippets updates
-#     branches:
-#       include:
-#       - cli_preview
-#     always: true
+schedules:
+   - cron: "30 12 * * 3"
+     displayName: Weekly Wednesday snippets updates
+     branches:
+       include:
+       - cli_preview
+     always: true
 
 resources:
  repositories:
    - repository: microsoft-graph-docs
      type: github
-     endpoint: timayabi2020
-     name: timayabi2020/microsoft-graph-docs
-     ref: main
+     endpoint: microsoftgraph
+     name: microsoftgraph/microsoft-graph-docs
+     ref: cli_preview
 
 pool:
   vmImage: 'ubuntu-latest'
