@@ -17,7 +17,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private const string RequestBodyVarName = "requestBody";
     private const string QueryParametersVarName = "queryParameters";
     private const string RequestConfigurationVarName = "requestConfiguration";
-    private const string RequestHeadersVarName = "headers";
+
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
         var indentManager = new IndentManager();
@@ -53,8 +53,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         var payloadSb = new StringBuilder();
         if (!model.HasParameters()) return default;
-
-        var className = $"{model.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
+        
         payloadSb.AppendLine($"{configClassName}::addQueryParameters(");
         indentManager.Indent(2);
         foreach(var queryParam in model.Parameters) {
