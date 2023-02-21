@@ -44,21 +44,24 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             ? $"{RequestBodyVarName}"
             : string.Empty;
         var optionsParameter = codeGraph.HasOptions() ? "options" : string.Empty;
-        var returnVar = codeGraph.HasReturnedBody() ? "$requestResult = " : string.Empty;
+        var returnVar = codeGraph.HasReturnedBody() ? "$result = " : string.Empty;
         var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
         payloadSb.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
         payloadSb.AppendLine($"{returnVar}{ClientVarName}->{GetFluentApiPath(codeGraph.Nodes)}->{method}({parameterList});");
     }
-    private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
+    private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager, string configClassName) 
     {
         var payloadSb = new StringBuilder();
         if (!model.HasParameters()) return default;
 
         var className = $"{model.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
-        payloadSb.AppendLine($"${QueryParametersVarName} = new {className}();");
+        payloadSb.AppendLine($"{configClassName}::addQueryParameters(");
+        indentManager.Indent(2);
         foreach(var queryParam in model.Parameters) {
-            payloadSb.AppendLine($"{indentManager.GetIndent()}${QueryParametersVarName}->{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()} = {EvaluateParameter(queryParam)};");
+            payloadSb.AppendLine($"{indentManager.GetIndent()}{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()}: {EvaluateParameter(queryParam)},");
         }
+        indentManager.Unindent();
+        payloadSb.AppendLine($"{indentManager.GetIndent()})");
         indentManager.Unindent();
         payloadSb.AppendLine();
         return payloadSb.ToString();
@@ -78,21 +81,19 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
     {
         var payloadSb = new StringBuilder();
-        var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager);
-        var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
 
-        if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload))
+        if (codeGraph.HasParameters() || codeGraph.HasHeaders() || codeGraph.HasOptions())
         {
             var className = $"{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
-            payloadSb.AppendLine($"${RequestConfigurationVarName} = new {className}();");
-            payloadSb.AppendLine();
-            payloadSb.Append(queryParamsPayload);
-            payloadSb.Append(requestHeadersPayload);
-            if (!string.IsNullOrEmpty(queryParamsPayload))
-                payloadSb.AppendLine($"${RequestConfigurationVarName}->queryParameters = ${QueryParametersVarName};");
+            payloadSb.AppendLine($"${RequestConfigurationVarName} = new {className}(");
+            indentManager.Indent(2);
+            var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
+            var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager, className);
             if (!string.IsNullOrEmpty(requestHeadersPayload))
-                payloadSb.AppendLine($"${RequestConfigurationVarName}->headers = ${RequestHeadersVarName};");
-            payloadSb.AppendLine();
+                payloadSb.AppendLine($"{indentManager.GetIndent()}headers: {requestHeadersPayload},");
+            if (!string.IsNullOrEmpty(queryParamsPayload))
+                payloadSb.AppendLine($"{indentManager.GetIndent()}{QueryParametersVarName}: {queryParamsPayload}");
+            payloadSb.AppendLine(");");
         }
         
         return (payloadSb.Length > 0 ? payloadSb.ToString() : default);
@@ -110,13 +111,13 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var filteredHeaders = snippetModel.Headers?.Where(static h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
         if(filteredHeaders != null && filteredHeaders.Any()) {
-            payloadSb.AppendLine($"{indentManager.GetIndent()}${RequestHeadersVarName} = [");
+            payloadSb.AppendLine("[");
             indentManager.Indent();
             filteredHeaders.ForEach(h =>
                 payloadSb.AppendLine($"{indentManager.GetIndent()}'{h.Name}' => '{h.Value.Replace("\'", "\\'")}',")
             );
             indentManager.Unindent();
-            payloadSb.AppendLine($"{indentManager.GetIndent()}];");
+            payloadSb.AppendLine($"{indentManager.GetIndent()}]");
             payloadSb.AppendLine();
             return payloadSb.ToString();
         }
@@ -240,7 +241,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         indentManager.Indent(2);
         foreach (var child in currentProperty.Children)
         {
-            payloadSb.Append($"\'{child.Name}\' => ");
+            payloadSb.Append($"{indentManager.GetIndent()}\'{child.Name}\' => ");
             WriteCodeProperty(propertyAssignment, payloadSb, currentProperty, child, indentManager, ++childPosition);
             payloadSb.AppendLine();
         }

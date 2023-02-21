@@ -83,8 +83,8 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$queryParameters = new UsersRequestBuilderPostQueryParameters();", result);
-        Assert.Contains("$requestConfiguration->queryParameters = $queryParameters;", result);
+        Assert.Contains("$requestConfiguration = new UsersRequestBuilderPostRequestConfiguration(\n", result);
+        Assert.Contains("queryParameters: UsersRequestBuilderPostRequestConfiguration::addQueryParameters(", result);
     }
 
     [Fact]
@@ -131,10 +131,11 @@ public class PhpGeneratorTests
             $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$queryParameters->count = true;", result);
-        Assert.Contains("$queryParameters->filter", result);
-        Assert.Contains("$queryParameters->select", result);
-        Assert.Contains("$queryParameters->orderby", result);
+        Assert.Contains("count: true,", result);
+        Assert.Contains("queryParameters: UsersRequestBuilderGetRequestConfiguration::addQueryParameters(", result);
+        Assert.Contains("filter: ", result);
+        Assert.Contains("select: ", result);
+        Assert.Contains("orderby: ", result);
     }
     
     [Fact]
@@ -144,9 +145,9 @@ public class PhpGeneratorTests
         requestPayload.Headers.Add("Accept", "application/json");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$headers = [", result);
+        Assert.Contains("headers: [", result);
         Assert.Contains("'ConsistencyLevel' => 'eventual',", result);
-        Assert.Contains("$requestConfiguration = ", result);
+        Assert.Contains("'Accept' => 'application/json',", result);
     }
 
     [Fact]
