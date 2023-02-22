@@ -1,0 +1,97 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# Pipeline for permissions table injection into Microsoft Graph docs
+
+trigger: none
+pr: none
+schedules:
+  - cron: "0 9 * * 2"
+    displayName: Weekly Tuesday graph docs permissions updates
+    branches:
+      include:
+      - master
+    always: true
+
+resources:
+ repositories:
+   - repository: microsoft-graph-docs
+     type: github
+     endpoint: microsoftgraphdocs
+     name: microsoftgraph/microsoft-graph-docs
+     ref: main   
+   - repository: api-doctor
+     type: github
+     endpoint: microsoftgraphdocs
+     name: OneDrive/apidoctor
+     ref: master
+
+pool:
+  vmImage: 'ubuntu-latest'
+     
+parameters:
+  - name: permissionsSourceFilePath
+    default: 'https://github.com/microsoftgraph/kibali/blob/main/test/kibaliTests/GraphPermissions.json'
+    displayName: 'The file path or URL to permissions in JSON format to be consumed by Kibali'
+  - name: bootstrappingOnly
+    type: boolean
+    default: false
+    displayName: 'Only move permissions table in reference document to own file without updating contents of permissions table'
+    
+variables:
+  buildConfiguration: 'Release'
+  apidoctorProjects: 'apidoctor/**/*.csproj'
+  permissionsSourceFilePath: ${{ parameters.permissionsSourceFilePath }}
+  ${{ if eq(parameters.bootstrappingOnly, true) }}:
+    bootstrappingOnly: '--bootstrapping-only'
+  ${{ else }}:
+    bootstrappingOnly: ''
+
+steps:
+- checkout: api-doctor
+  displayName: Checkout API Doctor
+  fetchDepth: 1
+  submodules: recursive
+  persistCredentials: true
+
+- checkout: microsoft-graph-docs
+  displayName: Checkout Microsoft Graph docs
+  fetchDepth: 1
+  persistCredentials: true
+
+- pwsh: |
+    # override branch prefix incase the run is manually triggered
+    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-permissions-table-update" } else { "permissions-table-update" }
+    Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
+    Write-Host "Branch prefix is $branchPrefix"
+  displayName: 'Evaluate branch prefix to use'
+
+- template: templates/git-config.yml
+
+- task: UseDotNet@2
+  displayName: 'Install .NET Core SDK 6'
+  inputs:
+    version: 6.x
+
+- task: DotNetCoreCLI@2
+  displayName: 'Restore packages for APIDoctor'
+  inputs:
+    command: 'restore'
+    projects: '$(Build.SourcesDirectory)/$(apidoctorProjects)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build APIDoctor'
+  inputs:
+    command: 'build'
+    projects: '$(Build.SourcesDirectory)/$(apidoctorProjects)'
+    arguments: '--configuration $(buildConfiguration)'
+
+- pwsh: |
+    $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
+    Write-Host "Path to apidoctor tool: $apidoctorPath"
+    
+    . $apidoctorPath generate-permission-files --ignore-warnings $(bootstrappingOnly) --path . --permissions-source-file $(permissionsSourceFilePath) --git-path "/bin/git"
+  displayName: 'Generate permissions tables'
+  workingDirectory: microsoft-graph-docs
+
+- template: templates/commit-changes.yml
