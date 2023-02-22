@@ -156,18 +156,59 @@ public class GraphCliGeneratorTests
     }
 
     [Theory]
-    [InlineData("?id=10")]
-    [InlineData("?id=")]
-    [InlineData("?id")]
-    [InlineData(null)]
-    [InlineData("? ")]
-    public void GeneratesSnippetsForCommandWithConflictingParameterName(string queryString)
+    [InlineData("?id=10", "--id {id} --id-query {id-query}")]
+    [InlineData("?id=", "--id {id} --id-query {id-query}")]
+    [InlineData("?id", "--id {id} --id-query {id-query}")]
+    [InlineData(null, "--id {id}")]
+    [InlineData("? ", "--id {id}")]
+    public void GeneratesSnippetsForCommandWithConflictingParameterName(string queryString, string commandSuffix)
     {
         // Given
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"query","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
         var doc = new OpenApiStringReader().Read(schema, out _);
         var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
         string url = $"{ServiceRootUrl}/tests/1/results{queryString}";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        // TODO: What should happen to the query parameter?
+        Assert.Equal($"mgc tests item results get {commandSuffix}", result);
+    }
+
+    [Fact]
+    public void GeneratesSnippetsForCommandWithConflictingParameterNameAndNoLocation()
+    {
+        // Given
+        // This open api doc is not valid since there's a parameter that has no location
+        // defined. That parameter will be skipped
+        string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
+        var doc = new OpenApiStringReader().Read(schema, out _);
+        var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        string url = $"{ServiceRootUrl}/tests/1/results";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        // TODO: What should happen to the query parameter?
+        Assert.Equal("mgc tests item results get --id {id}", result);
+    }
+
+    [Fact]
+    public void GeneratesSnippetsForCommandWithConflictingPathAndCookieParameterName()
+    {
+        // Given
+        // The cookie parameter will be skipped. not supported in the CLI
+        string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"cookie","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
+        var doc = new OpenApiStringReader().Read(schema, out _);
+        var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        string url = $"{ServiceRootUrl}/tests/1/results";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
 

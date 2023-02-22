@@ -171,12 +171,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (normalizedParameterName.Equals("CountVariable"))
                 return "CountVar";
-
+            if (normalizedParameterName.Equals("Search"))
+                return $"'\"{originalValue.Replace("+", " ")}\"'";
             if (originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
                 return originalValue.ToLowerInvariant();
             else if (int.TryParse(originalValue, out var intValue))
                 return intValue.ToString();
-            else {
+            else
+            {
                 var valueWithNested = originalValue.Split(',')
                                                     .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
                                                     .Aggregate((a, b) => $"{a},{b}");

@@ -88,8 +88,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetActionParametersList(params string[] parameters)
         {
-            var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
-            return nonEmptyParameters.Any() ? string.Join(", ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}")) : string.Empty;
+            var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
+            return nonEmptyParameters.Any() ? string.Join(", ", nonEmptyParameters.Aggregate(static (a, b) => $"{a}, {b}")) : string.Empty;
         }
 
         private static void WriteRequestHeaders(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, StringBuilder stringBuilder)
@@ -131,7 +131,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.Float64:
                     return queryParam.Value; // Numbers stay as is 
                 case PropertyType.Array:
-                    return $"new string []{{ {string.Join(",", queryParam.Children.Select(x =>  $"\"{x.Value}\"" ).ToList())} }}"; // deconstruct arrays
+                    return $"new string []{{ {string.Join(",", queryParam.Children.Select(static x =>  $"\"{x.Value}\"" ).ToList())} }}"; // deconstruct arrays
                 default:
                     return $"\"{queryParam.Value.EscapeQuotes()}\"";
             }
@@ -223,7 +223,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             var enumMember = codeProperty.Children.FirstOrDefault( member => member.Value.Equals(enumHint,StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
                             return $"{enumTypeString.TrimEnd('?')}.{enumMember.ToFirstCharacterUpperCase()}";
                         })
-                        .Aggregate((x, y) => $"{x} | {y}");
+                        .Aggregate(static (x, y) => $"{x} | {y}");
                     snippetBuilder.AppendLine($"{propertyAssignment}{enumValues}{assignmentSuffix}");
                     break;
                 case PropertyType.DateTime:
@@ -300,8 +300,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             namespaceName = namespaceName.Replace(DefaultNamespace,string.Empty, StringComparison.OrdinalIgnoreCase);
             
             var normalizedNameSpaceName = namespaceName.TrimStart('.').Split('.',StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => ReplaceIfReservedTypeName(x, "Namespace").ToFirstCharacterUpperCase())
-                .Aggregate((z, y) => z + '.' + y);
+                .Select(static x => ReplaceIfReservedTypeName(x, "Namespace").ToFirstCharacterUpperCase())
+                .Aggregate(static (z, y) => z + '.' + y);
 
             return $"{GetDefaultNamespaceName(apiVersion)}.{normalizedNameSpaceName}.";
         }
@@ -317,14 +317,16 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if(!(nodes?.Any() ?? false)) 
                 return string.Empty;
 
-            return nodes.Select(x => {
+            return nodes.Select(static x => {
                                         if(x.Segment.IsCollectionIndex())
                                             return x.Segment.Replace("{", "[\"").Replace("}", "\"]");
                                         if (x.Segment.IsFunction())
-                                            return x.Segment.Split('.').Last().ToFirstCharacterUpperCase();
+                                            return x.Segment.Split('.')
+                                                .Select(static s => s.ToFirstCharacterUpperCase())
+                                                .Aggregate(static (a, b) => $"{a}{b}");
                                         return x.Segment.ReplaceValueIdentifier().TrimStart('$').ToFirstCharacterUpperCase();
                                       })
-                                .Aggregate((x, y) =>
+                                .Aggregate(static (x, y) =>
                                 {
                                     var dot = y.StartsWith("[") ? string.Empty : ".";
                                     return $"{x}{dot}{y}";
