@@ -31,7 +31,7 @@ pool:
      
 parameters:
   - name: permissionsSourceFilePath
-    default: 'https://github.com/microsoftgraph/kibali/blob/main/test/kibaliTests/GraphPermissions.json'
+    default: 'https://raw.githubusercontent.com/microsoftgraph/kibali/main/test/kibaliTests/GraphPermissions.json'
     displayName: 'The file path or URL to permissions in JSON format to be consumed by Kibali'
   - name: bootstrappingOnly
     type: boolean
