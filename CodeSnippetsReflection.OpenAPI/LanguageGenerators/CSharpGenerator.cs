@@ -321,7 +321,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                         if(x.Segment.IsCollectionIndex())
                                             return x.Segment.Replace("{", "[\"").Replace("}", "\"]");
                                         if (x.Segment.IsFunction())
-                                            return x.Segment.Split('.')
+                                            return x.Segment.TrimEnd('(',')').Split('.')
                                                 .Select(static s => s.ToFirstCharacterUpperCase())
                                                 .Aggregate(static (a, b) => $"{a}{b}");
                                         return x.Segment.ReplaceValueIdentifier().TrimStart('$').ToFirstCharacterUpperCase();

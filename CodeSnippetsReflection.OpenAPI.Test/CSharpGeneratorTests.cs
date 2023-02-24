@@ -563,5 +563,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Guid.Parse(\"8e881353-1735-45af-af21-ee1344582a4d\")", result);
             Assert.Contains("Guid.Parse(\"00000000-0000-0000-0000-000000000000\")", result);
         }
+        [Fact]
+        public async Task CorrectlyHandlesOdataFunction()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/delta?$select=displayName,jobTitle,mobilePhone");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("await graphClient.Users.MicrosoftGraphDelta.GetAsync", result);
+            Assert.Contains("requestConfiguration.QueryParameters.Select = new string []{ \"displayName\",\"jobTitle\",\"mobilePhone\" };", result);
+        }
     }
 }
