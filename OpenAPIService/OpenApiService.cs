@@ -573,6 +573,9 @@ namespace OpenAPIService
                 _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
                 _graphUriQueue.Enqueue(graphUri);
+
+                graphUri += "/openapi.yaml";
+
                 OpenApiDocument source = await CreateOpenApiDocumentAsync(new Uri(graphUri), openApiStyle);
                 _OpenApiDocuments[cachedDoc] = source;
                 _OpenApiDocumentsDateCreated[cachedDoc] = DateTime.UtcNow;
@@ -657,7 +660,7 @@ namespace OpenAPIService
             var httpClient = CreateHttpClient();
 
             stopwatch.Start();
-            Stream csdl = await httpClient.GetStreamAsync(csdlHref.OriginalString);
+            Stream stream = await httpClient.GetStreamAsync(csdlHref.OriginalString);
             stopwatch.Stop();
 
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
@@ -666,7 +669,7 @@ namespace OpenAPIService
                                          _openApiTraceProperties);
             _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
-            OpenApiDocument document = await ConvertCsdlToOpenApiAsync(csdl, GetOpenApiConvertSettings(openApiStyle));
+            OpenApiDocument document = new OpenApiStreamReader().Read(stream, out var diagnostic);
 
             return document;
         }
