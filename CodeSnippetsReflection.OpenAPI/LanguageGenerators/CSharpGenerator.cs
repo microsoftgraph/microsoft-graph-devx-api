@@ -51,9 +51,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder(
-                                    "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-                                    $"var {ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+            var snippetBuilder = new StringBuilder($"var {ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
