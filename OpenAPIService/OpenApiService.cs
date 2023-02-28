@@ -55,6 +55,7 @@ namespace OpenAPIService
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
         private readonly Queue<string> _graphUriQueue = new();
         private static readonly RecyclableMemoryStreamManager _streamManager = new();
+        Dictionary<OpenApiStyle, string> fileNames = new Dictionary<OpenApiStyle, string>();
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
@@ -62,7 +63,12 @@ namespace OpenAPIService
                ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: {nameof(configuration)}");
             _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(_configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;
-            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService));            
+            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService));
+
+            fileNames.Add(OpenApiStyle.GEAutocomplete, "graphexplorer");
+            fileNames.Add(OpenApiStyle.Plain, "openapi");
+            fileNames.Add(OpenApiStyle.PowerShell, "powershell");
+            fileNames.Add(OpenApiStyle.PowerPlatform, "openapi");
         }
 
         /// <summary>
@@ -573,8 +579,8 @@ namespace OpenAPIService
                 _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
                 _graphUriQueue.Enqueue(graphUri);
-
-                graphUri += "/openapi.yaml";
+                
+                graphUri += $"/{fileNames[openApiStyle]}.yaml";
 
                 OpenApiDocument source = await CreateOpenApiDocumentAsync(new Uri(graphUri), openApiStyle);
                 _OpenApiDocuments[cachedDoc] = source;
