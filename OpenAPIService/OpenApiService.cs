@@ -55,7 +55,12 @@ namespace OpenAPIService
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
         private readonly Queue<string> _graphUriQueue = new();
         private static readonly RecyclableMemoryStreamManager _streamManager = new();
-        Dictionary<OpenApiStyle, string> fileNames = new Dictionary<OpenApiStyle, string>();
+        private static readonly Dictionary<OpenApiStyle, string> fileNames = new Dictionary<OpenApiStyle, string>() {
+            { OpenApiStyle.GEAutocomplete, "graphexplorer"},
+            { OpenApiStyle.Plain, "openapi"},
+            { OpenApiStyle.PowerShell, "powershell"},
+            { OpenApiStyle.PowerPlatform, "openapi"},
+         };
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
