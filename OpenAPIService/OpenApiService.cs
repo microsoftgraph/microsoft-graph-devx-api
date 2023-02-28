@@ -69,11 +69,6 @@ namespace OpenAPIService
             _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(_configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService));
-
-            fileNames.Add(OpenApiStyle.GEAutocomplete, "graphexplorer");
-            fileNames.Add(OpenApiStyle.Plain, "openapi");
-            fileNames.Add(OpenApiStyle.PowerShell, "powershell");
-            fileNames.Add(OpenApiStyle.PowerPlatform, "openapi");
         }
 
         /// <summary>
