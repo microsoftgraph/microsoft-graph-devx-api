@@ -24,7 +24,7 @@ namespace CodeSnippetsReflection.OpenAPI
         private readonly SimpleLazy<OpenApiUrlTreeNode> _betaOpenApiDocument;
         private readonly SimpleLazy<OpenApiUrlTreeNode> _customOpenApiDocument;
         public OpenApiSnippetsGenerator(
-            string v1OpenApiDocumentUrl = "C:/Users/ronaldkudoyi/Code/openapi.yaml",
+            string v1OpenApiDocumentUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml",
             string betaOpenApiDocumentUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/beta/openapi.yaml",
             string customOpenApiPathOrUrl = default,
             TelemetryClient telemetryClient = null)
