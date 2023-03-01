@@ -185,7 +185,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if ((!String.IsNullOrWhiteSpace(Name) && !Name.Substring(1).Equals("\"", StringComparison.OrdinalIgnoreCase)) && (Name.Contains('.') || Name.Contains('-')))
             {
                 var propertyMatch = PropertyNameRegex.Match(Name);
-                return propertyMatch.Success ? string.Join("",propertyMatch.Groups[1].Value.Split(".").Select(x => x.ToFirstCharacterUpperCase())).ToFirstCharacterLowerCase() : $"\"{Name}\"";
+                return propertyMatch.Success ? string.Join("",propertyMatch.Groups[1].Value.Split(".").Select(static x => x.ToFirstCharacterUpperCase())).ToFirstCharacterLowerCase() : $"\"{Name}\"";
             }
 
             return Name;
