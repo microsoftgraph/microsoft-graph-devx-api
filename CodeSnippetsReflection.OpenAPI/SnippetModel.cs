@@ -143,15 +143,15 @@ namespace CodeSnippetsReflection.OpenAPI
                 LoadNextNode(childNode, pathSegments);
                 return;
             }
-            if (node.Children.Keys.Any(x => x.Equals(pathSegment, StringComparison.OrdinalIgnoreCase)))
+            if (node.Children.Keys.Any(x => x.RemoveFunctionBraces().Equals(pathSegment, StringComparison.OrdinalIgnoreCase)))
             { // the casing in the description might be different than the casing in the snippet and this dictionary is CS
-                var caseChildNode = node.Children.First(x => x.Key.Equals(pathSegment, StringComparison.OrdinalIgnoreCase)).Value;
+                var caseChildNode = node.Children.First(x => x.Key.RemoveFunctionBraces().Equals(pathSegment, StringComparison.OrdinalIgnoreCase)).Value;
                 LoadNextNode(caseChildNode, pathSegments);
                 return;
             }
-            if (node.Children.Keys.Any(x => x.IsFunction()))
+            if (node.Children.Keys.Any(x => x.IsFunction()) || pathSegment.IsFunction())
             {
-                var actionChildNode = node.Children.FirstOrDefault(x => x.Key.Split('.').Last().Equals(pathSegment, StringComparison.OrdinalIgnoreCase));
+                var actionChildNode = node.Children.FirstOrDefault(x => x.Key.Split('.').Last().Equals(pathSegment.Split('.').Last(), StringComparison.OrdinalIgnoreCase));
                 if(actionChildNode.Value != null)
                 {
                     LoadNextNode(actionChildNode.Value, pathSegments);
