@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections.Immutable;
 using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
-using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
-using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
@@ -28,6 +25,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static IImmutableSet<string> specialProperties = ImmutableHashSet.Create("@odata.type");
         
         private static IImmutableSet<string> NativeTypes = GetNativeTypes();
+
+        private static readonly Regex PropertyNameRegex = new Regex(@"@(.*)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
 
         static IImmutableSet<string> GetNativeTypes()
         {
@@ -182,7 +181,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string NormalizeJsonName(string Name)
         {
-            return (!String.IsNullOrWhiteSpace(Name) && Name.Substring(1) != "\"") && (Name.Contains('.') || Name.Contains('-')) ? $"\"{Name}\"" : Name;
+            if ((!String.IsNullOrWhiteSpace(Name) && !Name.Substring(1).Equals("\"", StringComparison.OrdinalIgnoreCase)) && (Name.Contains('.') || Name.Contains('-')))
+            {
+                var propertyMatch = PropertyNameRegex.Match(Name);
+                return propertyMatch.Success ? string.Join("",propertyMatch.Groups[1].Value.Split(".").Select(static x => x.ToFirstCharacterUpperCase())).ToFirstCharacterLowerCase() : $"\"{Name}\"";
+            }
+
+            return Name;
         }
 
         private static void WriteExecutionStatement(SnippetCodeGraph codeGraph, StringBuilder builder, params string[] parameters)
@@ -395,7 +400,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                     .Aggregate(static (a, b) => $"{a}{b}") + "().";
                 return x.Segment.ToFirstCharacterUpperCase() + "().";
             })
-                        .Aggregate(static (x, y) => $"{x}{y}")
+                        .Aggregate(static (x, y) =>
+                        {
+                            return $"{x}{y.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterUpperCase()}";
+                        })
                         .Replace("().ById(", "ById(")
                         .Replace("()()", "()");
         }
