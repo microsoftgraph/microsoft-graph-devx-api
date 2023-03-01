@@ -582,7 +582,7 @@ namespace OpenAPIService
                 
                 graphUri += $"/{fileNames[openApiStyle]}.yaml";
 
-                OpenApiDocument source = await CreateOpenApiDocumentAsync(new Uri(graphUri), openApiStyle);
+                OpenApiDocument source = await CreateOpenApiDocumentAsync(new Uri(graphUri));
                 _OpenApiDocuments[cachedDoc] = source;
                 _OpenApiDocumentsDateCreated[cachedDoc] = DateTime.UtcNow;
                 return source;
@@ -660,13 +660,13 @@ namespace OpenAPIService
             return subsetOpenApiDocument;
         }
 
-        private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref, OpenApiStyle openApiStyle)
+        private async Task<OpenApiDocument> CreateOpenApiDocumentAsync(Uri csdlHref)
         {
             var stopwatch = new Stopwatch();
             var httpClient = CreateHttpClient();
 
             stopwatch.Start();
-            Stream stream = await httpClient.GetStreamAsync(csdlHref.OriginalString);
+            using Stream stream = await httpClient.GetStreamAsync(csdlHref.OriginalString);
             stopwatch.Stop();
 
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
