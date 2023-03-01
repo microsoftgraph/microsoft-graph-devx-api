@@ -8,7 +8,7 @@ using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Microsoft.OpenApi.Services;
 using Xunit;
 
-namespace CodeSnippetsReflection.OpenAPI.Test
+namespace CodeSnippetsReflection.OpenAPI.Test.LanguageGenerators
 {
     public class GoGeneratorTests {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";

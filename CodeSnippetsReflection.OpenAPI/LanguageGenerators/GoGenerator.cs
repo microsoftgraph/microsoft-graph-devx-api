@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections.Immutable;
-using System.ComponentModel.Design;
 using System.Text;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
@@ -27,7 +26,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         
         private static IImmutableSet<string> NativeTypes = GetNativeTypes();
 
-        private static readonly Regex PropertyNameRegex = new Regex(@"@(.*)", RegexOptions.Compiled);
+        private static readonly Regex PropertyNameRegex = new Regex(@"@(.*)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
 
         static IImmutableSet<string> GetNativeTypes()
         {
