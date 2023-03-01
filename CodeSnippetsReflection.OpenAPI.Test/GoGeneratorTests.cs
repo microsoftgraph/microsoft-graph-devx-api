@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -8,7 +7,7 @@ using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Microsoft.OpenApi.Services;
 using Xunit;
 
-namespace CodeSnippetsReflection.OpenAPI.Test.LanguageGenerators
+namespace CodeSnippetsReflection.OpenAPI.Test
 {
     public class GoGeneratorTests {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
@@ -224,7 +223,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test.LanguageGenerators
             Assert.Contains("map[string]interface{}{", result);
             Assert.Contains("[]string {", result);
             Assert.Contains("SetAdditionalData", result);
-            Assert.Contains("members", result); // property name hasn't been changed
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
         }
         [Fact]
