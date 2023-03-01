@@ -317,7 +317,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             return nodes.Select(static x => {
                                         if(x.Segment.IsCollectionIndex())
-                                            return x.Segment.Replace("{", "[\"").Replace("}", "\"]");
+                                            return x.Segment.Replace("{", "[\"{").Replace("}", "}\"]");
                                         if (x.Segment.IsFunction())
                                             return x.Segment.RemoveFunctionBraces().Split('.')
                                                 .Select(static s => s.ToFirstCharacterUpperCase())

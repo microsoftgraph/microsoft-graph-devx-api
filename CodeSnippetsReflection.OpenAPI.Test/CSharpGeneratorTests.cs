@@ -27,7 +27,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".Me.Messages[\"message-id\"]", result);
+            Assert.Contains(".Me.Messages[\"{message-id}\"]", result);
         }
         [Fact]
         public async Task GeneratesTheSnippetHeader() {
@@ -385,7 +385,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.Users[\"user-id\"].SendMail.PostAsync(requestBody);", result);
+            Assert.Contains("await graphClient.Users[\"{user-id}\"].SendMail.PostAsync(requestBody);", result);
             Assert.Contains("var requestBody = new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody", result);
             Assert.Contains("ToRecipients = new List<Recipient>", result);
         }
@@ -437,7 +437,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             // Assert `Directory` is replaced with `DirectoryObject`
-            Assert.Contains("await graphClient.Directory.AdministrativeUnits[\"administrativeUnit-id\"].ScopedRoleMembers.GetAsync()", result);
+            Assert.Contains("await graphClient.Directory.AdministrativeUnits[\"{administrativeUnit-id}\"].ScopedRoleMembers.GetAsync()", result);
         }
         
         [Fact]
@@ -499,7 +499,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.Teams[\"team-id\"].Archive.PostAsync(null);", result);
+            Assert.Contains("await graphClient.Teams[\"{team-id}\"].Archive.PostAsync(null);", result);
         }
         
         [Fact]
