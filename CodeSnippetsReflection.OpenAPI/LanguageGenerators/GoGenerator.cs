@@ -401,7 +401,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                     .Aggregate(static (a, b) => $"{a}{b}") + "().";
                 return x.Segment.ToFirstCharacterUpperCase() + "().";
             })
-                        .Aggregate((x, y) =>
+                        .Aggregate(static (x, y) =>
                         {
                             return $"{x}{y.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterUpperCase()}";
                         })
