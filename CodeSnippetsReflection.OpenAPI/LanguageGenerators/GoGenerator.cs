@@ -16,8 +16,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     public class GoGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         private const string clientVarName = "graphClient";
-        private const string clientVarType = "GraphServiceClient";
-        private const string httpCoreVarName = "requestAdapter";
+        private const string clientVarType = "GraphServiceClientWithCredentials";
+        private const string clientFactoryVariables = "cred, scopes";
         private const string requestBodyVarName = "requestBody";
         private const string requestHeadersVarName = "headers";
         private const string optionsParameterVarName = "options";
@@ -41,7 +41,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var codeGraph = new SnippetCodeGraph(snippetModel);
             var snippetBuilder = new StringBuilder(
                                     "//THE GO SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-                                    $"{clientVarName} := msgraphsdk.New{clientVarType}({httpCoreVarName}){Environment.NewLine}{Environment.NewLine}");
+                                    $"{clientVarName} := msgraphsdk.New{clientVarType}({clientFactoryVariables}){Environment.NewLine}{Environment.NewLine}");
 
             writeSnippet(codeGraph, snippetBuilder);
 
