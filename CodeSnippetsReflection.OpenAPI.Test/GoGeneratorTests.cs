@@ -54,7 +54,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".DrivesById(\"drive-id\").ItemsById(\"driveItem-id\").MicrosoftGraphCheckin().", result);
+            Assert.Contains(".DrivesById(\"drive-id\").ItemsById(\"driveItem-id\").Checkin().", result);
         }
         [Fact]
         public async Task IgnoreOdataTypeWhenGenerating() {
@@ -360,7 +360,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Directory().DeletedItems().MicrosoftGraphGroup().Get(context.Background(), nil)", result);
+            Assert.Contains("graphClient.Directory().DeletedItems().GraphGroup().Get(context.Background(), nil)", result);
         }
         [Fact]
         public async Task DoesntFailOnTerminalSlash() {

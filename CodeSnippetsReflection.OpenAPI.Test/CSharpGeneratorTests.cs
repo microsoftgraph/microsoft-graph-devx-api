@@ -348,8 +348,10 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("LocationEmailAddress = \"conf32room1368@imgeek.onmicrosoft.com\",", result);
         }
         
-                [Fact]
-        public async Task FullyQualifiesActionRequestBodyType()
+        [Theory]
+        [InlineData("sendMail")]
+        [InlineData("microsoft.graph.sendMail")]
+        public async Task FullyQualifiesActionRequestBodyType(string sendMailString)
         {
             var bodyContent = @"{
                     ""message"": {
@@ -376,14 +378,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 ""saveToSentItems"": ""false""
             }";
 
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users/{{id}}/sendMail")
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users/{{id}}/{sendMailString}")
             {
                 Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("var requestBody = new Microsoft.Graph.Users.Item.MicrosoftGraphSendMail.SendMailPostRequestBody", result);
+            Assert.Contains("await graphClient.Users[\"user-id\"].SendMail.PostAsync(requestBody);", result);
+            Assert.Contains("var requestBody = new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody", result);
             Assert.Contains("ToRecipients = new List<Recipient>", result);
         }
         
@@ -496,7 +499,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.Teams[\"team-id\"].MicrosoftGraphArchive.PostAsync(null);", result);
+            Assert.Contains("await graphClient.Teams[\"team-id\"].Archive.PostAsync(null);", result);
         }
         
         [Fact]
@@ -542,7 +545,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("var requestBody = new Microsoft.Graph.Applications.Item.MicrosoftGraphAddKey.AddKeyPostRequestBody", result);
+            Assert.Contains("var requestBody = new Microsoft.Graph.Applications.Item.AddKey.AddKeyPostRequestBody", result);
         }
         [Fact]
         public async Task CorrectlyEvaluatesGuidInRequestBodyParameter()
@@ -570,7 +573,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.Users.MicrosoftGraphDelta.GetAsync", result);
+            Assert.Contains("await graphClient.Users.Delta.GetAsync", result);
             Assert.Contains("requestConfiguration.QueryParameters.Select = new string []{ \"displayName\",\"jobTitle\",\"mobilePhone\" };", result);
         }
     }
