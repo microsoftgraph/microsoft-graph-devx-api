@@ -70,8 +70,12 @@ namespace GraphWebApi.Controllers
         //POST api/graphexplorersnippets
         [HttpPost]
         [Consumes("application/http")]
-        public async Task<IActionResult> PostAsync(string lang = "c#", string generation = "odata")
+        public async Task<IActionResult> PostAsync(string lang = "c#", string generation = "")
         {
+            // Default to openapi generation if supported and not explicitly requested for.
+            if (string.IsNullOrEmpty(generation))
+                generation = OpenApiSnippetsGenerator.SupportedLanguages.Contains(lang) ? "openapi" : "odata";
+            
             Request.EnableBuffering();
             using var streamContent = new StreamContent(Request.Body);
             streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
