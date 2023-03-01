@@ -403,7 +403,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             })
                         .Aggregate((x, y) =>
                         {
-                            return $"{x}{y.Replace("$","").ToFirstCharacterUpperCase()}";
+                            return $"{x}{y.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterUpperCase()}";
                         })
                         .Replace("().ById(", "ById(")
                         .Replace("()()", "()");
