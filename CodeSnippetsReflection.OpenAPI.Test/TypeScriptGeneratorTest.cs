@@ -68,7 +68,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
 
             const result = async () => {
-	            await graphServiceClient.identityGovernance.accessReviews.definitionsById(""accessReviewScheduleDefinition-id"").instancesById(""accessReviewInstance-id"").microsoftGraphBatchRecordDecisions.post(requestBody);
+	            await graphServiceClient.identityGovernance.accessReviews.definitionsById(""accessReviewScheduleDefinition-id"").instancesById(""accessReviewInstance-id"").batchRecordDecisions.post(requestBody);
             }
             ";
 
@@ -271,7 +271,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
 
             const result = async () => {
-	            await graphServiceClient.me.microsoftGraphFindMeetingTimes.post(requestBody);
+	            await graphServiceClient.me.findMeetingTimes.post(requestBody);
             }
             ";
 
