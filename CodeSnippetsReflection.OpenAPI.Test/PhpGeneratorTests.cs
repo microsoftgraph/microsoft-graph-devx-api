@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -258,7 +258,7 @@ public class PhpGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->activities()->microsoftGraphRecent()->get()", result);
+        Assert.Contains("->me()->activities()->recent()->get()", result);
     }
 
     [Fact /*(Skip = "Should fail by default.")*/]

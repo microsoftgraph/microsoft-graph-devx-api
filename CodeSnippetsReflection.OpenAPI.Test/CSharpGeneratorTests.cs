@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -545,7 +545,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("var requestBody = new Microsoft.Graph.Applications.Item.MicrosoftGraphAddKey.AddKeyPostRequestBody", result);
+            Assert.Contains("var requestBody = new Microsoft.Graph.Applications.Item.AddKey.AddKeyPostRequestBody", result);
         }
         [Fact]
         public async Task CorrectlyEvaluatesGuidInRequestBodyParameter()

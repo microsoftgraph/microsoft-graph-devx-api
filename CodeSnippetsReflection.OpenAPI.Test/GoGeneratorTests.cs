@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -53,7 +53,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".DrivesById(\"drive-id\").ItemsById(\"driveItem-id\").MicrosoftGraphCheckin().", result);
+            Assert.Contains(".DrivesById(\"drive-id\").ItemsById(\"driveItem-id\").Checkin().", result);
         }
         [Fact]
         public async Task IgnoreOdataTypeWhenGenerating() {
