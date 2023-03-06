@@ -57,9 +57,9 @@ namespace OpenAPIService
         private static readonly RecyclableMemoryStreamManager _streamManager = new();
         private static readonly Dictionary<OpenApiStyle, string> fileNames = new Dictionary<OpenApiStyle, string>() {
             { OpenApiStyle.GEAutocomplete, "graphexplorer"},
-            { OpenApiStyle.Plain, "openapi"},
+            { OpenApiStyle.Plain, "default"},
             { OpenApiStyle.PowerShell, "powershell"},
-            { OpenApiStyle.PowerPlatform, "openapi"},
+            { OpenApiStyle.PowerPlatform, "default"},
          };
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
