@@ -680,27 +680,6 @@ namespace OpenAPIService
             return document;
         }
 
-        public OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument)
-        {
-            _telemetryClient?.TrackTrace("Cloning OpenAPI document.",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
-
-            var stream = _streamManager.GetStream($"{nameof(OpenApiService)}.{nameof(CloneOpenApiDocument)}");
-            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
-            openApiDocument.SerializeAsV3(writer);
-            writer.Flush();
-            stream.Position = 0;
-            var reader = new OpenApiStreamReader();
-            var doc = reader.Read(stream, out _);
-
-            _telemetryClient?.TrackTrace("Finished cloning OpenAPI document.",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
-
-            return doc;
-        }
-
         public OpenApiConvertSettings GetOpenApiConvertSettings(OpenApiStyle style = OpenApiStyle.Plain)
         {
             var globalConvertSettings = new OpenApiConvertSettings()

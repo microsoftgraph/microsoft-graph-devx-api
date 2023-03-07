@@ -30,8 +30,6 @@ namespace OpenAPIService.Interfaces
 
         OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody = false);
 
-        OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument);
-
         OpenApiConvertSettings GetOpenApiConvertSettings(OpenApiStyle style = OpenApiStyle.Plain);
     }
 }
