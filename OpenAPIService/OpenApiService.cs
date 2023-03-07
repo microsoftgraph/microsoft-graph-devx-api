@@ -55,7 +55,7 @@ namespace OpenAPIService
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
         private readonly Queue<string> _graphUriQueue = new();
         private static readonly RecyclableMemoryStreamManager _streamManager = new();
-        private static readonly Dictionary<OpenApiStyle, string> fileNames = new() {
+        private static readonly Dictionary<OpenApiStyle, string> _fileNames = new() {
             { OpenApiStyle.GEAutocomplete, "graphexplorer"},
             { OpenApiStyle.Plain, "default"},
             { OpenApiStyle.PowerShell, "powershell"},
@@ -154,7 +154,7 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            return CloneOpenApiDocument(subset);
+            return new OpenApiDocument(subset);
         }
 
         /// <summary>
@@ -580,7 +580,7 @@ namespace OpenAPIService
 
                 _graphUriQueue.Enqueue(graphUri);
                 
-                graphUri += $"/{fileNames[openApiStyle]}.yaml";
+                graphUri += $"/{_fileNames[openApiStyle]}.yaml";
 
                 OpenApiDocument source = await GetOpenApiDocumentAsync(new Uri(graphUri));
                 _OpenApiDocuments[cachedDoc] = source;
@@ -678,29 +678,6 @@ namespace OpenAPIService
             OpenApiDocument document = new OpenApiStreamReader().Read(stream, out var diagnostic);
 
             return document;
-        }
-
-        public OpenApiConvertSettings GetOpenApiConvertSettings(OpenApiStyle style = OpenApiStyle.Plain)
-        {
-            var globalConvertSettings = new OpenApiConvertSettings()
-            {
-                AddSingleQuotesForStringParameters = true,
-                AddEnumDescriptionExtension = true,
-                EnableKeyAsSegment = true,
-                EnableOperationId = true,
-                PrefixEntityTypeNameBeforeKey = true,
-                TagDepth = 2,
-                EnablePagination = true,
-                EnableDiscriminatorValue = false,
-                EnableDerivedTypesReferencesForRequestBody = false,
-                EnableDerivedTypesReferencesForResponses = false,
-                ShowRootPath = false,
-                ShowLinks = true,
-                ExpandDerivedTypesNavigationProperties = false
-            };
-
-            _configuration.GetSection($"OpenAPI:ConvertSettings:{style}").Bind(globalConvertSettings);
-            return globalConvertSettings;
         }
 
         private static IList<SearchResult> FindOperations(OpenApiDocument graphOpenApi, Func<OpenApiOperation, bool> predicate)

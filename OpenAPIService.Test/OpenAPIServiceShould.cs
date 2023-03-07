@@ -627,39 +627,6 @@ namespace OpenAPIService.Test
             Assert.Equal("double", defaultPriceProperty.Format);
         }
 
-        [Theory]
-        [InlineData(OpenApiStyle.GEAutocomplete)]
-        [InlineData(OpenApiStyle.PowerPlatform)]
-        [InlineData(OpenApiStyle.PowerShell)]
-        public void ReturnsCorrectOpenApiConvertSettingsForStyle(OpenApiStyle openApiStyle)
-        {
-            var defaultSettings = _openApiService.GetOpenApiConvertSettings();
-            
-            // Act
-            var styleSettings = _openApiService.GetOpenApiConvertSettings(openApiStyle);
-
-            // Assert
-            if (openApiStyle == OpenApiStyle.PowerShell)
-            {
-                Assert.NotEqual(defaultSettings.EnablePagination, styleSettings.EnablePagination);
-                Assert.Equal(defaultSettings.TagDepth, styleSettings.TagDepth);
-                Assert.Equal(defaultSettings.ExpandDerivedTypesNavigationProperties, styleSettings.ExpandDerivedTypesNavigationProperties);
-            }
-            else if (openApiStyle == OpenApiStyle.PowerPlatform)
-            {
-                Assert.NotEqual(defaultSettings.TagDepth, styleSettings.TagDepth);
-                Assert.Equal(defaultSettings.EnablePagination, styleSettings.EnablePagination);
-                Assert.Equal(defaultSettings.ExpandDerivedTypesNavigationProperties, styleSettings.ExpandDerivedTypesNavigationProperties);
-
-            }
-            else if (openApiStyle == OpenApiStyle.GEAutocomplete)
-            {
-                Assert.NotEqual(defaultSettings.ExpandDerivedTypesNavigationProperties, styleSettings.ExpandDerivedTypesNavigationProperties);
-                Assert.Equal(defaultSettings.EnablePagination, styleSettings.EnablePagination);
-                Assert.Equal(defaultSettings.TagDepth, styleSettings.TagDepth);
-            }
-        }
-
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
         {
             Assert.NotNull(node);
