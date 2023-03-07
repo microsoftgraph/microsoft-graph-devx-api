@@ -142,6 +142,7 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi")]
         [HttpPost]
+        [Obsolete("No longer supported")]
         public async Task<IActionResult> Post([FromQuery] string operationIds = null,
                                               [FromQuery] string tags = null,
                                               [FromQuery] string url = null,
@@ -153,14 +154,8 @@ namespace GraphWebApi.Controllers
                                               [FromQuery] bool forceRefresh = false,
                                               [FromQuery] bool includeRequestBody = false)
         {
-            var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
-
-            var openApiConvertSettings = _openApiService.GetOpenApiConvertSettings(style);
-
-            var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body, openApiConvertSettings);
-
-            return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody);
-        }
+            throw new NotImplementedException();
+        }        
 
         private FileStreamResult CreateSubsetOpenApiDocument(string operationIds, string tags,
                                                              string url, OpenApiDocument source,

@@ -680,37 +680,6 @@ namespace OpenAPIService
             return document;
         }
 
-        /// <summary>
-        /// Converts CSDL to OpenAPI
-        /// </summary>
-        /// <param name="csdl">The CSDL stream.</param>
-        /// <returns>An OpenAPI document.</returns>
-        public async Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl, OpenApiConvertSettings settings)
-        {
-            _telemetryClient?.TrackTrace("Converting CSDL stream to an OpenApi document.",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
-
-            using var reader = new StreamReader(csdl);
-            var csdlTxt = await reader.ReadToEndAsync();
-            var edmModel = CsdlReader.Parse(XElement.Parse(csdlTxt).CreateReader());
-
-            OpenApiDocument document = edmModel.ConvertToOpenApi(settings);
-
-            _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
-            _telemetryClient?.TrackTrace("Finished converting CSDL stream to an OpenApi document. " +
-                                        $"No. of paths: {document.Paths.Count}",
-                                         SeverityLevel.Information,
-                                         _openApiTraceProperties);
-            _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
-
-            // The output of ConvertToOpenApi isn't quite a valid OpenApiDocument instance,
-            // so we write it out, and read it back in again to fix it up.
-            document = CloneOpenApiDocument(document);
-
-            return document;
-        }
-
         public OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument)
         {
             _telemetryClient?.TrackTrace("Cloning OpenAPI document.",
