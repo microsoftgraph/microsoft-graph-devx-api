@@ -2,19 +2,17 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Concurrent;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Resources;
 using OpenAPIService.Interfaces;
-using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.IO.Pipes;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
 using UtilityService;
 using Xunit;
 
@@ -621,7 +619,8 @@ namespace OpenAPIService.Test
             var defaultPriceProperty = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"].Properties["defaultPrice"];
 
             Assert.Null(averageAudioDegradationProperty.AnyOf);
-            Assert.Equal("number", averageAudioDegradationProperty.Type);
+            Assert.NotNull(averageAudioDegradationProperty.AllOf);
+            Assert.Equal("number", averageAudioDegradationProperty.AllOf.First().Type);
             Assert.Equal("float", averageAudioDegradationProperty.Format);
             Assert.True(averageAudioDegradationProperty.Nullable);
             Assert.Null(defaultPriceProperty.OneOf);
@@ -636,7 +635,7 @@ namespace OpenAPIService.Test
         public void ReturnsCorrectOpenApiConvertSettingsForStyle(OpenApiStyle openApiStyle)
         {
             var defaultSettings = _openApiService.GetOpenApiConvertSettings();
-            
+
             // Act
             var styleSettings = _openApiService.GetOpenApiConvertSettings(openApiStyle);
 
@@ -669,7 +668,7 @@ namespace OpenAPIService.Test
             // Arrange
             var openApiDocs = new ConcurrentDictionary<string, OpenApiDocument>();
             openApiDocs.TryAdd(GraphVersion, _graphMockSource);
-            using MemoryStream stream = new();            
+            using MemoryStream stream = new();
             var writer = new Utf8JsonWriter(stream, new JsonWriterOptions() { Indented = false });
 
             // Act
