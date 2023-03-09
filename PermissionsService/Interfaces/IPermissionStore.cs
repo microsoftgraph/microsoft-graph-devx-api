@@ -26,12 +26,12 @@ namespace PermissionsService.Interfaces
         /// <param name="org">Optional: The name of the org/owner of the repo.</param>
         /// <param name="branchName">Optional: The name of the branch containing the files</param>
         /// <returns></returns>
-        Task<PermissionResult> GetScopesAsync(List<string> requestUrls,
+        Task<PermissionResult> GetScopesAsync(List<string> requestUrls = null,
                                                    string locale = null,
                                                    ScopeType? scopeType = null,
                                                    string method = null,
                                                    bool includeHidden = false,
-                                                   bool isLeastPrivilege = false,
+                                                   bool leastPrivilegeOnly = false,
                                                    string org = null,
                                                    string branchName = null);
 

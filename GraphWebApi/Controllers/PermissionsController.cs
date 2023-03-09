@@ -48,7 +48,7 @@ namespace GraphWebApi.Controllers
                                                              [FromQuery]string org = null,
                                                              [FromQuery]string branchName = null,
                                                              [FromQuery]bool includeHidden = false,
-                                                             [FromQuery]bool isLeastPrivilege = false)
+                                                             [FromQuery]bool leastPrivilegeOnly = false)
         {
             if (!string.IsNullOrEmpty(requestUrl) && string.IsNullOrEmpty(method))
                 return BadRequest("The HTTP method value cannot be null or empty.");
@@ -61,7 +61,7 @@ namespace GraphWebApi.Controllers
                                                                 scopeType: scopeType,
                                                                 method: method,
                                                                 includeHidden: includeHidden,
-                                                                isLeastPrivilege: isLeastPrivilege,
+                                                                leastPrivilegeOnly: leastPrivilegeOnly,
                                                                 org: org,
                                                                 branchName: branchName);
 
@@ -80,7 +80,7 @@ namespace GraphWebApi.Controllers
                                                              [FromQuery] string method = null,
                                                              [FromQuery] string org = null,
                                                              [FromQuery] string branchName = null,
-                                                             [FromQuery] bool isLeastPrivilege = true,
+                                                             [FromQuery] bool leastPrivilegeOnly = true,
                                                              [FromQuery] bool includeHidden = false)
         {
             if (requestUrls == null || !requestUrls.Any())
@@ -94,7 +94,7 @@ namespace GraphWebApi.Controllers
                                                                 scopeType: scopeType,
                                                                 method: method,
                                                                 includeHidden: includeHidden,
-                                                                isLeastPrivilege: isLeastPrivilege,
+                                                                leastPrivilegeOnly: leastPrivilegeOnly,
                                                                 org: org,
                                                                 branchName: branchName);
 

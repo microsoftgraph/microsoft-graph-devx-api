@@ -217,10 +217,10 @@ paths:
         - $ref: "#/components/parameters/org"
         - $ref: "#/components/parameters/branchName"
         - $ref: "#/components/parameters/includeHidden"
-        - $ref: "#/components/parameters/isLeastPrivilege"
+        - $ref: "#/components/parameters/leastPrivilegeOnly"
       responses:
         "200":
-          description: Ordered array of permissions that enable access to a specified resource (or all the Microsoft Graph API endpoints), from least to most privileged along with detailed information about the permissions.
+          description: Ordered array of permissions that enable access to a specified resource (or all the Microsoft Graph API endpoints), along with detailed information about the permissions.
           content:
             application/json:
               schema:
@@ -231,19 +231,19 @@ paths:
                   consentDisplayName: Read user basic mail
                   consentDescription: "Allows the app to read email in the signed-in user's mailbox except body, previewBody, attachments and any extended properties."
                   isAdmin: false,
-                  isLeastPrivilege: true
+                  leastPrivilegeOnly: true
                 - value: Mail.Read
                   scopeType: Application
                   consentDisplayName: "Read your mail "
                   consentDescription: "Allows the app to read email in your mailbox. "
                   isAdmin: false
-                  isLeastPrivilege: false
+                  leastPrivilegeOnly: false
                 - value: Mail.ReadWrite
                   scopeType: Application
                   consentDisplayName: "Read and write access to your mail "
                   consentDescription: "Allows the app to read, update, create and delete email in your mailbox. Does not include permission to send mail. "
                   isAdmin: false
-                  isLeastPrivilege: false
+                  leastPrivilegeOnly: false
         "400":
           description: Bad request
         "404":
@@ -262,7 +262,7 @@ paths:
         - $ref: "#/components/parameters/org"
         - $ref: "#/components/parameters/branchName"
         - $ref: "#/components/parameters/includeHidden"
-        - $ref: "#/components/parameters/isLeastPrivilege"
+        - $ref: "#/components/parameters/leastPrivilegeOnly"
       requestBody:
         description: An array of URLs
         content:
@@ -284,19 +284,19 @@ paths:
                   consentDisplayName: Read user basic mail
                   consentDescription: "Allows the app to read email in the signed-in user's mailbox except body, previewBody, attachments and any extended properties."
                   isAdmin: false,
-                  isLeastPrivilege: true
+                  leastPrivilegeOnly: true
                 - value: Mail.Read
                   scopeType: Application
                   consentDisplayName: "Read your mail "
                   consentDescription: "Allows the app to read email in your mailbox. "
                   isAdmin: false
-                  isLeastPrivilege: false
+                  leastPrivilegeOnly: false
                 - value: Mail.ReadWrite
                   scopeType: Application
                   consentDisplayName: "Read and write access to your mail "
                   consentDescription: "Allows the app to read, update, create and delete email in your mailbox. Does not include permission to send mail. "
                   isAdmin: false
-                  isLeastPrivilege: false
+                  leastPrivilegeOnly: false
         "400":
           description: Returns results with description of errors encountered
           content:
@@ -798,7 +798,7 @@ components:
         - consentDisplayName
         - consentDescription
         - isAdmin
-        - isLeastPrivilege
+        - leastPrivilegeOnly
       properties:
         value:
           type: string
@@ -814,7 +814,7 @@ components:
           type: string
         isAdmin:
           type: string
-        isLeastPrivilege:
+        leastPrivilegeOnly:
           type: boolean
     changeLog:
       type: array
@@ -982,8 +982,8 @@ components:
       required: false
       description: If set to true, allows fetching of any available hidden permissions
       default: false
-    isLeastPrivilege:
-      name: isLeastPrivilege
+    leastPrivilegeOnly:
+      name: leastPrivilegeOnly
       in: query
       schema:
         type: boolean
