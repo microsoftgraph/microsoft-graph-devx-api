@@ -666,7 +666,7 @@ namespace OpenAPIService
             var httpClient = CreateHttpClient();
 
             stopwatch.Start();
-            using Stream stream = await httpClient.GetStreamAsync(openAPIHref.OriginalString);
+            await using Stream stream = await httpClient.GetStreamAsync(openAPIHref.OriginalString);
             stopwatch.Stop();
 
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
