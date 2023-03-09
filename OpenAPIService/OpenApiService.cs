@@ -595,7 +595,7 @@ namespace OpenAPIService
                 }
                 
                 _openApiDocumentAccess.Release();
-                _telemetryClient?.TrackTrace("Conversion lock successfully released.",
+                _telemetryClient?.TrackTrace("Fetch lock successfully released.",
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
             }            
