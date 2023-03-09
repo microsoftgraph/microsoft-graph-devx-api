@@ -203,13 +203,15 @@ namespace OpenAPIService
             if (string.IsNullOrEmpty(operationId))
                 return operationId;
 
+            // Plurality is assumed to be words ending in 's'/'S'.
+            char[] plurals = { 's', 'S' };
+
             var segments = operationId.Split('.').ToList();
 
             // The last segment is ignored as a rule.
             for (int x = segments.Count - 2; x >= 0; x--)
             {
-                // Plurality is assumed to be words ending in 's'.
-                var segment = segments[x].TrimEnd('s');
+                var segment = segments[x].TrimEnd(plurals);
                 segments[x] = segment;
 
                 // If a segment name is contained in another segment,
