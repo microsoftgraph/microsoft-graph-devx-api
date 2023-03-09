@@ -45,7 +45,7 @@ namespace OpenAPIService.Test
 
         private OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument)
         {
-            var stream = new MemoryStream();
+            await using var stream = new MemoryStream();
             var writer = new OpenApiYamlWriter(new StreamWriter(stream));
             openApiDocument.SerializeAsV3(writer);
             writer.Flush();
