@@ -140,23 +140,6 @@ namespace GraphWebApi.Controllers
             await Response.CompleteAsync();
         }
 
-        [Route("openapi")]
-        [HttpPost]
-        [Obsolete("No longer supported")]
-        public async Task<IActionResult> Post([FromQuery] string operationIds = null,
-                                              [FromQuery] string tags = null,
-                                              [FromQuery] string url = null,
-                                              [FromQuery] string openApiVersion = null,
-                                              [FromQuery] string title = "Partial Graph API",
-                                              [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
-                                              [FromQuery] string format = null,
-                                              [FromQuery] string graphVersion = null,
-                                              [FromQuery] bool forceRefresh = false,
-                                              [FromQuery] bool includeRequestBody = false)
-        {
-            throw new NotImplementedException();
-        }        
-
         private FileStreamResult CreateSubsetOpenApiDocument(string operationIds, string tags,
                                                              string url, OpenApiDocument source,
                                                              string title, OpenApiStyleOptions styleOptions,
