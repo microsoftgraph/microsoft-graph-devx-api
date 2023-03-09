@@ -32,7 +32,7 @@ paths:
               - Go
               - PowerShell
               - TypeScript
-              - php
+              - PHP
             default: C#
         - name: generation
           in: query
@@ -198,8 +198,8 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  /permissions: #  GET /permissions?requesturl=/me/memberof&method=GET&scopetype=DelegatedWork
-    get:
+  /permissions:
+    get: #  GET /permissions?requesturl=/me/memberof&method=GET&scopetype=DelegatedWork
       tags:
         - permissions
       summary: Permissions information
@@ -212,41 +212,12 @@ paths:
             type: string
           required: false
           description: Microsoft Graph API endpoint url.
-        - name: method
-          in: query
-          schema:
-            type: string
-            enum:
-              - GET
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-          required: false
-          description: Http method
-        - name: scopeType
-          in: query
-          schema:
-            type: string
-            enum:
-              - DelegatedWork
-              - DelegatedPersonal
-              - Application
-            default: DelegatedWork
-          required: false
-          description: A valid Microsoft Graph API permission category.
-        - name: org
-          in: query
-          schema:
-            type: string
-          required: false
-          description: Organization that a GitHub repo belongs to.
-        - name: branchName
-          in: query
-          schema:
-            type: string
-          required: false
-          description: The target branch in the target GitHub repo.
+        - $ref: "#/components/parameters/method"
+        - $ref: "#/components/parameters/scopeType"
+        - $ref: "#/components/parameters/org"
+        - $ref: "#/components/parameters/branchName"
+        - $ref: "#/components/parameters/includeHidden"
+        - $ref: "#/components/parameters/isLeastPrivilege"
       responses:
         "200":
           description: Ordered array of permissions that enable access to a specified resource (or all the Microsoft Graph API endpoints), from least to most privileged along with detailed information about the permissions.
@@ -256,21 +227,98 @@ paths:
                 $ref: "#/components/schemas/permission"
               example:
                 - value: Mail.ReadBasic
+                  scopeType: Application
                   consentDisplayName: Read user basic mail
                   consentDescription: "Allows the app to read email in the signed-in user's mailbox except body, previewBody, attachments and any extended properties."
-                  isAdmin: false
+                  isAdmin: false,
+                  isLeastPrivilege: true
                 - value: Mail.Read
+                  scopeType: Application
                   consentDisplayName: "Read your mail "
                   consentDescription: "Allows the app to read email in your mailbox. "
                   isAdmin: false
+                  isLeastPrivilege: false
                 - value: Mail.ReadWrite
+                  scopeType: Application
                   consentDisplayName: "Read and write access to your mail "
                   consentDescription: "Allows the app to read, update, create and delete email in your mailbox. Does not include permission to send mail. "
                   isAdmin: false
+                  isLeastPrivilege: false
         "400":
           description: Bad request
         "404":
           description: Not found
+        "500":
+          description: Internal server error
+    post:
+      tags:
+        - permissions
+      summary: Permissions information for a set of resources
+      description: Get list of permissions that enable access to a specified set of resources
+      operationId: permissions.ListPermissionsSet
+      parameters:
+        - $ref: "#/components/parameters/method"
+        - $ref: "#/components/parameters/scopeType"
+        - $ref: "#/components/parameters/org"
+        - $ref: "#/components/parameters/branchName"
+        - $ref: "#/components/parameters/includeHidden"
+        - $ref: "#/components/parameters/isLeastPrivilege"
+      requestBody:
+        description: An array of URLs
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        "200":
+          description: Ordered array of permissions that enable access to a specified resource (or all the Microsoft Graph API endpoints), from least to most privileged along with detailed information about the permissions.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/permission"
+              example:
+                - value: Mail.ReadBasic
+                  scopeType: Application
+                  consentDisplayName: Read user basic mail
+                  consentDescription: "Allows the app to read email in the signed-in user's mailbox except body, previewBody, attachments and any extended properties."
+                  isAdmin: false,
+                  isLeastPrivilege: true
+                - value: Mail.Read
+                  scopeType: Application
+                  consentDisplayName: "Read your mail "
+                  consentDescription: "Allows the app to read email in your mailbox. "
+                  isAdmin: false
+                  isLeastPrivilege: false
+                - value: Mail.ReadWrite
+                  scopeType: Application
+                  consentDisplayName: "Read and write access to your mail "
+                  consentDescription: "Allows the app to read, update, create and delete email in your mailbox. Does not include permission to send mail. "
+                  isAdmin: false
+                  isLeastPrivilege: false
+        "400":
+          description: Returns results with description of errors encountered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/permission"
+                  Errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Url:
+                          type: string
+                        Message:
+                          type: string
+
+                  type: object
         "500":
           description: Internal server error
   /changes:
@@ -683,12 +731,13 @@ paths:
                     title: "Sign in"
                     expectedActionType: "PROFILE_REQUEST_SUCCESS"
                     docsLink: ""
-                    query: {
+                    query:
+                      {
                         selectedVerb: "GET",
                         selectedVersion: "v1.0",
                         sampleUrl: "https://graph.microsoft.com/v1.0",
-                        sampleHeaders: []
-                    }
+                        sampleHeaders: [],
+                      }
                     active: true
         "204":
           description: No content
@@ -745,18 +794,28 @@ components:
       type: object
       required:
         - value
+        - scopeType
         - consentDisplayName
         - consentDescription
         - isAdmin
+        - isLeastPrivilege
       properties:
         value:
           type: string
+        scopeType:
+          type: string
+          enum:
+            - DelegatedWork
+            - DelegatedPersonal
+            - Application
         consentDisplayName:
           type: string
         consentDescription:
           type: string
         isAdmin:
           type: string
+        isLeastPrivilege:
+          type: boolean
     changeLog:
       type: array
       items:
@@ -855,24 +914,79 @@ components:
           query:
             type: object
             properties:
-                selectedVerb:
+              selectedVerb:
+                type: string
+                enum:
+                  - GET
+                  - PUT
+                  - POST
+                  - DELETE
+                  - PATCH
+              selectedVersion:
+                type: string
+              sampleUrl:
+                type: string
+              sampleHeaders:
+                type: object
+                properties:
+                  name:
                     type: string
-                    enum:
-                        - GET
-                        - PUT
-                        - POST
-                        - DELETE
-                        - PATCH
-                selectedVersion:
+                  value:
                     type: string
-                sampleUrl:
-                    type: string
-                sampleHeaders:
-                    type: object
-                    properties:
-                        name:
-                            type: string
-                        value:
-                            type: string
           advanced:
             type: boolean
+  parameters:
+    method:
+      name: method
+      in: query
+      schema:
+        type: string
+        enum:
+          - GET
+          - PUT
+          - POST
+          - PATCH
+          - DELETE
+      required: false
+      description: Http method
+    scopeType:
+      name: scopeType
+      in: query
+      schema:
+        type: string
+        enum:
+          - DelegatedWork
+          - DelegatedPersonal
+          - Application
+      required: false
+      description: A valid Microsoft Graph API permission category.
+    org:
+      name: org
+      in: query
+      schema:
+        type: string
+      required: false
+      description: Organization that a GitHub repo belongs to.
+    branchName:
+      name: branchName
+      in: query
+      schema:
+        type: string
+      required: false
+      description: The target branch in the target GitHub repo.
+    includeHidden:
+      name: includeHidden
+      in: query
+      schema:
+        type: boolean
+      required: false
+      description: If set to true, allows fetching of any available hidden permissions
+      default: false
+    isLeastPrivilege:
+      name: isLeastPrivilege
+      in: query
+      schema:
+        type: boolean
+      required: false
+      description: If set to true, fetches minimum permissions for a set of resources
+      default: true
