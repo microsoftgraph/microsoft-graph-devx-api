@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -27,7 +27,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".Me.Messages[\"message-id\"]", result);
+            Assert.Contains(".Me.Messages[\"{message-id}\"]", result);
         }
         [Fact]
         public async Task GeneratesTheSnippetHeader() {
@@ -206,7 +206,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
         [Fact]
         public async Task GeneratesFilterParameters() {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderby=displayName&$select=id,displayName,department");
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("requestConfiguration.QueryParameters.Count", result);
@@ -348,8 +348,10 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("LocationEmailAddress = \"conf32room1368@imgeek.onmicrosoft.com\",", result);
         }
         
-                [Fact]
-        public async Task FullyQualifiesActionRequestBodyType()
+        [Theory]
+        [InlineData("sendMail")]
+        [InlineData("microsoft.graph.sendMail")]
+        public async Task FullyQualifiesActionRequestBodyType(string sendMailString)
         {
             var bodyContent = @"{
                     ""message"": {
@@ -376,13 +378,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 ""saveToSentItems"": ""false""
             }";
 
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users/{{id}}/sendMail")
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users/{{id}}/{sendMailString}")
             {
                 Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
+            Assert.Contains("await graphClient.Users[\"{user-id}\"].SendMail.PostAsync(requestBody);", result);
             Assert.Contains("var requestBody = new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody", result);
             Assert.Contains("ToRecipients = new List<Recipient>", result);
         }
@@ -434,7 +437,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             // Assert `Directory` is replaced with `DirectoryObject`
-            Assert.Contains("await graphClient.DirectoryObject.AdministrativeUnits[\"administrativeUnit-id\"].ScopedRoleMembers.GetAsync()", result);
+            Assert.Contains("await graphClient.Directory.AdministrativeUnits[\"{administrativeUnit-id}\"].ScopedRoleMembers.GetAsync()", result);
         }
         
         [Fact]
@@ -496,7 +499,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.Teams[\"team-id\"].Archive.PostAsync(null);", result);
+            Assert.Contains("await graphClient.Teams[\"{team-id}\"].Archive.PostAsync(null);", result);
         }
         
         [Fact]
@@ -543,6 +546,35 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             Assert.Contains("var requestBody = new Microsoft.Graph.Applications.Item.AddKey.AddKeyPostRequestBody", result);
+        }
+        [Fact]
+        public async Task CorrectlyEvaluatesGuidInRequestBodyParameter()
+        {
+            var bodyContent = @"{
+                  ""principalId"": ""cde330e5-2150-4c11-9c5b-14bfdc948c79"",
+                  ""resourceId"": ""8e881353-1735-45af-af21-ee1344582a4d"",
+                  ""appRoleId"": ""00000000-0000-0000-0000-000000000000""
+                }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users/{{id}}/appRoleAssignments")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("Guid.Parse(\"cde330e5-2150-4c11-9c5b-14bfdc948c79\")", result);
+            Assert.Contains("Guid.Parse(\"8e881353-1735-45af-af21-ee1344582a4d\")", result);
+            Assert.Contains("Guid.Parse(\"00000000-0000-0000-0000-000000000000\")", result);
+        }
+        [Fact]
+        public async Task CorrectlyHandlesOdataFunction()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/delta?$select=displayName,jobTitle,mobilePhone");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("await graphClient.Users.Delta.GetAsync", result);
+            Assert.Contains("requestConfiguration.QueryParameters.Select = new string []{ \"displayName\",\"jobTitle\",\"mobilePhone\" };", result);
         }
     }
 }

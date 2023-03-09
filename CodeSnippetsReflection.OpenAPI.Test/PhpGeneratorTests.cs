@@ -109,7 +109,7 @@ public class PhpGeneratorTests
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphServiceClient->directory()->deletedItems()->group()->get()", result);
+        Assert.Contains("$graphServiceClient->directory()->deletedItems()->graphGroup()->get()", result);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class PhpGeneratorTests
         Assert.Contains("$queryParameters->count = true;", result);
         Assert.Contains("$queryParameters->filter", result);
         Assert.Contains("$queryParameters->select", result);
-        Assert.Contains("$queryParameters->orderBy", result);
+        Assert.Contains("$queryParameters->orderby", result);
     }
     
     [Fact]

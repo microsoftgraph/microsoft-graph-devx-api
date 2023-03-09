@@ -70,7 +70,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return param.PropertyType switch
         {
             PropertyType.Array =>
-                $"[{string.Join(",", param.Children.Select(x => $"\"{x.Value}\"").ToList())}]",
+                $"[{string.Join(",", param.Children.Select(static x => $"\"{x.Value}\"").ToList())}]",
             PropertyType.Boolean or PropertyType.Int32 or PropertyType.Double or PropertyType.Float32 or PropertyType.Float64 or PropertyType.Int64 => param.Value,
             _ => $"\"{param.Value.EscapeQuotes()}\""
         };
@@ -98,16 +98,16 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return (payloadSb.Length > 0 ? payloadSb.ToString() : default);
     }
     private static string GetActionParametersList(params string[] parameters) {
-        var nonEmptyParameters = parameters.Where(p => !string.IsNullOrEmpty(p));
+        var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
         var emptyParameters = nonEmptyParameters.ToList();
         if(emptyParameters.Any())
-            return string.Join(", ", emptyParameters.Select(x => $"${x}").Aggregate((a, b) => $"{a}, {b}"));
+            return string.Join(", ", emptyParameters.Select(static x => $"${x}").Aggregate(static (a, b) => $"{a}, {b}"));
         return string.Empty;
     }
     
     private static string GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager) {
         var payloadSb = new StringBuilder();
-        var filteredHeaders = snippetModel.Headers?.Where(h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
+        var filteredHeaders = snippetModel.Headers?.Where(static h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
         if(filteredHeaders != null && filteredHeaders.Any()) {
             payloadSb.AppendLine($"{indentManager.GetIndent()}${RequestHeadersVarName} = [");
@@ -332,15 +332,17 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         var openApiUrlTreeNodes = nodes.ToList();
         if (!(openApiUrlTreeNodes?.Any() ?? false)) return string.Empty;
-        var result = openApiUrlTreeNodes.Select(x =>
+        var result = openApiUrlTreeNodes.Select(static x =>
             {
                 if (x.Segment.IsCollectionIndex())
                     return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}";
                 if (x.Segment.IsFunction())
-                    return x.Segment.Split('.').Last().ToFirstCharacterLowerCase()+"()";
+                    return x.Segment.Split('.')
+                            .Select(static s => s.ToFirstCharacterUpperCase())
+                            .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterLowerCase() + "()";
                 return x.Segment.ToFirstCharacterLowerCase()+"()";
             })
-            .Aggregate((x, y) =>
+            .Aggregate(static (x, y) =>
             {
                 var dot = y.StartsWith("ById") ? string.Empty : "->";
                 return $"{x.Trim('$')}{dot}{y.Trim('$')}";

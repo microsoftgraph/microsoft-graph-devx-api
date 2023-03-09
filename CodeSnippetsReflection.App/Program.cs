@@ -7,7 +7,6 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using CodeSnippetsReflection.OData;
 using CodeSnippetsReflection.OpenAPI;
-using System.Collections.Generic;
 
 namespace CodeSnippetsReflection.App
 {
@@ -91,18 +90,10 @@ namespace CodeSnippetsReflection.App
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
 
             var originalGeneration = generation;
-
-            var openApiLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "go",
-                "powershell",
-                "typescript",
-                "php"
-            };
-
+            
             Parallel.ForEach(supportedLanguages, language =>
             {
-                if(openApiLanguages.Contains(language))
+                if(OpenApiSnippetsGenerator.SupportedLanguages.Contains(language))
                     generation = "openapi";
                 else
                     generation = originalGeneration;
