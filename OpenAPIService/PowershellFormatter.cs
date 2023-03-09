@@ -34,6 +34,7 @@ namespace OpenAPIService
             if (pathItem.Operations.ContainsKey(putOperation))
             {
                 var operationId = pathItem.Operations[putOperation].OperationId;
+                operationId = SingularizeAndDeduplicateOperationId(operationId);
 
                 if (operationId.Contains(DefaultPutPrefix))
                 {
@@ -78,6 +79,8 @@ namespace OpenAPIService
                     ResolveFunctionParameters(operation);
                 }
             }
+
+            operationId = SingularizeAndDeduplicateOperationId(operationId);
 
             var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 
@@ -188,6 +191,40 @@ namespace OpenAPIService
                     };
                 }
             }
+        }
+
+        /// <summary>
+        /// Singularizes and deduplicates segment names in an operation id.
+        /// </summary>
+        /// <param name="operationId">The target operationId value.</param>
+        /// <returns>The operationId with the segments singularized and deduplicated.</returns>
+        private static string SingularizeAndDeduplicateOperationId(string operationId)
+        {
+            if (string.IsNullOrEmpty(operationId))
+                return operationId;
+
+            var segments = operationId.Split('.').ToList();
+
+            // The last segment is ignored as a rule.
+            for (int x = segments.Count - 2; x >= 0; x--)
+            {
+                // Plurality is assumed to be words ending in 's'.
+                var segment = segments[x].TrimEnd('s');
+                segments[x] = segment;
+
+                // If a segment name is contained in another segment,
+                // the former is considered a duplicate.
+                for (int y = x - 1; y >= 0; y--)
+                {
+                    if (segments[y].Contains(segment, StringComparison.OrdinalIgnoreCase))
+                    {
+                        segments.RemoveAt(x);
+                        break;
+                    }
+                }
+            }
+
+            return string.Join(".", segments);
         }
     }
 }
