@@ -39,7 +39,6 @@ namespace PermissionsService
         private readonly string _scopesInformation;
         private readonly int _defaultRefreshTimeInHours; // life span of the in-memory cache
         private const string DefaultLocale = "en-US"; // default locale language
-        private readonly object _permissionsLock = new();
         private readonly object _scopesLock = new();
         private const string Delegated = "Delegated";
         private const string Application = "Application";
@@ -87,19 +86,13 @@ namespace PermissionsService
         {
             get
             {
-                if (!_cache.TryGetValue<PermissionsDataInfo>("PermissionsData", out var permissionsData))
+                if (!_cache.TryGetValue("PermissionsData", out PermissionsDataInfo permissionsData))
                 {
-                    lock (_permissionsLock)
+                    permissionsData = _cache.GetOrCreateAsync("PermissionsData", async entry =>
                     {
-                        permissionsData = LoadPermissionsDataAsync().Result;
-                        if (permissionsData != null)
-                        {
-                            _cache.Set("PermissionsData", permissionsData, new MemoryCacheEntryOptions
-                            {
-                                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours)
-                            });
-                        }
-                    }
+                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+                        return await LoadPermissionsDataAsync();
+                    }).Result;
                 }
 
                 return permissionsData;
@@ -360,7 +353,7 @@ namespace PermissionsService
                                                                 method: method,
                                                                 leastPrivilegeOnly: leastPrivilegeOnly);
 
-                        if (scopesForUrl == null)
+                        if (scopesForUrl == null || !scopesForUrl.Any())
                             throw new InvalidOperationException($"Permissions information for {url} were not found.");
 
                         scopes.AddRange(scopesForUrl);
