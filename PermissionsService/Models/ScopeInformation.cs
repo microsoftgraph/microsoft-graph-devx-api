@@ -49,10 +49,10 @@ namespace PermissionsService.Models
             get; set;
         }
 
-        [JsonProperty(Required = Required.Always, PropertyName = "isHidden")]
+        [JsonProperty(PropertyName = "isHidden")]
         public bool IsHidden
         {
             get; set;
-        }
+        } = false;
     }
 }

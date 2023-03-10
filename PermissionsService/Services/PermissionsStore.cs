@@ -357,6 +357,7 @@ namespace PermissionsService
 
                         var scopesForUrl = GetScopesForRequestUrl(requestUrl: url,
                                                                 scopeType: scopeType,
+                                                                method: method,
                                                                 leastPrivilegeOnly: leastPrivilegeOnly);
 
                         if (scopesForUrl == null)
@@ -437,10 +438,10 @@ namespace PermissionsService
             if (pathPermissions == null)
             {
                 _telemetryClient?.TrackTrace($"Key '{PermissionsData.PathPermissions[key]}' in the {nameof(PermissionsData.PathPermissions)} has a null value.",
-                SeverityLevel.Error,
+                                             SeverityLevel.Error,
                                              _permissionsTraceProperties);
 
-                return null;
+                return Enumerable.Empty<ScopeInformation>();
             }
 
             var scopes = pathPermissions
