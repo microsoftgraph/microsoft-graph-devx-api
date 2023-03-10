@@ -350,6 +350,31 @@ namespace PermissionsService.Test
         }
 
         [Fact]
+        public void ReturnsUniqueListOfPermissionsForPathsWithSharedPermissions()
+        {
+            // Act
+            PermissionResult result =
+                _permissionsStore.GetScopesAsync(requestUrls: new List<string>() { "/accessreviews", "/accessreviews/{id}" },
+                                                method: "GET", scopeType: ScopeType.DelegatedWork).GetAwaiter().GetResult();
+
+            // Assert
+            // Assert
+            Assert.Collection(result.Results,
+                item =>
+                {
+                    Assert.Equal("AccessReview.Read.All", item.ScopeName);
+                },
+                item =>
+                {
+                    Assert.Equal("AccessReview.ReadWrite.All", item.ScopeName);
+                },
+                item =>
+                {
+                    Assert.Equal("AccessReview.ReadWrite.Membership", item.ScopeName);
+                });
+        }
+
+        [Fact]
         public void FetchPermissionsDescriptionsFromGithub()
         {
             //Arrange

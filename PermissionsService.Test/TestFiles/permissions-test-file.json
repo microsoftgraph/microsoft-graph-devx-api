@@ -3,8 +3,7 @@
     "GET": {
       "Application": {
         "leastPrivilegePermissions": [
-          "AccessReview.Read.All",
-          "AccessReview.ReadWrite.Membership"
+          "AccessReview.Read.All"
         ],
         "allPermissions": [
           "AccessReview.Read.All",
@@ -13,8 +12,7 @@
       },
       "DelegatedWork": {
         "leastPrivilegePermissions": [
-          "AccessReview.Read.All",
-          "AccessReview.ReadWrite.Membership"
+          "AccessReview.Read.All"
         ],
         "allPermissions": [
           "AccessReview.Read.All",
@@ -47,8 +45,7 @@
     "GET": {
       "Application": {
         "leastPrivilegePermissions": [
-          "AccessReview.Read.All",
-          "AccessReview.ReadWrite.Membership"
+          "AccessReview.Read.All"
         ],
         "allPermissions": [
           "AccessReview.Read.All",
@@ -57,8 +54,7 @@
       },
       "DelegatedWork": {
         "leastPrivilegePermissions": [
-          "AccessReview.Read.All",
-          "AccessReview.ReadWrite.Membership"
+          "AccessReview.Read.All"
         ],
         "allPermissions": [
           "AccessReview.Read.All",
