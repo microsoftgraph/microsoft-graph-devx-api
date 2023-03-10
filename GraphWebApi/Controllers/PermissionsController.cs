@@ -97,8 +97,10 @@ namespace GraphWebApi.Controllers
                                                                 leastPrivilegeOnly: leastPrivilegeOnly,
                                                                 org: org,
                                                                 branchName: branchName);
+            if (result == null || !result.Results.Any())
+                return NotFound();
 
-            return result == null || result.Errors.Any() ? BadRequest(result) : Ok(result.Results);
+            return result.Errors.Any() ? BadRequest(result) : Ok(result.Results);
         }
 
         private string GetPreferredLocaleLanguage(HttpRequest request)

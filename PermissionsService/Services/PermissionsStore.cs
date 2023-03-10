@@ -370,7 +370,8 @@ namespace PermissionsService
             }
 
             // Get consent display name and description
-            var scopesInfo = GetAdditionalScopesInformation(scopesInformationDictionary, scopes.DistinctBy(x => new { x.ScopeName, x.ScopeType }));
+            var scopesInfo = GetAdditionalScopesInformation(scopesInformationDictionary, 
+                scopes.DistinctBy(x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase));
             
             // exclude hidden permissions unless stated otherwise
             scopesInfo = scopesInfo.Where(x => includeHidden || !x.IsHidden).ToList();
