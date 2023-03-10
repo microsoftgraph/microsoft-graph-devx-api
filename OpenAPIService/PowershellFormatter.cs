@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using Humanizer;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -203,15 +204,12 @@ namespace OpenAPIService
             if (string.IsNullOrEmpty(operationId))
                 return operationId;
 
-            // Plurality is assumed to be words ending in 's'/'S'.
-            char[] plurals = { 's', 'S' };
-
             var segments = operationId.Split('.').ToList();
 
             // The last segment is ignored as a rule.
             for (int x = segments.Count - 2; x >= 0; x--)
             {
-                var segment = segments[x].TrimEnd(plurals);
+                var segment = segments[x].Singularize(inputIsKnownToBePlural: false);
                 segments[x] = segment;
 
                 // If a segment name is contained in another segment,
