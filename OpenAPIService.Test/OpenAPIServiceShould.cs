@@ -619,8 +619,7 @@ namespace OpenAPIService.Test
             var defaultPriceProperty = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"].Properties["defaultPrice"];
 
             Assert.Null(averageAudioDegradationProperty.AnyOf);
-            Assert.NotNull(averageAudioDegradationProperty.AllOf);
-            Assert.Equal("number", averageAudioDegradationProperty.AllOf.First().Type);
+            Assert.Equal("number", averageAudioDegradationProperty.Type);
             Assert.Equal("float", averageAudioDegradationProperty.Format);
             Assert.True(averageAudioDegradationProperty.Nullable);
             Assert.Null(defaultPriceProperty.OneOf);
