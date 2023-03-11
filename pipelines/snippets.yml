@@ -95,8 +95,15 @@ steps:
     $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
     Write-Host "Path to apidoctor tool: $apidoctorPath"
 
-    . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --lang $(snippetLanguages) --git-path "/bin/git"
+    . $apidoctorPath generate-snippets --ignore-warnings --path . --snippet-generator-path $snippetGeneratorPath --temp-output-path $env:BUILD_ARTIFACTSTAGINGDIRECTORY/Snippets --lang $(snippetLanguages) --git-path "/bin/git"
   displayName: 'Generate snippets'
   workingDirectory: microsoft-graph-docs
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish snippets as artifact'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/Snippets'
+    ArtifactName: 'Snippets'
+    publishLocation: 'Container'
 
 - template: templates/commit-changes.yml
