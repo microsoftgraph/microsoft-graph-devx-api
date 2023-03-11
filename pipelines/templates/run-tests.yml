@@ -26,14 +26,14 @@ steps:
   displayName: 'Build CodeSnippetsPipeline.Test'
   inputs:
     command: 'build'
-    projects: 'microsoft-graph-devx-api/CodeSnippetsPipeline.Test/CodeSnippetsPipeline.Test.csproj'
+    projects: '**/CodeSnippetsPipeline.Test.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Run CodeSnippetsPipeline.Test'
   inputs:
     command: 'test'
-    projects: 'microsoft-graph-devx-api/CodeSnippetsPipeline.Test/CodeSnippetsPipeline.Test.csproj'
+    projects: '**/CodeSnippetsPipeline.Test.csproj'
     arguments: '--configuration $(buildConfiguration) --logger trx;LogFileName=TestResults.trx'
     publishTestResults: true
   env:
