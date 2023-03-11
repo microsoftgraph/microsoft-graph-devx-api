@@ -119,6 +119,20 @@ stages:
   displayName: Run tests
   jobs:
   - job: RunTests
+    strategy:
+      matrix:
+        HttpV1:
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'v1'
+        HttpBeta:
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'beta'
+        CSharpV1:
+          SNIPPET_LANGUAGE: 'c#'
+          GRAPH_VERSION: 'v1'
+        CSharpBeta:
+          SNIPPET_LANGUAGE: 'c#'
+          GRAPH_VERSION: 'beta'
     steps:
     - template: templates/run-tests.yml
     
