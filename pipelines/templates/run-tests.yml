@@ -29,6 +29,9 @@ steps:
     projects: '**/CodeSnippetsPipeline.Test.csproj'
     arguments: '--configuration $(buildConfiguration)'
 
+- pwsh: |
+    Write-Host "Running tests for language: $env:SNIPPET_LANGUAGE, version: $env:GRAPH_VERSION"
+
 - task: DotNetCoreCLI@2
   displayName: 'Run CodeSnippetsPipeline.Test'
   inputs:
@@ -44,6 +47,5 @@ steps:
   inputs:
     testResultsFormat: 'VSTest'
     testResultsFiles: '**/TestResults.trx'
-    searchFolder: '$(Build.SourcesDirectory)/microsoft-graph-devx-api/CodeSnippetsReflection.Test'
-    mergeTestResults: true
+    mergeTestResults: false
     failTaskOnFailedTests: true
