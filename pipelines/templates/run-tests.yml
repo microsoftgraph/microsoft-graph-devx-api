@@ -10,7 +10,13 @@ steps:
   inputs:
     artifact: 'Snippets'
     path: '$(Build.ArtifactStagingDirectory)/Snippets'
-    extractTars: true
+
+- task: ExtractFiles@1
+  displayName: 'Extract snippets artifact'
+  inputs:
+    archiveFilePatterns: '$(Build.ArtifactStagingDirectory)/Snippets/*.tar'
+    destinationFolder: '$(Build.ArtifactStagingDirectory)/Snippets'
+    cleanDestinationFolder: false
 
 - task: UseDotNet@2
   displayName: 'Install .NET Core SDK 6'
@@ -32,15 +38,10 @@ steps:
 - pwsh: |
     Write-Host "Running tests for language: $env:SNIPPET_LANGUAGE, version: $env:GRAPH_VERSION"
     ls $env:BUILD_ARTIFACTSTAGINGDIRECTORY/Snippets
-
-- task: DotNetCoreCLI@2
+    dotnet test --configuration $env:BUILD_CONFIGURATION --logger trx;LogFileName=TestResults.trx --results-directory $env:BUILD_ARTIFACTSTAGINGDIRECTORY/TestResults
   displayName: 'Run CodeSnippetsPipeline.Test'
-  inputs:
-    command: 'test'
-    projects: '**/CodeSnippetsPipeline.Test.csproj'
-    arguments: '--configuration $(buildConfiguration) --logger trx;LogFileName=TestResults.trx --results-directory $(Build.ArtifactStagingDirectory)/TestResults'
-    publishTestResults: true
   env:
+    BUILD_CONFIGURATION: '$(buildConfiguration)'
     SNIPPETS_PATH: '$(Build.ArtifactStagingDirectory)/Snippets'
 
 - task: PublishTestResults@2
@@ -48,5 +49,6 @@ steps:
   inputs:
     testResultsFormat: 'VSTest'
     testResultsFiles: '**/TestResults.trx'
+    searchFolder: '$(Build.ArtifactStagingDirectory)/TestResults'
     mergeTestResults: false
     failTaskOnFailedTests: true
