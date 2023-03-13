@@ -1,17 +1,18 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Microsoft.OpenApi;
-using Microsoft.OpenApi.Extensions;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Services;
-using OpenAPIService.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Extensions;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Services;
+using OpenAPIService.Interfaces;
 using UtilityService;
 using Xunit;
 
@@ -618,8 +619,7 @@ namespace OpenAPIService.Test
             var defaultPriceProperty = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"].Properties["defaultPrice"];
 
             Assert.Null(averageAudioDegradationProperty.AnyOf);
-            Assert.NotNull(averageAudioDegradationProperty.AllOf);
-            Assert.Equal("number", averageAudioDegradationProperty.AllOf.First().Type);
+            Assert.Equal("number", averageAudioDegradationProperty.Type);
             Assert.Equal("float", averageAudioDegradationProperty.Format);
             Assert.True(averageAudioDegradationProperty.Nullable);
             Assert.Null(defaultPriceProperty.OneOf);
@@ -634,7 +634,7 @@ namespace OpenAPIService.Test
         public void ReturnsCorrectOpenApiConvertSettingsForStyle(OpenApiStyle openApiStyle)
         {
             var defaultSettings = _openApiService.GetOpenApiConvertSettings();
-            
+
             // Act
             var styleSettings = _openApiService.GetOpenApiConvertSettings(openApiStyle);
 
@@ -660,31 +660,27 @@ namespace OpenAPIService.Test
             }
         }
 
-        [Theory]
-        [InlineData("identityGovernance.lifecycleWorkflows.workflows.workflow.activate", "identityGovernance.lifecycleWorkflow_activate", OperationType.Post)]
-        [InlineData("applications.CreateRefOwners", "application_CreateOwnersByRef", OperationType.Post)]
-        [InlineData("groups.group.events.event.calendar.events.delta", "group.event.calendar_delta", OperationType.Get)]
-        public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string inputOperationId, string expectedOperationId, OperationType operationType)
-        {
-            // Act
-            var predicate = _openApiService.CreatePredicate(
-                                               operationIds: inputOperationId,
-                                               tags: null,
-                                               url: null,
-                                               source: _graphMockSource,
-                                               graphVersion: GraphVersion);
 
-            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
-            var operationId = subsetOpenApiDocument.Paths
-                              .FirstOrDefault().Value
-                              .Operations[operationType]
-                              .OperationId;
+        [Fact]
+        public void ConvertOpenApiUrlTreeNodeToJsonRendersExternalDocs()
+        {
+            // Arrange
+            var openApiDocs = new ConcurrentDictionary<string, OpenApiDocument>();
+            openApiDocs.TryAdd(GraphVersion, _graphMockSource);
+            using MemoryStream stream = new();
+            var writer = new Utf8JsonWriter(stream, new JsonWriterOptions() { Indented = false });
+
+            // Act
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(openApiDocs);
+            OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
+            writer.Flush();
+            stream.Position = 0;
+            var output = new StreamReader(stream).ReadToEnd();
 
             // Assert
-            Assert.Equal(expectedOperationId, operationId);
+            Assert.Contains("\"children\":[{\"segment\":\"{user-id}\",\"labels\":[{\"name\":\"mock\",\"methods\":[{\"name\":\"Get\",\"documentationUrl\":\"https://docs.microsoft.com/foobar\"}", output);
         }
-        
+
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
         {
             Assert.NotNull(node);

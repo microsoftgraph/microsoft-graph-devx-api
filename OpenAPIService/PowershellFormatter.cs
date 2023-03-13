@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace OpenAPIService
 {
@@ -104,6 +105,7 @@ namespace OpenAPIService
             }
 
             operation.OperationId = operationId;
+            FormatODataTypeCastSegmentOperationId(operation);
         }
 
         /// <summary>
@@ -194,37 +196,22 @@ namespace OpenAPIService
             }
         }
 
-        /// <summary>
-        /// Singularizes and deduplicates segment names in an operation id.
-        /// </summary>
-        /// <param name="operationId">The target operationId value.</param>
-        /// <returns>The operationId with the segments singularized and deduplicated.</returns>
-        private static string SingularizeAndDeduplicateOperationId(string operationId)
+        private static void FormatODataTypeCastSegmentOperationId(OpenApiOperation operation)
         {
-            if (string.IsNullOrEmpty(operationId))
-                return operationId;
-
-            var segments = operationId.Split('.').ToList();
-
-            // The last segment is ignored as a rule.
-            for (int x = segments.Count - 2; x >= 0; x--)
+            // Replace fully qualified OData cast segments' namespace name with 'As'
+            var graphNamespace = "microsoft.graph.";
+            while (operation.OperationId.Contains(graphNamespace))
             {
-                var segment = segments[x].Singularize(inputIsKnownToBePlural: false);
-                segments[x] = segment;
+                var namespaceIndex = operation.OperationId.IndexOf(graphNamespace);
+                var part1 = operation.OperationId.Substring(0, namespaceIndex);
+                var targetCharIndex = namespaceIndex + graphNamespace.Length;
+                var targetChar = operation.OperationId[targetCharIndex];
+                var part2 = operation.OperationId.Substring(targetCharIndex + 1);
 
-                // If a segment name is contained in another segment,
-                // the former is considered a duplicate.
-                for (int y = x - 1; y >= 0; y--)
-                {
-                    if (segments[y].Contains(segment, StringComparison.OrdinalIgnoreCase))
-                    {
-                        segments.RemoveAt(x);
-                        break;
-                    }
-                }
+                targetChar = char.ToUpperInvariant(targetChar);
+
+                operation.OperationId = part1 + "As" + targetChar + part2;
             }
-
-            return string.Join(".", segments);
         }
     }
 }

@@ -1,7 +1,8 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using System.Linq;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using System.Collections.Generic;
@@ -13,11 +14,11 @@ namespace OpenAPIService
     {
         public override void Visit(OpenApiSchema schema)
         {
-            // Replace AnyOf with AllOf
             if (schema.AnyOf?.Any() ?? false)
             {
-                schema.AllOf = new List<OpenApiSchema>(schema.AnyOf); 
+                var newSchema = schema.AnyOf.FirstOrDefault();
                 schema.AnyOf = null;
+                FlattenSchema(schema, newSchema);
             }
 
             if (schema.OneOf?.Any() ?? false)
