@@ -210,9 +210,9 @@ namespace OpenAPIService.Test
         [InlineData(OpenApiStyle.GEAutocomplete, "/users/12345/messages/abcde", OperationType.Get)]
         [InlineData(OpenApiStyle.GEAutocomplete, "/", OperationType.Get)] // root path
         [InlineData(OpenApiStyle.PowerPlatform, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post)]
-        [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post, "administrativeUnit_restore")]
-        [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch, "user_UpdateUser")]
-        [InlineData(OpenApiStyle.PowerShell, "/applications/{application-id}/logo", OperationType.Put, "application_SetLogo")]
+        [InlineData(OpenApiStyle.PowerShell, "/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore", OperationType.Post, "administrativeUnits_restore")]
+        [InlineData(OpenApiStyle.PowerShell, "/users/{user-id}", OperationType.Patch, "users.user_UpdateUser")]
+        [InlineData(OpenApiStyle.PowerShell, "/applications/{application-id}/logo", OperationType.Put, "applications.application_SetLogo")]
         public void ReturnStyledOpenApiDocumentInApplyStyleForAllOpenApiStyles(OpenApiStyle style,
                                                                                string url,
                                                                                OperationType operationType,
@@ -389,9 +389,9 @@ namespace OpenAPIService.Test
         }
 
         [Theory]
-        [InlineData("/communications/calls/{call-id}/microsoft.graph.keepAlive", OperationType.Post, "communication.call_keepAlive")]
-        [InlineData("/groups/{group-id}/events/{event-id}/calendar/events/microsoft.graph.delta", OperationType.Get, "group.event.calendar_delta")]
-        [InlineData("/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})", OperationType.Get, "report_getSharePointSiteUsageDetail")]
+        [InlineData("/communications/calls/{call-id}/microsoft.graph.keepAlive", OperationType.Post, "communications.calls_keepAlive")]
+        [InlineData("/groups/{group-id}/events/{event-id}/calendar/events/microsoft.graph.delta", OperationType.Get, "groups.events.calendar.events_delta")]
+        [InlineData("/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})", OperationType.Get, "reports_getSharePointSiteUsageDetail")]
         public void ResolveActionFunctionOperationIdsForPowerShellStyle(string url, OperationType operationType, string expectedOperationId)
         {
             // Act
@@ -527,7 +527,7 @@ namespace OpenAPIService.Test
             var successResponse = operation.Responses.FirstOrDefault(r => r.Key == "200");
 
             // Assert
-            Assert.Equal("application_GetCreatedOnBehalfOfByRef", operation.OperationId);
+            Assert.Equal("applications_GetCreatedOnBehalfOfByRef", operation.OperationId);
             Assert.Contains(topParameter.Reference.Id, subsetOpenApiDocument.Components.Parameters.Keys);
             Assert.Contains(successResponse.Value.Reference.Id, subsetOpenApiDocument.Components.Responses.Keys);
         }
@@ -659,12 +659,15 @@ namespace OpenAPIService.Test
                 Assert.Equal(defaultSettings.TagDepth, styleSettings.TagDepth);
             }
         }
-
+        
         [Theory]
-        [InlineData("identityGovernance.lifecycleWorkflows.workflows.workflow.activate", "identityGovernance.lifecycleWorkflow_activate", OperationType.Post)]
-        [InlineData("applications.CreateRefOwners", "application_CreateOwnersByRef", OperationType.Post)]
-        [InlineData("groups.group.events.event.calendar.events.delta", "group.event.calendar_delta", OperationType.Get)]
-        public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string inputOperationId, string expectedOperationId, OperationType operationType)
+        [InlineData("identityGovernance.lifecycleWorkflows.workflows.workflow.activate", "identityGovernance.lifecycleWorkflow_activate", OperationType.Post, true)]
+        [InlineData("identityGovernance.lifecycleWorkflows.workflows.workflow.activate", "identityGovernance.lifecycleWorkflows.workflows.workflow_activate", OperationType.Post, false)]
+        [InlineData("applications.CreateRefOwners", "application_CreateOwnersByRef", OperationType.Post, true)]
+        [InlineData("applications.CreateRefOwners", "applications_CreateOwnersByRef", OperationType.Post, false)]
+        [InlineData("groups.group.events.event.calendar.events.delta", "group.event.calendar_delta", OperationType.Get, true)]
+        [InlineData("groups.group.events.event.calendar.events.delta", "groups.events.calendar.events_delta", OperationType.Get, false)]
+        public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string inputOperationId, string expectedOperationId, OperationType operationType, bool singularizeIds)
         {
             // Act
             var predicate = _openApiService.CreatePredicate(
@@ -675,7 +678,7 @@ namespace OpenAPIService.Test
                                                graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, singularizeIds: singularizeIds);
             var operationId = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
                               .Operations[operationType]
