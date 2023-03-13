@@ -22,6 +22,12 @@ namespace OpenAPIService
         private const string DefaultPutPrefix = ".Update";
         private const string NewPutPrefix = "_Set";
         private readonly Stack<OpenApiSchema> _schemaLoop = new();
+        private readonly bool _singularizeIds;
+
+        public PowershellFormatter(bool singularizeIds)
+        {
+            _singularizeIds = singularizeIds;
+        }
 
         /// <summary>
         /// Accesses the individual OpenAPI operations for a particular OpenApiPathItem.
@@ -35,7 +41,10 @@ namespace OpenAPIService
             if (pathItem.Operations.ContainsKey(putOperation))
             {
                 var operationId = pathItem.Operations[putOperation].OperationId;
-                operationId = SingularizeAndDeduplicateOperationId(operationId);
+                if (_singularizeIds)
+                {
+                    operationId = SingularizeAndDeduplicateOperationId(operationId);
+                }
 
                 if (operationId.Contains(DefaultPutPrefix))
                 {
@@ -81,7 +90,10 @@ namespace OpenAPIService
                 }
             }
 
-            operationId = SingularizeAndDeduplicateOperationId(operationId);
+            if (_singularizeIds)
+            {
+                operationId = SingularizeAndDeduplicateOperationId(operationId);
+            }            
 
             var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 

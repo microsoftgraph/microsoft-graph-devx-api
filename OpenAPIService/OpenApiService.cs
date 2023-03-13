@@ -598,7 +598,11 @@ namespace OpenAPIService
         /// <param name="style">The OpenApiStyle value.</param>
         /// <param name="subsetOpenApiDocument">The subset of an OpenAPI document.</param>
         /// <returns>An OpenAPI doc with the respective style applied.</returns>
-        public OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody)
+        public OpenApiDocument ApplyStyle(
+            OpenApiStyle style,
+            OpenApiDocument subsetOpenApiDocument,
+            bool includeRequestBody = false,
+            bool singularizeIds = false)
         {
             _telemetryClient?.TrackTrace($"Applying style for '{style}'",
                                          SeverityLevel.Information,
@@ -619,7 +623,7 @@ namespace OpenAPIService
                 if (style == OpenApiStyle.PowerShell)
                 {
                     // Format the OperationId for Powershell cmdlet names generation
-                    var powershellFormatter = new PowershellFormatter();
+                    var powershellFormatter = new PowershellFormatter(singularizeIds);
                     walker = new OpenApiWalker(powershellFormatter);
                     walker.Walk(subsetOpenApiDocument);
 
