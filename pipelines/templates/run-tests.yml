@@ -37,7 +37,7 @@ steps:
 
 - pwsh: |
     Write-Host "Running tests for language: $env:SNIPPET_LANGUAGE, version: $env:GRAPH_VERSION"
-    dotnet test ./CodeSnippetsPipeline.Test/ --configuration $env:BUILD_CONFIGURATION --logger trx;logfilename=TestResults.trx --results-directory $env:BUILD_ARTIFACTSTAGINGDIRECTORY/TestResults
+    dotnet test ./CodeSnippetsPipeline.Test/ --configuration $env:BUILD_CONFIGURATION --logger "trx;logfilename=TestResults.trx" --results-directory $env:BUILD_ARTIFACTSTAGINGDIRECTORY/TestResults
   displayName: 'Run CodeSnippetsPipeline.Test'
   env:
     BUILD_CONFIGURATION: '$(buildConfiguration)'
