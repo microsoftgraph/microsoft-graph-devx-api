@@ -43,7 +43,7 @@ namespace OpenAPIService.Test
             return new OpenApiService(configuration);
         }
 
-        private OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument)
+        private static OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument)
         {
             using var stream = new MemoryStream();
             var writer = new OpenApiYamlWriter(new StreamWriter(stream));
