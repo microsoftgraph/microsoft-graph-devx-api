@@ -602,7 +602,7 @@ namespace OpenAPIService
             OpenApiStyle style,
             OpenApiDocument subsetOpenApiDocument,
             bool includeRequestBody = false,
-            bool singularizeIds = false)
+            bool singularizeOperationIds = false)
         {
             _telemetryClient?.TrackTrace($"Applying style for '{style}'",
                                          SeverityLevel.Information,
@@ -623,7 +623,7 @@ namespace OpenAPIService
                 if (style == OpenApiStyle.PowerShell)
                 {
                     // Format the OperationId for Powershell cmdlet names generation
-                    var powershellFormatter = new PowershellFormatter(singularizeIds);
+                    var powershellFormatter = new PowershellFormatter(singularizeOperationIds);
                     walker = new OpenApiWalker(powershellFormatter);
                     walker.Walk(subsetOpenApiDocument);
 

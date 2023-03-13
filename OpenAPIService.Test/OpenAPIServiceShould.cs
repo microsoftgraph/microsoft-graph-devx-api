@@ -667,7 +667,7 @@ namespace OpenAPIService.Test
         [InlineData("applications.CreateRefOwners", "applications_CreateOwnersByRef", OperationType.Post, false)]
         [InlineData("groups.group.events.event.calendar.events.delta", "group.event.calendar_delta", OperationType.Get, true)]
         [InlineData("groups.group.events.event.calendar.events.delta", "groups.events.calendar.events_delta", OperationType.Get, false)]
-        public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string inputOperationId, string expectedOperationId, OperationType operationType, bool singularizeIds)
+        public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string inputOperationId, string expectedOperationId, OperationType operationType, bool singularizeOperationIds)
         {
             // Act
             var predicate = _openApiService.CreatePredicate(
@@ -678,7 +678,7 @@ namespace OpenAPIService.Test
                                                graphVersion: GraphVersion);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, singularizeIds: singularizeIds);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, singularizeOperationIds: singularizeOperationIds);
             var operationId = subsetOpenApiDocument.Paths
                               .FirstOrDefault().Value
                               .Operations[operationType]
