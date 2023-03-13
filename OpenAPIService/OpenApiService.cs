@@ -675,9 +675,8 @@ namespace OpenAPIService
                                          _openApiTraceProperties);
             _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
-            OpenApiDocument document = new OpenApiStreamReader().Read(stream, out var diagnostic);
-
-            return document;
+            var streamValue = await new OpenApiStreamReader().ReadAsync(stream);
+            return streamValue.OpenApiDocument;
         }
 
         private static IList<SearchResult> FindOperations(OpenApiDocument graphOpenApi, Func<OpenApiOperation, bool> predicate)
