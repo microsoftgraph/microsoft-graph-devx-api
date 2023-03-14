@@ -35,7 +35,7 @@ variables:
   buildConfiguration: 'Release'
   apidoctorPath: 'microsoft-graph-devx-api/apidoctor'
   apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
-  snippetLanguages: ${{ join(',' parameters.snippetLanguages) }}
+  snippetLanguages: ${{ join(',',parameters.snippetLanguages) }}
 
 stages:
 - stage: GenerateSnippets
