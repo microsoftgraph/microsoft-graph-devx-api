@@ -129,10 +129,12 @@ stages:
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
         ${{ each language in parameters.snippetLanguages }}:
-          ${{ each version in ['v1', 'beta'] }}:
-            '${{ language }} ${{ version }}':
-              SNIPPET_LANGUAGE: lower(${{ language }})
-              GRAPH_VERSION: ${{ version }}
+          '${{ language }} v1':
+            SNIPPET_LANGUAGE: lower(${{ language }})
+            GRAPH_VERSION: 'v1'
+          '${{ language }} beta':
+            SNIPPET_LANGUAGE: lower(${{ language }})
+            GRAPH_VERSION: 'beta'
 
     steps:
     - template: templates/run-tests.yml
