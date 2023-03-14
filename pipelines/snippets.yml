@@ -122,19 +122,17 @@ stages:
   - job: RunTests
     strategy:
       matrix:
-        HttpV1:
+        'HTTP v1':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'v1'
-        HttpBeta:
+        'HTTP beta':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
         ${{ each language in parameters.snippetLanguages }}:
-          ${{ language }}V1:
-            SNIPPET_LANGUAGE: ${{ language }}
-            GRAPH_VERSION: 'v1'
-          ${{ language }}Beta:
-            SNIPPET_LANGUAGE: ${{ language }}
-            GRAPH_VERSION: 'beta'
+          ${{ each version in ['v1', 'beta'] }}:
+            '${{ language }} ${{ version }}':
+              SNIPPET_LANGUAGE: lower(${{ language }})
+              GRAPH_VERSION: ${{ version }}
 
     steps:
     - template: templates/run-tests.yml

@@ -11,7 +11,7 @@ public class CodeSnippetsPipeline
 
         // enumerate all HTTP snippets in the folder
         var snippetsPath = getEnv("SNIPPETS_PATH");
-        var language = getEnv("SNIPPET_LANGUAGE");
+        var language = getEnv("SNIPPET_LANGUAGE").ToLowerInvariant();
         var version = getEnv("GRAPH_VERSION");
         var snippets = Directory.EnumerateFiles(snippetsPath, $"*{version}-httpSnippet*", SearchOption.AllDirectories);
 
