@@ -128,7 +128,7 @@ stages:
         HttpBeta:
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
-        ${{ each language in languagesArray }}:
+        ${{ each language in parameters.snippetLanguages }}:
           ${{ language }}V1:
             SNIPPET_LANGUAGE: ${{ language }}
             GRAPH_VERSION: 'v1'
