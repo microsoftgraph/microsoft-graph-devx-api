@@ -19,12 +19,13 @@ public class CodeSnippetsPipeline
         {
             var snippetName = Path.GetFileNameWithoutExtension(snippetFullPath).Replace("-httpSnippet", "");
             var testCase = new TestCaseData(snippetFullPath, language);
-            testCase.SetName(snippetName);
+            testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
             yield return testCase;
         }
     }
 
     [Test]
+    [Category(nameof(CodeSnippetsPipeline))]
     [TestCaseSource(typeof(CodeSnippetsPipeline), nameof(TestData))]
     public void Test(string httpSnippetFilePath, string language)
     {
