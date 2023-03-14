@@ -2,16 +2,16 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Microsoft.OpenApi;
-using Microsoft.OpenApi.Extensions;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Services;
-using OpenAPIService.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Extensions;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Services;
+using OpenAPIService.Interfaces;
 using UtilityService;
 using Xunit;
 
@@ -618,8 +618,7 @@ namespace OpenAPIService.Test
             var defaultPriceProperty = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"].Properties["defaultPrice"];
 
             Assert.Null(averageAudioDegradationProperty.AnyOf);
-            Assert.NotNull(averageAudioDegradationProperty.AllOf);
-            Assert.Equal("number", averageAudioDegradationProperty.AllOf.First().Type);
+            Assert.Equal("number", averageAudioDegradationProperty.Type);
             Assert.Equal("float", averageAudioDegradationProperty.Format);
             Assert.True(averageAudioDegradationProperty.Nullable);
             Assert.Null(defaultPriceProperty.OneOf);
