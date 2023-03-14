@@ -44,7 +44,7 @@ steps:
   inputs:
     testResultsFormat: 'VSTest'
     testResultsFiles: '**/TestResults.trx'
-    testRunTitle: 'Snippet Generation $(SNIPPET_LANGUAGE) $(GRAPH_VERSION)'
+    testRunTitle: '$(Build.Reason) Snippet Generation $(SNIPPET_LANGUAGE) $(GRAPH_VERSION)'
     searchFolder: '$(Build.ArtifactStagingDirectory)/TestResults'
     mergeTestResults: false
     failTaskOnFailedTests: false
