@@ -27,18 +27,15 @@ pool:
 
 parameters:
   - name: snippetLanguages
-    default: 'C#,JavaScript,Java,Go,PowerShell,PHP'
-    displayName: 'Languages to generate snippets (comma separated list)'
-  - name: languagesArray
     type: object
     default: ['C#', 'JavaScript', 'Java', 'Go', 'PowerShell', 'PHP']
-    displayName: 'Languages to generate snippets (array)'
+    displayName: 'Languages to generate snippets for'
 
 variables:
   buildConfiguration: 'Release'
   apidoctorPath: 'microsoft-graph-devx-api/apidoctor'
   apidoctorProjects: '$(apidoctorPath)/**/*.csproj'
-  snippetLanguages: ${{ parameters.snippetLanguages }}
+  snippetLanguages: ${{ join(',' parameters.snippetLanguages) }}
 
 stages:
 - stage: GenerateSnippets
