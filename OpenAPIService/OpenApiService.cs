@@ -49,7 +49,6 @@ namespace OpenAPIService
         private static readonly ConcurrentDictionary<string, string> _openApiTraceProperties =
                         new();
         private readonly TelemetryClient _telemetryClient;
-        private readonly IConfiguration _configuration;
         private static readonly SemaphoreSlim _openApiDocumentAccess = new(2, 2); // only 2 threads can be granted access at a time.
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInMinutes:OpenAPIDocuments";
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
@@ -64,9 +63,9 @@ namespace OpenAPIService
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
-            _configuration = configuration
-               ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: {nameof(configuration)}");
-            _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(_configuration[CacheRefreshTimeConfig]);
+            if (configuration == null) throw new ArgumentNullException(nameof(configuration), 
+                $"Value cannot be null: {nameof(configuration)}");
+            _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService));
         }
@@ -510,7 +509,7 @@ namespace OpenAPIService
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
-        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, OpenApiStyle openApiStyle, bool forceRefresh)       
+        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, OpenApiStyle openApiStyle, bool forceRefresh)
         {
             var cachedDoc = $"{graphUri}/{openApiStyle}";
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(cachedDoc, out OpenApiDocument doc))
@@ -579,7 +578,7 @@ namespace OpenAPIService
                 _openApiTraceProperties.TryRemove(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, out string _);
 
                 _graphUriQueue.Enqueue(graphUri);
-                
+
                 graphUri += $"/{_fileNames[openApiStyle]}.yaml";
 
                 OpenApiDocument source = await GetOpenApiDocumentAsync(new Uri(graphUri));
@@ -593,12 +592,12 @@ namespace OpenAPIService
                 {
                     _graphUriQueue.Dequeue();
                 }
-                
+
                 _openApiDocumentAccess.Release();
                 _telemetryClient?.TrackTrace("Fetch lock successfully released.",
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
-            }            
+            }
         }
 
         /// <summary>
