@@ -130,10 +130,10 @@ stages:
           GRAPH_VERSION: 'beta'
         ${{ each language in parameters.snippetLanguages }}:
           '${{ language }} v1':
-            SNIPPET_LANGUAGE: lower(${{ language }})
+            SNIPPET_LANGUAGE: ${{ lower(language) }})
             GRAPH_VERSION: 'v1'
           '${{ language }} beta':
-            SNIPPET_LANGUAGE: lower(${{ language }})
+            SNIPPET_LANGUAGE: ${{ lower(language) }})
             GRAPH_VERSION: 'beta'
 
     steps:
