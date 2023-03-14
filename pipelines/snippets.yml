@@ -29,6 +29,10 @@ parameters:
   - name: snippetLanguages
     default: 'C#,JavaScript,Java,Go,PowerShell,PHP'
     displayName: 'Languages to generate snippets (comma separated list)'
+  - name: languagesArray
+    type: object
+    default: ['C#', 'JavaScript', 'Java', 'Go', 'PowerShell', 'PHP']
+    displayName: 'Languages to generate snippets (array)'
 
 variables:
   buildConfiguration: 'Release'
@@ -127,13 +131,13 @@ stages:
         HttpBeta:
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
-        - ${{ each language in parameters.snippetLanguages.split(',') }}:
-            - ${{ language }}V1:
-              SNIPPET_LANGUAGE: ${{ language }}
-              GRAPH_VERSION: 'v1'
-            - ${{ language }}Beta:
-              SNIPPET_LANGUAGE: ${{ language }}
-              GRAPH_VERSION: 'beta'
+        ${{ each language in languagesArray }}:
+          ${{ language }}V1:
+            SNIPPET_LANGUAGE: ${{ language }}
+            GRAPH_VERSION: 'v1'
+          ${{ language }}Beta:
+            SNIPPET_LANGUAGE: ${{ language }}
+            GRAPH_VERSION: 'beta'
 
     steps:
     - template: templates/run-tests.yml
