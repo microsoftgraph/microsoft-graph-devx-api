@@ -127,12 +127,14 @@ stages:
         HttpBeta:
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
-        CSharpV1:
-          SNIPPET_LANGUAGE: 'c#'
-          GRAPH_VERSION: 'v1'
-        CSharpBeta:
-          SNIPPET_LANGUAGE: 'c#'
-          GRAPH_VERSION: 'beta'
+        - ${{ each language in parameters.snippetLanguages }}:
+            - ${{ language }}V1:
+              SNIPPET_LANGUAGE: ${{ language }}
+              GRAPH_VERSION: 'v1'
+            - ${{ language }}Beta:
+              SNIPPET_LANGUAGE: ${{ language }}
+              GRAPH_VERSION: 'beta'
+
     steps:
     - template: templates/run-tests.yml
     
