@@ -30,9 +30,9 @@ public class CodeSnippetsPipeline
     public void Test(string httpSnippetFilePath, string language)
     {
         var fileName = Path.GetFileName(httpSnippetFilePath);
-        if (language == "http")
+        if (language.Equals("http", StringComparison.OrdinalIgnoreCase))
         {
-            if (fileName.EndsWith("-httpSnippet"))
+            if (fileName.EndsWith("-httpSnippet", StringComparison.Ordinal))
             {
                 Assert.Pass();
             }
@@ -43,7 +43,7 @@ public class CodeSnippetsPipeline
         }
         else
         {
-            var expectedLanguageSnippetFileFullPath = string.Concat(httpSnippetFilePath.AsSpan(0, httpSnippetFilePath.LastIndexOf("-httpSnippet")), $"---{language}");
+            var expectedLanguageSnippetFileFullPath = string.Concat(httpSnippetFilePath.AsSpan(0, httpSnippetFilePath.LastIndexOf("-httpSnippet", StringComparison.Ordinal)), $"---{language}");
             if (File.Exists(expectedLanguageSnippetFileFullPath))
             {
                 Assert.Pass();
