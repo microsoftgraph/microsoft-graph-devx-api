@@ -467,6 +467,13 @@ paths:
             default: false
           required: false
           description: Reload the OpenAPI document.
+        - name: singularizeOperationIds 
+          in: query
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Singularize and deduplicate operationIds.
       responses:
         "200":
           description: List of operations associated to a tag/operationIds/url
@@ -610,6 +617,13 @@ paths:
             default: false
           required: false
           description: Reload the OpenAPI document.
+        - name: singularizeOperationIds 
+          in: query
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Singularize and deduplicate operationIds.
       responses:
         "200":
           description: OK
