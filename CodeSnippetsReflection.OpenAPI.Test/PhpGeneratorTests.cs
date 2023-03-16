@@ -84,7 +84,7 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$requestConfiguration = new UsersRequestBuilderPostRequestConfiguration();", result);
-        Assert.Contains("$queryParameters = UsersRequestBuilderPostRequestConfiguration::addQueryParameters();", result);
+        Assert.Contains("$queryParameters = UsersRequestBuilderPostRequestConfiguration::createQueryParameters();", result);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class PhpGeneratorTests
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphServiceClient->directory()->deletedItems()->microsoftGraphGroup()->get()", result);
+        Assert.Contains("$result = $graphServiceClient->directory()->deletedItemsById('directoryObject-id')->get();", result);
     }
 
     [Fact]
