@@ -3,7 +3,6 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.OData;
 using Microsoft.OpenApi.Services;
 using OpenAPIService.Common;
 using System;
@@ -28,6 +27,6 @@ namespace OpenAPIService.Interfaces
 
         void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream);
 
-        OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody = false);
+        OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody = false, bool singularizeOperationIds = false);
     }
 }

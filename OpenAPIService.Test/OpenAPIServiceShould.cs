@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -358,7 +358,7 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(15, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(16, subsetOpenApiDocument.Paths.Count);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Schemas);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);

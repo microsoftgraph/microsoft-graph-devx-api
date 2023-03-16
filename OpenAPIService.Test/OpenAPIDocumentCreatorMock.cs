@@ -1041,6 +1041,25 @@ namespace OpenAPIService.Test
                                 }
                             }
                         }
+                    },
+                    ["/identityGovernance/lifecycleWorkflows/workflows/{workflow-id}/microsoft.graph.identityGovernance.activate"] = new OpenApiPathItem
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Post, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        new OpenApiTag()
+                                        {
+                                            Name = "identityGovernance.Actions"
+                                        }
+                                    },
+                                    OperationId = "identityGovernance.lifecycleWorkflows.workflows.workflow.activate"                                    
+                                }
+                            }
+                        }
                     }
                 },
                 Components = new OpenApiComponents
