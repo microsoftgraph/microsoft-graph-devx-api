@@ -2,15 +2,20 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Readers;
+using Microsoft.OpenApi.Writers;
 using OpenAPIService.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 
 namespace OpenAPIService.Test
 {
@@ -36,6 +41,17 @@ namespace OpenAPIService.Test
                                                     .Build();
 
             return new OpenApiService(configuration);
+        }
+
+        private static OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument)
+        {
+            using var stream = new MemoryStream();
+            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
+            openApiDocument.SerializeAsV3(writer);
+            writer.Flush();
+            stream.Position = 0;
+            var reader = new OpenApiStreamReader();
+            return reader.Read(stream, out _); ;
         }
 
         /// <summary>
@@ -1025,6 +1041,25 @@ namespace OpenAPIService.Test
                                 }
                             }
                         }
+                    },
+                    ["/identityGovernance/lifecycleWorkflows/workflows/{workflow-id}/microsoft.graph.identityGovernance.activate"] = new OpenApiPathItem
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Post, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        new OpenApiTag()
+                                        {
+                                            Name = "identityGovernance.Actions"
+                                        }
+                                    },
+                                    OperationId = "identityGovernance.lifecycleWorkflows.workflows.workflow.activate"                                    
+                                }
+                            }
+                        }
                     }
                 },
                 Components = new OpenApiComponents
@@ -1216,7 +1251,7 @@ namespace OpenAPIService.Test
                 }
             };
 
-            return _openApiService.CloneOpenApiDocument(document);
+            return CloneOpenApiDocument(document);
         }
     }
 }
