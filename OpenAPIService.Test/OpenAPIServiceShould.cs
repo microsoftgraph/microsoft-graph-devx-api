@@ -1,17 +1,17 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Microsoft.OpenApi;
-using Microsoft.OpenApi.Extensions;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Services;
-using OpenAPIService.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Extensions;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Services;
+using OpenAPIService.Interfaces;
 using UtilityService;
 using Xunit;
 
@@ -618,8 +618,7 @@ namespace OpenAPIService.Test
             var defaultPriceProperty = subsetOpenApiDocument.Components.Schemas["microsoft.graph.networkInterface"].Properties["defaultPrice"];
 
             Assert.Null(averageAudioDegradationProperty.AnyOf);
-            Assert.NotNull(averageAudioDegradationProperty.AllOf);
-            Assert.Equal("number", averageAudioDegradationProperty.AllOf.First().Type);
+            Assert.Equal("number", averageAudioDegradationProperty.Type);
             Assert.Equal("float", averageAudioDegradationProperty.Format);
             Assert.True(averageAudioDegradationProperty.Nullable);
             Assert.Null(defaultPriceProperty.OneOf);
@@ -627,67 +626,6 @@ namespace OpenAPIService.Test
             Assert.Equal("double", defaultPriceProperty.Format);
         }
 
-        [Theory]
-        [InlineData(OpenApiStyle.GEAutocomplete)]
-        [InlineData(OpenApiStyle.PowerPlatform)]
-        [InlineData(OpenApiStyle.PowerShell)]
-        public void ReturnsCorrectOpenApiConvertSettingsForStyle(OpenApiStyle openApiStyle)
-        {
-            var defaultSettings = _openApiService.GetOpenApiConvertSettings();
-            
-            // Act
-            var styleSettings = _openApiService.GetOpenApiConvertSettings(openApiStyle);
-
-            // Assert
-            if (openApiStyle == OpenApiStyle.PowerShell)
-            {
-                Assert.NotEqual(defaultSettings.EnablePagination, styleSettings.EnablePagination);
-                Assert.Equal(defaultSettings.TagDepth, styleSettings.TagDepth);
-                Assert.Equal(defaultSettings.ExpandDerivedTypesNavigationProperties, styleSettings.ExpandDerivedTypesNavigationProperties);
-            }
-            else if (openApiStyle == OpenApiStyle.PowerPlatform)
-            {
-                Assert.NotEqual(defaultSettings.TagDepth, styleSettings.TagDepth);
-                Assert.Equal(defaultSettings.EnablePagination, styleSettings.EnablePagination);
-                Assert.Equal(defaultSettings.ExpandDerivedTypesNavigationProperties, styleSettings.ExpandDerivedTypesNavigationProperties);
-
-            }
-            else if (openApiStyle == OpenApiStyle.GEAutocomplete)
-            {
-                Assert.NotEqual(defaultSettings.ExpandDerivedTypesNavigationProperties, styleSettings.ExpandDerivedTypesNavigationProperties);
-                Assert.Equal(defaultSettings.EnablePagination, styleSettings.EnablePagination);
-                Assert.Equal(defaultSettings.TagDepth, styleSettings.TagDepth);
-            }
-        }
-        
-        [Theory]
-        [InlineData("identityGovernance.lifecycleWorkflows.workflows.workflow.activate", "identityGovernance.lifecycleWorkflow_activate", OperationType.Post, true)]
-        [InlineData("identityGovernance.lifecycleWorkflows.workflows.workflow.activate", "identityGovernance.lifecycleWorkflows.workflows.workflow_activate", OperationType.Post, false)]
-        [InlineData("applications.CreateRefOwners", "application_CreateOwnersByRef", OperationType.Post, true)]
-        [InlineData("applications.CreateRefOwners", "applications_CreateOwnersByRef", OperationType.Post, false)]
-        [InlineData("groups.group.events.event.calendar.events.delta", "group.event.calendar_delta", OperationType.Get, true)]
-        [InlineData("groups.group.events.event.calendar.events.delta", "groups.events.calendar.events_delta", OperationType.Get, false)]
-        public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string inputOperationId, string expectedOperationId, OperationType operationType, bool singularizeOperationIds)
-        {
-            // Act
-            var predicate = _openApiService.CreatePredicate(
-                                               operationIds: inputOperationId,
-                                               tags: null,
-                                               url: null,
-                                               source: _graphMockSource,
-                                               graphVersion: GraphVersion);
-
-            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
-            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, singularizeOperationIds: singularizeOperationIds);
-            var operationId = subsetOpenApiDocument.Paths
-                              .FirstOrDefault().Value
-                              .Operations[operationType]
-                              .OperationId;
-
-            // Assert
-            Assert.Equal(expectedOperationId, operationId);
-        }
-        
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
         {
             Assert.NotNull(node);
