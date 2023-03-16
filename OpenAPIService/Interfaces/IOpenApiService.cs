@@ -3,7 +3,6 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.OData;
 using Microsoft.OpenApi.Services;
 using OpenAPIService.Common;
 using System;
