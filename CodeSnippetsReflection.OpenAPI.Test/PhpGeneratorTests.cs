@@ -83,8 +83,8 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestConfiguration = new UsersRequestBuilderPostRequestConfiguration(\n", result);
-        Assert.Contains("queryParameters: UsersRequestBuilderPostRequestConfiguration::addQueryParameters(", result);
+        Assert.Contains("$requestConfiguration = new UsersRequestBuilderPostRequestConfiguration();", result);
+        Assert.Contains("$queryParameters = UsersRequestBuilderPostRequestConfiguration::addQueryParameters();", result);
     }
 
     [Fact]
@@ -131,11 +131,11 @@ public class PhpGeneratorTests
             $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("count: true,", result);
-        Assert.Contains("queryParameters: UsersRequestBuilderGetRequestConfiguration::addQueryParameters(", result);
-        Assert.Contains("filter: ", result);
-        Assert.Contains("select: ", result);
-        Assert.Contains("orderby: ", result);
+        Assert.Contains("$requestConfiguration->queryParameters = $queryParameters;", result);
+        Assert.Contains("$queryParameters = UsersRequestBuilderGetRequestConfiguration::createQueryParameters();", result);
+        Assert.Contains("$queryParameters->orderby = [\"displayName\"];", result);
+        Assert.Contains("$queryParameters->select = [\"id\",\"displayName\",\"department\"];", result);
+        Assert.Contains("$queryParameters->filter = \"Department eq 'Finance'\";", result);
     }
     
     [Fact]
@@ -145,7 +145,7 @@ public class PhpGeneratorTests
         requestPayload.Headers.Add("Accept", "application/json");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("headers: [", result);
+        Assert.Contains("$headers = [", result);
         Assert.Contains("'ConsistencyLevel' => 'eventual',", result);
         Assert.Contains("'Accept' => 'application/json',", result);
     }
@@ -259,7 +259,7 @@ public class PhpGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->activities()->microsoftGraphRecent()->get()", result);
+        Assert.Contains("->me()->activitiesById('userActivity-id')->get();", result);
     }
 
     [Fact /*(Skip = "Should fail by default.")*/]
