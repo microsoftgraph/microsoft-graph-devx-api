@@ -33,7 +33,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IOpenApiService _openApiService;
- 
+
         public OpenApiController(IConfiguration configuration, IOpenApiService openApiService)
         {
             ArgumentNullException.ThrowIfNull(openApiService, nameof(openApiService));
@@ -46,16 +46,16 @@ namespace GraphWebApi.Controllers
         [Route("$openapi")]
         [HttpGet]
         public async Task<IActionResult> Get(
-                                    [FromQuery]string operationIds = null,
-                                    [FromQuery]string tags = null,
-                                    [FromQuery]string url = null,
-                                    [FromQuery]string openApiVersion = null,
-                                    [FromQuery]string title = "Partial Graph API",
-                                    [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
-                                    [FromQuery]string format = null,
-                                    [FromQuery]string graphVersion = null,
-                                    [FromQuery]bool includeRequestBody = false,
-                                    [FromQuery]bool forceRefresh = false)
+                                    [FromQuery] string operationIds = null,
+                                    [FromQuery] string tags = null,
+                                    [FromQuery] string url = null,
+                                    [FromQuery] string openApiVersion = null,
+                                    [FromQuery] string title = "Partial Graph API",
+                                    [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
+                                    [FromQuery] string format = null,
+                                    [FromQuery] string graphVersion = null,
+                                    [FromQuery] bool includeRequestBody = false,
+                                    [FromQuery] bool forceRefresh = false)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
@@ -72,11 +72,11 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/operations")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]string graphVersion = null,
-                                             [FromQuery]string openApiVersion = null,
-                                             [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
-                                             [FromQuery]string format = null,
-                                             [FromQuery]bool forceRefresh = false)
+        public async Task<IActionResult> Get([FromQuery] string graphVersion = null,
+                                             [FromQuery] string openApiVersion = null,
+                                             [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
+                                             [FromQuery] string format = null,
+                                             [FromQuery] bool forceRefresh = false)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
@@ -129,37 +129,15 @@ namespace GraphWebApi.Controllers
             }
 
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
-            
+
             Response.ContentType = "application/json";
             Response.StatusCode = 200;
             await Response.StartAsync();
-            
+
             var writer = new Utf8JsonWriter(Response.BodyWriter, new JsonWriterOptions() { Indented = false });
             OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
             await writer.FlushAsync();
             await Response.CompleteAsync();
-        }
-
-        [Route("openapi")]
-        [HttpPost]
-        public async Task<IActionResult> Post([FromQuery] string operationIds = null,
-                                              [FromQuery] string tags = null,
-                                              [FromQuery] string url = null,
-                                              [FromQuery] string openApiVersion = null,
-                                              [FromQuery] string title = "Partial Graph API",
-                                              [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
-                                              [FromQuery] string format = null,
-                                              [FromQuery] string graphVersion = null,
-                                              [FromQuery] bool forceRefresh = false,
-                                              [FromQuery] bool includeRequestBody = false)
-        {
-            var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
-
-            var openApiConvertSettings = _openApiService.GetOpenApiConvertSettings(style);
-
-            var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body, openApiConvertSettings);
-
-            return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody);
         }
 
         private FileStreamResult CreateSubsetOpenApiDocument(string operationIds, string tags,

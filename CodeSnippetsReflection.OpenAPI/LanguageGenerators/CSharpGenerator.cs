@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -51,9 +51,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder(
-                                    "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-                                    $"var {ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+            var snippetBuilder = new StringBuilder($"var {ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
@@ -319,12 +317,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             return nodes.Select(static x => {
                                         if(x.Segment.IsCollectionIndex())
-                                            return x.Segment.Replace("{", "[\"").Replace("}", "\"]");
+                                            return x.Segment.Replace("{", "[\"{").Replace("}", "}\"]");
                                         if (x.Segment.IsFunction())
-                                            return x.Segment.Split('.')
+                                            return x.Segment.RemoveFunctionBraces().Split('.')
                                                 .Select(static s => s.ToFirstCharacterUpperCase())
                                                 .Aggregate(static (a, b) => $"{a}{b}");
-                                        return x.Segment.ReplaceValueIdentifier().TrimStart('$').ToFirstCharacterUpperCase();
+                                        return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces().ToFirstCharacterUpperCase();
                                       })
                                 .Aggregate(static (x, y) =>
                                 {
