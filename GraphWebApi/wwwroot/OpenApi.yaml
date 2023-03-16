@@ -446,163 +446,22 @@ paths:
       description: Get the Microsoft Graph API metadata CSDL document as an OpenAPI document.
       operationId: openapi.GetDocument
       parameters:
-        - name: url
-          in: query
-          schema:
-            type: string
-          required: false
-          description: Microsoft Graph API endpoint url.
-        - name: tags
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: Comma separated list of tags.
-        - name: operationIds
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: Comma separated list of OperationIds or * for all the OperationIds.
-        - name: openApiVersion
-          in: query
-          schema:
-            type: string
-          required: false
-          description: The target OpenAPI version.
-        - name: graphVersion
-          in: query
-          schema:
-            type: string
-          required: false
-          description: The target Microsoft Graph API version.
-        - name: style
-          in: query
-          schema:
-            type: string
-            enum:
-              - Plain
-              - PowerPlatform
-              - PowerShell
-              - GEAutocomplete
-            default: Plain
-          required: false
-          description: The client for which the OpenAPI document needs to be formatted for.
-        - name: title
-          in: query
-          schema:
-            type: string
-            default: Partial Graph API
-          required: false
-          description: The OpenAPI document title.
-        - name: format
-          in: query
-          schema:
-            type: string
-            enum:
-              - json
-              - yaml
-            default: json
-          description: The OpenAPI document output format.
-        - name: forceRefresh
-          in: query
-          schema:
-            type: boolean
-            default: false
-          required: false
-          description: Reload the OpenAPI document.
+        - $ref: '#/components/parameters/url'
+        - $ref: '#/components/parameters/tags'
+        - $ref: '#/components/parameters/operationIds'
+        - $ref: '#/components/parameters/openApiVersion'
+        - $ref: '#/components/parameters/graphVersion'
+        - $ref: '#/components/parameters/style'
+        - $ref: '#/components/parameters/title'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/forceRefresh'
+        - $ref: '#/components/parameters/singularizeOperationIds'
       responses:
         "200":
           description: List of operations associated to a tag/operationIds/url
           content:
             application/vnd.oai.openapi+json: {} # JSON
             application/vnd.oai.openapi: {} # YAML
-    post:
-      tags:
-        - openapi
-      summary: Convert a given CSDL document into an OpenAPI document.
-      description: OpenAPI document from a CSDL document
-      operationId: openapi.PostDocument
-      parameters:
-        - name: url
-          in: query
-          schema:
-            type: string
-          required: false
-          description: An API endpoint url.
-        - name: tags
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: Comma separated list of tag names.
-        - name: operationIds
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
-          description: Comma separated list of OperationIds or * for all the OperationIds.
-        - name: openApiVersion
-          in: query
-          schema:
-            type: string
-          required: false
-          description: The target OpenAPI version.
-        - name: graphVersion
-          in: query
-          schema:
-            type: string
-          required: false
-          description: The target API version.
-        - name: style
-          in: query
-          schema:
-            type: string
-            enum:
-              - Plain
-              - PowerPlatform
-              - PowerShell
-              - GEAutocomplete
-            default: Plain
-          required: false
-          description: The client for which the OpenAPI document needs to be formatted for.
-        - name: title
-          in: query
-          schema:
-            type: string
-            default: Partial Graph API
-          required: false
-          description: The OpenAPI document title.
-        - name: format
-          in: query
-          schema:
-            type: string
-            enum:
-              - json
-              - yaml
-            default: json
-          description: The OpenAPI document output format.
-        - name: forceRefresh
-          in: query
-          schema:
-            type: boolean
-            default: false
-          required: false
-          description: Reload the OpenAPI document.
-      responses:
-        "200":
-          description: List of operations associated to a tag/operationIds/url
-          content:
-            application/vnd.oai.openapi: {} # YAML
-            application/vnd.oai.openapi+json: {} # JSON
   /openapi/operations:
     get:
       tags:
@@ -611,53 +470,13 @@ paths:
       description: Get all the operations from the Microsoft Graph API metadata CSDL document.
       operationId: openapi.operations.ListOperations
       parameters:
-        - name: openApiVersion
-          in: query
-          schema:
-            type: string
-          required: false
-          description: The target OpenAPI version.
-        - name: graphVersion
-          in: query
-          schema:
-            type: string
-          required: false
-          description: The target Microsoft Graph API version.
-        - name: style
-          in: query
-          schema:
-            type: string
-            enum:
-              - Plain
-              - PowerPlatform
-              - PowerShell
-              - GEAutocomplete
-            default: Plain
-          required: false
-          description: The client for which the OpenAPI document needs to be formatted for.
-        - name: title
-          in: query
-          schema:
-            type: string
-            default: Partial Graph API
-          required: false
-          description: The OpenAPI document title.
-        - name: format
-          in: query
-          schema:
-            type: string
-            enum:
-              - json
-              - yaml
-            default: json
-          description: The OpenAPI document output format.
-        - name: forceRefresh
-          in: query
-          schema:
-            type: boolean
-            default: false
-          required: false
-          description: Reload the OpenAPI document.
+        - $ref: '#/components/parameters/openApiVersion'
+        - $ref: '#/components/parameters/graphVersion'
+        - $ref: '#/components/parameters/style'
+        - $ref: '#/components/parameters/title'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/forceRefresh'
+        - $ref: '#/components/parameters/singularizeOperationIds'
       responses:
         "200":
           description: OK
@@ -671,20 +490,8 @@ paths:
       description: Get the Microsoft Graph API metadata CSDL document as an OpenAPIUrlTreeNode document.
       operationId: openapi.tree.GetUrlTreeNode
       parameters:
-        - name: graphVersions
-          in: query
-          schema:
-            type: string
-            default: v1.0 and beta
-          required: false
-          description: The target Microsoft Graph API version. # Ex: ?graphVersions=v1.0 / ?graphVersions=beta / or ?graphVersions=* (for both)
-        - name: forceRefresh
-          in: query
-          schema:
-            type: boolean
-            default: false
-          required: false
-          description: Reload the OpenAPI document(s).
+        - $ref: '#/components/parameters/graphVersions'
+        - $ref: '#/components/parameters/forceRefresh'
       responses:
         "200":
           description: Simplified OpenAPI document(s) rendered as an OpenApiUrlTreeNode document.
@@ -990,3 +797,97 @@ components:
       required: false
       description: If set to true, fetches minimum permissions for a set of resources
       default: true
+    url:
+      name: url
+      in: query
+      schema:
+        type: string
+      required: false
+      description: Microsoft Graph API endpoint url.
+    tags:
+      name: tags
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+      required: false
+      description: Comma separated list of tags.
+    openApiVersion:
+      name: openApiVersion
+      in: query
+      schema:
+        type: string
+      required: false
+      description: The target OpenAPI version.
+    graphVersion:
+      name: graphVersion
+      in: query
+      schema:
+        type: string
+      required: false
+      description: The target Microsoft Graph API version.
+    operationIds:
+      name: operationIds
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+      required: false
+      description: Comma separated list of OperationIds or * for all the OperationIds.
+    style:
+      name: style
+      in: query
+      schema:
+        type: string
+        enum:
+          - Plain
+          - PowerPlatform
+          - PowerShell
+          - GEAutocomplete
+        default: Plain
+      required: false
+      description: The client for which the OpenAPI document needs to be formatted for.
+    title:
+      name: title
+      in: query
+      schema:
+        type: string
+        default: Partial Graph API
+      required: false
+      description: The OpenAPI document title.
+    format:
+      name: format
+      in: query
+      schema:
+        type: string
+        enum:
+          - json
+          - yaml
+        default: json
+      description: The OpenAPI document output format.
+    forceRefresh: 
+      name: forceRefresh
+      in: query
+      schema:
+        type: boolean
+        default: false
+      required: false
+      description: Reload the OpenAPI document.
+    singularizeOperationIds:
+      name: singularizeOperationIds
+      in: query
+      schema:
+        type: boolean
+        default: false
+      required: false
+      description: Singularize and deduplicate operationIds.
+    graphVersions:
+      name: graphVersions
+      in: query
+      schema:
+        type: string
+        default: v1.0 and beta
+      required: false
+      description: The target Microsoft Graph API version. # Ex: ?graphVersions=v1.0 / ?graphVersions=beta / or ?graphVersions=* (for both)

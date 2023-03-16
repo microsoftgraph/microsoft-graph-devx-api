@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using Humanizer;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -21,6 +22,12 @@ namespace OpenAPIService
         private const string DefaultPutPrefix = ".Update";
         private const string NewPutPrefix = "_Set";
         private readonly Stack<OpenApiSchema> _schemaLoop = new();
+        private readonly bool _singularizeOperationIds;
+
+        public PowershellFormatter(bool singularizeOperationIds)
+        {
+            _singularizeOperationIds = singularizeOperationIds;
+        }
 
         /// <summary>
         /// Accesses the individual OpenAPI operations for a particular OpenApiPathItem.
@@ -34,6 +41,10 @@ namespace OpenAPIService
             if (pathItem.Operations.ContainsKey(putOperation))
             {
                 var operationId = pathItem.Operations[putOperation].OperationId;
+                if (_singularizeOperationIds)
+                {
+                    operationId = SingularizeAndDeduplicateOperationId(operationId);
+                }
 
                 if (operationId.Contains(DefaultPutPrefix))
                 {
@@ -78,6 +89,11 @@ namespace OpenAPIService
                     ResolveFunctionParameters(operation);
                 }
             }
+
+            if (_singularizeOperationIds)
+            {
+                operationId = SingularizeAndDeduplicateOperationId(operationId);
+            }            
 
             var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 
@@ -188,6 +204,39 @@ namespace OpenAPIService
                     };
                 }
             }
+        }
+
+        /// <summary>
+        /// Singularizes and deduplicates segment names in an operation id.
+        /// </summary>
+        /// <param name="operationId">The target operationId value.</param>
+        /// <returns>The operationId with the segments singularized and deduplicated.</returns>
+        private static string SingularizeAndDeduplicateOperationId(string operationId)
+        {
+            if (string.IsNullOrEmpty(operationId))
+                return operationId;
+
+            var segments = operationId.Split('.').ToList();
+
+            // The last segment is ignored as a rule.
+            for (int x = segments.Count - 2; x >= 0; x--)
+            {
+                var segment = segments[x].Singularize(inputIsKnownToBePlural: false);
+                segments[x] = segment;
+
+                // If a segment name is contained in another segment,
+                // the former is considered a duplicate.
+                for (int y = x - 1; y >= 0; y--)
+                {
+                    if (segments[y].Contains(segment, StringComparison.OrdinalIgnoreCase))
+                    {
+                        segments.RemoveAt(x);
+                        break;
+                    }
+                }
+            }
+
+            return string.Join(".", segments);
         }
     }
 }
