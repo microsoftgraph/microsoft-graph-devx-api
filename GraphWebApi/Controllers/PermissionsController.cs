@@ -55,8 +55,9 @@ namespace GraphWebApi.Controllers
 
             string localeCode = GetPreferredLocaleLanguage(Request);
 
+            var requestUrls = requestUrl != null ? new List<string> { requestUrl } : null;
             PermissionResult result = await _permissionsStore.GetScopesAsync(
-                                                                requestUrls: new List<string> { requestUrl },
+                                                                requestUrls: requestUrls,
                                                                 locale: localeCode,
                                                                 scopeType: scopeType,
                                                                 method: method,

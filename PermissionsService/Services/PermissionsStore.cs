@@ -86,16 +86,11 @@ namespace PermissionsService
         {
             get
             {
-                if (!_cache.TryGetValue("PermissionsData", out PermissionsDataInfo permissionsData))
+                return _cache.GetOrCreateAsync("PermissionsData", async entry =>
                 {
-                    permissionsData = _cache.GetOrCreateAsync("PermissionsData", async entry =>
-                    {
-                        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-                        return await LoadPermissionsDataAsync();
-                    }).Result;
-                }
-
-                return permissionsData;
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+                    return await LoadPermissionsDataAsync();
+                }).Result;
             }
         }
 
@@ -370,15 +365,15 @@ namespace PermissionsService
             }
 
             // Get consent display name and description
-            var scopesInfo = GetAdditionalScopesInformation(scopesInformationDictionary, 
-                scopes.DistinctBy(x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase));
+            var scopesInfo = GetAdditionalScopesInformation(scopesInformationDictionary, scopes);
             
             // exclude hidden permissions unless stated otherwise
             scopesInfo = scopesInfo.Where(x => includeHidden || !x.IsHidden).ToList();
 
-            _telemetryClient?.TrackTrace($"Return permissions for '{string.Join(",", requestUrls)}'",
-                                         SeverityLevel.Information,
-                                         _permissionsTraceProperties);
+            _telemetryClient?.TrackTrace(requestUrls == null || !requestUrls.Any() ? 
+                "Return all permissions" : $"Return permissions for '{string.Join(",", requestUrls)}'", 
+                SeverityLevel.Information, 
+                _permissionsTraceProperties);
 
             return new PermissionResult()
             {
@@ -397,7 +392,8 @@ namespace PermissionsService
                 {
                     ScopeType = x.Key,
                     ScopeName = permission
-                });
+                })
+               .DistinctBy(x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase);
 
             return scopes;
         }
@@ -449,7 +445,8 @@ namespace PermissionsService
                         ScopeType = x.Key,
                         ScopeName = permission,
                         IsLeastPrivilege = leastPrivilegeOnly || x.Value.LeastPrivilegePermissions.Contains(permission)
-                    });
+                    })
+                .DistinctBy(x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase);
 
             return scopes;
         }
