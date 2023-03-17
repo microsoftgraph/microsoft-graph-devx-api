@@ -395,7 +395,7 @@ namespace PermissionsService
                     ScopeType = x.Key,
                     ScopeName = permission
                 })
-               .DistinctBy(x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase);
+               .DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase);
 
             return scopes;
         }
@@ -439,7 +439,7 @@ namespace PermissionsService
             var scopes = pathPermissions
                 .Where(x => string.IsNullOrEmpty(method)
                     || x.Key.Equals(method, StringComparison.OrdinalIgnoreCase))
-                .SelectMany(x => x.Value)
+                .SelectMany(static x => x.Value)
                 .Where(x => scopeType == null || x.Key == scopeType)
                 .SelectMany(x => leastPrivilegeOnly ? x.Value.LeastPrivilegePermissions : x.Value.AllPermissions,
                     (x, permission) => new ScopeInformation
@@ -448,7 +448,7 @@ namespace PermissionsService
                         ScopeName = permission,
                         IsLeastPrivilege = leastPrivilegeOnly || x.Value.LeastPrivilegePermissions.Contains(permission)
                     })
-                .DistinctBy(x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase);
+                .DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase);
 
             return scopes;
         }
@@ -504,7 +504,7 @@ namespace PermissionsService
                 throw new ArgumentNullException(nameof(scopes));
             }
 
-            var schemeKeys = scopes.Select(x => x.ScopeType).Distinct()
+            var schemeKeys = scopes.Select(static x => x.ScopeType).Distinct()
                 .Select(x => x.ToString().Contains(Delegated, StringComparison.InvariantCultureIgnoreCase) ? Delegated : Application)
                 .ToList();
 
