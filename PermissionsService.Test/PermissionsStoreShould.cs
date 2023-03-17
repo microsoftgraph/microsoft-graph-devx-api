@@ -358,7 +358,6 @@ namespace PermissionsService.Test
                                                 method: "GET", scopeType: ScopeType.DelegatedWork).GetAwaiter().GetResult();
 
             // Assert
-            // Assert
             Assert.Collection(result.Results,
                 item =>
                 {
