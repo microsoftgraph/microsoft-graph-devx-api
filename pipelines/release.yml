@@ -56,7 +56,7 @@ steps:
   inputs:
     command: test
     projects: '**/*Test/*.csproj'
-    arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'
+    arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --filter "TestCategory!=CodeSnippetsPipeline"'
 
 # CredScan
 - task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@2
