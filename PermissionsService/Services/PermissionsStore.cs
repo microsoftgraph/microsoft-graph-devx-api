@@ -34,6 +34,10 @@ namespace PermissionsService
         private readonly Dictionary<string, string> _permissionsTracePropertiesWithSanitizeIgnore =
             new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(PermissionsStore) },
                     { UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore) } };
+        private readonly Dictionary<ScopeType, string> permissionDescriptionGroups = 
+            new() { { ScopeType.DelegatedWork, Delegated },
+                    { ScopeType.DelegatedPersonal, Delegated },
+                    { ScopeType.Application, Application } };
         private readonly string _permissionsContainerName;
         private readonly string _permissionsBlobName;
         private readonly string _scopesInformation;
@@ -82,17 +86,12 @@ namespace PermissionsService
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
         }
 
-        private PermissionsDataInfo PermissionsData
-        {
-            get
+        private PermissionsDataInfo PermissionsData => 
+            _cache.GetOrCreateAsync("PermissionsData", async entry =>
             {
-                return _cache.GetOrCreateAsync("PermissionsData", async entry =>
-                {
-                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-                    return await LoadPermissionsDataAsync();
-                }).Result;
-            }
-        }
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
+                return await LoadPermissionsDataAsync();
+            }).Result;
 
         /// <summary>
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
@@ -367,7 +366,7 @@ namespace PermissionsService
             // Get consent display name and description
             var scopesInfo = GetAdditionalScopesInformation(
                 scopesInformationDictionary, 
-                scopes.DistinctBy(x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase));
+                scopes.DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase));
             
             // exclude hidden permissions unless stated otherwise
             scopesInfo = scopesInfo.Where(x => includeHidden || !x.IsHidden).ToList();
@@ -504,10 +503,7 @@ namespace PermissionsService
                 throw new ArgumentNullException(nameof(scopes));
             }
 
-            var schemeKeys = scopes.Select(static x => x.ScopeType).Distinct()
-                .Select(x => x.ToString().Contains(Delegated, StringComparison.InvariantCultureIgnoreCase) ? Delegated : Application)
-                .ToList();
-
+            var schemeKeys = permissionDescriptionGroups.Values.Distinct().ToList();
             schemeKeys.ForEach(key =>
             {
                 if (scopesInformationDictionary[key].Values.Any())
@@ -521,7 +517,7 @@ namespace PermissionsService
 
             var scopesInfo = scopes.Select(scope =>
             {
-                var schemeKey = scope.ScopeType.ToString().Contains(Delegated, StringComparison.InvariantCultureIgnoreCase) ? Delegated : Application;
+                permissionDescriptionGroups.TryGetValue((ScopeType)scope.ScopeType, out var schemeKey);
                 scopesInformationDictionary[schemeKey].TryGetValue(scope.ScopeName, out var scopeInfo);
                 if (scopeInfo != null)
                 {
