@@ -60,6 +60,13 @@ steps:
     scanFolder: '$(Build.SourcesDirectory)'
     debugMode: false
 
+- task: UseDotNet@2
+  displayName: 'Use .NET Core sdk'
+  inputs:
+    packageType: sdk
+    version: 6.0.x # for ESRP task
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
 - task: EsrpCodeSigning@2
   displayName: 'ESRP CodeSigning'
   inputs:  
