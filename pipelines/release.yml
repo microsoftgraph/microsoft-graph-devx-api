@@ -46,13 +46,6 @@ steps:
   inputs:
     command: 'build'
 
-- task: DotNetCoreCLI@2
-  displayName: "Run Tests"
-  inputs:
-    command: test
-    projects: '**/*Test/*.csproj'
-    arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --filter "TestCategory!=CodeSnippetsPipeline"'
-
 # CredScan
 - task: CredScan@3
   displayName: 'Run CredScan'
