@@ -72,6 +72,7 @@ steps:
   inputs:  
     ConnectedServiceName: 'microsoftgraph ESRP CodeSign DLL and NuGet (AKV)'
     FolderPath: $(System.DefaultWorkingDirectory)
+    Pattern: ^(?!CodeSnippetsReflection\.App\.dll$).* # include everthing except CodeSnippetReflection.App.dll, which cuases problems at the time of signing
     signConfigType: inlineSignParams
     inlineOperation: |
       [
