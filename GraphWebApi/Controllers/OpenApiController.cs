@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -16,10 +16,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using UtilityService;
 using Constants = OpenAPIService.Common.Constants;
 
 namespace GraphWebApi.Controllers
@@ -33,7 +31,7 @@ namespace GraphWebApi.Controllers
     {
         private readonly IConfiguration _configuration;
         private readonly IOpenApiService _openApiService;
- 
+
         public OpenApiController(IConfiguration configuration, IOpenApiService openApiService)
         {
             ArgumentNullException.ThrowIfNull(openApiService, nameof(openApiService));
@@ -55,7 +53,8 @@ namespace GraphWebApi.Controllers
                                     [FromQuery]string format = null,
                                     [FromQuery]string graphVersion = null,
                                     [FromQuery]bool includeRequestBody = false,
-                                    [FromQuery]bool forceRefresh = false)
+                                    [FromQuery]bool forceRefresh = false,
+                                    [FromQuery]bool singularizeOperationIds = false)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
@@ -67,7 +66,7 @@ namespace GraphWebApi.Controllers
             }
 
             var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh);
-            return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody);
+            return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody, singularizeOperationIds);
         }
 
         [Route("openapi/operations")]
@@ -76,7 +75,8 @@ namespace GraphWebApi.Controllers
                                              [FromQuery]string openApiVersion = null,
                                              [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
                                              [FromQuery]string format = null,
-                                             [FromQuery]bool forceRefresh = false)
+                                             [FromQuery]bool forceRefresh = false,
+                                             [FromQuery] bool singularizeOperationIds = false)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
@@ -89,7 +89,7 @@ namespace GraphWebApi.Controllers
 
             var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh);
             await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
-                graphOpenApi, Response.Body, styleOptions.Style);
+                graphOpenApi, Response.Body, styleOptions.Style, singularizeOperationIds);
 
             return new EmptyResult();
         }
@@ -129,49 +129,28 @@ namespace GraphWebApi.Controllers
             }
 
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
-            
+
             Response.ContentType = "application/json";
             Response.StatusCode = 200;
             await Response.StartAsync();
-            
+
             var writer = new Utf8JsonWriter(Response.BodyWriter, new JsonWriterOptions() { Indented = false });
             OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
             await writer.FlushAsync();
             await Response.CompleteAsync();
         }
 
-        [Route("openapi")]
-        [HttpPost]
-        public async Task<IActionResult> Post([FromQuery] string operationIds = null,
-                                              [FromQuery] string tags = null,
-                                              [FromQuery] string url = null,
-                                              [FromQuery] string openApiVersion = null,
-                                              [FromQuery] string title = "Partial Graph API",
-                                              [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
-                                              [FromQuery] string format = null,
-                                              [FromQuery] string graphVersion = null,
-                                              [FromQuery] bool forceRefresh = false,
-                                              [FromQuery] bool includeRequestBody = false)
-        {
-            var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
-
-            var openApiConvertSettings = _openApiService.GetOpenApiConvertSettings(style);
-
-            var source = await _openApiService.ConvertCsdlToOpenApiAsync(Request.Body, openApiConvertSettings);
-
-            return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody);
-        }
-
         private FileStreamResult CreateSubsetOpenApiDocument(string operationIds, string tags,
                                                              string url, OpenApiDocument source,
                                                              string title, OpenApiStyleOptions styleOptions,
-                                                             bool forceRefresh, bool includeRequestBody)
+                                                             bool forceRefresh, bool includeRequestBody,
+                                                             bool singularizeOperationIds)
         {
             var predicate = _openApiService.CreatePredicate(operationIds, tags, url, source, styleOptions.GraphVersion, forceRefresh);
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(source, title, styleOptions.GraphVersion, predicate);
 
-            subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument, includeRequestBody);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(styleOptions.Style, subsetOpenApiDocument, includeRequestBody, singularizeOperationIds);
 
             var stream = _openApiService.SerializeOpenApiDocument(subsetOpenApiDocument, styleOptions);
 
@@ -185,8 +164,15 @@ namespace GraphWebApi.Controllers
             }
         }
 
-        private static async Task WriteIndex(string baseUrl, string graphVersion, string openApiVersion, string format,
-                                OpenApiDocument graphOpenApi, Stream stream, OpenApiStyle style)
+        private static async Task WriteIndex(
+            string baseUrl,
+            string graphVersion,
+            string openApiVersion,
+            string format,
+            OpenApiDocument graphOpenApi,
+            Stream stream,
+            OpenApiStyle style,
+            bool singularizeOperationIds)
 
         {
             using var sw = new StreamWriter(stream);
@@ -204,7 +190,7 @@ namespace GraphWebApi.Controllers
 
             foreach (var item in indexSearch.Index)
             {
-                var target = $"{baseUrl}/openapi?tags={item.Key.Name}&openApiVersion={openApiVersion}&graphVersion={graphVersion}&format={format}&style={style}";
+                var target = $"{baseUrl}/openapi?tags={item.Key.Name}&openApiVersion={openApiVersion}&graphVersion={graphVersion}&format={format}&style={style}&singularizeOperationIds={singularizeOperationIds}";
                 await sw.WriteAsync($"<li>{item.Key.Name} [<a href='{target}'>OpenApi</a>]   [<a href='/swagger/index.html#url={target}'>Swagger UI</a>]</li>{Environment.NewLine}<ul>{Environment.NewLine}");
                 foreach (var op in item.Value)
                 {

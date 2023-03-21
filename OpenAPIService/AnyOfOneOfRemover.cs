@@ -5,8 +5,6 @@
 using System.Linq;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace OpenAPIService
 {

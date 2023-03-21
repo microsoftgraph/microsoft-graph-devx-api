@@ -7,12 +7,12 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 using OpenAPIService.Interfaces;
+using System.Text.Json;
 using UtilityService;
 using Xunit;
 
@@ -625,60 +625,6 @@ namespace OpenAPIService.Test
             Assert.Null(defaultPriceProperty.OneOf);
             Assert.Equal("number", defaultPriceProperty.Type);
             Assert.Equal("double", defaultPriceProperty.Format);
-        }
-
-        [Theory]
-        [InlineData(OpenApiStyle.GEAutocomplete)]
-        [InlineData(OpenApiStyle.PowerPlatform)]
-        [InlineData(OpenApiStyle.PowerShell)]
-        public void ReturnsCorrectOpenApiConvertSettingsForStyle(OpenApiStyle openApiStyle)
-        {
-            var defaultSettings = _openApiService.GetOpenApiConvertSettings();
-
-            // Act
-            var styleSettings = _openApiService.GetOpenApiConvertSettings(openApiStyle);
-
-            // Assert
-            if (openApiStyle == OpenApiStyle.PowerShell)
-            {
-                Assert.NotEqual(defaultSettings.EnablePagination, styleSettings.EnablePagination);
-                Assert.Equal(defaultSettings.TagDepth, styleSettings.TagDepth);
-                Assert.Equal(defaultSettings.ExpandDerivedTypesNavigationProperties, styleSettings.ExpandDerivedTypesNavigationProperties);
-            }
-            else if (openApiStyle == OpenApiStyle.PowerPlatform)
-            {
-                Assert.NotEqual(defaultSettings.TagDepth, styleSettings.TagDepth);
-                Assert.Equal(defaultSettings.EnablePagination, styleSettings.EnablePagination);
-                Assert.Equal(defaultSettings.ExpandDerivedTypesNavigationProperties, styleSettings.ExpandDerivedTypesNavigationProperties);
-
-            }
-            else if (openApiStyle == OpenApiStyle.GEAutocomplete)
-            {
-                Assert.NotEqual(defaultSettings.ExpandDerivedTypesNavigationProperties, styleSettings.ExpandDerivedTypesNavigationProperties);
-                Assert.Equal(defaultSettings.EnablePagination, styleSettings.EnablePagination);
-                Assert.Equal(defaultSettings.TagDepth, styleSettings.TagDepth);
-            }
-        }
-
-
-        [Fact]
-        public void ConvertOpenApiUrlTreeNodeToJsonRendersExternalDocs()
-        {
-            // Arrange
-            var openApiDocs = new ConcurrentDictionary<string, OpenApiDocument>();
-            openApiDocs.TryAdd(GraphVersion, _graphMockSource);
-            using MemoryStream stream = new();
-            var writer = new Utf8JsonWriter(stream, new JsonWriterOptions() { Indented = false });
-
-            // Act
-            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(openApiDocs);
-            OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
-            writer.Flush();
-            stream.Position = 0;
-            var output = new StreamReader(stream).ReadToEnd();
-
-            // Assert
-            Assert.Contains("\"children\":[{\"segment\":\"{user-id}\",\"labels\":[{\"name\":\"mock\",\"methods\":[{\"name\":\"Get\",\"documentationUrl\":\"https://docs.microsoft.com/foobar\"}", output);
         }
 
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
