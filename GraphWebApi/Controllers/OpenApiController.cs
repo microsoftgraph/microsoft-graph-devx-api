@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -195,7 +195,7 @@ namespace GraphWebApi.Controllers
                 foreach (var op in item.Value)
                 {
                     await sw.WriteLineAsync($"<li>{op.OperationId}  [<a href='../../openapi?operationIds={op.OperationId}&openApiVersion={openApiVersion}&graphVersion={graphVersion}" +
-                        $"&format={format}&style={style}'>OpenAPI</a>]</li>");
+                        $"&format={format}&style={style}&singularizeOperationIds={singularizeOperationIds}'>OpenAPI</a>]</li>");
                 }
                 await sw.WriteLineAsync("</ul>");
             }
