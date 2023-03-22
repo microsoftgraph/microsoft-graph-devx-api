@@ -51,7 +51,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void writeImportStatements(SnippetCodeGraph codeGraph, StringBuilder builder)
         {
-            var apiVersion = codeGraph.ApiVersion == "v1.0" ? "msgraph-sdk-go" : "msgraph-beta-sdk-go";
+            var apiVersion = "v1.0".Equals(codeGraph.ApiVersion) ? "msgraph-sdk-go" : "msgraph-beta-sdk-go";
             builder.AppendLine("import (");
             builder.AppendLine("\t  \"context\""); // default
 
@@ -85,7 +85,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (codeGraph.RequiresRequestConfig())
             {
                 var path = codeGraph.Nodes.First().Segment.ToLower();
-                return path.Equals("me") ? "users" : path;
+                return path.Equals("me", StringComparison.OrdinalIgnoreCase) ? "users" : path;
             }
 
             return string.Empty;
@@ -123,7 +123,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static Boolean searchProperty(IEnumerable<CodeProperty> properties, PropertyType propertyType)
         {
-            return properties != null && properties.Select(x => searchProperty(x, propertyType)).Where(x => true).FirstOrDefault();
+            return properties != null && propertyType == properties.FirstOrDefault(x => searchProperty(x, propertyType)).PropertyType;
         }
 
 
@@ -131,8 +131,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (property.Children != null && property.Children.Any())
             {
-                var inchildren = property.Children.Select(x => x.PropertyType == propertyType).Where(x => true).FirstOrDefault();
-                if (inchildren) return true;
+                var existingChild = property.Children.FirstOrDefault(x => x.PropertyType == propertyType);
+                return propertyType == existingChild.PropertyType;
             }
             return property.PropertyType == propertyType;
         }
@@ -254,7 +254,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         .Aggregate(static (x, y) =>
                         {
                             var w = x.EndsWith("s") && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
-                            w = w.Equals("Me") ? "Item" : w;
+                            w = "Me".Equals(w, StringComparison.Ordinal) ? "Item" : w;
                             return $"{w}{y}";
                         });
         }
