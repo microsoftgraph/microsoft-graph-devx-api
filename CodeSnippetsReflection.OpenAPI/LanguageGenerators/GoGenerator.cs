@@ -123,7 +123,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static Boolean searchProperty(IEnumerable<CodeProperty> properties, PropertyType propertyType)
         {
-            return properties != null && propertyType == properties.FirstOrDefault(x => searchProperty(x, propertyType))?.PropertyType;
+            return properties != null && propertyType == properties.FirstOrDefault(x => searchProperty(x, propertyType)).PropertyType;
         }
 
 
