@@ -35,6 +35,17 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains(".Me().Messages()", result);
         }
         [Fact]
+        public async Task GeneratesMeImportFromUserPackage()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages?$select=sender,subject");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("import", result);
+            Assert.Contains("graphconfig \"github.com/microsoftgraph/msgraph-sdk-go/users\"", result);
+            Assert.Contains("msgraphsdk \"github.com/microsoftgraph/msgraph-sdk-go\"", result);
+            Assert.Contains(".Me().Messages()", result);
+        }
+        [Fact]
         public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollections() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
@@ -311,6 +322,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("import", result);
+            Assert.Contains("abstractions \"github.com/microsoft/kiota-abstractions-go\"", result);
             Assert.Contains("headers := abstractions.NewRequestHeaders()", result);
             Assert.Contains("headers.Add(\"ConsistencyLevel\", \"eventual\")", result);
             Assert.Contains("graphconfig.GroupsRequestBuilderGetRequestConfiguration", result);
