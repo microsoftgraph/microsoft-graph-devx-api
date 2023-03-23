@@ -33,6 +33,7 @@ paths:
               - PowerShell
               - TypeScript
               - php
+              - python
             default: C#
         - name: generation
           in: query
