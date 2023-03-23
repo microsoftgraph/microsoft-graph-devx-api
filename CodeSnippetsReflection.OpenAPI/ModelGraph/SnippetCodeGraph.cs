@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Expressions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 
@@ -125,6 +126,14 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         public Boolean HasReturnedBody(){
             return !(ResponseSchema == null || (ResponseSchema.Properties.Count == 1 && ResponseSchema.Properties.First().Key.Equals("error", StringComparison.OrdinalIgnoreCase)));
+        }
+        public Boolean RequiresRequestConfig()
+        {
+            return HasHeaders() || HasOptions() || HasParameters();
+        }
+
+        public Boolean HasJsonBody(){
+            return HasBody() && Body.PropertyType != PropertyType.Binary;
         }
 
         ///
