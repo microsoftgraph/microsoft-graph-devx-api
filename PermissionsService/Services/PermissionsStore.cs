@@ -91,7 +91,7 @@ namespace PermissionsService
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
                 return await LoadPermissionsDataAsync();
-            }).Result;
+            }).GetAwaiter().GetResult();
 
         /// <summary>
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
@@ -318,11 +318,6 @@ namespace PermissionsService
             if (PermissionsData?.PathPermissions == null)
                 throw new InvalidOperationException("Failed to fetch permissions");
 
-            // Create a dict of scopes information from GitHub files or cached files
-            var scopesInformationDictionary = !(string.IsNullOrEmpty(org) || string.IsNullOrEmpty(branchName))
-                ? await GetPermissionsDescriptionsFromGithub(org, branchName, locale)
-                : await GetOrCreatePermissionsDescriptionsAsync(locale);
-
             List<ScopeInformation> scopes = new List<ScopeInformation>();
             List<PermissionError> errors = new List<PermissionError>();
 
@@ -363,10 +358,15 @@ namespace PermissionsService
                 }
             }
 
+            // Create a dict of scopes information from GitHub files or cached files
+            var scopesInformationDictionary = !(string.IsNullOrEmpty(org) || string.IsNullOrEmpty(branchName))
+                ? await GetPermissionsDescriptionsFromGithub(org, branchName, locale)
+                : await GetOrCreatePermissionsDescriptionsAsync(locale);
+
             // Get consent display name and description
             var scopesInfo = GetAdditionalScopesInformation(
                 scopesInformationDictionary, 
-                scopes.DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase));
+                scopes.DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase).ToList());
             
             // exclude hidden permissions unless stated otherwise
             scopesInfo = scopesInfo.Where(x => includeHidden || !x.IsHidden).ToList();
@@ -491,7 +491,7 @@ namespace PermissionsService
         /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
         /// <exception cref="ArgumentNullException"></exception>
         private List<ScopeInformation> GetAdditionalScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
-        IEnumerable<ScopeInformation> scopes)
+            List<ScopeInformation> scopes)
         {
             if (scopesInformationDictionary is null)
             {
@@ -521,10 +521,18 @@ namespace PermissionsService
                 scopesInformationDictionary[schemeKey].TryGetValue(scope.ScopeName, out var scopeInfo);
                 if (scopeInfo != null)
                 {
-                    scopeInfo.ScopeType = scope.ScopeType;
-                    scopeInfo.IsLeastPrivilege = scope.IsLeastPrivilege;
+                    return new ScopeInformation()
+                        {
+                            ScopeName = scopeInfo.ScopeName,
+                            DisplayName = scopeInfo.DisplayName,
+                            IsAdmin = scopeInfo.IsAdmin,
+                            IsHidden = scopeInfo.IsHidden,
+                            Description = scopeInfo.Description,
+                            ScopeType = scope.ScopeType,
+                            IsLeastPrivilege = scope.IsLeastPrivilege
+                        };                  
                 }
-                return scopeInfo ?? scope;
+                return scope;
             }).ToList();
             return scopesInfo;
         }
