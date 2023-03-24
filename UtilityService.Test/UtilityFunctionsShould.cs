@@ -15,6 +15,7 @@ namespace UtilityService.Test
         [InlineData("hello!", false)]
         [InlineData("file://C:/hello", false)]
         [InlineData("hello?", false)]
+        [InlineData("hello%20", false)]
         public void CheckWhetherInputIsUrlSafe(string input, bool expected)
         {
             // Arrange and Act

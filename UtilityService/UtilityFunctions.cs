@@ -12,6 +12,8 @@ namespace UtilityService
     /// </summary>
     public static class UtilityFunctions
     {
+        private static readonly Regex _unsafeUrlRegex = new(@"[^a-zA-Z0-9\-._~]", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+        
         /// <summary>
         /// Check whether the input argument value is null or not.
         /// </summary>
@@ -39,7 +41,7 @@ namespace UtilityService
         /// Validates whether an input string has URL-safe characters.
         /// </summary>
         /// <param name="input">The input string.</param>
-        /// <returns>True whether the input string does not contain URL-safe characters.</returns>
+        /// <returns>true when the input string contains URL-safe characters, otherwise false.</returns>
         public static bool IsUrlSafe(string input)
         {
             if (string.IsNullOrEmpty(input))
@@ -47,8 +49,7 @@ namespace UtilityService
                 return true;
             }
 
-            const string pattern = @"[^a-zA-Z0-9\-._~]";
-            return !Regex.IsMatch(input, pattern);
+            return !_unsafeUrlRegex.IsMatch(input);
         }
     }
 }
