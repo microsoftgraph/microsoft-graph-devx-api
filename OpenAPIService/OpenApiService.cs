@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -516,7 +516,14 @@ namespace OpenAPIService
             {
                 fileName = _fileNames[openApiStyle];
             }
-            
+            else
+            {
+                if (!UtilityFunctions.IsUrlSafe(fileName))
+                {
+                    throw new ArgumentException("The value is not URL-safe", nameof(fileName));
+                }
+            }
+
             var cachedDoc = $"{graphUri}/{openApiStyle}/{fileName}";
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(cachedDoc, out OpenApiDocument doc))
             {
