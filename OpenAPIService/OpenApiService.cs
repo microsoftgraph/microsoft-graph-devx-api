@@ -508,10 +508,16 @@ namespace OpenAPIService
         /// </summary>
         /// <param name="graphUri">The uri of the Microsoft Graph metadata doc.</param>
         /// <param name="forceRefresh">Whether to reload the OpenAPI document from source.</param>
+        /// <param name="fileName">Optional: Overrides the OpenAPI file name for the specified <paramref name="openApiStyle"/>.</param>
         /// <returns>A task of the value of an OpenAPI document.</returns>
-        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, OpenApiStyle openApiStyle, bool forceRefresh)
+        public async Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, OpenApiStyle openApiStyle, bool forceRefresh, string fileName = null)
         {
-            var cachedDoc = $"{graphUri}/{openApiStyle}";
+            if (string.IsNullOrEmpty(fileName))
+            {
+                fileName = _fileNames[openApiStyle];
+            }
+            
+            var cachedDoc = $"{graphUri}/{openApiStyle}/{fileName}";
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(cachedDoc, out OpenApiDocument doc))
             {
                 _telemetryClient?.TrackTrace("Fetch the OpenApi document from the cache",
@@ -567,7 +573,7 @@ namespace OpenAPIService
                                                  "performing a fetch for a similar Graph version. New thread requeued.",
                                                  SeverityLevel.Information,
                                                  _openApiTraceProperties);
-                    return await GetGraphOpenApiDocumentAsync(graphUri, openApiStyle, forceRefresh);
+                    return await GetGraphOpenApiDocumentAsync(graphUri, openApiStyle, forceRefresh, fileName);
                 }
 
                 // Refresh the OpenAPI document.
@@ -579,7 +585,7 @@ namespace OpenAPIService
 
                 _graphUriQueue.Enqueue(graphUri);
 
-                graphUri += $"/{_fileNames[openApiStyle]}.yaml";
+                graphUri += $"/{fileName}.yaml";
 
                 OpenApiDocument source = await GetOpenApiDocumentAsync(new Uri(graphUri));
                 _OpenApiDocuments[cachedDoc] = source;
