@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System;
+using System.Text.RegularExpressions;
 
 namespace UtilityService
 {
@@ -32,6 +33,22 @@ namespace UtilityService
         public static string CheckArgumentNullOrEmpty(string value, string parameterName)
         {
             return string.IsNullOrEmpty(value) ? throw new ArgumentNullException(parameterName, $"Value cannot be null or empty: {parameterName}") : value;
+        }
+
+        /// <summary>
+        /// Validates whether an input string has URL-safe characters.
+        /// </summary>
+        /// <param name="input">The input string.</param>
+        /// <returns>True whether the input string does not contain URL-safe characters.</returns>
+        public static bool IsUrlSafe(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return true;
+            }
+
+            const string pattern = @"[^a-zA-Z0-9\-._~]";
+            return !Regex.IsMatch(input, pattern);
         }
     }
 }
