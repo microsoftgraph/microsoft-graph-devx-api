@@ -10,6 +10,7 @@ using PermissionsService.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web;
 using UtilityService;
 
@@ -89,17 +90,17 @@ namespace TelemetrySanitizerService
                 customEvent.Properties.ContainsKey(RequestPath) &&
                 customEvent.Properties.ContainsKey(RenderedMessage))
             {
-                SanitizeTelemetry(customEvent: customEvent);
+               SanitizeTelemetryAsync(customEvent: customEvent).GetAwaiter().GetResult();
             }
 
             if (item is RequestTelemetry request)
             {
-                SanitizeTelemetry(request: request);
+                SanitizeTelemetryAsync(request: request).GetAwaiter().GetResult();
             }
 
             if (item is TraceTelemetry trace && !trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
             {
-                SanitizeTelemetry(trace: trace);
+                SanitizeTelemetryAsync(trace: trace).GetAwaiter().GetResult();
             }
 
             _next.Process(item);
@@ -111,7 +112,7 @@ namespace TelemetrySanitizerService
         /// <param name="customEvent">Optional: A custom event telemetry.</param>
         /// <param name="request">Optional: A request telemetry.</param>
         /// <param name="trace">Optional: A trace telemetry.</param>
-        public void SanitizeTelemetry(EventTelemetry customEvent = null,
+        public async Task SanitizeTelemetryAsync(EventTelemetry customEvent = null,
                                       RequestTelemetry request = null,
                                       TraceTelemetry trace = null)
         {
@@ -121,7 +122,7 @@ namespace TelemetrySanitizerService
                 var pathValueLength = requestPathValue.Length;
                 var pathValueIndex = customEvent.Properties[RenderedMessage].IndexOf(requestPathValue);
 
-                requestPathValue = SanitizeUrlQueryPath(requestPathValue);
+                requestPathValue = await SanitizeUrlQueryPathAsync(requestPathValue);
                 customEvent.Properties[RequestPath] = requestPathValue;
                 customEvent.Properties[RenderedMessage] = customEvent.Properties[RenderedMessage]
                     .Remove(pathValueIndex, pathValueLength)
@@ -131,7 +132,7 @@ namespace TelemetrySanitizerService
             if (request != null)
             {
                 var requestUrl = request.Url.ToString();
-                request.Url = new Uri(SanitizeUrlQueryPath(requestUrl), UriKind.RelativeOrAbsolute);
+                request.Url = new Uri(await SanitizeUrlQueryPathAsync(requestUrl), UriKind.RelativeOrAbsolute);
             }
 
             if (trace != null)
@@ -147,7 +148,7 @@ namespace TelemetrySanitizerService
         /// only the query path requires sanitization.</remarks>
         /// <param name="url">The target url string. Can be of relative or absolute uri kind.</param>
         /// <returns>The string url with PII sanitized from its query path.</returns>
-        private string SanitizeUrlQueryPath(string url)
+        private async Task<string> SanitizeUrlQueryPathAsync(string url)
         {
             
             const char QueryValSeparator = '&';
@@ -160,7 +161,7 @@ namespace TelemetrySanitizerService
 
             // use the service provider to lazily get an IPermissionsStore instance
             var permissionsStore = _serviceProvider.GetRequiredService<IPermissionsStore>();
-            var uriTemplateMatcher = permissionsStore.GetUriTemplateMatcher();
+            var uriTemplateMatcher = await permissionsStore.GetUriTemplateMatcherAsync();
 
             var queryValues = queryPath.Split(QueryValSeparator, StringSplitOptions.RemoveEmptyEntries);
 

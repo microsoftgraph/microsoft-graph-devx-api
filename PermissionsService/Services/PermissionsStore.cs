@@ -86,12 +86,12 @@ namespace PermissionsService
             _defaultRefreshTimeInHours = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
         }
 
-        private PermissionsDataInfo PermissionsData => 
+        private Task<PermissionsDataInfo> PermissionsData =>
             _cache.GetOrCreateAsync("PermissionsData", async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
                 return await LoadPermissionsDataAsync();
-            }).GetAwaiter().GetResult();
+            });
 
         /// <summary>
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
@@ -315,7 +315,8 @@ namespace PermissionsService
                                                    string org = null,
                                                    string branchName = null)
         {
-            if (PermissionsData?.PathPermissions == null)
+            var permissionsData = await PermissionsData;
+            if (permissionsData?.PathPermissions == null)
                 throw new InvalidOperationException("Failed to fetch permissions");
 
             List<ScopeInformation> scopes = new List<ScopeInformation>();
@@ -324,7 +325,7 @@ namespace PermissionsService
             if (requestUrls == null || !requestUrls.Any())
             {
                 // Get all scopes
-                var allScopes = GetAllScopes(scopeType);
+                var allScopes = await GetAllScopesAsync(scopeType);
                 scopes.AddRange(allScopes);
             }
             else
@@ -337,7 +338,7 @@ namespace PermissionsService
                         if (string.IsNullOrEmpty(url))
                             throw new InvalidOperationException("The request URL cannot be null or empty.");
 
-                        var scopesForUrl = GetScopesForRequestUrl(requestUrl: url,
+                        var scopesForUrl = await GetScopesForRequestUrlAsync(requestUrl: url,
                                                                 scopeType: scopeType,
                                                                 method: method,
                                                                 leastPrivilegeOnly: leastPrivilegeOnly);
@@ -383,9 +384,10 @@ namespace PermissionsService
             };
         }
 
-        private IEnumerable<ScopeInformation> GetAllScopes(ScopeType? scopeType)
+        private async Task<IEnumerable<ScopeInformation>> GetAllScopesAsync(ScopeType? scopeType)
         {
-            var scopes = PermissionsData.PathPermissions.Values
+            var permissionsData = await PermissionsData;
+            var scopes = permissionsData.PathPermissions.Values
                 .SelectMany(static x => x.Values)
                 .SelectMany(static x => x)
                 .Where(x => scopeType == null || x.Key == scopeType)
@@ -399,17 +401,19 @@ namespace PermissionsService
             return scopes;
         }
 
-        private IEnumerable<ScopeInformation> GetScopesForRequestUrl(string requestUrl,
+        private async Task<IEnumerable<ScopeInformation>> GetScopesForRequestUrlAsync(string requestUrl,
                                                               string method = null,
                                                               ScopeType? scopeType = null,
                                                               bool leastPrivilegeOnly = false)
         {
+            var permissionsData = await PermissionsData;
+
             if (string.IsNullOrEmpty(requestUrl))
                 return Enumerable.Empty<ScopeInformation>();
 
             requestUrl = CleanRequestUrl(requestUrl);
 
-            var resultMatch = PermissionsData.UriTemplateMatcher.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
+            var resultMatch = permissionsData.UriTemplateMatcher.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
 
             if (resultMatch is null)
             {
@@ -420,7 +424,7 @@ namespace PermissionsService
             if (!int.TryParse(resultMatch.Key, out int key))
                 throw new InvalidOperationException($"Failed to parse '{resultMatch.Key}' to int.");
 
-            if (!PermissionsData.PathPermissions.TryGetValue(key, out var pathPermissions))
+            if (!permissionsData.PathPermissions.TryGetValue(key, out var pathPermissions))
             {
                 _telemetryClient?.TrackTrace($"Permissions information for {requestUrl} were not found.", SeverityLevel.Error, _permissionsTraceProperties);
                 return Enumerable.Empty<ScopeInformation>();
@@ -428,7 +432,7 @@ namespace PermissionsService
 
             if (pathPermissions == null)
             {
-                _telemetryClient?.TrackTrace($"Key '{PermissionsData.PathPermissions[key]}' in the {nameof(PermissionsData.PathPermissions)} has a null value.",
+                _telemetryClient?.TrackTrace($"Key '{permissionsData.PathPermissions[key]}' in the {nameof(permissionsData.PathPermissions)} has a null value.",
                                              SeverityLevel.Error,
                                              _permissionsTraceProperties);
 
@@ -538,9 +542,10 @@ namespace PermissionsService
         }
 
         ///<inheritdoc/>
-        public UriTemplateMatcher GetUriTemplateMatcher()
+        public async Task<UriTemplateMatcher> GetUriTemplateMatcherAsync()
         {
-            return PermissionsData.UriTemplateMatcher;
+            var permissionsData = await PermissionsData;
+            return permissionsData.UriTemplateMatcher;
         }
     }
 }

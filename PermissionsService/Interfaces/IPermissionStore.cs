@@ -39,6 +39,6 @@ namespace PermissionsService.Interfaces
         /// Gets an instance of <see cref="UriTemplateMatcher"/> seeded with url templates.
         /// </summary>
         /// <returns>An instance of <see cref="UriTemplateMatcher"/> seeded with url templates.</returns>
-        UriTemplateMatcher GetUriTemplateMatcher();
+        Task<UriTemplateMatcher> GetUriTemplateMatcherAsync();
     }
 }
