@@ -408,6 +408,7 @@ paths:
         - $ref: '#/components/parameters/format'
         - $ref: '#/components/parameters/forceRefresh'
         - $ref: '#/components/parameters/singularizeOperationIds'
+        - $ref: '#/components/parameters/fileName'
       responses:
         "200":
           description: List of operations associated to a tag/operationIds/url
@@ -429,6 +430,7 @@ paths:
         - $ref: '#/components/parameters/format'
         - $ref: '#/components/parameters/forceRefresh'
         - $ref: '#/components/parameters/singularizeOperationIds'
+        - $ref: '#/components/parameters/fileName'
       responses:
         "200":
           description: OK
