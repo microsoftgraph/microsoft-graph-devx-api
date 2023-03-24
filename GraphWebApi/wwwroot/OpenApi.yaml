@@ -778,3 +778,10 @@ components:
         default: v1.0 and beta
       required: false
       description: The target Microsoft Graph API version. # Ex: ?graphVersions=v1.0 / ?graphVersions=beta / or ?graphVersions=* (for both)
+    fileName:
+      name: fileName
+      in: query
+      schema:
+        type: string
+      required: false
+      description: Overrides the OpenAPI file name for the specified OpenApi style.
