@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -44,17 +44,18 @@ namespace GraphWebApi.Controllers
         [Route("$openapi")]
         [HttpGet]
         public async Task<IActionResult> Get(
-                                    [FromQuery]string operationIds = null,
-                                    [FromQuery]string tags = null,
-                                    [FromQuery]string url = null,
-                                    [FromQuery]string openApiVersion = null,
-                                    [FromQuery]string title = "Partial Graph API",
-                                    [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
-                                    [FromQuery]string format = null,
-                                    [FromQuery]string graphVersion = null,
-                                    [FromQuery]bool includeRequestBody = false,
-                                    [FromQuery]bool forceRefresh = false,
-                                    [FromQuery]bool singularizeOperationIds = false)
+                                    [FromQuery] string operationIds = null,
+                                    [FromQuery] string tags = null,
+                                    [FromQuery] string url = null,
+                                    [FromQuery] string openApiVersion = null,
+                                    [FromQuery] string title = "Partial Graph API",
+                                    [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
+                                    [FromQuery] string format = null,
+                                    [FromQuery] string graphVersion = null,
+                                    [FromQuery] bool includeRequestBody = false,
+                                    [FromQuery] bool forceRefresh = false,
+                                    [FromQuery] bool singularizeOperationIds = false,
+                                    [FromQuery] string fileName = null)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
@@ -65,18 +66,19 @@ namespace GraphWebApi.Controllers
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
 
-            var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh);
+            var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh, fileName);
             return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody, singularizeOperationIds);
         }
 
         [Route("openapi/operations")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery]string graphVersion = null,
-                                             [FromQuery]string openApiVersion = null,
-                                             [FromQuery]OpenApiStyle style = OpenApiStyle.Plain,
-                                             [FromQuery]string format = null,
-                                             [FromQuery]bool forceRefresh = false,
-                                             [FromQuery] bool singularizeOperationIds = false)
+        public async Task<IActionResult> Get([FromQuery] string graphVersion = null,
+                                             [FromQuery] string openApiVersion = null,
+                                             [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
+                                             [FromQuery] string format = null,
+                                             [FromQuery] bool forceRefresh = false,
+                                             [FromQuery] bool singularizeOperationIds = false,
+                                             [FromQuery] string fileName = null)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
@@ -87,7 +89,7 @@ namespace GraphWebApi.Controllers
                 throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
             }
 
-            var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh);
+            var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh, fileName);
             await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                 graphOpenApi, Response.Body, styleOptions.Style, singularizeOperationIds);
 
