@@ -2,13 +2,16 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading.Tasks;
 using FileService.Extensions;
 using GraphWebApi.Common;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PermissionsService.Interfaces;
 using PermissionsService.Models;
@@ -39,13 +42,71 @@ namespace GraphWebApi.Controllers
         // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> GetPermissionScopes([FromQuery]string scopeType = "DelegatedWork",
+        public async Task<IActionResult> GetPermissionScopes([FromQuery]ScopeType? scopeType = null,
                                                              [FromQuery]string requestUrl = null,
                                                              [FromQuery]string method = null,
                                                              [FromQuery]string org = null,
-                                                             [FromQuery]string branchName = null)
+                                                             [FromQuery]string branchName = null,
+                                                             [FromQuery]bool includeHidden = false,
+                                                             [FromQuery]bool leastPrivilegeOnly = false)
         {
-            string localeCode = RequestHelper.GetPreferredLocaleLanguage(Request) ?? Constants.DefaultLocale;
+            if (!string.IsNullOrEmpty(requestUrl) && string.IsNullOrEmpty(method))
+                return BadRequest("The HTTP method value cannot be null or empty.");
+
+            string localeCode = GetPreferredLocaleLanguage(Request);
+
+            var requestUrls = requestUrl != null ? new List<string> { requestUrl } : null;
+            PermissionResult result = await _permissionsStore.GetScopesAsync(
+                                                                requestUrls: requestUrls,
+                                                                locale: localeCode,
+                                                                scopeType: scopeType,
+                                                                method: method,
+                                                                includeHidden: includeHidden,
+                                                                leastPrivilegeOnly: leastPrivilegeOnly,
+                                                                org: org,
+                                                                branchName: branchName);
+
+            _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsController));
+            _telemetryClient?.TrackTrace($"Fetched {result?.Results.Count ?? 0} permissions",
+                                            SeverityLevel.Information,
+                                            _permissionsTraceProperties);
+
+            return result == null || !result.Results.Any() ? NotFound() : Ok(result.Results);
+        }
+
+        [HttpPost]
+        [Produces("application/json")]
+        public async Task<IActionResult> GetPermissionScopes([FromBody] List<string> requestUrls,
+                                                             [FromQuery] ScopeType? scopeType = null,
+                                                             [FromQuery] string method = null,
+                                                             [FromQuery] string org = null,
+                                                             [FromQuery] string branchName = null,
+                                                             [FromQuery] bool leastPrivilegeOnly = true,
+                                                             [FromQuery] bool includeHidden = false)
+        {
+            if (requestUrls == null || !requestUrls.Any())
+                return BadRequest("Request URLs cannot be null or empty");
+
+            string localeCode = GetPreferredLocaleLanguage(Request);
+
+            PermissionResult result = await _permissionsStore.GetScopesAsync(
+                                                                requestUrls: requestUrls,
+                                                                locale: localeCode,
+                                                                scopeType: scopeType,
+                                                                method: method,
+                                                                includeHidden: includeHidden,
+                                                                leastPrivilegeOnly: leastPrivilegeOnly,
+                                                                org: org,
+                                                                branchName: branchName);
+            if (result == null || !result.Results.Any())
+                return NotFound();
+
+            return result.Errors.Any() ? BadRequest(result) : Ok(result.Results);
+        }
+
+        private string GetPreferredLocaleLanguage(HttpRequest request)
+        {
+            string localeCode = RequestHelper.GetPreferredLocaleLanguage(request) ?? Constants.DefaultLocale;
             _telemetryClient?.TrackTrace($"Request to fetch permissions for locale '{localeCode}'",
                                             SeverityLevel.Information,
                                             _permissionsTraceProperties);
@@ -58,34 +119,7 @@ namespace GraphWebApi.Controllers
                                             _permissionsTraceProperties);
                 localeCode = supportedLocaleCode;
             }
-
-            List<ScopeInformation> result = null;
-
-            if (!string.IsNullOrEmpty(org) && !string.IsNullOrEmpty(branchName))
-            {
-                // Fetch permissions descriptions file from Github
-                result = await _permissionsStore.GetScopesAsync(scopeType: scopeType,
-                                                                locale: localeCode,
-                                                                requestUrl: requestUrl,
-                                                                method: method,
-                                                                org: org,
-                                                                branchName: branchName);
-            }
-            else
-            {
-                // Fetch the files from Azure Blob
-                result = await _permissionsStore.GetScopesAsync(scopeType: scopeType,
-                                                                locale: localeCode,
-                                                                requestUrl: requestUrl,
-                                                                method: method);
-            }
-
-            _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsController));
-            _telemetryClient?.TrackTrace($"Fetched {result?.Count ?? 0} permissions",
-                                            SeverityLevel.Information,
-                                            _permissionsTraceProperties);
-
-            return result == null ? NotFound() : Ok(result);
+            return localeCode;
         }
     }
 }
