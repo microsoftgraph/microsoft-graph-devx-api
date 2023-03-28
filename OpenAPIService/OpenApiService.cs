@@ -1,21 +1,16 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
 using Microsoft.OpenApi.Writers;
-using Microsoft.OpenApi.OData;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using OpenAPIService.Common;
@@ -31,6 +26,8 @@ using System.Threading;
 using Microsoft.Extensions.Configuration;
 using FileService.Common;
 using Microsoft.IO;
+using System.Text;
+using FileService.Interfaces;
 
 namespace OpenAPIService
 {
@@ -46,14 +43,14 @@ namespace OpenAPIService
     {
         private static readonly ConcurrentDictionary<string, OpenApiDocument> _OpenApiDocuments = new();
         private static readonly ConcurrentDictionary<string, DateTime> _OpenApiDocumentsDateCreated = new();
-        private static readonly ConcurrentDictionary<string, string> _openApiTraceProperties =
-                        new();
+        private static readonly ConcurrentDictionary<string, string> _openApiTraceProperties = new();
         private readonly TelemetryClient _telemetryClient;
         private static readonly SemaphoreSlim _openApiDocumentAccess = new(2, 2); // only 2 threads can be granted access at a time.
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInMinutes:OpenAPIDocuments";
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
         private readonly Queue<string> _graphUriQueue = new();
         private static readonly RecyclableMemoryStreamManager _streamManager = new();
+        private readonly IHttpClientUtility _httpClientUtility;
         private static readonly Dictionary<OpenApiStyle, string> _fileNames = new() {
             { OpenApiStyle.GEAutocomplete, "graphexplorer"},
             { OpenApiStyle.Plain, "default"},
@@ -61,10 +58,12 @@ namespace OpenAPIService
             { OpenApiStyle.PowerPlatform, "default"},
          };
 
-        public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
+        public OpenApiService(IConfiguration configuration, IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient = null)
         {
             if (configuration == null) throw new ArgumentNullException(nameof(configuration), 
-                $"Value cannot be null: {nameof(configuration)}");
+                $"{UtilityConstants.NullValueError}: {nameof(configuration)}");
+            _httpClientUtility = httpClientUtility
+               ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{UtilityConstants.NullValueError}: {nameof(httpClientUtility)}");
             _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService));
@@ -527,7 +526,7 @@ namespace OpenAPIService
             var cachedDoc = $"{graphUri}/{openApiStyle}/{fileName}";
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(cachedDoc, out OpenApiDocument doc))
             {
-                _telemetryClient?.TrackTrace("Fetch the OpenApi document from the cache",
+                    _telemetryClient?.TrackTrace("Fetch the OpenApi document from the cache",
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
 
@@ -629,42 +628,44 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
+            var openApiDoc = CloneOpenApiDocument(subsetOpenApiDocument);
+
             if (style == OpenApiStyle.GEAutocomplete && !includeRequestBody)
             {
                 // The Content property and its schema $refs are unnecessary for autocomplete
-                RemoveContent(subsetOpenApiDocument);
+                RemoveContent(openApiDoc);
             }
             if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
                 // Remove AnyOf and OneOf since AutoREST does not support them. See https://github.com/Azure/autorest/issues/4118. 
                 var anyOfRemover = new AnyOfOneOfRemover();
                 var walker = new OpenApiWalker(anyOfRemover);
-                walker.Walk(subsetOpenApiDocument);
+                walker.Walk(openApiDoc);
 
                 if (style == OpenApiStyle.PowerShell)
                 {
                     // Format the OperationId for Powershell cmdlet names generation
                     var powershellFormatter = new PowershellFormatter(singularizeOperationIds);
                     walker = new OpenApiWalker(powershellFormatter);
-                    walker.Walk(subsetOpenApiDocument);
+                    walker.Walk(openApiDoc);
 
-                    var version = subsetOpenApiDocument.Info.Version;
+                    var version = openApiDoc.Info.Version;
                     if (!new Regex("v\\d\\.\\d", RegexOptions.None, TimeSpan.FromSeconds(5)).Match(version).Success)
                     {
-                        subsetOpenApiDocument.Info.Version = "v1.0-" + version;
+                        openApiDoc.Info.Version = "v1.0-" + version;
                     }
 
                     // Remove the root path to make AutoREST happy
-                    subsetOpenApiDocument.Paths.Remove("/");
+                    openApiDoc.Paths.Remove("/");
 
                     // Temp. fix - Escape the # character from description in
                     // 'microsoft.graph.networkInterface' schema
-                    EscapePoundCharacter(subsetOpenApiDocument.Components);
+                    EscapePoundCharacter(openApiDoc.Components);
                 }
             }
 
-            if (subsetOpenApiDocument.Paths == null ||
-                !subsetOpenApiDocument.Paths.Any())
+            if (openApiDoc.Paths == null ||
+                !openApiDoc.Paths.Any())
             {
                 throw new ArgumentException("No paths found for the supplied parameters.");
             }
@@ -673,16 +674,16 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            return subsetOpenApiDocument;
+            return CloneOpenApiDocument(openApiDoc);
         }
 
         private async Task<OpenApiDocument> GetOpenApiDocumentAsync(Uri openAPIHref)
         {
             var stopwatch = new Stopwatch();
-            var httpClient = CreateHttpClient();
-
             stopwatch.Start();
-            await using Stream stream = await httpClient.GetStreamAsync(openAPIHref.OriginalString);
+            
+            await using Stream stream = await _httpClientUtility.GetHttpClient().GetStreamAsync(openAPIHref.OriginalString);
+            
             stopwatch.Stop();
 
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
@@ -702,19 +703,7 @@ namespace OpenAPIService
             walker.Walk(graphOpenApi);
             return search.SearchResults;
         }
-
-        private static HttpClient CreateHttpClient()
-        {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            var httpClient = new HttpClient(new HttpClientHandler()
-            {
-                AutomaticDecompression = DecompressionMethods.GZip
-            });
-            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
-            httpClient.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("graphslice", "1.0"));
-            return httpClient;
-        }
-
+        
         private static void CopyReferences(OpenApiDocument target)
         {
             bool morestuff;
@@ -800,6 +789,20 @@ namespace OpenAPIService
             ContentRemover contentRemover = new ContentRemover();
             OpenApiWalker walker = new OpenApiWalker(contentRemover);
             walker.Walk(target);
+        }
+
+        /// <summary>
+        /// Creates a clone of an OpenAPI document
+        /// </summary>
+        /// <param name="document">The source document to clone.</param>
+        /// <returns>A clone of the source document.</returns>
+        public OpenApiDocument CloneOpenApiDocument(OpenApiDocument document)
+        {
+            var sb = new StringBuilder();
+            document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
+            var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
+
+            return doc;
         }
 
         /// <summary>
