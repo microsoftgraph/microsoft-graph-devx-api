@@ -49,9 +49,6 @@ namespace PermissionsService
         private const string ScopesInfoBlobConfig = "BlobStorage:Blobs:Permissions:Descriptions";
         private const string PermissionsNamesBlobConfig = "BlobStorage:Blobs:Permissions:Names";
         private const string PermissionsContainerBlobConfig = "BlobStorage:Containers:Permissions";
-        private const string NullValueError = "Value cannot be null";
-
-
         private class PermissionsDataInfo
         {
             public UriTemplateMatcher UriTemplateMatcher
@@ -69,13 +66,13 @@ namespace PermissionsService
         {
             _telemetryClient = telemetryClient;
             _configuration = configuration
-               ?? throw new ArgumentNullException(nameof(configuration), $"{NullValueError}: {nameof(configuration)}");
+               ?? throw new ArgumentNullException(nameof(configuration), $"{UtilityConstants.NullValueError}: {nameof(configuration)}");
             _cache = permissionsCache
-                ?? throw new ArgumentNullException(nameof(permissionsCache), $"{NullValueError}: {nameof(permissionsCache)}");
+                ?? throw new ArgumentNullException(nameof(permissionsCache), $"{UtilityConstants.NullValueError}: {nameof(permissionsCache)}");
             _httpClientUtility = httpClientUtility
-                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{NullValueError}: {nameof(httpClientUtility)}");
+                ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{UtilityConstants.NullValueError}: {nameof(httpClientUtility)}");
             _fileUtility = fileUtility
-                ?? throw new ArgumentNullException(nameof(fileUtility), $"{NullValueError}: {nameof(fileUtility)}");
+                ?? throw new ArgumentNullException(nameof(fileUtility), $"{UtilityConstants.NullValueError}: {nameof(fileUtility)}");
             _permissionsContainerName = configuration[PermissionsContainerBlobConfig]
                 ?? throw new ArgumentNullException(nameof(PermissionsContainerBlobConfig), $"Config path missing: {PermissionsContainerBlobConfig}");
             _permissionsBlobNames = configuration.GetSection(PermissionsNamesBlobConfig).Get<List<string>>()

@@ -30,5 +30,7 @@ namespace UtilityService
         /// Contains the name of the Known Issues Azure DevOps Organisation
 		/// </summary>
 		public const string KnownIssuesOrganisation = "Known Issues (staging)";
+
+        public const string NullValueError = "Value cannot be null";
     }
 }
