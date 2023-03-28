@@ -27,7 +27,8 @@ using Microsoft.Extensions.Configuration;
 using FileService.Common;
 using Microsoft.IO;
 using System.Text;
-using FileService.Interfaces;
+using System.Net.Http;
+using System.Net;
 
 namespace OpenAPIService
 {
@@ -50,7 +51,6 @@ namespace OpenAPIService
         private readonly int _defaultForceRefreshTime; // time span for allowable forceRefresh of the OpenAPI document
         private readonly Queue<string> _graphUriQueue = new();
         private static readonly RecyclableMemoryStreamManager _streamManager = new();
-        private readonly IHttpClientUtility _httpClientUtility;
         private static readonly Dictionary<OpenApiStyle, string> _fileNames = new() {
             { OpenApiStyle.GEAutocomplete, "graphexplorer"},
             { OpenApiStyle.Plain, "default"},
@@ -58,12 +58,10 @@ namespace OpenAPIService
             { OpenApiStyle.PowerPlatform, "default"},
          };
 
-        public OpenApiService(IConfiguration configuration, IHttpClientUtility httpClientUtility, TelemetryClient telemetryClient = null)
+        public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
             if (configuration == null) throw new ArgumentNullException(nameof(configuration), 
                 $"{UtilityConstants.NullValueError}: {nameof(configuration)}");
-            _httpClientUtility = httpClientUtility
-               ?? throw new ArgumentNullException(nameof(httpClientUtility), $"{UtilityConstants.NullValueError}: {nameof(httpClientUtility)}");
             _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService));
@@ -680,10 +678,9 @@ namespace OpenAPIService
         private async Task<OpenApiDocument> GetOpenApiDocumentAsync(Uri openAPIHref)
         {
             var stopwatch = new Stopwatch();
+            var httpClient = CreateHttpClient();
             stopwatch.Start();
-            
-            await using Stream stream = await _httpClientUtility.GetHttpClient().GetStreamAsync(openAPIHref.OriginalString);
-            
+            await using Stream stream = await httpClient.GetStreamAsync(openAPIHref.OriginalString);          
             stopwatch.Stop();
 
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
@@ -789,6 +786,17 @@ namespace OpenAPIService
             ContentRemover contentRemover = new ContentRemover();
             OpenApiWalker walker = new OpenApiWalker(contentRemover);
             walker.Walk(target);
+        }
+        private static HttpClient CreateHttpClient()
+        {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            var httpClient = new HttpClient(new HttpClientHandler()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip
+            });
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
+            httpClient.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("graphslice", "1.0"));
+            return httpClient;
         }
 
         /// <summary>
