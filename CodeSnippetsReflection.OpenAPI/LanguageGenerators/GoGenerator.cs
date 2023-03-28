@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections.Immutable;
@@ -7,6 +7,8 @@ using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
 using System.Text.RegularExpressions;
+using Microsoft.OpenApi.Expressions;
+using System.Diagnostics.Metrics;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
@@ -21,9 +23,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string requestOptionsVarName = "options";
         private const string requestParametersVarName = "requestParameters";
         private const string requestConfigurationVarName = "configuration";
-        
+
         private static IImmutableSet<string> specialProperties = ImmutableHashSet.Create("@odata.type");
-        
+
         private static IImmutableSet<string> NativeTypes = GetNativeTypes();
 
         private static readonly Regex PropertyNameRegex = new Regex(@"@(.*)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
@@ -38,17 +40,106 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (snippetModel == null) throw new ArgumentNullException("Argument snippetModel cannot be null");
 
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder(
-                                    "//THE GO SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-                                    $"{clientVarName} := msgraphsdk.New{clientVarType}({clientFactoryVariables}){Environment.NewLine}{Environment.NewLine}");
+            var snippetBuilder = new StringBuilder("//THE GO SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY");
+            snippetBuilder.AppendLine("");
 
+            writeImportStatements(codeGraph, snippetBuilder);
             writeSnippet(codeGraph, snippetBuilder);
 
             return snippetBuilder.ToString();
         }
 
+        private static void writeImportStatements(SnippetCodeGraph codeGraph, StringBuilder builder)
+        {
+            var apiVersion = "v1.0".Equals(codeGraph.ApiVersion) ? "msgraph-sdk-go" : "msgraph-beta-sdk-go";
+            builder.AppendLine("import (");
+            builder.AppendLine("\t  \"context\""); // default
+
+
+            if (hasPropertyOfType(codeGraph, PropertyType.DateTime))
+                builder.AppendLine("\t  \"time\""); // conditional time import
+
+            if (hasPropertyOfType(codeGraph, PropertyType.Guid))
+                builder.AppendLine("\t  \"github.com/google/uuid\""); // conditional uuid import
+
+            if (codeGraph.HasHeaders() || hasPropertyOfType(codeGraph, PropertyType.Duration))
+                builder.AppendLine($"\t  abstractions \"github.com/microsoft/kiota-abstractions-go\""); // conditional abstractions import
+
+            builder.AppendLine($"\t  msgraphsdk \"github.com/microsoftgraph/{apiVersion}\""); // api version
+
+            var modelPath = evaluateModelPath(codeGraph);
+            if (!String.IsNullOrWhiteSpace(modelPath))
+                builder.AppendLine($"\t  graphmodels \"github.com/microsoftgraph/{apiVersion}/{modelPath}\"");
+
+            var configPath = evaluateConfigPath(codeGraph);
+            if (!String.IsNullOrWhiteSpace(configPath))
+                builder.AppendLine($"\t  graphconfig \"github.com/microsoftgraph/{apiVersion}/{configPath}\"");
+
+            builder.AppendLine("\t  //other-imports"); // models version
+            builder.AppendLine(")");
+            builder.AppendLine("");
+        }
+
+        private static string evaluateConfigPath(SnippetCodeGraph codeGraph)
+        {
+            if (codeGraph.RequiresRequestConfig())
+            {
+                var path = codeGraph.Nodes.First().Segment.ToLower();
+                return path.Equals("me", StringComparison.OrdinalIgnoreCase) ? "users" : path;
+            }
+
+            return string.Empty;
+        }
+
+
+        private static string evaluateModelPath(SnippetCodeGraph codeGraph)
+        {
+            if (codeGraph.HasJsonBody())
+            {
+                var path = codeGraph.Body.NamespaceName.Replace("microsoft.graph", "").Replace(".", "/");
+                return path.EndsWith("/") ? path.Remove(path.Length - 1, 1) : path;
+            }
+
+            return string.Empty;
+        }
+
+        private static Boolean hasPropertyOfType(SnippetCodeGraph codeGraph, PropertyType propertyType)
+        {
+            if (codeGraph.HasBody())
+                return searchProperty(codeGraph.Body, propertyType);
+
+            if (codeGraph.HasHeaders())
+                return searchProperty(codeGraph.Headers, propertyType);
+
+            if (codeGraph.HasParameters())
+                return searchProperty(codeGraph.Parameters, propertyType);
+
+            if (codeGraph.HasOptions())
+                return searchProperty(codeGraph.Options, propertyType);
+
+            return false;
+        }
+
+
+        private static Boolean searchProperty(IEnumerable<CodeProperty> properties, PropertyType propertyType)
+        {
+            return properties != null && propertyType == properties.FirstOrDefault(x => searchProperty(x, propertyType)).PropertyType;
+        }
+
+
+        private static Boolean searchProperty(CodeProperty property, PropertyType propertyType)
+        {
+            if (property.Children != null && property.Children.Any())
+            {
+                var existingChild = property.Children.FirstOrDefault(x => x.PropertyType == propertyType);
+                return propertyType == existingChild.PropertyType;
+            }
+            return property.PropertyType == propertyType;
+        }
+
         private static void writeSnippet(SnippetCodeGraph codeGraph, StringBuilder builder)
         {
+            builder.AppendLine($"{clientVarName} := msgraphsdk.New{clientVarType}({clientFactoryVariables}){Environment.NewLine}{Environment.NewLine}");
             writeHeadersAndOptions(codeGraph, builder);
             WriteBody(codeGraph, builder);
             builder.AppendLine("");
@@ -163,6 +254,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         .Aggregate(static (x, y) =>
                         {
                             var w = x.EndsWith("s") && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
+                            w = "Me".Equals(w, StringComparison.Ordinal) ? "Item" : w;
                             return $"{w}{y}";
                         });
         }
