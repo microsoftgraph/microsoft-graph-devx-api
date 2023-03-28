@@ -522,8 +522,7 @@ namespace PermissionsService
             var scopesInfo = scopes.Select(scope =>
             {
                 permissionDescriptionGroups.TryGetValue((ScopeType)scope.ScopeType, out var schemeKey);
-                scopesInformationDictionary[schemeKey].TryGetValue(scope.ScopeName, out var scopeInfo);
-                if (scopeInfo != null)
+                if (scopesInformationDictionary[schemeKey].TryGetValue(scope.ScopeName, out var scopeInfo))
                 {
                     return new ScopeInformation()
                         {
