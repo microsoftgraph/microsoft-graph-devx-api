@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -25,6 +25,8 @@ namespace FileService.Services
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient), $"Value cannot be null: { nameof(httpClient) }");
         }
 
+        public HttpClient GetHttpClient() => _httpClient;
+        
         /// <summary>
         /// Reads the contents of a document from an HTTP source.
         /// </summary>
