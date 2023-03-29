@@ -79,7 +79,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             var segment = node.Segment.Replace("$value", "content").TrimStart('$');
             if (segment.IsCollectionIndex())
             {
-                commandSegments.Add("item");
                 AddParameterToDictionary(ref parameters, segment);
             }
             else
