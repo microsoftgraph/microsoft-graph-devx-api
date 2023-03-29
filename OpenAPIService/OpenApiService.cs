@@ -524,7 +524,7 @@ namespace OpenAPIService
             var cachedDoc = $"{graphUri}/{openApiStyle}/{fileName}";
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(cachedDoc, out OpenApiDocument doc))
             {
-                    _telemetryClient?.TrackTrace("Fetch the OpenApi document from the cache",
+                _telemetryClient?.TrackTrace("Fetch the OpenApi document from the cache",
                                              SeverityLevel.Information,
                                              _openApiTraceProperties);
 
@@ -680,7 +680,7 @@ namespace OpenAPIService
             var stopwatch = new Stopwatch();
             var httpClient = CreateHttpClient();
             stopwatch.Start();
-            await using Stream stream = await httpClient.GetStreamAsync(openAPIHref.OriginalString);          
+            await using Stream stream = await httpClient.GetStreamAsync(openAPIHref.OriginalString);
             stopwatch.Stop();
 
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(OpenApiService));
@@ -700,7 +700,19 @@ namespace OpenAPIService
             walker.Walk(graphOpenApi);
             return search.SearchResults;
         }
-        
+
+        private static HttpClient CreateHttpClient()
+        {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            var httpClient = new HttpClient(new HttpClientHandler()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip
+            });
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
+            httpClient.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("graphslice", "1.0"));
+            return httpClient;
+        }
+
         private static void CopyReferences(OpenApiDocument target)
         {
             bool morestuff;
@@ -787,18 +799,7 @@ namespace OpenAPIService
             OpenApiWalker walker = new OpenApiWalker(contentRemover);
             walker.Walk(target);
         }
-        private static HttpClient CreateHttpClient()
-        {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-            var httpClient = new HttpClient(new HttpClientHandler()
-            {
-                AutomaticDecompression = DecompressionMethods.GZip
-            });
-            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("gzip"));
-            httpClient.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("graphslice", "1.0"));
-            return httpClient;
-        }
-
+        
         /// <summary>
         /// Creates a clone of an OpenAPI document
         /// </summary>
