@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -150,7 +150,7 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            return new OpenApiDocument(subset);
+            return CloneOpenApiDocument(subset);
         }
 
         /// <summary>
@@ -672,7 +672,7 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            return CloneOpenApiDocument(openApiDoc);
+            return openApiDoc;
         }
 
         private async Task<OpenApiDocument> GetOpenApiDocumentAsync(Uri openAPIHref)
@@ -809,7 +809,6 @@ namespace OpenAPIService
             var sb = new StringBuilder();
             document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
             var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
-
             return doc;
         }
 
