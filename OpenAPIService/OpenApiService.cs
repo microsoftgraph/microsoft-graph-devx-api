@@ -807,10 +807,13 @@ namespace OpenAPIService
         /// <returns>A clone of the source document.</returns>
         public OpenApiDocument CloneOpenApiDocument(OpenApiDocument document)
         {
-            var sb = new StringBuilder();
-            document.SerializeAsV3(new OpenApiYamlWriter(new StringWriter(sb)));
-            var doc = new OpenApiStringReader().Read(sb.ToString(), out _);
-            return doc;
+            using var stream = new MemoryStream();
+            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
+            document.SerializeAsV3(writer);
+            writer.Flush();
+            stream.Position = 0;
+            var reader = new OpenApiStreamReader();
+            return reader.Read(stream, out _);
         }
 
         /// <summary>
