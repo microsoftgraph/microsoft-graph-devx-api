@@ -2,12 +2,10 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Microsoft.OData.Edm.Csdl;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
 using Microsoft.OpenApi.Writers;
-using Microsoft.OpenApi.OData;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,7 +13,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using OpenAPIService.Common;
@@ -153,7 +150,7 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            return new OpenApiDocument(subset);
+            return CloneOpenApiDocument(subset);
         }
 
         /// <summary>
@@ -629,42 +626,44 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
+            var openApiDoc = CloneOpenApiDocument(subsetOpenApiDocument);
+
             if (style == OpenApiStyle.GEAutocomplete && !includeRequestBody)
             {
                 // The Content property and its schema $refs are unnecessary for autocomplete
-                RemoveContent(subsetOpenApiDocument);
+                RemoveContent(openApiDoc);
             }
             if (style == OpenApiStyle.PowerShell || style == OpenApiStyle.PowerPlatform)
             {
                 // Remove AnyOf and OneOf since AutoREST does not support them. See https://github.com/Azure/autorest/issues/4118. 
                 var anyOfRemover = new AnyOfOneOfRemover();
                 var walker = new OpenApiWalker(anyOfRemover);
-                walker.Walk(subsetOpenApiDocument);
+                walker.Walk(openApiDoc);
 
                 if (style == OpenApiStyle.PowerShell)
                 {
                     // Format the OperationId for Powershell cmdlet names generation
                     var powershellFormatter = new PowershellFormatter(singularizeOperationIds);
                     walker = new OpenApiWalker(powershellFormatter);
-                    walker.Walk(subsetOpenApiDocument);
+                    walker.Walk(openApiDoc);
 
-                    var version = subsetOpenApiDocument.Info.Version;
+                    var version = openApiDoc.Info.Version;
                     if (!new Regex("v\\d\\.\\d", RegexOptions.None, TimeSpan.FromSeconds(5)).Match(version).Success)
                     {
-                        subsetOpenApiDocument.Info.Version = "v1.0-" + version;
+                        openApiDoc.Info.Version = "v1.0-" + version;
                     }
 
                     // Remove the root path to make AutoREST happy
-                    subsetOpenApiDocument.Paths.Remove("/");
+                    openApiDoc.Paths.Remove("/");
 
                     // Temp. fix - Escape the # character from description in
                     // 'microsoft.graph.networkInterface' schema
-                    EscapePoundCharacter(subsetOpenApiDocument.Components);
+                    EscapePoundCharacter(openApiDoc.Components);
                 }
             }
 
-            if (subsetOpenApiDocument.Paths == null ||
-                !subsetOpenApiDocument.Paths.Any())
+            if (openApiDoc.Paths == null ||
+                !openApiDoc.Paths.Any())
             {
                 throw new ArgumentException("No paths found for the supplied parameters.");
             }
@@ -673,14 +672,13 @@ namespace OpenAPIService
                                          SeverityLevel.Information,
                                          _openApiTraceProperties);
 
-            return subsetOpenApiDocument;
+            return openApiDoc;
         }
 
         private async Task<OpenApiDocument> GetOpenApiDocumentAsync(Uri openAPIHref)
         {
             var stopwatch = new Stopwatch();
             var httpClient = CreateHttpClient();
-
             stopwatch.Start();
             await using Stream stream = await httpClient.GetStreamAsync(openAPIHref.OriginalString);
             stopwatch.Stop();
@@ -800,6 +798,22 @@ namespace OpenAPIService
             ContentRemover contentRemover = new ContentRemover();
             OpenApiWalker walker = new OpenApiWalker(contentRemover);
             walker.Walk(target);
+        }
+
+        /// <summary>
+        /// Creates a clone of an OpenAPI document
+        /// </summary>
+        /// <param name="document">The source document to clone.</param>
+        /// <returns>A clone of the source document.</returns>
+        public OpenApiDocument CloneOpenApiDocument(OpenApiDocument document)
+        {
+            using var stream = new MemoryStream();
+            var writer = new OpenApiYamlWriter(new StreamWriter(stream));
+            document.SerializeAsV3(writer);
+            writer.Flush();
+            stream.Position = 0;
+            var reader = new OpenApiStreamReader();
+            return reader.Read(stream, out _);
         }
 
         /// <summary>
