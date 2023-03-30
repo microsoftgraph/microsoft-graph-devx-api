@@ -1,4 +1,4 @@
-﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -216,6 +216,9 @@ namespace OpenAPIService
             if (string.IsNullOrEmpty(operationId))
                 return operationId;
 
+            // drives does not properly singularize to drive.
+            Vocabularies.Default.AddSingular("(drive)s$", "$1");
+            
             var segments = operationId.Split('.').ToList();
 
             // The last segment is ignored as a rule.
