@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Humanizer;
+using Humanizer.Inflections;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
