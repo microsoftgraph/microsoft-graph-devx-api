@@ -578,6 +578,37 @@ namespace OpenAPIService.Test
                             }
                         }
                     },
+                    ["/drives"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        {
+                                            new OpenApiTag()
+                                            {
+                                                Name = "drives.drive"
+                                            }
+                                        }
+                                    },
+                                    OperationId = "drives.drive.ListDrive",
+                                    Summary = "Get Drive",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200", new OpenApiResponse()
+                                            {
+                                                Description = "Success"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     ["/security/hostSecurityProfiles"] = new OpenApiPathItem()
                     {
                         Operations = new Dictionary<OperationType, OpenApiOperation>

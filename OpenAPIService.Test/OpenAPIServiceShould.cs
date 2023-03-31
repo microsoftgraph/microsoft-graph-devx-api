@@ -358,7 +358,7 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(16, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(17, subsetOpenApiDocument.Paths.Count);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Schemas);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);
@@ -410,6 +410,29 @@ namespace OpenAPIService.Test
 
             // Assert
             Assert.Equal(expectedOperationId, operationId);
+        }
+
+        [Theory]
+        [InlineData("drives.drive.ListDrive", "drive_ListDrive", OperationType.Get)]
+        [InlineData("applications.application.UpdateLogo", "application_SetLogo", OperationType.Put)]
+        public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string operationId, string expectedOperationId, OperationType operationType)
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: operationId,
+                                                           tags: null,
+                                                           url: null,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, singularizeOperationIds: true);
+            var singularizedOpId = subsetOpenApiDocument.Paths
+                                  .FirstOrDefault().Value
+                                  .Operations[operationType]
+                                  .OperationId;
+
+            // Assert
+            Assert.Equal(expectedOperationId, singularizedOpId);
         }
 
         [Fact]
