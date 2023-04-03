@@ -271,7 +271,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Array:
-                    return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{GetTypeString(codeProperty.Children.First(),apiVersion)}>";
+                    var collectionTypeString = codeProperty.Children.Any()
+                        ? GetTypeString(codeProperty.Children.First(), apiVersion)
+                        : typeString;
+                    return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{collectionTypeString}>";
                 case PropertyType.Object:
                     return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString)}";
                 case PropertyType.Map:
@@ -318,6 +321,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return nodes.Select(static x => {
                                         if(x.Segment.IsCollectionIndex())
                                             return x.Segment.Replace("{", "[\"{").Replace("}", "}\"]");
+                                        if (x.Segment.IsFunctionWithParameters())
+                                        {
+                                            var functionName = x.Segment.Split('(').First();
+                                            var parameters = x.Segment.Split('(').Last().TrimEnd(')').Split(',')
+                                                .Select(static s => $"With{s.Split('=').First().ToFirstCharacterUpperCase()}")
+                                                .Aggregate(static (a, b) => $"{a}{b}");;
+                                            var parametersValues = x.Segment.Split('(').Last().TrimEnd(')').Split(',')
+                                                .Select(static s => $"\"{s.Split('=').Last().Trim('\'')}\"")
+                                                .Aggregate(static (a, b) => $"{a},{b}");
+                                            return functionName.ToFirstCharacterUpperCase()
+                                                   + parameters
+                                                   + $"({parametersValues})";
+                                        }
                                         if (x.Segment.IsFunction())
                                             return x.Segment.RemoveFunctionBraces().Split('.')
                                                 .Select(static s => s.ToFirstCharacterUpperCase())
