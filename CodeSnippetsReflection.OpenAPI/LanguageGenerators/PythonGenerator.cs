@@ -11,12 +11,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 
 public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 {
-    private const string ClientVarName = "graphServiceClient";
+    private const string ClientVarName = "client";
     private const string ClientVarType = "GraphServiceClient";
     private const string HttpCoreVarName = "requestAdapter";
     private const string RequestBodyVarName = "requestBody";
-    private const string QueryParametersVarName = "queryParameters";
-    private const string RequestConfigurationVarName = "requestConfiguration";
+    private const string QueryParametersVarName = "query_params";
+    private const string RequestConfigurationVarName = "request_config";
     private const string RequestHeadersVarName = "headers";
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
@@ -44,10 +44,10 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             ? $"{RequestBodyVarName}"
             : string.Empty;
         var optionsParameter = codeGraph.HasOptions() ? "options" : string.Empty;
-        var returnVar = codeGraph.HasReturnedBody() ? "requestResult = " : string.Empty;
+        var returnVar = codeGraph.HasReturnedBody() ? "result = " : string.Empty;
         var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
         snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-        snippetBuilder.AppendLine($"{returnVar}{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList});");
+        snippetBuilder.AppendLine($"{returnVar}await{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList});");
     }
     private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
     {
