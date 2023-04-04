@@ -32,12 +32,12 @@ public class GraphCliGeneratorTests
     public static IEnumerable<object[]> GetSnippetData()
     {
         return new[] {
-            new object[] {HttpMethod.Delete, $"{ServiceRootUrl}/users/100/settings", "mgc users item settings delete --user-id {user-id}"},
+            new object[] {HttpMethod.Delete, $"{ServiceRootUrl}/users/100/settings", "mgc users settings delete --user-id {user-id}"},
             new object[] {HttpMethod.Get, $"{ServiceRootUrl}/users", "mgc users list"},
-            new object[] {HttpMethod.Get, $"{ServiceRootUrl}/users/100", "mgc users item get --user-id {user-id}"},
-            new object[] {HttpMethod.Patch, $"{ServiceRootUrl}/users/100/licenseDetails/123", "mgc users item license-details item patch --user-id {user-id} --license-details-id {licenseDetails-id}"},
-            new object[] {HttpMethod.Post, $"{ServiceRootUrl}/users/100/extensions", "mgc users item extensions create --user-id {user-id}"},
-            new object[] {HttpMethod.Put, $"{ServiceRootUrl}/users/100/manager/$ref", "mgc users item manager ref put --user-id {user-id}"},
+            new object[] {HttpMethod.Get, $"{ServiceRootUrl}/users/100", "mgc users get --user-id {user-id}"},
+            new object[] {HttpMethod.Patch, $"{ServiceRootUrl}/users/100/licenseDetails/123", "mgc users license-details patch --user-id {user-id} --license-details-id {licenseDetails-id}"},
+            new object[] {HttpMethod.Post, $"{ServiceRootUrl}/users/100/extensions", "mgc users extensions create --user-id {user-id}"},
+            new object[] {HttpMethod.Put, $"{ServiceRootUrl}/users/100/manager/$ref", "mgc users manager ref put --user-id {user-id}"},
         };
     }
 
@@ -69,7 +69,7 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users item todo lists item tasks item attachments item get --user-id {user-id} --todo-task-list-id {todoTaskList-id} --todo-task-id {todoTask-id} --attachment-base-id {attachmentBase-id}", result);
+        Assert.Equal("mgc users todo lists tasks attachments get --user-id {user-id} --todo-task-list-id {todoTaskList-id} --todo-task-id {todoTask-id} --attachment-base-id {attachmentBase-id}", result);
     }
 
     // Powershell metadata doesn't have /$count endpoints
@@ -121,7 +121,7 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users item manager ref get --user-id {user-id}", result);
+        Assert.Equal("mgc users manager ref get --user-id {user-id}", result);
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users item photo content get --user-id {user-id}", result);
+        Assert.Equal("mgc users photo content get --user-id {user-id}", result);
     }
 
     [Fact]
@@ -176,7 +176,7 @@ public class GraphCliGeneratorTests
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal($"mgc tests item results get {commandSuffix}", result);
+        Assert.Equal($"mgc tests results get {commandSuffix}", result);
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class GraphCliGeneratorTests
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal("mgc tests item results get --id {id}", result);
+        Assert.Equal("mgc tests results get --id {id}", result);
     }
 
     [Fact]
@@ -216,7 +216,7 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc tests item results get --id {id}", result);
+        Assert.Equal("mgc tests results get --id {id}", result);
     }
 
     [Fact]
@@ -236,7 +236,7 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc tests item results get --id {id} --id-header test-header", result);
+        Assert.Equal("mgc tests results get --id {id} --id-header test-header", result);
     }
 
     [Theory]
