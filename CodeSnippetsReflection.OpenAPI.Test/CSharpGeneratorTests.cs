@@ -567,6 +567,41 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Guid.Parse(\"00000000-0000-0000-0000-000000000000\")", result);
         }
         [Fact]
+        public async Task DefaultsEnumIfNoneProvided()
+        {
+            var bodyContent = @"{
+                ""subject"": ""subject-value"",
+                ""body"": {
+                ""contentType"": """",
+                ""content"": ""content-value""
+                },
+                ""inferenceClassification"": ""other""
+            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/me/messages/{{id}}")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("ContentType = BodyType.Text,", result);
+        }
+        [Fact]
+        public async Task HandlesEmptyCollection()
+        {
+            var bodyContent = @"{
+                ""defaultUserRolePermissions"": {
+                ""permissionGrantPoliciesAssigned"": []
+                }
+            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/policies/authorizationPolicy")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("PermissionGrantPoliciesAssigned = new List<String>", result);
+        }
+        [Fact]
         public async Task CorrectlyHandlesOdataFunction()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/delta?$select=displayName,jobTitle,mobilePhone");
@@ -575,6 +610,33 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("await graphClient.Users.Delta.GetAsync", result);
             Assert.Contains("requestConfiguration.QueryParameters.Select = new string []{ \"displayName\",\"jobTitle\",\"mobilePhone\" };", result);
+        }
+        
+        [Fact]
+        public async Task MatchesPathWithPathParameter()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/drive/items/{{id}}/workbook/worksheets/{{id|name}}/range(address='A1:B2')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("var result = await graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Worksheets[\"{workbookWorksheet-id}\"].RangeWithAddress(\"{address}\").GetAsync()", result);
+        }
+        [Theory]
+        [InlineData("/me/drive/root/delta","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Delta.GetAsync()")]
+        [InlineData("/groups/{group-id}/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
+        [InlineData("/me/drive","graphClient.Me.Drive.GetAsync()")]
+        [InlineData("/sites/{site-id}/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
+        [InlineData("/sites/{site-id}/drive/root/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
+        [InlineData("/users/{user-id}/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
+        [InlineData("/me/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
+        [InlineData("/drive/bundles","graphClient.Drives[\"{drive-id}\"].Bundles.GetAsync()")]
+        [InlineData("/me/drive/items/{id}/workbook/application/calculate","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Application.Calculate", "POST")]
+        public async Task GeneratesSnippetWithRemappedDriveCall(string inputPath, string expected, string method = "") 
+        {
+            using var requestPayload = new HttpRequestMessage(string.IsNullOrEmpty(method) ? HttpMethod.Get : new HttpMethod(method), $"{ServiceRootUrl}{inputPath}");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains(expected, result);
         }
     }
 }
