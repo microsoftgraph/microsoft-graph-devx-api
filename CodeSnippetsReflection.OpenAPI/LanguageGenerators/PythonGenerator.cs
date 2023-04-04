@@ -56,7 +56,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             return default;
 
         var className = $"{model.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
-        snippetBuilder.AppendLine($"{QueryParametersVarName} = {className};");
+        snippetBuilder.AppendLine($"{QueryParametersVarName} = {className}();");
         foreach(var queryParam in model.Parameters) {
             snippetBuilder.AppendLine($"{indentManager.GetIndent()}{QueryParametersVarName}.{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()} = {EvaluateParameter(queryParam)};");
         }
@@ -329,27 +329,27 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
 
     private static string NormalizeVariableName(string variable) =>
         variable.Replace(".", String.Empty).Replace("-", string.Empty);
-    private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
-    {
-        var openApiUrlTreeNodes = nodes.ToList();
-        if (!(openApiUrlTreeNodes?.Any() ?? false)) return string.Empty;
-        var result = openApiUrlTreeNodes.Select(static x =>
-            {
-                if (x.Segment.IsCollectionIndex())
+    
+     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
+        {
+            var openApiUrlTreeNodes = nodes.ToList();
+            if(!(openApiUrlTreeNodes?.Any() ?? false)) 
+                return string.Empty;
+
+            return openApiUrlTreeNodes.Select(static x => {
+                if(x.Segment.IsCollectionIndex())
                     return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}";
                 if (x.Segment.IsFunction())
-                    return x.Segment.Split('.')
-                            .Select(static s => s.ToFirstCharacterUpperCase())
-                            .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterLowerCase() + "()";
-                return x.Segment.ToFirstCharacterLowerCase()+"()";
-            })
-            .Aggregate(static (x, y) =>
+                    return x.Segment.RemoveFunctionBraces().Split('.')
+                        .Select(static s => s.ToFirstCharacterLowerCase())
+                        .Aggregate(static (a, b) => $"{a}{b}");
+                return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces().ToFirstCharacterLowerCase();
+                })
+        .Aggregate(static (x, y) =>
             {
                 var dot = y.StartsWith("ById") ? string.Empty : ".";
                 return $"{x.Trim('$')}{dot}{y.Trim('$')}";
             }).Replace("()ById(", "ById(")
               .Replace("()().", "().");
-        
-        return result.EndsWith("()()") ? result[..^2] : result;
-    }
+        }
 }
