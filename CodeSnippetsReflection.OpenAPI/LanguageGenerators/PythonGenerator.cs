@@ -47,7 +47,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var returnVar = codeGraph.HasReturnedBody() ? "result = " : string.Empty;
         var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
         snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-        snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList});");
+        snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList})");
     }
     private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
     {
@@ -56,9 +56,9 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             return default;
 
         var className = $"{model.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
-        snippetBuilder.AppendLine($"{QueryParametersVarName} = {className}();");
+        snippetBuilder.AppendLine($"{QueryParametersVarName} = {className}()");
         foreach(var queryParam in model.Parameters) {
-            snippetBuilder.AppendLine($"{indentManager.GetIndent()}{QueryParametersVarName}.{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()} = {EvaluateParameter(queryParam)};");
+            snippetBuilder.AppendLine($"{indentManager.GetIndent()}{QueryParametersVarName}.{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()} = {EvaluateParameter(queryParam)}");
         }
         indentManager.Unindent();
         snippetBuilder.AppendLine();
@@ -85,14 +85,14 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload))
         {
             var className = $"{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
-            snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}();");
+            snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}()");
             snippetBuilder.AppendLine();
             snippetBuilder.Append(queryParamsPayload);
             snippetBuilder.Append(requestHeadersPayload);
             if (!string.IsNullOrEmpty(queryParamsPayload))
-                snippetBuilder.AppendLine($"{RequestConfigurationVarName}.queryParameters = {QueryParametersVarName};");
+                snippetBuilder.AppendLine($"{RequestConfigurationVarName}.queryParameters = {QueryParametersVarName}");
             if (!string.IsNullOrEmpty(requestHeadersPayload))
-                snippetBuilder.AppendLine($"{RequestConfigurationVarName}.headers = {RequestHeadersVarName};");
+                snippetBuilder.AppendLine($"{RequestConfigurationVarName}.headers = {RequestHeadersVarName}");
             snippetBuilder.AppendLine();
         }
         
@@ -117,7 +117,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 snippetBuilder.AppendLine($"{indentManager.GetIndent()}'{h.Name}' => '{h.Value.Replace("\'", "\\'")}',")
             );
             indentManager.Unindent();
-            snippetBuilder.AppendLine($"{indentManager.GetIndent()}];");
+            snippetBuilder.AppendLine($"{indentManager.GetIndent()}]");
             snippetBuilder.AppendLine();
             return snippetBuilder.ToString();
         }
@@ -128,7 +128,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     {
         var childPosition = 0;
         var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToFirstCharacterUpperCase();
-        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = {objectType}();");
+        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = {objectType}()");
         foreach(CodeProperty child in codeProperty.Children)
         {
             var newChildName = (childPropertyName ?? "") + child.Name.ToFirstCharacterUpperCase();
@@ -156,14 +156,14 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             case PropertyType.Float64:
                 if (!isMap && !isArray)
                     snippetBuilder.AppendLine(
-                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.set{propertyName.ToFirstCharacterUpperCase()}({child.Value});");
+                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.set{propertyName.ToFirstCharacterUpperCase()}({child.Value})");
                 else
                     snippetBuilder.Append($"{child.Value},");
                 break;
 			case PropertyType.Boolean:
                 if (!isMap && !isArray) {
                     snippetBuilder.AppendLine(
-                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.set{propertyName.ToFirstCharacterUpperCase()}({child.Value.ToLower()});");
+                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.set{propertyName.ToFirstCharacterUpperCase()}({child.Value.ToLower()})");
                 }
                 else
                 {
@@ -177,7 +177,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), snippetBuilder, child, indentManager, childPropertyName);
                 if (!fromArray)
                     snippetBuilder.AppendLine(
-                        $"{propertyAssignment.ToFirstCharacterLowerCase()}.set{child.Name.ToFirstCharacterUpperCase()}(${(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()});");
+                        $"{propertyAssignment.ToFirstCharacterLowerCase()}.set{child.Name.ToFirstCharacterUpperCase()}(${(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()})");
                 break;
 			case PropertyType.Array:
 				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, snippetBuilder, parent, child, indentManager); 
@@ -209,7 +209,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var assignmentValue = $" \\DateInterval(\'{child.Value}\')";
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}${propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}({assignmentValue});");
+                $"{indentManager.GetIndent()}${propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}({assignmentValue})");
         else
             snippetBuilder.Append($"{indentManager.GetIndent()}{assignmentValue},");
     }
@@ -220,7 +220,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var assignmentValue = $"DateTime(\'{child.Value}\')";
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}({assignmentValue});");
+                $"{indentManager.GetIndent()}{propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}({assignmentValue})");
         else
             snippetBuilder.Append($"{indentManager.GetIndent()}{assignmentValue},");
     }
@@ -229,7 +229,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var fromObject = parent.PropertyType == PropertyType.Object;
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}(null);");
+                $"{indentManager.GetIndent()}{propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}(null)");
         else
             snippetBuilder.Append($"{indentManager.GetIndent()}null,");
     }
@@ -250,7 +250,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         snippetBuilder.AppendLine("];");
         if (parent.PropertyType == PropertyType.Object)
             snippetBuilder.AppendLine(
-                $"{propertyAssignment}.set{NormalizeVariableName(currentProperty.Name.ToFirstCharacterUpperCase())}({NormalizeVariableName(currentProperty.Name).ToFirstCharacterLowerCase()});");
+                $"{propertyAssignment}.set{NormalizeVariableName(currentProperty.Name.ToFirstCharacterUpperCase())}({NormalizeVariableName(currentProperty.Name).ToFirstCharacterLowerCase()})");
         snippetBuilder.AppendLine();
     }
     private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder snippetBuilder, CodeProperty parentProperty, CodeProperty codeProperty, IndentManager indentManager)
@@ -259,7 +259,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var arrayName = $"{objectName.ToFirstCharacterLowerCase()}Array";
         StringBuilder builder = new StringBuilder();
         if (hasSchema) 
-            builder.AppendLine($"{arrayName} = [];");
+            builder.AppendLine($"{arrayName} = []");
         else if (codeProperty.Children.FirstOrDefault().PropertyType != PropertyType.Object)
              builder.Append('[');
         int childPosition = 0;
@@ -279,7 +279,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         if (lastProperty.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array)
         {
             builder.AppendLine(
-                $"{propertyAssignment}.set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}({arrayName});");
+                $"{propertyAssignment}.set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}({arrayName})");
             snippetBuilder.AppendLine(builder.ToString());
         }
         else
@@ -287,7 +287,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             builder.Append(']');
             if (parentProperty.PropertyType == PropertyType.Object)
                 snippetBuilder.AppendLine(
-                    $"{propertyAssignment}.set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}({builder.ToString()});");
+                    $"{propertyAssignment}.set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}({builder.ToString()})");
             else
                 snippetBuilder.Append($"{builder.ToString()},");
         }
@@ -301,7 +301,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var enumClass = enumParts.First();
         var enumValue = enumParts.Last().ToLower();
         snippetBuilder.AppendLine(
-            $"{parentPropertyName}.set{NormalizeVariableName(currentProperty.Name).ToFirstCharacterUpperCase()}({enumClass}('{enumValue}'));");
+            $"{parentPropertyName}.set{NormalizeVariableName(currentProperty.Name).ToFirstCharacterUpperCase()}({enumClass}('{enumValue}'))");
     }
 
     private static void WriteBase64Url(string propertyAssignment, CodeProperty parent, StringBuilder snippetBuilder, IndentManager indentManager, CodeProperty child)
@@ -309,7 +309,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var fromObject = parent.PropertyType == PropertyType.Object;
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}(base64_decode(\'{child.Value}\'));");
+                $"{indentManager.GetIndent()}{propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}(base64_decode(\'{child.Value}\'))");
         else
             snippetBuilder.Append("null,");
     }
@@ -321,7 +321,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         if (fromObject)
         {
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.set{NormalizeVariableName(codeProperty.Name)?.ToFirstCharacterUpperCase()}('{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}');");
+                $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.set{NormalizeVariableName(codeProperty.Name)?.ToFirstCharacterUpperCase()}('{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}')");
         }
         else
             snippetBuilder.Append($"\'{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}\', ");
