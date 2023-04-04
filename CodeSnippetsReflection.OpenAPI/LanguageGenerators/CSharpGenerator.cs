@@ -326,7 +326,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             var functionName = x.Segment.Split('(').First();
                                             var parameters = x.Segment.Split('(').Last().TrimEnd(')').Split(',')
                                                 .Select(static s => $"With{s.Split('=').First().ToFirstCharacterUpperCase()}")
-                                                .Aggregate(static (a, b) => $"{a}{b}");;
+                                                .Aggregate(static (a, b) => $"{a}{b}");
                                             var parametersValues = x.Segment.Split('(').Last().TrimEnd(')').Split(',')
                                                 .Select(static s => $"\"{s.Split('=').Last().Trim('\'')}\"")
                                                 .Aggregate(static (a, b) => $"{a},{b}");
