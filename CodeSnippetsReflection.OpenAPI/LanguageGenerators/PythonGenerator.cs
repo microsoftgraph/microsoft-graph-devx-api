@@ -14,7 +14,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     private const string ClientVarName = "client";
     private const string ClientVarType = "GraphServiceClient";
     private const string HttpCoreVarName = "request_adapter";
-    private const string RequestBodyVarName = "requestBody";
+    private const string RequestBodyVarName = "request_body";
     private const string QueryParametersVarName = "query_params";
     private const string RequestConfigurationVarName = "request_config";
     private const string RequestHeadersVarName = "headers";
@@ -52,10 +52,11 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
     {
         var snippetBuilder = new StringBuilder();
-        if (!model.HasParameters()) return default;
+        if (!model.HasParameters()) 
+            return default;
 
         var className = $"{model.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
-        snippetBuilder.AppendLine($"{QueryParametersVarName} = {className}();");
+        snippetBuilder.AppendLine($"{QueryParametersVarName} = {className};");
         foreach(var queryParam in model.Parameters) {
             snippetBuilder.AppendLine($"{indentManager.GetIndent()}{QueryParametersVarName}.{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()} = {EvaluateParameter(queryParam)};");
         }
