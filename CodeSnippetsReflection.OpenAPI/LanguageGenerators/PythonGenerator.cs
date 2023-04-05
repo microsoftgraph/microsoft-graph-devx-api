@@ -347,9 +347,9 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 })
         .Aggregate(static (x, y) =>
             {
-                var dot = y.StartsWith("by_id") ? string.Empty : ".";
+                var dot = y.StartsWith("by_id") ? "_" : ".";
                 return $"{x.Trim('$')}{dot}{y.Trim('$')}";
-            }).Replace("()ById(", "_by_id(")
+            }).Replace("()ById(", "by_id(")
               .Replace("()().", "().");
         }
 }
