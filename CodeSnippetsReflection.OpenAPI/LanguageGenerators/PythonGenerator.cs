@@ -338,7 +338,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
 
             return openApiUrlTreeNodes.Select(static x => {
                 if(x.Segment.IsCollectionIndex())
-                    return $"_by_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
+                    return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}";
                 if (x.Segment.IsFunction())
                     return x.Segment.RemoveFunctionBraces().Split('.')
                         .Select(static s => s.ToFirstCharacterLowerCase())
