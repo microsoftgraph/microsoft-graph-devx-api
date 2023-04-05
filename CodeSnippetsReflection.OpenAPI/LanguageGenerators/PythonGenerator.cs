@@ -24,7 +24,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var codeGraph = new SnippetCodeGraph(snippetModel);
         var snippetBuilder = new StringBuilder(
                                     "// THE PYTHON SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-                    $"{ClientVarName} =  {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+                    $"{ClientVarName} =  {ClientVarType}({HttpCoreVarName}){Environment.NewLine}{Environment.NewLine}");
 
         if (codeGraph.HasBody())
         {
@@ -338,7 +338,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
 
             return openApiUrlTreeNodes.Select(static x => {
                 if(x.Segment.IsCollectionIndex())
-                    return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}";
+                    return $"_by_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
                 if (x.Segment.IsFunction())
                     return x.Segment.RemoveFunctionBraces().Split('.')
                         .Select(static s => s.ToFirstCharacterLowerCase())
@@ -349,7 +349,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             {
                 var dot = y.StartsWith("ById") ? string.Empty : ".";
                 return $"{x.Trim('$')}{dot}{y.Trim('$')}";
-            }).Replace("()ById(", "ById(")
+            }).Replace("()ById(", "_by_id(")
               .Replace("()().", "().");
         }
 }
