@@ -338,7 +338,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
 
             return openApiUrlTreeNodes.Select(static x => {
                 if(x.Segment.IsCollectionIndex())
-                    return $"_by_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
+                    return $"by_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
                 if (x.Segment.IsFunction())
                     return x.Segment.RemoveFunctionBraces().Split('.')
                         .Select(static s => s.ToFirstCharacterLowerCase())
@@ -349,7 +349,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             {
                 var dot = y.StartsWith("by_id") ? string.Empty : ".";
                 return $"{x.Trim('$')}{dot}{y.Trim('$')}";
-            }).Replace("()ById(", "by_id(")
+            }).Replace("()ById(", "_by_id(")
               .Replace("()().", "().");
         }
 }
