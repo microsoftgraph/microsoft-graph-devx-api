@@ -349,7 +349,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             {
                 var dot = y.StartsWith("by_id") ? string.Empty : "_";
                 return $"{x.Trim('$')}{dot}{y.Trim('$')}";
-            }).Replace("()ById(", "by_id(")
+            }).Replace("()ById(", "_by_id(")
               .Replace("()().", "().");
         }
 }
