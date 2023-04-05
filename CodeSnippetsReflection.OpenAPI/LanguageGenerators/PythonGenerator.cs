@@ -85,14 +85,12 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload))
         {
             var className = $"{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
-            snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}()");
-            snippetBuilder.AppendLine();
+            snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}(");
+            indentManager.Indent();
             snippetBuilder.Append(queryParamsPayload);
             snippetBuilder.Append(requestHeadersPayload);
-            if (!string.IsNullOrEmpty(queryParamsPayload))
-                snippetBuilder.AppendLine($"{RequestConfigurationVarName}.queryParameters = {QueryParametersVarName}");
-            if (!string.IsNullOrEmpty(requestHeadersPayload))
-                snippetBuilder.AppendLine($"{RequestConfigurationVarName}.headers = {RequestHeadersVarName}");
+            indentManager.Unindent();
+            snippetBuilder.AppendLine($")");
             snippetBuilder.AppendLine();
         }
         
