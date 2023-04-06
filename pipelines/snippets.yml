@@ -5,13 +5,13 @@
 
 trigger: none
 pr: none
-schedules:
-   - cron: "30 12 * * 3"
-     displayName: Weekly Wednesday snippets updates
-     branches:
-       include:
-       - cli_preview
-     always: true
+# schedules:
+#    - cron: "30 12 * * 3"
+#      displayName: Weekly Wednesday snippets updates
+#      branches:
+#        include:
+#        - cli_preview
+#      always: true
 
 resources:
  repositories:
@@ -19,7 +19,7 @@ resources:
      type: github
      endpoint: microsoftgraph
      name: microsoftgraph/microsoft-graph-docs
-     ref: docs-cli
+     ref: docs-sdk-previews
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -28,7 +28,7 @@ pool:
 parameters:
   - name: snippetLanguages
     type: object
-    default: ['C#', 'JavaScript', 'Java', 'Go', 'PowerShell', 'PHP']
+    default: ['PowerShell', 'TypeScript', 'Cli']
     displayName: 'Languages to generate snippets for'
 
 variables:
