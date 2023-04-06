@@ -7,7 +7,6 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using CodeSnippetsReflection.OData;
 using CodeSnippetsReflection.OpenAPI;
-using System.Collections.Generic;
 
 namespace CodeSnippetsReflection.App
 {
@@ -91,19 +90,10 @@ namespace CodeSnippetsReflection.App
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
 
             var originalGeneration = generation;
-
-            var openApiLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "go",
-                "powershell",
-                "typescript",
-                "php",
-                "cli"
-            };
-
+            
             Parallel.ForEach(supportedLanguages, language =>
             {
-                if(openApiLanguages.Contains(language))
+                if(OpenApiSnippetsGenerator.SupportedLanguages.Contains(language))
                     generation = "openapi";
                 else
                     generation = originalGeneration;
@@ -133,6 +123,7 @@ namespace CodeSnippetsReflection.App
             streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
 
             string snippet;
+            var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
             try
             {
                 // This is a very fast operation, it is fine to make is synchronuous.
@@ -145,19 +136,22 @@ namespace CodeSnippetsReflection.App
              }
             catch (Exception e)
             {
-                Console.Error.WriteLine($"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}");
+                var message = $"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}";
+                Console.Error.WriteLine(message);
+                File.WriteAllText(filePath + "-error", message);
                 return;
             }
 
             if (!string.IsNullOrWhiteSpace(snippet))
             {
-                var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
                 Console.WriteLine($"Writing snippet: {filePath}");
                 File.WriteAllText(filePath, snippet);
             }
             else
             {
-                Console.WriteLine($"Failed to generate {language} snippets for {file}.");
+                var message = $"Failed to generate {language} snippets for {file}.";
+                File.WriteAllText(filePath + "-error", message);
+                Console.Error.WriteLine(message);
             }
         }
     }

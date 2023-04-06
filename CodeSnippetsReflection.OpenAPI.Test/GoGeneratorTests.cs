@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -33,6 +32,17 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains(".Me().Messages()", result);
+        }
+        [Fact]
+        public async Task GeneratesMeImportFromUserPackage()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages?$select=sender,subject");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("import", result);
+            Assert.Contains("graphconfig \"github.com/microsoftgraph/msgraph-sdk-go/users\"", result);
+            Assert.Contains("msgraphsdk \"github.com/microsoftgraph/msgraph-sdk-go\"", result);
             Assert.Contains(".Me().Messages()", result);
         }
         [Fact]
@@ -79,7 +89,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient := msgraphsdk.NewGraphServiceClient(requestAdapter)", result);
+            Assert.Contains("graphClient := msgraphsdk.NewGraphServiceClientWithCredentials(cred, scopes)", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall() {
@@ -224,7 +234,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("map[string]interface{}{", result);
             Assert.Contains("[]string {", result);
             Assert.Contains("SetAdditionalData", result);
-            Assert.Contains("members", result); // property name hasn't been changed
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
         }
         [Fact]
@@ -255,6 +264,25 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("configuration :=", result);
             Assert.Contains("requestParameters :=", result);
             Assert.Contains("result, err := graphClient.UsersById(\"user-id\").Get(context.Background(), configuration)", result);
+        }
+        [Fact]
+        public async Task GeneratesODataTypesAreEscaped()
+        {
+            const string jsonObject = @"
+{
+  ""@odata.id"": ""https://graph.microsoft.com/v1.0/directoryObjects/{id}""
+}
+";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups/{{group-id}}/members/$ref")
+            {
+                Content = new StringContent(jsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestBody := graphmodels.NewReferenceCreate()", result);
+            Assert.Contains("requestBody.SetOdataId(&odataId)", result);
+            Assert.Contains("odataId := \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"", result);
+            Assert.Contains("graphClient.GroupsById(\"group-id\").Members().Ref().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesCountBooleanQueryParameters() {
@@ -294,6 +322,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("import", result);
+            Assert.Contains("abstractions \"github.com/microsoft/kiota-abstractions-go\"", result);
             Assert.Contains("headers := abstractions.NewRequestHeaders()", result);
             Assert.Contains("headers.Add(\"ConsistencyLevel\", \"eventual\")", result);
             Assert.Contains("graphconfig.GroupsRequestBuilderGetRequestConfiguration", result);
@@ -360,7 +390,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Directory().DeletedItems().Group().Get(context.Background(), nil)", result);
+            Assert.Contains("graphClient.Directory().DeletedItems().GraphGroup().Get(context.Background(), nil)", result);
         }
         [Fact]
         public async Task DoesntFailOnTerminalSlash() {

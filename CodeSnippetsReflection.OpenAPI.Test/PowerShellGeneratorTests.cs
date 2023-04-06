@@ -233,7 +233,27 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("-Search \"displayName:Megan\"", result);
+            Assert.Contains("-Search '\"displayName:Megan\"'", result);
+            Assert.Contains("-ConsistencyLevel eventual", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithORLogicalConjuction()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" OR \"displayName:al\"");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-Search '\"displayName:di\" OR \"displayName:al\"'", result);
+            Assert.Contains("-ConsistencyLevel eventual", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjuction()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" AND \"displayName:al\"");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-Search '\"displayName:di\" AND \"displayName:al\"'", result);
             Assert.Contains("-ConsistencyLevel eventual", result);
         }
 
@@ -259,8 +279,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
-                $"DisplayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
-                $"City = \"Seattle\"{Environment.NewLine}}}";
+                $"displayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
+                $"city = \"Seattle\"{Environment.NewLine}}}";
             Assert.Contains(expectedParams, result);
             Assert.Contains("-BodyParameter $params", result);
         }
@@ -282,8 +302,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
-                $"DisplayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
-                $"City = \"Seattle\"{Environment.NewLine}\t" +
+                $"displayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
+                $"city = \"Seattle\"{Environment.NewLine}\t" +
                 $"PasswordProfile = @{{{Environment.NewLine}\t\t" +
                 $"Password = \"2d79ba3a-b03a-9ed5-86dc-79544e262664\"{Environment.NewLine}\t\t" +
                 $"ForceChangePasswordNextSignIn = $false{Environment.NewLine}\t" +
@@ -306,8 +326,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
-                $"DisplayName = \"Library Assist\"{Environment.NewLine}\t" +
-                $"GroupTypes = @({Environment.NewLine}\t\t" +
+                $"displayName = \"Library Assist\"{Environment.NewLine}\t" +
+                $"groupTypes = @({Environment.NewLine}\t\t" +
                 $"\"Unified\"{Environment.NewLine}\t\t" +
                 $"\"DynamicMembership\"{Environment.NewLine}\t" +
                 $"){Environment.NewLine}" +

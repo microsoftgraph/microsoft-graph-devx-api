@@ -22,14 +22,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string modulePrefix = "Microsoft.Graph";
         private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
         private readonly Lazy<IList<PowerShellCommandInfo>> psCommands = new(
-            () => {
+            () =>
+            {
                 using var httpClient = new HttpClient();
                 using var stream = httpClient.GetStreamAsync(mgCommandMetadataUrl).GetAwaiter().GetResult();
                 return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
             },
             LazyThreadSafetyMode.PublicationOnly
         );
-        private static Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -59,7 +60,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var commandParameters = GetCommandParameters(snippetModel, payloadVarName);
                 if (!string.IsNullOrEmpty(commandParameters))
                     snippetBuilder.Append($"{commandParameters}");
-                if (RequiresMIMEContentOutPut(snippetModel,path))
+                if (RequiresMIMEContentOutPut(snippetModel, path))
                 {
                     //Allows genration of an output file for MIME content of the message
                     snippetBuilder.Append($" -OutFile $outFileId");
@@ -171,12 +172,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (normalizedParameterName.Equals("CountVariable"))
                 return "CountVar";
-
+            if (normalizedParameterName.Equals("Search"))
+                return $"'\"{originalValue.Replace("+", " ")}\"'";
             if (originalValue.Equals("true", StringComparison.OrdinalIgnoreCase) || originalValue.Equals("false", StringComparison.OrdinalIgnoreCase))
                 return originalValue.ToLowerInvariant();
             else if (int.TryParse(originalValue, out var intValue))
                 return intValue.ToString();
-            else {
+            else
+            {
                 var valueWithNested = originalValue.Split(',')
                                                     .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
                                                     .Aggregate((a, b) => $"{a},{b}");
@@ -187,7 +190,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string NormalizeQueryParameterName(string queryParam)
         {
             string psParameterName = queryParam.TrimStart('$').ToLower().ToFirstCharacterUpperCase();
-            return psParameterName switch {
+            return psParameterName switch
+            {
                 "Select" => "Property",
                 "Expand" => "ExpandProperty",
                 "Count" => "CountVariable",
@@ -196,7 +200,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             };
         }
 
-        private static Regex nestedStatementRegex = new(@"(\w+|\w+\/\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex nestedStatementRegex = new(@"(\w+|\w+\/\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams)
         {
             var replacements = new Dictionary<string, string>();
@@ -212,7 +216,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return (queryParams, replacements);
         }
 
-        private static Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
         {
             if (psCommands.Value.Count == 0)
@@ -256,7 +260,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             .Select(x => new Tuple<JsonProperty, OpenApiSchema>(x, schema?.GetPropertySchema(x.Name)));
             foreach (var propertyAndSchema in propertiesAndSchema)
             {
-                var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterUpperCase();
+                var propertyName = propertyAndSchema.Item1.Name;
                 // Enclose in quotes if property name contains a non-word character.
                 if (Regex.IsMatch(propertyName, "\\W", RegexOptions.None, TimeSpan.FromSeconds(5))) { propertyName = $"\"{propertyName}\""; }
                 var propertyAssignment = includePropertyAssignment ? $"{indentManager.GetIndent()}{propertyName} = " : string.Empty;

@@ -10,9 +10,8 @@
     <None Remove="appsettingstest.json" />
     <None Remove="TestFiles\appsettingstest-empty.json" />
     <None Remove="TestFiles\appsettingstest-invalid.json" />
-    <None Remove="TestFiles\permissions-test-file-v1.0_empty.json" />
-    <None Remove="TestFiles\permissions-test-file-v1.0_ver1.json" />
-    <None Remove="TestFiles\permissions-test-file-v1.0_ver2.json" />
+    <None Remove="TestFiles\permissions-test-file-empty.json" />
+    <None Remove="TestFiles\permissions-test-file.json" />
     <None Remove="TestFiles\ScopesInformationList-test-file.json" />
     <None Remove="TestFiles\ScopesInformationList-test-file_es-ES.json" />
     <None Remove="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file_es-ES.json" />
@@ -20,34 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file_es-ES.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestFiles\Org\Repo\Branch\TestFiles\ScopesInformationList-test-file.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestFiles\appsettingstest-empty.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestFiles\appsettingstest-invalid.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestFiles\appsettingstest-valid.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestFiles\permissions-test-file-v1.0_empty.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestFiles\permissions-test-file-v1.0_ver1.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestFiles\permissions-test-file-v1.0_ver2.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestFiles\ScopesInformationList-test-file_es-ES.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TestFiles\ScopesInformationList-test-file.json">
+    <Content Include="TestFiles\**">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -61,7 +33,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
       <PrivateAssets>all</PrivateAssets>

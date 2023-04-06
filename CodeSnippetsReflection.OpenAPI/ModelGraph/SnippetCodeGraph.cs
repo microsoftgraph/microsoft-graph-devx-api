@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Expressions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 
@@ -125,6 +126,14 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         public Boolean HasReturnedBody(){
             return !(ResponseSchema == null || (ResponseSchema.Properties.Count == 1 && ResponseSchema.Properties.First().Key.Equals("error", StringComparison.OrdinalIgnoreCase)));
+        }
+        public Boolean RequiresRequestConfig()
+        {
+            return HasHeaders() || HasOptions() || HasParameters();
+        }
+
+        public Boolean HasJsonBody(){
+            return HasBody() && Body.PropertyType != PropertyType.Binary;
         }
 
         ///
@@ -353,11 +362,12 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             if ((propSchema?.Enum.Count ?? 0) == 0 && enumSchema == null)
                 return new CodeProperty { Name = propertyName, Value = escapeSpecialCharacters(value.GetString()), PropertyType = PropertyType.String, Children = new List<CodeProperty>() };
             enumSchema ??= propSchema;
-            var propValue = String.IsNullOrWhiteSpace(value.GetString()) ? null : $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{value.GetString().ToFirstCharacterUpperCase()}";
             // Pass the list of options in the enum as children so that the language generators may use them for validation if need be, 
             var enumValueOptions = enumSchema?.Enum.Where(option => option is OpenApiString)
                                                                 .Select(option => new CodeProperty{Name = ((OpenApiString)option).Value,Value = ((OpenApiString)option).Value,PropertyType = PropertyType.String})
                                                                 .ToList() ?? new List<CodeProperty>();
+            var propValue = String.IsNullOrWhiteSpace(value.GetString()) ? $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{enumValueOptions.FirstOrDefault().Value.ToFirstCharacterUpperCase()}" : $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{value.GetString().ToFirstCharacterUpperCase()}";
+
             return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = enumValueOptions ,NamespaceName = GetNamespaceFromSchema(enumSchema)};
         }
 

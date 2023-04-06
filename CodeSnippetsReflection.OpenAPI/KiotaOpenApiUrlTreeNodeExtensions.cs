@@ -63,8 +63,8 @@ namespace CodeSnippetsReflection.OpenAPI {
                     ?.Split(pathNameSeparator, StringSplitOptions.RemoveEmptyEntries)
                     ?.Select(replaceSingleParameterSegmentByItem)
                     ?.Select(static x => CleanupParametersFromPath((x ?? string.Empty).Split('.', StringSplitOptions.RemoveEmptyEntries)
-                        ?.Select(static x => x.TrimStart('$')) //$ref from OData
-                        .Last()))
+                        ?.Select(static x => x.TrimStart('$').ToFirstCharacterUpperCase()) //$ref from OData
+                        .Aggregate(static (x,y) => $"{x}{y}")))
                     ?.Select(static x => x.CleanupSymbolName())
                     ?.Aggregate(string.Empty, 
                         static (x, y) => $"{x}{GetDotIfBothNotNullOfEmpty(x, y)}{y}") :
