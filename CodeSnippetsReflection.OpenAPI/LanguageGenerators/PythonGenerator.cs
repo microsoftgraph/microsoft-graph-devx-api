@@ -33,7 +33,6 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
         return snippetBuilder.ToString();
     }
-
     private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder snippetBuilder, IndentManager indentManager)
     {
         var method = codeGraph.HttpMethod.Method.ToLower();
@@ -47,7 +46,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var returnVar = codeGraph.HasReturnedBody() ? "result = " : string.Empty;
         var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
         snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-        snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList})");
+        snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList}, {RequestHeadersVarName}={configParameter})");
     }
     private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
     {
@@ -80,12 +79,14 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     {
         var snippetBuilder = new StringBuilder();
         var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager);
-        var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
+        var requestHeadersPayload = GetRequestHeaders(codeGraph);
 
         if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload))
         {
             var className = $"{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}(");
+            snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}(query_params={queryParamsPayload})");
+
             indentManager.Indent();
             snippetBuilder.Append(queryParamsPayload);
             snippetBuilder.Append(requestHeadersPayload);
@@ -104,23 +105,24 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         return string.Empty;
     }
     
-    private static string GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager) {
+    private static string GetRequestHeaders(SnippetCodeGraph snippetModel) {
         var snippetBuilder = new StringBuilder();
         var filteredHeaders = snippetModel.Headers?.Where(static h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
-        if(filteredHeaders != null && filteredHeaders.Any()) {
-            snippetBuilder.AppendLine($"{indentManager.GetIndent()}{RequestHeadersVarName} = [");
-            indentManager.Indent();
+        if (filteredHeaders != null && filteredHeaders.Any())
+            {
+            List<Tuple<string, string>> headers = new List<Tuple<string, string>>();
+
             filteredHeaders.ForEach(h =>
-                snippetBuilder.AppendLine($"{indentManager.GetIndent()}'{h.Name}' => '{h.Value.Replace("\'", "\\'")}',")
+                headers.Add(new Tuple<string, string>(h.Name, h.Value.Replace("\'", "\\'")))
             );
-            indentManager.Unindent();
-            snippetBuilder.AppendLine($"{indentManager.GetIndent()}]");
-            snippetBuilder.AppendLine();
+
+            snippetBuilder.Append(headers.ToString());
             return snippetBuilder.ToString();
         }
-        return default;
-    }
+
+    return default;
+}
     private static string NormalizeQueryParameterName(string queryParam) => queryParam?.TrimStart('$').ToFirstCharacterLowerCase();
     private static void WriteObjectProperty(string propertyAssignment, StringBuilder snippetBuilder, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default, SnippetCodeGraph codeGraph = default)
     {
@@ -328,7 +330,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     private static string NormalizeVariableName(string variable) =>
         variable.Replace(".", String.Empty).Replace("-", string.Empty);
     
-     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
+    private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
             var openApiUrlTreeNodes = nodes.ToList();
             if(!(openApiUrlTreeNodes?.Any() ?? false)) 
