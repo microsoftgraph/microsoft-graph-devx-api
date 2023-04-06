@@ -48,23 +48,19 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
         snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList}, {RequestHeadersVarName}={configParameter})");
     }
-    private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
-    {
-        var snippetBuilder = new StringBuilder();
-        if (!model.HasParameters()) 
-            return default;
-
-        var className = $"{model.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
-        snippetBuilder.AppendLine($"{QueryParametersVarName} = {className}()");
-        foreach(var queryParam in model.Parameters) {
-            snippetBuilder.AppendLine($"{indentManager.GetIndent()}{QueryParametersVarName}.{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()} = {EvaluateParameter(queryParam)}");
+    private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager)
+        {
+            var snippetBuilder = new StringBuilder();
+            if (!model.HasParameters())
+                return default;
+            foreach (var queryParam in model.Parameters)
+            {
+                var queryParameterName = NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase();
+                snippetBuilder.AppendLine($"{indentManager.GetIndent()}params['{queryParameterName}'] = {EvaluateParameter(queryParam)}");
+            }
+            indentManager.Unindent();
+            return snippetBuilder.ToString();
         }
-        indentManager.Unindent();
-        snippetBuilder.AppendLine();
-        return snippetBuilder.ToString();
-
-    }
-    
     private static string EvaluateParameter(CodeProperty param)
     {
         return param.PropertyType switch
@@ -76,27 +72,16 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         };
     }
     private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
-    {
-        var snippetBuilder = new StringBuilder();
-        var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager);
-        var requestHeadersPayload = GetRequestHeaders(codeGraph);
-
-        if (!string.IsNullOrEmpty(queryParamsPayload) || !string.IsNullOrEmpty(requestHeadersPayload))
         {
+            var snippetBuilder = new StringBuilder();
             var className = $"{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager);     
             snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}(");
             snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}(query_params={queryParamsPayload})");
-
-            indentManager.Indent();
-            snippetBuilder.Append(queryParamsPayload);
-            snippetBuilder.Append(requestHeadersPayload);
-            indentManager.Unindent();
-            snippetBuilder.AppendLine($")");
-            snippetBuilder.AppendLine();
+            var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
+            snippetBuilder.AppendLine(requestHeadersPayload);
+            return snippetBuilder.ToString();
         }
-        
-        return (snippetBuilder.Length > 0 ? snippetBuilder.ToString() : default);
-    }
     private static string GetActionParametersList(params string[] parameters) {
         var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
         var emptyParameters = nonEmptyParameters.ToList();
@@ -105,24 +90,21 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         return string.Empty;
     }
     
-    private static string GetRequestHeaders(SnippetCodeGraph snippetModel) {
+   private static string GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager)
+    {
         var snippetBuilder = new StringBuilder();
         var filteredHeaders = snippetModel.Headers?.Where(static h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
-        if (filteredHeaders != null && filteredHeaders.Any())
-            {
-            List<Tuple<string, string>> headers = new List<Tuple<string, string>>();
+        if (!snippetModel.HasHeaders())
+            return default;
 
-            filteredHeaders.ForEach(h =>
-                headers.Add(new Tuple<string, string>(h.Name, h.Value.Replace("\'", "\\'")))
-            );
-
-            snippetBuilder.Append(headers.ToString());
-            return snippetBuilder.ToString();
+        foreach (var header in snippetModel.Headers)
+        {
+            snippetBuilder.AppendLine($"{indentManager.GetIndent()}headers['{header.Name}'] = {EvaluateParameter(header)}");
         }
 
-    return default;
-}
+        return snippetBuilder.ToString();
+    }
     private static string NormalizeQueryParameterName(string queryParam) => queryParam?.TrimStart('$').ToFirstCharacterLowerCase();
     private static void WriteObjectProperty(string propertyAssignment, StringBuilder snippetBuilder, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default, SnippetCodeGraph codeGraph = default)
     {
