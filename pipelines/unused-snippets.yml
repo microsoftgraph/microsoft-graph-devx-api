@@ -5,13 +5,13 @@
 
 trigger: none
 pr: none
-schedules:
-  - cron: "30 12 * * 3"
-    displayName: Weekly Wednesday unused snippets removal
-    branches:
-      include:
-      - master
-    always: true
+# schedules:
+#   - cron: "30 12 * * 3"
+#     displayName: Weekly Wednesday unused snippets removal
+#     branches:
+#       include:
+#       - master
+#     always: true
 
 resources:
  repositories:
@@ -19,7 +19,7 @@ resources:
      type: github
      endpoint: microsoftgraph
      name: microsoftgraph/microsoft-graph-docs
-     ref: docs-cli
+     ref: docs-sdk-previews
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -37,7 +37,7 @@ steps:
 
 - pwsh: |
     # override branch prefix incase the run is manually triggered
-    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-cli-snippet-generation" } else { "cli-snippet-generation" }
+    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-snippet-generation" } else { "snippet-generation" }
     Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
     Write-Host "Branch prefix is $branchPrefix"
   displayName: 'Evaluate branch prefix to use'
