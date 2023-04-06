@@ -16,7 +16,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     private const string HttpCoreVarName = "request_adapter";
     private const string RequestBodyVarName = "request_body";
     private const string QueryParametersVarName = "query_params";
-    private const string RequestConfigurationVarName = "request_config";
+    private const string RequestConfigurationVarName = "request_configuration";
     private const string RequestHeadersVarName = "headers";
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
@@ -46,7 +46,8 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var returnVar = codeGraph.HasReturnedBody() ? "result = " : string.Empty;
         var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
         snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-        snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList}, {RequestHeadersVarName}={configParameter})");
+        snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList})"); 
+
     }
     private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager) 
     {
@@ -57,7 +58,8 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var className = $"{model.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{model.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
         snippetBuilder.AppendLine($"{QueryParametersVarName} = {className}()");
         foreach(var queryParam in model.Parameters) {
-            snippetBuilder.AppendLine($"{indentManager.GetIndent()}{QueryParametersVarName}.{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()} = {EvaluateParameter(queryParam)}");
+            snippetBuilder.AppendLine($"{indentManager.GetIndent()}{QueryParametersVarName}['{NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase()}'] = {EvaluateParameter(queryParam)}");
+
         }
         indentManager.Unindent();
         snippetBuilder.AppendLine();
@@ -65,6 +67,8 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
 
     }
     
+   
+
     private static string EvaluateParameter(CodeProperty param)
     {
         return param.PropertyType switch
@@ -75,6 +79,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             _ => $"\"{param.Value.EscapeQuotes()}\""
         };
     }
+
     private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
     {
         var snippetBuilder = new StringBuilder();
