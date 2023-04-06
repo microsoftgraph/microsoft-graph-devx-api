@@ -17,8 +17,8 @@ resources:
  repositories:
    - repository: microsoft-graph-docs
      type: github
-     endpoint: microsoftgraph
-     name: microsoftgraph/microsoft-graph-docs
+     endpoint: timayabi2020
+     name: timayabi2020/microsoft-graph-docs
      ref: docs-sdk-previews
 
 pool:
