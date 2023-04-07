@@ -1074,6 +1074,48 @@ namespace OpenAPIService.Test
                                 }
                             }
                         }
+                    },
+                    ["/groups/{group-id}/sites/{site-id}/termStore/groups/{group-id1}/sets/{set-id}"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "groups.sites.termStore.groups.GetSets",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/print/taskDefinitions/{printTaskDefinition-id}/tasks/{printTask-id}/trigger"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "print.taskDefinitions.tasks.GetTrigger",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 Components = new OpenApiComponents

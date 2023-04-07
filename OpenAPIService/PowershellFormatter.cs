@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -94,7 +94,7 @@ namespace OpenAPIService
             if (_singularizeOperationIds)
             {
                 operationId = SingularizeAndDeduplicateOperationId(operationId);
-            }            
+            }
 
             var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 
@@ -145,7 +145,7 @@ namespace OpenAPIService
         private static string ResolveActionFunctionOperationId(OpenApiOperation operation)
         {
             var operationId = operation.OperationId;
-            var segments = operationId.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries).ToList();
+            var segments = operationId.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
             // Remove ODataKeySegment values from OperationIds of actions and functions paths.
             // This is to prevent breaking changes of OperationId values already
@@ -219,24 +219,21 @@ namespace OpenAPIService
 
             // drives does not properly singularize to drive.
             Vocabularies.Default.AddSingular("(drive)s$", "$1");
-            
+            // exclude the following from singularization.
+            Vocabularies.Default.AddSingular("(data)$", "$1");
+
             var segments = operationId.Split('.').ToList();
 
             // The last segment is ignored as a rule.
-            for (int x = segments.Count - 2; x >= 0; x--)
+            for (int x = 0; x < segments.Count - 1; x++)
             {
                 var segment = segments[x].Singularize(inputIsKnownToBePlural: false);
                 segments[x] = segment;
-
-                // If a segment name is contained in another segment,
-                // the former is considered a duplicate.
-                for (int y = x - 1; y >= 0; y--)
+                // If a segment name is contained in the previous segment,
+                // the latter is considered a duplicate.
+                if (x > 0 && segments[x - 1].Equals(segments[x], StringComparison.OrdinalIgnoreCase))
                 {
-                    if (segments[y].Contains(segment, StringComparison.OrdinalIgnoreCase))
-                    {
-                        segments.RemoveAt(x);
-                        break;
-                    }
+                    segments.RemoveAt(x);
                 }
             }
 
