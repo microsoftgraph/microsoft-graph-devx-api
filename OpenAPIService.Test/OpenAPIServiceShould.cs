@@ -358,7 +358,7 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(17, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(20, subsetOpenApiDocument.Paths.Count);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Schemas);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);
@@ -416,6 +416,7 @@ namespace OpenAPIService.Test
         [InlineData("drives.drive.ListDrive", "drive_ListDrive", OperationType.Get)]
         [InlineData("print.taskDefinitions.tasks.GetTrigger", "print.taskDefinition.task_GetTrigger", OperationType.Get)]
         [InlineData("groups.sites.termStore.groups.GetSets", "group.site.termStore.group_GetSets", OperationType.Get)]
+        [InlineData("external.industryData.ListDataConnectors", "external.industryData_ListDataConnectors", OperationType.Get)]
         [InlineData("applications.application.UpdateLogo", "application_SetLogo", OperationType.Put)]
         [InlineData("identityGovernance.lifecycleWorkflows.workflows.workflow.activate", "identityGovernance.lifecycleWorkflow.workflow_activate", OperationType.Post)]
         public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string operationId, string expectedOperationId, OperationType operationType)

@@ -1116,6 +1116,27 @@ namespace OpenAPIService.Test
                                 }
                             }
                         }
+                    },
+                    ["/external/industryData/dataConnectors"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "external.industryData.ListDataConnectors",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 Components = new OpenApiComponents
