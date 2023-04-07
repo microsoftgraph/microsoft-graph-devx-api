@@ -456,6 +456,27 @@ namespace OpenAPIService.Test
                             }
                         }
                     },
+                    ["/users/$count"] = new OpenApiPathItem() // root path
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "users.GetCount-ee47",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     ["/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore"] = new OpenApiPathItem()
                     {
                         Operations = new Dictionary<OperationType, OpenApiOperation>
