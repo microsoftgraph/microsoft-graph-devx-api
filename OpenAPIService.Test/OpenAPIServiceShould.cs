@@ -415,8 +415,8 @@ namespace OpenAPIService.Test
         [Theory]
         [InlineData("drives.drive.ListDrive", "drive_ListDrive", OperationType.Get)]
         [InlineData("print.taskDefinitions.tasks.GetTrigger", "print.taskDefinition.task_GetTrigger", OperationType.Get)]
-        [InlineData("groups.sites.termStore.groups.GetSets", "group.site.termStore.group_GetSets", OperationType.Get)]
-        [InlineData("external.industryData.ListDataConnectors", "external.industryData_ListDataConnectors", OperationType.Get)]
+        [InlineData("groups.sites.termStore.groups.GetSets", "group.site.termStore.group_GetSet", OperationType.Get)]
+        [InlineData("external.industryData.ListDataConnectors", "external.industryData_ListDataConnector", OperationType.Get)]
         [InlineData("applications.application.UpdateLogo", "application_SetLogo", OperationType.Put)]
         [InlineData("identityGovernance.lifecycleWorkflows.workflows.workflow.activate", "identityGovernance.lifecycleWorkflow.workflow_activate", OperationType.Post)]
         public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string operationId, string expectedOperationId, OperationType operationType)

@@ -223,21 +223,21 @@ namespace OpenAPIService
             Vocabularies.Default.AddSingular("(data)$", "$1");
 
             var segments = operationId.Split('.').ToList();
+            var segementsCount = segments.Count;
+            var lastSegmentIndex = segementsCount - 1;
+            var singularizedSegments = new List<string>();
 
-            // The last segment is ignored as a rule.
-            for (int x = 0; x < segments.Count - 1; x++)
+            for (int x = 0; x < segementsCount; x++)
             {
                 var segment = segments[x].Singularize(inputIsKnownToBePlural: false);
-                segments[x] = segment;
-                // If a segment name is contained in the previous segment,
-                // the latter is considered a duplicate.
-                if (x > 0 && segments[x - 1].Equals(segments[x], StringComparison.OrdinalIgnoreCase))
-                {
-                    segments.RemoveAt(x);
-                }
-            }
 
-            return string.Join(".", segments);
+                // If a segment name is contained in the previous segment, the latter is considered a duplicate.
+                // The last segment is ignored as a rule.
+                if ((x > 0 && x < lastSegmentIndex) && singularizedSegments.Last().Equals(segment, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                singularizedSegments.Add(segment);
+            }
+            return string.Join(".", singularizedSegments);
         }
     }
 }
