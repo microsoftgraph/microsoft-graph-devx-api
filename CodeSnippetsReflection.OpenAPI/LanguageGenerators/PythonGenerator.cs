@@ -59,7 +59,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             if (!model.HasParameters())
                 return default;
             snippetBuilder.AppendLine($"query_params = {classNameQueryParameters}(");
-            indentManager.Indent(4);
+            indentManager.Indent(2);
             foreach (var queryParam in model.Parameters)
             {
                 var queryParameterName = NormalizeQueryParameterName(queryParam.Name).ToFirstCharacterLowerCase();
@@ -86,19 +86,26 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             var className = $"{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             
             var classNameQueryParameters = $"{requestBuilderName}.{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
+            
             var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager, classNameQueryParameters);
-            snippetBuilder.AppendLine(queryParamsPayload);  
-            snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}(");
-            indentManager.Indent();
+            if (codeGraph.HasParameters() || codeGraph.HasParameters()){
+                snippetBuilder.AppendLine(queryParamsPayload); 
+                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}(");
+                indentManager.Indent(); 
+            }
+            
             var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
             if (codeGraph.HasParameters()){
                 snippetBuilder.AppendLine("query_parameters = query_params,");
+                 indentManager.Unindent();
+                snippetBuilder.AppendLine(")");
             }
             if (codeGraph.HasHeaders()) {
-            snippetBuilder.AppendLine(requestHeadersPayload);
+                snippetBuilder.AppendLine(requestHeadersPayload);
+                 indentManager.Unindent();
+                snippetBuilder.AppendLine(")");
             }
-            indentManager.Unindent();
-            snippetBuilder.AppendLine(")");
+           
             return snippetBuilder.ToString();
         }
     private static string GetActionParametersList(params string[] parameters) {
@@ -119,7 +126,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         
         var headersvar = new StringBuilder();
         headersvar.AppendLine("headers = {");
-        indentManager.Indent(4);
+        indentManager.Indent(2);
         foreach (var header in snippetModel.Headers)
         {
             headersvar.AppendLine($"{indentManager.GetIndent()}'{header.Name}' : {EvaluateParameter(header)},");

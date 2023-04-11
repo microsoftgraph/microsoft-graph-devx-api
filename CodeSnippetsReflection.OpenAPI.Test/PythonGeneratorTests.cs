@@ -44,7 +44,7 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->messagesById('message-id')", result);
+        Assert.Contains(".me.messages_by_id('message-id').get()", result);
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class PythonGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->get()", result);
+        Assert.Contains(".me.get()", result);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->usersById('user-id')->messages()->get();", result);
+        Assert.Contains(".users_by_id('user-id').messages.get()", result);
     }
 
     [Fact]
@@ -83,9 +83,10 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(@"query_params = UsersRequestBuilder.UsersRequestBuilderPostQueryParameters(
-           			select = [""displayName"",""mailNickName""],
-           )", result);
+        Assert.Contains(
+        @"query_params = UsersRequestBuilder.UsersRequestBuilderPostQueryParameters(
+            select = [""displayName"",""mailNickName""],
+            )", result);
         Assert.Contains("requestConfiguration.query_params = query_params;", result);
     }
 
@@ -185,7 +186,7 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphServiceClient->me()->messagesById('message-id')->delete()", result);
+        Assert.Contains(".me().messages_by_id('message-id').delete()", result);
     }
     
     [Fact]
@@ -198,7 +199,7 @@ public class PythonGeneratorTests
             };
        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
        var result = _generator.GenerateCodeSnippet(snippetModel);
-       Assert.Contains("$requestBody = new CreateReplyPostRequestBody();", result);
+       Assert.Contains("request_body = CreateReplyPostRequestBody();", result);
     }
 
     [Fact]
@@ -211,7 +212,7 @@ public class PythonGeneratorTests
 
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("->ref()", result);
+        Assert.Contains("-.ref()", result);
     }
 
     [Fact]
@@ -251,7 +252,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setAdditionalData($additionalData);", result);
+        Assert.Contains("request_body.AdditionalData(additionalData);", result);
     }
 
     [Fact]
@@ -260,7 +261,7 @@ public class PythonGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->activities()->recent()->get()", result);
+        Assert.Contains(".me().activities().recent().get()", result);
     }
 
     [Fact /*(Skip = "Should fail by default.")*/]
@@ -291,7 +292,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setCallOptions($callOptions);", result);
+        Assert.Contains("request_body->setCallOptions(callOptions);", result);
     }
     
     [Fact]
@@ -393,8 +394,8 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$location = new Location();", result);
-        Assert.Contains("$requestBody->setAttendees($attendeesArray);", result);
+        Assert.Contains("location = Location();", result);
+        Assert.Contains("request_body.setAttendees(attendeesArray);", result);
     }
 
     [Fact (Skip = "This is still not passing. Keeping to use during fixing of bug related.")]
