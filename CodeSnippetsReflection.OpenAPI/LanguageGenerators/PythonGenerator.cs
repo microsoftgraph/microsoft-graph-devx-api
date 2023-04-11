@@ -190,7 +190,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), snippetBuilder, child, indentManager, childPropertyName);
                 if (!fromArray)
                     snippetBuilder.AppendLine(
-                        $"{propertyAssignment.ToFirstCharacterLowerCase()}.{NormalizeVariableName(child.Name)} = ${(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()}");
+                        $"{propertyAssignment.ToFirstCharacterLowerCase()}.{NormalizeVariableName(child.Name)} = {(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()}");
                 break;
 			case PropertyType.Array:
 				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, snippetBuilder, parent, child, indentManager); 
@@ -222,7 +222,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var assignmentValue = $" \\DateInterval(\'{child.Value}\')";
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}${propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}({assignmentValue})");
+                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name.ToLower())} = {assignmentValue}");
         else
             snippetBuilder.Append($"{indentManager.GetIndent()}{assignmentValue},");
     }
@@ -263,7 +263,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         snippetBuilder.AppendLine("];");
         if (parent.PropertyType == PropertyType.Object)
             snippetBuilder.AppendLine(
-                $"{propertyAssignment}.set{NormalizeVariableName(currentProperty.Name.ToFirstCharacterUpperCase())}({NormalizeVariableName(currentProperty.Name).ToFirstCharacterLowerCase()})");
+                $"{propertyAssignment}.{NormalizeVariableName(currentProperty.Name.ToLower())}({NormalizeVariableName(currentProperty.Name).ToFirstCharacterLowerCase()})");
         snippetBuilder.AppendLine();
     }
     private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder snippetBuilder, CodeProperty parentProperty, CodeProperty codeProperty, IndentManager indentManager)
@@ -292,7 +292,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         if (lastProperty.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array)
         {
             builder.AppendLine(
-                $"{propertyAssignment}.set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}({arrayName})");
+                $"{propertyAssignment}.{NormalizeVariableName(codeProperty.Name).ToLower()}({arrayName})");
             snippetBuilder.AppendLine(builder.ToString());
         }
         else
@@ -300,7 +300,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             builder.Append(']');
             if (parentProperty.PropertyType == PropertyType.Object)
                 snippetBuilder.AppendLine(
-                    $"{propertyAssignment}.set{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}({builder.ToString()})");
+                    $"{propertyAssignment}.{NormalizeVariableName(codeProperty.Name).ToFirstCharacterUpperCase()}({builder.ToString()})");
             else
                 snippetBuilder.Append($"{builder.ToString()},");
         }
@@ -314,7 +314,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var enumClass = enumParts.First();
         var enumValue = enumParts.Last().ToLower();
         snippetBuilder.AppendLine(
-            $"{parentPropertyName}.set{NormalizeVariableName(currentProperty.Name).ToFirstCharacterUpperCase()}({enumClass}('{enumValue}'))");
+            $"{parentPropertyName}.{NormalizeVariableName(currentProperty.Name).ToFirstCharacterUpperCase()}({enumClass}('{enumValue}'))");
     }
 
     private static void WriteBase64Url(string propertyAssignment, CodeProperty parent, StringBuilder snippetBuilder, IndentManager indentManager, CodeProperty child)
@@ -322,7 +322,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var fromObject = parent.PropertyType == PropertyType.Object;
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment}.set{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}(base64_decode(\'{child.Value}\'))");
+                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}(base64_decode(\'{child.Value}\'))");
         else
             snippetBuilder.Append("null,");
     }

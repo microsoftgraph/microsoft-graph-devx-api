@@ -83,8 +83,10 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$queryParameters = new UsersRequestBuilderPostQueryParameters();", result);
-        Assert.Contains("$requestConfiguration->queryParameters = $queryParameters;", result);
+        Assert.Contains(@"query_params = UsersRequestBuilder.UsersRequestBuilderPostQueryParameters(
+           			select = [""displayName"",""mailNickName""],
+           )", result);
+        Assert.Contains("requestConfiguration.query_params = query_params;", result);
     }
 
     [Fact]
