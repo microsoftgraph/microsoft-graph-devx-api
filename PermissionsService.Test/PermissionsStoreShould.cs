@@ -8,6 +8,7 @@ using PermissionsService.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace PermissionsService.Test
@@ -16,8 +17,6 @@ namespace PermissionsService.Test
     {
         private readonly IPermissionsStore _permissionsStore;
         private static string ConfigFilePath => Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest-valid.json");
-        private const string DelegatedWork = "DelegatedWork";
-        private const string Application = "Application";
 
         public PermissionsStoreShould()
         {
@@ -25,179 +24,239 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public void GetRequiredPermissionScopesGivenAnExistingRequestUrl()
+        public async Task GetAllRequiredPermissionScopesGivenAnExistingRequestUrl()
         {
             // Act
-            List<ScopeInformation> result = _permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}", method: "GET")
-                                                            .GetAwaiter().GetResult();
+            var result = await _permissionsStore.GetScopesAsync(
+                requestUrls: new List<string>() { "/security/alerts/{alert_id}" }, 
+                method: "GET");
 
             // Assert
-            Assert.Collection(result,
+            Assert.Collection(result.Results,
+                item =>
+                {
+                    Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
+                    Assert.Equal("Read your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events without a signed-in user.", item.Description);
+                    Assert.Equal(ScopeType.Application, item.ScopeType);
+                    Assert.False(item.IsAdmin);
+                    Assert.True(item.IsLeastPrivilege);
+                    Assert.False(item.IsHidden);
+                },
+                item =>
+                {
+                    Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
+                    Assert.Equal("Read and update your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events without a signed-in user. Also allows the app to update editable properties in security events.", item.Description);
+                    Assert.Equal(ScopeType.Application, item.ScopeType);
+                    Assert.False(item.IsAdmin);
+                    Assert.False(item.IsLeastPrivilege);
+                    Assert.False(item.IsHidden);
+                },
                 item =>
                 {
                     Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
                     Assert.Equal("Read your organization's security events", item.DisplayName);
                     Assert.Equal("Allows the app to read your organization's security events on your behalf.", item.Description);
+                    Assert.Equal(ScopeType.DelegatedWork, item.ScopeType);
                     Assert.True(item.IsAdmin);
+                    Assert.True(item.IsLeastPrivilege);
+                    Assert.False(item.IsHidden);
                 },
                 item =>
                 {
                     Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
                     Assert.Equal("Read and update your organization's security events", item.DisplayName);
                     Assert.Equal("Allows the app to read your organization's security events on your behalf. Also allows you to update editable properties in security events.", item.Description);
+                    Assert.Equal(ScopeType.DelegatedWork, item.ScopeType);
                     Assert.True(item.IsAdmin);
+                    Assert.False(item.IsLeastPrivilege);
+                    Assert.False(item.IsHidden);
                 });
         }
 
         [Theory]
-        [InlineData(DelegatedWork, 115)]
-        [InlineData(Application, 66)]
-        public void GetAllPermissionScopesGivenNoRequestUrl(string scopeType, int expectedCount)
+        [InlineData(ScopeType.DelegatedWork)]
+        [InlineData(ScopeType.DelegatedPersonal)]
+        [InlineData(ScopeType.Application)]
+        public async Task GetRequiredPermissionScopesGivenAnExistingRequestUrlByScopeType(ScopeType scopeType)
         {
             // Act
-            List<ScopeInformation> result = _permissionsStore.GetScopesAsync(scopeType: scopeType).GetAwaiter().GetResult();
+            var result = await _permissionsStore.GetScopesAsync(
+                requestUrls: new List<string>() { "/security/alerts/{alert_id}" }, 
+                method: "GET", scopeType: scopeType);
 
             // Assert
-            Assert.NotEmpty(result);
-            Assert.Equal(expectedCount, result.Count);
-
-            if (scopeType == DelegatedWork)
+            if (scopeType == ScopeType.DelegatedWork)
             {
-                Assert.True(result.Exists(x => x.ScopeName.Equals("Financials.ReadWrite.All")));
-                Assert.True(result.Exists(x => x.ScopeName.Equals("identityriskyuser.read.all")));
-                Assert.True(result.Exists(x => x.ScopeName.Equals("Foobar.ReadWrite")));
-                Assert.True(result.Exists(x => x.ScopeName.Equals("LoremIpsum.ReadWrite")));
-                Assert.False(result.Exists(x => x.ScopeName.Equals("N/A")));
+                // Assert
+                Assert.Collection(result.Results,
+                    item =>
+                    {
+                        Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
+                        Assert.Equal("Read your organization's security events", item.DisplayName);
+                        Assert.Equal("Allows the app to read your organization's security events on your behalf.", item.Description);
+                        Assert.Equal(ScopeType.DelegatedWork, item.ScopeType);
+                        Assert.True(item.IsAdmin);
+                        Assert.True(item.IsLeastPrivilege);
+                        Assert.False(item.IsHidden);
+                    },
+                    item =>
+                    {
+                        Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
+                        Assert.Equal("Read and update your organization's security events", item.DisplayName);
+                        Assert.Equal("Allows the app to read your organization's security events on your behalf. Also allows you to update editable properties in security events.", item.Description);
+                        Assert.Equal(ScopeType.DelegatedWork, item.ScopeType);
+                        Assert.True(item.IsAdmin);
+                        Assert.False(item.IsLeastPrivilege);
+                        Assert.False(item.IsHidden);
+                    });
             }
-            else if (scopeType == Application)
+            else if (scopeType == ScopeType.Application)
             {
-                Assert.True(result.Exists(x => x.ScopeName.Equals("AdministrativeUnit.ReadWrite.All")));
-                Assert.True(result.Exists(x => x.ScopeName.Equals("Notes.ReadWrite.All")));
-                Assert.True(result.Exists(x => x.ScopeName.Equals("LoremIpsum.Read.All")));
-                Assert.True(result.Exists(x => x.ScopeName.Equals("LoremIpsum.ReadWrite.All")));
-                Assert.False(result.Exists(x => x.ScopeName.Equals("N/A")));
+                // Assert
+                Assert.Collection(result.Results,
+                    item =>
+                    {
+                        Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
+                        Assert.Equal("Read your organization's security events", item.DisplayName);
+                        Assert.Equal("Allows the app to read your organization's security events without a signed-in user.", item.Description);
+                        Assert.Equal(ScopeType.Application, item.ScopeType);
+                        Assert.False(item.IsAdmin);
+                        Assert.True(item.IsLeastPrivilege);
+                        Assert.False(item.IsHidden);
+                    },
+                    item =>
+                    {
+                        Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
+                        Assert.Equal("Read and update your organization's security events", item.DisplayName);
+                        Assert.Equal("Allows the app to read your organization's security events without a signed-in user. Also allows the app to update editable properties in security events.", item.Description);
+                        Assert.Equal(ScopeType.Application, item.ScopeType);
+                        Assert.False(item.IsAdmin);
+                        Assert.False(item.IsLeastPrivilege);
+                        Assert.False(item.IsHidden);
+                    });
+            }
+            else
+            {
+                Assert.Empty(result.Results);
             }
         }
 
         [Fact]
-        public void ReturnNullGivenANonExistentRequestUrl()
+        public async Task GetLeastPrivilegePermissionScopesGivenAnExistingRequestUrl()
         {
             // Act
-            List<ScopeInformation> result = _permissionsStore.GetScopesAsync(requestUrl: "/foo/bar/{alert_id}", method: "GET") // non-existent request url
-                                                            .GetAwaiter().GetResult();
+            var result = await _permissionsStore.GetScopesAsync(
+                requestUrls: new List<string>() { "/security/alerts/{alert_id}" }, 
+                method: "GET", 
+                scopeType: ScopeType.Application, 
+                leastPrivilegeOnly: true);
 
-            // Assert that returned result is null
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public void ReturnNullGivenANonExistentHttpVerb()
-        {
-            // Act
-            List<ScopeInformation> result = _permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}", method: "Foobar") // non-existent http verb
-                                                            .GetAwaiter().GetResult();
-
-            // Assert that returned result is null
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public void ReturnNullGivenANonExistentScopeType()
-        {
-            // Act
-            List<ScopeInformation> result =
-                _permissionsStore.GetScopesAsync(scopeType: "Foobar",
-                                                requestUrl: "/security/alerts/{alert_id}",
-                                                method: "PATCH").GetAwaiter().GetResult(); // non-existent scope type
-
-            // Assert that returned result is null
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public void ReturnEmptyArrayForEmptyPermissionScopes()
-        {
-            // Act by requesting scopes for the 'DelegatedPersonal' scope type
-            List<ScopeInformation> result =
-                _permissionsStore.GetScopesAsync(scopeType: "DelegatedPersonal", requestUrl: "/security/alerts/{alert_id}", method: "GET").GetAwaiter().GetResult();
-
-            // Assert that returned result is empty
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void ReturnScopesForRequestUrlsInEitherPermissionFilesProvided()
-        {
-            /* Act */
-
-            List<ScopeInformation> result1 =
-                _permissionsStore.GetScopesAsync(scopeType: DelegatedWork, requestUrl: "/users/{id}/calendars/{id}?$orderby=CreatedDate desc", method: "GET").GetAwaiter().GetResult(); // permission in ver1 doc.
-            List<ScopeInformation> result2 =
-                _permissionsStore.GetScopesAsync(scopeType: DelegatedWork, requestUrl: "/anonymousipriskevents/{id}", method: "GET").GetAwaiter().GetResult(); // permission in ver2 doc.
-            List<ScopeInformation> result3 =
-                _permissionsStore.GetScopesAsync(scopeType: Application, requestUrl: "/security/alerts/{id}", method: "PATCH").GetAwaiter().GetResult(); // permission in ver1 doc.
-            List<ScopeInformation> result4 =
-                _permissionsStore.GetScopesAsync(scopeType: DelegatedWork, requestUrl: "/me/photo/$value", method: "PATCH").GetAwaiter().GetResult(); // permission in ver1 doc.
-
-            /* Assert */
-
-            Assert.Collection(result1,
-                item =>
-                {
-                    Assert.Equal("Calendars.Read", item.ScopeName);
-                    Assert.Equal("Read your calendars ", item.DisplayName);
-                    Assert.Equal("Allows the app to read events in your calendars. ", item.Description);
-                    Assert.False(item.IsAdmin);
-                });
-
-            Assert.Collection(result2,
-              item =>
-              {
-                  Assert.Equal("IdentityRiskEvent.Read.All", item.ScopeName);
-                  Assert.Equal("Read identity risk event information", item.DisplayName);
-                  Assert.Equal("Allows the app to read identity risk event information for all users in your organization on behalf of the signed-in user. ", item.Description);
-                  Assert.True(item.IsAdmin);
-              });
-
-            Assert.Collection(result3,
-              item =>
-              {
-                  Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
-                  Assert.Equal("Read and update your organization's security events", item.DisplayName);
-                  Assert.Equal("Allows the app to read your organization's security events without a signed-in user. Also allows the app to update editable properties in security events.", item.Description);
-                  Assert.False(item.IsAdmin);
-              });
-
-            Assert.Collection(result4,
-              item =>
-              {
-                  Assert.Equal("User.ReadWrite", item.ScopeName);
-                  Assert.Equal("Read and update your profile", item.DisplayName);
-                  Assert.Equal("Allows the app to read your profile, and discover your group membership, reports and manager. It also allows the app to update your profile information on your behalf.", item.Description);
-                  Assert.False(item.IsAdmin);
-              },
-              item =>
-              {
-                  Assert.Equal("User.ReadWrite.All", item.ScopeName);
-                  Assert.Equal("Read and write all users' full profiles", item.DisplayName);
-                  Assert.Equal("Allows the app to read and write the full set of profile properties, reports, and managers of other users in your organization, on your behalf.", item.Description);
-                  Assert.True(item.IsAdmin);
-              });
+            // Assert
+            Assert.Single(result.Results);
+            Assert.Collection(result.Results,
+                    item =>
+                    {
+                        Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
+                        Assert.Equal("Read your organization's security events", item.DisplayName);
+                        Assert.Equal("Allows the app to read your organization's security events without a signed-in user.", item.Description);
+                        Assert.Equal(ScopeType.Application, item.ScopeType);
+                        Assert.False(item.IsAdmin);
+                        Assert.True(item.IsLeastPrivilege);
+                        Assert.False(item.IsHidden);
+                    });
         }
 
         [Theory]
-        [InlineData("/workbook/worksheets/{id}/charts/{id}/image")]
-        [InlineData("/workbook/worksheets/{id}/charts/{id}/image(width={value})")]
-        public void RemoveFunctionParametersFromRequestUrlsDuringLoadingAndQueryingOfPermissionsFiles(string url)
+        [InlineData(ScopeType.DelegatedWork, 292)]
+        [InlineData(ScopeType.DelegatedPersonal, 38)]
+        [InlineData(ScopeType.Application, 279)]
+        public async Task GetAllPermissionScopesGivenNoRequestUrlFilteredByScopeType(ScopeType scopeType, int expectedCount)
         {
             // Act
-            List<ScopeInformation> result =
-                _permissionsStore.GetScopesAsync(scopeType: DelegatedWork,
-                                                 requestUrl: url,
-                                                 method: "GET").GetAwaiter().GetResult();
+            var result = await _permissionsStore.GetScopesAsync(scopeType: scopeType);
 
-            /* Assert */
-            Assert.Collection(result,
+            // Assert
+            Assert.NotEmpty(result.Results);
+            Assert.Equal(expectedCount, result.Results.Count);
+        }
+
+        [Fact]
+        public async Task GetAllPermissionScopesGivenNoRequestUrl()
+        {
+            // Act
+            var result = await _permissionsStore.GetScopesAsync();
+
+            // Assert
+            Assert.NotEmpty(result.Results);
+            Assert.Equal(609, result.Results.Count);
+        }
+
+        [Fact]
+        public async Task ReturnNullGivenANonExistentRequestUrl()
+        {
+            // Act
+            var result = await _permissionsStore.GetScopesAsync(
+                requestUrls: new List<string>() { "/foo/bar/{alert_id}" }, // non-existent request url
+                method: "GET"); 
+
+            // Assert
+            Assert.Empty(result.Results);
+        }
+
+        [Fact]
+        public async Task ReturnNullGivenANonExistentHttpVerb()
+        {
+            // Act
+            var result = await _permissionsStore.GetScopesAsync(
+                requestUrls: new List<string>() { "/security/alerts/{alert_id}" }, 
+                method: "Foobar"); // non-existent http verb
+
+            // Assert
+            Assert.Empty(result.Results);
+        }
+
+        [Theory]
+        [InlineData(true, 10)]
+        [InlineData(false, 12)]
+        public async Task ReturnLeastPrivilegePermissionsForSetOfResources(bool leastPrivilegeOnly, int expectedCount)
+        {
+            // Arrange
+            var requestUrls = new List<string>()
+            {
+                "/security/alerts/{alert_id}",
+                "/sites/{site_id}",
+                 "/me/tasks/lists/delta"
+            };
+
+            // Act
+            var result = await _permissionsStore.GetScopesAsync(
+                requestUrls: requestUrls, 
+                leastPrivilegeOnly: leastPrivilegeOnly);
+
+            // Assert
+            Assert.NotNull(result.Results);
+            Assert.NotEmpty(result.Results);
+            Assert.Equal(expectedCount, result.Results.Count);
+        }
+
+
+        [Theory]
+        [InlineData("/users/{id}/drive/items/{id}/workbook/worksheets/{id}/range")]
+        [InlineData("/users/{id}/drive/items/{id}/workbook/worksheets/{id}/range()")]
+        [InlineData("/users/{id}/drive/items/{id}/workbook/worksheets/{id}/range(address={value})")]
+        public async Task RemoveFunctionParametersFromRequestUrlsDuringLoadingAndQueryingOfPermissionsFiles(string url)
+        {
+            // Act
+            var result =
+                await _permissionsStore.GetScopesAsync(
+                    scopeType: ScopeType.DelegatedWork,
+                    requestUrls: new List<string>() { url },
+                    method: "GET");
+
+            // Assert
+            Assert.Collection(result.Results,
                 item =>
                 {
                     Assert.Equal("Files.ReadWrite", item.ScopeName);
@@ -208,15 +267,15 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public void ReturnScopesForRequestUrlWhoseScopesInformationNotAvailable()
+        public async Task ReturnScopesForRequestUrlWhoseScopesInformationNotAvailable()
         {
             // Act
-            List<ScopeInformation> result =
-                _permissionsStore.GetScopesAsync(requestUrl: "/lorem/ipsum/{id}",
-                                                method: "GET").GetAwaiter().GetResult(); // bogus permission whose scopes info are unavailable
+            var result = await _permissionsStore.GetScopesAsync(
+                requestUrls: new List<string>() { "/lorem/ipsum/{id}" },
+                method: "GET"); // bogus permission whose scopes info are unavailable
 
             // Assert
-            Assert.Collection(result,
+            Assert.Collection(result.Results,
                 item =>
                 {
                     Assert.Equal("LoremIpsum.Read", item.ScopeName);
@@ -234,16 +293,17 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public void ReturnLocalizedPermissionsDescriptionsForSupportedLanguage()
+        public async Task ReturnLocalizedPermissionsDescriptionsForSupportedLanguage()
         {
             // Act
-            List<ScopeInformation> result =
-                _permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}",
-                                                method: "GET",
-                                                locale: "es-ES").GetAwaiter().GetResult();
+            var result = await _permissionsStore.GetScopesAsync(
+                requestUrls: new List<string>() { "/security/alerts/{alert_id}" },
+                method: "GET",
+                scopeType: ScopeType.DelegatedWork,
+                locale: "es-ES");
 
             // Assert
-            Assert.Collection(result,
+            Assert.Collection(result.Results,
                 item =>
                 {
                     Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
@@ -261,52 +321,98 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public void ThrowInvalidOperationExceptionIfTablesNotPopulatedDueToEmptyPermissionsFile()
+        public async Task ReturnsErrorsForEmptyOrNullRequestUrls()
         {
-            /* Act & Assert */
-
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                var store = PermissionStoreFactoryMock.GetPermissionStore(Path.Combine(Environment.CurrentDirectory, "TestFiles", "appsettingstest-empty.json"));
-                store.GetUriTemplateMatcher();  // Permissions store defers loading of file until needed
-            });
+            // Act
+            PermissionResult result =
+                await _permissionsStore.GetScopesAsync(requestUrls: new List<string>() { "", null },
+                                                method: "GET");
+            // Assert
+            Assert.Empty(result.Results);
+            Assert.NotEmpty(result.Errors);
+            Assert.Equal(2, result.Errors.Count);
+            Assert.Collection(result.Errors,
+                item =>
+                {
+                    Assert.Equal("", item.Url);
+                    Assert.Equal("The request URL cannot be null or empty.", item.Message);
+                },
+                item =>
+                {
+                    Assert.Null(item.Url);
+                    Assert.Equal("The request URL cannot be null or empty.", item.Message);
+                });
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfMethodIsNullOrEmptyAndRequestUrlHasValue()
+        public async Task ReturnsErrorsForNonExistentRequestUrls()
         {
-            // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => _permissionsStore.GetScopesAsync(requestUrl: "/security/alerts/{alert_id}")
-                                                                       .GetAwaiter().GetResult());
+            // Act
+            PermissionResult result =
+                await _permissionsStore.GetScopesAsync(requestUrls: new List<string>() { "/foo/bar" },
+                                                method: "GET");
+            // Assert
+            Assert.Empty(result.Results);
+            Assert.NotEmpty(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Collection(result.Errors,
+                item =>
+                {
+                    Assert.Equal("/foo/bar", item.Url);
+                    Assert.Equal("Permissions information for /foo/bar were not found.", item.Message);
+                });
         }
 
         [Fact]
-        public void FetchPermissionsDescriptionsFromGithub()
+        public async Task ReturnsUniqueListOfPermissionsForPathsWithSharedPermissions()
+        {
+            // Act
+            PermissionResult result =
+                await _permissionsStore.GetScopesAsync(requestUrls: new List<string>() { "/accessreviews", "/accessreviews/{id}" },
+                                                method: "GET", scopeType: ScopeType.DelegatedWork);
+
+            // Assert
+            Assert.Collection(result.Results,
+                item =>
+                {
+                    Assert.Equal("AccessReview.Read.All", item.ScopeName);
+                },
+                item =>
+                {
+                    Assert.Equal("AccessReview.ReadWrite.All", item.ScopeName);
+                },
+                item =>
+                {
+                    Assert.Equal("AccessReview.ReadWrite.Membership", item.ScopeName);
+                });
+        }
+
+        [Fact]
+        public async Task FetchPermissionsDescriptionsFromGithub()
         {
             //Arrange
             string org = "\\Org";
             string branchName = "Branch";
 
             // Act
-            List<ScopeInformation> result = _permissionsStore.GetScopesAsync(org: org, branchName: branchName).GetAwaiter().GetResult();
+            var result = await _permissionsStore.GetScopesAsync(org: org, branchName: branchName);
 
             // Assert
-            Assert.NotEmpty(result);
+            Assert.NotEmpty(result.Results);
         }
 
         [Fact]
-        public void FetchPermissionsDescriptionsFromGithubGivenARequestUrl()
+        public async Task FetchPermissionsDescriptionsFromGithubGivenARequestUrl()
         {
             // Arrange
             string org = "\\Org";
             string branchName = "Branch";
 
             // Act
-            List<ScopeInformation> result = _permissionsStore.GetScopesAsync(org: org, branchName: branchName, requestUrl: "/security/alerts/{alert_id}", method: "GET")
-                                                            .GetAwaiter().GetResult();
+            var result = await _permissionsStore.GetScopesAsync(org: org, branchName: branchName, scopeType: ScopeType.DelegatedWork, requestUrls: new List<string>() { "/security/alerts/{alert_id}" }, method: "GET");
 
             // Assert
-            Assert.Collection(result,
+            Assert.Collection(result.Results,
                 item =>
                 {
                     Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
