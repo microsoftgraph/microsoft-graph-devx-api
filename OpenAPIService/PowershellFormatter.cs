@@ -23,6 +23,7 @@ namespace OpenAPIService
         private const string NewPutPrefix = "_Set";
         private readonly Stack<OpenApiSchema> _schemaLoop = new();
         private readonly bool _singularizeOperationIds;
+        private static readonly Regex s_oDataCastRegex = new("(.*(?<=[a-z]))\\.(As(?=[A-Z]).*)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         public PowershellFormatter(bool singularizeOperationIds)
         {
@@ -93,7 +94,8 @@ namespace OpenAPIService
             if (_singularizeOperationIds)
             {
                 operationId = SingularizeAndDeduplicateOperationId(operationId);
-            }            
+            }
+            operationId = ResolveODataCastOperationId(operationId);
 
             var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 
@@ -144,7 +146,7 @@ namespace OpenAPIService
         private static string ResolveActionFunctionOperationId(OpenApiOperation operation)
         {
             var operationId = operation.OperationId;
-            var segments = operationId.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries).ToList();
+            var segments = operationId.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
             // Remove ODataKeySegment values from OperationIds of actions and functions paths.
             // This is to prevent breaking changes of OperationId values already
@@ -179,6 +181,21 @@ namespace OpenAPIService
             updatedOperationId = regex.Match(updatedOperationId).Value;
 
             return updatedOperationId;
+        }
+
+        /// <summary>
+        /// Resolves operationIds of OData cast paths by merging the [ACTION] and [AS_CAST_TYPE] segmenets on an operationId.
+        /// </summary>
+        /// <param name="operationId">The target OpenAPI operation.</param>
+        /// <returns>The resolved OperationId.</returns>
+        private static string ResolveODataCastOperationId(string operationId)
+        {
+            var match = s_oDataCastRegex.Match(operationId);
+            if (match.Success)
+            {
+                operationId = $"{match.Groups[1]}{match.Groups[2]}";
+            }
+            return operationId;
         }
 
         /// <summary>

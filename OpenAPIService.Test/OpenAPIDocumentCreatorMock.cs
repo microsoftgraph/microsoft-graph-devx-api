@@ -2,9 +2,6 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Interfaces;
@@ -31,7 +28,7 @@ namespace OpenAPIService.Test
         public OpenApiDocumentCreatorMock(IOpenApiService openApiService)
         {
             _openApiService = openApiService
-                ?? throw new ArgumentNullException(nameof(openApiService), $"{ NullValueError }: { nameof(openApiService) }");
+                ?? throw new ArgumentNullException(nameof(openApiService), $"{NullValueError}: {nameof(openApiService)}");
         }
 
         public static IOpenApiService GetOpenApiService(string configFilePath)
@@ -1008,7 +1005,7 @@ namespace OpenAPIService.Test
                                                     Id = "StringCollectionResponse"
                                                 }
                                             }
-                                        } 
+                                        }
                                     }
                                 }
                             }
@@ -1056,7 +1053,49 @@ namespace OpenAPIService.Test
                                             Name = "identityGovernance.Actions"
                                         }
                                     },
-                                    OperationId = "identityGovernance.lifecycleWorkflows.workflows.workflow.activate"                                    
+                                    OperationId = "identityGovernance.lifecycleWorkflows.workflows.workflow.activate"
+                                }
+                            }
+                        }
+                    },
+                    ["/directory/deletedItems/{directoryObject-id}/microsoft.graph.application"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "directory.GetDeletedItems.AsApplication",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/drives/{drive-id}/items/{driveItem-id}/assignSensitivityLabel"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Post, new OpenApiOperation
+                                {
+                                    OperationId = "drives.drive.items.driveItem.assignSensitivityLabel",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
