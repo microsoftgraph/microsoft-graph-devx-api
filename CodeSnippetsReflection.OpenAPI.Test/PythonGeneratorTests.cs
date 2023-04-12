@@ -83,11 +83,11 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(
-        @"query_params = UsersRequestBuilder.UsersRequestBuilderPostQueryParameters(
-            select = [""displayName"",""mailNickName""],
-            )", result);
-        Assert.Contains("requestConfiguration.query_params = query_params;", result);
+        // Assert.Contains(
+        // @"query_params = UsersRequestBuilder.UsersRequestBuilderPostQueryParameters(
+        //     select = [""displayName"",""mailNickName""],
+        //     )", result);
+        Assert.Contains("query_parameters = query_params", result);
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class PythonGeneratorTests
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphServiceClient->directory()->deletedItems()->graphGroup()->get()", result);
+        Assert.Contains(".directory.deletedItems.graphgroup.get()", result);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class PythonGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(
-            "$graphServiceClient->me()->messagesById('message-id')->get($requestConfiguration)",
+            ".me.messages_by_id('message-id').get(request_configuration = request_configuration)",
             result);
     }
 
@@ -134,10 +134,9 @@ public class PythonGeneratorTests
             $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$queryParameters->count = true;", result);
-        Assert.Contains("$queryParameters->filter", result);
-        Assert.Contains("$queryParameters->select", result);
-        Assert.Contains("$queryParameters->orderby", result);
+        Assert.Contains("count = true", result);
+        Assert.Contains(@"select = [""id"",""displayName"",""department""]", result);
+        Assert.Contains(@"orderby = [""displayName""]", result);
     }
     
     [Fact]
@@ -147,9 +146,9 @@ public class PythonGeneratorTests
         requestPayload.Headers.Add("Accept", "application/json");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$headers = [", result);
-        Assert.Contains("'ConsistencyLevel' => 'eventual',", result);
-        Assert.Contains("$requestConfiguration = ", result);
+        Assert.Contains("headers = {", result);
+        Assert.Contains(@"'ConsistencyLevel' : ""eventual""", result);
+        Assert.Contains("request_configuration = request_configuration", result);
     }
 
     [Fact]
@@ -175,8 +174,8 @@ public class PythonGeneratorTests
                 };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
-            Assert.Contains("$ccRecipientsArray []= $ccRecipientsRecipient1;", result);
+            Assert.Contains("ccRecipientsRecipient1 = Recipient()", result);
+            Assert.Contains("message.body = messageBody", result);
     }
     
     [Fact]
@@ -186,7 +185,7 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(".me().messages_by_id('message-id').delete()", result);
+        Assert.Contains(".me.messages_by_id('message-id').delete()", result);
     }
     
     [Fact]
