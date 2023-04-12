@@ -198,7 +198,7 @@ public class PythonGeneratorTests
             };
        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
        var result = _generator.GenerateCodeSnippet(snippetModel);
-       Assert.Contains("request_body = CreateReplyPostRequestBody();", result);
+       Assert.Contains("request_body = CreateReplyPostRequestBody()", result);
     }
 
     [Fact]
@@ -211,7 +211,7 @@ public class PythonGeneratorTests
 
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("-.ref()", result);
+        Assert.Contains(".ref.get()", result);
     }
 
     [Fact]
@@ -225,7 +225,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setState(new UsageRightState('active'));", result);
+        Assert.Contains("request_body = UsageRight()", result);
     }
 
     [Fact]
@@ -251,7 +251,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("request_body.AdditionalData(additionalData);", result);
+        Assert.Contains("request_body.additionaldata(additionalData)", result);
     }
 
     [Fact]
@@ -260,7 +260,7 @@ public class PythonGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(".me().activities().recent().get()", result);
+        Assert.Contains(".me.activities.recent.get()", result);
     }
 
     [Fact /*(Skip = "Should fail by default.")*/]
@@ -291,7 +291,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("request_body->setCallOptions(callOptions);", result);
+        Assert.Contains("request_body.callOptions = callOptions", result);
     }
     
     [Fact]
@@ -345,8 +345,8 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("new AttendeeBase();", result);
-        Assert.Contains("new LocationConstraintItem();", result);
+        Assert.Contains("attendeesAttendeeBase1 = AttendeeBase()", result);
+        Assert.Contains("= LocationConstraintItem()", result);
     }
 
     [Fact]
@@ -393,8 +393,8 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("location = Location();", result);
-        Assert.Contains("request_body.setAttendees(attendeesArray);", result);
+        Assert.Contains("location = Location()", result);
+        Assert.Contains("attendeesAttendee1 = Attendee()", result);
     }
 
     [Fact (Skip = "This is still not passing. Keeping to use during fixing of bug related.")]
