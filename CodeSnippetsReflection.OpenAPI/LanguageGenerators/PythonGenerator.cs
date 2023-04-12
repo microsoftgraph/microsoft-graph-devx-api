@@ -92,9 +92,8 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 snippetBuilder.AppendLine(queryParamsPayload); 
                 snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{className}(");
                 indentManager.Indent(); 
-            }
-            
-            var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
+
+                var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
             if (codeGraph.HasParameters()){
                 snippetBuilder.AppendLine("query_parameters = query_params,");
                  indentManager.Unindent();
@@ -105,7 +104,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                  indentManager.Unindent();
                 snippetBuilder.AppendLine(")");
             }
-           
+            }    
             return snippetBuilder.ToString();
         }
     private static string GetActionParametersList(params string[] parameters) {
