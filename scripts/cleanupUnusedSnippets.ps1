@@ -7,7 +7,7 @@ foreach ($docFile in $docsFiles) {
 		$pathMatches = [regex]::Matches($content, "\(([^\)]+)\)"); # gets the path portion of a MD link
 		foreach($pathMatch in $pathMatches) {
 			$snippetPath = $pathMatch.Groups[1].Value;
-			if($snippetPath -match ".*snippets.*" -and $snippetPath -cnotmatch ".*:\/\/.*") { # checks that the snippet is in a "snippets" folder and that it's not a link "://"
+			if($snippetPath -match ".*snippets.*" -and $snippetPath -cnotmatch ".*:\/\/.*" -and $snippetPath.EndsWith('.md')) { # checks that the snippet is in a "snippets" folder and that it's not a link "://"
 				$snippetFullPath = (Resolve-Path -LiteralPath (Join-Path $docFile.DirectoryName $snippetPath)).Path
 				$resolvedSnippetsFiles.add($snippetFullPath) | Out-Null
 			}
