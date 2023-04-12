@@ -216,11 +216,11 @@ namespace OpenAPIService
             Vocabularies.Default.AddSingular("(data)$", "$1");
 
             var segments = operationId.Split('.').ToList();
-            var segementsCount = segments.Count;
-            var lastSegmentIndex = segementsCount - 1;
+            var segmentsCount = segments.Count;
+            var lastSegmentIndex = segmentsCount - 1;
             var singularizedSegments = new List<string>();
 
-            for (int x = 0; x < segementsCount; x++)
+            for (int x = 0; x < segmentsCount; x++)
             {
                 var segment = segments[x].Singularize(inputIsKnownToBePlural: false);
 
