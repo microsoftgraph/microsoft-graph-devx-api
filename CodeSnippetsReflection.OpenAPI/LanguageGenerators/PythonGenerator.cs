@@ -128,7 +128,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         indentManager.Indent();
         foreach (var header in snippetModel.Headers)
         {
-            headersvar.AppendLine($"{indentManager.GetIndent()}'{header.Name}' : {EvaluateParameter(header)},");
+            headersvar.AppendLine($"'{header.Name}' : {EvaluateParameter(header)},");
         }
         indentManager.Unindent();
         headersvar.AppendLine("}");
