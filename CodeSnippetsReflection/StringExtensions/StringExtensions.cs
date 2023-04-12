@@ -35,6 +35,27 @@
             return stringValue[0..charIndex] + char.ToUpper(stringValue[charIndex + 1]) + stringValue[(charIndex + 2)..].ToFirstCharacterUpperCaseAfterCharacter(character);
         }
 
+        public static string ToSnakeCase(this string str)
+        {
+            string snakeCaseString = "";
+            for (int i = 0; i < str.Length; i++)
+            {
+                char c = str[i];
+                if (char.IsUpper(c))
+                {
+                    if (i > 0)
+                    {
+                        snakeCaseString += "_";
+                    }
+                    snakeCaseString += char.ToLower(c);
+                }
+                else
+                {
+                    snakeCaseString += c;
+                }
+            }
+            return snakeCaseString;
+        }
         public static string EscapeQuotes(this string stringValue)
         {
             return stringValue.Replace("\"", "\\\"");

@@ -345,7 +345,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("attendeesAttendeeBase1 = AttendeeBase()", result);
+        Assert.Contains("attendees_attendee_base1 = AttendeeBase()", result);
         Assert.Contains("= LocationConstraintItem()", result);
     }
 
@@ -394,7 +394,7 @@ public class PythonGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("location = Location()", result);
-        Assert.Contains("attendeesAttendee1 = Attendee()", result);
+        Assert.Contains("attendees_attendee1 = Attendee()", result);
     }
 
     [Fact (Skip = "This is still not passing. Keeping to use during fixing of bug related.")]
