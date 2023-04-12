@@ -57,10 +57,18 @@ public class CodeSnippetsPipeline
                         File.ReadAllText(httpSnippetFilePath).TrimStart() + Environment.NewLine +
                         File.ReadAllText(expectedLanguageSnippetErrorFileFullPath);
 
-                    if(!message.Contains("workbook"))
+                    if(language.Equals("powershell", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if(!message.Contains("workbook"))
+                        {
+                            Assert.Fail(message);
+                        }
+                    }
+                    else
                     {
                         Assert.Fail(message);
                     }
+                    
                 }
                 else
                 {
