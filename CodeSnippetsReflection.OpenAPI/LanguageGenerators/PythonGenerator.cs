@@ -181,14 +181,14 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             case PropertyType.Float64:
                 if (!isMap && !isArray)
                     snippetBuilder.AppendLine(
-                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{NormalizeVariableName(child.Name)} = {child.Value}");
+                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{child.Name.ToSnakeCase()} = {child.Value}");
                 else
                     snippetBuilder.Append($"{child.Value},");
                 break;
 			case PropertyType.Boolean:
                 if (!isMap && !isArray) {
                     snippetBuilder.AppendLine(
-                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{NormalizeVariableName(child.Name)} = {child.Value.ToLower()}");
+                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{child.Name.ToSnakeCase()} = {child.Value.ToFirstCharacterUpperCase()}");
                 }
                 else
                 {
@@ -202,7 +202,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), snippetBuilder, child, indentManager, childPropertyName);
                 if (!fromArray)
                     snippetBuilder.AppendLine(
-                        $"{propertyAssignment.ToFirstCharacterLowerCase()}.{NormalizeVariableName(child.Name)} = {(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()}");
+                        $"{propertyAssignment.ToFirstCharacterLowerCase()}.{child.Name.ToSnakeCase()} = {(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()}");
                 break;
 			case PropertyType.Array:
 				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, snippetBuilder, parent, child, indentManager); 
