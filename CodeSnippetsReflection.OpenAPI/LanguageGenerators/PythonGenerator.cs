@@ -94,16 +94,16 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 indentManager.Indent(); 
 
                 var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
-            if (codeGraph.HasParameters()){
-                snippetBuilder.AppendLine("query_parameters = query_params,");
-                 indentManager.Unindent();
-                snippetBuilder.AppendLine(")");
-            }
-            if (codeGraph.HasHeaders()) {
-                snippetBuilder.AppendLine(requestHeadersPayload);
-                 indentManager.Unindent();
-                snippetBuilder.AppendLine(")");
-            }
+                if (codeGraph.HasParameters()){
+                    snippetBuilder.AppendLine("query_parameters = query_params,");
+                    indentManager.Unindent();
+                    snippetBuilder.AppendLine(")");
+                }
+                if (codeGraph.HasHeaders()) {
+                    snippetBuilder.AppendLine(requestHeadersPayload);
+                    indentManager.Unindent();
+                    snippetBuilder.AppendLine(")");
+                }
             }    
             return snippetBuilder.ToString();
         }
