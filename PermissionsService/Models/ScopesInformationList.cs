@@ -11,8 +11,14 @@ namespace PermissionsService.Models
     /// </summary>
     internal class ScopesInformationList
     {
-        public List<ScopeInformation> DelegatedScopesList { get; set; }
-        public List<ScopeInformation> ApplicationScopesList { get; set; }
+        public List<ScopeInformation> DelegatedScopesList
+        {
+            get; set;
+        }
+        public List<ScopeInformation> ApplicationScopesList
+        {
+            get; set;
+        }
 
         public ScopesInformationList()
         {

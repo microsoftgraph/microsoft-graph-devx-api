@@ -10,6 +10,26 @@ internal static class StringExtensions
     internal static bool IsCollectionIndex(this string pathSegment) =>
         !string.IsNullOrEmpty(pathSegment) && pathSegment.StartsWith('{') && pathSegment.EndsWith('}');
     internal static bool IsFunction(this string pathSegment) => !string.IsNullOrEmpty(pathSegment) && pathSegment.Contains('.');
+
+    private static readonly Regex FunctionWithParameterRegex = new(@"\([\w=':${}<>|\-,]+\)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
+    internal static bool IsFunctionWithParameters(this string pathSegment) => !string.IsNullOrEmpty(pathSegment) 
+                                                                              && FunctionWithParameterRegex.Match(pathSegment).Success;
+
+    internal static bool IsFunctionWithParametersMatch(this string pathSegment, string segment)
+    {
+        // verify both have parameters
+        if (!pathSegment.IsFunctionWithParameters() || !segment.IsFunctionWithParameters())
+            return false;
+        
+        // verify both have same prefix/name
+        if (!pathSegment.Split('(').First().Equals(segment.Split('(').First(), StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var originalParameters = pathSegment.Split('(').Last().TrimEnd(')').Split(',').Select(static s => s.Split('=').First());
+        var compareParameters = segment.Split('(').Last().TrimEnd(')').Split(',').Select(static s => s.Split('=').First());
+
+        return compareParameters.All(parameter => originalParameters.Contains(parameter.Split('=').First(), StringComparer.OrdinalIgnoreCase));
+    }
     internal static string RemoveFunctionBraces(this string pathSegment) => pathSegment.TrimEnd('(',')');
     internal static string ReplaceValueIdentifier(this string original) =>
         original?.Replace("$value", "Content");

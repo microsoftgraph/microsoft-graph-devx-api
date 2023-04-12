@@ -83,8 +83,8 @@ public class PhpGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$queryParameters = new UsersRequestBuilderPostQueryParameters();", result);
-        Assert.Contains("$requestConfiguration->queryParameters = $queryParameters;", result);
+        Assert.Contains("$requestConfiguration = new UsersRequestBuilderPostRequestConfiguration();", result);
+        Assert.Contains("$queryParameters = UsersRequestBuilderPostRequestConfiguration::createQueryParameters();", result);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class PhpGeneratorTests
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphServiceClient->directory()->deletedItems()->graphGroup()->get()", result);
+        Assert.Contains("$result = $graphServiceClient->directory()->deletedItems()->graphGroup()->get();", result);
     }
 
     [Fact]
@@ -131,10 +131,11 @@ public class PhpGeneratorTests
             $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$queryParameters->count = true;", result);
-        Assert.Contains("$queryParameters->filter", result);
-        Assert.Contains("$queryParameters->select", result);
-        Assert.Contains("$queryParameters->orderby", result);
+        Assert.Contains("$requestConfiguration->queryParameters = $queryParameters;", result);
+        Assert.Contains("$queryParameters = UsersRequestBuilderGetRequestConfiguration::createQueryParameters();", result);
+        Assert.Contains("$queryParameters->orderby = [\"displayName\"];", result);
+        Assert.Contains("$queryParameters->select = [\"id\",\"displayName\",\"department\"];", result);
+        Assert.Contains("$queryParameters->filter = \"Department eq 'Finance'\";", result);
     }
     
     [Fact]
@@ -146,7 +147,7 @@ public class PhpGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$headers = [", result);
         Assert.Contains("'ConsistencyLevel' => 'eventual',", result);
-        Assert.Contains("$requestConfiguration = ", result);
+        Assert.Contains("'Accept' => 'application/json',", result);
     }
 
     [Fact]
@@ -258,7 +259,7 @@ public class PhpGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->activities()->recent()->get()", result);
+        Assert.Contains("$result = $graphServiceClient->me()->activities()->recent()->get();", result);
     }
 
     [Fact /*(Skip = "Should fail by default.")*/]

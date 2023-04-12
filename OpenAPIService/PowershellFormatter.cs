@@ -24,6 +24,8 @@ namespace OpenAPIService
         private const string NewPutPrefix = "_Set";
         private readonly Stack<OpenApiSchema> _schemaLoop = new();
         private readonly bool _singularizeOperationIds;
+        private static readonly Regex s_hashSuffixRegex = new(@"^[^-]+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex s_oDataRefRegex = new("(?<=[a-z])Ref(?=[A-Z])", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         public PowershellFormatter(bool singularizeOperationIds)
         {
@@ -68,7 +70,6 @@ namespace OpenAPIService
         public override void Visit(OpenApiOperation operation)
         {
             var operationId = operation.OperationId;
-
             if (operation.Extensions.TryGetValue("x-ms-docs-operation-type",
                                                   out var value) && value != null)
             {
@@ -90,6 +91,8 @@ namespace OpenAPIService
                     ResolveFunctionParameters(operation);
                 }
             }
+            // Remove hash suffix values from OperationIds.
+            operationId = s_hashSuffixRegex.Match(operationId).Value;
 
             if (_singularizeOperationIds)
             {
@@ -110,10 +113,9 @@ namespace OpenAPIService
             // Update $ref path operationId name
             // Ref key word is enclosed between lower-cased and upper-cased letters
             // Ex.: applications_GetRefCreatedOnBehalfOf to applications_GetCreatedOnBehalfOfByRef
-            var regex = new Regex("(?<=[a-z])Ref(?=[A-Z])", RegexOptions.None, TimeSpan.FromSeconds(5));
-            if (regex.Match(operationId).Success)
+            if (s_oDataRefRegex.Match(operationId).Success)
             {
-                operationId = $"{regex.Replace(operationId, string.Empty)}ByRef";
+                operationId = $"{s_oDataRefRegex.Replace(operationId, string.Empty)}ByRef";
             }
 
             operation.OperationId = operationId;
@@ -170,16 +172,7 @@ namespace OpenAPIService
                 }
             }
 
-            var updatedOperationId = string.Join(".", segments);
-
-            // Remove hash suffix values from OperationIds of function paths.
-            // For example,
-            // Default OperationId --> reports_getEmailActivityUserDetail-fe32
-            // Resolved OperationId --> reports_getEmailActivityUserDetail
-            var regex = new Regex(@"^[^-]+", RegexOptions.None, TimeSpan.FromSeconds(5));
-            updatedOperationId = regex.Match(updatedOperationId).Value;
-
-            return updatedOperationId;
+            return string.Join(".", segments);
         }
 
         /// <summary>

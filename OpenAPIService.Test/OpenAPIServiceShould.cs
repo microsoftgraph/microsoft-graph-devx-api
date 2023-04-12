@@ -653,6 +653,30 @@ namespace OpenAPIService.Test
             Assert.Equal("double", defaultPriceProperty.Format);
         }
 
+
+        [Theory]
+        [InlineData("/users/$count", OperationType.Get, "users_GetCount")]
+        [InlineData("/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})", OperationType.Get, "reports_getSharePointSiteUsageDetail")]
+        public void RemoveHashSuffixFromOperationIdsForPowerShellStyle(string url, OperationType operationType, string expectedOperationId)
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: url,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            var operationId = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
+                              .Operations[operationType]
+                              .OperationId;
+
+            // Assert
+            Assert.Equal(expectedOperationId, operationId);
+        }
+
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
         {
             Assert.NotNull(node);
