@@ -184,7 +184,7 @@ namespace OpenAPIService
         }
 
         /// <summary>
-        /// Resolves operationIds of OData cast paths by merging the [ACTION] and [AS_CAST_TYPE] segmenets on an operationId.
+        /// Resolves operationIds of OData cast paths by merging the [ACTION] and [AS_CAST_TYPE] segments on an operationId.
         /// </summary>
         /// <param name="operationId">The target OpenAPI operation.</param>
         /// <returns>The resolved OperationId.</returns>
