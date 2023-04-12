@@ -94,12 +94,18 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 indentManager.Indent(); 
 
                 var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
-                if (codeGraph.HasParameters()){
+                if ( codeGraph.HasParameters()  && codeGraph.HasHeaders()){
+                    snippetBuilder.AppendLine("query_parameters = query_params,");
+                    snippetBuilder.AppendLine(requestHeadersPayload);
+                    indentManager.Unindent();
+                    snippetBuilder.AppendLine(")");
+                }
+                if ( codeGraph.HasParameters()  && !codeGraph.HasHeaders()){
                     snippetBuilder.AppendLine("query_parameters = query_params,");
                     indentManager.Unindent();
                     snippetBuilder.AppendLine(")");
                 }
-                if (codeGraph.HasHeaders()) {
+                if (codeGraph.HasHeaders() && !codeGraph.HasParameters()) {
                     snippetBuilder.AppendLine(requestHeadersPayload);
                     indentManager.Unindent();
                     snippetBuilder.AppendLine(")");
@@ -128,7 +134,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         indentManager.Indent();
         foreach (var header in snippetModel.Headers)
         {
-            headersvar.AppendLine($"'{header.Name}' : {EvaluateParameter(header)},");
+            headersvar.AppendLine($"{indentManager.GetIndent()}'{header.Name}' : {EvaluateParameter(header)},");
         }
         indentManager.Unindent();
         headersvar.AppendLine("}");
@@ -147,7 +153,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     {
         var childPosition = 0;
         var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToFirstCharacterUpperCase();
-        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = {objectType}()");
+        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToSnakeCase()} = {objectType}()");
         foreach(CodeProperty child in codeProperty.Children)
         {
             var newChildName = (childPropertyName ?? "") + child.Name.ToFirstCharacterUpperCase();
