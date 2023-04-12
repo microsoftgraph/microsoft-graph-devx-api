@@ -90,7 +90,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager, classNameQueryParameters);
             if (codeGraph.HasParameters() || codeGraph.HasParameters()){
                 snippetBuilder.AppendLine(queryParamsPayload); 
-                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {className}(");
+                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{className}(");
                 indentManager.Indent(); 
             }
             
@@ -126,7 +126,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         
         var headersvar = new StringBuilder();
         headersvar.AppendLine("headers = {");
-        indentManager.Indent(2);
+        indentManager.Indent();
         foreach (var header in snippetModel.Headers)
         {
             headersvar.AppendLine($"{indentManager.GetIndent()}'{header.Name}' : {EvaluateParameter(header)},");
