@@ -212,28 +212,25 @@ namespace OpenAPIService
 
             // drives does not properly singularize to drive.
             Vocabularies.Default.AddSingular("(drive)s$", "$1");
+            // exclude the following from singularization.
+            Vocabularies.Default.AddSingular("(data)$", "$1");
 
             var segments = operationId.Split('.').ToList();
+            var segmentsCount = segments.Count;
+            var lastSegmentIndex = segmentsCount - 1;
+            var singularizedSegments = new List<string>();
 
-            // The last segment is ignored as a rule.
-            for (int x = segments.Count - 2; x >= 0; x--)
+            for (int x = 0; x < segmentsCount; x++)
             {
                 var segment = segments[x].Singularize(inputIsKnownToBePlural: false);
-                segments[x] = segment;
 
-                // If a segment name is contained in another segment,
-                // the former is considered a duplicate.
-                for (int y = x - 1; y >= 0; y--)
-                {
-                    if (segments[y].Contains(segment, StringComparison.OrdinalIgnoreCase))
-                    {
-                        segments.RemoveAt(x);
-                        break;
-                    }
-                }
+                // If a segment name is contained in the previous segment, the latter is considered a duplicate.
+                // The last segment is ignored as a rule.
+                if ((x > 0 && x < lastSegmentIndex) && singularizedSegments.Last().Equals(segment, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                singularizedSegments.Add(segment);
             }
-
-            return string.Join(".", segments);
+            return string.Join(".", singularizedSegments);
         }
     }
 }
