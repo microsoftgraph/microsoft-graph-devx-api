@@ -58,7 +58,7 @@ public class CodeSnippetsPipeline
                         File.ReadAllText(expectedLanguageSnippetErrorFileFullPath);
                     if(language.Equals("powershell", StringComparison.OrdinalIgnoreCase))
                     {
-                        if(!message.Contains("workbook"))
+                        if(!message.Contains("workbook", StringComparison.OrdinalIgnoreCase))
                         {
                             Assert.Fail(message);
                         }
