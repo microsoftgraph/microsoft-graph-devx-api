@@ -1,4 +1,6 @@
-﻿namespace CodeSnippetsReflection.StringExtensions
+﻿using System.Text;
+
+namespace CodeSnippetsReflection.StringExtensions
 {
     public static class StringExtensions
     {
@@ -35,27 +37,27 @@
             return stringValue[0..charIndex] + char.ToUpper(stringValue[charIndex + 1]) + stringValue[(charIndex + 2)..].ToFirstCharacterUpperCaseAfterCharacter(character);
         }
 
-        public static string ToSnakeCase(this string str)
+       public static string ToSnakeCase(this string str)
+    {
+        StringBuilder snakeCaseBuilder = new StringBuilder();
+        for (int i = 0; i < str.Length; i++)
         {
-            string snakeCaseString = "";
-            for (int i = 0; i < str.Length; i++)
+            char c = str[i];
+            if (char.IsUpper(c))
             {
-                char c = str[i];
-                if (char.IsUpper(c))
+                if (i > 0)
                 {
-                    if (i > 0)
-                    {
-                        snakeCaseString += "_";
-                    }
-                    snakeCaseString += char.ToLower(c);
+                    snakeCaseBuilder.Append('_');
                 }
-                else
-                {
-                    snakeCaseString += c;
-                }
+                snakeCaseBuilder.Append(char.ToLower(c));
             }
-            return snakeCaseString;
+            else
+            {
+                snakeCaseBuilder.Append(c);
+            }
         }
+        return snakeCaseBuilder.ToString();
+    }
         public static string EscapeQuotes(this string stringValue)
         {
             return stringValue.Replace("\"", "\\\"");
