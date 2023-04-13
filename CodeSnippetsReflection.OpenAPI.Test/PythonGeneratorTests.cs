@@ -174,7 +174,7 @@ public class PythonGeneratorTests
                 };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("ccRecipientsRecipient1 = Recipient()", result);
+            Assert.Contains("cc_recipients_recipient1 = Recipient()", result);
             Assert.Contains("message.body = messageBody", result);
     }
     
@@ -291,7 +291,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("request_body.callOptions = callOptions", result);
+        Assert.Contains("request_body.call_options = callOptions", result);
     }
     
     [Fact]
