@@ -83,11 +83,9 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        // Assert.Contains(
-        // @"query_params = UsersRequestBuilder.UsersRequestBuilderPostQueryParameters(
-        //     select = [""displayName"",""mailNickName""],
+        // Assert.Contains("select = [""displayName"",""mailNickName""],
         //     )", result);
-        Assert.Contains("query_parameters = query_params", result);
+        Assert.Contains("request_body.account_enabled = True", result);
     }
 
     [Fact]
