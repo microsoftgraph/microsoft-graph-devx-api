@@ -485,7 +485,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var elements = nodes.Select(static (x, i) =>
             {
                 if (x.Segment.IsCollectionIndex())
-                    return $"WithTypeId{x.Segment.Replace("{", "(\"").Replace("}", "\")")}.";
+                    return $"ByTypeId{x.Segment.Replace("{", "(\"").Replace("}", "\")")}.";
                 else if (x.Segment.IsFunction())
                     return x.Segment.Split('.')
                                     .Select(static s => s.ToFirstCharacterUpperCase())
@@ -494,8 +494,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             })
                         .Aggregate(new List<String>(), (current, next) =>
                         {
-                            var element = next.Contains("WithTypeId",StringComparison.OrdinalIgnoreCase) ? 
-                            next.Replace("WithTypeId", $"With{current.Last().Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}Id") :
+                            var element = next.Contains("ByTypeId", StringComparison.OrdinalIgnoreCase) ? 
+                            next.Replace("ByTypeId", $"By{current.Last().Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}Id") :
                             $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterUpperCase()}";
 
                             current.Add(element);
