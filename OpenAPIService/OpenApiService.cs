@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -60,7 +60,7 @@ namespace OpenAPIService
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
-            if (configuration == null) throw new ArgumentNullException(nameof(configuration), 
+            if (configuration == null) throw new ArgumentNullException(nameof(configuration),
                 $"Value cannot be null: {nameof(configuration)}");
             _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;

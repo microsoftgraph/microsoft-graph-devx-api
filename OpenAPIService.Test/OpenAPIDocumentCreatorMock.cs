@@ -1158,6 +1158,48 @@ namespace OpenAPIService.Test
                                 }
                             }
                         }
+                    },
+                    ["/directory/deletedItems/{directoryObject-id}/microsoft.graph.application"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "directory.GetDeletedItems.AsApplication",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/drives/{drive-id}/items/{driveItem-id}/assignSensitivityLabel"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Post, new OpenApiOperation
+                                {
+                                    OperationId = "drives.drive.items.driveItem.assignSensitivityLabel",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 Components = new OpenApiComponents
