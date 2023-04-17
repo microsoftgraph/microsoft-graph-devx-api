@@ -50,7 +50,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".Me().MessagesById(\"message-id\")", result);
+            Assert.Contains(".Me().Messages().ByMessageId(\"message-id\")", result);
         }
         [Fact]
         public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollectionsWithMultipleParams() {
@@ -64,7 +64,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".DrivesById(\"drive-id\").ItemsById(\"driveItem-id\").Checkin().", result);
+            Assert.Contains("Drives().ByDriveId(\"drive-id\").Items().ByItemId(\"driveItem-id\").Checkin().", result);
         }
         [Fact]
         public async Task IgnoreOdataTypeWhenGenerating() {
@@ -122,7 +122,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Patch", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").Patch(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Me().Messages().ByMessageId(\"message-id\").Patch(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesThePutMethodCall() {
@@ -137,7 +137,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Put", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("graphClient.ApplicationsById(\"application-id\").Logo().Put(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Applications().ByApplicationId(\"application-id\").Logo().Put(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesTheDeleteMethodCall() {
@@ -147,7 +147,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Delete", result);
             Assert.DoesNotContain("result, err :=", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").Delete(context.Background(), nil)", result);
+            Assert.Contains("graphClient.Me().Messages().ByMessageId(\"message-id\").Delete(context.Background(), nil)", result);
         }
         [Fact]
         public async Task WritesTheRequestPayload() {
@@ -263,7 +263,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("&graphconfig.UserItemRequestBuilderGetRequestConfiguration", result);
             Assert.Contains("configuration :=", result);
             Assert.Contains("requestParameters :=", result);
-            Assert.Contains("result, err := graphClient.UsersById(\"user-id\").Get(context.Background(), configuration)", result);
+            Assert.Contains("result, err := graphClient.Users().ByUserId(\"user-id\").Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesODataTypesAreEscaped()
@@ -282,7 +282,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestBody := graphmodels.NewReferenceCreate()", result);
             Assert.Contains("requestBody.SetOdataId(&odataId)", result);
             Assert.Contains("odataId := \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"", result);
-            Assert.Contains("graphClient.GroupsById(\"group-id\").Members().Ref().Post(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Groups().ByGroupId(\"group-id\").Members().Ref().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesCountBooleanQueryParameters() {
@@ -339,7 +339,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Me().EventsById(\"event-id\").Attachments().Post(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Me().Events().ByEventId(\"event-id\").Attachments().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task ParsesThePayloadEvenIfContentTypeIsMissing() {
@@ -349,7 +349,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.TeamsById(\"team-id\").ChannelsById(\"channel-id\").Messages().Post(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Teams().ByTeamId(\"team-id\").Channels().ByChannelId(\"channel-id\").Messages().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task WritesEmptyPrimitiveArrays() {
@@ -397,7 +397,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/me/messages/AAMkADYAAAImV_jAAA=/?$expand=microsoft.graph.eventMessage/event");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").Get(context.Background(), configuration)", result);
+            Assert.Contains("graphClient.Me().Messages().ByMessageId(\"message-id\").Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task IncludesRequestBodyClassName() {

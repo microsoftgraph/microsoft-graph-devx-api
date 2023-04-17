@@ -358,7 +358,7 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(21, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(23, subsetOpenApiDocument.Paths.Count);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Schemas);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);
@@ -430,6 +430,29 @@ namespace OpenAPIService.Test
 
             var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, singularizeOperationIds: true);
+            var singularizedOpId = subsetOpenApiDocument.Paths
+                                  .FirstOrDefault().Value
+                                  .Operations[operationType]
+                                  .OperationId;
+
+            // Assert
+            Assert.Equal(expectedOperationId, singularizedOpId);
+        }
+
+        [Theory]
+        [InlineData("directory.GetDeletedItems.AsApplication", "directory_GetDeletedItemsAsApplication", OperationType.Get)]
+        [InlineData("drives.drive.items.driveItem.assignSensitivityLabel", "drives.drive.items.driveItem_assignSensitivityLabel", OperationType.Post)]
+        public void ResolveODataCastOperationIdsForPowerShellStyle(string operationId, string expectedOperationId, OperationType operationType)
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: operationId,
+                                                           tags: null,
+                                                           url: null,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
             var singularizedOpId = subsetOpenApiDocument.Paths
                                   .FirstOrDefault().Value
                                   .Operations[operationType]

@@ -92,7 +92,7 @@ namespace GraphWebApi.Controllers
                                             SeverityLevel.Information,
                                             _snippetsTraceProperties);
 
-            return new StringResult(response);
+            return string.IsNullOrEmpty(response) ? NoContent() : new StringResult(response);
         }
         private ISnippetsGenerator GetSnippetGenerator(string generation) {
             return (generation.ToLowerInvariant()) switch {

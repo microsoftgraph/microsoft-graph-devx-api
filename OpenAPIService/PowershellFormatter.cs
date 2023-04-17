@@ -24,6 +24,8 @@ namespace OpenAPIService
         private const string NewPutPrefix = "_Set";
         private readonly Stack<OpenApiSchema> _schemaLoop = new();
         private readonly bool _singularizeOperationIds;
+
+        private static readonly Regex s_oDataCastRegex = new("(.*(?<=[a-z]))\\.(As(?=[A-Z]).*)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex s_hashSuffixRegex = new(@"^[^-]+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex s_oDataRefRegex = new("(?<=[a-z])Ref(?=[A-Z])", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
@@ -99,6 +101,8 @@ namespace OpenAPIService
                 operationId = SingularizeAndDeduplicateOperationId(operationId);
             }
 
+            operationId = ResolveODataCastOperationId(operationId);
+
             var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 
             // Check whether Put operation id already got updated
@@ -173,6 +177,21 @@ namespace OpenAPIService
             }
 
             return string.Join(".", segments);
+        }
+
+        /// <summary>
+        /// Resolves operationIds of OData cast paths by merging the [ACTION] and [AS_CAST_TYPE] segments on an operationId.
+        /// </summary>
+        /// <param name="operationId">The target OpenAPI operation.</param>
+        /// <returns>The resolved OperationId.</returns>
+        private static string ResolveODataCastOperationId(string operationId)
+        {
+            var match = s_oDataCastRegex.Match(operationId);
+            if (match.Success)
+            {
+                operationId = $"{match.Groups[1]}{match.Groups[2]}";
+            }
+            return operationId;
         }
 
         /// <summary>
