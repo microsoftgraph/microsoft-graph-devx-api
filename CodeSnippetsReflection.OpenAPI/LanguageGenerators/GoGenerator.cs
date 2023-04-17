@@ -482,22 +482,27 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
-            return nodes.Select(static x =>
+            var elements = nodes.Select(static (x, i) =>
             {
                 if (x.Segment.IsCollectionIndex())
-                    return $"ById{x.Segment.Replace("{", "(\"").Replace("}", "\")")}.";
+                    return $"ByTypeId{x.Segment.Replace("{", "(\"").Replace("}", "\")")}.";
                 else if (x.Segment.IsFunction())
                     return x.Segment.Split('.')
                                     .Select(static s => s.ToFirstCharacterUpperCase())
                                     .Aggregate(static (a, b) => $"{a}{b}") + "().";
                 return x.Segment.ToFirstCharacterUpperCase() + "().";
             })
-                        .Aggregate(static (x, y) =>
+                        .Aggregate(new List<String>(), (current, next) =>
                         {
-                            return $"{x}{y.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterUpperCase()}";
-                        })
-                        .Replace("().ById(", "ById(")
-                        .Replace("()()", "()");
+                            var element = next.Contains("ByTypeId", StringComparison.OrdinalIgnoreCase) ? 
+                            next.Replace("ByTypeId", $"By{current.Last().Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}Id") :
+                            $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterUpperCase()}";
+
+                            current.Add(element);
+                            return current;
+                        });
+
+            return string.Join("", elements).Replace("()()", "()");
         }
     }
 }

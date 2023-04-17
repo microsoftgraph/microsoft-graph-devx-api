@@ -91,7 +91,7 @@ namespace GraphWebApi.Controllers
 
             var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh, fileName);
             await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
-                graphOpenApi, Response.Body, styleOptions.Style, singularizeOperationIds);
+                graphOpenApi, Response.Body, styleOptions.Style, singularizeOperationIds, fileName);
 
             return new EmptyResult();
         }
@@ -174,7 +174,8 @@ namespace GraphWebApi.Controllers
             OpenApiDocument graphOpenApi,
             Stream stream,
             OpenApiStyle style,
-            bool singularizeOperationIds)
+            bool singularizeOperationIds,
+            string fileName = null)
 
         {
             using var sw = new StreamWriter(stream);
@@ -190,14 +191,16 @@ namespace GraphWebApi.Controllers
                                 "<b/>" + Environment.NewLine +
                                 "<ul>" + Environment.NewLine);
 
+            string fileNameParam = !string.IsNullOrEmpty(fileName) ? "&fileName=" + fileName : null;
+
             foreach (var item in indexSearch.Index)
             {
-                var target = $"{baseUrl}/openapi?tags={item.Key.Name}&openApiVersion={openApiVersion}&graphVersion={graphVersion}&format={format}&style={style}&singularizeOperationIds={singularizeOperationIds}";
+                var target = $"{baseUrl}/openapi?tags={item.Key.Name}&openApiVersion={openApiVersion}&graphVersion={graphVersion}&format={format}&style={style}&singularizeOperationIds={singularizeOperationIds}{fileNameParam}";
                 await sw.WriteAsync($"<li>{item.Key.Name} [<a href='{target}'>OpenApi</a>]   [<a href='/swagger/index.html#url={target}'>Swagger UI</a>]</li>{Environment.NewLine}<ul>{Environment.NewLine}");
                 foreach (var op in item.Value)
                 {
                     await sw.WriteLineAsync($"<li>{op.OperationId}  [<a href='../../openapi?operationIds={op.OperationId}&openApiVersion={openApiVersion}&graphVersion={graphVersion}" +
-                        $"&format={format}&style={style}'>OpenAPI</a>]</li>");
+                        $"&format={format}&style={style}&singularizeOperationIds={singularizeOperationIds}{fileNameParam}'>OpenAPI</a>]</li>");
                 }
                 await sw.WriteLineAsync("</ul>");
             }

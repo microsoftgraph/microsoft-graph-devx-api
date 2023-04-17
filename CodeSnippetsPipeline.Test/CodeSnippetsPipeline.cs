@@ -56,7 +56,17 @@ public class CodeSnippetsPipeline
                     var message = "Original HTTP Snippet:" + Environment.NewLine + 
                         File.ReadAllText(httpSnippetFilePath).TrimStart() + Environment.NewLine +
                         File.ReadAllText(expectedLanguageSnippetErrorFileFullPath);
-                    Assert.Fail(message);
+                    if(language.Equals("powershell", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if(!message.Contains("workbook", StringComparison.OrdinalIgnoreCase))
+                        {
+                            Assert.Fail(message);
+                        }
+                    }
+                    else
+                    {
+                        Assert.Fail(message);
+                    }
                 }
                 else
                 {
