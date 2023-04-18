@@ -613,6 +613,35 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
         
         [Fact]
+        public async Task CorrectlyHandlesDateTimeOffsetInUrl()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/reports/getUserArchivedPrintJobs(userId='{{id}}',startDateTime=<timestamp>,endDateTime=<timestamp>)");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("await graphClient.Reports.GetUserArchivedPrintJobsWithUserIdWithStartDateTimeWithEndDateTime(DateTimeOffset.Parse(\"{endDateTime}\"),DateTimeOffset.Parse(\"{startDateTime}\"),\"{userId}\").GetAsync()", result);
+        }
+
+        [Fact]
+        public async Task CorrectlyHandlesNumberInUrl()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/drive/items/{{id}}/workbook/worksheets/{{id|name}}/cell(row=<row>,column=<column>)");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("await graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Worksheets[\"{workbookWorksheet-id}\"].CellWithRowWithColumn(1,1).GetAsync();",result);
+        }
+        [Fact]
+        public async Task CorrectlyHandlesDateInUrl()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/reports/getYammerGroupsActivityDetail(date='2018-03-05')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("await graphClient.Reports.GetYammerGroupsActivityDetailWithDate(new Date(DateTime.Parse(\"{date}\"))).GetAsync();", result);
+        }
+
+        [Fact]
         public async Task MatchesPathWithPathParameter()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/drive/items/{{id}}/workbook/worksheets/{{id|name}}/range(address='A1:B2')");

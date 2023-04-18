@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
@@ -67,7 +68,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 requestPayloadParameterName = "null";// pass a null parameter if we have a request schema expected but there is not body provided
             var requestConfigurationPayload = GetRequestConfiguration(codeGraph, indentManager);
             var parametersList = GetActionParametersList(requestPayloadParameterName , requestConfigurationPayload);
-            payloadSb.AppendLine($"{responseAssignment}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{methodName}({parametersList});");
+            payloadSb.AppendLine($"{responseAssignment}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes,codeGraph)}.{methodName}({parametersList});");
         }
 
         private static string GetRequestConfiguration(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager)
@@ -313,26 +314,33 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string ReplaceIfReservedTypeName(string originalString, string suffix = "Object")
             => ReservedNames.Value.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
-        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph)
         {
             if(!(nodes?.Any() ?? false)) 
                 return string.Empty;
 
-            return nodes.Select(static x => {
+            return nodes.Select(x => {
                                         if(x.Segment.IsCollectionIndex())
                                             return x.Segment.Replace("{", "[\"{").Replace("}", "}\"]");
                                         if (x.Segment.IsFunctionWithParameters())
                                         {
                                             var functionName = x.Segment.Split('(').First();
-                                            var parameters = x.Segment.Split('(').Last().TrimEnd(')').Split(',')
-                                                .Select(static s => $"With{s.Split('=').First().ToFirstCharacterUpperCase()}")
+                                            var parameters = snippetCodeGraph.PathParameters
+                                                .Select(static s => $"With{s.Name.ToFirstCharacterUpperCase()}")
                                                 .Aggregate(static (a, b) => $"{a}{b}");
-                                            var parametersValues = x.Segment.Split('(').Last().TrimEnd(')').Split(',')
-                                                .Select(static s => $"\"{s.Split('=').Last().Trim('\'')}\"")
-                                                .Aggregate(static (a, b) => $"{a},{b}");
+
+                                            // use the existing WriteObjectFromCodeProperty functionality to write the parameters as if they were a comma seperated array so as to automatically infer type handling from the codeDom :)
+                                            var parametersBuilder = new StringBuilder();
+                                            foreach (var codeProperty in snippetCodeGraph.PathParameters.OrderBy(static parameter => parameter.Name))
+                                            {
+                                                var parameter = new StringBuilder();
+                                                WriteObjectFromCodeProperty(new CodeProperty{PropertyType = PropertyType.Array}, codeProperty, parameter, new IndentManager(), snippetCodeGraph.ApiVersion);
+                                                parametersBuilder.Append(parameter.ToString().Trim());//Do this to trim the surrounding whitespace generated
+                                            }
+                                            
                                             return functionName.ToFirstCharacterUpperCase()
                                                    + parameters
-                                                   + $"({parametersValues})";
+                                                   + $"({parametersBuilder.ToString().TrimEnd(',')})" ;
                                         }
                                         if (x.Segment.IsFunction())
                                             return x.Segment.RemoveFunctionBraces().Split('.')
