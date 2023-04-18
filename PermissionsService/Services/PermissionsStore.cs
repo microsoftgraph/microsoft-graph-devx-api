@@ -354,16 +354,14 @@ namespace PermissionsService
                 foreach (var scopeSet in scopesByRequestUrl.Values)
                 {
                     bool foundInOthers = false;
-                    var higherPriviledgedScopes = scopeSet.Where(x => x.IsLeastPrivilege == false);
-                    foreach (var scope in higherPriviledgedScopes)
-                    {
-                        // if any of the higher privilege permissions is a leastPrivilegePermissions somewhere, ignore
-                        if (allLeastPrivilegeScopes.Exists(x => x.ScopeName == scope.ScopeName && x.ScopeType == scope.ScopeType))
-                        {
-                            foundInOthers = true;
-                            break;
-                        }
-                    }
+                    var higherPrivilegedScopes = scopeSet.Where(scope => scope.IsLeastPrivilege == false);
+
+                    // If any of the higher privilege permissions is a leastPrivilegePermissions somewhere, ignore
+                    if (higherPrivilegedScopes.Any(scope =>
+                            allLeastPrivilegeScopes.Any(leastScope =>
+                                leastScope.ScopeName == scope.ScopeName && leastScope.ScopeType == scope.ScopeType)))
+                        foundInOthers = true;
+
                     if (!foundInOthers)
                         scopes.AddRange(scopeSet);
                 }
