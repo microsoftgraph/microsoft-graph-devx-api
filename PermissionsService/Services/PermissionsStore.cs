@@ -350,16 +350,18 @@ namespace PermissionsService
                     }
                 }
 
-                var allLeastPrivilegeScopes = scopesByRequestUrl.Values.SelectMany(x => x).Where(x => x.IsLeastPrivilege == true).ToList();
+                var allLeastPrivilegeScopes = scopesByRequestUrl.Values
+                    .SelectMany(static x => x).Where(static x => x.IsLeastPrivilege == true).ToList();
                 foreach (var scopeSet in scopesByRequestUrl.Values)
                 {
                     bool foundInOthers = false;
-                    var higherPrivilegedScopes = scopeSet.Where(scope => scope.IsLeastPrivilege == false);
+                    var higherPrivilegedScopes = scopeSet.Where(static x => x.IsLeastPrivilege == false);
 
                     // If any of the higher privilege permissions is a leastPrivilegePermissions somewhere, ignore
                     if (higherPrivilegedScopes.Any(scope =>
                             allLeastPrivilegeScopes.Any(leastScope =>
-                                leastScope.ScopeName == scope.ScopeName && leastScope.ScopeType == scope.ScopeType)))
+                                leastScope.ScopeName.Equals(scope.ScopeName, StringComparison.OrdinalIgnoreCase) && 
+                                    leastScope.ScopeType == scope.ScopeType)))
                         foundInOthers = true;
 
                     if (!foundInOthers)
@@ -367,7 +369,7 @@ namespace PermissionsService
                 }
 
                 if (leastPrivilegeOnly)
-                    scopes = scopes.Where(x => x.IsLeastPrivilege == true).ToList();
+                    scopes = scopes.Where(static x => x.IsLeastPrivilege == true).ToList();
             }
 
             // Create a dict of scopes information from GitHub files or cached files
