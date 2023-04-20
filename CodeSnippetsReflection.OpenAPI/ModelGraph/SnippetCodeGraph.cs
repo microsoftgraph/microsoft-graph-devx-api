@@ -194,7 +194,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             var parameters = new List<CodeProperty>();
             foreach (var parameter in pathParameters)
             {
-                switch (parameter.Schema.Type)
+                switch (parameter.Schema.Type.ToLowerCaseInvariant())
                 {
                     case "string":
                         parameters.Add(evaluateStringProperty(parameter.Name, $"{{{parameter.Name}}}", parameter.Schema));
