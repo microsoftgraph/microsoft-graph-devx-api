@@ -187,14 +187,17 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         private static List<CodeProperty> parsePathParameters(SnippetModel snippetModel)
         {
 
-            var pathParameters = snippetModel.EndPathNode.PathItems.FirstOrDefault()
-                .Value?.Operations.FirstOrDefault()
-                .Value?.Parameters.Where(static param => param.In == ParameterLocation.Path) ?? new List<OpenApiParameter>();
+            var pathParameters = snippetModel.EndPathNode
+                                             .PathItems
+                                             .SelectMany(static pathItem => pathItem.Value.Operations)
+                                             .Where(operation => operation.Key.ToString().Equals(snippetModel.Method.ToString(), StringComparison.OrdinalIgnoreCase)) // get the operations that match the method
+                                             .SelectMany(static operation => operation.Value.Parameters)
+                                             .Where(static parameter => parameter.In == ParameterLocation.Path); // find the parameters in the path
 
             var parameters = new List<CodeProperty>();
             foreach (var parameter in pathParameters)
             {
-                switch (parameter.Schema.Type.ToLowerCaseInvariant())
+                switch (parameter.Schema.Type.ToLowerInvariant())
                 {
                     case "string":
                         parameters.Add(evaluateStringProperty(parameter.Name, $"{{{parameter.Name}}}", parameter.Schema));
