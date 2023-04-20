@@ -189,7 +189,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
             var pathParameters = snippetModel.EndPathNode.PathItems.FirstOrDefault()
                 .Value?.Operations.FirstOrDefault()
-                .Value?.Parameters.Where(param => param.In == ParameterLocation.Path) ?? new List<OpenApiParameter>();
+                .Value?.Parameters.Where(static param => param.In == ParameterLocation.Path) ?? new List<OpenApiParameter>();
 
             var parameters = new List<CodeProperty>();
             foreach (var parameter in pathParameters)
