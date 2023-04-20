@@ -331,7 +331,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
                                             // use the existing WriteObjectFromCodeProperty functionality to write the parameters as if they were a comma seperated array so as to automatically infer type handling from the codeDom :)
                                             var parametersBuilder = new StringBuilder();
-                                            foreach (var codeProperty in snippetCodeGraph.PathParameters.OrderBy(static parameter => parameter.Name))
+                                            foreach (var codeProperty in snippetCodeGraph.PathParameters.OrderBy(static parameter => parameter.Name, StringComparer.OrdinalIgnoreCase))
                                             {
                                                 var parameter = new StringBuilder();
                                                 WriteObjectFromCodeProperty(new CodeProperty{PropertyType = PropertyType.Array}, codeProperty, parameter, new IndentManager(), snippetCodeGraph.ApiVersion);
