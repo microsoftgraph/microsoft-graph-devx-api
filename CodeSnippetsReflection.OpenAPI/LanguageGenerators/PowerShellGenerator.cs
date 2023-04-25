@@ -246,6 +246,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 snippetModel.ContentType = "application/json";
             }
 
+            if ("GET".Equals(snippetModel?.Method.ToString(), StringComparison.OrdinalIgnoreCase)
+               && !string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
+            {
+                return default;
+            }
+
             var payloadSB = new StringBuilder();
             switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant())
             {
