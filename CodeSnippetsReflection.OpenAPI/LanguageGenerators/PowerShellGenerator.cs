@@ -37,7 +37,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var snippetBuilder = new StringBuilder();
             var cleanPath = snippetModel.EndPathNode.Path.Replace("\\", "/");
             var isMeSegment = meSegmentRegex.IsMatch(cleanPath);
-            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath);
+            var isDelta = snippetModel.EndPathNode.Path.Contains("()", StringComparison.OrdinalIgnoreCase);
+            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, isDelta, cleanPath);
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
@@ -106,13 +107,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return payloadSB.ToString();
         }
 
-        private static (string, string) SubstituteMeSegment(bool isMeSegment, string path)
+        private static (string, string) SubstituteMeSegment(bool isMeSegment, bool isDelta, string path)
         {
             string additionalKeySegmentParmeter = default;
             if (isMeSegment)
             {
                 path = meSegmentRegex.Replace(path, "/users/{user-id}");
                 additionalKeySegmentParmeter = $" -UserId $userId";
+            }
+            if (isDelta)
+            {
+                path = path.Replace("()", "");
             }
             return (path, additionalKeySegmentParmeter);
         }
@@ -229,10 +234,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
+
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody)
                 || "undefined".Equals(snippetModel?.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
                 return (default, default);
             if (indentManager == null) throw new ArgumentNullException(nameof(indentManager));
+
+            if (isValidJson(snippetModel?.RequestBody)
+                && string.IsNullOrWhiteSpace(snippetModel?.ContentType))      
+            {
+                snippetModel.ContentType = "application/json";
+            }
 
             var payloadSB = new StringBuilder();
             switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant())
@@ -246,12 +258,28 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         payloadSB.AppendLine("}");
                     }
                     break;
+                case "image/jpeg":
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = Binary data for the image");
+                    break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
             }
             return (payloadSB.ToString(), $"-BodyParameter ${requestBodyVarName}");
         }
 
+        private static bool isValidJson(string requestBody)
+        {
+            try
+            {
+                JsonDocument.Parse(requestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
+                return true;
+            }
+            catch (Exception ex)
+            {
+                 
+            }
+            return false;
+        }
         private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true)
         {
             if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
@@ -320,14 +348,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetNumberLiteral(OpenApiSchema schema, JsonElement value)
         {
-            if (schema == default) return default;
-            return schema.Type switch
-            {
-                "integer" when schema.Format.Equals("int64") => $"{value.GetInt64()}",
-                _ when schema.Format.Equals("float") => $"{value.GetDecimal()}",
-                _ when schema.Format.Equals("double") => $"{value.GetDouble()}",
-                _ => value.GetInt32().ToString(),
-            };
+            //if (schema == default) return default;
+            //return schema.Type switch
+            //{
+            //    "integer" when schema.Format.Equals("int64") => $"{value.GetInt64()}",
+            //    _ when schema.Format.Equals("float") => $"{value.GetDecimal()}",
+            //    _ when schema.Format.Equals("double") => $"{value.GetDouble()}",
+            //    _ => value.GetInt32().ToString(),
+            //};
+            return value.ToString();
         }
 
         private static string GetActionParametersList(params string[] parameters)
