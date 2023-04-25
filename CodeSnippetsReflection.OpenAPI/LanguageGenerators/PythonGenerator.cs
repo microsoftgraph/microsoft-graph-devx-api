@@ -17,7 +17,6 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     private const string RequestBodyVarName = "request_body";
     private const string QueryParametersVarName = "query_params";
     private const string RequestConfigurationVarName = "request_configuration";
-    private const string RequestHeadersVarName = "headers";
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
         var indentManager = new IndentManager();
@@ -55,7 +54,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             var snippetBuilder = new StringBuilder();
             if (!model.HasParameters())
                 return default;
-            snippetBuilder.AppendLine($"query_params = {classNameQueryParameters}(");
+            snippetBuilder.AppendLine($"{QueryParametersVarName} = {classNameQueryParameters}(");
             indentManager.Indent(2);
             foreach (var queryParam in model.Parameters)
             {
@@ -93,22 +92,18 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
                 if (codeGraph.HasHeaders()){
                     if(queryParamsPayload != null){
-                        snippetBuilder.AppendLine("query_parameters = query_params,");
+                        snippetBuilder.AppendLine($"query_parameters = {QueryParametersVarName},");
                     }
                     snippetBuilder.AppendLine(requestHeadersPayload);
                     indentManager.Unindent();
                     snippetBuilder.AppendLine(")");
                 }         
                 if (!codeGraph.HasHeaders()){
-                    snippetBuilder.AppendLine("query_parameters = query_params,");
+                    snippetBuilder.AppendLine($"query_parameters = {QueryParametersVarName},");
                     indentManager.Unindent();
                     snippetBuilder.AppendLine(")");
                 }
-                // if (codeGraph.HasHeaders() && !codeGraph.HasParameters()) {
-                //     snippetBuilder.AppendLine(requestHeadersPayload);
-                //     indentManager.Unindent();
-                //     snippetBuilder.AppendLine(")");
-                // }
+                
             }    
             return snippetBuilder.ToString();
         }
@@ -122,7 +117,6 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     
    private static string GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager)
     {
-        var snippetBuilder = new StringBuilder();
         var filteredHeaders = snippetModel.Headers?.Where(static h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
         var headersvar = new StringBuilder();
