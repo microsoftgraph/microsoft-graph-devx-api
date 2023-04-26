@@ -67,6 +67,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.Append($" -OutFile $outFileId");
                 }
             }
+            else
+            {
+                snippetBuilder.Append("UnsupportedSDKPath:" + snippetModel.Method.ToString() + " " + path);  
+            }
             return snippetBuilder.ToString();
         }
         /// <summary>

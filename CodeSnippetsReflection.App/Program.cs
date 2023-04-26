@@ -141,18 +141,43 @@ namespace CodeSnippetsReflection.App
                 File.WriteAllText(filePath + "-error", message);
                 return;
             }
-
-            if (!string.IsNullOrWhiteSpace(snippet))
+            if("powershell".Equals(language, StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine($"Writing snippet: {filePath}");
-                File.WriteAllText(filePath, snippet);
+                if (!string.IsNullOrWhiteSpace(snippet) && !snippet.Contains("UnsupportedSDKPath"))
+                {
+                    Console.WriteLine($"Writing snippet: {filePath}");
+                    File.WriteAllText(filePath, snippet);
+                }
+                else
+                {
+                    if (snippet.Contains("UnsupportedSDKPath"))
+                    {
+                        File.WriteAllText(filePath + "-error", snippet);
+                        Console.Error.WriteLine(snippet);
+                    }
+                    else
+                    {
+                        var message = $"Failed to generate {language} snippets for {file}.";
+                        File.WriteAllText(filePath + "-error", message);
+                        Console.Error.WriteLine(message);
+                    }
+                }
             }
             else
             {
-                var message = $"Failed to generate {language} snippets for {file}.";
-                File.WriteAllText(filePath + "-error", message);
-                Console.Error.WriteLine(message);
+                if (!string.IsNullOrWhiteSpace(snippet))
+                {
+                    Console.WriteLine($"Writing snippet: {filePath}");
+                    File.WriteAllText(filePath, snippet);
+                }
+                else
+                {
+                    var message = $"Failed to generate {language} snippets for {file}.";
+                    File.WriteAllText(filePath + "-error", message);
+                    Console.Error.WriteLine(message);
+                }
             }
+            
         }
     }
 }
