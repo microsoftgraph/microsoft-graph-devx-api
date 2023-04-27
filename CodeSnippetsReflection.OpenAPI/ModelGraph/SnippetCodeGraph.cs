@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
@@ -10,7 +9,6 @@ using System.Text.RegularExpressions;
 using System.Web;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Expressions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 
@@ -55,6 +53,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             Headers = parseHeaders(snippetModel);
             Options = Enumerable.Empty<CodeProperty>();
             Parameters = parseParameters(snippetModel);
+            PathParameters = parsePathParameters(snippetModel);
             Body = parseBody(snippetModel);
             ApiVersion = snippetModel.ApiVersion;
         }
@@ -89,6 +88,11 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         }
 
         public IEnumerable<CodeProperty> Parameters
+        {
+            get; set;
+        }
+        
+        public IEnumerable<CodeProperty> PathParameters
         {
             get; set;
         }
@@ -175,6 +179,35 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                     }else{
                         parameters.Add(new() { Name = name, Value = value, PropertyType = PropertyType.String });
                     }
+                }
+            }
+            return parameters;
+        }
+        
+        private static List<CodeProperty> parsePathParameters(SnippetModel snippetModel)
+        {
+
+            var pathParameters = snippetModel.EndPathNode
+                                             .PathItems
+                                             .SelectMany(static pathItem => pathItem.Value.Operations)
+                                             .Where(operation => operation.Key.ToString().Equals(snippetModel.Method.ToString(), StringComparison.OrdinalIgnoreCase)) // get the operations that match the method
+                                             .SelectMany(static operation => operation.Value.Parameters)
+                                             .Where(static parameter => parameter.In == ParameterLocation.Path); // find the parameters in the path
+
+            var parameters = new List<CodeProperty>();
+            foreach (var parameter in pathParameters)
+            {
+                switch (parameter.Schema.Type.ToLowerInvariant())
+                {
+                    case "string":
+                        parameters.Add(evaluateStringProperty(parameter.Name, $"{{{parameter.Name}}}", parameter.Schema));
+                        break;
+                    case "integer":
+                        parameters.Add(new CodeProperty { Name = parameter.Name, Value = int.TryParse(parameter.Name, out _) ? parameter.Name : "1", PropertyType = PropertyType.Int32, Children = new List<CodeProperty>() });
+                        break;
+                    case "double":
+                        parameters.Add(new CodeProperty { Name = parameter.Name, Value = double.TryParse(parameter.Name, out _) ? parameter.Name : "1.0d", PropertyType = PropertyType.Double, Children = new List<CodeProperty>() });
+                        break;
                 }
             }
             return parameters;
@@ -351,22 +384,22 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             return $"models{namespaceSuffix}";
         }
         
-        private static CodeProperty evaluateStringProperty(string propertyName, JsonElement value, OpenApiSchema propSchema)
+        private static CodeProperty evaluateStringProperty(string propertyName, string value, OpenApiSchema propSchema)
         {
             if ((propSchema?.Type?.Equals("boolean", StringComparison.OrdinalIgnoreCase) ?? false))
-                return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.Boolean, Children = new List<CodeProperty>() };
+                return new CodeProperty { Name = propertyName, Value = value, PropertyType = PropertyType.Boolean, Children = new List<CodeProperty>() };
             var formatString = propSchema?.Format;
             if (!string.IsNullOrEmpty(formatString) && _formatPropertyTypes.TryGetValue(formatString, out var type))
-                return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = type, Children = new List<CodeProperty>() };
+                return new CodeProperty { Name = propertyName, Value = value, PropertyType = type, Children = new List<CodeProperty>() };
             var enumSchema = propSchema?.AnyOf.FirstOrDefault(x => x.Enum.Count > 0);
             if ((propSchema?.Enum.Count ?? 0) == 0 && enumSchema == null)
-                return new CodeProperty { Name = propertyName, Value = escapeSpecialCharacters(value.GetString()), PropertyType = PropertyType.String, Children = new List<CodeProperty>() };
+                return new CodeProperty { Name = propertyName, Value = escapeSpecialCharacters(value), PropertyType = PropertyType.String, Children = new List<CodeProperty>() };
             enumSchema ??= propSchema;
             // Pass the list of options in the enum as children so that the language generators may use them for validation if need be, 
             var enumValueOptions = enumSchema?.Enum.Where(option => option is OpenApiString)
                                                                 .Select(option => new CodeProperty{Name = ((OpenApiString)option).Value,Value = ((OpenApiString)option).Value,PropertyType = PropertyType.String})
                                                                 .ToList() ?? new List<CodeProperty>();
-            var propValue = String.IsNullOrWhiteSpace(value.GetString()) ? $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{enumValueOptions.FirstOrDefault().Value.ToFirstCharacterUpperCase()}" : $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{value.GetString().ToFirstCharacterUpperCase()}";
+            var propValue = String.IsNullOrWhiteSpace(value) ? $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{enumValueOptions.FirstOrDefault().Value.ToFirstCharacterUpperCase()}" : $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{value.ToFirstCharacterUpperCase()}";
 
             return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = enumValueOptions ,NamespaceName = GetNamespaceFromSchema(enumSchema)};
         }
@@ -404,7 +437,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             switch (value.ValueKind)
             {
                 case JsonValueKind.String:
-                    return evaluateStringProperty(propertyName, value, propSchema);
+                    return evaluateStringProperty(propertyName, value.GetString(), propSchema);
                 case JsonValueKind.Number:
                     return evaluateNumericProperty(propertyName, value, propSchema);
                 case JsonValueKind.False:

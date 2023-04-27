@@ -42,7 +42,7 @@ namespace GraphWebApi.Controllers
         // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> GetPermissionScopes([FromQuery]ScopeType? scopeType = null,
+        public async Task<IActionResult> GetPermissionScopes([FromQuery]ScopeType scopeType = ScopeType.DelegatedWork,
                                                              [FromQuery]string requestUrl = null,
                                                              [FromQuery]string method = null,
                                                              [FromQuery]string org = null,
@@ -55,12 +55,14 @@ namespace GraphWebApi.Controllers
 
             string localeCode = GetPreferredLocaleLanguage(Request);
 
-            var requestUrls = requestUrl != null ? new List<string> { requestUrl } : null;
+            var requests = requestUrl != null
+                ? new List<RequestInfo> { new RequestInfo { RequestUrl = requestUrl, HttpMethod = method } }
+                : null;
+
             PermissionResult result = await _permissionsStore.GetScopesAsync(
-                                                                requestUrls: requestUrls,
+                                                                requests: requests,
                                                                 locale: localeCode,
                                                                 scopeType: scopeType,
-                                                                method: method,
                                                                 includeHidden: includeHidden,
                                                                 leastPrivilegeOnly: leastPrivilegeOnly,
                                                                 org: org,
@@ -76,24 +78,22 @@ namespace GraphWebApi.Controllers
 
         [HttpPost]
         [Produces("application/json")]
-        public async Task<IActionResult> GetPermissionScopes([FromBody] List<string> requestUrls,
+        public async Task<IActionResult> GetPermissionScopes([FromBody] List<RequestInfo> requests,
                                                              [FromQuery] ScopeType? scopeType = null,
-                                                             [FromQuery] string method = null,
                                                              [FromQuery] string org = null,
                                                              [FromQuery] string branchName = null,
                                                              [FromQuery] bool leastPrivilegeOnly = true,
                                                              [FromQuery] bool includeHidden = false)
         {
-            if (requestUrls == null || !requestUrls.Any())
+            if (requests == null || !requests.Any())
                 return BadRequest("Request URLs cannot be null or empty");
 
             string localeCode = GetPreferredLocaleLanguage(Request);
 
             PermissionResult result = await _permissionsStore.GetScopesAsync(
-                                                                requestUrls: requestUrls,
+                                                                requests: requests,
                                                                 locale: localeCode,
                                                                 scopeType: scopeType,
-                                                                method: method,
                                                                 includeHidden: includeHidden,
                                                                 leastPrivilegeOnly: leastPrivilegeOnly,
                                                                 org: org,

@@ -28,5 +28,7 @@ namespace OpenAPIService.Interfaces
         void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream);
 
         OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody = false, bool singularizeOperationIds = false);
+
+        OpenApiDocument CloneOpenApiDocument(OpenApiDocument document);
     }
 }
