@@ -234,7 +234,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             // Tokenize uri by substituting parameter values with "{.*}" e.g, "/users/{user-id}" to "/users/{.*}".
             path = $"^{keyIndexRegex.Replace(path, "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Value.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri,
-                path, RegexOptions.None, TimeSpan.FromSeconds(5)).Success).ToList();
+                path, RegexOptions.None, TimeSpan.FromSeconds(10)).Success).ToList();
         }
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
