@@ -44,7 +44,7 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(".me.messages_by_id('message-id').get()", result);
+        Assert.Contains(".me.messages.by_message_id('message-id').get()", result);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(".users_by_id('user-id').messages.get()", result);
+        Assert.Contains(".users.by_user_id('user-id').messages.get()", result);
     }
 
     [Fact]
@@ -121,8 +121,9 @@ public class PythonGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(
-            ".me.messages_by_id('message-id').get(request_configuration = request_configuration)",
+            ".me.messages.by_message_id('message-id').get(request_configuration = request_configuration)",
             result);
+           
     }
 
     [Fact]
@@ -183,7 +184,7 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(".me.messages_by_id('message-id').delete()", result);
+        Assert.Contains(".me.messages.by_message_id('message-id').delete()", result);
     }
     
     [Fact]
@@ -407,6 +408,6 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("= new DirectoryObject();", result);
+        Assert.Contains("= DirectoryObject();", result);
     }
 }

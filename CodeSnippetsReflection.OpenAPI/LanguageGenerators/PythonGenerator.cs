@@ -343,26 +343,56 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     private static string NormalizeVariableName(string variable) =>
         variable.Replace(".", String.Empty).Replace("-", string.Empty);
     
+    // private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
+    //     {
+    //         var openApiUrlTreeNodes = nodes.ToList();
+    //         if(!(openApiUrlTreeNodes?.Any() ?? false)) 
+    //             return string.Empty;
+
+    //         return openApiUrlTreeNodes.Select(static x => {
+    //             if(x.Segment.IsCollectionIndex())
+    //                 return $"by_type_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
+    //             if (x.Segment.IsFunction())
+    //                 return x.Segment.RemoveFunctionBraces().Split('.')
+    //                     .Select(static s => s.ToFirstCharacterLowerCase())
+    //                     .Aggregate(static (a, b) => $"{a}{b}");
+    //             return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces().ToFirstCharacterLowerCase();
+    //             })
+    //     .Aggregate(static (x, y) =>
+    //         {
+    //             var dot = y.StartsWith("by_id") ? "_" : ".";
+    //             return $"{x.Trim('$')}{dot}{y.Trim('$')}";
+    //         }).Replace("()ById(", "by_id(")
+    //           .Replace("()().", "().");
+    //     }
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
-            var openApiUrlTreeNodes = nodes.ToList();
-            if(!(openApiUrlTreeNodes?.Any() ?? false)) 
-                return string.Empty;
-
-            return openApiUrlTreeNodes.Select(static x => {
-                if(x.Segment.IsCollectionIndex())
-                    return $"by_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
-                if (x.Segment.IsFunction())
-                    return x.Segment.RemoveFunctionBraces().Split('.')
-                        .Select(static s => s.ToFirstCharacterLowerCase())
-                        .Aggregate(static (a, b) => $"{a}{b}");
-                return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces().ToFirstCharacterLowerCase();
-                })
-        .Aggregate(static (x, y) =>
+            if (!(nodes?.Any() ?? false)) return string.Empty;
+            var elements = nodes.Select(static (x, i) =>
             {
-                var dot = y.StartsWith("by_id") ? "_" : ".";
-                return $"{x.Trim('$')}{dot}{y.Trim('$')}";
-            }).Replace("()ById(", "by_id(")
-              .Replace("()().", "().");
+                if (x.Segment.IsCollectionIndex())
+                    return $"by_type_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
+                else if (x.Segment.IsFunction())
+                    return x.Segment.Split('.')
+                                    .Select(static s => s.ToFirstCharacterLowerCase())
+                                    .Aggregate(static (a, b) => $"{a}{b}") + "().";
+                return x.Segment.ToFirstCharacterLowerCase() + "().";
+            })
+                        .Aggregate(new List<String>(), (current, next) =>
+                        {
+                            var element = next.Contains("by_type_id", StringComparison.OrdinalIgnoreCase) ? 
+                            next.Replace("by_type_id", $"by_{current.Last().Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}_id") :
+                            $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
+
+                            current.Add(element);
+                            return current;
+                        }).Aggregate(static (x, y) =>
+                            {
+                                var dot = y.StartsWith("by_id") ? "_" : string.Empty;
+                                return $"{x.Trim('$')}{dot}{y.Trim('$')}";
+                            }).Replace("().", ".")
+                            .Replace("()().", ".");
+
+            return string.Join("", elements).Replace("()()", "()");
         }
 }
