@@ -20,17 +20,32 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
-        private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/features/2.0/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
-        private readonly Lazy<IList<PowerShellCommandInfo>> psCommands = new(
+        private const string v1_mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
+        private const string v2_mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/features/2.0/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
+        private readonly Lazy<IList<PowerShellCommandInfo>> psV1Commands = new(
             () =>
             {
                 using var httpClient = new HttpClient();
-                using var stream = httpClient.GetStreamAsync(mgCommandMetadataUrl).GetAwaiter().GetResult();
+                using var stream = httpClient.GetStreamAsync(v1_mgCommandMetadataUrl).GetAwaiter().GetResult();
+                return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
+            },
+            LazyThreadSafetyMode.PublicationOnly
+        );
+        private readonly Lazy<IList<PowerShellCommandInfo>> psV2Commands = new(
+            () => {
+                using var httpClient = new HttpClient();
+                using var stream = httpClient.GetStreamAsync(v2_mgCommandMetadataUrl).GetAwaiter().GetResult();
                 return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
             },
             LazyThreadSafetyMode.PublicationOnly
         );
         private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private string sdkVersion;
+
+        public PowerShellGenerator(string version)
+        {
+            sdkVersion = version;
+        }
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -39,7 +54,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var isMeSegment = meSegmentRegex.IsMatch(cleanPath);
             var isDelta = snippetModel.EndPathNode.Path.Contains("()", StringComparison.OrdinalIgnoreCase);
             var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, isDelta, cleanPath);
-            IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
+            IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion, sdkVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
             {
@@ -226,8 +241,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
 
         private static readonly Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
+        private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion, string sdkversion)
         {
+            var psCommands = string.Equals("V1", sdkversion, StringComparison.OrdinalIgnoreCase) ? psV1Commands : psV2Commands;
             if (psCommands.Value.Count == 0)
                 return default;
             path = Regex.Escape(SnippetModel.TrimNamespace(path));

@@ -12,7 +12,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
     {
         private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
         private static OpenApiUrlTreeNode _v1TreeNode;
-        private readonly PowerShellGenerator _generator = new();
+        private readonly PowerShellGenerator _generator = new("V2");
         private static async Task<OpenApiUrlTreeNode> GetV1TreeNode()
         {
             if (_v1TreeNode == null)

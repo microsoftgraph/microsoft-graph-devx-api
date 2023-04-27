@@ -70,6 +70,7 @@ namespace CodeSnippetsReflection.OpenAPI
             "typescript",
             "go",
             "powershell",
+            "powershellv2",
             "php",
             "cli"
         };
@@ -78,7 +79,8 @@ namespace CodeSnippetsReflection.OpenAPI
                 "c#" => new CSharpGenerator(),
                 "typescript" => new TypeScriptGenerator(),
                 "go" => new GoGenerator(),
-                "powershell" => new PowerShellGenerator(),
+                "powershell" => new PowerShellGenerator("V1"),
+                "powershellv2" => new PowerShellGenerator("V2"),
                 "php" => new PhpGenerator(),
                 "cli" => new GraphCliGenerator(),
                 _ => throw new ArgumentOutOfRangeException($"Language '{language}' is not supported"),
