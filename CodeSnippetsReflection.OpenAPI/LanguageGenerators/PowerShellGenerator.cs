@@ -271,6 +271,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case "image/jpeg":
                     payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = Binary data for the image");
                     break;
+                case "application/zip":
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = {snippetModel?.RequestBody}");
+                    break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
             }
