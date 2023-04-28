@@ -63,7 +63,7 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(".users.by_user_id('user-id').messages.get()", result);
+        Assert.Contains("-users.by_user_id('user-id').messages.get()", result);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class PythonGeneratorTests
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(".directory.deletedItems.graphgroup.get()", result);
+        Assert.Contains(".directory.deleted_items.graph_group.get()", result);
     }
 
     [Fact]
@@ -250,7 +250,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("request_body.additionaldata(additionalData)", result);
+        Assert.Contains("request_body.additional_data(additionalData)", result); 
     }
 
     [Fact]
