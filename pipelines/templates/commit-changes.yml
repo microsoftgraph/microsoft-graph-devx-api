@@ -20,10 +20,3 @@ steps:
     }
   displayName: 'Git: stage and commit generated files'
   workingDirectory: 'microsoft-graph-docs'
-
-- pwsh: |
-    git push --set-upstream origin $env:BRANCHNAME | Write-Host
-    Write-Host "Pushed the results of the build to the $env:BRANCHNAME branch." -ForegroundColor Green
-  displayName: 'Git: push updates'
-  workingDirectory: 'microsoft-graph-docs'
-  condition: and(succeeded(), eq(variables.shouldPushBranch, 'true'))
