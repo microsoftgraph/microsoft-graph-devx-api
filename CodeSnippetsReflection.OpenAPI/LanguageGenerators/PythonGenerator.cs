@@ -340,6 +340,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         else
             snippetBuilder.Append($"\'{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}\', ");
     }
+
     private static string NormalizeVariableName(string variable) =>
         variable.Replace(".", String.Empty).Replace("-", string.Empty);
     
@@ -375,5 +376,6 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 
 
             return string.Join("", elements).Replace("()()", "()");
+
         }
 }

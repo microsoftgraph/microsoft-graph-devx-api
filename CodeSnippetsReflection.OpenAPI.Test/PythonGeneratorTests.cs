@@ -44,7 +44,11 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
+<<<<<<< HEAD
         Assert.Contains(".me.messages.by_message_id('message-id').get()", result);
+=======
+        Assert.Contains(".me.messages_by_id('message-id').get()", result);
+>>>>>>> f5d8428e60fd0fd376e76316d2f95fd990736662
     }
 
     [Fact]
@@ -63,7 +67,11 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
+<<<<<<< HEAD
         Assert.Contains("users.by_user_id('user-id').messages.get()", result);
+=======
+        Assert.Contains(".users_by_id('user-id').messages.get()", result);
+>>>>>>> f5d8428e60fd0fd376e76316d2f95fd990736662
     }
 
     [Fact]
@@ -110,7 +118,11 @@ public class PythonGeneratorTests
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
+<<<<<<< HEAD
         Assert.Contains(".directory.deleted_items.graph_group.get()", result);
+=======
+        Assert.Contains(".directory.deletedItems.graphgroup.get()", result);
+>>>>>>> f5d8428e60fd0fd376e76316d2f95fd990736662
     }
 
     [Fact]
@@ -121,9 +133,14 @@ public class PythonGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(
+<<<<<<< HEAD
             ".me.messages.by_message_id('message-id').get(request_configuration = request_configuration)",
             result);
            
+=======
+            ".me.messages_by_id('message-id').get(request_configuration = request_configuration)",
+            result);
+>>>>>>> f5d8428e60fd0fd376e76316d2f95fd990736662
     }
 
     [Fact]
@@ -184,7 +201,11 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
+<<<<<<< HEAD
         Assert.Contains(".me.messages.by_message_id('message-id').delete()", result);
+=======
+        Assert.Contains(".me.messages_by_id('message-id').delete()", result);
+>>>>>>> f5d8428e60fd0fd376e76316d2f95fd990736662
     }
     
     [Fact]
@@ -250,7 +271,11 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
+<<<<<<< HEAD
         Assert.Contains("request_body.additional_data(additionalData)", result); 
+=======
+        Assert.Contains("request_body.additionaldata(additionalData)", result);
+>>>>>>> f5d8428e60fd0fd376e76316d2f95fd990736662
     }
 
     [Fact]
@@ -408,6 +433,10 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
+<<<<<<< HEAD
         Assert.Contains("= DirectoryObject();", result);
+=======
+        Assert.Contains("= new DirectoryObject();", result);
+>>>>>>> f5d8428e60fd0fd376e76316d2f95fd990736662
     }
 }
