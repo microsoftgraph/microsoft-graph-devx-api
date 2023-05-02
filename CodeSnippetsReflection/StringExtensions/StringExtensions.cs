@@ -51,6 +51,11 @@ namespace CodeSnippetsReflection.StringExtensions
                 }
                 snakeCaseBuilder.Append(char.ToLower(c));
             }
+            else if (c=='.')
+            {
+                snakeCaseBuilder.Append('_');
+            }
+            
             else
             {
                 snakeCaseBuilder.Append(c);

@@ -63,7 +63,7 @@ public class PythonGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("-users.by_user_id('user-id').messages.get()", result);
+        Assert.Contains("users.by_user_id('user-id').messages.get()", result);
     }
 
     [Fact]

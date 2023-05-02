@@ -340,7 +340,6 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         else
             snippetBuilder.Append($"\'{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}\', ");
     }
-
     private static string NormalizeVariableName(string variable) =>
         variable.Replace(".", String.Empty).Replace("-", string.Empty);
     
@@ -348,29 +347,32 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
             var elements = nodes.Select(static (x, i) =>
-            {
-                if (x.Segment.IsCollectionIndex())
-                    return $"by_type_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
-                else if (x.Segment.IsFunction())
-                    return x.Segment.RemoveFunctionBraces().Split('.')
-                                    .Select(static s => s.ToFirstCharacterLowerCase())
-                                    .Aggregate(static (a, b) => $"{a}{b}") + "().";
-                return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces(). ToFirstCharacterLowerCase() + "().";
-            })
+                {
+                    if (x.Segment.IsCollectionIndex())
+                        return $"by_type_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
+                    else if (x.Segment.IsFunction())
+                        return x.Segment.RemoveFunctionBraces().Split('.')
+                            .Select(static s => s.ToSnakeCase())
+                            .Aggregate(static (a, b) => $"{a}{b}") + "().";
+                    return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces()
+                        .ToSnakeCase() + "().";
+                })
                 .Aggregate(new List<String>(), (current, next) =>
                 {
-                    var element = next.Contains("by_type_id", StringComparison.OrdinalIgnoreCase) ? 
-                    next.Replace("by_type_id", $"by_{current.Last().Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}_id") :
-                    $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
+                    var element = next.Contains("by_type_id", StringComparison.OrdinalIgnoreCase)
+                        ? next.Replace("by_type_id",
+                            $"by_{current.Last().Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}_id")
+                        : $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
 
                     current.Add(element);
                     return current;
                 }).Aggregate(static (x, y) =>
-                    {
-                        var dot = (y.StartsWith("by_")  && y.EndsWith("_id")) ? "_" : string.Empty;
-                        return $"{x.Trim('$')}.{y.Trim('$')}";
-                    }).Replace("().", ".")
-                    .Replace("()().", ".");
+                {
+                    return $"{x.Trim('$')}.{y.Trim('$', '.').Replace("()", string.Empty)}";
+                }).Replace("..", ".")
+                .Replace("().", ".")
+                .Replace("()().", ".");
+                
 
             return string.Join("", elements).Replace("()()", "()");
         }
