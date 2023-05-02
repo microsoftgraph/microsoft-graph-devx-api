@@ -41,7 +41,7 @@ public class PythonGeneratorTests
     public async Task GeneratesTheCorrectFluentApiPathForIndexedCollections()
     {
         using var requestPayload =
-            new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
+            new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}"); 
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(".me.messages.by_message_id('message-id').get()", result);
@@ -60,7 +60,7 @@ public class PythonGeneratorTests
     public async Task GeneratesCorrectLongPaths()
     {
         using var requestPayload =
-            new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
+            new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages"); 
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("users.by_user_id('user-id').messages.get()", result);
@@ -112,7 +112,6 @@ public class PythonGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(".directory.deleted_items.graph_group.get()", result);
-
     }
 
     [Fact]

@@ -141,7 +141,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     {
         var childPosition = 0;
         var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToFirstCharacterUpperCase();
-        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToSnakeCase()} = {objectType}()");
+        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = {objectType}()");
         
         foreach(CodeProperty child in codeProperty.Children)
         {
@@ -170,14 +170,14 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             case PropertyType.Float64:
                 if (!isMap && !isArray)
                     snippetBuilder.AppendLine(
-                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{child.Name.ToSnakeCase()} = {child.Value}");
+                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{propertyName.ToFirstCharacterUpperCase()} = {child.Value}");
                 else
                     snippetBuilder.Append($"{child.Value},");
                 break;
 			case PropertyType.Boolean:
                 if (!isMap && !isArray) {
                     snippetBuilder.AppendLine(
-                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{child.Name.ToSnakeCase()} = {child.Value.ToFirstCharacterUpperCase()}");
+                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{propertyName.ToFirstCharacterUpperCase()}({child.Value.ToLower()})");
                 }
                 else
                 {
@@ -191,7 +191,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), snippetBuilder, child, indentManager, childPropertyName);
                 if (!fromArray)
                     snippetBuilder.AppendLine(
-                        $"{propertyAssignment.ToFirstCharacterLowerCase()}.{child.Name.ToSnakeCase()} = {(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()}");
+                        $"{propertyAssignment.ToFirstCharacterLowerCase()}.{child.Name.ToFirstCharacterUpperCase()} = {(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()}");
                 break;
 			case PropertyType.Array:
 				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, snippetBuilder, parent, child, indentManager); 
