@@ -140,12 +140,12 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     private static void WriteObjectProperty(string propertyAssignment, StringBuilder snippetBuilder, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default, SnippetCodeGraph codeGraph = default)
     {
         var childPosition = 0;
-        var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToFirstCharacterUpperCase();
-        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = {objectType}()");
+        var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToSnakeCase();
+        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToSnakeCase()} = {objectType.ToFirstCharacterUpperCase()}()");
         
         foreach(CodeProperty child in codeProperty.Children)
         {
-            var newChildName = (childPropertyName ?? "") + child.Name.ToFirstCharacterUpperCase();
+            var newChildName = (childPropertyName ?? "") + child.Name.ToSnakeCase().ToSnakeCase();
             WriteCodeProperty(childPropertyName ?? propertyAssignment, snippetBuilder, codeProperty, child, indentManager, ++childPosition, newChildName);
             if (child.PropertyType != PropertyType.Object) 
                 snippetBuilder.AppendLine();
@@ -158,7 +158,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var isMap = parent.PropertyType == PropertyType.Map;
         var fromArray = parent.PropertyType == PropertyType.Array;
 
-        var propertyName = NormalizeQueryParameterName(child.Name.ToFirstCharacterLowerCase());
+        var propertyName = NormalizeQueryParameterName(child.Name);
         switch (child.PropertyType) {
 			case PropertyType.String:
                 WriteStringProperty(propertyAssignment, parent, snippetBuilder, indentManager, child);
@@ -188,13 +188,13 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 WriteNullProperty(propertyAssignment, parent, snippetBuilder, indentManager, child);
                 break;
             case PropertyType.Object: 
-                WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), snippetBuilder, child, indentManager, childPropertyName);
+                WriteObjectProperty(propertyAssignment.ToSnakeCase(), snippetBuilder, child, indentManager, childPropertyName.ToSnakeCase());
                 if (!fromArray)
                     snippetBuilder.AppendLine(
-                        $"{propertyAssignment.ToFirstCharacterLowerCase()}.{child.Name.ToFirstCharacterUpperCase()} = {(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()}");
+                        $"{propertyAssignment.ToSnakeCase()}.{child.Name.ToSnakeCase()} = {(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()}");
                 break;
 			case PropertyType.Array:
-				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, snippetBuilder, parent, child, indentManager); 
+				WriteArrayProperty(propertyAssignment.ToSnakeCase(), child.Name, snippetBuilder, parent, child, indentManager); 
                 break;
             case PropertyType.Enum:
                 WriteEnumValue(snippetBuilder, propertyAssignment.ToFirstCharacterLowerCase(), child);
@@ -250,12 +250,12 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
 
     private static void WriteMapValue(StringBuilder snippetBuilder, string propertyAssignment, CodeProperty parent, CodeProperty currentProperty, IndentManager indentManager)
     {
-        snippetBuilder.AppendLine($"{currentProperty.Name} = [");
+        snippetBuilder.AppendLine($"{currentProperty.Name.ToSnakeCase()} = [");
         var childPosition = 0;
         indentManager.Indent(2);
         foreach (var child in currentProperty.Children)
         {
-            snippetBuilder.Append($"\'{child.Name}\' => ");
+            snippetBuilder.Append($"\'{child.Name.ToSnakeCase()}\' => ");
             WriteCodeProperty(propertyAssignment, snippetBuilder, currentProperty, child, indentManager, ++childPosition);
             snippetBuilder.AppendLine();
         }
@@ -264,7 +264,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         snippetBuilder.AppendLine("];");
         if (parent.PropertyType == PropertyType.Object)
             snippetBuilder.AppendLine(
-                $"{propertyAssignment}.{NormalizeVariableName(currentProperty.Name.ToLower())}({NormalizeVariableName(currentProperty.Name).ToFirstCharacterLowerCase()})");
+                $"{propertyAssignment}.{NormalizeVariableName(currentProperty.Name.ToSnakeCase())}({NormalizeVariableName(currentProperty.Name).ToSnakeCase()})");
         snippetBuilder.AppendLine();
     }
     private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder snippetBuilder, CodeProperty parentProperty, CodeProperty codeProperty, IndentManager indentManager)
@@ -335,7 +335,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         if (fromObject)
         {
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{NormalizeVariableName(codeProperty.Name)} = '{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}'");
+                $"{indentManager.GetIndent()}{propertyAssignment.ToSnakeCase()}.{NormalizeVariableName(codeProperty.Name.ToSnakeCase())} = '{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}'");
         }
         else
             snippetBuilder.Append($"\'{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}\', ");

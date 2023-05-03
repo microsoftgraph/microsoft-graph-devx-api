@@ -176,7 +176,7 @@ public class PythonGeneratorTests
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("cc_recipients_recipient1 = Recipient()", result);
-            Assert.Contains("message.body = messageBody", result);
+            Assert.Contains("message.body = messagebody", result);
     }
     
     [Fact]
@@ -253,7 +253,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("request_body.additional_data(additionalData)", result); 
+        Assert.Contains("request_body.additional_data(additional_data)", result); 
 
     }
 
