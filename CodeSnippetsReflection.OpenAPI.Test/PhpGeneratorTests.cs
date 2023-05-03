@@ -44,7 +44,7 @@ public class PhpGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->messagesById('message-id')", result);
+        Assert.Contains("->me()->messages()->byMessageId('message-id')", result);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class PhpGeneratorTests
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->usersById('user-id')->messages()->get();", result);
+        Assert.Contains("->users()->byUserId('user-id')->messages()->get();", result);
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public class PhpGeneratorTests
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(
-            "$graphServiceClient->me()->messagesById('message-id')->get($requestConfiguration)",
+            "$graphServiceClient->me()->messages()->byMessageId('message-id')->get($requestConfiguration)",
             result);
     }
 
@@ -184,7 +184,7 @@ public class PhpGeneratorTests
             new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphServiceClient->me()->messagesById('message-id')->delete()", result);
+        Assert.Contains("$graphServiceClient->me()->messages()->byMessageId('message-id')->delete()", result);
     }
     
     [Fact]
