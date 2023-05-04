@@ -101,7 +101,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("request_body = add_password_post_request_body()", result);
+        Assert.Contains("request_body = Add_password_post_request_body()", result);
     }
 
     [Fact]
@@ -264,7 +264,7 @@ public class PythonGeneratorTests
         Assert.Contains(".me.activities.recent.get()", result);
     }
 
-    [Fact /*(Skip = "Should fail by default.")*/]
+    [Fact (Skip = "Should fail by default.")]
     public async Task GenerateWithODataTypeAndODataId()
     {
         var url = "/communications/calls/{id}/answer";
