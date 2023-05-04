@@ -40,7 +40,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (snippetModel == null) throw new ArgumentNullException("Argument snippetModel cannot be null");
 
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder("//THE GO SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY");
+            var snippetBuilder = new StringBuilder();
             snippetBuilder.AppendLine("");
 
             writeImportStatements(codeGraph, snippetBuilder);
