@@ -177,7 +177,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
 			case PropertyType.Boolean:
                 if (!isMap && !isArray) {
                     snippetBuilder.AppendLine(
-                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{propertyName.ToFirstCharacterUpperCase()}({child.Value.ToLower()})");
+                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{propertyName.ToSnakeCase()} = {child.Value.ToFirstCharacterUpperCase()}");
                 }
                 else
                 {
@@ -311,11 +311,11 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
 
     private static void WriteEnumValue(StringBuilder snippetBuilder,string parentPropertyName, CodeProperty currentProperty)
     {
-        var enumParts = currentProperty.Value.Split('.');
+        var enumParts = currentProperty.Value.Split('_');
         var enumClass = enumParts.First();
         var enumValue = enumParts.Last().ToLower();
         snippetBuilder.AppendLine(
-            $"{parentPropertyName}.{NormalizeVariableName(currentProperty.Name).ToFirstCharacterUpperCase()}({enumClass}('{enumValue}'))");
+            $"{parentPropertyName}.{(currentProperty.Name).ToLower()}({enumClass}('{enumValue}'))");
     }
 
     private static void WriteBase64Url(string propertyAssignment, CodeProperty parent, StringBuilder snippetBuilder, IndentManager indentManager, CodeProperty child)
@@ -354,9 +354,9 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                     else if (x.Segment.IsFunction())
                         return x.Segment.Replace(".", "_").RemoveFunctionBraces().Split('.')
                             .Select(static s => s.ToSnakeCase())
-                            .Aggregate(static (a, b) => $"{a}{b}") + "().";
+                            .Aggregate(static (a, b) => $"{a}{b}");
                     return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces()
-                        .ToSnakeCase() + "().";
+                        .ToSnakeCase();
                 })
                 .Aggregate(new List<String>(), (current, next) =>
                 {
@@ -369,7 +369,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                     return current;
                 }).Aggregate(static (x, y) =>
                 {
-                    return $"{x.Trim('$')}.{y.Trim('$', '.').Replace("()", string.Empty)}";
+                    return $"{x.Trim('$').Replace("s_", "_")}.{y.Trim('$', '.').Replace("()", string.Empty).Replace("s_", "_")}";
                 }).Replace("..", ".")
                 .Replace("().", ".")
                 .Replace("()().", ".");
