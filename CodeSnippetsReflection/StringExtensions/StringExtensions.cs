@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using System.Globalization;
+using System.Linq;
 
 namespace CodeSnippetsReflection.StringExtensions
 {
@@ -37,6 +39,13 @@ namespace CodeSnippetsReflection.StringExtensions
             return stringValue[0..charIndex] + char.ToUpper(stringValue[charIndex + 1]) + stringValue[(charIndex + 2)..].ToFirstCharacterUpperCaseAfterCharacter(character);
         }
 
+        public static string ToPascalCase(this string str)
+        {
+            string[] words = str.Split('_');
+            string pascalCaseString = string.Join("", words.Select(w => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(w)));
+            return pascalCaseString;
+        }
+
        public static string ToSnakeCase(this string str)
         {
             StringBuilder snakeCaseBuilder = new StringBuilder();
@@ -63,6 +72,8 @@ namespace CodeSnippetsReflection.StringExtensions
             }
             return snakeCaseBuilder.ToString();
         }
+
+       
         public static string EscapeQuotes(this string stringValue)
         {
             return stringValue.Replace("\"", "\\\"");

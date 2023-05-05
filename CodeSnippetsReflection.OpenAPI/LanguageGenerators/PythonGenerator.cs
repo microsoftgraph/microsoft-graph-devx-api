@@ -137,11 +137,13 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
  
     }
     private static string NormalizeQueryParameterName(string queryParam) => queryParam?.TrimStart('$').ToFirstCharacterLowerCase();
+    
+    
     private static void WriteObjectProperty(string propertyAssignment, StringBuilder snippetBuilder, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default, SnippetCodeGraph codeGraph = default)
     {
         var childPosition = 0;
         var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToSnakeCase();
-        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToSnakeCase()} = {objectType.ToFirstCharacterUpperCase()}()");
+        snippetBuilder.AppendLine($"{(childPropertyName ?? propertyAssignment).ToSnakeCase()} = {objectType.ToPascalCase()}()");
         
         foreach(CodeProperty child in codeProperty.Children)
         {
@@ -191,7 +193,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
                 WriteObjectProperty(propertyAssignment.ToSnakeCase(), snippetBuilder, child, indentManager, childPropertyName.ToSnakeCase());
                 if (!fromArray)
                     snippetBuilder.AppendLine(
-                        $"{propertyAssignment.ToSnakeCase()}.{child.Name.ToSnakeCase()} = {(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()}");
+                        $"{propertyAssignment.ToSnakeCase()}.{child.Name.ToSnakeCase()} = {childPropertyName ?? propertyName}");
                 break;
 			case PropertyType.Array:
 				WriteArrayProperty(propertyAssignment.ToSnakeCase(), child.Name, snippetBuilder, parent, child, indentManager); 

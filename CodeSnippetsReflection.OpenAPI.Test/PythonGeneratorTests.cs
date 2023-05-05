@@ -101,7 +101,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("request_body = Add_password_post_request_body()", result);
+        Assert.Contains("request_body = AddPasswordPostRequestBody()", result);
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public class PythonGeneratorTests
             };
        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
        var result = _generator.GenerateCodeSnippet(snippetModel);
-       Assert.Contains("request_body = Create_reply_post_request_body()", result);
+       Assert.Contains("request_body = CreateReplyPostRequestBody()", result);
     }
 
     [Fact]
@@ -225,7 +225,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("request_body = Usage_right()", result);
+        Assert.Contains("request_body = UsageRight()", result);
     }
 
     [Fact]
@@ -292,7 +292,7 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("request_body.call_options = callOptions", result);
+        Assert.Contains("request_body.call_options = call_options", result);
     }
     
     [Fact]
@@ -346,8 +346,8 @@ public class PythonGeneratorTests
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("attendees_attendee_base1 = Attendee_base()", result);
-        Assert.Contains("= Location_constraint_item()", result);
+        Assert.Contains("attendees_attendee_base1 = AttendeeBase()", result);
+        Assert.Contains("location_constraint = LocationConstraint()", result);
     }
 
     [Fact]
