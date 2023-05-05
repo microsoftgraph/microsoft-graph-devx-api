@@ -73,10 +73,31 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
     private static void ProcessCommandSegmentsAndParameters([NotNull] in SnippetModel snippetModel, [NotNull] ref List<string> commandSegments, [NotNull] ref OpenApiOperation operation, [NotNull] ref Dictionary<string, string> parameters)
     {
-
+        // Cache the last 2 path nodes for conflict checking
+        OpenApiUrlTreeNode prevPrevNode = null;
+        OpenApiUrlTreeNode prevNode = null;
         foreach (var node in snippetModel.PathNodes)
         {
             var segment = node.Segment.Replace("$value", "content").TrimStart('$');
+
+            // Kiota removes redundant microsoft. prefix from actions
+            if (segment.StartsWith("microsoft.graph"))
+            {
+                segment = segment.Replace("microsoft.", string.Empty);
+            }
+
+            // Handle path operation conflicts
+            // GET /users/{user-id}/directReports/graph.orgContact
+            // GET /users/{user-id}/directReports/{directoryObject-id}/graph.orgContact
+            if (prevPrevNode is not null && prevNode is not null && prevNode.IsParameter &&
+                prevPrevNode.Children.TryGetValue(node.Segment, out var prevPrevNodeMatch) &&
+                node.PathItems.TryGetValue("default", out var nodeDefaultItem) &&
+                prevPrevNodeMatch.PathItems.TryGetValue("default", out var prevPrevNodeDefaultItem) &&
+                nodeDefaultItem.Operations.Any(x => prevPrevNodeDefaultItem.Operations.ContainsKey(x.Key)))
+            {
+                segment += "ById";
+            }
+
             if (segment.IsCollectionIndex())
             {
                 AddParameterToDictionary(ref parameters, segment);
@@ -85,6 +106,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             {
                 commandSegments.Add(NormalizeToOption(segment));
             }
+            prevPrevNode = prevNode;
+            prevNode = node;
         }
 
         // Adds query parameters from the request into the parameters dictionary
@@ -111,7 +134,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
     private static IDictionary<string, string> ProcessHeaderParameters([NotNull] in SnippetModel snippetModel)
     {
-        return snippetModel.RequestHeaders.ToDictionary(x => x.Key, x=> string.Join(',',x.Value));
+        return snippetModel.RequestHeaders.ToDictionary(x => x.Key, x => string.Join(',', x.Value));
     }
 
     private static IDictionary<string, string> ProcessQueryParameters([NotNull] in SnippetModel snippetModel)
@@ -134,7 +157,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         return splitQueryString;
     }
 
-    private static void PostProcessParameters([NotNull] in IDictionary<string, string> processedParameters, in OpenApiOperation operation, ParameterLocation? location, [NotNull] ref Dictionary<string, string> parameters) {
+    private static void PostProcessParameters([NotNull] in IDictionary<string, string> processedParameters, in OpenApiOperation operation, ParameterLocation? location, [NotNull] ref Dictionary<string, string> parameters)
+    {
         var processed = processedParameters;
         var matchingParams = operation.Parameters
                     .Where(p => p.In == location && processed

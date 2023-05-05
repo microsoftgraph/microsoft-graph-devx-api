@@ -72,6 +72,25 @@ public class GraphCliGeneratorTests
         Assert.Equal("mgc users todo lists tasks attachments get --user-id {user-id} --todo-task-list-id {todoTaskList-id} --todo-task-id {todoTask-id} --attachment-base-id {attachmentBase-id}", result);
     }
 
+    [Theory]
+    [InlineData("/users/100/directReports/graph.orgContact", "mgc users direct-reports graph-org-contact get --user-id {user-id}")]
+    [InlineData("/users/100/directReports/123/graph.orgContact", "mgc users direct-reports graph-org-contact-by-id get --user-id {user-id} --directory-object-id {directoryObject-id}")]
+    public async Task GeneratesSnippetsForConflictingIndexerNavSubCommand(string url, string expectedCommand)
+    {
+        // Tests:
+        // GET /users/{user-id}/directReports/graph.orgContact
+        // GET /users/{user-id}/directReports/{directoryObject-id}/graph.orgContact
+        // Given
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{url}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal(expectedCommand, result);
+    }
+
     // Powershell metadata doesn't have /$count endpoints
     [Fact]
     public void GeneratesSnippetsForCountCommand()
