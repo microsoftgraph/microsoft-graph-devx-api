@@ -49,15 +49,14 @@ namespace CodeSnippetsReflection.OpenAPI
         private static readonly Dictionary<Regex, string> KnownReMappings = new()
         {
             { new Regex(@"/me/drive/root/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/root/" },
-            { new Regex(@"/me/drive/items/[A-z0-9{}\-]+/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/itemId/" },
+            { new Regex(@"/me/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
             { new Regex(@"/groups/[A-z0-9{}\-]+/drive/root",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/root/" },
-            { new Regex(@"/groups/[A-z0-9{}\-]+/drive/items/[A-z0-9{}\-]+/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/itemId/" },
+            { new Regex(@"/groups/[A-z0-9{}\-]+/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
             { new Regex(@"/sites/[A-z0-9{}\-]+/drive/root",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/root/" },
-            { new Regex(@"/sites/[A-z0-9{}\-]+/drive/items/[A-z0-9{}\-]+/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/itemId/" },
+            { new Regex(@"/sites/[A-z0-9{}\-]+/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
             { new Regex(@"/users/[A-z0-9{}\-]+/drive/root",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/root/" },
-            { new Regex(@"/users/[A-z0-9{}\-]+/drive/items/[A-z0-9{}\-]+/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/itemId/" },
-            { new Regex(@"/drive/bundles",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/bundles" },
-            { new Regex(@"/drive/items",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items" },
+            { new Regex(@"/users/[A-z0-9{}\-]+/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
+            { new Regex(@"/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
         };
         
         private static HttpRequestMessage RemapKnownPathsIfNeeded(HttpRequestMessage originalRequest)
