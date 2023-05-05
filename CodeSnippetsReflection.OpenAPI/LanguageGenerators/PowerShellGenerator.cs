@@ -31,14 +31,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             LazyThreadSafetyMode.PublicationOnly
         );
         private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex deltaWithParams = new(@"delta\(\w*='{\w*}\'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex deltaWithoutParams = new(@"delta\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
             var cleanPath = snippetModel.EndPathNode.Path.Replace("\\", "/");
             var isMeSegment = meSegmentRegex.IsMatch(cleanPath);
-            var isDelta = snippetModel.EndPathNode.Path.Contains("()", StringComparison.OrdinalIgnoreCase);
-            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, isDelta, cleanPath);
+            var hasGraphPrefix = snippetModel.EndPathNode.Path.Contains("graph", StringComparison.OrdinalIgnoreCase);
+            var isIdentityProvider = snippetModel.RootPathNode.Path.StartsWith("\\identityProviders", StringComparison.OrdinalIgnoreCase);
+            var lastPathSegment = snippetModel.EndPathNode.Segment;
+            cleanPath = SubstituteIdentityProviderSegment(cleanPath, isIdentityProvider);
+            cleanPath = SubstituteDeltaSegment(lastPathSegment, cleanPath);
+            cleanPath = SubstituteGraphSegment(cleanPath, hasGraphPrefix);
+            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
@@ -69,7 +77,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             else
             {
-                snippetBuilder.Append("UnsupportedSDKPath:" + snippetModel.Method.ToString() + " " + path);  
+                snippetBuilder.Append("UnsupportedSDKPath:" + snippetModel.Method.ToString() + " " + path);
             }
             return snippetBuilder.ToString();
         }
@@ -99,7 +107,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             var queryParamsPayload = GetRequestQueryParameters(snippetModel);
             if (!string.IsNullOrEmpty(queryParamsPayload))
-                payloadSB.Append($" {queryParamsPayload}");
+                payloadSB.Append($" {ReturnCleanParamsPayload(queryParamsPayload)}");
 
             var parameterList = GetActionParametersList(payloadVarName);
             if (!string.IsNullOrEmpty(parameterList))
@@ -110,8 +118,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 payloadSB.Append(requestHeadersPayload);
             return payloadSB.ToString();
         }
+        public static string ReturnCleanParamsPayload(string queryParamsPayload)
+        {
+            if (encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
+                return queryParamsPayload.Replace("+", " ");
+            return queryParamsPayload;
+        }
 
-        private static (string, string) SubstituteMeSegment(bool isMeSegment, bool isDelta, string path)
+        private static (string, string) SubstituteMeSegment(bool isMeSegment, string path, string lastPathSegment)
         {
             string additionalKeySegmentParmeter = default;
             if (isMeSegment)
@@ -119,11 +133,32 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 path = meSegmentRegex.Replace(path, "/users/{user-id}");
                 additionalKeySegmentParmeter = $" -UserId $userId";
             }
-            if (isDelta)
+            if (lastPathSegment.Contains("()"))
             {
                 path = path.Replace("()", "");
             }
             return (path, additionalKeySegmentParmeter);
+        }
+
+        private static string SubstituteDeltaSegment(string lastPathSegment, string path)
+        {
+            if (deltaWithoutParams.IsMatch(lastPathSegment) || deltaWithParams.IsMatch(lastPathSegment))
+                path = path.Replace(lastPathSegment, "delta");
+            return path;
+        }
+
+        private static string SubstituteGraphSegment(string path, bool hasGraphPrefix)
+        {
+            if (hasGraphPrefix)
+                path = path.Replace("graph.", "");
+            return path;
+        }
+
+        private static string SubstituteIdentityProviderSegment(string path, bool isIdentityProvider)
+        {
+            if (isIdentityProvider)
+                path = path.Replace("identityProviders", "identity/identityProviders");
+            return path;
         }
 
         private static string GetSupportedRequestHeaders(SnippetModel snippetModel)
@@ -245,13 +280,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (indentManager == null) throw new ArgumentNullException(nameof(indentManager));
 
             if (isValidJson(snippetModel?.RequestBody)
-                && string.IsNullOrWhiteSpace(snippetModel?.ContentType))      
+                && string.IsNullOrWhiteSpace(snippetModel?.ContentType))
             {
                 snippetModel.ContentType = "application/json";
             }
-
             if ("GET".Equals(snippetModel?.Method.ToString(), StringComparison.OrdinalIgnoreCase)
-               && !string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
+                && !string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
             {
                 return default;
             }
@@ -289,8 +323,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             catch (Exception ex)
             {
-                 
+
             }
+
             return false;
         }
         private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true)
