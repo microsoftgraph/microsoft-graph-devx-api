@@ -37,6 +37,9 @@ namespace OpenAPIService
         {
             Vocabularies.Default.AddSingular("(drive)s$", "$1"); // drives does not properly singularize to drive.               
             Vocabularies.Default.AddSingular("(data)$", "$1"); // exclude the following from singularization.
+            Vocabularies.Default.AddSingular("(delta)$", "$1");
+            Vocabularies.Default.AddSingular("(quota)$", "$1");
+            Vocabularies.Default.AddSingular("(statistics)$", "$1");
         }
 
         /// <summary>
