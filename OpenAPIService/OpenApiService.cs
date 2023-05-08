@@ -57,6 +57,7 @@ namespace OpenAPIService
             { OpenApiStyle.PowerShell, "powershell"},
             { OpenApiStyle.PowerPlatform, "default"},
          };
+        private readonly List<string> _humanizerVocabularies = new(); 
 
         public OpenApiService(IConfiguration configuration, TelemetryClient telemetryClient = null)
         {
@@ -65,6 +66,7 @@ namespace OpenAPIService
             _defaultForceRefreshTime = FileServiceHelper.GetFileCacheRefreshTime(configuration[CacheRefreshTimeConfig]);
             _telemetryClient = telemetryClient;
             _openApiTraceProperties.TryAdd(UtilityConstants.TelemetryPropertyKey_OpenApi, nameof(OpenApiService));
+            _humanizerVocabularies = configuration.GetSection("HumanizerVocabularies").Get<List<string>>();
         }
 
         /// <summary>
@@ -643,7 +645,7 @@ namespace OpenAPIService
                 if (style == OpenApiStyle.PowerShell)
                 {
                     // Format the OperationId for Powershell cmdlet names generation
-                    var powershellFormatter = new PowershellFormatter(singularizeOperationIds);
+                    var powershellFormatter = new PowershellFormatter(singularizeOperationIds, _humanizerVocabularies);
                     walker = new OpenApiWalker(powershellFormatter);
                     walker.Walk(openApiDoc);
 

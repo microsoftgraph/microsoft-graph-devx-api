@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using UtilityService;
 
 namespace OpenAPIService
 {
@@ -27,19 +28,27 @@ namespace OpenAPIService
         private static readonly Regex s_oDataCastRegex = new("(.*(?<=[a-z]))\\.(As(?=[A-Z]).*)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex s_hashSuffixRegex = new(@"^[^-]+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex s_oDataRefRegex = new("(?<=[a-z])Ref(?=[A-Z])", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static bool s_humanizerVocabulariesAdded = false;
 
-        public PowershellFormatter(bool singularizeOperationIds)
+        public PowershellFormatter(bool singularizeOperationIds, List<string> vocabularies = null)
         {
             _singularizeOperationIds = singularizeOperationIds;
+            if (vocabularies != null && !s_humanizerVocabulariesAdded)
+            {
+                AddHumanizerVocabularies(vocabularies);
+            }
         }
 
-        static PowershellFormatter()
+        private static void AddHumanizerVocabularies(List<string> vocabularies)
         {
-            Vocabularies.Default.AddSingular("(drive)s$", "$1"); // drives does not properly singularize to drive.               
-            Vocabularies.Default.AddSingular("(data)$", "$1"); // exclude the following from singularization.
-            Vocabularies.Default.AddSingular("(delta)$", "$1");
-            Vocabularies.Default.AddSingular("(quota)$", "$1");
-            Vocabularies.Default.AddSingular("(statistics)$", "$1");
+            UtilityFunctions.CheckArgumentNull(vocabularies, nameof(vocabularies));
+
+            foreach (var vocabulary in vocabularies)
+            {
+                Vocabularies.Default.AddSingular(vocabulary, "$1");
+            }
+
+            s_humanizerVocabulariesAdded = true;
         }
 
         /// <summary>
