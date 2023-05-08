@@ -43,9 +43,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var hasGraphPrefix = snippetModel.EndPathNode.Path.Contains("graph", StringComparison.OrdinalIgnoreCase);
             var isIdentityProvider = snippetModel.RootPathNode.Path.StartsWith("\\identityProviders", StringComparison.OrdinalIgnoreCase);
             var lastPathSegment = snippetModel.EndPathNode.Segment;
+            var rootPathSegment = snippetModel.RootPathNode.Segment;
+            var hasMicrosoftPrefix = lastPathSegment.StartsWith("microsoft", StringComparison.OrdinalIgnoreCase);
             cleanPath = SubstituteIdentityProviderSegment(cleanPath, isIdentityProvider);
             cleanPath = SubstituteDeltaSegment(lastPathSegment, cleanPath);
             cleanPath = SubstituteGraphSegment(cleanPath, hasGraphPrefix);
+            cleanPath = SubstituteMicrosoftSegment(cleanPath, hasMicrosoftPrefix, lastPathSegment);
+            cleanPath = AppendIdentityProtection(cleanPath,rootPathSegment);
             var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
@@ -151,6 +155,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (hasGraphPrefix)
                 path = path.Replace("graph.", "");
+            return path;
+        }
+        private static string SubstituteMicrosoftSegment(string path, bool hasMicrosoftSegment, string lastSegmentPath)
+        {
+            if (hasMicrosoftSegment)
+            {
+                var splittedPath = path.Split('/');
+                path = path.Replace(splittedPath[splittedPath.Length - 1], lastSegmentPath);
+            }
+         
+            return path;
+        }
+        private static string AppendIdentityProtection(string path, string rootPathSegment)
+        {
+            if (rootPathSegment.StartsWith("riskyUsers") || rootPathSegment.StartsWith("riskDetections"))
+            {
+                path = path.Replace(rootPathSegment, $"identityProtection/{rootPathSegment}");
+            }
             return path;
         }
 
