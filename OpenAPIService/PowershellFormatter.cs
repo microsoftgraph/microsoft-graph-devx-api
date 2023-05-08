@@ -33,6 +33,15 @@ namespace OpenAPIService
             _singularizeOperationIds = singularizeOperationIds;
         }
 
+        static PowershellFormatter()
+        {
+            Vocabularies.Default.AddSingular("(drive)s$", "$1"); // drives does not properly singularize to drive.               
+            Vocabularies.Default.AddSingular("(data)$", "$1"); // exclude the following from singularization.
+            Vocabularies.Default.AddSingular("(delta)$", "$1");
+            Vocabularies.Default.AddSingular("(quota)$", "$1");
+            Vocabularies.Default.AddSingular("(statistics)$", "$1");
+        }
+
         /// <summary>
         /// Accesses the individual OpenAPI operations for a particular OpenApiPathItem.
         /// </summary>
@@ -227,11 +236,6 @@ namespace OpenAPIService
             if (string.IsNullOrEmpty(operationId))
                 return operationId;
 
-            // drives does not properly singularize to drive.
-            Vocabularies.Default.AddSingular("(drive)s$", "$1");
-            // exclude the following from singularization.
-            Vocabularies.Default.AddSingular("(data)$", "$1");
-
             var segments = operationId.Split('.').ToList();
             var segmentsCount = segments.Count;
             var lastSegmentIndex = segmentsCount - 1;
@@ -245,8 +249,10 @@ namespace OpenAPIService
                 // The last segment is ignored as a rule.
                 if ((x > 0 && x < lastSegmentIndex) && singularizedSegments.Last().Equals(segment, StringComparison.OrdinalIgnoreCase))
                     continue;
+
                 singularizedSegments.Add(segment);
             }
+
             return string.Join(".", singularizedSegments);
         }
     }
