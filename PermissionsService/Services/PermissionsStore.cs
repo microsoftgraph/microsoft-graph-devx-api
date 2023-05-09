@@ -321,9 +321,11 @@ namespace PermissionsService
             var scopes = new List<ScopeInformation>();
             var errors = new List<PermissionError>();
 
+            bool getAllScopes = false;
             if (requests == null || !requests.Any())
             {
                 // Get all scopes if no request URLs are provided
+                getAllScopes = true;
                 var allScopes = await GetAllScopesAsync(scopeType);
                 scopes.AddRange(allScopes);
             }
@@ -380,7 +382,9 @@ namespace PermissionsService
             // Get consent display name and description
             var scopesInfo = GetAdditionalScopesInformation(
                 scopesInformationDictionary, 
-                scopes.DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase).ToList());
+                scopes.DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase).ToList(),
+                scopeType, 
+                getAllScopes);
             
             // exclude hidden permissions unless stated otherwise
             scopesInfo = scopesInfo.Where(x => includeHidden || !x.IsHidden).ToList();
@@ -509,7 +513,7 @@ namespace PermissionsService
         /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
         /// <exception cref="ArgumentNullException"></exception>
         private List<ScopeInformation> GetAdditionalScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
-            List<ScopeInformation> scopes)
+            List<ScopeInformation> scopes, ScopeType? scopeType = null, bool getAllPermissions = false)
         {
             if (scopesInformationDictionary is null)
             {
@@ -521,17 +525,12 @@ namespace PermissionsService
                 throw new ArgumentNullException(nameof(scopes));
             }
 
-            var schemeKeys = permissionDescriptionGroups.Values.Distinct().ToList();
-            schemeKeys.ForEach(key =>
+            var descriptionGroups = permissionDescriptionGroups.Values.Distinct().Except(scopesInformationDictionary.Keys);
+            foreach (var group in descriptionGroups)
             {
-                if (scopesInformationDictionary[key].Values.Any())
-                {
-                    var errMsg = $"{nameof(scopesInformationDictionary)}:[{key}] has no values.";
-                    _telemetryClient?.TrackTrace(errMsg,
-                                                 SeverityLevel.Error,
-                                                 _permissionsTraceProperties);
-                }
-            });
+                var errMsg = $"{nameof(scopesInformationDictionary)} does not contain a dictionary for {group} scopes.";
+                _telemetryClient?.TrackTrace(errMsg, SeverityLevel.Error, _permissionsTraceProperties);
+            }
 
             var scopesInfo = scopes.Select(scope =>
             {
@@ -551,6 +550,30 @@ namespace PermissionsService
                 }
                 return scope;
             }).ToList();
+
+            if (getAllPermissions)
+            {
+                foreach (var key in permissionDescriptionGroups.Keys)
+                {
+                    if (scopeType != null && key != scopeType)
+                        continue;
+
+                    scopesInfo.AddRange(
+                        scopesInformationDictionary[permissionDescriptionGroups[key]].Values
+                        .Where(info => !scopesInfo.Exists(x => x.ScopeName.Equals(info.ScopeName, StringComparison.OrdinalIgnoreCase)))
+                        .Select(scope =>
+                        {
+                            return new ScopeInformation()
+                            {
+                                ScopeName = scope.ScopeName,
+                                DisplayName = scope.DisplayName,
+                                IsAdmin = scope.IsAdmin,
+                                Description = scope.Description,
+                                ScopeType = key
+                            };
+                        }));
+                }
+            }
             return scopesInfo;
         }
 

@@ -167,8 +167,8 @@ namespace PermissionsService.Test
         }
 
         [Theory]
-        [InlineData(ScopeType.DelegatedWork, 292)]
-        [InlineData(ScopeType.DelegatedPersonal, 38)]
+        [InlineData(ScopeType.DelegatedWork, 311)]
+        [InlineData(ScopeType.DelegatedPersonal, 113)]
         [InlineData(ScopeType.Application, 279)]
         public async Task GetAllPermissionScopesGivenNoRequestUrlFilteredByScopeType(ScopeType scopeType, int expectedCount)
         {
@@ -188,7 +188,7 @@ namespace PermissionsService.Test
 
             // Assert
             Assert.NotEmpty(result.Results);
-            Assert.Equal(609, result.Results.Count);
+            Assert.Equal(625, result.Results.Count);
         }
 
         [Fact]
