@@ -25,6 +25,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             () =>
             {
                 using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(300);
                 using var stream = httpClient.GetStreamAsync(mgCommandMetadataUrl).GetAwaiter().GetResult();
                 return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
             },
