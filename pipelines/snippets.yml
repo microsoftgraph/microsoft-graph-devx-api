@@ -28,7 +28,7 @@ pool:
 parameters:
   - name: snippetLanguages
     type: object
-    default: ['PowerShell', 'TypeScript', 'Cli']
+    default: ['PowerShell']
     displayName: 'Languages to generate snippets for'
 
 variables:
