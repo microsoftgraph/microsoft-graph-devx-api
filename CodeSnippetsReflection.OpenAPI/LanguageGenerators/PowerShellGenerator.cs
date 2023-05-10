@@ -31,6 +31,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             LazyThreadSafetyMode.PublicationOnly
         );
         private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -94,7 +95,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             var queryParamsPayload = GetRequestQueryParameters(snippetModel);
             if (!string.IsNullOrEmpty(queryParamsPayload))
-                payloadSB.Append($" {queryParamsPayload}");
+                payloadSB.Append($" {ReturnCleanParamsPayload(queryParamsPayload)}");
 
             var parameterList = GetActionParametersList(payloadVarName);
             if (!string.IsNullOrEmpty(parameterList))
@@ -104,6 +105,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!string.IsNullOrEmpty(requestHeadersPayload))
                 payloadSB.Append(requestHeadersPayload);
             return payloadSB.ToString();
+        }
+        public static string ReturnCleanParamsPayload(string queryParamsPayload)
+        {
+            if(encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
+                return queryParamsPayload.Replace("+", " ");
+            return queryParamsPayload;
         }
 
         private static (string, string) SubstituteMeSegment(bool isMeSegment, string path)

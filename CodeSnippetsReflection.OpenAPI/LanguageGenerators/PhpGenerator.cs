@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Web;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
+using Microsoft.ApplicationInsights.Metrics.Extensibility;
 using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -339,17 +341,27 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}";
                 if (x.Segment.IsFunction())
                     return x.Segment.Split('.')
-                            .Select(static s => s.ToFirstCharacterUpperCase())
-                            .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterLowerCase() + "()";
-                return x.Segment.ToFirstCharacterLowerCase()+"()";
-            })
-            .Aggregate(static (x, y) =>
+                        .Select(static s => s.ToFirstCharacterUpperCase())
+                        .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterLowerCase() + "()";
+                return x.Segment.ToFirstCharacterLowerCase() + "()";
+            }).Aggregate(new List<String>(), (current, next) =>
             {
-                var dot = y.StartsWith("ById") ? string.Empty : "->";
-                return $"{x.Trim('$')}{dot}{y.Trim('$')}";
-            }).Replace("()ById(", "ById(")
-              .Replace("()()->", "()->");
-        
+                if (next.StartsWith("ById"))
+                {
+                    var prev = current.Last();
+                    var inBrackets = next[4..];
+                    if (prev.EndsWith("s()"))
+                    {
+                        prev = prev[..^3];
+                    }
+
+                    next = $"by{prev.ToFirstCharacterUpperCase()}Id{inBrackets}";
+                }
+                current.Add(next);
+                return current;
+            }).Aggregate(static (x, y) => $"{x.Trim('$')}->{y.Trim('$')}")
+            .Replace("()()->", "()->");
+
         return result.EndsWith("()()") ? result[..^2] : result;
     }
 }

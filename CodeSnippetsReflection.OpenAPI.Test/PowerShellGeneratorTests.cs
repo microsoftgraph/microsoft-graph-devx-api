@@ -77,6 +77,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
+        public async Task GeneratesNoneEncodedSnippetForRequestWithFilterQueryOptionAndEncodedPayloads()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$filter=displayName+eq+'Megan+Bowen'");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-Filter \"displayName eq 'Megan Bowen'\"", result);
+        }
+
+        
+        [Fact]
         public async Task GeneratesSnippetForRequestWithFilterQueryOption()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$filter=displayName eq 'Megan Bowen'");
