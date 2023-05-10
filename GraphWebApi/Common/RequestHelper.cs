@@ -31,8 +31,14 @@ namespace GraphWebApi.Common
                .OrderByDescending(s => s.Quality.GetValueOrDefault(1));
 
                 localeLanguage = languages.FirstOrDefault()?.ToString();
-                var localeSegments = localeLanguage.Split("-");
-                localeLanguage = $"{localeSegments[0]}-{localeSegments[1].ToUpper(CultureInfo.InvariantCulture)}";
+                if (localeLanguage != null)
+                {
+                    var localeSegments = localeLanguage.Split("-");
+                    if (localeSegments.Length >= 2)
+                    {
+                        localeLanguage = $"{localeSegments[0]}-{localeSegments[1].ToUpper(CultureInfo.InvariantCulture)}";
+                    }
+                }
             }
 
             return localeLanguage;
