@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -211,6 +212,41 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 }
             }
             return parameters;
+        }
+
+
+        /// <summary>
+        /// Returns a list of all the namespaces that are referenced in the body.
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source enumerable.</typeparam>
+        public HashSet<String> GetReferencedNamespaces(Boolean shimmedMePackage = false)
+        {
+
+            HashSet<String> result = new HashSet<string>();
+            if (HasBody())
+            {
+                traverseProperty(Body, x =>
+                {
+                    if (!string.IsNullOrWhiteSpace(x.NamespaceName))
+                    {
+                        var nameSpaceName = shimmedMePackage ? x.NamespaceName.Split(".").Select(x => x.Equals("Me", StringComparison.OrdinalIgnoreCase) ? "Users" : x).Aggregate((current, next) => current + "." + next) : x.NamespaceName;
+                        result.Add(nameSpaceName);
+                    }
+                });
+            }
+            return result;
+        }
+
+        private void traverseProperty(CodeProperty property, Action<CodeProperty> act)
+        {
+            act(property);
+            if (property.Children != null)
+            {
+                foreach (var prop in property.Children)
+                {
+                    traverseProperty(prop, act);
+                }
+            }
         }
 
         private static string NormalizeQueryParameterName(string queryParam) => HttpUtility.UrlDecode(queryParam.TrimStart('$').ToFirstCharacterLowerCase());

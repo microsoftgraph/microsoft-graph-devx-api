@@ -67,13 +67,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             builder.AppendLine($"\t  msgraphsdk \"github.com/microsoftgraph/{apiVersion}\""); // api version
 
-            var modelPath = evaluateModelPath(codeGraph);
-            if (!String.IsNullOrWhiteSpace(modelPath))
-                builder.AppendLine($"\t  graphmodels \"github.com/microsoftgraph/{apiVersion}/{modelPath}\"");
+
+            // add models
+            var models = getModelsPaths(codeGraph);
+            foreach (var path in models)
+            {
+                builder.AppendLine($"\t  graph{path} \"github.com/microsoftgraph/{apiVersion}/{path}\"");
+            }
 
             var configPath = evaluateConfigPath(codeGraph);
-            if (!String.IsNullOrWhiteSpace(configPath))
-                builder.AppendLine($"\t  graphconfig \"github.com/microsoftgraph/{apiVersion}/{configPath}\"");
+            if (!String.IsNullOrWhiteSpace(configPath) && !models.Contains(configPath))
+                builder.AppendLine($"\t  graph{configPath} \"github.com/microsoftgraph/{apiVersion}/{configPath}\"");
 
             builder.AppendLine("\t  //other-imports"); // models version
             builder.AppendLine(")");
@@ -92,15 +96,27 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
 
 
+        private static IEnumerable<String> getModelsPaths(SnippetCodeGraph codeGraph)
+        {
+            // check the body and its children recursively for the namespaces
+            return codeGraph.GetReferencedNamespaces(true).Select(x => evaluateNameSpaceName(x));
+        }
+
+
         private static string evaluateModelPath(SnippetCodeGraph codeGraph)
         {
             if (codeGraph.HasJsonBody())
             {
-                var path = codeGraph.Body.NamespaceName.Replace("microsoft.graph", "").Replace(".", "/");
+                var path = codeGraph.Body.NamespaceName.Replace("microsoft.graph", "").Replace(".", "/").Replace("//","/").ToLower().Split("/").FirstOrDefault();
                 return path.EndsWith("/") ? path.Remove(path.Length - 1, 1) : path;
             }
 
             return string.Empty;
+        }
+
+        private static string evaluateNameSpaceName(string nameSpace)
+        {
+            return nameSpace.Split(".").FirstOrDefault().ToLower().Replace(".microsoft.graph", "");
         }
 
         private static Boolean hasPropertyOfType(SnippetCodeGraph codeGraph, PropertyType propertyType)
@@ -139,7 +155,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void writeSnippet(SnippetCodeGraph codeGraph, StringBuilder builder)
         {
-            builder.AppendLine($"{clientVarName} := msgraphsdk.New{clientVarType}({clientFactoryVariables}){Environment.NewLine}{Environment.NewLine}");
+            builder.AppendLine($"{clientVarName}, err := msgraphsdk.New{clientVarType}({clientFactoryVariables}){Environment.NewLine}{Environment.NewLine}");
             writeHeadersAndOptions(codeGraph, builder);
             WriteBody(codeGraph, builder);
             builder.AppendLine("");
