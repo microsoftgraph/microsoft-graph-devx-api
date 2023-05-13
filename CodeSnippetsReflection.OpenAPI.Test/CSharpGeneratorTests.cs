@@ -659,6 +659,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [InlineData("/users/{user-id}/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
         [InlineData("/me/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
         [InlineData("/drive/bundles","graphClient.Drives[\"{drive-id}\"].Bundles.GetAsync()")]
+        [InlineData("/me/drive/special/documents","graphClient.Drives[\"{drive-id}\"].Special[\"{driveItem-id}\"].GetAsync()")]
+        [InlineData("/me/drive/root/search(q='Contoso%20Project')","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].SearchWithQ(\"{q}\").GetAsync()")]
         [InlineData("/me/drive/items/{id}/workbook/application/calculate","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Application.Calculate", "POST")]
         public async Task GeneratesSnippetWithRemappedDriveCall(string inputPath, string expected, string method = "") 
         {
