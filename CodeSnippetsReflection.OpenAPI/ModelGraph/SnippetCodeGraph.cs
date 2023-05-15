@@ -229,7 +229,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 {
                     if (!string.IsNullOrWhiteSpace(x.NamespaceName))
                     {
-                        var nameSpaceName = shimmedMePackage ? x.NamespaceName.Split(".").Select(x => x.Equals("Me", StringComparison.OrdinalIgnoreCase) ? "Users" : x).Aggregate((current, next) => current + "." + next) : x.NamespaceName;
+                        var nameSpaceName = shimmedMePackage ? x.NamespaceName.Split(".").Where(x => !string.IsNullOrEmpty(x)).Select(x => x.Equals("Me", StringComparison.OrdinalIgnoreCase) ? "Users" : x).Aggregate((current, next) => current + "." + next) : x.NamespaceName;
                         result.Add(nameSpaceName);
                     }
                 });

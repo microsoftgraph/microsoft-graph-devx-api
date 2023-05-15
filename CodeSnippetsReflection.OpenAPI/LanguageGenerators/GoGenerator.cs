@@ -88,7 +88,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (codeGraph.RequiresRequestConfig())
             {
-                var path = codeGraph.Nodes.First().Segment.ToLower();
+                var path = codeGraph.Nodes.First().Segment.ToLowe();
                 return path.Equals("me", StringComparison.OrdinalIgnoreCase) ? "users" : path;
             }
 
@@ -99,7 +99,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static IEnumerable<String> getModelsPaths(SnippetCodeGraph codeGraph)
         {
             // check the body and its children recursively for the namespaces
-            return codeGraph.GetReferencedNamespaces(true).Select(x => evaluateNameSpaceName(x));
+            return codeGraph.GetReferencedNamespaces(true).Select(evaluateNameSpaceName);
         }
 
 
@@ -107,7 +107,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (codeGraph.HasJsonBody())
             {
-                var path = codeGraph.Body.NamespaceName.Replace("microsoft.graph", "").Replace(".", "/").Replace("//","/").ToLower().Split("/").FirstOrDefault();
+                var path = codeGraph.Body.NamespaceName.Replace("microsoft.graph", "").Replace(".", "/").Replace("//","/").ToLowerInvariant().Split("/").FirstOrDefault();
+                if(path == null) return path;
                 return path.EndsWith("/") ? path.Remove(path.Length - 1, 1) : path;
             }
 
@@ -116,7 +117,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string evaluateNameSpaceName(string nameSpace)
         {
-            return nameSpace.Split(".").FirstOrDefault().ToLower().Replace(".microsoft.graph", "");
+            return nameSpace.Split(".").FirstOrDefault()?.ToLowerInvariant()?.Replace(".microsoft.graph", "");
         }
 
         private static Boolean hasPropertyOfType(SnippetCodeGraph codeGraph, PropertyType propertyType)
@@ -300,7 +301,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void WriteExecutionStatement(SnippetCodeGraph codeGraph, StringBuilder builder, params string[] parameters)
         {
-            var methodName = $"{codeGraph.HttpMethod.ToString().ToLower().ToFirstCharacterUpperCase()}";
+            var methodName = $"{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}";
 
             var parametersList = GetActionParametersList(parameters);
             var returnStatement = codeGraph.HasReturnedBody() ? "result, err := " : "";
@@ -362,7 +363,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 builder.AppendLine(objectBuilder.ToString());
             }
 
-            var typeName = NativeTypes.Contains(codeProperty.TypeDefinition?.ToLower()?.Trim()) ? codeProperty.TypeDefinition?.ToLower() : $"graphmodels.{codeProperty.TypeDefinition}able";
+            var typeName = NativeTypes.Contains(codeProperty.TypeDefinition?.ToLowerInvariant()?.Trim()) ? codeProperty.TypeDefinition?.ToLowerInvariant() : $"graphmodels.{codeProperty.TypeDefinition}able";
             builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := []{typeName} {{");
             builder.AppendLine(contentBuilder.ToString());
             builder.AppendLine($"{indentManager.GetIndent()}}}");
