@@ -218,7 +218,6 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         /// <summary>
         /// Returns a list of all the namespaces that are referenced in the body.
         /// </summary>
-        /// <typeparam name="TSource">The type of the source enumerable.</typeparam>
         public HashSet<String> GetReferencedNamespaces(Boolean shimmedMePackage = false)
         {
 

@@ -88,7 +88,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (codeGraph.RequiresRequestConfig())
             {
-                var path = codeGraph.Nodes.First().Segment.ToLowe();
+                var path = codeGraph.Nodes.First().Segment.ToLowerInvariant();
                 return path.Equals("me", StringComparison.OrdinalIgnoreCase) ? "users" : path;
             }
 
