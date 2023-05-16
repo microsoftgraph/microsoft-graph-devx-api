@@ -138,7 +138,7 @@ namespace PermissionsService.Test
             }
             else
             {
-                Assert.Empty(result.Results);
+                Assert.Null(result.Results);
             }
         }
 
@@ -199,7 +199,7 @@ namespace PermissionsService.Test
                 new List<RequestInfo> { new RequestInfo { RequestUrl = "/foo/bar/{id}", HttpMethod = "GET" } }); // non-existent request url
 
             // Assert
-            Assert.Empty(result.Results);
+            Assert.Null(result.Results);
         }
 
         [Fact]
@@ -213,7 +213,7 @@ namespace PermissionsService.Test
                         HttpMethod = "Foobar" } }); // non-existent http verb
 
             // Assert
-            Assert.Empty(result.Results);
+            Assert.Null(result.Results);
         }
 
         [Theory]
@@ -332,18 +332,18 @@ namespace PermissionsService.Test
                         new RequestInfo { RequestUrl = null, HttpMethod = "GET" } }
                     );
             // Assert
-            Assert.Empty(result.Results);
+            Assert.Null(result.Results);
             Assert.NotEmpty(result.Errors);
             Assert.Equal(2, result.Errors.Count);
             Assert.Collection(result.Errors,
                 item =>
                 {
-                    Assert.Equal("", item.Url);
+                    Assert.Equal("", item.RequestUrl);
                     Assert.Equal("The request URL cannot be null or empty.", item.Message);
                 },
                 item =>
                 {
-                    Assert.Null(item.Url);
+                    Assert.Null(item.RequestUrl);
                     Assert.Equal("The request URL cannot be null or empty.", item.Message);
                 });
         }
@@ -357,14 +357,14 @@ namespace PermissionsService.Test
                     requests: new List<RequestInfo>() {
                         new RequestInfo { RequestUrl = "/foo/bar", HttpMethod = "GET" } });
             // Assert
-            Assert.Empty(result.Results);
+            Assert.Null(result.Results);
             Assert.NotEmpty(result.Errors);
             Assert.Single(result.Errors);
             Assert.Collection(result.Errors,
                 item =>
                 {
-                    Assert.Equal("/foo/bar", item.Url);
-                    Assert.Equal("Permissions information for 'GET /foo/bar' were not found.", item.Message);
+                    Assert.Equal("/foo/bar", item.RequestUrl);
+                    Assert.Equal("Permissions information for 'GET /foo/bar' was not found.", item.Message);
                 });
         }
 

@@ -1,27 +1,30 @@
 ﻿using System.Collections.Generic;
-using System.Net;
+using Newtonsoft.Json;
 
 namespace PermissionsService.Models
 {
     public class PermissionResult
     {
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<ScopeInformation> Results
         {
             get; set;
-        } = new();
+        }
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<PermissionError> Errors
         {
             get; set;
-        } = new();
+        }
     }
 
     public class PermissionError
     {
-        public string Url
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string RequestUrl
         {
             get; set;
-        } = string.Empty;
+        }
 
         public string Message
         {

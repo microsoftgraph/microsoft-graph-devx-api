@@ -338,7 +338,7 @@ namespace PermissionsService
                     {
                         var scopesForUrl = await GetScopesForRequestUrlAsync(request.RequestUrl, request.HttpMethod, scopeType);
                         if (scopesForUrl == null || !scopesForUrl.Any())
-                            throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' were not found.");
+                            throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
 
                         scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", scopesForUrl);
                     }
@@ -346,7 +346,7 @@ namespace PermissionsService
                     {
                         errors.Add(new PermissionError()
                         {
-                            Url = request.RequestUrl,
+                            RequestUrl = request.RequestUrl,
                             Message = exception.Message
                         });
                     }
@@ -389,6 +389,14 @@ namespace PermissionsService
             // exclude hidden permissions unless stated otherwise
             scopesInfo = scopesInfo.Where(x => includeHidden || !x.IsHidden).ToList();
 
+            if (!scopesInfo.Any() && !errors.Any())
+            {
+                errors.Add(new PermissionError()
+                {
+                    Message = "No permissions found."
+                });
+            }
+
             _telemetryClient?.TrackTrace(requests == null || !requests.Any() ? 
                 "Return all permissions" : $"Return permissions for '{string.Join(", ", requests.Select(x => x.RequestUrl))}'", 
                 SeverityLevel.Information, 
@@ -396,8 +404,8 @@ namespace PermissionsService
 
             return new PermissionResult()
             {
-                Results = scopesInfo,
-                Errors = errors
+                Results = scopesInfo.Any() ? scopesInfo : null,
+                Errors = errors.Any() ? errors : null
             };
         }
 
