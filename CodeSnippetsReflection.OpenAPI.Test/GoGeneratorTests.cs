@@ -41,7 +41,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("import", result);
-            Assert.Contains("graphusers \"github.com/microsoftgraph/msgraph-sdk-go/me\"", result);
+            Assert.Contains("graphusers \"github.com/microsoftgraph/msgraph-sdk-go/users\"", result);
             Assert.Contains("msgraphsdk \"github.com/microsoftgraph/msgraph-sdk-go\"", result);
             Assert.Contains(".Me().Messages()", result);
         }
