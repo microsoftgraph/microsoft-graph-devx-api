@@ -8,6 +8,7 @@ using PermissionsService.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -240,6 +241,22 @@ namespace PermissionsService.Test
             Assert.Equal(expectedCount, result.Results.Count);
         }
 
+        [Fact]
+        public async Task ReturnErrorWhenLeastPrivilegePermissionsForSetOfResourcesIsNotAvailable()
+        {
+            // Act
+            var result = await _permissionsStore.GetScopesAsync(
+                new List<RequestInfo> { new RequestInfo { RequestUrl = "/no/least/privileged/permissions", HttpMethod = "DELETE" } },
+                scopeType: ScopeType.DelegatedWork,
+                leastPrivilegeOnly: true);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Null(result.Results);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("No permissions found.", result.Errors.First().Message);
+        }
 
         [Theory]
         [InlineData("/users/{id}/drive/items/{id}/workbook/worksheets/{id}/range")]
