@@ -95,7 +95,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         public static HashSet<String> GetReferencedNamespaces(SnippetCodeGraph codeGraph)
         {
 
-            HashSet<String> result = new HashSet<string>();
+            HashSet<String> result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (codeGraph.HasBody())
             {
                 TraverseProperty(codeGraph.Body, x =>
