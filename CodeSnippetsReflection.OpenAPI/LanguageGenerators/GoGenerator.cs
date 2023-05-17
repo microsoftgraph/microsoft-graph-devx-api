@@ -84,7 +84,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var nameSpaces = GetReferencedNamespaces(codeGraph);
             if (codeGraph.HasHeaders() || codeGraph.HasParameters() || codeGraph.HasOptions())
             {
-                nameSpaces.Add(codeGraph.Nodes.FirstOrDefault()?.Segment.ToLowerInvariant());
+                nameSpaces.Add(ProcessFinalNameSpaceName(codeGraph.Nodes.FirstOrDefault()?.Segment.ToLowerInvariant()));
             }
             return nameSpaces;
         }
@@ -127,9 +127,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static String ProcessNameSpaceName(String nameSpace)
         {
-            return nameSpace != null ? nameSpace.Split(".", StringSplitOptions.RemoveEmptyEntries)
+            return (nameSpace != null ? nameSpace.Split(".", StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Equals("Me", StringComparison.OrdinalIgnoreCase) ? "Users" : x)
-                .Aggregate((current, next) => current.Replace(".microsoft.graph", "") + "." + next) : "models";
+                .Aggregate((current, next) => current + "." + next) : "models").Replace(".microsoft.graph", "");
         }
 
         private static String ProcessFinalNameSpaceName(String nameSpace)
@@ -156,7 +156,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             return false;
         }
-
 
         private static Boolean searchProperty(IEnumerable<CodeProperty> properties, PropertyType propertyType)
         {
@@ -199,7 +198,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             WriteOptions(codeGraph, builder, indentManager);
             WriteParameters(codeGraph, builder, indentManager);
 
-            var rootPath = codeGraph.Nodes.FirstOrDefault()?.Segment.ToLowerInvariant();
+            var rootPath = ProcessFinalNameSpaceName(codeGraph.Nodes.FirstOrDefault()?.Segment).ToLowerInvariant();
             var className = $"graph{rootPath}.{GetNestedObjectName(codeGraph.Nodes)}RequestBuilder{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             builder.AppendLine($"{requestConfigurationVarName} := &{className}{{");
             indentManager.Indent();
@@ -258,7 +257,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (nonArrayParams.Any())
                 builder.AppendLine(string.Empty);
 
-            var rootPath = codeGraph.Nodes.FirstOrDefault().Segment.ToLowerInvariant();
+            var rootPath = ProcessFinalNameSpaceName(codeGraph.Nodes.FirstOrDefault()?.Segment).ToLowerInvariant();
             var className = $"graph{rootPath}.{GetNestedObjectName(codeGraph.Nodes)}RequestBuilder{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
             builder.AppendLine($"{indentManager.GetIndent()}{requestParametersVarName} := &{className}{{");
             indentManager.Indent();
@@ -282,7 +281,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
             // if the first element is a collection index skip it
-            var filteredNodes = (nodes.First().Segment.IsCollectionIndex()) ? nodes.Skip(2) : nodes.Skip(1); // skip first element
+            var isCollection = nodes.First().Segment.IsCollectionIndex();
+            var isSingleElement = nodes.Count() == 1;
+            
+            var filteredNodes = (isCollection && !isSingleElement) ? nodes.Skip(2) : isCollection ? nodes.Skip(1) : nodes; // skip first element if its not only element
+            if (!(filteredNodes?.Any() ?? false)) return string.Empty;
             return filteredNodes.Select(static x =>
             {
                 if (x.Segment.IsCollectionIndex())
@@ -292,8 +295,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             })
                         .Aggregate(static (x, y) =>
                         {
-                            //var w = x.EndsWith("s") && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
-                            var w = "Me".Equals(x, StringComparison.Ordinal) ? "Item" : x;
+                            var w = x.EndsWith("s") && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
+                            w = "Me".Equals(w, StringComparison.Ordinal) ? "Item" : w;
                             return $"{w}{y}";
                         });
         }

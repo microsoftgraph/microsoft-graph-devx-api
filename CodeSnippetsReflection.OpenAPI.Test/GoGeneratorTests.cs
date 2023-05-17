@@ -41,7 +41,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("import", result);
-            Assert.Contains("graphconfig \"github.com/microsoftgraph/msgraph-sdk-go/users\"", result);
+            Assert.Contains("graphusers \"github.com/microsoftgraph/msgraph-sdk-go/me\"", result);
             Assert.Contains("msgraphsdk \"github.com/microsoftgraph/msgraph-sdk-go\"", result);
             Assert.Contains(".Me().Messages()", result);
         }
@@ -89,7 +89,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient := msgraphsdk.NewGraphServiceClientWithCredentials(cred, scopes)", result);
+            Assert.Contains("graphClient, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, scopes)", result);
         }
         [Fact]
         public async Task GeneratesMultipleImportStatements()
@@ -308,8 +308,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Select: [] string {\"displayName\",\"givenName\",\"postalCode\",\"identities\"}", result);
             Assert.Contains("QueryParameters: ", result);
-            Assert.Contains("&graphconfig.UserItemRequestBuilderGetQueryParameters", result);
-            Assert.Contains("&graphconfig.UserItemRequestBuilderGetRequestConfiguration", result);
+            Assert.Contains("&graphusers.UserItemRequestBuilderGetQueryParameters", result);
+            Assert.Contains("&graphusers.UserItemRequestBuilderGetRequestConfiguration", result);
             Assert.Contains("configuration :=", result);
             Assert.Contains("requestParameters :=", result);
             Assert.Contains("result, err := graphClient.Users().ByUserId(\"user-id\").Get(context.Background(), configuration)", result);
@@ -375,7 +375,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("abstractions \"github.com/microsoft/kiota-abstractions-go\"", result);
             Assert.Contains("headers := abstractions.NewRequestHeaders()", result);
             Assert.Contains("headers.Add(\"ConsistencyLevel\", \"eventual\")", result);
-            Assert.Contains("graphconfig.GroupsRequestBuilderGetRequestConfiguration", result);
+            Assert.Contains("graphgroups.GroupsRequestBuilderGetRequestConfiguration", result);
             Assert.Contains("Headers: headers", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
             Assert.Contains("result, err := graphClient.Groups().Get(context.Background(), configuration)", result);
