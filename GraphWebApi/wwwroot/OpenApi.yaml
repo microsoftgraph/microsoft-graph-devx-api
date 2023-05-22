@@ -32,7 +32,8 @@ paths:
               - Go
               - PowerShell
               - TypeScript
-              - PHP
+              - php
+              - python
             default: C#
         - name: generation
           in: query

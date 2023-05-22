@@ -1,4 +1,8 @@
-﻿namespace CodeSnippetsReflection.StringExtensions
+﻿using System.Text;
+using System.Globalization;
+using System.Linq;
+
+namespace CodeSnippetsReflection.StringExtensions
 {
     public static class StringExtensions
     {
@@ -35,6 +39,41 @@
             return stringValue[0..charIndex] + char.ToUpper(stringValue[charIndex + 1]) + stringValue[(charIndex + 2)..].ToFirstCharacterUpperCaseAfterCharacter(character);
         }
 
+        public static string ToPascalCase(this string str)
+        {
+            string[] words = str.Split('_');
+            string pascalCaseString = string.Join("", words.Select(w => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(w)));
+            return pascalCaseString;
+        }
+
+       public static string ToSnakeCase(this string str)
+        {
+            StringBuilder snakeCaseBuilder = new StringBuilder();
+            for (int i = 0; i < str.Length; i++)
+            {
+                char c = str[i];
+                if (char.IsUpper(c))
+                {
+                    if (i > 0)
+                    {
+                        snakeCaseBuilder.Append('_');
+                    }
+                    snakeCaseBuilder.Append(char.ToLower(c));
+                }
+                else if (c=='.')
+                {
+                    snakeCaseBuilder.Append('_');
+                }
+                
+                else
+                {
+                    snakeCaseBuilder.Append(c);
+                }
+            }
+            return snakeCaseBuilder.ToString();
+        }
+
+       
         public static string EscapeQuotes(this string stringValue)
         {
             return stringValue.Replace("\"", "\\\"");
