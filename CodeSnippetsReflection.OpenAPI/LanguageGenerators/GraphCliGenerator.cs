@@ -14,6 +14,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
 
+    private const string PathItemsKey = "default";
+
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
         // Check if path item has the requested operation.
@@ -40,8 +42,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         ProcessCommandSegmentsAndParameters(snippetModel, ref commandSegments, ref operation, ref parameters);
 
         return commandSegments.Aggregate("", (accum, val) => string.IsNullOrWhiteSpace(accum) ? val : $"{accum} {val}")
-                    .Replace("\n", "\\\n")
-                    .Replace("\r\n", "\\\r\n");
+                    .Replace("\n", "\\\n", StringComparison.Ordinal)
+                    .Replace("\r\n", "\\\r\n", StringComparison.Ordinal);
     }
 
     private static string GetOperationName([NotNull] in SnippetModel snippetModel)
@@ -78,12 +80,12 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         OpenApiUrlTreeNode prevNode = null;
         foreach (var node in snippetModel.PathNodes)
         {
-            var segment = node.Segment.Replace("$value", "content").TrimStart('$');
+            var segment = node.Segment.Replace("$value", "content", StringComparison.Ordinal).TrimStart('$');
 
             // Kiota removes redundant microsoft. prefix from actions
-            if (segment.StartsWith("microsoft.graph"))
+            if (segment.StartsWith("microsoft.graph", StringComparison.Ordinal))
             {
-                segment = segment.Replace("microsoft.", string.Empty);
+                segment = segment.Replace("microsoft.", string.Empty, StringComparison.Ordinal);
             }
 
             // Handle path operation conflicts
@@ -91,8 +93,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             // GET /users/{user-id}/directReports/{directoryObject-id}/graph.orgContact
             if (prevPrevNode is not null && prevNode is not null && prevNode.IsParameter &&
                 prevPrevNode.Children.TryGetValue(node.Segment, out var prevPrevNodeMatch) &&
-                node.PathItems.TryGetValue("default", out var nodeDefaultItem) &&
-                prevPrevNodeMatch.PathItems.TryGetValue("default", out var prevPrevNodeDefaultItem) &&
+                node.PathItems.TryGetValue(PathItemsKey, out var nodeDefaultItem) &&
+                prevPrevNodeMatch.PathItems.TryGetValue(PathItemsKey, out var prevPrevNodeDefaultItem) &&
                 nodeDefaultItem.Operations.Any(x => prevPrevNodeDefaultItem.Operations.ContainsKey(x.Key)))
             {
                 segment += "ById";
