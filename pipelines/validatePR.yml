@@ -11,58 +11,73 @@ pr:
     - dev
     - master
 
-pool: 1es-windows-latest
-
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
-steps:
-- checkout: self
-  clean: true
-  fetchDepth: 1
-  submodules: recursive
 
-- task: UseDotNet@2
-  displayName: 'Use .NET Core sdk'
-  inputs:
-    packageType: sdk
-    version: 7.0.x
-    performMultiLevelLookup: true
-    includePreviewVersions: true
-    installationPath: $(Agent.ToolsDirectory)/dotnet
-
-- task: DotNetCoreCLI@2
-  displayName: "Restore Nuget Packages"
-  inputs:
-    command: 'restore'
-    feedsToUse: 'select'
-
-- task: DotNetCoreCLI@2
-  displayName: "Build"
-  inputs:
-    command: 'build'
-
-- task: DotNetCoreCLI@2
-  displayName: "Run Tests"
-  inputs:
-    command: test
-    projects: '**/*Test/*.csproj'
-    arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --filter "TestCategory!=CodeSnippetsPipeline"'
-
-# CredScan
-- task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@3
-  displayName: 'Run CredScan'
-  inputs:
-    toolMajorVersion: 'V2'
-    scanFolder: '$(Build.SourcesDirectory)'
-    debugMode: false
-
-- task: PublishTestResults@2
-  displayName: "Publish Test Results"
-  inputs:
-    testResultsFormat: xUnit
-    testResultsFiles: '**/*.trx'
-    codeCoverageTool: 'cobertura'
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
+stages:
+  - stage: build
+    jobs:
+      - job: build
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+        - checkout: self
+          clean: true
+          fetchDepth: 1
+          submodules: recursive
+        
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core sdk'
+          inputs:
+            packageType: sdk
+            version: 7.0.x
+            performMultiLevelLookup: true
+            includePreviewVersions: true
+            installationPath: $(Agent.ToolsDirectory)/dotnet
+        
+        - task: DotNetCoreCLI@2
+          displayName: "Restore Nuget Packages"
+          inputs:
+            command: 'restore'
+            feedsToUse: 'select'
+        
+        - task: DotNetCoreCLI@2
+          displayName: "Build"
+          inputs:
+            command: 'build'
+        
+        - task: DotNetCoreCLI@2
+          displayName: "Run Tests"
+          inputs:
+            command: test
+            projects: '**/*Test/*.csproj'
+            arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --filter "TestCategory!=CodeSnippetsPipeline"'
+        
+        - task: PublishTestResults@2
+          displayName: "Publish Test Results"
+          inputs:
+            testResultsFormat: xUnit
+            testResultsFiles: '**/*.trx'
+            codeCoverageTool: 'cobertura'
+            summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
+  
+      - job: scan
+        pool:
+          vmImage: windows-latest
+        steps:
+          - checkout: self
+            clean: true
+            fetchDepth: 1
+            submodules: recursive
+          
+          # CredScan
+          - task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@3
+            displayName: 'Run CredScan'
+            inputs:
+              toolMajorVersion: 'V2'
+              scanFolder: '$(Build.SourcesDirectory)'
+              debugMode: false
+      
