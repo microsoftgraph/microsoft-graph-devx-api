@@ -31,6 +31,8 @@ namespace UriMatchingService
     {
         private readonly Dictionary<string, string> _templates = new Dictionary<string, string>();
 
+        private static readonly Regex placeholderRegex = new Regex(@"\{(.*?)\}", RegexOptions.Compiled);
+
         public void Add(string key, string template)
         {
             if (string.IsNullOrEmpty(key))
@@ -64,14 +66,25 @@ namespace UriMatchingService
                 absolutePath = new Uri(uri.AbsolutePath, UriKind.Relative);
             }
 
+            var templateMatches = new Dictionary<KeyValuePair<string, string>, int>(); // {{ templateKey, foundParameterCount }}
             foreach (var template in _templates)
             {
                 var parameters = GetParameters(absolutePath, template.Value);
                 if (parameters != null)
                 {
-                    return new TemplateMatch() { Key = template.Key, Template = template.Value };
+                    if (parameters.Count == 0)
+                        return new TemplateMatch() { Key = template.Key, Template = template.Value }; // exact match, no ids
+                    else 
+                        templateMatches.Add(template, parameters.Count);
                 }
             }
+
+            if (templateMatches.Any())
+            {
+                var bestMatch = templateMatches.OrderBy(kv => kv.Value).Select(x => x.Key).First();
+                return new TemplateMatch() { Key = bestMatch.Key, Template = bestMatch.Value };
+            }
+
             return null;
         }
 
@@ -101,6 +114,7 @@ namespace UriMatchingService
 
             if (parameterRegex == null)
             {
+                template = RenameDuplicatePlaceholders(template);
                 var matchingRegex = CreateMatchingRegex(template);
                 parameterRegex = new Regex(matchingRegex, RegexOptions.None, TimeSpan.FromSeconds(5));
             }
@@ -120,6 +134,36 @@ namespace UriMatchingService
                 }
             }
             return match.Success ? parameters : null;
+        }
+
+
+        /// <summary>
+        /// Renames placeholder in path by appending number to occurrence
+        /// </summary>
+        /// <param name="value">The target string value.</param>
+        /// <returns>The string without duplicated placeholder names.</returns>
+        private string RenameDuplicatePlaceholders(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+
+            var placeholderCounts = new Dictionary<string, int>();
+            MatchCollection matches = placeholderRegex.Matches(value);
+
+            foreach (var match in matches.Cast<Match>())
+            {
+                var placeholder = match.Groups[1].Value;
+                if (!placeholderCounts.ContainsKey(placeholder))
+                    placeholderCounts.Add(placeholder, 0);
+                int count = ++placeholderCounts[placeholder];
+                var newPlaceholder = $"{{{placeholder}{count}}}";
+                Regex regex = new Regex(Regex.Escape($"{{{placeholder}}}"));
+                value = regex.Replace(value, newPlaceholder, 1);
+            }
+
+            return value;
         }
 
         private string CreateMatchingRegex(string uriTemplate)

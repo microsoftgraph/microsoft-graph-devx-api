@@ -127,7 +127,7 @@ namespace PermissionsService
                 foreach (var key in fetchedPermissions.Keys)
                 {
                     // Remove any '(...)' from the request url and set to lowercase for uniformity
-                    string requestUrl = key.RemoveParentheses().ToLower();
+                    string requestUrl = key.RemoveParentheses().RenameDuplicatePlaceholders().ToLower();
 
                     count++;
 
