@@ -89,8 +89,9 @@ namespace PermissionsService
         private Task<PermissionsDataInfo> PermissionsData =>
             _cache.GetOrCreateAsync("PermissionsData", async entry =>
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
-                return await LoadPermissionsDataAsync();
+                var permissionsData = await LoadPermissionsDataAsync();
+                entry.AbsoluteExpirationRelativeToNow = permissionsData is not null ? TimeSpan.FromHours(_defaultRefreshTimeInHours) : TimeSpan.FromSeconds(1);
+                return permissionsData;
             });
 
         /// <summary>
@@ -127,7 +128,7 @@ namespace PermissionsService
                 foreach (var key in fetchedPermissions.Keys)
                 {
                     // Remove any '(...)' from the request url and set to lowercase for uniformity
-                    string requestUrl = key.RemoveParentheses().RenameDuplicatePlaceholders().ToLower();
+                    string requestUrl = key.RemoveParentheses().ToLower();
 
                     count++;
 
