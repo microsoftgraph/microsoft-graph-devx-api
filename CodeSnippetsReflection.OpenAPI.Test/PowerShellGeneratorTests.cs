@@ -357,8 +357,18 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            var expectedSnippet = "Import-Module Microsoft.Graph.Identity.SignIns\r\n\r\n$params = @{\r\n\tdefinition = @(\r\n\t\t'{\"ClaimsMappingPolicy\":{\"Version\":1,\"IncludeBasicClaimSet\":\"true\", \"ClaimsSchema\": [{\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/Role\"}, {\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/RoleSessionName\"}, {\"Value\":\"900\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/SessionDuration\"}, {\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"appRoles\"}, {\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/nameidentifier\"}]}}'\r\n\t)\r\n\tdisplayName = \"AWS Claims Policy\"\r\n\tisOrganizationDefault = $false\r\n}\r\n\r\nNew-MgPolicyClaimMappingPolicy -BodyParameter $params";
-            Assert.Contains(expectedSnippet, result);
+            var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
+                $"definition = @(" +
+                
+                $"{Environment.NewLine}\t    "+
+                $"'{{\"ClaimsMappingPolicy\":{{\"Version\":1,\"IncludeBasicClaimSet\":\"true\", \"ClaimsSchema\": [{{\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/Role\"}}, {{\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/RoleSessionName\"}}, {{\"Value\":\"900\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/SessionDuration\"}}, {{\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"appRoles\"}}, {{\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/nameidentifier\"}}]}}}}'{Environment.NewLine}\t" +
+                $")"+
+                $"{Environment.NewLine}\t" +
+                $"displayName = \"AWS Claims Policy\"{Environment.NewLine}\t" +
+                $"isOrganizationDefault = $false{Environment.NewLine}" +
+                $"}}";
+            Assert.Contains(expectedParams, result);
+            Assert.Contains("-BodyParameter $params", result);
         }
     }
 }
