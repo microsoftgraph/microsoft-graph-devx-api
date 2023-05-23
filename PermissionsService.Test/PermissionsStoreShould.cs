@@ -219,7 +219,7 @@ namespace PermissionsService.Test
 
         [Theory]
         [InlineData(true, 6)]
-        [InlineData(false, 10)]
+        [InlineData(false, 12)]
         public async Task ReturnLeastPrivilegePermissionsForSetOfResources(bool leastPrivilegeOnly, int expectedCount)
         {
             // Arrange
@@ -239,6 +239,30 @@ namespace PermissionsService.Test
             Assert.NotNull(result.Results);
             Assert.NotEmpty(result.Results);
             Assert.Equal(expectedCount, result.Results.Count);
+        }
+
+        [Fact]
+        public async Task ReturnCorrectLeastPrivilegePermissionsForResourcesThatHaveMatchMoreThanOneTemplate()
+        {
+            // Arrange
+            var request1 = new List<RequestInfo>()
+            {
+                new RequestInfo { RequestUrl = "/me/tasks/lists/delta", HttpMethod = "GET" }
+            };
+
+            var request2 = new List<RequestInfo>()
+            {
+                new RequestInfo { RequestUrl = "/me/tasks/lists/{lists_id}", HttpMethod = "GET" }
+            };
+
+            // Act
+            var result1 = await _permissionsStore.GetScopesAsync(requests: request1);
+            var result2 = await _permissionsStore.GetScopesAsync(requests: request2);
+
+            // Assert
+            Assert.NotNull(result1?.Results);
+            Assert.NotNull(result2?.Results);
+            Assert.NotEqual(result1.Results.Count, result2.Results.Count);
         }
 
         [Fact]
