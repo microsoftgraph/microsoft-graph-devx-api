@@ -69,11 +69,11 @@ namespace GraphWebApi.Controllers
                                                                 branchName: branchName);
 
             _permissionsTraceProperties.Add(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsController));
-            _telemetryClient?.TrackTrace($"Fetched {result?.Results.Count ?? 0} permissions",
+            _telemetryClient?.TrackTrace($"Fetched {result?.Results?.Count ?? 0} permissions",
                                             SeverityLevel.Information,
                                             _permissionsTraceProperties);
 
-            return result == null || !result.Results.Any() ? NotFound() : Ok(result.Results);
+            return result == null || result.Results == null ? NotFound() : Ok(result.Results);
         }
 
         [HttpPost]
