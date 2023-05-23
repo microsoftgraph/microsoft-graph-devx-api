@@ -32,6 +32,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         );
         private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex wrongQoutesInStringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -48,7 +49,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"Import-Module {modulePrefix}.{moduleName}");
                 var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
                 if (!string.IsNullOrEmpty(requestPayload))
-                    snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
+                    if (wrongQoutesInStringLiterals.IsMatch(requestPayload))
+                        requestPayload = requestPayload.Replace("\"{", "'{").Replace("}\"", "}'");
+                snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
 
                 if (isMeSegment)
                     snippetBuilder.Append($"{Environment.NewLine}# A UPN can also be used as -UserId.");
