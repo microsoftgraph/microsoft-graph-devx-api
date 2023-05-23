@@ -49,9 +49,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"Import-Module {modulePrefix}.{moduleName}");
                 var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
                 if (!string.IsNullOrEmpty(requestPayload))
+                {
                     if (wrongQoutesInStringLiterals.IsMatch(requestPayload))
+                    {
                         requestPayload = requestPayload.Replace("\"{", "'{").Replace("}\"", "}'");
-                snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
+                    }    
+                    snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
+                }
+                    
 
                 if (isMeSegment)
                     snippetBuilder.Append($"{Environment.NewLine}# A UPN can also be used as -UserId.");
