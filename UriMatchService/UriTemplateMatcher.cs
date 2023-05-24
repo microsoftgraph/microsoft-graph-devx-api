@@ -17,6 +17,7 @@
 using System;
 #pragma warning restore S125 // Sections of code should not be commented out
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -31,7 +32,7 @@ namespace UriMatchingService
     {
         private readonly Dictionary<string, string> _templates = new Dictionary<string, string>();
 
-        private static readonly Regex placeholderRegex = new Regex(@"\{(.*?)\}", RegexOptions.Compiled);
+        private static readonly Regex placeholderRegex = new Regex(@"\{(.*?)\}", RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
 
         public void Add(string key, string template)
         {
@@ -114,7 +115,8 @@ namespace UriMatchingService
 
             if (parameterRegex == null)
             {
-                template = RenameDuplicatePlaceholders(template);
+                int count = 0;
+                template = placeholderRegex.Replace(template, m => $"{{{++count}}}");
                 var matchingRegex = CreateMatchingRegex(template);
                 parameterRegex = new Regex(matchingRegex, RegexOptions.None, TimeSpan.FromSeconds(5));
             }
@@ -134,36 +136,6 @@ namespace UriMatchingService
                 }
             }
             return match.Success ? parameters : null;
-        }
-
-
-        /// <summary>
-        /// Renames placeholder in path by appending number to occurrence
-        /// </summary>
-        /// <param name="value">The target string value.</param>
-        /// <returns>The string without duplicated placeholder names.</returns>
-        private string RenameDuplicatePlaceholders(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return value;
-            }
-
-            var placeholderCounts = new Dictionary<string, int>();
-            MatchCollection matches = placeholderRegex.Matches(value);
-
-            foreach (var match in matches.Cast<Match>())
-            {
-                var placeholder = match.Groups[1].Value;
-                if (!placeholderCounts.ContainsKey(placeholder))
-                    placeholderCounts.Add(placeholder, 0);
-                int count = ++placeholderCounts[placeholder];
-                var newPlaceholder = $"{{{placeholder}{count}}}";
-                Regex regex = new Regex(Regex.Escape($"{{{placeholder}}}"));
-                value = regex.Replace(value, newPlaceholder, 1);
-            }
-
-            return value;
         }
 
         private string CreateMatchingRegex(string uriTemplate)
