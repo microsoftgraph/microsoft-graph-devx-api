@@ -42,7 +42,7 @@ namespace CodeSnippetsReflection.OpenAPI
                                         .TrimStart(pathSeparator))
                                         .Split(pathSeparator, StringSplitOptions.RemoveEmptyEntries)
                                         .Skip(1); //skipping the version
-            LoadPathNodes(treeNode, splatPath);
+            LoadPathNodes(treeNode, splatPath, requestPayload.Method);
             InitializeModel(requestPayload);
         }
 
@@ -161,21 +161,29 @@ namespace CodeSnippetsReflection.OpenAPI
             return path;
         }
         private static readonly char pathSeparator = '/';
-        private void LoadPathNodes(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments)
+        private void LoadPathNodes(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments, HttpMethod httpMethod)
         {
-            if (!pathSegments.Any())
-                return;
+            if (!pathSegments.Any())// we've found a mathing url path.
+            {
+                var operationType = GetOperationType(httpMethod);
+                if (node.PathItems[OpenApiSnippetsGenerator.treeNodeLabel].Operations.ContainsKey(operationType))
+                    return;// Verify if the method exists before returning.
+
+                throw new EntryPointNotFoundException($"HTTP Method '{httpMethod}' not found for path.");//path exists but Method does not
+            }
+
+            
             var pathSegment = HttpUtility.UrlDecode(pathSegments.First());
             var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Equals(pathSegment)).Value;
             if (childNode != null)
             {
-                LoadNextNode(childNode, pathSegments);
+                LoadNextNode(childNode, pathSegments, httpMethod);
                 return;
             }
             if (node.Children.Keys.Any(x => x.RemoveFunctionBraces().Equals(pathSegment, StringComparison.OrdinalIgnoreCase)))
             { // the casing in the description might be different than the casing in the snippet and this dictionary is CS
                 var caseChildNode = node.Children.First(x => x.Key.RemoveFunctionBraces().Equals(pathSegment, StringComparison.OrdinalIgnoreCase)).Value;
-                LoadNextNode(caseChildNode, pathSegments);
+                LoadNextNode(caseChildNode, pathSegments, httpMethod);
                 return;
             }
             if (node.Children.Keys.Any(x => x.IsFunction()) || pathSegment.IsFunction())
@@ -183,7 +191,7 @@ namespace CodeSnippetsReflection.OpenAPI
                 var actionChildNode = node.Children.FirstOrDefault(x => x.Key.Split('.').Last().Equals(pathSegment.Split('.').Last(), StringComparison.OrdinalIgnoreCase));
                 if(actionChildNode.Value != null)
                 {
-                    LoadNextNode(actionChildNode.Value, pathSegments);
+                    LoadNextNode(actionChildNode.Value, pathSegments, httpMethod);
                     return;
                 }
             }
@@ -192,7 +200,7 @@ namespace CodeSnippetsReflection.OpenAPI
                 var collectionIndexNode = node.Children.FirstOrDefault(x => x.Key.IsCollectionIndex());
                 if (collectionIndexNode.Value != null)
                 {
-                    LoadNextNode(collectionIndexNode.Value, pathSegments);
+                    LoadNextNode(collectionIndexNode.Value, pathSegments, httpMethod);
                     return;
                 }
             }
@@ -202,17 +210,17 @@ namespace CodeSnippetsReflection.OpenAPI
                 var functionWithParametersNode = node.Children.FirstOrDefault(function => function.Key.IsFunctionWithParametersMatch(pathSegment));
                 if (functionWithParametersNode.Value != null)
                 {
-                    LoadNextNode(functionWithParametersNode.Value, pathSegments);
+                    LoadNextNode(functionWithParametersNode.Value, pathSegments, httpMethod);
                     return;
                 }
             }
 
             throw new EntryPointNotFoundException($"Path segment '{pathSegment}' not found in path");
         }
-        private void LoadNextNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments)
+        private void LoadNextNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments, HttpMethod httpMethod)
         {
             PathNodes.Add(node);
-            LoadPathNodes(node, pathSegments.Skip(1));
+            LoadPathNodes(node, pathSegments.Skip(1),httpMethod);
         }
         protected override OpenApiUrlTreeNode GetLastPathSegment()
         {

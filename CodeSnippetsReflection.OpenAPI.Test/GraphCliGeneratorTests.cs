@@ -345,22 +345,6 @@ public class GraphCliGeneratorTests
     }
 
     [Fact]
-    public async Task ReturnsEmptyStringForUnsupportedHttpOperation()
-    {
-        // DELETE /users/{user-id}/createdObjects
-        // Given
-        string url = $"{ServiceRootUrl}/users/100/createdObjects";
-        using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
-
-        // When
-        var result = _generator.GenerateCodeSnippet(snippetModel);
-
-        // Then
-        Assert.Equal(string.Empty, result);
-    }
-
-    [Fact]
     public async Task ThrowsExceptionOnUnsupportedApiVersion()
     {
         // Given
