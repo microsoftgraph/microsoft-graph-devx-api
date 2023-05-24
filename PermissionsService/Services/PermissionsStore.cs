@@ -90,7 +90,7 @@ namespace PermissionsService
             _cache.GetOrCreateAsync("PermissionsData", async entry =>
             {
                 var permissionsData = await LoadPermissionsDataAsync();
-                entry.AbsoluteExpirationRelativeToNow = permissionsData is not null ? TimeSpan.FromHours(_defaultRefreshTimeInHours) : TimeSpan.FromSeconds(1);
+                entry.AbsoluteExpirationRelativeToNow = permissionsData is not null ? TimeSpan.FromHours(_defaultRefreshTimeInHours) : TimeSpan.FromMilliseconds(1);
                 return permissionsData;
             });
 
