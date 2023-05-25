@@ -82,12 +82,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         {
             var segment = node.Segment.Replace("$value", "content", StringComparison.Ordinal).TrimStart('$');
 
-            // Kiota removes redundant microsoft. prefix from actions
-            if (segment.StartsWith("microsoft.graph", StringComparison.Ordinal))
-            {
-                segment = segment.Replace("microsoft.", string.Empty, StringComparison.Ordinal);
-            }
-
             // Handle path operation conflicts
             // GET /users/{user-id}/directReports/graph.orgContact
             // GET /users/{user-id}/directReports/{directoryObject-id}/graph.orgContact

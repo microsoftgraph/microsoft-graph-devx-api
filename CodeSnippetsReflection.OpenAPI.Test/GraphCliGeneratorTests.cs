@@ -75,14 +75,17 @@ public class GraphCliGeneratorTests
     [Theory]
     [InlineData("/users/100/directReports/graph.orgContact", "mgc users direct-reports graph-org-contact get --user-id {user-id}")]
     [InlineData("/users/100/directReports/123/graph.orgContact", "mgc users direct-reports graph-org-contact-by-id get --user-id {user-id} --directory-object-id {directoryObject-id}")]
-    public async Task GeneratesSnippetsForConflictingIndexerNavSubCommand(string url, string expectedCommand)
+    public void GeneratesSnippetsForConflictingIndexerNavSubCommand(string url, string expectedCommand)
     {
         // Tests:
         // GET /users/{user-id}/directReports/graph.orgContact
         // GET /users/{user-id}/directReports/{directoryObject-id}/graph.orgContact
         // Given
+        string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/users/{user-id}/directReports/graph.orgContact":{"get":{"responses":{"200":{"description":"Successful operation"}}}},"/users/{user-id}/directReports/{directoryObject-id}/graph.orgContact":{"get":{"responses":{"200":{"description":"Successful operation"}}}}}}""";
+        var doc = new OpenApiStringReader().Read(schema, out _);
+        var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{url}");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
