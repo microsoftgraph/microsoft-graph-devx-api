@@ -80,7 +80,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         OpenApiUrlTreeNode prevNode = null;
         foreach (var node in snippetModel.PathNodes)
         {
-            var segment = node.Segment.Replace("$value", "content", StringComparison.Ordinal).TrimStart('$');
+            var segment = node.Segment.ReplaceValueIdentifier().TrimStart('$');
 
             // Handle path operation conflicts
             // GET /users/{user-id}/directReports/graph.orgContact

@@ -32,7 +32,7 @@ internal static class StringExtensions
     }
     internal static string RemoveFunctionBraces(this string pathSegment) => pathSegment.TrimEnd('(',')');
     internal static string ReplaceValueIdentifier(this string original) =>
-        original?.Replace("$value", "Content");
+        original?.Replace("$value", "Content", StringComparison.Ordinal);
    
     internal static string Append(this string original, string suffix) =>
         string.IsNullOrEmpty(original) ? original : original + suffix;
