@@ -8,6 +8,7 @@ using PermissionsService.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -138,7 +139,7 @@ namespace PermissionsService.Test
             }
             else
             {
-                Assert.Empty(result.Results);
+                Assert.Null(result.Results);
             }
         }
 
@@ -199,7 +200,7 @@ namespace PermissionsService.Test
                 new List<RequestInfo> { new RequestInfo { RequestUrl = "/foo/bar/{id}", HttpMethod = "GET" } }); // non-existent request url
 
             // Assert
-            Assert.Empty(result.Results);
+            Assert.Null(result.Results);
         }
 
         [Fact]
@@ -213,12 +214,12 @@ namespace PermissionsService.Test
                         HttpMethod = "Foobar" } }); // non-existent http verb
 
             // Assert
-            Assert.Empty(result.Results);
+            Assert.Null(result.Results);
         }
 
         [Theory]
         [InlineData(true, 6)]
-        [InlineData(false, 10)]
+        [InlineData(false, 12)]
         public async Task ReturnLeastPrivilegePermissionsForSetOfResources(bool leastPrivilegeOnly, int expectedCount)
         {
             // Arrange
@@ -240,6 +241,46 @@ namespace PermissionsService.Test
             Assert.Equal(expectedCount, result.Results.Count);
         }
 
+        [Fact]
+        public async Task ReturnCorrectLeastPrivilegePermissionsForResourcesThatHaveMatchMoreThanOneTemplate()
+        {
+            // Arrange
+            var request1 = new List<RequestInfo>()
+            {
+                new RequestInfo { RequestUrl = "/me/tasks/lists/delta", HttpMethod = "GET" }
+            };
+
+            var request2 = new List<RequestInfo>()
+            {
+                new RequestInfo { RequestUrl = "/me/tasks/lists/{lists_id}", HttpMethod = "GET" }
+            };
+
+            // Act
+            var result1 = await _permissionsStore.GetScopesAsync(requests: request1);
+            var result2 = await _permissionsStore.GetScopesAsync(requests: request2);
+
+            // Assert
+            Assert.NotNull(result1?.Results);
+            Assert.NotNull(result2?.Results);
+            Assert.NotEqual(result1.Results.Count, result2.Results.Count);
+        }
+
+        [Fact]
+        public async Task ReturnErrorWhenLeastPrivilegePermissionsForSetOfResourcesIsNotAvailable()
+        {
+            // Act
+            var result = await _permissionsStore.GetScopesAsync(
+                new List<RequestInfo> { new RequestInfo { RequestUrl = "/no/least/privileged/permissions", HttpMethod = "DELETE" } },
+                scopeType: ScopeType.DelegatedWork,
+                leastPrivilegeOnly: true);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Null(result.Results);
+            Assert.NotNull(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Equal("No permissions found.", result.Errors.First().Message);
+        }
 
         [Theory]
         [InlineData("/users/{id}/drive/items/{id}/workbook/worksheets/{id}/range")]
@@ -332,18 +373,18 @@ namespace PermissionsService.Test
                         new RequestInfo { RequestUrl = null, HttpMethod = "GET" } }
                     );
             // Assert
-            Assert.Empty(result.Results);
+            Assert.Null(result.Results);
             Assert.NotEmpty(result.Errors);
             Assert.Equal(2, result.Errors.Count);
             Assert.Collection(result.Errors,
                 item =>
                 {
-                    Assert.Equal("", item.Url);
+                    Assert.Equal("", item.RequestUrl);
                     Assert.Equal("The request URL cannot be null or empty.", item.Message);
                 },
                 item =>
                 {
-                    Assert.Null(item.Url);
+                    Assert.Null(item.RequestUrl);
                     Assert.Equal("The request URL cannot be null or empty.", item.Message);
                 });
         }
@@ -357,14 +398,14 @@ namespace PermissionsService.Test
                     requests: new List<RequestInfo>() {
                         new RequestInfo { RequestUrl = "/foo/bar", HttpMethod = "GET" } });
             // Assert
-            Assert.Empty(result.Results);
+            Assert.Null(result.Results);
             Assert.NotEmpty(result.Errors);
             Assert.Single(result.Errors);
             Assert.Collection(result.Errors,
                 item =>
                 {
-                    Assert.Equal("/foo/bar", item.Url);
-                    Assert.Equal("Permissions information for 'GET /foo/bar' were not found.", item.Message);
+                    Assert.Equal("/foo/bar", item.RequestUrl);
+                    Assert.Equal("Permissions information for 'GET /foo/bar' was not found.", item.Message);
                 });
         }
 

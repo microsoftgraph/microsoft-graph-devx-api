@@ -157424,5 +157424,15 @@
         ]
       }
     }
+  },
+  "/no/least/privileged/permissions": {
+    "DELETE": {
+      "DelegatedWork": {
+        "leastPrivilegePermissions": [],
+        "allPermissions": [
+          "PrinterShare.ReadWrite.All"
+        ]
+      }
+    }
   }
 }

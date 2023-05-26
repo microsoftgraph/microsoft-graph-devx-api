@@ -31,6 +31,8 @@ namespace UriMatchingService
     {
         private readonly Dictionary<string, string> _templates = new Dictionary<string, string>();
 
+        private static readonly Regex placeholderRegex = new Regex(@"\{(.*?)\}", RegexOptions.Compiled, TimeSpan.FromMilliseconds(100));
+
         public void Add(string key, string template)
         {
             if (string.IsNullOrEmpty(key))
@@ -64,14 +66,25 @@ namespace UriMatchingService
                 absolutePath = new Uri(uri.AbsolutePath, UriKind.Relative);
             }
 
+            var templateMatches = new Dictionary<KeyValuePair<string, string>, int>(); // {{ templateKey, foundParameterCount }}
             foreach (var template in _templates)
             {
                 var parameters = GetParameters(absolutePath, template.Value);
                 if (parameters != null)
                 {
-                    return new TemplateMatch() { Key = template.Key, Template = template.Value };
+                    if (parameters.Count == 0)
+                        return new TemplateMatch() { Key = template.Key, Template = template.Value }; // exact match, no ids
+                    else 
+                        templateMatches.Add(template, parameters.Count);
                 }
             }
+
+            if (templateMatches.Any())
+            {
+                var bestMatch = templateMatches.OrderBy(kv => kv.Value).Select(x => x.Key).First();
+                return new TemplateMatch() { Key = bestMatch.Key, Template = bestMatch.Value };
+            }
+
             return null;
         }
 
@@ -101,6 +114,8 @@ namespace UriMatchingService
 
             if (parameterRegex == null)
             {
+                int count = 0;
+                template = placeholderRegex.Replace(template, m => $"{{{++count}}}");
                 var matchingRegex = CreateMatchingRegex(template);
                 parameterRegex = new Regex(matchingRegex, RegexOptions.None, TimeSpan.FromSeconds(5));
             }
