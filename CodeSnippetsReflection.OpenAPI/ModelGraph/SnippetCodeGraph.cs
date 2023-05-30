@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
@@ -17,7 +17,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
     public record SnippetCodeGraph
     {
 
-        private static readonly Regex nestedStatementRegex = new(@"(\w+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex nestedStatementRegex = new(@"([/\w]+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         private static readonly Regex splitCommasExcludingBracketsRegex = new(@"([^,\(\)]+(\(.*?\))*)+", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
@@ -153,6 +153,13 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         private static List<CodeProperty> parseParameters(SnippetModel snippetModel)
         {
 
+            var queryParameters = snippetModel.EndPathNode
+                .PathItems
+                .SelectMany(static pathItem => pathItem.Value.Operations)
+                .Where(operation => operation.Key.ToString().Equals(snippetModel.Method.ToString(), StringComparison.OrdinalIgnoreCase)) // get the operations that match the method
+                .SelectMany(static operation => operation.Value.Parameters)
+                .Where(static parameter => parameter.In == ParameterLocation.Query); // find the parameters in the path
+            
             var ArrayParameters = ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase,"select", "expand", "orderby");
             var NumberParameters = ImmutableHashSet.Create(StringComparer.OrdinalIgnoreCase,"skip", "top");
 
@@ -164,20 +171,47 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 NameValueCollection queryCollection = HttpUtility.ParseQueryString(queryString);
                 foreach (String key in queryCollection.AllKeys)
                 {
+                    //try to lookup the parameter from the schema
+                    var queryParam = queryParameters.FirstOrDefault(param =>
+                        NormalizeQueryParameterName(param.Name).Equals(NormalizeQueryParameterName(key),
+                            StringComparison.OrdinalIgnoreCase));
+
+                    //setup defaults
                     var name = NormalizeQueryParameterName(key).Trim();
                     var value = GetQueryParameterValue(queryCollection[key], replacements);
-                    if(ArrayParameters.Contains(name)){
-                        var children = splitCommasExcludingBracketsRegex.Split(value)
-                            .Where(x => !String.IsNullOrEmpty(x) && !x.StartsWith("(") && !x.Equals(","))
-                            .Select(x => new CodeProperty() { Name = null, Value = x, PropertyType = PropertyType.String }).ToList();
-
-                        parameters.Add(new() { Name = name.ToLower(), Value = null, PropertyType = PropertyType.Array , Children = children});
-                    }else if (value.Equals("true", StringComparison.OrdinalIgnoreCase) || value.Equals("false", StringComparison.OrdinalIgnoreCase)){
-                        parameters.Add(new() { Name = name.ToLower(), Value = value, PropertyType = PropertyType.Boolean });
-                    }else if (NumberParameters.Contains(name)){
-                        parameters.Add(new() { Name = name.ToLower(), Value = value, PropertyType = PropertyType.Int32 });
-                    }else{
-                        parameters.Add(new() { Name = name, Value = value, PropertyType = PropertyType.String });
+                    var schema = "string";
+                    if (NumberParameters.Contains(name))
+                        schema = "integer";
+                    else if(ArrayParameters.Contains(name))
+                        schema = "array";
+                    
+                    // use values from the schema if match is found
+                    if (queryParam != null)
+                    {
+                        schema = queryParam.Schema.Type.ToLowerInvariant();
+                        name = NormalizeQueryParameterName(queryParam.Name).Trim();
+                    }
+                    
+                    switch (schema)
+                    {
+                        case "string":
+                            parameters.Add(evaluateStringProperty(name, value, queryParam?.Schema));
+                            break;
+                        case "integer":
+                            parameters.Add(new CodeProperty { Name = name, Value = int.TryParse(value, out _) ? value : "1", PropertyType = PropertyType.Int32, Children = new List<CodeProperty>() });
+                            break;
+                        case "double":
+                            parameters.Add(new CodeProperty { Name = name, Value = double.TryParse(value, out _) ? value : "1.0d", PropertyType = PropertyType.Double, Children = new List<CodeProperty>() });
+                            break;
+                        case "boolean":
+                            parameters.Add(new CodeProperty { Name = name, Value = bool.TryParse(value, out _) ? value : "false", PropertyType = PropertyType.Boolean, Children = new List<CodeProperty>() });
+                            break;
+                        case "array":
+                            var children = splitCommasExcludingBracketsRegex.Split(GetQueryParameterValue(queryCollection[key], replacements))
+                                .Where(x => !String.IsNullOrEmpty(x) && !x.StartsWith("(") && !x.Equals(","))
+                                .Select(x => new CodeProperty() { Name = null, Value = x, PropertyType = PropertyType.String }).ToList();
+                            parameters.Add(new CodeProperty { Name = name, Value = null, PropertyType = PropertyType.Array, Children = children });
+                            break;
                     }
                 }
             }
