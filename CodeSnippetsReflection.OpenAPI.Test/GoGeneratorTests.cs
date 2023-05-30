@@ -85,6 +85,28 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.DoesNotContain("@odata.type", result);
         }
         [Fact]
+        public async Task GeneratesObjectsInArray() {
+            var sampleJson = @"
+            {
+            ""addLicenses"": [
+                {
+                ""disabledPlans"": [ ""11b0131d-43c8-4bbb-b2c8-e80f9a50834a"" ],
+                ""skuId"": ""45715bb8-13f9-4bf6-927f-ef96c102d394""
+                }
+            ],
+            ""removeLicenses"": [ ""bea13e0c-3828-4daa-a392-28af7ff61a0f"" ]
+            }
+            ";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/assignLicense"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestBody := graphusers.NewItemAssignLicensePostRequestBody()", result);
+            Assert.Contains("disabledPlans := []uuid.UUID {", result);
+            Assert.Contains("removeLicenses := []uuid.UUID {\r\n\tuuid.MustParse(\"bea13e0c-3828-4daa-a392-28af7ff61a0f\"),\r\n}", result);
+        }
+        [Fact]
         public async Task GeneratesTheSnippetHeader() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
