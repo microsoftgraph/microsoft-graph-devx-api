@@ -34,8 +34,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return ImmutableHashSet.Create("string", "int", "float");
         }
 
-
-        public static Dictionary<string, string> formatPropertyName = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, string> formatPropertyName = new(StringComparer.OrdinalIgnoreCase)
         {
             {"guid", "uuid.UUID"},
             {"uuid", "uuid.UUID"},
