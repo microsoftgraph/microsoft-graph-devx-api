@@ -33,7 +33,7 @@ namespace CodeSnippetsReflection
 
             this.Method = requestPayload.Method;
             this.Path = Uri.UnescapeDataString(requestPayload.RequestUri.AbsolutePath.Substring(5));
-            this.QueryString = requestPayload.RequestUri.Query;
+            this.QueryString = Uri.UnescapeDataString(requestPayload.RequestUri.Query);
             this.ApiVersion = serviceRootUrl.Substring(serviceRootUrl.Length - 4);
             this.SelectFieldList = new List<string>();
             this.FilterFieldList = new List<string>();

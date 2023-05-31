@@ -76,7 +76,8 @@ namespace CodeSnippetsReflection.StringExtensions
        
         public static string EscapeQuotes(this string stringValue)
         {
-            return stringValue.Replace("\"", "\\\"");
+            return stringValue.Replace("\\\"", "\"")//try to unescape quotes in case the input string is already escaped to avoid double escaping.
+                              .Replace("\"", "\\\"");
         }
 
         public static string AddQuotes(this string stringValue)
