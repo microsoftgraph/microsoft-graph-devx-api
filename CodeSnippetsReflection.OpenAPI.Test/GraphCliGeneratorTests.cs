@@ -32,12 +32,12 @@ public class GraphCliGeneratorTests
     public static IEnumerable<object[]> GetSnippetData()
     {
         return new[] {
-            new object[] {HttpMethod.Delete, $"{ServiceRootUrl}/users/100/settings", "mgc users item settings delete --user-id {user-id}"},
+            new object[] {HttpMethod.Delete, $"{ServiceRootUrl}/users/100/settings", "mgc users settings delete --user-id {user-id}"},
             new object[] {HttpMethod.Get, $"{ServiceRootUrl}/users", "mgc users list"},
-            new object[] {HttpMethod.Get, $"{ServiceRootUrl}/users/100", "mgc users item get --user-id {user-id}"},
-            new object[] {HttpMethod.Patch, $"{ServiceRootUrl}/users/100/licenseDetails/123", "mgc users item license-details item patch --user-id {user-id} --license-details-id {licenseDetails-id}"},
-            new object[] {HttpMethod.Post, $"{ServiceRootUrl}/users/100/extensions", "mgc users item extensions create --user-id {user-id}"},
-            new object[] {HttpMethod.Put, $"{ServiceRootUrl}/users/100/manager/$ref", "mgc users item manager ref put --user-id {user-id}"},
+            new object[] {HttpMethod.Get, $"{ServiceRootUrl}/users/100", "mgc users get --user-id {user-id}"},
+            new object[] {HttpMethod.Patch, $"{ServiceRootUrl}/users/100/licenseDetails/123", "mgc users license-details patch --user-id {user-id} --license-details-id {licenseDetails-id}"},
+            new object[] {HttpMethod.Post, $"{ServiceRootUrl}/users/100/extensions", "mgc users extensions create --user-id {user-id}"},
+            new object[] {HttpMethod.Put, $"{ServiceRootUrl}/users/100/manager/$ref", "mgc users manager ref put --user-id {user-id}"},
         };
     }
 
@@ -69,7 +69,29 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users item todo lists item tasks item attachments item get --user-id {user-id} --todo-task-list-id {todoTaskList-id} --todo-task-id {todoTask-id} --attachment-base-id {attachmentBase-id}", result);
+        Assert.Equal("mgc users todo lists tasks attachments get --user-id {user-id} --todo-task-list-id {todoTaskList-id} --todo-task-id {todoTask-id} --attachment-base-id {attachmentBase-id}", result);
+    }
+
+    [Theory]
+    [InlineData("/users/100/directReports/graph.orgContact", "mgc users direct-reports graph-org-contact get --user-id {user-id}")]
+    [InlineData("/users/100/directReports/123/graph.orgContact", "mgc users direct-reports graph-org-contact-by-id get --user-id {user-id} --directory-object-id {directoryObject-id}")]
+    public void GeneratesSnippetsForConflictingIndexerNavSubCommand(string url, string expectedCommand)
+    {
+        // Tests:
+        // GET /users/{user-id}/directReports/graph.orgContact
+        // GET /users/{user-id}/directReports/{directoryObject-id}/graph.orgContact
+        // Given
+        string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/users/{user-id}/directReports/graph.orgContact":{"get":{"responses":{"200":{"description":"Successful operation"}}}},"/users/{user-id}/directReports/{directoryObject-id}/graph.orgContact":{"get":{"responses":{"200":{"description":"Successful operation"}}}}}}""";
+        var doc = new OpenApiStringReader().Read(schema, out _);
+        var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{url}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal(expectedCommand, result);
     }
 
     // Powershell metadata doesn't have /$count endpoints
@@ -121,7 +143,7 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users item manager ref get --user-id {user-id}", result);
+        Assert.Equal("mgc users manager ref get --user-id {user-id}", result);
     }
 
     [Fact]
@@ -137,7 +159,7 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users item photo content get --user-id {user-id}", result);
+        Assert.Equal("mgc users photo content get --user-id {user-id}", result);
     }
 
     [Fact]
@@ -156,9 +178,9 @@ public class GraphCliGeneratorTests
     }
 
     [Theory]
-    [InlineData("?id=10", "--id {id} --id-query {id-query}")]
-    [InlineData("?id=", "--id {id} --id-query {id-query}")]
-    [InlineData("?id", "--id {id} --id-query {id-query}")]
+    [InlineData("?id=10", "--id {id} --id-query 10")]
+    [InlineData("?id=", "--id {id}")] // When the query parameter value is an empty string, the snippet generator ignores it
+    [InlineData("?id", "--id {id}")] // When the query parameter value is not provided, the snippet generator ignores it
     [InlineData(null, "--id {id}")]
     [InlineData("? ", "--id {id}")]
     public void GeneratesSnippetsForCommandWithConflictingParameterName(string queryString, string commandSuffix)
@@ -176,7 +198,7 @@ public class GraphCliGeneratorTests
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal($"mgc tests item results get {commandSuffix}", result);
+        Assert.Equal($"mgc tests results get {commandSuffix}", result);
     }
 
     [Fact]
@@ -197,7 +219,7 @@ public class GraphCliGeneratorTests
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal("mgc tests item results get --id {id}", result);
+        Assert.Equal("mgc tests results get --id {id}", result);
     }
 
     [Fact]
@@ -216,13 +238,32 @@ public class GraphCliGeneratorTests
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        // TODO: What should happen to the query parameter?
-        Assert.Equal("mgc tests item results get --id {id}", result);
+        Assert.Equal("mgc tests results get --id {id}", result);
+    }
+
+    [Fact]
+    public void GeneratesSnippetsForCommandWithConflictingPathAndHeaderParameterName()
+    {
+        // Given
+        // The cookie parameter will be skipped. not supported in the CLI
+        string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"header","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
+        var doc = new OpenApiStringReader().Read(schema, out _);
+        var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        string url = $"{ServiceRootUrl}/tests/1/results";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        requestPayload.Headers.Add("id", "test-header");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc tests results get --id {id} --id-header test-header", result);
     }
 
     [Theory]
-    [InlineData("?$select=name", " --select {$select}")]
-    [InlineData("?$filter=test&$select=name", " --filter {$filter} --select {$select}")]
+    [InlineData("?$select=name", " --select name")]
+    [InlineData("?$filter=test&$select=name", " --filter test --select name")]
     public async Task GeneratesSnippetsForCommandWithODataParameters(string queryString, string commandOptions)
     {
         // Given
@@ -272,7 +313,7 @@ public class GraphCliGeneratorTests
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal("mgc tests get --id {id}", result);
+        Assert.Equal("mgc tests get --id 10", result);
     }
 
     [Theory]
@@ -345,26 +386,10 @@ public class GraphCliGeneratorTests
     }
 
     [Fact]
-    public async Task ReturnsEmptyStringForUnsupportedHttpOperation()
-    {
-        // DELETE /users/{user-id}/createdObjects
-        // Given
-        string url = $"{ServiceRootUrl}/users/100/createdObjects";
-        using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
-
-        // When
-        var result = _generator.GenerateCodeSnippet(snippetModel);
-
-        // Then
-        Assert.Equal(string.Empty, result);
-    }
-
-    [Fact]
     public async Task ThrowsExceptionOnUnsupportedApiVersion()
     {
         // Given
-        string rootUrl = "https://example.com/v2";
+        string rootUrl = "https://example.com/v303";
         string url = $"{rootUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         var snippetModel = new SnippetModel(requestPayload, rootUrl, await GetV1TreeNode());
@@ -372,5 +397,21 @@ public class GraphCliGeneratorTests
         // When
         // Then
         Assert.Throws<ArgumentException>(() => _generator.GenerateCodeSnippet(snippetModel));
+    }
+    
+    [Fact]
+    public async Task GeneratesEscapedSnippetsForMultilineCommand()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/users";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, url);
+        requestPayload.Content = new StringContent("{\n  \"name\": \"test\"\n}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc users create --body '{\\\n  \"name\": \"test\"\\\n}'", result);
     }
 }

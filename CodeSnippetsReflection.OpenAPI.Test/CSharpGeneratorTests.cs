@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -213,6 +213,24 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.QueryParameters.Filter", result);
             Assert.Contains("requestConfiguration.QueryParameters.Select", result);
             Assert.Contains("requestConfiguration.QueryParameters.Orderby", result);
+        }
+        [Fact]
+        public async Task GeneratesFilterParametersWithSpecialCharacters() {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$filter=imAddresses/any(i:i eq 'admin@contoso.com')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestConfiguration.QueryParameters.Filter", result);
+            Assert.Contains("imAddresses/any(i:i eq 'admin@contoso.com')", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjuction()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" AND \"displayName:al\"");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestConfiguration.QueryParameters.Search", result);
+            Assert.Contains("requestConfiguration.QueryParameters.Search = \"\\\"displayName:di\\\" AND \\\"displayName:al\\\"\";", result);
         }
         [Fact]
         public async Task HandlesOdataTypeWhenGenerating() {
@@ -640,6 +658,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("await graphClient.Reports.GetYammerGroupsActivityDetailWithDate(new Date(DateTime.Parse(\"{date}\"))).GetAsync();", result);
         }
+        
+        [Fact]
+        public async Task CorrectlyHandlesTypeFromInUrl()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/mailFolders/?includehiddenfolders=true");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("requestConfiguration.QueryParameters.IncludeHiddenFolders = \"true\";", result);
+        }
 
         [Fact]
         public async Task MatchesPathWithPathParameter()
@@ -659,6 +687,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [InlineData("/users/{user-id}/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
         [InlineData("/me/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
         [InlineData("/drive/bundles","graphClient.Drives[\"{drive-id}\"].Bundles.GetAsync()")]
+        [InlineData("/me/drive/special/documents","graphClient.Drives[\"{drive-id}\"].Special[\"{driveItem-id}\"].GetAsync()")]
+        [InlineData("/me/drive/root/search(q='Contoso%20Project')","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].SearchWithQ(\"{q}\").GetAsync()")]
         [InlineData("/me/drive/items/{id}/workbook/application/calculate","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Application.Calculate", "POST")]
         public async Task GeneratesSnippetWithRemappedDriveCall(string inputPath, string expected, string method = "") 
         {
