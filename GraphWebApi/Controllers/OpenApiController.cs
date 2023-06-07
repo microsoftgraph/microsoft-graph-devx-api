@@ -2,6 +2,13 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Text.Json;
+using System.Threading.Tasks;
 using GraphWebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -10,14 +17,6 @@ using Microsoft.OpenApi.Services;
 using OpenAPIService;
 using OpenAPIService.Common;
 using OpenAPIService.Interfaces;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.IO;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Constants = OpenAPIService.Common.Constants;
 
 namespace GraphWebApi.Controllers
@@ -55,16 +54,12 @@ namespace GraphWebApi.Controllers
                                     [FromQuery] bool includeRequestBody = false,
                                     [FromQuery] bool forceRefresh = false,
                                     [FromQuery] bool singularizeOperationIds = false,
+                                    [FromQuery] CloudEnvironment cloud = CloudEnvironment.Prod,
                                     [FromQuery] string fileName = null)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-            var graphUri = GetVersionUri(styleOptions.GraphVersion);
-
-            if (string.IsNullOrEmpty(graphUri))
-            {
-                throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
-            }
+            var graphUri = GetOpenApiDocumentBaseUrl(styleOptions.GraphVersion, cloud);
 
             var source = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh, fileName);
             return CreateSubsetOpenApiDocument(operationIds, tags, url, source, title, styleOptions, forceRefresh, includeRequestBody, singularizeOperationIds);
@@ -78,16 +73,12 @@ namespace GraphWebApi.Controllers
                                              [FromQuery] string format = null,
                                              [FromQuery] bool forceRefresh = false,
                                              [FromQuery] bool singularizeOperationIds = false,
+                                             [FromQuery] CloudEnvironment cloud = CloudEnvironment.Prod,
                                              [FromQuery] string fileName = null)
         {
             var styleOptions = new OpenApiStyleOptions(style, openApiVersion, graphVersion, format);
 
-            var graphUri = GetVersionUri(styleOptions.GraphVersion);
-
-            if (string.IsNullOrEmpty(graphUri))
-            {
-                throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
-            }
+            var graphUri = GetOpenApiDocumentBaseUrl(styleOptions.GraphVersion, cloud);
 
             var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh, fileName);
             await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
@@ -99,7 +90,8 @@ namespace GraphWebApi.Controllers
         [Route("openapi/tree")]
         [HttpGet]
         public async Task Get([FromQuery] string graphVersions = "*",
-                                             [FromQuery] bool forceRefresh = false)
+                              [FromQuery] bool forceRefresh = false,
+                              [FromQuery] CloudEnvironment cloud = CloudEnvironment.Prod)
         {
             if (string.IsNullOrEmpty(graphVersions))
             {
@@ -121,12 +113,7 @@ namespace GraphWebApi.Controllers
             var sources = new ConcurrentDictionary<string, OpenApiDocument>();
             foreach (var graphVersion in graphVersionsList)
             {
-                var graphUri = GetVersionUri(graphVersion);
-                if (string.IsNullOrEmpty(graphUri))
-                {
-                    throw new InvalidOperationException($"Unsupported {nameof(graphVersion)} provided: '{graphVersion}'");
-                }
-
+                var graphUri = GetOpenApiDocumentBaseUrl(graphVersion, cloud);
                 sources.TryAdd(graphVersion, await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, OpenApiStyle.Plain, forceRefresh));
             }
 
@@ -208,14 +195,23 @@ namespace GraphWebApi.Controllers
             await sw.FlushAsync();
         }
 
-        private string GetVersionUri(string graphVersion)
+        private string GetOpenApiDocumentBaseUrl(string graphVersion, CloudEnvironment cloud)
         {
-            return graphVersion.ToLower(CultureInfo.InvariantCulture) switch
+            var baseUrl = _configuration["OpenApi:BaseUrl"];
+            if (string.IsNullOrEmpty(baseUrl))
             {
-                "v1.0" => _configuration["GraphMetadata:V1.0"],
-                "beta" => _configuration["GraphMetadata:Beta"],
-                _ => null,
-            };
+                throw new InvalidOperationException($"Open API document base URL not found");
+            }
+            return $"{baseUrl}/{graphVersion.ToLower()}/{cloud.ToString().ToLower()}";
+        }
+
+        public enum CloudEnvironment
+        {
+            Prod,
+            Fairfax,
+            Mooncake,
+            USNat,
+            USSec
         }
     }
 }

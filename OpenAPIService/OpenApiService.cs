@@ -521,7 +521,7 @@ namespace OpenAPIService
                 }
             }
 
-            var cachedDoc = $"{graphUri}/{openApiStyle}/{fileName}";
+            var cachedDoc = $"{graphUri}/{fileName}";
             if (!forceRefresh && _OpenApiDocuments.TryGetValue(cachedDoc, out OpenApiDocument doc))
             {
                 _telemetryClient?.TrackTrace("Fetch the OpenApi document from the cache",
