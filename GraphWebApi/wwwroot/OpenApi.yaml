@@ -437,6 +437,7 @@ paths:
         - $ref: "#/components/parameters/forceRefresh"
         - $ref: "#/components/parameters/singularizeOperationIds"
         - $ref: "#/components/parameters/fileName"
+        - $ref: "#/components/parameters/cloudName"
       responses:
         "200":
           description: List of operations associated to a tag/operationIds/url
@@ -459,6 +460,7 @@ paths:
         - $ref: "#/components/parameters/forceRefresh"
         - $ref: "#/components/parameters/singularizeOperationIds"
         - $ref: "#/components/parameters/fileName"
+        - $ref: "#/components/parameters/cloudName"
       responses:
         "200":
           description: OK
@@ -474,6 +476,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/graphVersions"
         - $ref: "#/components/parameters/forceRefresh"
+        - $ref: "#/components/parameters/cloudName"
       responses:
         "200":
           description: Simplified OpenAPI document(s) rendered as an OpenApiUrlTreeNode document.
@@ -880,3 +883,17 @@ components:
         type: string
       required: false
       description: Overrides the OpenAPI file name for the specified OpenApi style.
+    cloudName:
+      name: cloud
+      in: query
+      schema:
+        type: string
+        enum:
+          - Prod
+          - Fairfax
+          - Mooncake
+          - USNat
+          - USSec
+        default: Prod
+      required: false
+      description: The name of the cloud environment to fetch Open API document for.
