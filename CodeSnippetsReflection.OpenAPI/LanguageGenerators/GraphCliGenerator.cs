@@ -22,7 +22,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         // If operation does not exist, return an empty string
         if (operation == null)
         {
-            return string.Empty;
+            throw new MissingMethodException(snippetModel.Method.ToString() + " operation is not supported");
         }
 
         // List has an initial capacity of 4. Reserve more based on the number of nodes.
