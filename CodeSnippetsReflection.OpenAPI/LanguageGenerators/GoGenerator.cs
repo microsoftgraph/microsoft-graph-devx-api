@@ -33,6 +33,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return ImmutableHashSet.Create("string", "int", "float");
         }
 
+        private static readonly Dictionary<string, string> formatPropertyName = new(StringComparer.OrdinalIgnoreCase)
+        {
+            {"guid", "uuid.UUID"},
+            {"uuid", "uuid.UUID"},
+            {"date-time", "time.Time"},
+            {"date", "serialization.DateOnly"},
+            {"duration", "serialization.ISODuration"}
+        };
+
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             if (snippetModel == null) throw new ArgumentNullException("Argument snippetModel cannot be null");
@@ -345,7 +354,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             else
             {
-                builder.AppendLine($"{indentManager.GetIndent()}{requestBodyVarName} := graph{ProcessFinalNameSpaceName(codeGraph.Body.NamespaceName).Replace(".","").ToLowerInvariant()}.New{codeGraph.Body.Name.ToFirstCharacterUpperCase()}()");
+                // objects in namespace user have a prefix of item
+                string bodyName = codeGraph.Body.NamespaceName.StartsWith("Me", StringComparison.OrdinalIgnoreCase) ? $"Item{codeGraph.Body.Name}" : codeGraph.Body.Name;
+                builder.AppendLine($"{indentManager.GetIndent()}{requestBodyVarName} := graph{ProcessFinalNameSpaceName(codeGraph.Body.NamespaceName).Replace(".","").ToLowerInvariant()}.New{bodyName.ToFirstCharacterUpperCase()}()");
                 WriteCodePropertyObject(requestBodyVarName, builder, codeGraph.Body, indentManager);
             }
         }
@@ -388,9 +399,21 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 builder.AppendLine(objectBuilder.ToString());
             }
 
-            var typeName = NativeTypes.Contains(codeProperty.TypeDefinition?.ToLowerInvariant()?.Trim()) ? codeProperty.TypeDefinition?.ToLowerInvariant() : $"graph{ProcessFinalNameSpaceName(parentProperty.NamespaceName).Replace(".","").ToLowerInvariant()}.{codeProperty.TypeDefinition}able";
+            var typeDefinition = codeProperty.TypeDefinition?.ToLowerInvariant()?.Trim();
+
+            String typeName;
+            if (NativeTypes.Contains(typeDefinition)) {
+                typeName = typeDefinition;
+            } else if (formatPropertyName.TryGetValue(typeDefinition, out var type))
+            {
+                typeName = type;
+            } else
+            {
+                typeName = $"graph{ProcessFinalNameSpaceName(codeProperty.NamespaceName).Replace(".", "").ToLowerInvariant()}.{codeProperty.TypeDefinition}able";
+            }
+
             builder.AppendLine($"{indentManager.GetIndent()}{propertyName} := []{typeName} {{");
-            builder.AppendLine(contentBuilder.ToString());
+            builder.AppendLine(contentBuilder.ToString().TrimEnd());
             builder.AppendLine($"{indentManager.GetIndent()}}}");
             if (parentProperty.PropertyType == PropertyType.Object)
                 builder.AppendLine($"{indentManager.GetIndent()}{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}({objectName})");
@@ -433,8 +456,16 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     WriteArrayProperty(propertyAssignment, objectName, builder, codeProperty, child, indentManager);
                     break;
                 case PropertyType.Guid:
-                    builder.AppendLine($"{propertyName} := uuid.MustParse(\"{child.Value}\")");
-                    builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+
+                    if (!isArray)
+                    {
+                        builder.AppendLine($"{propertyName} := uuid.MustParse(\"{child.Value}\")");
+                        builder.AppendLine($"{propertyAssignment}.Set{propertyName.ToFirstCharacterUpperCase()}(&{propertyName}) ");
+                    }
+                    else
+                    {
+                        builder.AppendLine($"{indentManager.GetIndent()}uuid.MustParse(\"{child.Value}\"),");
+                    }
                     break;
                 case PropertyType.String:
                     WriteStringProperty(propertyAssignment, codeProperty, builder, indentManager, child);
