@@ -385,7 +385,8 @@ paths:
                     Description: Notifications fail when an organization has several Bookings businesses,
                     WorkloadArea: Notifications,
                     Workaround: Upgrade Notifications,
-                    APIPathLink: https://docs.microsoft.com/en-us/graph/api/resources/calendar?view=graph-rest-1.0
+                    APIPathLink: https://docs.microsoft.com/en-us/graph/api/resources/calendar?view=graph-rest-1.0,
+                    SubArea: NotificationsSubArea
         "404":
           description: Not found
         "500":
