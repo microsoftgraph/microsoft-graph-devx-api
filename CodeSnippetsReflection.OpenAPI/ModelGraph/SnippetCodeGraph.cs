@@ -460,13 +460,18 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         private static CodeProperty parseJsonArrayValue(string propertyName, JsonElement value, OpenApiSchema schema)
         {
             var alternativeType = schema?.Items?.AnyOf?.FirstOrDefault()?.AllOf?.LastOrDefault()?.Title;
-            var children = value.EnumerateArray().Select(item => parseProperty(schema.GetSchemaTitle() ?? alternativeType?.ToFirstCharacterUpperCase(), item, schema?.Items)).ToList();
-
             // uuid schemas 
             var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ??
                               (value.EnumerateArray().Any() ?
                                   evaluatePropertyTypeDefinition(value.EnumerateArray().First().ValueKind.ToString(), schema?.Items) :
                                   schema?.Items?.Type);
+            var children = value.EnumerateArray().Select(item =>
+            {
+                var prop = parseProperty(schema.GetSchemaTitle() ?? alternativeType?.ToFirstCharacterUpperCase(), item,
+                    schema?.Items);
+                prop.TypeDefinition = prop.TypeDefinition ?? genericType;
+                return prop;
+            }).ToList();
             return new CodeProperty { Name = propertyName, Value = null, PropertyType = PropertyType.Array, Children = children, TypeDefinition = genericType ?? alternativeType };
         }
 

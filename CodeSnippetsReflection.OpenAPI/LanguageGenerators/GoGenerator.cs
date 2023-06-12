@@ -7,7 +7,6 @@ using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
 using System.Text.RegularExpressions;
-using System.Xml;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
@@ -356,7 +355,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             else
             {
                 // objects in namespace user have a prefix of item
-                string bodyName = codeGraph.Body.NamespaceName.StartsWith("Me") ? $"Item{codeGraph.Body.Name}" : codeGraph.Body.Name;
+                string bodyName = codeGraph.Body.NamespaceName.StartsWith("Me", StringComparison.OrdinalIgnoreCase) ? $"Item{codeGraph.Body.Name}" : codeGraph.Body.Name;
                 builder.AppendLine($"{indentManager.GetIndent()}{requestBodyVarName} := graph{ProcessFinalNameSpaceName(codeGraph.Body.NamespaceName).Replace(".","").ToLowerInvariant()}.New{bodyName.ToFirstCharacterUpperCase()}()");
                 WriteCodePropertyObject(requestBodyVarName, builder, codeGraph.Body, indentManager);
             }
