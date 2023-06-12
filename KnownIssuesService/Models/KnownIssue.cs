@@ -60,5 +60,13 @@ namespace KnownIssuesService.Models
         /// Known Issues Status i.e New, Active,Resolved
         /// </summary>
         public string State { get; set; }
+
+        /// <summary>
+        /// Microsoft Graph SubArea
+        /// </summary>
+        public string SubArea
+        {
+            get; set;
+        }
     }
 }

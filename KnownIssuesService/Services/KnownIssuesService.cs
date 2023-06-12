@@ -59,8 +59,8 @@ namespace KnownIssuesService.Services
 										 SeverityLevel.Information,
 										 _knownIssuesTraceProperties);
 
-			var accessToken = _configuration[AccessTokenValue];
-			return new VssBasicCredential(string.Empty, accessToken);
+            var accessToken = _configuration[AccessTokenValue];
+            return new VssBasicCredential(string.Empty, accessToken);
 		}
 
         /// <summary>
@@ -165,6 +165,7 @@ namespace KnownIssuesService.Services
                 Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default,
                 CreatedDateTime = x.Fields.TryGetValue("Custom.Dateissuewasraised", out DateTime createdDate) ? createdDate : default,
                 LastUpdatedDateTime = x.Fields.TryGetValue("Custom.Lastupdate", out DateTime changedDate) ? changedDate : default,
+                SubArea = x.Fields.TryGetValue("Custom.MicrosoftGraphSubarea", out var subArea) ? subArea.ToString() : default
             }).ToList();
 
             foreach(var knownIssue in _knownIssuesList.ToList())
