@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -36,11 +35,22 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains(".Me().Messages()", result);
         }
         [Fact]
+        public async Task GeneratesMeImportFromUserPackage()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages?$select=sender,subject");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("import", result);
+            Assert.Contains("graphusers \"github.com/microsoftgraph/msgraph-sdk-go/users\"", result);
+            Assert.Contains("msgraphsdk \"github.com/microsoftgraph/msgraph-sdk-go\"", result);
+            Assert.Contains(".Me().Messages()", result);
+        }
+        [Fact]
         public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollections() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".Me().MessagesById(\"message-id\")", result);
+            Assert.Contains(".Me().Messages().ByMessageId(\"message-id\")", result);
         }
         [Fact]
         public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollectionsWithMultipleParams() {
@@ -54,7 +64,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".DrivesById(\"drive-id\").ItemsById(\"driveItem-id\").Checkin().", result);
+            Assert.Contains("Drives().ByDriveId(\"drive-id\").Items().ByItemId(\"driveItem-id\").Checkin().", result);
         }
         [Fact]
         public async Task IgnoreOdataTypeWhenGenerating() {
@@ -79,7 +89,56 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient := msgraphsdk.NewGraphServiceClient(requestAdapter)", result);
+            Assert.Contains("graphClient, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, scopes)", result);
+        }
+        [Fact]
+        public async Task GeneratesMultipleImportStatements()
+        {
+            var bodyContent = @"
+            {
+                ""customKeyIdentifier"": null,
+                ""endDateTime"": ""2021-09-09T19:50:29.3086381Z"",
+                ""keyId"": ""f0b0b335-1d71-4883-8f98-567911bfdca6"",
+                ""startDateTime"": ""2019-09-09T19:50:29.3086381Z"",
+                ""secretText"": ""[6gyXA5S20@MN+WRXAJ]I-TO7g1:h2P8"",
+                ""hint"": ""[6g"",
+                ""displayName"": ""Password friendly name""
+            }
+            ";
+
+            using var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/applications/{{application-id}}/addPassword")
+                {
+                    Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("graphapplications \"github.com/microsoftgraph/msgraph-sdk-go/applications\"", result);
+        }
+        [Fact]
+        public async Task AllowsNestedModelsNameSpace()
+        {
+            var bodyContent = @"
+            {
+              ""labels"": [
+                        {
+                            ""languageTag"" : ""en-US"",
+                            ""name"" : ""Car"",
+                            ""isDefault"" : true
+                        }
+              ]
+            }
+            ";
+
+            using var requestPayload =
+                new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/sites/microsoft.sharepoint.com,b9b0bc03-cbc4-40d2-aba9-2c9dd9821ddf,6a742cee-9216-4db5-8046-13a595684e74/termStore/sets/{{set-id}}/children")
+                {
+                    Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+                };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("graphmodelstermstore \"github.com/microsoftgraph/msgraph-sdk-go/models/termstore\"", result);
+            Assert.Contains("requestBody := graphmodelstermstore.NewTerm()", result);
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall() {
@@ -112,7 +171,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Patch", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").Patch(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Me().Messages().ByMessageId(\"message-id\").Patch(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesThePutMethodCall() {
@@ -127,7 +186,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Put", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("graphClient.ApplicationsById(\"application-id\").Logo().Put(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Applications().ByApplicationId(\"application-id\").Logo().Put(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesTheDeleteMethodCall() {
@@ -137,7 +196,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Delete", result);
             Assert.DoesNotContain("result, err :=", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").Delete(context.Background(), nil)", result);
+            Assert.Contains("graphClient.Me().Messages().ByMessageId(\"message-id\").Delete(context.Background(), nil)", result);
         }
         [Fact]
         public async Task WritesTheRequestPayload() {
@@ -224,7 +283,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("map[string]interface{}{", result);
             Assert.Contains("[]string {", result);
             Assert.Contains("SetAdditionalData", result);
-            Assert.Contains("members", result); // property name hasn't been changed
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
         }
         [Fact]
@@ -250,11 +308,30 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Select: [] string {\"displayName\",\"givenName\",\"postalCode\",\"identities\"}", result);
             Assert.Contains("QueryParameters: ", result);
-            Assert.Contains("&graphconfig.UserItemRequestBuilderGetQueryParameters", result);
-            Assert.Contains("&graphconfig.UserItemRequestBuilderGetRequestConfiguration", result);
+            Assert.Contains("&graphusers.UserItemRequestBuilderGetQueryParameters", result);
+            Assert.Contains("&graphusers.UserItemRequestBuilderGetRequestConfiguration", result);
             Assert.Contains("configuration :=", result);
             Assert.Contains("requestParameters :=", result);
-            Assert.Contains("result, err := graphClient.UsersById(\"user-id\").Get(context.Background(), configuration)", result);
+            Assert.Contains("result, err := graphClient.Users().ByUserId(\"user-id\").Get(context.Background(), configuration)", result);
+        }
+        [Fact]
+        public async Task GeneratesODataTypesAreEscaped()
+        {
+            const string jsonObject = @"
+{
+  ""@odata.id"": ""https://graph.microsoft.com/v1.0/directoryObjects/{id}""
+}
+";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups/{{group-id}}/members/$ref")
+            {
+                Content = new StringContent(jsonObject, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestBody := graphmodels.NewReferenceCreate()", result);
+            Assert.Contains("requestBody.SetOdataId(&odataId)", result);
+            Assert.Contains("odataId := \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"", result);
+            Assert.Contains("graphClient.Groups().ByGroupId(\"group-id\").Members().Ref().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesCountBooleanQueryParameters() {
@@ -294,9 +371,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("import", result);
+            Assert.Contains("abstractions \"github.com/microsoft/kiota-abstractions-go\"", result);
             Assert.Contains("headers := abstractions.NewRequestHeaders()", result);
             Assert.Contains("headers.Add(\"ConsistencyLevel\", \"eventual\")", result);
-            Assert.Contains("graphconfig.GroupsRequestBuilderGetRequestConfiguration", result);
+            Assert.Contains("graphgroups.GroupsRequestBuilderGetRequestConfiguration", result);
             Assert.Contains("Headers: headers", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
             Assert.Contains("result, err := graphClient.Groups().Get(context.Background(), configuration)", result);
@@ -309,7 +388,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Me().EventsById(\"event-id\").Attachments().Post(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Me().Events().ByEventId(\"event-id\").Attachments().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task ParsesThePayloadEvenIfContentTypeIsMissing() {
@@ -319,7 +398,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.TeamsById(\"team-id\").ChannelsById(\"channel-id\").Messages().Post(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Teams().ByTeamId(\"team-id\").Channels().ByChannelId(\"channel-id\").Messages().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task WritesEmptyPrimitiveArrays() {
@@ -360,14 +439,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Directory().DeletedItems().Group().Get(context.Background(), nil)", result);
+            Assert.Contains("graphClient.Directory().DeletedItems().GraphGroup().Get(context.Background(), nil)", result);
         }
         [Fact]
         public async Task DoesntFailOnTerminalSlash() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/me/messages/AAMkADYAAAImV_jAAA=/?$expand=microsoft.graph.eventMessage/event");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Me().MessagesById(\"message-id\").Get(context.Background(), configuration)", result);
+            Assert.Contains("graphClient.Me().Messages().ByMessageId(\"message-id\").Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task IncludesRequestBodyClassName() {

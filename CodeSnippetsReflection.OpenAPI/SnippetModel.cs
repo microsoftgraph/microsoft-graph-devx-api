@@ -36,14 +36,43 @@ namespace CodeSnippetsReflection.OpenAPI
         {
             if (treeNode == null) throw new ArgumentNullException(nameof(treeNode));
 
-            var splatPath = ReplaceIndexParametersByPathSegment(requestPayload.RequestUri
+            var remappedPayload = RemapKnownPathsIfNeeded(requestPayload);
+            var splatPath = ReplaceIndexParametersByPathSegment(remappedPayload.RequestUri
                                         .AbsolutePath
                                         .TrimStart(pathSeparator))
                                         .Split(pathSeparator, StringSplitOptions.RemoveEmptyEntries)
                                         .Skip(1); //skipping the version
-            LoadPathNodes(treeNode, splatPath);
+            LoadPathNodes(treeNode, splatPath, requestPayload.Method);
             InitializeModel(requestPayload);
         }
+
+        private static readonly Dictionary<Regex, string> KnownReMappings = new()
+        {
+            { new Regex(@"/me/drive/root/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/root/" },
+            { new Regex(@"/me/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
+            { new Regex(@"/groups/[A-z0-9{}\-]+/drive/root",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/root/" },
+            { new Regex(@"/groups/[A-z0-9{}\-]+/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
+            { new Regex(@"/sites/[A-z0-9{}\-]+/drive/root",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/root/" },
+            { new Regex(@"/sites/[A-z0-9{}\-]+/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
+            { new Regex(@"/users/[A-z0-9{}\-]+/drive/root",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/items/root/" },
+            { new Regex(@"/users/[A-z0-9{}\-]+/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
+            { new Regex(@"/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
+        };
+        
+        private static HttpRequestMessage RemapKnownPathsIfNeeded(HttpRequestMessage originalRequest)
+        {
+            var originalUri = originalRequest.RequestUri.OriginalString;
+            var regexMatch = KnownReMappings.Keys.FirstOrDefault(regex => regex.Match(originalUri).Success);
+            if (regexMatch == null)
+            {
+                return originalRequest;
+            }
+
+            originalUri = regexMatch.Replace(originalUri, KnownReMappings[regexMatch]);
+            originalRequest.RequestUri = new Uri(originalUri);
+            return originalRequest;
+        }
+
         private static Regex oDataIndexReplacementRegex = new(@"\('([\w=]+)'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         /// <summary>
         /// Replaces OData style ids to path segments
@@ -132,29 +161,37 @@ namespace CodeSnippetsReflection.OpenAPI
             return path;
         }
         private static readonly char pathSeparator = '/';
-        private void LoadPathNodes(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments)
+        private void LoadPathNodes(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments, HttpMethod httpMethod)
         {
-            if (!pathSegments.Any())
-                return;
+            if (!pathSegments.Any())// we've found a mathing url path.
+            {
+                var operationType = GetOperationType(httpMethod);
+                if (node.PathItems[OpenApiSnippetsGenerator.treeNodeLabel].Operations.ContainsKey(operationType))
+                    return;// Verify if the method exists before returning.
+
+                throw new EntryPointNotFoundException($"HTTP Method '{httpMethod}' not found for path.");//path exists but Method does not
+            }
+
+            
             var pathSegment = HttpUtility.UrlDecode(pathSegments.First());
             var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Equals(pathSegment)).Value;
             if (childNode != null)
             {
-                LoadNextNode(childNode, pathSegments);
+                LoadNextNode(childNode, pathSegments, httpMethod);
                 return;
             }
-            if (node.Children.Keys.Any(x => x.Equals(pathSegment, StringComparison.OrdinalIgnoreCase)))
+            if (node.Children.Keys.Any(x => x.RemoveFunctionBraces().Equals(pathSegment, StringComparison.OrdinalIgnoreCase)))
             { // the casing in the description might be different than the casing in the snippet and this dictionary is CS
-                var caseChildNode = node.Children.First(x => x.Key.Equals(pathSegment, StringComparison.OrdinalIgnoreCase)).Value;
-                LoadNextNode(caseChildNode, pathSegments);
+                var caseChildNode = node.Children.First(x => x.Key.RemoveFunctionBraces().Equals(pathSegment, StringComparison.OrdinalIgnoreCase)).Value;
+                LoadNextNode(caseChildNode, pathSegments, httpMethod);
                 return;
             }
-            if (node.Children.Keys.Any(x => x.IsFunction()))
+            if (node.Children.Keys.Any(x => x.IsFunction()) || pathSegment.IsFunction())
             {
-                var actionChildNode = node.Children.FirstOrDefault(x => x.Key.Split('.').Last().Equals(pathSegment, StringComparison.OrdinalIgnoreCase));
+                var actionChildNode = node.Children.FirstOrDefault(x => x.Key.Split('.').Last().Equals(pathSegment.Split('.').Last(), StringComparison.OrdinalIgnoreCase));
                 if(actionChildNode.Value != null)
                 {
-                    LoadNextNode(actionChildNode.Value, pathSegments);
+                    LoadNextNode(actionChildNode.Value, pathSegments, httpMethod);
                     return;
                 }
             }
@@ -163,16 +200,27 @@ namespace CodeSnippetsReflection.OpenAPI
                 var collectionIndexNode = node.Children.FirstOrDefault(x => x.Key.IsCollectionIndex());
                 if (collectionIndexNode.Value != null)
                 {
-                    LoadNextNode(collectionIndexNode.Value, pathSegments);
+                    LoadNextNode(collectionIndexNode.Value, pathSegments, httpMethod);
                     return;
                 }
             }
+
+            if (node.Children.Keys.Any(static x => x.IsFunctionWithParameters()) && pathSegment.IsFunctionWithParameters())
+            {
+                var functionWithParametersNode = node.Children.FirstOrDefault(function => function.Key.IsFunctionWithParametersMatch(pathSegment));
+                if (functionWithParametersNode.Value != null)
+                {
+                    LoadNextNode(functionWithParametersNode.Value, pathSegments, httpMethod);
+                    return;
+                }
+            }
+
             throw new EntryPointNotFoundException($"Path segment '{pathSegment}' not found in path");
         }
-        private void LoadNextNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments)
+        private void LoadNextNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments, HttpMethod httpMethod)
         {
             PathNodes.Add(node);
-            LoadPathNodes(node, pathSegments.Skip(1));
+            LoadPathNodes(node, pathSegments.Skip(1),httpMethod);
         }
         protected override OpenApiUrlTreeNode GetLastPathSegment()
         {

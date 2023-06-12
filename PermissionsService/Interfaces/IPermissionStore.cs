@@ -2,9 +2,9 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using PermissionsService.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using PermissionsService.Models;
 using UriMatchingService;
 
 namespace PermissionsService.Interfaces
@@ -15,26 +15,28 @@ namespace PermissionsService.Interfaces
     public interface IPermissionsStore
     {
         /// <summary>
-        /// Retrieves permissions scopes information.
+        /// Retrieves permissions scopes information for a set of URLs.
         /// </summary>
-        /// <param name="scopeType">The type of scope to be retrieved for the target request url.</param>
-        /// <param name="locale">Optional: The language code for the preferred localized file.</param>
-        /// <param name="requestUrl">Optional: The target request url whose scopes are to be retrieved.</param>
-        /// <param name="method">Optional: The target http verb of the request url whose scopes are to be retrieved.</param>
+        /// <param name="requests">The list of request URLs to fetch permissions for.</param>
+        /// <param name="locale">Optional: The language code for the preferred localized file.<</param>
+        /// <param name="scopeType">Optional: The type of scope to be retrieved for the target request url.</param>
+        /// <param name="includeHidden">Optional: Whether to include hidden permissions or not: Defaults to false.</param>
+        /// <param name="leastPrivilegeOnly">Optional: Whether to only return least privilege permissions on not. Defaults to false.</param>
         /// <param name="org">Optional: The name of the org/owner of the repo.</param>
         /// <param name="branchName">Optional: The name of the branch containing the files.</param>
-        /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
-        Task<List<ScopeInformation>> GetScopesAsync(string scopeType = "DelegatedWork",
-                                                    string locale = null,
-                                                    string requestUrl = null,
-                                                    string method = null,
-                                                    string org = null,
-                                                    string branchName = null);
+        /// <returns></returns>
+        Task<PermissionResult> GetScopesAsync(List<RequestInfo> requests = null,
+                                                   string locale = null,
+                                                   ScopeType? scopeType = null,
+                                                   bool includeHidden = false,
+                                                   bool leastPrivilegeOnly = false,
+                                                   string org = null,
+                                                   string branchName = null);
 
         /// <summary>
         /// Gets an instance of <see cref="UriTemplateMatcher"/> seeded with url templates.
         /// </summary>
         /// <returns>An instance of <see cref="UriTemplateMatcher"/> seeded with url templates.</returns>
-        UriTemplateMatcher GetUriTemplateMatcher();
+        Task<UriTemplateMatcher> GetUriTemplateMatcherAsync();
     }
 }

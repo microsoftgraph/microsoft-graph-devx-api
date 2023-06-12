@@ -225,7 +225,7 @@ namespace CodeSnippetsReflection.Test
             // Act by generating the code snippet
             var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
 
-            Assert.Contains(".Expand(\"singleValueExtendedProperties($filter=id%20eq%20'%7Bid_value%7D')\")", result);
+            Assert.Contains(".Expand(\"singleValueExtendedProperties($filter=id eq '{id_value}')\")", result);
             Assert.DoesNotContain(".Filter(", result);
         }
 
@@ -242,7 +242,7 @@ namespace CodeSnippetsReflection.Test
             // Act by generating the code snippet
             var result = new CSharpGenerator(_edmModel.Value).GenerateCodeSnippet(snippetModel, expressions);
 
-            Assert.Contains(".Expand(\"singleValueExtendedProperties($filter=id%20eq%20'%7Bid_value1%7D')\")", result);
+            Assert.Contains(".Expand(\"singleValueExtendedProperties($filter=id eq '{id_value1}')\")", result);
             Assert.Contains(".Filter(\"id eq '{id_value2}'\")", result);
         }
 

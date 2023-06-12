@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -218,7 +218,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.True(result.HasParameters());
             var param = result.Parameters.First();
             Assert.Equal("filter",param.Name);
-            Assert.Equal("groupTypes/any",param.Value); // TODO check if result should be `groupTypes/any(c:c+eq+'Unified')`
+            Assert.Equal("groupTypes/any(c:c+eq+'Unified')",param.Value);
         }
 
         [Fact]
@@ -273,12 +273,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.True(result.HasParameters());
             Assert.Equal(2, result.Parameters.Count());
 
-            var expectedProperty1 = new CodeProperty { Name = "filter" , Value = "roleDefinitionId eq '62e90394-69f5-4237-9190-012177145e10'", PropertyType = PropertyType.String };
+            var expectedProperty1 = new CodeProperty { Name = "filter" , Value = "roleDefinitionId eq '62e90394-69f5-4237-9190-012177145e10'", PropertyType = PropertyType.String, Children = new List<CodeProperty>()};
             var actualParam1 = result.Parameters.First();
 
-            Assert.Equal(expectedProperty1, actualParam1);
+            Assert.Equal(expectedProperty1.Name, actualParam1.Name);
+            Assert.Equal(expectedProperty1.Value, actualParam1.Value);
+            Assert.Equal(expectedProperty1.PropertyType, actualParam1.PropertyType);
+            Assert.Equal(expectedProperty1.Children.Count, actualParam1.Children.Count);
 
-            var expectedProperty2 = new CodeProperty { Value = "principal", PropertyType = PropertyType.String };
+            var expectedProperty2 = new CodeProperty { Value = "principal", PropertyType = PropertyType.String};
             var actualParam2 = result.Parameters.Skip(1).First();
 
             Assert.Equal("expand", actualParam2.Name);

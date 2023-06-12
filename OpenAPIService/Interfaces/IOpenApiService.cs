@@ -3,7 +3,6 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.OData;
 using Microsoft.OpenApi.Services;
 using OpenAPIService.Common;
 using System;
@@ -22,18 +21,14 @@ namespace OpenAPIService.Interfaces
 
         MemoryStream SerializeOpenApiDocument(OpenApiDocument subset, OpenApiStyleOptions styleOptions);
 
-        Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, OpenApiStyle openApiStyle, bool forceRefresh);
+        Task<OpenApiDocument> GetGraphOpenApiDocumentAsync(string graphUri, OpenApiStyle openApiStyle, bool forceRefresh, string fileName = null);
 
         OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(ConcurrentDictionary<string, OpenApiDocument> sources);
 
         void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream);
 
-        OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody = false);
+        OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody = false, bool singularizeOperationIds = false);
 
-        Task<OpenApiDocument> ConvertCsdlToOpenApiAsync(Stream csdl, OpenApiConvertSettings settings);
-
-        OpenApiDocument CloneOpenApiDocument(OpenApiDocument openApiDocument);
-
-        OpenApiConvertSettings GetOpenApiConvertSettings(OpenApiStyle style = OpenApiStyle.Plain);
+        OpenApiDocument CloneOpenApiDocument(OpenApiDocument document);
     }
 }

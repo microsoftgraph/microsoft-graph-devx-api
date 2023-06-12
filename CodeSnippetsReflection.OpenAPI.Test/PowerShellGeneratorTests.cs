@@ -77,6 +77,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
+        public async Task GeneratesNoneEncodedSnippetForRequestWithFilterQueryOptionAndEncodedPayloads()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$filter=displayName+eq+'Megan+Bowen'");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-Filter \"displayName eq 'Megan Bowen'\"", result);
+        }
+
+        
+        [Fact]
         public async Task GeneratesSnippetForRequestWithFilterQueryOption()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$filter=displayName eq 'Megan Bowen'");
@@ -233,7 +243,27 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("-Search \"displayName:Megan\"", result);
+            Assert.Contains("-Search '\"displayName:Megan\"'", result);
+            Assert.Contains("-ConsistencyLevel eventual", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithORLogicalConjuction()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" OR \"displayName:al\"");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-Search '\"displayName:di\" OR \"displayName:al\"'", result);
+            Assert.Contains("-ConsistencyLevel eventual", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjuction()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" AND \"displayName:al\"");
+            requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-Search '\"displayName:di\" AND \"displayName:al\"'", result);
             Assert.Contains("-ConsistencyLevel eventual", result);
         }
 
@@ -259,8 +289,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
-                $"DisplayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
-                $"City = \"Seattle\"{Environment.NewLine}}}";
+                $"displayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
+                $"city = \"Seattle\"{Environment.NewLine}}}";
             Assert.Contains(expectedParams, result);
             Assert.Contains("-BodyParameter $params", result);
         }
@@ -282,8 +312,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
-                $"DisplayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
-                $"City = \"Seattle\"{Environment.NewLine}\t" +
+                $"displayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
+                $"city = \"Seattle\"{Environment.NewLine}\t" +
                 $"PasswordProfile = @{{{Environment.NewLine}\t\t" +
                 $"Password = \"2d79ba3a-b03a-9ed5-86dc-79544e262664\"{Environment.NewLine}\t\t" +
                 $"ForceChangePasswordNextSignIn = $false{Environment.NewLine}\t" +
@@ -306,11 +336,35 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
-                $"DisplayName = \"Library Assist\"{Environment.NewLine}\t" +
-                $"GroupTypes = @({Environment.NewLine}\t\t" +
+                $"displayName = \"Library Assist\"{Environment.NewLine}\t" +
+                $"groupTypes = @({Environment.NewLine}\t\t" +
                 $"\"Unified\"{Environment.NewLine}\t\t" +
                 $"\"DynamicMembership\"{Environment.NewLine}\t" +
                 $"){Environment.NewLine}" +
+                $"}}";
+            Assert.Contains(expectedParams, result);
+            Assert.Contains("-BodyParameter $params", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithWrongQuotesForStringLiteralsInBody()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/policies/claimsMappingPolicies")
+            {
+                Content = new StringContent(
+                    "{\r\n    \"definition\": [\r\n        \"{\\\"ClaimsMappingPolicy\\\":{\\\"Version\\\":1,\\\"IncludeBasicClaimSet\\\":\\\"true\\\", \\\"ClaimsSchema\\\": [{\\\"Source\\\":\\\"user\\\",\\\"ID\\\":\\\"assignedroles\\\",\\\"SamlClaimType\\\": \\\"https://aws.amazon.com/SAML/Attributes/Role\\\"}, {\\\"Source\\\":\\\"user\\\",\\\"ID\\\":\\\"userprincipalname\\\",\\\"SamlClaimType\\\": \\\"https://aws.amazon.com/SAML/Attributes/RoleSessionName\\\"}, {\\\"Value\\\":\\\"900\\\",\\\"SamlClaimType\\\": \\\"https://aws.amazon.com/SAML/Attributes/SessionDuration\\\"}, {\\\"Source\\\":\\\"user\\\",\\\"ID\\\":\\\"assignedroles\\\",\\\"SamlClaimType\\\": \\\"appRoles\\\"}, {\\\"Source\\\":\\\"user\\\",\\\"ID\\\":\\\"userprincipalname\\\",\\\"SamlClaimType\\\": \\\"https://aws.amazon.com/SAML/Attributes/nameidentifier\\\"}]}}\"\r\n    ],\r\n    \"displayName\": \"AWS Claims Policy\",\r\n    \"isOrganizationDefault\": false\r\n}",
+                    Encoding.UTF8,
+                    "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
+                $"definition = @(" +          
+                $"{Environment.NewLine}\t\t"+
+                $"'{{\"ClaimsMappingPolicy\":{{\"Version\":1,\"IncludeBasicClaimSet\":\"true\", \"ClaimsSchema\": [{{\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/Role\"}}, {{\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/RoleSessionName\"}}, {{\"Value\":\"900\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/SessionDuration\"}}, {{\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"appRoles\"}}, {{\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/nameidentifier\"}}]}}}}'{Environment.NewLine}\t" +
+                $")"+
+                $"{Environment.NewLine}\t" +
+                $"displayName = \"AWS Claims Policy\"{Environment.NewLine}\t" +
+                $"isOrganizationDefault = $false{Environment.NewLine}" +
                 $"}}";
             Assert.Contains(expectedParams, result);
             Assert.Contains("-BodyParameter $params", result);

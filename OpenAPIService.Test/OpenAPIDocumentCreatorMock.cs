@@ -2,7 +2,6 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Microsoft.ApplicationInsights.Channel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Interfaces;
@@ -26,7 +25,7 @@ namespace OpenAPIService.Test
         public OpenApiDocumentCreatorMock(IOpenApiService openApiService)
         {
             _openApiService = openApiService
-                ?? throw new ArgumentNullException(nameof(openApiService), $"{ NullValueError }: { nameof(openApiService) }");
+                ?? throw new ArgumentNullException(nameof(openApiService), $"{NullValueError}: {nameof(openApiService)}");
         }
 
         public static IOpenApiService GetOpenApiService(string configFilePath)
@@ -457,6 +456,27 @@ namespace OpenAPIService.Test
                             }
                         }
                     },
+                    ["/users/$count"] = new OpenApiPathItem() // root path
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "users.GetCount-ee47",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     ["/administrativeUnits/{administrativeUnit-id}/microsoft.graph.restore"] = new OpenApiPathItem()
                     {
                         Operations = new Dictionary<OperationType, OpenApiOperation>
@@ -570,6 +590,37 @@ namespace OpenAPIService.Test
                                     {
                                         {
                                             "204", new OpenApiResponse()
+                                            {
+                                                Description = "Success"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/drives"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        {
+                                            new OpenApiTag()
+                                            {
+                                                Name = "drives.drive"
+                                            }
+                                        }
+                                    },
+                                    OperationId = "drives.drive.ListDrive",
+                                    Summary = "Get Drive",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200", new OpenApiResponse()
                                             {
                                                 Description = "Success"
                                             }
@@ -992,7 +1043,7 @@ namespace OpenAPIService.Test
                                                     Id = "StringCollectionResponse"
                                                 }
                                             }
-                                        } 
+                                        }
                                     }
                                 }
                             }
@@ -1020,6 +1071,130 @@ namespace OpenAPIService.Test
                                         {
                                             Type = ReferenceType.RequestBody,
                                             Id = "refPostBody"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/identityGovernance/lifecycleWorkflows/workflows/{workflow-id}/microsoft.graph.identityGovernance.activate"] = new OpenApiPathItem
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Post, new OpenApiOperation
+                                {
+                                    Tags = new List<OpenApiTag>
+                                    {
+                                        new OpenApiTag()
+                                        {
+                                            Name = "identityGovernance.Actions"
+                                        }
+                                    },
+                                    OperationId = "identityGovernance.lifecycleWorkflows.workflows.workflow.activate"
+                                }
+                            }
+                        }
+                    },
+                    ["/groups/{group-id}/sites/{site-id}/termStore/groups/{group-id1}/sets/{set-id}"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "groups.sites.termStore.groups.GetSets",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/print/taskDefinitions/{printTaskDefinition-id}/tasks/{printTask-id}/trigger"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "print.taskDefinitions.tasks.GetTrigger",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/external/industryData/dataConnectors"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "external.industryData.ListDataConnectors",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/directory/deletedItems/{directoryObject-id}/microsoft.graph.application"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Get, new OpenApiOperation
+                                {
+                                    OperationId = "directory.GetDeletedItems.AsApplication",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    ["/drives/{drive-id}/items/{driveItem-id}/assignSensitivityLabel"] = new OpenApiPathItem()
+                    {
+                        Operations = new Dictionary<OperationType, OpenApiOperation>
+                        {
+                            {
+                                OperationType.Post, new OpenApiOperation
+                                {
+                                    OperationId = "drives.drive.items.driveItem.assignSensitivityLabel",
+                                    Responses = new OpenApiResponses()
+                                    {
+                                        {
+                                            "200",new OpenApiResponse()
+                                            {
+                                                Description = "OK"
+                                            }
                                         }
                                     }
                                 }

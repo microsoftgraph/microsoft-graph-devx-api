@@ -108,5 +108,33 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 snippetModel.ResponseSchema.AllOf.Any() ||
                 snippetModel.ResponseSchema.OneOf.Any());
         }
+        
+        [Fact]
+        public async Task ThrowsExceptionForUnsupportedHttpOperation()
+        {
+            // DELETE /users/{user-id}/delta
+            // Given
+            string url = $"{ServiceRootUrl}/users/delta";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, url);//delta exists but has not DELETE
+
+            // When
+            // Then
+            var entryPointNotFoundException = await Assert.ThrowsAsync<EntryPointNotFoundException>(async () => new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            Assert.Equal("HTTP Method 'DELETE' not found for path.",entryPointNotFoundException.Message);
+        }
+        
+        [Fact]
+        public async Task ThrowsExceptionForUnsupportedPathOperation()
+        {
+            // GET /users/{user-id}/deltaTest
+            // Given
+            string url = $"{ServiceRootUrl}/users/100/deltaTest";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, url);//path does not exists
+
+            // When
+            // Then
+            var entryPointNotFoundException = await Assert.ThrowsAsync<EntryPointNotFoundException>(async () => new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            Assert.Equal("Path segment 'deltaTest' not found in path",entryPointNotFoundException.Message);
+        }
     }
 }
