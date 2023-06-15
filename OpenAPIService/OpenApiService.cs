@@ -424,7 +424,7 @@ namespace OpenAPIService
                 {
                     writer.WriteStartObject();
                     writer.WriteString("name", method);
-                    var url = pathItem.Value.Operations.FirstOrDefault(x => x.Key.ToString().Equals(method) &&
+                    var url = pathItem.Value.Operations.FirstOrDefault(x => x.Key.ToString().Equals(method, StringComparison.OrdinalIgnoreCase) &&
                         x.Value.ExternalDocs != null).Value?.ExternalDocs?.Url?.OriginalString;
                     writer.WriteString("documentationUrl", url);
                     writer.WriteEndObject();
