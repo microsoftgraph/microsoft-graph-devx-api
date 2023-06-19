@@ -289,6 +289,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     return "Date";
                 case PropertyType.TimeOnly:
                     return "Time";
+                case PropertyType.Guid:
+                    return "Guid?";
                 default:
                     return ReplaceIfReservedTypeName(typeString);
             }

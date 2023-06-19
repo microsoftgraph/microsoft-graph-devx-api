@@ -663,6 +663,29 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("await graphClient.Communications.CallRecords.MicrosoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(DateTimeOffset.Parse(\"{fromDateTime}\"),DateTimeOffset.Parse(\"{toDateTime}\")).GetAsync();", result);
         }
+        [Fact]
+        public async Task GeneratesObjectsInArray() {
+            var sampleJson = @"
+            {
+            ""addLicenses"": [
+                {
+                ""disabledPlans"": [ ""11b0131d-43c8-4bbb-b2c8-e80f9a50834a"" ],
+                ""skuId"": ""45715bb8-13f9-4bf6-927f-ef96c102d394""
+                }
+            ],
+            ""removeLicenses"": [ ""bea13e0c-3828-4daa-a392-28af7ff61a0f"" ]
+            }
+            ";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/assignLicense"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("var requestBody = new Microsoft.Graph.Me.AssignLicense.AssignLicensePostRequestBody", result);
+            Assert.Contains("DisabledPlans = new List<Guid?>", result);
+            Assert.Contains("RemoveLicenses = new List<Guid?>", result);
+            Assert.Contains("Guid.Parse(\"bea13e0c-3828-4daa-a392-28af7ff61a0f\"),", result);
+        }
         
         [Fact]
         public async Task CorrectlyHandlesTypeFromInUrl()
