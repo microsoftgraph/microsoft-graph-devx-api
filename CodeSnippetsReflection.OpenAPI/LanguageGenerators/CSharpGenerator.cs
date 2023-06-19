@@ -274,8 +274,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 case PropertyType.Array:
                     // For objects, rely on the typeDefinition from the array definition otherwise look deeper for primitive collections
-                    var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children.First().PropertyType != PropertyType.Object
-                        ? GetTypeString(codeProperty.Children.First(), apiVersion)
+                    var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children[0].PropertyType != PropertyType.Object
+                        ? GetTypeString(codeProperty.Children[0], apiVersion)
                         : typeString;
                     if(string.IsNullOrEmpty(collectionTypeString)) 
                         collectionTypeString = "object";

@@ -200,7 +200,7 @@ namespace CodeSnippetsReflection.OpenAPI
             }
             if (node.Children.Keys.Any(static x => x.IsFunctionWithParameters()) && pathSegment.IsFunctionWithParameters())
             {
-                var functionWithParametersNode = node.Children.FirstOrDefault(function => function.Key.Split('.').Last().IsFunctionWithParametersMatch(pathSegment.Split('.').Last()));
+                var functionWithParametersNode = node.Children.FirstOrDefault(function => function.Key.Split('.')[^1].IsFunctionWithParametersMatch(pathSegment.Split('.')[^1]));
                 if (functionWithParametersNode.Value != null)
                 {
                     LoadNextNode(functionWithParametersNode.Value, pathSegments, httpMethod);
