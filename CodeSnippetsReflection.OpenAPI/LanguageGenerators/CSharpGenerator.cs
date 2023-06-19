@@ -273,7 +273,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Array:
-                    var collectionTypeString = codeProperty.Children.Any()
+                    // For objects, rely on the typeDefinition from the array definition otherwise look deeper for primitive collections
+                    var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children.First().PropertyType != PropertyType.Object
                         ? GetTypeString(codeProperty.Children.First(), apiVersion)
                         : typeString;
                     return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{collectionTypeString}>";

@@ -516,13 +516,17 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                               (value.EnumerateArray().Any() ?
                                   evaluatePropertyTypeDefinition(value.EnumerateArray().First().ValueKind.ToString(), schema?.Items) :
                                   schema?.Items?.Type);
+            
+            var typeDefinition = string.IsNullOrEmpty(genericType) || genericType.Equals("Object", StringComparison.OrdinalIgnoreCase) // try to use alternativeType for objects if we couldn't find a useful name.
+                ? alternativeType
+                : genericType;
             var children = value.EnumerateArray().Select(item =>
             {
                 var prop = parseProperty(schema.GetSchemaTitle() ?? alternativeType?.ToFirstCharacterUpperCase(), item, schema?.Items, snippetModelSchemas);
-                prop.TypeDefinition ??= genericType;
+                prop.TypeDefinition ??= typeDefinition;
                 return prop;
             }).ToList();
-            return new CodeProperty { Name = propertyName, Value = null, PropertyType = PropertyType.Array, Children = children, TypeDefinition = genericType ?? alternativeType };
+            return new CodeProperty { Name = propertyName, Value = null, PropertyType = PropertyType.Array, Children = children, TypeDefinition = typeDefinition };
         }
 
         private static string evaluatePropertyTypeDefinition(String typeInfo, OpenApiSchema propSchema)

@@ -695,6 +695,42 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("RemoveLicenses = new List<Guid?>", result);
             Assert.Contains("Guid.Parse(\"bea13e0c-3828-4daa-a392-28af7ff61a0f\"),", result);
         }
+        [Fact]
+        public async Task GeneratesCorrectCollectionTypeAndDerivedInstances() {
+            var sampleJson = @"{
+              ""message"": {
+                ""subject"": ""Meet for lunch?"",
+                ""body"": {
+                  ""contentType"": ""Text"",
+                  ""content"": ""The new cafeteria is open.""
+                },
+                ""toRecipients"": [
+                  {
+                    ""emailAddress"": {
+                      ""address"": ""meganb@contoso.onmicrosoft.com""
+                    }
+                  }
+                ],
+                ""attachments"": [
+                  {
+                    ""@odata.type"": ""#microsoft.graph.fileAttachment"",
+                    ""name"": ""attachment.txt"",
+                    ""contentType"": ""text/plain"",
+                    ""contentBytes"": ""SGVsbG8gV29ybGQh""
+                  }
+                ]
+              }
+            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/sendMail"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("var requestBody = new Microsoft.Graph.Me.SendMail.SendMailPostRequestBody", result);
+            Assert.Contains("Attachments = new List<Attachment>", result);
+            Assert.Contains("new FileAttachment", result);
+            Assert.Contains("ContentBytes = Convert.FromBase64String(\"SGVsbG8gV29ybGQh\"),", result);
+        }
         
         [Fact]
         public async Task CorrectlyHandlesTypeFromInUrl()
