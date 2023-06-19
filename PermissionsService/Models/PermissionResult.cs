@@ -9,11 +9,10 @@ namespace PermissionsService.Models
 {
     public class PermissionResult
     {
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<ScopeInformation> Results
         {
             get; set;
-        }
+        } = new();
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<PermissionError> Errors
