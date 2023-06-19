@@ -277,6 +277,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children.First().PropertyType != PropertyType.Object
                         ? GetTypeString(codeProperty.Children.First(), apiVersion)
                         : typeString;
+                    if(string.IsNullOrEmpty(collectionTypeString)) 
+                        collectionTypeString = "object";
                     return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{collectionTypeString}>";
                 case PropertyType.Object:
                     return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString)}";

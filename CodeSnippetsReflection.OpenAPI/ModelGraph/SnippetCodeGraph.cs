@@ -526,7 +526,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 prop.TypeDefinition ??= typeDefinition;
                 return prop;
             }).ToList();
-            return new CodeProperty { Name = propertyName, Value = null, PropertyType = PropertyType.Array, Children = children, TypeDefinition = typeDefinition };
+            return new CodeProperty { Name = propertyName, Value = null, PropertyType = PropertyType.Array, Children = children, TypeDefinition = typeDefinition ,NamespaceName = GetNamespaceFromSchema(schema?.Items) };
         }
 
         private static string evaluatePropertyTypeDefinition(String typeInfo, OpenApiSchema propSchema)

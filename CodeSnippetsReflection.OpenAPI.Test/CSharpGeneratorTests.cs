@@ -727,8 +727,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("var requestBody = new Microsoft.Graph.Me.SendMail.SendMailPostRequestBody", result);
-            Assert.Contains("Attachments = new List<Attachment>", result);
-            Assert.Contains("new FileAttachment", result);
+            Assert.Contains("Attachments = new List<Attachment>", result);// Collection defines Base type
+            Assert.Contains("new FileAttachment", result);// Individual items are derived types
             Assert.Contains("ContentBytes = Convert.FromBase64String(\"SGVsbG8gV29ybGQh\"),", result);
         }
         
