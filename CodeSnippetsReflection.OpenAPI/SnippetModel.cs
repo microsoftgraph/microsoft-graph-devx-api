@@ -208,12 +208,13 @@ namespace CodeSnippetsReflection.OpenAPI
                 }
             }
             // always match indexer last as functions on collections may be interpreted as indexers if processed after.
-            if (node.Children.Any(x => x.Key.IsCollectionIndex()))
+            var collectionIndices = node.Children.Keys.Where(static x => x.IsCollectionIndex()).ToArray();
+            if (collectionIndices.Any())
             {
-                var collectionIndexNode = node.Children.FirstOrDefault(x => x.Key.IsCollectionIndex());
-                if (collectionIndexNode.Value != null)
+                var collectionIndexValue = node.Children[collectionIndices[0]];//lookup the node using the key
+                if (collectionIndexValue != null)
                 {
-                    LoadNextNode(collectionIndexNode.Value, pathSegments, httpMethod);
+                    LoadNextNode(collectionIndexValue, pathSegments, httpMethod);
                     return;
                 }
             }
