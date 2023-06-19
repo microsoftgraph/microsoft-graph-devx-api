@@ -73,7 +73,7 @@ namespace GraphWebApi.Controllers
                                             SeverityLevel.Information,
                                             _permissionsTraceProperties);
 
-            return result == null || result.Results == null || !result.Results.Any() ? NotFound() : Ok(result.Results);
+            return result?.Results == null || !result.Results.Any() ? NotFound() : Ok(result.Results);
         }
 
         [HttpPost]
