@@ -198,6 +198,16 @@ namespace CodeSnippetsReflection.OpenAPI
                     return;
                 }
             }
+            if (node.Children.Keys.Any(static x => x.IsFunctionWithParameters()) && pathSegment.IsFunctionWithParameters())
+            {
+                var functionWithParametersNode = node.Children.FirstOrDefault(function => function.Key.Split('.').Last().IsFunctionWithParametersMatch(pathSegment.Split('.').Last()));
+                if (functionWithParametersNode.Value != null)
+                {
+                    LoadNextNode(functionWithParametersNode.Value, pathSegments, httpMethod);
+                    return;
+                }
+            }
+            // always match indexer last as functions on collections may be interpreted as indexers if processed after.
             if (node.Children.Any(x => x.Key.IsCollectionIndex()))
             {
                 var collectionIndexNode = node.Children.FirstOrDefault(x => x.Key.IsCollectionIndex());
@@ -207,17 +217,7 @@ namespace CodeSnippetsReflection.OpenAPI
                     return;
                 }
             }
-
-            if (node.Children.Keys.Any(static x => x.IsFunctionWithParameters()) && pathSegment.IsFunctionWithParameters())
-            {
-                var functionWithParametersNode = node.Children.FirstOrDefault(function => function.Key.IsFunctionWithParametersMatch(pathSegment));
-                if (functionWithParametersNode.Value != null)
-                {
-                    LoadNextNode(functionWithParametersNode.Value, pathSegments, httpMethod);
-                    return;
-                }
-            }
-
+            
             throw new EntryPointNotFoundException($"Path segment '{pathSegment}' not found in path");
         }
         private void LoadNextNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments, HttpMethod httpMethod)

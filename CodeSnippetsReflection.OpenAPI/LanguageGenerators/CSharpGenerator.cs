@@ -326,6 +326,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                         if (x.Segment.IsFunctionWithParameters())
                                         {
                                             var functionName = x.Segment.Split('(').First();
+                                            functionName = functionName.Split(".",StringSplitOptions.RemoveEmptyEntries)
+                                                                        .Select(static s => s.ToFirstCharacterUpperCase())
+                                                                        .Aggregate(static (a, b) => $"{a}{b}");
                                             var parameters = snippetCodeGraph.PathParameters
                                                 .Select(static s => $"With{s.Name.ToFirstCharacterUpperCase()}")
                                                 .Aggregate(static (a, b) => $"{a}{b}");

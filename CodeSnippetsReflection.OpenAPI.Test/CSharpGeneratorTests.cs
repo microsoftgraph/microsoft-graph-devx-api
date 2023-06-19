@@ -654,6 +654,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("await graphClient.Reports.GetYammerGroupsActivityDetailWithDate(new Date(DateTime.Parse(\"{date}\"))).GetAsync();", result);
         }
+        [Fact]
+        public async Task CorrectlyHandlesDateInUrl2()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/communications/callRecords/getPstnCalls(fromDateTime=2019-11-01,toDateTime=2019-12-01)");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("await graphClient.Communications.CallRecords.MicrosoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(DateTimeOffset.Parse(\"{fromDateTime}\"),DateTimeOffset.Parse(\"{toDateTime}\")).GetAsync();", result);
+        }
         
         [Fact]
         public async Task CorrectlyHandlesTypeFromInUrl()
