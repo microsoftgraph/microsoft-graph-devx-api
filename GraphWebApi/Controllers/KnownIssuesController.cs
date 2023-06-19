@@ -44,7 +44,7 @@ namespace GraphWebApi.Controllers
 
             List<KnownIssue> result = await _knownIssuesService.QueryBugsAsync();
 
-            return result == null ? NotFound() : Ok(JsonConvert.SerializeObject(result));
+            return result == null ? NotFound() : Ok(result);
         }
     }
 }
