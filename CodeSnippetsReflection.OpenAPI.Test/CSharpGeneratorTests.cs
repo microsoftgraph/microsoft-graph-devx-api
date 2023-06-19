@@ -244,6 +244,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("OdataType = \"#microsoft.graph.socialIdentityProvider\",", result);
+            Assert.Contains("new SocialIdentityProvider", result);// ensure the derived type is used
         }
         [Fact]
         public async Task HandlesOdataReferenceSegmentsInUrl() {

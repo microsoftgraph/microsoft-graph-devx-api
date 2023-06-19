@@ -333,21 +333,31 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
             var schema = snippetModel.RequestSchema;
             var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? ComputeRequestBody(snippetModel);
-            return parseJsonObjectValue(className, parsedBody.RootElement, schema, snippetModel.EndPathNode);
+            return parseJsonObjectValue(className, parsedBody.RootElement, schema, snippetModel.Schemas, snippetModel.EndPathNode);
         }
 
-        private static CodeProperty parseJsonObjectValue(String rootPropertyName, JsonElement value, OpenApiSchema schema, OpenApiUrlTreeNode currentNode = null)
+        private static CodeProperty parseJsonObjectValue(string rootPropertyName, JsonElement value, OpenApiSchema schema, IDictionary<string, OpenApiSchema> snippetModelSchemas, OpenApiUrlTreeNode currentNode = null)
         {
             var children = new List<CodeProperty>();
 
             if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
+
+            if (value.TryGetProperty("@odata.type", out var odataTypeProperty))
+            {
+                var discriminatorValue = odataTypeProperty.GetString()?.TrimStart('#');
+                if (!string.IsNullOrEmpty(discriminatorValue) && snippetModelSchemas.TryGetValue(discriminatorValue, out OpenApiSchema specifiedSchema))
+                {
+                    // use the schema explictly stated as the payload may be a derived type and the metadata defines the base type which does not define all properties.
+                    schema = specifiedSchema; 
+                }
+            }
 
             var propertiesAndSchema = value.EnumerateObject()
                                             .Select(x => new Tuple<JsonProperty, OpenApiSchema>(x, schema.GetPropertySchema(x.Name)));
             foreach (var propertyAndSchema in propertiesAndSchema.Where(x => x.Item2 != null))
             {
                 var propertyName = propertyAndSchema.Item1.Name.ToFirstCharacterLowerCase();
-                children.Add(parseProperty(propertyName, propertyAndSchema.Item1.Value, propertyAndSchema.Item2));
+                children.Add(parseProperty(propertyName, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, snippetModelSchemas));
             }
 
             var propertiesWithoutSchema = propertiesAndSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
@@ -356,7 +366,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
                 var additionalChildren = new List<CodeProperty>();
                 foreach (var property in propertiesWithoutSchema)
-                    additionalChildren.Add(parseProperty(property.Name, property.Value, null));
+                    additionalChildren.Add(parseProperty(property.Name, property.Value, null,snippetModelSchemas));
 
                 if (additionalChildren.Any())
                     children.Add(new CodeProperty { Name = "additionalData", PropertyType = PropertyType.Map, Children = additionalChildren });
@@ -466,7 +476,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             return new CodeProperty { Name = propertyName, Value = propertyValue, PropertyType = propertyType, Children = new List<CodeProperty>() };
         }
 
-        private static CodeProperty parseProperty(string propertyName, JsonElement value, OpenApiSchema propSchema)
+        private static CodeProperty parseProperty(string propertyName, JsonElement value, OpenApiSchema propSchema, IDictionary<string, OpenApiSchema> snippetModelSchemas)
         {
             switch (value.ValueKind)
             {
@@ -481,17 +491,17 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                     return new CodeProperty { Name = propertyName, Value = "null", PropertyType = PropertyType.Null, Children = new List<CodeProperty>() };
                 case JsonValueKind.Object:
                     if (propSchema != null)
-                        return parseJsonObjectValue(propertyName, value, propSchema);
+                        return parseJsonObjectValue(propertyName, value, propSchema,snippetModelSchemas);
                     else
-                        return parseAnonymousObjectValues(propertyName, value, propSchema);
+                        return parseAnonymousObjectValues(propertyName, value, propSchema, snippetModelSchemas);
                 case JsonValueKind.Array:
-                    return parseJsonArrayValue(propertyName, value, propSchema);
+                    return parseJsonArrayValue(propertyName, value, propSchema, snippetModelSchemas);
                 default:
                     throw new NotImplementedException($"Unsupported JsonValueKind: {value.ValueKind}");
             }
         }
 
-        private static CodeProperty parseJsonArrayValue(string propertyName, JsonElement value, OpenApiSchema schema)
+        private static CodeProperty parseJsonArrayValue(string propertyName, JsonElement value, OpenApiSchema schema, IDictionary<string, OpenApiSchema> snippetModelSchemas)
         {
             var alternativeType = schema?.Items?.AnyOf?.FirstOrDefault()?.AllOf?.LastOrDefault()?.Title;
             // uuid schemas 
@@ -501,9 +511,8 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                                   schema?.Items?.Type);
             var children = value.EnumerateArray().Select(item =>
             {
-                var prop = parseProperty(schema.GetSchemaTitle() ?? alternativeType?.ToFirstCharacterUpperCase(), item,
-                    schema?.Items);
-                prop.TypeDefinition = prop.TypeDefinition ?? genericType;
+                var prop = parseProperty(schema.GetSchemaTitle() ?? alternativeType?.ToFirstCharacterUpperCase(), item, schema?.Items, snippetModelSchemas);
+                prop.TypeDefinition ??= genericType;
                 return prop;
             }).ToList();
             return new CodeProperty { Name = propertyName, Value = null, PropertyType = PropertyType.Array, Children = children, TypeDefinition = genericType ?? alternativeType };
@@ -523,7 +532,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             return typeInfo;
         }
 
-        private static CodeProperty parseAnonymousObjectValues(string propertyName, JsonElement value, OpenApiSchema schema)
+        private static CodeProperty parseAnonymousObjectValues(string propertyName, JsonElement value, OpenApiSchema schema, IDictionary<string, OpenApiSchema> snippetModelSchemas)
         {
             if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
 
@@ -532,7 +541,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                                             .Select(x => new Tuple<JsonProperty, OpenApiSchema>(x, schema.GetPropertySchema(x.Name)));
             foreach (var propertyAndSchema in propertiesAndSchema)
             {
-                children.Add(parseProperty(propertyAndSchema.Item1.Name.ToFirstCharacterLowerCase(), propertyAndSchema.Item1.Value, propertyAndSchema.Item2));
+                children.Add(parseProperty(propertyAndSchema.Item1.Name.ToFirstCharacterLowerCase(), propertyAndSchema.Item1.Value, propertyAndSchema.Item2, snippetModelSchemas));
             }
 
             return new CodeProperty { Name = propertyName, Value = null, PropertyType = PropertyType.Object, Children = children };

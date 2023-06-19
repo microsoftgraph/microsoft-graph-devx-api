@@ -32,6 +32,8 @@ namespace CodeSnippetsReflection.OpenAPI
         /// </remarks>
         public OpenApiUrlTreeNode RootPathNode => PathNodes.FirstOrDefault();
         public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
+        public IDictionary<string, OpenApiSchema> Schemas{ get; private set; }
+        
         public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiSnippetMetadata openApiSnippetMetadata) : base(requestPayload, serviceRootUrl)
         {
             if (openApiSnippetMetadata == null) throw new ArgumentNullException(nameof(openApiSnippetMetadata));
@@ -43,6 +45,7 @@ namespace CodeSnippetsReflection.OpenAPI
                                         .Split(pathSeparator, StringSplitOptions.RemoveEmptyEntries)
                                         .Skip(1); //skipping the version
             LoadPathNodes(openApiSnippetMetadata.OpenApiUrlTreeNode, splatPath, requestPayload.Method);
+            Schemas = openApiSnippetMetadata.Schemas ?? new Dictionary<string, OpenApiSchema>();
             InitializeModel(requestPayload);
         }
 
