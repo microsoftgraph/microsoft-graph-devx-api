@@ -32,9 +32,9 @@ namespace CodeSnippetsReflection.OpenAPI
         /// </remarks>
         public OpenApiUrlTreeNode RootPathNode => PathNodes.FirstOrDefault();
         public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
-        public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiUrlTreeNode treeNode) : base(requestPayload, serviceRootUrl)
+        public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiSnippetMetadata openApiSnippetMetadata) : base(requestPayload, serviceRootUrl)
         {
-            if (treeNode == null) throw new ArgumentNullException(nameof(treeNode));
+            if (openApiSnippetMetadata == null) throw new ArgumentNullException(nameof(openApiSnippetMetadata));
 
             var remappedPayload = RemapKnownPathsIfNeeded(requestPayload);
             var splatPath = ReplaceIndexParametersByPathSegment(remappedPayload.RequestUri
@@ -42,7 +42,7 @@ namespace CodeSnippetsReflection.OpenAPI
                                         .TrimStart(pathSeparator))
                                         .Split(pathSeparator, StringSplitOptions.RemoveEmptyEntries)
                                         .Skip(1); //skipping the version
-            LoadPathNodes(treeNode, splatPath, requestPayload.Method);
+            LoadPathNodes(openApiSnippetMetadata.OpenApiUrlTreeNode, splatPath, requestPayload.Method);
             InitializeModel(requestPayload);
         }
 

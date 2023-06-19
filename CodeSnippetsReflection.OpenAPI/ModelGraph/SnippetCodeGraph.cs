@@ -42,7 +42,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         
         private static readonly char NamespaceNameSeparator = '.';
         
-        public SnippetCodeGraph(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiUrlTreeNode treeNode) : this(new SnippetModel(requestPayload, serviceRootUrl, treeNode)) {}
+        public SnippetCodeGraph(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiSnippetMetadata openApiSnippetMetadata) : this(new SnippetModel(requestPayload, serviceRootUrl, openApiSnippetMetadata)) {}
 
         public SnippetCodeGraph(SnippetModel snippetModel)
         {
