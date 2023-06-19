@@ -139,7 +139,7 @@ namespace PermissionsService.Test
             }
             else
             {
-                Assert.Null(result.Results);
+                Assert.Empty(result.Results);
             }
         }
 
@@ -200,7 +200,7 @@ namespace PermissionsService.Test
                 new List<RequestInfo> { new RequestInfo { RequestUrl = "/foo/bar/{id}", HttpMethod = "GET" } }); // non-existent request url
 
             // Assert
-            Assert.Null(result.Results);
+            Assert.Empty(result.Results);
         }
 
         [Fact]
@@ -214,7 +214,7 @@ namespace PermissionsService.Test
                         HttpMethod = "Foobar" } }); // non-existent http verb
 
             // Assert
-            Assert.Null(result.Results);
+            Assert.Empty(result.Results);
         }
 
         [Theory]
@@ -276,7 +276,7 @@ namespace PermissionsService.Test
 
             // Assert
             Assert.NotNull(result);
-            Assert.Null(result.Results);
+            Assert.Empty(result.Results);
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
             Assert.Equal("No permissions found.", result.Errors.First().Message);
@@ -373,7 +373,7 @@ namespace PermissionsService.Test
                         new RequestInfo { RequestUrl = null, HttpMethod = "GET" } }
                     );
             // Assert
-            Assert.Null(result.Results);
+            Assert.Empty(result.Results);
             Assert.NotEmpty(result.Errors);
             Assert.Equal(2, result.Errors.Count);
             Assert.Collection(result.Errors,
@@ -398,7 +398,7 @@ namespace PermissionsService.Test
                     requests: new List<RequestInfo>() {
                         new RequestInfo { RequestUrl = "/foo/bar", HttpMethod = "GET" } });
             // Assert
-            Assert.Null(result.Results);
+            Assert.Empty(result.Results);
             Assert.NotEmpty(result.Errors);
             Assert.Single(result.Errors);
             Assert.Collection(result.Errors,
