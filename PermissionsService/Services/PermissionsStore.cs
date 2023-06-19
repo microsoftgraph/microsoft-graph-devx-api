@@ -405,7 +405,7 @@ namespace PermissionsService
 
             return new PermissionResult()
             {
-                Results = scopesInfo.Any() ? scopesInfo : null,
+                Results = scopesInfo,
                 Errors = errors.Any() ? errors : null
             };
         }

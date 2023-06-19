@@ -23,7 +23,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static readonly CodeProperty EMPTY_PROPERTY = new() { Name = null, Value = null, Children = null, PropertyType = PropertyType.Default };
 
-        private static Dictionary<string, PropertyType> _formatPropertyTypes = new (StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, PropertyType> _formatPropertyTypes = new (StringComparer.OrdinalIgnoreCase)
         {
             {"int32", PropertyType.Int32},
             {"int64", PropertyType.Int64},
@@ -417,7 +417,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             var namespaceSuffix = lastDotIndex != -1 ? $".{referenceId[..lastDotIndex]}" : string.Empty;
             return $"models{namespaceSuffix}";
         }
-        
+
         private static CodeProperty evaluateStringProperty(string propertyName, string value, OpenApiSchema propSchema)
         {
             if ((propSchema?.Type?.Equals("boolean", StringComparison.OrdinalIgnoreCase) ?? false))
@@ -494,12 +494,33 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         private static CodeProperty parseJsonArrayValue(string propertyName, JsonElement value, OpenApiSchema schema)
         {
             var alternativeType = schema?.Items?.AnyOf?.FirstOrDefault()?.AllOf?.LastOrDefault()?.Title;
-            var children = value.EnumerateArray().Select(item => parseProperty(schema.GetSchemaTitle() ?? alternativeType?.ToFirstCharacterUpperCase(), item, schema?.Items)).ToList();
+            // uuid schemas 
             var genericType = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ??
                               (value.EnumerateArray().Any() ?
-                                  value.EnumerateArray().First().ValueKind.ToString() :
+                                  evaluatePropertyTypeDefinition(value.EnumerateArray().First().ValueKind.ToString(), schema?.Items) :
                                   schema?.Items?.Type);
+            var children = value.EnumerateArray().Select(item =>
+            {
+                var prop = parseProperty(schema.GetSchemaTitle() ?? alternativeType?.ToFirstCharacterUpperCase(), item,
+                    schema?.Items);
+                prop.TypeDefinition = prop.TypeDefinition ?? genericType;
+                return prop;
+            }).ToList();
             return new CodeProperty { Name = propertyName, Value = null, PropertyType = PropertyType.Array, Children = children, TypeDefinition = genericType ?? alternativeType };
+        }
+
+        private static string evaluatePropertyTypeDefinition(String typeInfo, OpenApiSchema propSchema)
+        {
+            if (!typeInfo.Equals("String", StringComparison.CurrentCultureIgnoreCase))
+                return typeInfo;
+
+            if ((propSchema?.Type?.Equals("boolean", StringComparison.OrdinalIgnoreCase) ?? false))
+                return "boolean";
+            var formatString = propSchema?.Format;
+            if (!string.IsNullOrEmpty(formatString) && _formatPropertyTypes.TryGetValue(formatString, out var type))
+                return formatString;
+
+            return typeInfo;
         }
 
         private static CodeProperty parseAnonymousObjectValues(string propertyName, JsonElement value, OpenApiSchema schema)
