@@ -664,6 +664,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("await graphClient.Communications.CallRecords.MicrosoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(DateTimeOffset.Parse(\"{fromDateTime}\"),DateTimeOffset.Parse(\"{toDateTime}\")).GetAsync();", result);
         }
         [Fact]
+        public async Task CorrectlyHandlesEnumInUrl()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/identityGovernance/appConsent/appConsentRequests/filterByCurrentUser(on='reviewer')?$filter=userConsentRequests/any(u:u/status eq 'InProgress')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("await graphClient.IdentityGovernance.AppConsent.AppConsentRequests.FilterByCurrentUserWithOn(\"reviewer\").GetAsync", result);
+        }
+        [Fact]
         public async Task GeneratesObjectsInArray() {
             var sampleJson = @"
             {

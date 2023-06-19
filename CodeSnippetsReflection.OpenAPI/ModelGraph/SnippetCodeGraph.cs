@@ -234,7 +234,14 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                 switch (parameter.Schema.Type.ToLowerInvariant())
                 {
                     case "string":
-                        parameters.Add(evaluateStringProperty(parameter.Name, $"{{{parameter.Name}}}", parameter.Schema));
+                        var codeProperty = evaluateStringProperty(parameter.Name, $"{{{parameter.Name}}}", parameter.Schema);
+                        // At the moment, enums in path parameters are passed as strings, so pull a string equivalent of the enum
+                        if (codeProperty.PropertyType == PropertyType.Enum)
+                        {
+                            codeProperty.PropertyType = PropertyType.String;
+                            codeProperty.Value = codeProperty.Children?.FirstOrDefault().Value ?? parameter.Name;
+                        }
+                        parameters.Add(codeProperty);
                         break;
                     case "integer":
                         parameters.Add(new CodeProperty { Name = parameter.Name, Value = int.TryParse(parameter.Name, out _) ? parameter.Name : "1", PropertyType = PropertyType.Int32, Children = new List<CodeProperty>() });
