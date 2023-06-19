@@ -77,8 +77,8 @@ namespace KnownIssuesService.Services
 														 SeverityLevel.Information,
 														 _knownIssuesTraceProperties);
 
-				var knownIssuesUri = _configuration[KnownIssuesPath];
-				return new WorkItemTrackingHttpClient(new Uri(knownIssuesUri), Authenticate());
+                var knownIssuesUri = _configuration[KnownIssuesPath];
+                return new WorkItemTrackingHttpClient(new Uri(knownIssuesUri), Authenticate());
 			}
             catch
             {
