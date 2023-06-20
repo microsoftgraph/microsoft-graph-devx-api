@@ -22,7 +22,7 @@ namespace KnownIssuesService.Test
         private readonly IKnownIssuesService _knownIssuesService;
         private readonly WorkItemTrackingHttpClientMock _workItemTrackingHttpClientMock;
         private readonly WorkItemTrackingHttpClient _workItemTrackingHttpClient;
-        private readonly Mock<Wiql> _wiqlTest;
+        private readonly Mock<Wiql> _wiqlTest = new();
         private readonly IConfigurationRoot _configuration;
 
         public KnownIssuesServiceShould()
