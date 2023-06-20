@@ -10,9 +10,9 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.4" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.3.2" />
     <PackageReference Include="Microsoft.OData.Edm" Version="7.16.0" />
-    <PackageReference Include="Microsoft.OpenApi" Version="1.6.4" />
+    <PackageReference Include="Microsoft.OpenApi" Version="1.6.5" />
     <PackageReference Include="Microsoft.OpenApi.OData" Version="1.4.0" />
-    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.4" />
+    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.5" />
   </ItemGroup>
 
   <ItemGroup>

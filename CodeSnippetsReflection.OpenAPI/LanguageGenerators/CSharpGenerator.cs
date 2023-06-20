@@ -273,9 +273,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Array:
-                    var collectionTypeString = codeProperty.Children.Any()
-                        ? GetTypeString(codeProperty.Children.First(), apiVersion)
+                    // For objects, rely on the typeDefinition from the array definition otherwise look deeper for primitive collections
+                    var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children[0].PropertyType != PropertyType.Object
+                        ? GetTypeString(codeProperty.Children[0], apiVersion)
                         : typeString;
+                    if(string.IsNullOrEmpty(collectionTypeString)) 
+                        collectionTypeString = "object";
                     return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{collectionTypeString}>";
                 case PropertyType.Object:
                     return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString)}";
@@ -289,6 +292,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     return "Date";
                 case PropertyType.TimeOnly:
                     return "Time";
+                case PropertyType.Guid:
+                    return "Guid?";
                 default:
                     return ReplaceIfReservedTypeName(typeString);
             }
@@ -326,6 +331,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                         if (x.Segment.IsFunctionWithParameters())
                                         {
                                             var functionName = x.Segment.Split('(').First();
+                                            functionName = functionName.Split(".",StringSplitOptions.RemoveEmptyEntries)
+                                                                        .Select(static s => s.ToFirstCharacterUpperCase())
+                                                                        .Aggregate(static (a, b) => $"{a}{b}");
                                             var parameters = snippetCodeGraph.PathParameters
                                                 .Select(static s => $"With{s.Name.ToFirstCharacterUpperCase()}")
                                                 .Aggregate(static (a, b) => $"{a}{b}");

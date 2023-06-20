@@ -32,9 +32,11 @@ namespace CodeSnippetsReflection.OpenAPI
         /// </remarks>
         public OpenApiUrlTreeNode RootPathNode => PathNodes.FirstOrDefault();
         public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
-        public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiUrlTreeNode treeNode) : base(requestPayload, serviceRootUrl)
+        public IDictionary<string, OpenApiSchema> Schemas{ get; private set; }
+        
+        public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiSnippetMetadata openApiSnippetMetadata) : base(requestPayload, serviceRootUrl)
         {
-            if (treeNode == null) throw new ArgumentNullException(nameof(treeNode));
+            if (openApiSnippetMetadata == null) throw new ArgumentNullException(nameof(openApiSnippetMetadata));
 
             var remappedPayload = RemapKnownPathsIfNeeded(requestPayload);
             var splatPath = ReplaceIndexParametersByPathSegment(remappedPayload.RequestUri
@@ -42,7 +44,8 @@ namespace CodeSnippetsReflection.OpenAPI
                                         .TrimStart(pathSeparator))
                                         .Split(pathSeparator, StringSplitOptions.RemoveEmptyEntries)
                                         .Skip(1); //skipping the version
-            LoadPathNodes(treeNode, splatPath, requestPayload.Method);
+            LoadPathNodes(openApiSnippetMetadata.OpenApiUrlTreeNode, splatPath, requestPayload.Method);
+            Schemas = openApiSnippetMetadata.Schemas ?? new Dictionary<string, OpenApiSchema>();
             InitializeModel(requestPayload);
         }
 
@@ -195,26 +198,27 @@ namespace CodeSnippetsReflection.OpenAPI
                     return;
                 }
             }
-            if (node.Children.Any(x => x.Key.IsCollectionIndex()))
-            {
-                var collectionIndexNode = node.Children.FirstOrDefault(x => x.Key.IsCollectionIndex());
-                if (collectionIndexNode.Value != null)
-                {
-                    LoadNextNode(collectionIndexNode.Value, pathSegments, httpMethod);
-                    return;
-                }
-            }
-
             if (node.Children.Keys.Any(static x => x.IsFunctionWithParameters()) && pathSegment.IsFunctionWithParameters())
             {
-                var functionWithParametersNode = node.Children.FirstOrDefault(function => function.Key.IsFunctionWithParametersMatch(pathSegment));
+                var functionWithParametersNode = node.Children.FirstOrDefault(function => function.Key.Split('.')[^1].IsFunctionWithParametersMatch(pathSegment.Split('.')[^1]));
                 if (functionWithParametersNode.Value != null)
                 {
                     LoadNextNode(functionWithParametersNode.Value, pathSegments, httpMethod);
                     return;
                 }
             }
-
+            // always match indexer last as functions on collections may be interpreted as indexers if processed after.
+            var collectionIndices = node.Children.Keys.Where(static x => x.IsCollectionIndex()).ToArray();
+            if (collectionIndices.Any())
+            {
+                var collectionIndexValue = node.Children[collectionIndices[0]];//lookup the node using the key
+                if (collectionIndexValue != null)
+                {
+                    LoadNextNode(collectionIndexValue, pathSegments, httpMethod);
+                    return;
+                }
+            }
+            
             throw new EntryPointNotFoundException($"Path segment '{pathSegment}' not found in path");
         }
         private void LoadNextNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments, HttpMethod httpMethod)

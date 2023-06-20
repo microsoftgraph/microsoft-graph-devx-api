@@ -1,30 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
-using Microsoft.OpenApi.Services;
 using Xunit;
 
 namespace CodeSnippetsReflection.OpenAPI.Test
 {
-    public class TypeScriptGeneratorTest
+    public class TypeScriptGeneratorTest : OpenApiSnippetGeneratorTestBase
     {
-        private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-        private static OpenApiUrlTreeNode _v1TreeNode;
-
-        // read the file from disk
-        private static async Task<OpenApiUrlTreeNode> GetV1TreeNode()
-        {
-            if (_v1TreeNode == null)
-            {
-                _v1TreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
-            }
-            return _v1TreeNode;
-        }
-
         private readonly TypeScriptGenerator _generator = new();
 
         // check path correctness
@@ -32,7 +15,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesTheCorrectFluentAPIPath()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -55,7 +38,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -80,7 +63,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollections()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -100,7 +83,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesTheSnippetInitializationStatement()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("const graphServiceClient = GraphServiceClient.init({authProvider});", result);
         }
@@ -109,7 +92,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesTheGetMethodCall()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expected = @"
             const graphServiceClient = GraphServiceClient.init({authProvider});
@@ -128,7 +111,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesThePostMethodCall()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expected = @"
                 const result = async () => {
@@ -144,7 +127,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesThePatchMethodCall()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/me/messages/{{message-id}}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expected = @"
                 const result = async () => {
@@ -160,7 +143,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesThePutMethodCall()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/applications/{{application-id}}/logo");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("put", result);
         }
@@ -169,7 +152,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesTheDeleteMethodCall()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{message-id}}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expected = @"
             const graphServiceClient = GraphServiceClient.init({authProvider});
@@ -204,7 +187,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -241,7 +224,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("10", result);
             Assert.DoesNotContain("microsoft.graph1", result);
@@ -260,7 +243,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -286,7 +269,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                 Content = new ByteArrayContent(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 })
             };
             requestPayload.Content.Headers.ContentType = new("application/octet-stream");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -310,7 +293,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -337,7 +320,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -373,7 +356,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(samplePayload, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -401,7 +384,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -434,7 +417,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesSelectQueryParameters()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$select=displayName,id");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -458,7 +441,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesCountBooleanQueryParameters()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$select=displayName,id");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -484,7 +467,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesSkipQueryParameters()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$skip=10");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -508,7 +491,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesSelectExpandQueryParameters()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=id,displayName)");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("expand", result);
             Assert.Contains("members($select=id,displayName)", result);
@@ -520,7 +503,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups");
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -564,7 +547,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(samplePayload, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
@@ -617,7 +600,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(payloadJson, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"

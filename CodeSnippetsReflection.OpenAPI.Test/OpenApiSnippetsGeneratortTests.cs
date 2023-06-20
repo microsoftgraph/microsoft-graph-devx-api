@@ -1,8 +1,6 @@
 using System;
 using Xunit;
-using CodeSnippetsReflection.OpenAPI;
 using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace CodeSnippetsReflection.OpenAPI.Test
 {

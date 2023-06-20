@@ -7,28 +7,14 @@ using Microsoft.OpenApi.Readers;
 using Xunit;
 using System.Net.Http.Headers;
 using System;
+using Microsoft.OpenApi.Models;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 
-public class GraphCliGeneratorTests
+public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 {
-    private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-    private const string ServiceRootUrlBeta = "https://graph.microsoft.com/beta";
-    private static OpenApiUrlTreeNode _v1TreeNode;
-    private static OpenApiUrlTreeNode _betaTreeNode;
     private readonly GraphCliGenerator _generator = new();
-    private static async Task<OpenApiUrlTreeNode> GetV1TreeNode()
-    {
-        _v1TreeNode ??= await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/openApiDocs/v1.0/Users.yml");
-        return _v1TreeNode;
-    }
-
-    private static async Task<OpenApiUrlTreeNode> GetBetaTreeNode()
-    {
-        _betaTreeNode ??= await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/openApiDocs/beta/Users.yml");
-        return _betaTreeNode;
-    }
-
+    
     public static IEnumerable<object[]> GetSnippetData()
     {
         return new[] {
@@ -47,7 +33,7 @@ public class GraphCliGeneratorTests
     {
         // Given a url and method
         using var requestPayload = new HttpRequestMessage(method, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -63,7 +49,7 @@ public class GraphCliGeneratorTests
         // Given
         string url = $"{ServiceRootUrl}/users/100/todo/lists/123/tasks/1234/attachments/12345";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -84,8 +70,9 @@ public class GraphCliGeneratorTests
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/users/{user-id}/directReports/graph.orgContact":{"get":{"responses":{"200":{"description":"Successful operation"}}}},"/users/{user-id}/directReports/{directoryObject-id}/graph.orgContact":{"get":{"responses":{"200":{"description":"Successful operation"}}}}}}""";
         var doc = new OpenApiStringReader().Read(schema, out _);
         var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{url}");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -103,8 +90,9 @@ public class GraphCliGeneratorTests
         string url = $"{ServiceRootUrl}/tests/$count";
         var doc = new OpenApiStringReader().Read(schema, out _);
         var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -117,9 +105,9 @@ public class GraphCliGeneratorTests
     public async Task GeneratesSnippetsForBetaCommand()
     {
         // Given
-        string url = $"{ServiceRootUrlBeta}/users";
+        string url = $"{ServiceRootBetaUrl}/users";
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestMessage, ServiceRootUrlBeta, await GetBetaTreeNode());
+        var snippetModel = new SnippetModel(requestMessage, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -137,7 +125,7 @@ public class GraphCliGeneratorTests
         // Given
         string url = $"{ServiceRootUrl}/users/100/manager/$ref";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -153,7 +141,7 @@ public class GraphCliGeneratorTests
         // Given
         string url = $"{ServiceRootUrl}/users/100/photo/$value";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -168,7 +156,7 @@ public class GraphCliGeneratorTests
         // Given
         string url = $"{ServiceRootUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -189,9 +177,10 @@ public class GraphCliGeneratorTests
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"query","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
         var doc = new OpenApiStringReader().Read(schema, out _);
         var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         string url = $"{ServiceRootUrl}/tests/1/results{queryString}";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -210,9 +199,10 @@ public class GraphCliGeneratorTests
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
         var doc = new OpenApiStringReader().Read(schema, out _);
         var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         string url = $"{ServiceRootUrl}/tests/1/results";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -230,9 +220,10 @@ public class GraphCliGeneratorTests
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"cookie","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
         var doc = new OpenApiStringReader().Read(schema, out _);
         var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         string url = $"{ServiceRootUrl}/tests/1/results";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -249,10 +240,11 @@ public class GraphCliGeneratorTests
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"header","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
         var doc = new OpenApiStringReader().Read(schema, out _);
         var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         string url = $"{ServiceRootUrl}/tests/1/results";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         requestPayload.Headers.Add("id", "test-header");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -269,7 +261,7 @@ public class GraphCliGeneratorTests
         // Given
         string url = $"{ServiceRootUrl}/users{queryString}";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -285,9 +277,10 @@ public class GraphCliGeneratorTests
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests":{"get":{"operationId":"getTestResults","parameters":[{"name":"","in":"query","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
         var doc = new OpenApiStringReader().Read(schema, out _);
         var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         string url = $"{ServiceRootUrl}/tests?";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -304,9 +297,10 @@ public class GraphCliGeneratorTests
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"query","required":false,"schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
         var doc = new OpenApiStringReader().Read(schema, out _);
         var rootNode = OpenApiUrlTreeNode.Create(doc, "default");
+        var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         string url = $"{ServiceRootUrl}/tests?id=10";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, rootNode);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -329,7 +323,7 @@ public class GraphCliGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Post, url);
         requestPayload.Content = new StringContent(content);
         requestPayload.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -365,7 +359,7 @@ public class GraphCliGeneratorTests
             }
         }
 
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -392,7 +386,7 @@ public class GraphCliGeneratorTests
         string rootUrl = "https://example.com/v303";
         string url = $"{rootUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, rootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, rootUrl, await GetV1SnippetMetadata());
 
         // When
         // Then
@@ -406,7 +400,7 @@ public class GraphCliGeneratorTests
         string url = $"{ServiceRootUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Post, url);
         requestPayload.Content = new StringContent("{\n  \"name\": \"test\"\n}");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
