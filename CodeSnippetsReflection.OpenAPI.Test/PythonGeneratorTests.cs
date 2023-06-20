@@ -2,47 +2,20 @@
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
-using Microsoft.OpenApi.Services;
 using Xunit;
 
 namespace CodeSnippetsReflection.OpenAPI.Test;
 
-public class PythonGeneratorTests
+public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
 {
-    private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-    private const string ServiceRootBetaUrl = "https://graph.microsoft.com/beta";
-    private static OpenApiUrlTreeNode _v1TreeNode;
-    private static OpenApiUrlTreeNode _betaTreeNode;
     private readonly PythonGenerator _generator = new();
-
-    private static async Task<OpenApiUrlTreeNode> GetV1TreeNode()
-    {
-        if (_v1TreeNode == null)
-        {
-            _v1TreeNode = await SnippetModelTests.GetTreeNode(
-                "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
-        }
-
-        return _v1TreeNode;
-    }
-
-    private static async Task<OpenApiUrlTreeNode> GetBetaTreeNode()
-    {
-        if (_betaTreeNode == null)
-        {
-            _betaTreeNode = await SnippetModelTests.GetTreeNode(
-                "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/beta/openapi.yaml");
-        }
-
-        return _betaTreeNode;
-    }
 
     [Fact]
     public async Task GeneratesTheCorrectFluentApiPathForIndexedCollections()
     {
         using var requestPayload =
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}"); 
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(".me.messages.by_message_id('message-id').get()", result);
     }
@@ -51,7 +24,7 @@ public class PythonGeneratorTests
     public async Task GeneratesTheCorrectSnippetForUsers()
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(".me.get()", result);
     }
@@ -61,7 +34,7 @@ public class PythonGeneratorTests
     {
         using var requestPayload =
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages"); 
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("users.by_user_id('user-id').messages.get()", result);
 
@@ -82,7 +55,7 @@ public class PythonGeneratorTests
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         // Assert.Contains("select = [""displayName"",""mailNickName""],
         //     )", result);
@@ -99,7 +72,7 @@ public class PythonGeneratorTests
             {
                 Content = new StringContent(payloadBody, Encoding.UTF8, "application/json")
             };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("request_body = AddPasswordPostRequestBody()", result);
     }
@@ -109,7 +82,7 @@ public class PythonGeneratorTests
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(".directory.deleted_items.graph_group.get()", result);
     }
@@ -119,7 +92,7 @@ public class PythonGeneratorTests
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
             $"{ServiceRootBetaUrl}/me/messages/AAMkADYAAAImV_jAAA=/?$expand=microsoft.graph.eventMessage/event");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(
             ".me.messages.by_message_id('message-id').get(request_configuration = request_configuration)",
@@ -131,7 +104,7 @@ public class PythonGeneratorTests
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
             $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("count = true", result);
         Assert.Contains(@"select = [""id"",""displayName"",""department""]", result);
@@ -143,7 +116,7 @@ public class PythonGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups");
         requestPayload.Headers.Add("ConsistencyLevel", "eventual");
         requestPayload.Headers.Add("Accept", "application/json");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("headers = {", result);
         Assert.Contains(@"'ConsistencyLevel' : ""eventual""", result);
@@ -171,7 +144,7 @@ public class PythonGeneratorTests
                 {
                     Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
                 };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("cc_recipients_recipient1 = Recipient()", result);
             Assert.Contains("message.body = messagebody", result);
@@ -182,7 +155,7 @@ public class PythonGeneratorTests
     {
         using var requestPayload =
             new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(".me.messages.by_message_id('message-id').delete()", result);
 
@@ -196,7 +169,7 @@ public class PythonGeneratorTests
             {
                 Content = new StringContent("{\"field\":\"Nothinkg to be done\"}", Encoding.UTF8, "application/json")
             };
-       var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+       var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
        var result = _generator.GenerateCodeSnippet(snippetModel);
        Assert.Contains("request_body = CreateReplyPostRequestBody()", result);
     }
@@ -207,7 +180,7 @@ public class PythonGeneratorTests
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
             $"{ServiceRootBetaUrl}/applications/{{application-id}}/tokenIssuancePolicies/$ref");
 
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
 
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
@@ -223,7 +196,7 @@ public class PythonGeneratorTests
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json")
             };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("request_body = UsageRight()", result);
     }
@@ -233,7 +206,7 @@ public class PythonGeneratorTests
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/identityGovernance/appConsent/appConsentRequests/{{id}}/userConsentRequests/filterByCurrentUser(on='reviewer')");
 
-        var betaTreeNode = await GetBetaTreeNode();
+        var betaTreeNode = await GetBetaSnippetMetadata();
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, betaTreeNode);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("appConsent", result);
@@ -249,7 +222,7 @@ public class PythonGeneratorTests
             {
                 Content = new StringContent("{\"field\":\"Nothing to be done\"}", Encoding.UTF8, "application/json")
             };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("request_body.additional_data(additional_data)", result); 
 
@@ -259,7 +232,7 @@ public class PythonGeneratorTests
     public async Task GenerateFluentApiPathCornerCase()
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(".me.activities.recent.get()", result);
     }
@@ -290,7 +263,7 @@ public class PythonGeneratorTests
             {
                 Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
             };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaTreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("request_body.call_options = call_options", result);
     }
@@ -344,7 +317,7 @@ public class PythonGeneratorTests
             {
                 Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
             };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("attendees_attendee_base1 = AttendeeBase()", result);
         Assert.Contains("location_constraint = LocationConstraint()", result);
@@ -392,7 +365,7 @@ public class PythonGeneratorTests
             {
                 Content = new StringContent(eventData, Encoding.UTF8, "application/json")
             };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("location = Location()", result);
         Assert.Contains("attendees_attendee1 = Attendee()", result);
@@ -408,7 +381,7 @@ public class PythonGeneratorTests
             {
                 Content = new StringContent("{\"@odata.id\":\"https://graph.microsoft.com/v1.0/users/alexd@contoso.com\"}", Encoding.UTF8, "application/json")
             };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("= DirectoryObject();", result);
 

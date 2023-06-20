@@ -1,49 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
 using Moq;
 using Xunit;
 
 namespace CodeSnippetsReflection.OpenAPI.Test
 {
-    public class SnippetModelTests
+    public class SnippetModelTests : OpenApiSnippetGeneratorTestBase
     {
-        private const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
-        private static OpenApiUrlTreeNode _v1TreeNode;
-        private async static Task<OpenApiUrlTreeNode> GetV1TreeNode() {
-            if(_v1TreeNode == null) {
-                _v1TreeNode = await SnippetModelTests.GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
-            }
-            return _v1TreeNode;
-        }
-        internal static async Task<OpenApiUrlTreeNode> GetTreeNode(string url)
-        {
-            Stream stream;
-            if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            {
-                using var httpClient = new HttpClient();
-                stream = await httpClient.GetStreamAsync(url);
-            }
-            else
-            {
-                stream = File.OpenRead(url);
-            }
-            var reader = new OpenApiStreamReader();
-            var doc = reader.Read(stream, out var diags);
-            await stream.DisposeAsync();
-            return OpenApiUrlTreeNode.Create(doc, "default");
-        }
-
         [Fact]
         public void DefensiveProgramming()
         {
-            var nodeMock = OpenApiUrlTreeNode.Create();
+            var nodeMock = new OpenApiSnippetMetadata(OpenApiUrlTreeNode.Create(), new Dictionary<string, OpenApiSchema>());
             var requestMock = new Mock<HttpRequestMessage>().Object;
             Assert.Throws<ArgumentNullException>(() => new SnippetModel(null, "something", nodeMock));
             Assert.Throws<ArgumentNullException>(() => new SnippetModel(requestMock, null, nodeMock));
@@ -62,7 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject)
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             Assert.NotNull(snippetModel.EndPathNode);
             Assert.NotNull(snippetModel.RootPathNode);
             Assert.Equal(snippetModel.EndPathNode, snippetModel.RootPathNode);
@@ -73,7 +47,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task FindsTheSubPathItem()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             Assert.NotNull(snippetModel.EndPathNode);
             Assert.NotNull(snippetModel.RootPathNode);
             Assert.NotEqual(snippetModel.EndPathNode, snippetModel.RootPathNode);
@@ -93,7 +67,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             Assert.NotNull(snippetModel.RequestSchema);
             Assert.NotEmpty(snippetModel.RequestSchema.AllOf);
         }
@@ -101,7 +75,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GetsTheResponseSchema()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             Assert.NotNull(snippetModel.ResponseSchema);
             Assert.True(snippetModel.ResponseSchema.Properties.Any() ||
                 snippetModel.ResponseSchema.AnyOf.Any() ||
@@ -119,7 +93,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             // When
             // Then
-            var entryPointNotFoundException = await Assert.ThrowsAsync<EntryPointNotFoundException>(async () => new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            var entryPointNotFoundException = await Assert.ThrowsAsync<EntryPointNotFoundException>(async () => new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata()));
             Assert.Equal("HTTP Method 'DELETE' not found for path.",entryPointNotFoundException.Message);
         }
         
@@ -133,7 +107,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             // When
             // Then
-            var entryPointNotFoundException = await Assert.ThrowsAsync<EntryPointNotFoundException>(async () => new SnippetModel(requestPayload, ServiceRootUrl, await GetV1TreeNode()));
+            var entryPointNotFoundException = await Assert.ThrowsAsync<EntryPointNotFoundException>(async () => new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata()));
             Assert.Equal("Path segment 'deltaTest' not found in path",entryPointNotFoundException.Message);
         }
     }
