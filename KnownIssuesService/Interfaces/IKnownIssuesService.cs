@@ -14,7 +14,7 @@ namespace KnownIssuesService.Interfaces
     /// </summary>
     public interface IKnownIssuesService
     {
-        Task<List<KnownIssue>> QueryBugsAsync();
+        Task<List<KnownIssue>> QueryBugsAsync(string environment);
         Task<WorkItemQueryResult> GetQueryByWiqlAsync();
         Task<List<WorkItem>> GetWorkItemsQueryAsync(int[] ids, WorkItemQueryResult result);
     }

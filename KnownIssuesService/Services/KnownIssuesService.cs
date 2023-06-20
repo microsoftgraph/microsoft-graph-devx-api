@@ -12,6 +12,7 @@ using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
@@ -26,7 +27,7 @@ namespace KnownIssuesService.Services
     public class KnownIssuesService : IKnownIssuesService
     {
 		private List<KnownIssue> _knownIssuesList;
-		private readonly Wiql _workItemQuery;
+		private Wiql WorkItemQuery;
 		private readonly WorkItemTrackingHttpClient _httpQueryClient;
 		private readonly IConfiguration _configuration;
 		private readonly TelemetryClient _telemetryClient;
@@ -34,6 +35,7 @@ namespace KnownIssuesService.Services
 			new() { { UtilityConstants.TelemetryPropertyKey_KnownIssues, nameof(KnownIssuesService) } };
 		private const string AccessTokenValue = "KnownIssues:Token";
 		private const string KnownIssuesPath = "KnownIssues:Uri";
+        private string IssuesEnvironment = UtilityConstants.KnownIssuesStagingOrganisation;
 
 
 		public KnownIssuesService(IConfiguration configuration,
@@ -43,8 +45,7 @@ namespace KnownIssuesService.Services
 		{
 			UtilityFunctions.CheckArgumentNull(configuration, nameof(configuration));
 			_configuration = configuration;
-			_telemetryClient = telemetryClient;
-			_workItemQuery = wiql ?? QueryBuilder();
+			_telemetryClient = telemetryClient;			
 			_httpQueryClient = httpQueryClient ?? GetWorkItemTrackingHttpClient();
 		}
 
@@ -93,7 +94,7 @@ namespace KnownIssuesService.Services
 		/// <returns>WorkItem Query result</returns>
 		public Task<WorkItemQueryResult> GetQueryByWiqlAsync()
 		{
-			return _httpQueryClient.QueryByWiqlAsync(_workItemQuery, null, 100, null, CancellationToken.None);
+			return _httpQueryClient.QueryByWiqlAsync(this.WorkItemQuery, null, 100, null, CancellationToken.None);
 		}
 
 		/// <summary>
@@ -116,15 +117,25 @@ namespace KnownIssuesService.Services
         /// </summary>
         /// <returns>A work item query builder containing the selection criteria</returns>
         [ExcludeFromCodeCoverage]
-        private static Wiql QueryBuilder()
+        private Wiql QueryBuilder()
 		{
-			// create a wiql object and build our query
-			return new Wiql()
+            string organization;
+
+            if (this.IssuesEnvironment.ToLower() == EnvironmentType.Production.ToLower() || this.IssuesEnvironment.ToLower() == EnvironmentType.Preview.ToLower())
+            {
+                organization = UtilityConstants.KnownIssuesProdOrganisation;
+            }
+            else
+            {
+                organization = UtilityConstants.KnownIssuesStagingOrganisation;
+            }
+            // create a wiql object and build our query
+            return new Wiql()
 			{
 				Query = "Select [Id] " +
 						"From WorkItems " +
 						"Where [Work Item Type] = 'Bug' " +
-						"And [System.TeamProject] = '" + UtilityConstants.KnownIssuesOrganisation + "' " +
+						"And [System.TeamProject] = '" + organization + "' " +
 						"Order By [State] Asc, [Changed Date] Desc",
 			};
 		}
@@ -133,11 +144,13 @@ namespace KnownIssuesService.Services
 		/// Function to Query the List of Known Issues from Azure DevOps Known Organization
 		/// </summary>
 		/// <returns>Known Issues Contract that contains json items that will be rendered on the browser</returns>
-		public async Task<List<KnownIssue>> QueryBugsAsync()
+		public async Task<List<KnownIssue>> QueryBugsAsync(string environment)
 		{
 			_telemetryClient?.TrackTrace("Fetches a WorkItemQueryResult for fetching work item Ids and urls",
 										 SeverityLevel.Information,
 										 _knownIssuesTraceProperties);
+            this.IssuesEnvironment = environment;
+            this.WorkItemQuery = this.QueryBuilder();
 
 			WorkItemQueryResult result = await GetQueryByWiqlAsync();
 			int[] ids = result.WorkItems.Select(item => item.Id).ToArray();

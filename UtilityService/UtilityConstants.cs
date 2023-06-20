@@ -27,8 +27,15 @@ namespace UtilityService
         public const string CleanBetaMetadata = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/clean_beta_metadata/cleanMetadataWithDescriptionsbeta.xml";
 
         /// <summary>
-        /// Contains the name of the Known Issues Azure DevOps Organisation
+        /// Contains the names of the Known Issues Azure DevOps Organisation
 		/// </summary>
-		public const string KnownIssuesOrganisation = "Known Issues (staging)";
+		public const string KnownIssuesStagingOrganisation = "Known Issues (Staging)";
+        public const string KnownIssuesProdOrganisation = "Known Issues";
+    }
+    public static class EnvironmentType
+    {
+        public const string Staging = "Staging";
+        public const string Production = "Production";
+        public const string Preview = "Preview";
     }
 }
