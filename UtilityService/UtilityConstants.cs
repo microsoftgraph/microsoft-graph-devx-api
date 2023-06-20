@@ -34,8 +34,8 @@ namespace UtilityService
     }
     public static class EnvironmentType
     {
-        public const string Staging = "Staging";
-        public const string Production = "Production";
-        public const string Preview = "Preview";
+        public const string Staging = "staging";
+        public const string Production = "production";
+        public const string Preview = "preview";
     }
 }

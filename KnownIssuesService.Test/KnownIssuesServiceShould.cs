@@ -22,7 +22,7 @@ namespace KnownIssuesService.Test
         private readonly IKnownIssuesService _knownIssuesService;
         private readonly WorkItemTrackingHttpClientMock _workItemTrackingHttpClientMock;
         private readonly WorkItemTrackingHttpClient _workItemTrackingHttpClient;
-        private Mock<Wiql> _wiqlTest;
+        private readonly Mock<Wiql> _wiqlTest;
         private readonly IConfigurationRoot _configuration;
 
         public KnownIssuesServiceShould()
@@ -30,10 +30,9 @@ namespace KnownIssuesService.Test
             _configuration = new ConfigurationBuilder()
                             .AddJsonFile("appsettingstest.json")
                             .Build();
-            this._wiqlTest = new Mock<Wiql>();
             _workItemTrackingHttpClientMock = new WorkItemTrackingHttpClientMock();
             _workItemTrackingHttpClient = _workItemTrackingHttpClientMock.MockWorkItemTrackingHttpClient(_wiqlTest);
-            _knownIssuesService = new Services.KnownIssuesService(_configuration, wiql: this._wiqlTest.Object, httpQueryClient: _workItemTrackingHttpClient);
+            _knownIssuesService = new Services.KnownIssuesService(_configuration, httpQueryClient: _workItemTrackingHttpClient);
         }
 
         [Fact]
@@ -43,7 +42,7 @@ namespace KnownIssuesService.Test
             int expectedNoOfWorkItems = 5;
 
             //Act
-            WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync();
+            WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync(_wiqlTest.Object);
             int actualNoOfWorkItems = workItemQueryResult.WorkItems.ToList().Count;
 
             //Assert
@@ -57,7 +56,7 @@ namespace KnownIssuesService.Test
             int expectedNoOfWorkItems = 5;
 
             //Act
-            WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync();
+            WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync(_wiqlTest.Object);
             int[] ids = workItemQueryResult.WorkItems.Select(item => item.Id).ToArray();
             List<WorkItem> items = await _knownIssuesService.GetWorkItemsQueryAsync(ids, workItemQueryResult);
 
