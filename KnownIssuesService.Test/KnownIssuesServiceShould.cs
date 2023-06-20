@@ -4,19 +4,16 @@
 
 using KnownIssuesService.Interfaces;
 using KnownIssuesService.Models;
-using KnownIssuesService.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using UtilityService;
 using Xunit;
-using System.Reflection;
 
 namespace KnownIssuesService.Test
 {
