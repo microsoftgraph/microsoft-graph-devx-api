@@ -41,7 +41,7 @@ namespace GraphWebApi.Controllers
             _telemetryClient?.TrackTrace("Request to query the list of known issues",
                                             SeverityLevel.Information,
                                             _knownIssuesTraceProperties);
-            List<KnownIssue> result = await _knownIssuesService.QueryBugsAsync(environment);
+            List<KnownIssue> result = await _knownIssuesService.QueryBugsAsync(environment, null);
             return result == null ? NotFound() : Ok(result);
         }
     }
