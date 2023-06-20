@@ -46,6 +46,7 @@ namespace KnownIssuesService.Services
 			_configuration = configuration;
 			_telemetryClient = telemetryClient;			
 			_httpQueryClient = httpQueryClient ?? GetWorkItemTrackingHttpClient();
+            this.WorkItemQuery = wiql ?? this.QueryBuilder();
 		}
 
         /// <summary>
@@ -143,18 +144,18 @@ namespace KnownIssuesService.Services
 		/// Function to Query the List of Known Issues from Azure DevOps Known Organization
 		/// </summary>
 		/// <returns>Known Issues Contract that contains json items that will be rendered on the browser</returns>
-		public async Task<List<KnownIssue>> QueryBugsAsync(string environment)
+		public async Task<List<KnownIssue>> QueryBugsAsync(string environment, Wiql workItemQuery = null)
 		{
 			_telemetryClient?.TrackTrace("Fetches a WorkItemQueryResult for fetching work item Ids and urls",
 										 SeverityLevel.Information,
 										 _knownIssuesTraceProperties);
             this.IssuesEnvironment = environment;
-            this.WorkItemQuery = this.QueryBuilder();
+            this.WorkItemQuery = workItemQuery ?? this.QueryBuilder();
 
 			WorkItemQueryResult result = await GetQueryByWiqlAsync();
-			int[] ids = result.WorkItems.Select(item => item.Id).ToArray();
+			int[] ids = result?.WorkItems.Select(item => item.Id).ToArray();
 
-            if (ids.Length == 0)
+            if (ids?.Length == 0)
             {
                 return _knownIssuesList;
             }

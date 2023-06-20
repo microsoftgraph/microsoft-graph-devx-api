@@ -4,16 +4,19 @@
 
 using KnownIssuesService.Interfaces;
 using KnownIssuesService.Models;
+using KnownIssuesService.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using UtilityService;
 using Xunit;
+using System.Reflection;
 
 namespace KnownIssuesService.Test
 {
@@ -22,7 +25,7 @@ namespace KnownIssuesService.Test
         private readonly IKnownIssuesService _knownIssuesService;
         private readonly WorkItemTrackingHttpClientMock _workItemTrackingHttpClientMock;
         private readonly WorkItemTrackingHttpClient _workItemTrackingHttpClient;
-        private readonly Mock<Wiql> _wiqlTest;
+        private Mock<Wiql> _wiqlTest;
         private readonly IConfigurationRoot _configuration;
 
         public KnownIssuesServiceShould()
@@ -30,10 +33,10 @@ namespace KnownIssuesService.Test
             _configuration = new ConfigurationBuilder()
                             .AddJsonFile("appsettingstest.json")
                             .Build();
-            _wiqlTest = new Mock<Wiql>();
+            this._wiqlTest = new Mock<Wiql>();
             _workItemTrackingHttpClientMock = new WorkItemTrackingHttpClientMock();
             _workItemTrackingHttpClient = _workItemTrackingHttpClientMock.MockWorkItemTrackingHttpClient(_wiqlTest);
-            _knownIssuesService = new Services.KnownIssuesService(_configuration, wiql: _wiqlTest.Object, httpQueryClient: _workItemTrackingHttpClient);
+            _knownIssuesService = new Services.KnownIssuesService(_configuration, wiql: this._wiqlTest.Object, httpQueryClient: _workItemTrackingHttpClient);
         }
 
         [Fact]
@@ -78,11 +81,12 @@ namespace KnownIssuesService.Test
                 WorkAround = "Test",
                 Link = "/foo/bar",
                 CreatedDateTime = DateTime.Parse("01/06/2022 00:00:00"),
-                LastUpdatedDateTime = DateTime.Parse("01/07/2022 00:00:00")
+                LastUpdatedDateTime = DateTime.Parse("01/07/2022 00:00:00"),
+                SubArea = "Test notifications"
             };
 
             //Act
-            List<KnownIssue> items = await _knownIssuesService.QueryBugsAsync(EnvironmentType.Staging);
+            List<KnownIssue> items = await _knownIssuesService.QueryBugsAsync(EnvironmentType.Staging, this._wiqlTest.Object);
 
             //Assert
             foreach (var item in items)
