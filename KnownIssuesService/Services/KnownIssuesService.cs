@@ -116,7 +116,7 @@ namespace KnownIssuesService.Services
 		{
             string organization;
 
-            if (environment == EnvironmentType.Production || environment == EnvironmentType.Preview)
+            if (EnvironmentType.Production.Equals(environment, StringComparison.OrdinalIgnoreCase) || EnvironmentType.Preview.Equals(environment, StringComparison.OrdinalIgnoreCase))
             {
                 organization = UtilityConstants.KnownIssuesProdOrganisation;
             }
