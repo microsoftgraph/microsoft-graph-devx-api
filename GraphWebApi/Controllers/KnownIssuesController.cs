@@ -8,7 +8,6 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using UtilityService;
@@ -36,12 +35,11 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]")]
         [Route("knownissues")]
         [HttpGet]
-        public async Task<IActionResult> GetKnownIssues([FromQuery] string environment = UtilityConstants.EnvironmentType.Staging)
+        public async Task<IActionResult> GetKnownIssues([FromQuery] string environment = EnvironmentType.Staging)
         {
             _telemetryClient?.TrackTrace("Request to query the list of known issues",
                                             SeverityLevel.Information,
                                             _knownIssuesTraceProperties);
-            Debug.WriteLine("Environment is "+environment);
             List<KnownIssue> result = await _knownIssuesService.QueryBugsAsync(environment);
             return result == null ? NotFound() : Ok(result);
         }

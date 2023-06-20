@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using UtilityService;
 using Xunit;
 
 namespace KnownIssuesService.Test
@@ -81,7 +82,7 @@ namespace KnownIssuesService.Test
             };
 
             //Act
-            List<KnownIssue> items = await _knownIssuesService.QueryBugsAsync();
+            List<KnownIssue> items = await _knownIssuesService.QueryBugsAsync(EnvironmentType.Staging);
 
             //Assert
             foreach (var item in items)
