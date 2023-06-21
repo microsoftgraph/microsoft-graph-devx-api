@@ -3,7 +3,9 @@
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -332,8 +334,10 @@ namespace PermissionsService
             }
             else
             {
-                var scopesByRequestUrl = new Dictionary<string, IEnumerable<ScopeInformation>>();
-                foreach (var request in requests)
+                var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
+                var uniqueRequests = requests.DistinctBy(static x => $"{x.HttpMethod}{x.RequestUrl}", StringComparer.OrdinalIgnoreCase);
+
+                Parallel.ForEach(uniqueRequests, async request =>
                 {
                     try
                     {
@@ -351,21 +355,20 @@ namespace PermissionsService
                             Message = exception.Message
                         });
                     }
-                }
+                });
 
                 var allLeastPrivilegeScopes = scopesByRequestUrl.Values
-                    .SelectMany(static x => x).Where(static x => x.IsLeastPrivilege == true).ToList();
+                    .SelectMany(static x => x).Where(static x => x.IsLeastPrivilege == true)
+                    .DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase).ToList();
                 foreach (var scopeSet in scopesByRequestUrl.Values)
                 {
-                    bool foundInOthers = false;
                     var higherPrivilegedScopes = scopeSet.Where(static x => x.IsLeastPrivilege == false);
 
                     // If any of the higher privilege permissions is a leastPrivilegePermissions somewhere, ignore
-                    if (higherPrivilegedScopes.Any(scope =>
+                    bool foundInOthers = higherPrivilegedScopes.Any(scope =>
                             allLeastPrivilegeScopes.Any(leastScope =>
-                                leastScope.ScopeName.Equals(scope.ScopeName, StringComparison.OrdinalIgnoreCase) && 
-                                    leastScope.ScopeType == scope.ScopeType)))
-                        foundInOthers = true;
+                                leastScope.ScopeName.Equals(scope.ScopeName, StringComparison.OrdinalIgnoreCase) &&
+                                    leastScope.ScopeType == scope.ScopeType));
 
                     if (!foundInOthers)
                         scopes.AddRange(scopeSet);
