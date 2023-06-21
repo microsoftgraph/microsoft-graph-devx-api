@@ -363,25 +363,38 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnsErrorsForEmptyOrNullRequestUrls()
+        public async Task ReturnsErrorsForEmptyRequestUrl()
         {
             // Act
             PermissionResult result =
                 await _permissionsStore.GetScopesAsync(
-                    requests: new List<RequestInfo>() { 
-                        new RequestInfo { RequestUrl = "", HttpMethod = "GET" },
-                        new RequestInfo { RequestUrl = null, HttpMethod = "GET" } }
-                    );
+                    requests: new List<RequestInfo>() {
+                        new RequestInfo { RequestUrl = "", HttpMethod = "GET" } });
             // Assert
             Assert.Empty(result.Results);
             Assert.NotEmpty(result.Errors);
-            Assert.Equal(2, result.Errors.Count);
+            Assert.Single(result.Errors);
             Assert.Collection(result.Errors,
                 item =>
                 {
                     Assert.Equal("", item.RequestUrl);
                     Assert.Equal("The request URL cannot be null or empty.", item.Message);
-                },
+                });
+        }
+
+        [Fact]
+        public async Task ReturnsErrorsForNullRequestUrl()
+        {
+            // Act
+            PermissionResult result =
+                await _permissionsStore.GetScopesAsync(
+                    requests: new List<RequestInfo>() {
+                        new RequestInfo { RequestUrl = null, HttpMethod = "GET" } });
+            // Assert
+            Assert.Empty(result.Results);
+            Assert.NotEmpty(result.Errors);
+            Assert.Single(result.Errors);
+            Assert.Collection(result.Errors,
                 item =>
                 {
                     Assert.Null(item.RequestUrl);
