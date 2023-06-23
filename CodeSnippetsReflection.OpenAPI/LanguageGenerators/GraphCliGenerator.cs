@@ -24,7 +24,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         // If operation does not exist, return an empty string
         if (operation == null)
         {
-            throw new MissingMethodException(snippetModel.Method.ToString() + " operation is not supported");
+            return string.Empty;
         }
 
         // List has an initial capacity of 4. Reserve more based on the number of nodes.
@@ -113,12 +113,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         // Adds header parameters from the request into the parameters dictionary
         var processedHeaders = ProcessHeaderParameters(snippetModel);
         PostProcessParameters(processedHeaders, operation, ParameterLocation.Header, ref parameters);
-        var processedQuery = ProcessQueryParameters(snippetModel);
-        PostProcessParameters(processedQuery, operation, ParameterLocation.Query, ref parameters);
-
-        // Adds header parameters from the request into the parameters dictionary
-        var processedHeaders = ProcessHeaderParameters(snippetModel);
-        PostProcessParameters(processedHeaders, operation, ParameterLocation.Header, ref parameters);
 
         var operationName = GetOperationName(snippetModel);
 
@@ -134,7 +128,12 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         }
     }
 
-    private static void ProcessQueryParameters([NotNull] in SnippetModel snippetModel, [NotNull] in OpenApiOperation operation, [NotNull] ref Dictionary<string, string> parameters)
+    private static IDictionary<string, string> ProcessHeaderParameters([NotNull] in SnippetModel snippetModel)
+    {
+        return snippetModel.RequestHeaders.ToDictionary(x => x.Key, x => string.Join(',', x.Value));
+    }
+
+    private static IDictionary<string, string> ProcessQueryParameters([NotNull] in SnippetModel snippetModel)
     {
         IDictionary<string, string> splitQueryString = new Dictionary<string, string>();
         if (!string.IsNullOrWhiteSpace(snippetModel.QueryString))
@@ -151,6 +150,12 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                     .ToDictionary(t => t.Item1, t => t.Item2);
         }
 
+        return splitQueryString;
+    }
+
+    private static void PostProcessParameters([NotNull] in IDictionary<string, string> processedParameters, in OpenApiOperation operation, ParameterLocation? location, [NotNull] ref Dictionary<string, string> parameters)
+    {
+        var processed = processedParameters;
         var matchingParams = operation.Parameters
                     .Where(p => p.In == location && processed
                         .Any(s => s.Key
