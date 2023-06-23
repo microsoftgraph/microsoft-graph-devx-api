@@ -32,7 +32,8 @@ paths:
               - Go
               - PowerShell
               - TypeScript
-              - PHP
+              - php
+              - python
             default: C#
         - name: generation
           in: query
@@ -257,68 +258,47 @@ paths:
       description: Get list of permissions that enable access to a specified set of resources
       operationId: permissions.ListPermissionsSet
       parameters:
-        - $ref: "#/components/parameters/method"
         - $ref: "#/components/parameters/scopeType"
         - $ref: "#/components/parameters/org"
         - $ref: "#/components/parameters/branchName"
         - $ref: "#/components/parameters/includeHidden"
         - $ref: "#/components/parameters/leastPrivilegeOnly"
       requestBody:
-        description: An array of URLs
+        description: An array of URLs and corresponding HTTP methods
         content:
           application/json:
             schema:
               type: array
               items:
-                type: string
+                type: object
+                properties:
+                  requestUrl:
+                    type: string
+                  method:
+                    type: string
       responses:
         "200":
-          description: Ordered array of permissions that enable access to a specified resource (or all the Microsoft Graph API endpoints), from least to most privileged along with detailed information about the permissions.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/permission"
-              example:
-                - value: Mail.ReadBasic
-                  scopeType: Application
-                  consentDisplayName: Read user basic mail
-                  consentDescription: "Allows the app to read email in the signed-in user's mailbox except body, previewBody, attachments and any extended properties."
-                  isAdmin: false,
-                  leastPrivilegeOnly: true
-                - value: Mail.Read
-                  scopeType: Application
-                  consentDisplayName: "Read your mail "
-                  consentDescription: "Allows the app to read email in your mailbox. "
-                  isAdmin: false
-                  leastPrivilegeOnly: false
-                - value: Mail.ReadWrite
-                  scopeType: Application
-                  consentDisplayName: "Read and write access to your mail "
-                  consentDescription: "Allows the app to read, update, create and delete email in your mailbox. Does not include permission to send mail. "
-                  isAdmin: false
-                  leastPrivilegeOnly: false
-        "400":
-          description: Returns results with description of errors encountered
+          description: An array of least privileged permissions that enable access to a set of resources, along with detailed information about the permissions and any errors encountered.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  Results:
+                  results:
                     type: array
                     items:
                       $ref: "#/components/schemas/permission"
-                  Errors:
+                  errors:
                     type: array
                     items:
                       type: object
                       properties:
-                        Url:
+                        requestUrl:
                           type: string
-                        Message:
+                        message:
                           type: string
-
-                  type: object
+        "404":
+          description: Not found
         "500":
           description: Internal server error
   /changes:
@@ -433,7 +413,8 @@ paths:
                     Description: Notifications fail when an organization has several Bookings businesses,
                     WorkloadArea: Notifications,
                     Workaround: Upgrade Notifications,
-                    APIPathLink: https://docs.microsoft.com/en-us/graph/api/resources/calendar?view=graph-rest-1.0
+                    APIPathLink: https://docs.microsoft.com/en-us/graph/api/resources/calendar?view=graph-rest-1.0,
+                    SubArea: NotificationsSubArea
         "404":
           description: Not found
         "500":
@@ -446,17 +427,17 @@ paths:
       description: Get the Microsoft Graph API metadata CSDL document as an OpenAPI document.
       operationId: openapi.GetDocument
       parameters:
-        - $ref: '#/components/parameters/url'
-        - $ref: '#/components/parameters/tags'
-        - $ref: '#/components/parameters/operationIds'
-        - $ref: '#/components/parameters/openApiVersion'
-        - $ref: '#/components/parameters/graphVersion'
-        - $ref: '#/components/parameters/style'
-        - $ref: '#/components/parameters/title'
-        - $ref: '#/components/parameters/format'
-        - $ref: '#/components/parameters/forceRefresh'
-        - $ref: '#/components/parameters/singularizeOperationIds'
-        - $ref: '#/components/parameters/fileName'
+        - $ref: "#/components/parameters/url"
+        - $ref: "#/components/parameters/tags"
+        - $ref: "#/components/parameters/operationIds"
+        - $ref: "#/components/parameters/openApiVersion"
+        - $ref: "#/components/parameters/graphVersion"
+        - $ref: "#/components/parameters/style"
+        - $ref: "#/components/parameters/title"
+        - $ref: "#/components/parameters/format"
+        - $ref: "#/components/parameters/forceRefresh"
+        - $ref: "#/components/parameters/singularizeOperationIds"
+        - $ref: "#/components/parameters/fileName"
       responses:
         "200":
           description: List of operations associated to a tag/operationIds/url
@@ -471,14 +452,14 @@ paths:
       description: Get all the operations from the Microsoft Graph API metadata CSDL document.
       operationId: openapi.operations.ListOperations
       parameters:
-        - $ref: '#/components/parameters/openApiVersion'
-        - $ref: '#/components/parameters/graphVersion'
-        - $ref: '#/components/parameters/style'
-        - $ref: '#/components/parameters/title'
-        - $ref: '#/components/parameters/format'
-        - $ref: '#/components/parameters/forceRefresh'
-        - $ref: '#/components/parameters/singularizeOperationIds'
-        - $ref: '#/components/parameters/fileName'
+        - $ref: "#/components/parameters/openApiVersion"
+        - $ref: "#/components/parameters/graphVersion"
+        - $ref: "#/components/parameters/style"
+        - $ref: "#/components/parameters/title"
+        - $ref: "#/components/parameters/format"
+        - $ref: "#/components/parameters/forceRefresh"
+        - $ref: "#/components/parameters/singularizeOperationIds"
+        - $ref: "#/components/parameters/fileName"
       responses:
         "200":
           description: OK
@@ -492,8 +473,8 @@ paths:
       description: Get the Microsoft Graph API metadata CSDL document as an OpenAPIUrlTreeNode document.
       operationId: openapi.tree.GetUrlTreeNode
       parameters:
-        - $ref: '#/components/parameters/graphVersions'
-        - $ref: '#/components/parameters/forceRefresh'
+        - $ref: "#/components/parameters/graphVersions"
+        - $ref: "#/components/parameters/forceRefresh"
       responses:
         "200":
           description: Simplified OpenAPI document(s) rendered as an OpenApiUrlTreeNode document.
@@ -869,7 +850,7 @@ components:
           - yaml
         default: json
       description: The OpenAPI document output format.
-    forceRefresh: 
+    forceRefresh:
       name: forceRefresh
       in: query
       schema:

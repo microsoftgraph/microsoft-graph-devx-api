@@ -11,7 +11,7 @@ internal static class StringExtensions
         !string.IsNullOrEmpty(pathSegment) && pathSegment.StartsWith('{') && pathSegment.EndsWith('}');
     internal static bool IsFunction(this string pathSegment) => !string.IsNullOrEmpty(pathSegment) && pathSegment.Contains('.');
 
-    private static readonly Regex FunctionWithParameterRegex = new(@"\([\w=':${}<>|\-,]+\)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
+    private static readonly Regex FunctionWithParameterRegex = new(@"\([\w\s\d=':${}<>|\-,]+\)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
     internal static bool IsFunctionWithParameters(this string pathSegment) => !string.IsNullOrEmpty(pathSegment) 
                                                                               && FunctionWithParameterRegex.Match(pathSegment).Success;
 
@@ -32,7 +32,7 @@ internal static class StringExtensions
     }
     internal static string RemoveFunctionBraces(this string pathSegment) => pathSegment.TrimEnd('(',')');
     internal static string ReplaceValueIdentifier(this string original) =>
-        original?.Replace("$value", "Content");
+        original?.Replace("$value", "Content", StringComparison.Ordinal);
    
     internal static string Append(this string original, string suffix) =>
         string.IsNullOrEmpty(original) ? original : original + suffix;

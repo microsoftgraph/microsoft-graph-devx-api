@@ -14,6 +14,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
 
+    private const string PathItemsKey = "default";
+
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
         // Check if path item has the requested operation.
@@ -40,8 +42,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         ProcessCommandSegmentsAndParameters(snippetModel, ref commandSegments, ref operation, ref parameters);
 
         return commandSegments.Aggregate("", (accum, val) => string.IsNullOrWhiteSpace(accum) ? val : $"{accum} {val}")
-                    .Replace("\n", "\\\n")
-                    .Replace("\r\n", "\\\r\n");
+                    .Replace("\n", "\\\n", StringComparison.Ordinal)
+                    .Replace("\r\n", "\\\r\n", StringComparison.Ordinal);
     }
 
     private static string GetOperationName([NotNull] in SnippetModel snippetModel)
@@ -73,10 +75,25 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
     private static void ProcessCommandSegmentsAndParameters([NotNull] in SnippetModel snippetModel, [NotNull] ref List<string> commandSegments, [NotNull] ref OpenApiOperation operation, [NotNull] ref Dictionary<string, string> parameters)
     {
-
+        // Cache the last 2 path nodes for conflict checking
+        OpenApiUrlTreeNode prevPrevNode = null;
+        OpenApiUrlTreeNode prevNode = null;
         foreach (var node in snippetModel.PathNodes)
         {
-            var segment = node.Segment.Replace("$value", "content").TrimStart('$');
+            var segment = node.Segment.ReplaceValueIdentifier().TrimStart('$');
+
+            // Handle path operation conflicts
+            // GET /users/{user-id}/directReports/graph.orgContact
+            // GET /users/{user-id}/directReports/{directoryObject-id}/graph.orgContact
+            if (prevPrevNode is not null && prevNode is not null && prevNode.IsParameter &&
+                prevPrevNode.Children.TryGetValue(node.Segment, out var prevPrevNodeMatch) &&
+                node.PathItems.TryGetValue(PathItemsKey, out var nodeDefaultItem) &&
+                prevPrevNodeMatch.PathItems.TryGetValue(PathItemsKey, out var prevPrevNodeDefaultItem) &&
+                nodeDefaultItem.Operations.Any(x => prevPrevNodeDefaultItem.Operations.ContainsKey(x.Key)))
+            {
+                segment += "ById";
+            }
+
             if (segment.IsCollectionIndex())
             {
                 AddParameterToDictionary(ref parameters, segment);
@@ -85,9 +102,17 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             {
                 commandSegments.Add(NormalizeToOption(segment));
             }
+            prevPrevNode = prevNode;
+            prevNode = node;
         }
 
         // Adds query parameters from the request into the parameters dictionary
+        var processedQuery = ProcessQueryParameters(snippetModel);
+        PostProcessParameters(processedQuery, operation, ParameterLocation.Query, ref parameters);
+
+        // Adds header parameters from the request into the parameters dictionary
+        var processedHeaders = ProcessHeaderParameters(snippetModel);
+        PostProcessParameters(processedHeaders, operation, ParameterLocation.Header, ref parameters);
         var processedQuery = ProcessQueryParameters(snippetModel);
         PostProcessParameters(processedQuery, operation, ParameterLocation.Query, ref parameters);
 
@@ -109,12 +134,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         }
     }
 
-    private static IDictionary<string, string> ProcessHeaderParameters([NotNull] in SnippetModel snippetModel)
-    {
-        return snippetModel.RequestHeaders.ToDictionary(x => x.Key, x=> string.Join(',',x.Value));
-    }
-
-    private static IDictionary<string, string> ProcessQueryParameters([NotNull] in SnippetModel snippetModel)
+    private static void ProcessQueryParameters([NotNull] in SnippetModel snippetModel, [NotNull] in OpenApiOperation operation, [NotNull] ref Dictionary<string, string> parameters)
     {
         IDictionary<string, string> splitQueryString = new Dictionary<string, string>();
         if (!string.IsNullOrWhiteSpace(snippetModel.QueryString))
@@ -131,11 +151,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                     .ToDictionary(t => t.Item1, t => t.Item2);
         }
 
-        return splitQueryString;
-    }
-
-    private static void PostProcessParameters([NotNull] in IDictionary<string, string> processedParameters, in OpenApiOperation operation, ParameterLocation? location, [NotNull] ref Dictionary<string, string> parameters) {
-        var processed = processedParameters;
         var matchingParams = operation.Parameters
                     .Where(p => p.In == location && processed
                         .Any(s => s.Key

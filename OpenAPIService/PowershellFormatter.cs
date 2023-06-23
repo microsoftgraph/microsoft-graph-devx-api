@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using Humanizer;
+using Humanizer.Inflections;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -24,9 +25,22 @@ namespace OpenAPIService
         private readonly Stack<OpenApiSchema> _schemaLoop = new();
         private readonly bool _singularizeOperationIds;
 
+        private static readonly Regex s_oDataCastRegex = new("(.*(?<=[a-z]))\\.(As(?=[A-Z]).*)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex s_hashSuffixRegex = new(@"^[^-]+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex s_oDataRefRegex = new("(?<=[a-z])Ref(?=[A-Z])", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+
         public PowershellFormatter(bool singularizeOperationIds)
         {
             _singularizeOperationIds = singularizeOperationIds;
+        }
+
+        static PowershellFormatter()
+        {
+            Vocabularies.Default.AddSingular("(drive)s$", "$1"); // drives does not properly singularize to drive.               
+            Vocabularies.Default.AddSingular("(data)$", "$1"); // exclude the following from singularization.
+            Vocabularies.Default.AddSingular("(delta)$", "$1");
+            Vocabularies.Default.AddSingular("(quota)$", "$1");
+            Vocabularies.Default.AddSingular("(statistics)$", "$1");
         }
 
         /// <summary>
@@ -67,7 +81,6 @@ namespace OpenAPIService
         public override void Visit(OpenApiOperation operation)
         {
             var operationId = operation.OperationId;
-
             if (operation.Extensions.TryGetValue("x-ms-docs-operation-type",
                                                   out var value) && value != null)
             {
@@ -89,11 +102,15 @@ namespace OpenAPIService
                     ResolveFunctionParameters(operation);
                 }
             }
+            // Remove hash suffix values from OperationIds.
+            operationId = s_hashSuffixRegex.Match(operationId).Value;
 
             if (_singularizeOperationIds)
             {
                 operationId = SingularizeAndDeduplicateOperationId(operationId);
-            }            
+            }
+
+            operationId = ResolveODataCastOperationId(operationId);
 
             var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
 
@@ -109,10 +126,9 @@ namespace OpenAPIService
             // Update $ref path operationId name
             // Ref key word is enclosed between lower-cased and upper-cased letters
             // Ex.: applications_GetRefCreatedOnBehalfOf to applications_GetCreatedOnBehalfOfByRef
-            var regex = new Regex("(?<=[a-z])Ref(?=[A-Z])", RegexOptions.None, TimeSpan.FromSeconds(5));
-            if (regex.Match(operationId).Success)
+            if (s_oDataRefRegex.Match(operationId).Success)
             {
-                operationId = $"{regex.Replace(operationId, string.Empty)}ByRef";
+                operationId = $"{s_oDataRefRegex.Replace(operationId, string.Empty)}ByRef";
             }
 
             operation.OperationId = operationId;
@@ -144,7 +160,7 @@ namespace OpenAPIService
         private static string ResolveActionFunctionOperationId(OpenApiOperation operation)
         {
             var operationId = operation.OperationId;
-            var segments = operationId.Split(new char[] {'.'}, StringSplitOptions.RemoveEmptyEntries).ToList();
+            var segments = operationId.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
             // Remove ODataKeySegment values from OperationIds of actions and functions paths.
             // This is to prevent breaking changes of OperationId values already
@@ -169,16 +185,22 @@ namespace OpenAPIService
                 }
             }
 
-            var updatedOperationId = string.Join(".", segments);
+            return string.Join(".", segments);
+        }
 
-            // Remove hash suffix values from OperationIds of function paths.
-            // For example,
-            // Default OperationId --> reports_getEmailActivityUserDetail-fe32
-            // Resolved OperationId --> reports_getEmailActivityUserDetail
-            var regex = new Regex(@"^[^-]+", RegexOptions.None, TimeSpan.FromSeconds(5));
-            updatedOperationId = regex.Match(updatedOperationId).Value;
-
-            return updatedOperationId;
+        /// <summary>
+        /// Resolves operationIds of OData cast paths by merging the [ACTION] and [AS_CAST_TYPE] segments on an operationId.
+        /// </summary>
+        /// <param name="operationId">The target OpenAPI operation.</param>
+        /// <returns>The resolved OperationId.</returns>
+        private static string ResolveODataCastOperationId(string operationId)
+        {
+            var match = s_oDataCastRegex.Match(operationId);
+            if (match.Success)
+            {
+                operationId = $"{match.Groups[1]}{match.Groups[2]}";
+            }
+            return operationId;
         }
 
         /// <summary>
@@ -217,26 +239,23 @@ namespace OpenAPIService
                 return operationId;
 
             var segments = operationId.Split('.').ToList();
+            var segmentsCount = segments.Count;
+            var lastSegmentIndex = segmentsCount - 1;
+            var singularizedSegments = new List<string>();
 
-            // The last segment is ignored as a rule.
-            for (int x = segments.Count - 2; x >= 0; x--)
+            for (int x = 0; x < segmentsCount; x++)
             {
                 var segment = segments[x].Singularize(inputIsKnownToBePlural: false);
-                segments[x] = segment;
 
-                // If a segment name is contained in another segment,
-                // the former is considered a duplicate.
-                for (int y = x - 1; y >= 0; y--)
-                {
-                    if (segments[y].Contains(segment, StringComparison.OrdinalIgnoreCase))
-                    {
-                        segments.RemoveAt(x);
-                        break;
-                    }
-                }
+                // If a segment name is contained in the previous segment, the latter is considered a duplicate.
+                // The last segment is ignored as a rule.
+                if ((x > 0 && x < lastSegmentIndex) && singularizedSegments.Last().Equals(segment, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                singularizedSegments.Add(segment);
             }
 
-            return string.Join(".", segments);
+            return string.Join(".", singularizedSegments);
         }
     }
 }

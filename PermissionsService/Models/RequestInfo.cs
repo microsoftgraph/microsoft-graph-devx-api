@@ -2,15 +2,22 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using Newtonsoft.Json;
+
 namespace PermissionsService.Models
 {
-    /// <summary>
-    /// Defines permission schemes
-    /// </summary>
-    public enum ScopeType 
+    public class RequestInfo
     {
-        Application,
-        DelegatedWork,
-        DelegatedPersonal
-    };
+        [JsonProperty(PropertyName = "requestUrl")]
+        public string RequestUrl
+        {
+            get; set;
+        }
+
+        [JsonProperty(PropertyName = "method")]
+        public string HttpMethod
+        {
+            get; set;
+        }
+    }
 }

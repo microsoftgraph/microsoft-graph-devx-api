@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Net;
+﻿// -------------------------------------------------------------------------------------------------------------------------------------------------------
+//  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
+// -------------------------------------------------------------------------------------------------------------------------------------------------------
+
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace PermissionsService.Models
 {
@@ -10,18 +14,20 @@ namespace PermissionsService.Models
             get; set;
         } = new();
 
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<PermissionError> Errors
         {
             get; set;
-        } = new();
+        }
     }
 
     public class PermissionError
     {
-        public string Url
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string RequestUrl
         {
             get; set;
-        } = string.Empty;
+        }
 
         public string Message
         {

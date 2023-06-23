@@ -56,8 +56,8 @@ public class CodeSnippetsPipeline
                     var message = "Original HTTP Snippet:" + Environment.NewLine + 
                         File.ReadAllText(httpSnippetFilePath).TrimStart() + Environment.NewLine +
                         File.ReadAllText(expectedLanguageSnippetErrorFileFullPath);
-                    Assert.Fail(message);
-                }         
+                    Assert.Fail(message);     
+                }
                 else
                 {
                     Assert.Fail("Snippet file is not generated and exception message is not captured");

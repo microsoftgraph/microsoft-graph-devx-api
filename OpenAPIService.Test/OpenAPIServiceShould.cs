@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------------------------------------------------------------------------------------
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Models;
@@ -358,7 +359,7 @@ namespace OpenAPIService.Test
             subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.Plain, subsetOpenApiDocument);
 
             // Assert
-            Assert.Equal(16, subsetOpenApiDocument.Paths.Count);
+            Assert.Equal(23, subsetOpenApiDocument.Paths.Count);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Schemas);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Parameters);
             Assert.NotEmpty(subsetOpenApiDocument.Components.Responses);
@@ -410,6 +411,56 @@ namespace OpenAPIService.Test
 
             // Assert
             Assert.Equal(expectedOperationId, operationId);
+        }
+
+        [Theory]
+        [InlineData("drives.drive.ListDrive", "drive_ListDrive", OperationType.Get)]
+        [InlineData("print.taskDefinitions.tasks.GetTrigger", "print.taskDefinition.task_GetTrigger", OperationType.Get)]
+        [InlineData("groups.sites.termStore.groups.GetSets", "group.site.termStore.group_GetSet", OperationType.Get)]
+        [InlineData("external.industryData.ListDataConnectors", "external.industryData_ListDataConnector", OperationType.Get)]
+        [InlineData("applications.application.UpdateLogo", "application_SetLogo", OperationType.Put)]
+        [InlineData("identityGovernance.lifecycleWorkflows.workflows.workflow.activate", "identityGovernance.lifecycleWorkflow.workflow_activate", OperationType.Post)]
+        public void SingularizeAndDeduplicateOperationIdsForPowerShellStyle(string operationId, string expectedOperationId, OperationType operationType)
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: operationId,
+                                                           tags: null,
+                                                           url: null,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument, singularizeOperationIds: true);
+            var singularizedOpId = subsetOpenApiDocument.Paths
+                                  .FirstOrDefault().Value
+                                  .Operations[operationType]
+                                  .OperationId;
+
+            // Assert
+            Assert.Equal(expectedOperationId, singularizedOpId);
+        }
+
+        [Theory]
+        [InlineData("directory.GetDeletedItems.AsApplication", "directory_GetDeletedItemsAsApplication", OperationType.Get)]
+        [InlineData("drives.drive.items.driveItem.assignSensitivityLabel", "drives.drive.items.driveItem_assignSensitivityLabel", OperationType.Post)]
+        public void ResolveODataCastOperationIdsForPowerShellStyle(string operationId, string expectedOperationId, OperationType operationType)
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: operationId,
+                                                           tags: null,
+                                                           url: null,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            var singularizedOpId = subsetOpenApiDocument.Paths
+                                  .FirstOrDefault().Value
+                                  .Operations[operationType]
+                                  .OperationId;
+
+            // Assert
+            Assert.Equal(expectedOperationId, singularizedOpId);
         }
 
         [Fact]
@@ -546,7 +597,7 @@ namespace OpenAPIService.Test
 
             // Assert
             var jsonPayload = Encoding.ASCII.GetString(stream.ToArray());
-            var expectedPayloadContent = "{\"segment\":\"/\",\"labels\":[{\"name\":\"mock\",\"methods\":[\"Get\"]}],\"children\":[{\"segment\":\"administrativeUnits\",\"labels\":[]," +
+            var expectedPayloadContent = "{\"segment\":\"/\",\"labels\":[{\"name\":\"mock\",\"methods\":[{\"name\":\"Get\",\"documentationUrl\":null}]}],\"children\":[{\"segment\":\"administrativeUnits\",\"labels\":[]," +
                 "\"children\":[{\"segment\":\"{administrativeUnit-id}\",\"labels\":[],\"children\":[{\"segment\":\"microsoft.graph.restore\",";
 
             Assert.NotEmpty(jsonPayload);
@@ -624,6 +675,49 @@ namespace OpenAPIService.Test
             Assert.Null(defaultPriceProperty.OneOf);
             Assert.Equal("number", defaultPriceProperty.Type);
             Assert.Equal("double", defaultPriceProperty.Format);
+        }
+
+        [Theory]
+        [InlineData("/users/$count", OperationType.Get, "users_GetCount")]
+        [InlineData("/reports/microsoft.graph.getSharePointSiteUsageDetail(period={period})", OperationType.Get, "reports_getSharePointSiteUsageDetail")]
+        public void RemoveHashSuffixFromOperationIdsForPowerShellStyle(string url, OperationType operationType, string expectedOperationId)
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: null,
+                                                           url: url,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+            subsetOpenApiDocument = _openApiService.ApplyStyle(OpenApiStyle.PowerShell, subsetOpenApiDocument);
+            var operationId = subsetOpenApiDocument.Paths
+                              .FirstOrDefault().Value
+                              .Operations[operationType]
+                              .OperationId;
+
+            // Assert
+            Assert.Equal(expectedOperationId, operationId);
+        }
+
+        [Fact]
+        public void ConvertOpenApiUrlTreeNodeToJsonRendersExternalDocs()
+        {
+            // Arrange
+            var openApiDocs = new ConcurrentDictionary<string, OpenApiDocument>();
+            openApiDocs.TryAdd(GraphVersion, _graphMockSource);
+            using MemoryStream stream = new();            
+            var writer = new Utf8JsonWriter(stream, new JsonWriterOptions() { Indented = false });
+
+            // Act
+            var rootNode = _openApiService.CreateOpenApiUrlTreeNode(openApiDocs);
+            OpenApiService.ConvertOpenApiUrlTreeNodeToJson(writer, rootNode);
+            writer.Flush();
+            stream.Position = 0;
+            var output = new StreamReader(stream).ReadToEnd();
+
+            // Assert
+            Assert.Contains("\"children\":[{\"segment\":\"{user-id}\",\"labels\":[{\"name\":\"mock\",\"methods\":[{\"name\":\"Get\",\"documentationUrl\":\"https://docs.microsoft.com/foobar\"}", output);
         }
 
         private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)

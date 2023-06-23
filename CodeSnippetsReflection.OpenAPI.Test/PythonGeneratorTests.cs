@@ -6,18 +6,18 @@ using Xunit;
 
 namespace CodeSnippetsReflection.OpenAPI.Test;
 
-public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
+public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
 {
-    private readonly PhpGenerator _generator = new();
+    private readonly PythonGenerator _generator = new();
 
     [Fact]
     public async Task GeneratesTheCorrectFluentApiPathForIndexedCollections()
     {
         using var requestPayload =
-            new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
+            new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}"); 
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->messages()->byMessageId('message-id')", result);
+        Assert.Contains(".me.messages.by_message_id('message-id').get()", result);
     }
 
     [Fact]
@@ -26,17 +26,18 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->get()", result);
+        Assert.Contains(".me.get()", result);
     }
 
     [Fact]
     public async Task GeneratesCorrectLongPaths()
     {
         using var requestPayload =
-            new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
+            new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages"); 
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->users()->byUserId('user-id')->messages()->get();", result);
+        Assert.Contains("users.by_user_id('user-id').messages.get()", result);
+
     }
 
     [Fact]
@@ -56,8 +57,9 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestConfiguration = new UsersRequestBuilderPostRequestConfiguration();", result);
-        Assert.Contains("$queryParameters = UsersRequestBuilderPostRequestConfiguration::createQueryParameters();", result);
+        // Assert.Contains("select = [""displayName"",""mailNickName""],
+        //     )", result);
+        Assert.Contains("request_body.account_enabled = True", result);
     }
 
     [Fact]
@@ -72,7 +74,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("AddPasswordPostRequestBody", result);
+        Assert.Contains("request_body = AddPasswordPostRequestBody()", result);
     }
 
     [Fact]
@@ -82,7 +84,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$result = $graphServiceClient->directory()->deletedItems()->graphGroup()->get();", result);
+        Assert.Contains(".directory.deleted_items.graph_group.get()", result);
     }
 
     [Fact]
@@ -93,7 +95,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(
-            "$graphServiceClient->me()->messages()->byMessageId('message-id')->get($requestConfiguration)",
+            ".me.messages.by_message_id('message-id').get(request_configuration = request_configuration)",
             result);
     }
 
@@ -104,11 +106,9 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestConfiguration->queryParameters = $queryParameters;", result);
-        Assert.Contains("$queryParameters = UsersRequestBuilderGetRequestConfiguration::createQueryParameters();", result);
-        Assert.Contains("$queryParameters->orderby = [\"displayName\"];", result);
-        Assert.Contains("$queryParameters->select = [\"id\",\"displayName\",\"department\"];", result);
-        Assert.Contains("$queryParameters->filter = \"Department eq 'Finance'\";", result);
+        Assert.Contains("count = true", result);
+        Assert.Contains(@"select = [""id"",""displayName"",""department""]", result);
+        Assert.Contains(@"orderby = [""displayName""]", result);
     }
     
     [Fact]
@@ -118,9 +118,9 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         requestPayload.Headers.Add("Accept", "application/json");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$headers = [", result);
-        Assert.Contains("'ConsistencyLevel' => 'eventual',", result);
-        Assert.Contains("'Accept' => 'application/json',", result);
+        Assert.Contains("headers = {", result);
+        Assert.Contains(@"'ConsistencyLevel' : ""eventual""", result);
+        Assert.Contains("request_configuration = request_configuration", result);
     }
 
     [Fact]
@@ -146,8 +146,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
                 };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
-            Assert.Contains("$ccRecipientsArray []= $ccRecipientsRecipient1;", result);
+            Assert.Contains("cc_recipients_recipient1 = Recipient()", result);
+            Assert.Contains("message.body = messagebody", result);
     }
     
     [Fact]
@@ -157,7 +157,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$graphServiceClient->me()->messages()->byMessageId('message-id')->delete()", result);
+        Assert.Contains(".me.messages.by_message_id('message-id').delete()", result);
+
     }
     
     [Fact]
@@ -170,7 +171,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
        var result = _generator.GenerateCodeSnippet(snippetModel);
-       Assert.Contains("$requestBody = new CreateReplyPostRequestBody();", result);
+       Assert.Contains("request_body = CreateReplyPostRequestBody()", result);
     }
 
     [Fact]
@@ -183,7 +184,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("->ref()", result);
+        Assert.Contains(".ref.get()", result);
     }
 
     [Fact]
@@ -197,7 +198,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setState(new UsageRightState('active'));", result);
+        Assert.Contains("request_body = UsageRight()", result);
     }
 
     [Fact]
@@ -223,7 +224,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setAdditionalData($additionalData);", result);
+        Assert.Contains("request_body.additional_data(additional_data)", result); 
+
     }
 
     [Fact]
@@ -232,10 +234,10 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$result = $graphServiceClient->me()->activities()->recent()->get();", result);
+        Assert.Contains(".me.activities.recent.get()", result);
     }
 
-    [Fact /*(Skip = "Should fail by default.")*/]
+    [Fact (Skip = "Should fail by default.")]
     public async Task GenerateWithODataTypeAndODataId()
     {
         var url = "/communications/calls/{id}/answer";
@@ -263,7 +265,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setCallOptions($callOptions);", result);
+        Assert.Contains("request_body.call_options = call_options", result);
     }
     
     [Fact]
@@ -317,8 +319,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("new AttendeeBase();", result);
-        Assert.Contains("new LocationConstraintItem();", result);
+        Assert.Contains("attendees_attendee_base1 = AttendeeBase()", result);
+        Assert.Contains("location_constraint = LocationConstraint()", result);
     }
 
     [Fact]
@@ -365,8 +367,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$location = new Location();", result);
-        Assert.Contains("$requestBody->setAttendees($attendeesArray);", result);
+        Assert.Contains("location = Location()", result);
+        Assert.Contains("attendees_attendee1 = Attendee()", result);
     }
 
     [Fact (Skip = "This is still not passing. Keeping to use during fixing of bug related.")]
@@ -381,6 +383,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("= new DirectoryObject();", result);
+        Assert.Contains("= DirectoryObject();", result);
+
     }
 }

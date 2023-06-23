@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Microsoft.ApplicationInsights;
@@ -20,9 +19,9 @@ namespace CodeSnippetsReflection.OpenAPI
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
                     new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(OpenApiSnippetsGenerator) } };
-        private readonly SimpleLazy<OpenApiUrlTreeNode> _v1OpenApiDocument;
-        private readonly SimpleLazy<OpenApiUrlTreeNode> _betaOpenApiDocument;
-        private readonly SimpleLazy<OpenApiUrlTreeNode> _customOpenApiDocument;
+        private readonly SimpleLazy<OpenApiSnippetMetadata> _v1OpenApiSnippetMetadata;
+        private readonly SimpleLazy<OpenApiSnippetMetadata> _betaOpenApiSnippetMetadata;
+        private readonly SimpleLazy<OpenApiSnippetMetadata> _customOpenApiSnippetMetadata;
         public OpenApiSnippetsGenerator(
             string v1OpenApiDocumentUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml",
             string betaOpenApiDocumentUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/beta/openapi.yaml",
@@ -33,12 +32,12 @@ namespace CodeSnippetsReflection.OpenAPI
             if(string.IsNullOrEmpty(betaOpenApiDocumentUrl)) throw new ArgumentNullException(nameof(betaOpenApiDocumentUrl));
 
             _telemetryClient = telemetryClient;
-            _v1OpenApiDocument = new SimpleLazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(v1OpenApiDocumentUrl).GetAwaiter().GetResult());
-            _betaOpenApiDocument = new SimpleLazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(betaOpenApiDocumentUrl).GetAwaiter().GetResult());
+            _v1OpenApiSnippetMetadata = new SimpleLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferences(v1OpenApiDocumentUrl).GetAwaiter().GetResult());
+            _betaOpenApiSnippetMetadata = new SimpleLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferences(betaOpenApiDocumentUrl).GetAwaiter().GetResult());
             if(!string.IsNullOrEmpty(customOpenApiPathOrUrl))
-                _customOpenApiDocument = new SimpleLazy<OpenApiUrlTreeNode>(() => GetOpenApiDocument(customOpenApiPathOrUrl).GetAwaiter().GetResult());
+                _customOpenApiSnippetMetadata = new SimpleLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferences(customOpenApiPathOrUrl).GetAwaiter().GetResult());
         }
-        private static async Task<OpenApiUrlTreeNode> GetOpenApiDocument(string url) {
+        private static async Task<OpenApiSnippetMetadata> GetOpenApiReferences(string url) {
             Stream stream;
             if(url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) {
                 using var httpClient = new HttpClient();
@@ -51,15 +50,15 @@ namespace CodeSnippetsReflection.OpenAPI
             await stream.DisposeAsync();
             if(diags.Errors.Any())
                 throw new InvalidOperationException($"Failed to load the OpenAPI document:{Environment.NewLine}{diags.Errors.Select(x => x.Message).Aggregate((x, y) => x + Environment.NewLine + y)}");
-            return OpenApiUrlTreeNode.Create(doc, treeNodeLabel);
+            return new OpenApiSnippetMetadata(OpenApiUrlTreeNode.Create(doc, treeNodeLabel), doc.Components.Schemas) ;
         }
         public string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language)
         {
             _telemetryClient?.TrackTrace($"Generating code snippet for '{language}' from the request payload",
                                          SeverityLevel.Information,
                                          _snippetsTraceProperties);
-            var (openApiTreeNode, serviceRootUri) = GetModelAndServiceUriTuple(requestPayload.RequestUri);
-            var snippetModel = new SnippetModel(requestPayload, serviceRootUri.AbsoluteUri, openApiTreeNode);
+            var (openApiSnippetMetadata, serviceRootUri) = GetModelAndServiceUriTuple(requestPayload.RequestUri);
+            var snippetModel = new SnippetModel(requestPayload, serviceRootUri.AbsoluteUri, openApiSnippetMetadata);
 
             var generator = GetLanguageGenerator(language);
             return generator.GenerateCodeSnippet(snippetModel);
@@ -71,7 +70,8 @@ namespace CodeSnippetsReflection.OpenAPI
             "go",
             "powershell",
             "php",
-            "cli"
+            "cli",
+            "python"
         };
         private static ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> GetLanguageGenerator(string language) {
             return language.ToLowerInvariant() switch {
@@ -81,6 +81,7 @@ namespace CodeSnippetsReflection.OpenAPI
                 "powershell" => new PowerShellGenerator(),
                 "php" => new PhpGenerator(),
                 "cli" => new GraphCliGenerator(),
+                "python" => new PythonGenerator(),
                 _ => throw new ArgumentOutOfRangeException($"Language '{language}' is not supported"),
             };
         }
@@ -89,15 +90,15 @@ namespace CodeSnippetsReflection.OpenAPI
         /// </summary>
         /// <param name="requestUri">The URI of the service requested</param>
         /// <returns>Tuple of the OpenApiUrlTreeNode and the URI of the service root</returns>
-        private (OpenApiUrlTreeNode, Uri) GetModelAndServiceUriTuple(Uri requestUri)
+        private (OpenApiSnippetMetadata, Uri) GetModelAndServiceUriTuple(Uri requestUri)
         {
             var apiVersion = requestUri.Segments[1].Trim('/');
             var serviceRootUri = new Uri(new Uri(requestUri.GetLeftPart(UriPartial.Authority)), $"/{apiVersion}");
             return apiVersion.ToLowerInvariant() switch
             {
-                "v1.0" => ((_customOpenApiDocument ?? _v1OpenApiDocument).Value, serviceRootUri),
-                "beta" => ((_customOpenApiDocument ?? _betaOpenApiDocument).Value, serviceRootUri),
-                _ when _customOpenApiDocument != null => (_customOpenApiDocument.Value, serviceRootUri),
+                "v1.0" => ((_customOpenApiSnippetMetadata ?? _v1OpenApiSnippetMetadata).Value, serviceRootUri),
+                "beta" => ((_customOpenApiSnippetMetadata ?? _betaOpenApiSnippetMetadata).Value, serviceRootUri),
+                _ when _customOpenApiSnippetMetadata != null => (_customOpenApiSnippetMetadata.Value, serviceRootUri),
                 _ => throw new ArgumentOutOfRangeException(nameof(requestUri), "Unsupported Graph version in url"),
             };
         }

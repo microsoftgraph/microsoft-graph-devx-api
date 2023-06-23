@@ -20,12 +20,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
-        private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/features/2.0/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
+        private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
         private readonly Lazy<IList<PowerShellCommandInfo>> psCommands = new(
             () =>
             {
                 using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromSeconds(300);
                 using var stream = httpClient.GetStreamAsync(mgCommandMetadataUrl).GetAwaiter().GetResult();
                 return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
             },
@@ -33,25 +32,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         );
         private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private static readonly Regex deltaWithParams = new(@"delta\(\w*='{\w*}\'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private static readonly Regex deltaWithoutParams = new(@"delta\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex wrongQoutesInStringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
             var cleanPath = snippetModel.EndPathNode.Path.Replace("\\", "/");
             var isMeSegment = meSegmentRegex.IsMatch(cleanPath);
-            var hasGraphPrefix = snippetModel.EndPathNode.Path.Contains("graph", StringComparison.OrdinalIgnoreCase);
-            var isIdentityProvider = snippetModel.RootPathNode.Path.StartsWith("\\identityProviders", StringComparison.OrdinalIgnoreCase);
-            var lastPathSegment = snippetModel.EndPathNode.Segment;
-            var rootPathSegment = snippetModel.RootPathNode.Segment;
-            var hasMicrosoftPrefix = lastPathSegment.StartsWith("microsoft", StringComparison.OrdinalIgnoreCase);
-            cleanPath = SubstituteIdentityProviderSegment(cleanPath, isIdentityProvider);
-            cleanPath = SubstituteDeltaSegment(lastPathSegment, cleanPath);
-            cleanPath = SubstituteGraphSegment(cleanPath, hasGraphPrefix);
-            cleanPath = SubstituteMicrosoftSegment(cleanPath, hasMicrosoftPrefix, lastPathSegment);
-            cleanPath = AppendIdentityProtection(cleanPath,rootPathSegment);
-            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
+            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath);
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
@@ -61,7 +49,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"Import-Module {modulePrefix}.{moduleName}");
                 var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
                 if (!string.IsNullOrEmpty(requestPayload))
+                {
+                    if (wrongQoutesInStringLiterals.IsMatch(requestPayload))
+                    {
+                        requestPayload = requestPayload.Replace("\"{", "'{").Replace("}\"", "}'");
+                    }    
                     snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
+                }
+                    
 
                 if (isMeSegment)
                     snippetBuilder.Append($"{Environment.NewLine}# A UPN can also be used as -UserId.");
@@ -79,10 +74,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     //Allows genration of an output file for MIME content of the message
                     snippetBuilder.Append($" -OutFile $outFileId");
                 }
-            }
-            else
-            {
-                snippetBuilder.Append("UnsupportedSDKPath:" + snippetModel.Method.ToString() + " " + path);
             }
             return snippetBuilder.ToString();
         }
@@ -125,12 +116,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         public static string ReturnCleanParamsPayload(string queryParamsPayload)
         {
-            if (encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
+            if(encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
                 return queryParamsPayload.Replace("+", " ");
             return queryParamsPayload;
         }
 
-        private static (string, string) SubstituteMeSegment(bool isMeSegment, string path, string lastPathSegment)
+        private static (string, string) SubstituteMeSegment(bool isMeSegment, string path)
         {
             string additionalKeySegmentParmeter = default;
             if (isMeSegment)
@@ -138,50 +129,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 path = meSegmentRegex.Replace(path, "/users/{user-id}");
                 additionalKeySegmentParmeter = $" -UserId $userId";
             }
-            if (lastPathSegment.Contains("()"))
-            {
-                path = path.Replace("()", "");
-            }
             return (path, additionalKeySegmentParmeter);
-        }
-
-        private static string SubstituteDeltaSegment(string lastPathSegment, string path)
-        {
-            if (deltaWithoutParams.IsMatch(lastPathSegment) || deltaWithParams.IsMatch(lastPathSegment))
-                path = path.Replace(lastPathSegment, "delta");
-            return path;
-        }
-
-        private static string SubstituteGraphSegment(string path, bool hasGraphPrefix)
-        {
-            if (hasGraphPrefix)
-                path = path.Replace("graph.", "");
-            return path;
-        }
-        private static string SubstituteMicrosoftSegment(string path, bool hasMicrosoftSegment, string lastSegmentPath)
-        {
-            if (hasMicrosoftSegment)
-            {
-                var splittedPath = path.Split('/');
-                path = path.Replace(splittedPath[splittedPath.Length - 1], lastSegmentPath);
-            }
-         
-            return path;
-        }
-        private static string AppendIdentityProtection(string path, string rootPathSegment)
-        {
-            if (rootPathSegment.StartsWith("riskyUsers") || rootPathSegment.StartsWith("riskDetections"))
-            {
-                path = path.Replace(rootPathSegment, $"identityProtection/{rootPathSegment}");
-            }
-            return path;
-        }
-
-        private static string SubstituteIdentityProviderSegment(string path, bool isIdentityProvider)
-        {
-            if (isIdentityProvider)
-                path = path.Replace("identityProviders", "identity/identityProviders");
-            return path;
         }
 
         private static string GetSupportedRequestHeaders(SnippetModel snippetModel)
@@ -292,26 +240,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             // Tokenize uri by substituting parameter values with "{.*}" e.g, "/users/{user-id}" to "/users/{.*}".
             path = $"^{keyIndexRegex.Replace(path, "(\\w*-\\w*|\\w*)")}$";
             return psCommands.Value.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri,
-                path, RegexOptions.None, TimeSpan.FromSeconds(10)).Success).ToList();
+                path, RegexOptions.None, TimeSpan.FromSeconds(5)).Success).ToList();
         }
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {
-
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody)
                 || "undefined".Equals(snippetModel?.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
                 return (default, default);
             if (indentManager == null) throw new ArgumentNullException(nameof(indentManager));
-
-            if (isValidJson(snippetModel?.RequestBody)
-                && string.IsNullOrWhiteSpace(snippetModel?.ContentType))
-            {
-                snippetModel.ContentType = "application/json";
-            }
-            if ("GET".Equals(snippetModel?.Method.ToString(), StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(snippetModel?.RequestBody))
-            {
-                return default;
-            }
 
             var payloadSB = new StringBuilder();
             switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant())
@@ -325,35 +261,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         payloadSB.AppendLine("}");
                     }
                     break;
-                case "image/jpeg":
-                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = Binary data for the image");
-                    break;
-                case "application/zip":
-                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = {snippetModel?.RequestBody}");
-                    break;
-                case "text/plain":
-                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = Plain text");
-                    break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
             }
             return (payloadSB.ToString(), $"-BodyParameter ${requestBodyVarName}");
         }
 
-        private static bool isValidJson(string requestBody)
-        {
-            try
-            {
-                JsonDocument.Parse(requestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
-                return true;
-            }
-            catch (Exception ex)
-            {
-
-            }
-
-            return false;
-        }
         private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true)
         {
             if (value.ValueKind != JsonValueKind.Object) throw new InvalidOperationException($"Expected JSON object and got {value.ValueKind}");
@@ -422,15 +335,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetNumberLiteral(OpenApiSchema schema, JsonElement value)
         {
-            //if (schema == default) return default;
-            //return schema.Type switch
-            //{
-            //    "integer" when schema.Format.Equals("int64") => $"{value.GetInt64()}",
-            //    _ when schema.Format.Equals("float") => $"{value.GetDecimal()}",
-            //    _ when schema.Format.Equals("double") => $"{value.GetDouble()}",
-            //    _ => value.GetInt32().ToString(),
-            //};
-            return value.ToString();
+            if (schema == default) return default;
+            return schema.Type switch
+            {
+                "integer" when schema.Format.Equals("int64") => $"{value.GetInt64()}",
+                _ when schema.Format.Equals("float") => $"{value.GetDecimal()}",
+                _ when schema.Format.Equals("double") => $"{value.GetDouble()}",
+                _ => value.GetInt32().ToString(),
+            };
         }
 
         private static string GetActionParametersList(params string[] parameters)
