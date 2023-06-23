@@ -36,14 +36,12 @@ namespace GraphWebApi.Controllers
         [Route("api/[controller]")]
         [Route("knownissues")]
         [HttpGet]
-        public async Task<IActionResult> GetKnownIssues()
+        public async Task<IActionResult> GetKnownIssues([FromQuery] string environment = EnvironmentType.Staging)
         {
             _telemetryClient?.TrackTrace("Request to query the list of known issues",
                                             SeverityLevel.Information,
                                             _knownIssuesTraceProperties);
-
-            List<KnownIssue> result = await _knownIssuesService.QueryBugsAsync();
-
+            List<KnownIssue> result = await _knownIssuesService.QueryBugsAsync(environment, null);
             return result == null ? NotFound() : Ok(result);
         }
     }

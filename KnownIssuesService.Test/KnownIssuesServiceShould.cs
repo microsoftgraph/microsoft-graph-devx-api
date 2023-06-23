@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using UtilityService;
 using Xunit;
 
 namespace KnownIssuesService.Test
@@ -21,7 +22,7 @@ namespace KnownIssuesService.Test
         private readonly IKnownIssuesService _knownIssuesService;
         private readonly WorkItemTrackingHttpClientMock _workItemTrackingHttpClientMock;
         private readonly WorkItemTrackingHttpClient _workItemTrackingHttpClient;
-        private readonly Mock<Wiql> _wiqlTest;
+        private readonly Mock<Wiql> _wiqlTest = new();
         private readonly IConfigurationRoot _configuration;
 
         public KnownIssuesServiceShould()
@@ -29,10 +30,9 @@ namespace KnownIssuesService.Test
             _configuration = new ConfigurationBuilder()
                             .AddJsonFile("appsettingstest.json")
                             .Build();
-            _wiqlTest = new Mock<Wiql>();
             _workItemTrackingHttpClientMock = new WorkItemTrackingHttpClientMock();
             _workItemTrackingHttpClient = _workItemTrackingHttpClientMock.MockWorkItemTrackingHttpClient(_wiqlTest);
-            _knownIssuesService = new Services.KnownIssuesService(_configuration, wiql: _wiqlTest.Object, httpQueryClient: _workItemTrackingHttpClient);
+            _knownIssuesService = new Services.KnownIssuesService(_configuration, httpQueryClient: _workItemTrackingHttpClient);
         }
 
         [Fact]
@@ -42,7 +42,7 @@ namespace KnownIssuesService.Test
             int expectedNoOfWorkItems = 5;
 
             //Act
-            WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync();
+            WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync(_wiqlTest.Object);
             int actualNoOfWorkItems = workItemQueryResult.WorkItems.ToList().Count;
 
             //Assert
@@ -56,7 +56,7 @@ namespace KnownIssuesService.Test
             int expectedNoOfWorkItems = 5;
 
             //Act
-            WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync();
+            WorkItemQueryResult workItemQueryResult = await _knownIssuesService.GetQueryByWiqlAsync(_wiqlTest.Object);
             int[] ids = workItemQueryResult.WorkItems.Select(item => item.Id).ToArray();
             List<WorkItem> items = await _knownIssuesService.GetWorkItemsQueryAsync(ids, workItemQueryResult);
 
@@ -77,11 +77,12 @@ namespace KnownIssuesService.Test
                 WorkAround = "Test",
                 Link = "/foo/bar",
                 CreatedDateTime = DateTime.Parse("01/06/2022 00:00:00"),
-                LastUpdatedDateTime = DateTime.Parse("01/07/2022 00:00:00")
+                LastUpdatedDateTime = DateTime.Parse("01/07/2022 00:00:00"),
+                SubArea = "Test notifications"
             };
 
             //Act
-            List<KnownIssue> items = await _knownIssuesService.QueryBugsAsync();
+            List<KnownIssue> items = await _knownIssuesService.QueryBugsAsync(EnvironmentType.Staging, this._wiqlTest.Object);
 
             //Assert
             foreach (var item in items)
