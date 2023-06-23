@@ -24,6 +24,7 @@ namespace OpenAPIService
         private const string NewPutPrefix = "_Set";
         private readonly Stack<OpenApiSchema> _schemaLoop = new();
         private readonly bool _singularizeOperationIds;
+
         private static readonly Regex s_oDataCastRegex = new("(.*(?<=[a-z]))\\.(As(?=[A-Z]).*)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex s_hashSuffixRegex = new(@"^[^-]+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex s_oDataRefRegex = new("(?<=[a-z])Ref(?=[A-Z])", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
@@ -108,6 +109,7 @@ namespace OpenAPIService
             {
                 operationId = SingularizeAndDeduplicateOperationId(operationId);
             }
+
             operationId = ResolveODataCastOperationId(operationId);
 
             var charPos = operationId.LastIndexOf('.', operationId.Length - 1);
