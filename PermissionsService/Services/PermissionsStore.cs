@@ -353,6 +353,7 @@ namespace PermissionsService
                             RequestUrl = request.RequestUrl,
                             Message = exception.Message
                         });
+                        _telemetryClient?.TrackException(exception);
                     }
                 });
 

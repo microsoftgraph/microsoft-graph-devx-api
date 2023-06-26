@@ -69,13 +69,20 @@ namespace UriMatchingService
             var templateMatches = new Dictionary<KeyValuePair<string, string>, int>(); // {{ templateKey, foundParameterCount }}
             foreach (var template in _templates)
             {
-                var parameters = GetParameters(absolutePath, template.Value);
-                if (parameters != null)
+                try
                 {
-                    if (parameters.Count == 0)
-                        return new TemplateMatch() { Key = template.Key, Template = template.Value }; // exact match, no ids
-                    else 
-                        templateMatches.Add(template, parameters.Count);
+                    var parameters = GetParameters(absolutePath, template.Value);
+                    if (parameters != null)
+                    {
+                        if (parameters.Count == 0)
+                            return new TemplateMatch() { Key = template.Key, Template = template.Value }; // exact match, no ids
+                        else
+                            templateMatches.Add(template, parameters.Count);
+                    }
+                }
+                catch (Exception)
+                {
+                    continue;
                 }
             }
 
