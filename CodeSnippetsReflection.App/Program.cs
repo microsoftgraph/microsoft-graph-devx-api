@@ -141,43 +141,18 @@ namespace CodeSnippetsReflection.App
                 File.WriteAllText(filePath + "-error", message);
                 return;
             }
-            if("powershell".Equals(language, StringComparison.OrdinalIgnoreCase))
+
+            if (!string.IsNullOrWhiteSpace(snippet))
             {
-                if (!string.IsNullOrWhiteSpace(snippet) && !snippet.Contains("UnsupportedSDKPath"))
-                {
-                    Console.WriteLine($"Writing snippet: {filePath}");
-                    File.WriteAllText(filePath, snippet);
-                }
-                else
-                {
-                    if (snippet.Contains("UnsupportedSDKPath"))
-                    {
-                        File.WriteAllText(filePath + "-error", snippet);
-                        Console.Error.WriteLine(snippet);
-                    }
-                    else
-                    {
-                        var message = $"Failed to generate {language} snippets for {file}.";
-                        File.WriteAllText(filePath + "-error", message);
-                        Console.Error.WriteLine(message);
-                    }
-                }
+                Console.WriteLine($"Writing snippet: {filePath}");
+                File.WriteAllText(filePath, snippet);
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(snippet))
-                {
-                    Console.WriteLine($"Writing snippet: {filePath}");
-                    File.WriteAllText(filePath, snippet);
-                }
-                else
-                {
-                    var message = $"Failed to generate {language} snippets for {file}.";
-                    File.WriteAllText(filePath + "-error", message);
-                    Console.Error.WriteLine(message);
-                }
+                var message = $"Failed to generate {language} snippets for {file}.";
+                File.WriteAllText(filePath + "-error", message);
+                Console.Error.WriteLine(message);
             }
-            
         }
     }
 }
