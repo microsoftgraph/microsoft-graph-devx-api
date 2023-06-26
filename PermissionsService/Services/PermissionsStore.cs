@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -337,7 +336,7 @@ namespace PermissionsService
                 var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
                 var uniqueRequests = requests.DistinctBy(static x => $"{x.HttpMethod}{x.RequestUrl}", StringComparer.OrdinalIgnoreCase);
 
-                Parallel.ForEach(uniqueRequests, async request =>
+                await Parallel.ForEachAsync(uniqueRequests, async (request, _) =>
                 {
                     try
                     {
