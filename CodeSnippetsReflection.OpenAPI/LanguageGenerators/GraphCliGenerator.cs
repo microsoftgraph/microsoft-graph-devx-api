@@ -16,7 +16,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex overloadedBoundedFunctionWithNoneDateRegex = new(@"\w*\(\w*='{\w*\}'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex unBoundedFunctionRegex = new(@"\w*\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-
+    private static readonly Regex filtersWithFunctionOperatorRegex = new (@"--filter \w*\(", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex expandQueryOptionRegex = new(@"expand=\w*\(\D*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private const string PathItemsKey = "default";
 
     public string GenerateCodeSnippet(SnippetModel snippetModel)
@@ -146,8 +147,22 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             var updatedSegment = ProcessUnBoundFunctions(commandSegments[unboundedFunctionIndex]);
             commandSegments[unboundedFunctionIndex] = updatedSegment;
         }
+
+        int functionOperatorTypeIndex = commandSegments.FindIndex(f => f.Contains("--filter"));
+        if (functionOperatorTypeIndex != -1)
+        {
+            var updatedSegment = ProcessFunctionOperatorTypes(commandSegments[functionOperatorTypeIndex]);
+            commandSegments[functionOperatorTypeIndex] = updatedSegment;
+        }
+
+
     }
 
+    private static string ProcessFunctionOperatorTypes(string segment)
+    {
+        var functionOperatorItems = segment.Split("--filter");
+        return segment.Replace(functionOperatorItems[1], " \""+functionOperatorItems[1].TrimStart()+"\"");
+    }
     private static (string, string) ProcessOverloadedBoundFunctions(string segment, string operation)
     {
         var functionItems = segment.Split("(");
@@ -172,7 +187,17 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         IDictionary<string, string> splitQueryString = new Dictionary<string, string>();
         if (!string.IsNullOrWhiteSpace(snippetModel.QueryString))
         {
-            splitQueryString = snippetModel.QueryString
+
+            if (expandQueryOptionRegex.IsMatch(snippetModel.QueryString))
+            {
+                var val = snippetModel.QueryString.Split("expand=");
+                var updatedVal = val[1].Replace("$", "`$");
+                updatedVal = updatedVal.Replace(updatedVal, "\"" + updatedVal + "\"");
+                splitQueryString.Add("$expand", updatedVal);
+            }
+            else
+            {
+                splitQueryString = snippetModel.QueryString
                     .Remove(0, 1)
                     .Split('&')
                     .Select(q =>
@@ -182,6 +207,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                     })
                     .Where(t => !string.IsNullOrWhiteSpace(t.Item2))
                     .ToDictionary(t => t.Item1, t => t.Item2);
+            }
         }
 
         return splitQueryString;
