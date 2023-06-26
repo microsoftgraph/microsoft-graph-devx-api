@@ -13,6 +13,9 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 {
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
+    private static readonly Regex overloadedBoundedFunctionWithNoneDateRegex = new(@"\w*\(\w*='{\w*\}'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex unBoundedFunctionRegex = new(@"\w*\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
     private const string PathItemsKey = "default";
 
@@ -119,15 +122,46 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         commandSegments.Add(operationName);
 
         commandSegments.AddRange(parameters.Select(p => $"{p.Key} {p.Value}"));
-
+        
         // Gets the request payload
         var payload = GetRequestPayLoad(snippetModel);
         if (!string.IsNullOrWhiteSpace(payload))
         {
             commandSegments.Add(payload);
         }
+        int boundedFunctionIndex = commandSegments.FindIndex(u => overloadedBoundedFunctionWithNoneDateRegex.IsMatch(u)
+        || overloadedBoundedFunctionWithDateRegex.IsMatch(u));
+
+        if (boundedFunctionIndex != -1)
+        {
+            int operationIndex = commandSegments.FindIndex(o => o == operationName);
+            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName);
+            commandSegments[boundedFunctionIndex] = updatedSegment;
+            commandSegments[operationIndex] = updatedOperation;
+        }
+
+        int unboundedFunctionIndex = commandSegments.FindIndex(u => unBoundedFunctionRegex.IsMatch(u));
+        if(unboundedFunctionIndex != -1)
+        {
+            var updatedSegment = ProcessUnBoundFunctions(commandSegments[unboundedFunctionIndex]);
+            commandSegments[unboundedFunctionIndex] = updatedSegment;
+        }
     }
 
+    private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation)
+    {
+        var functionItems = segment.Split("(");
+        var functionParams = functionItems[1];
+        var functionName = functionItems[0];
+        var parameter = functionParams.Split("=")[0];
+        var updatedSegment = $"{functionName}-with-{parameter}";
+        return parameter.Equals("period")?(updatedSegment,$"{operation} --{parameter}"+" '{"+parameter+"-id}'")
+            : (updatedSegment, $"{operation} --{parameter}" + " {" + parameter + "-id}");
+    }
+    private static string ProcessUnBoundFunctions(string segment)
+    {
+        return segment.Replace("(", "").Replace(")", "");
+    }
     private static IDictionary<string, string> ProcessHeaderParameters([NotNull] in SnippetModel snippetModel)
     {
         return snippetModel.RequestHeaders.ToDictionary(x => x.Key, x => string.Join(',', x.Value));
