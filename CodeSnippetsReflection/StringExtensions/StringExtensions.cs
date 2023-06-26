@@ -41,13 +41,15 @@ namespace CodeSnippetsReflection.StringExtensions
 
         public static string ToPascalCase(this string str)
         {
+            if (string.IsNullOrEmpty(str)) return str;
             string[] words = str.Split('_');
-            string pascalCaseString = string.Join("", words.Select(w => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(w)));
+            string pascalCaseString = string.Join("", words.Select(ToFirstCharacterUpperCase));
             return pascalCaseString;
         }
 
        public static string ToSnakeCase(this string str)
         {
+            if (string.IsNullOrEmpty(str)) return str;
             StringBuilder snakeCaseBuilder = new StringBuilder();
             for (int i = 0; i < str.Length; i++)
             {
