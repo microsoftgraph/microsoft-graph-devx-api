@@ -13,6 +13,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 {
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
+    private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
     private const string PathItemsKey = "default";
 
@@ -126,6 +128,47 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         {
             commandSegments.Add(payload);
         }
+        OverLoadedBoundFunctionsWithDate(commandSegments, operationName, snippetModel);
+
+    }
+    /// <summary>
+    /// Checks for segments that have overloaded bound functions with date parameter
+    /// Example of such a segment would be: getYammerDeviceUsageUserDetail(date=2018-03-05).
+    /// ProcessOverloadedBoundFunction is called to reconstruct the segment to the expected command segment.
+    /// </summary>
+    /// <param name="commandSegments"></param>
+    /// <param name="operationName"></param>
+    private static void OverLoadedBoundFunctionsWithDate(List<string> commandSegments, string operationName, SnippetModel snippetModel)
+    {
+        int boundedFunctionIndex = commandSegments.FindIndex(static u => overloadedBoundedFunctionWithDateRegex.IsMatch(u));
+
+        if (boundedFunctionIndex != -1)
+        {
+            int operationIndex = commandSegments.FindIndex(o => operationName.Equals(o, StringComparison.OrdinalIgnoreCase));
+            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName, snippetModel);
+            commandSegments[boundedFunctionIndex] = updatedSegment;
+            commandSegments[operationIndex] = updatedOperation;
+        }
+    }
+
+    /// <summary>
+    /// Reconstructs segments with overloaded bound functions to the expected command segments.
+    /// For example; "get-yammer-device-usage-user-detail(date={date})" get will be reconstructed to
+    /// "get-yammer-device-usage-user-detail-with-date get --date {date_id}" as expected by cli for it
+    /// to execute successfully.
+    /// </summary>
+    /// <param name="segment"></param>
+    /// <param name="operation"></param>
+    /// <returns></returns>
+    private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation, SnippetModel snippetModel)
+    {
+        var functionItems = segment.Split("(");
+        var functionParams = functionItems[1];
+        var functionName = functionItems[0];
+        var parameter = functionParams.Split("=")[0];
+        var updatedSegment = $"{functionName}-with-{parameter}";
+        return apiPathWithSingleOrDoubleQuotesOnFunctions.IsMatch(snippetModel.Path) ? (updatedSegment,$"{operation} --{parameter}"+" '{"+parameter+"-id}'")
+            : (updatedSegment, $"{operation} --{parameter}" + " {" + parameter + "-id}");
     }
 
     private static IDictionary<string, string> ProcessHeaderParameters([NotNull] in SnippetModel snippetModel)
