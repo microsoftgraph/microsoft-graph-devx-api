@@ -169,10 +169,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         return parameter.Equals("period")?(updatedSegment,$"{operation} --{parameter}"+" '{"+parameter+"-id}'")
             : (updatedSegment, $"{operation} --{parameter}" + " {" + parameter + "-id}");
     }
-    private static string ProcessUnBoundFunctions(string segment)
-    {
-        return segment.Replace("(", "").Replace(")", "");
-    }
+
     private static IDictionary<string, string> ProcessHeaderParameters([NotNull] in SnippetModel snippetModel)
     {
         return snippetModel.RequestHeaders.ToDictionary(x => x.Key, x => string.Join(',', x.Value));
