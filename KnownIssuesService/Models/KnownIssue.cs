@@ -81,5 +81,13 @@ namespace KnownIssuesService.Models
         {
             get; set;
         }
+
+        /// <summary>
+        /// Microsoft Graph Issue Visibility
+        /// </summary>
+        public Boolean IsPublicIssue
+        {
+            get; set;
+        }
     }
 }
