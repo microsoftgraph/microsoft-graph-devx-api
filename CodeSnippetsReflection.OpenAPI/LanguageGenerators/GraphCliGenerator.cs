@@ -139,7 +139,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// <param name="operationName"></param>
     private static void OverLoadedBoundFunctionsWithDate(List<string> commandSegments, string operationName)
     {
-        int boundedFunctionIndex = commandSegments.FindIndex(u => overloadedBoundedFunctionWithDateRegex.IsMatch(u));
+        int boundedFunctionIndex = commandSegments.FindIndex(static u => overloadedBoundedFunctionWithDateRegex.IsMatch(u));
 
         if (boundedFunctionIndex != -1)
         {
