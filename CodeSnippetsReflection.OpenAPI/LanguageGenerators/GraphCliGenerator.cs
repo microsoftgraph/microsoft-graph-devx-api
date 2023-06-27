@@ -144,7 +144,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
         if (boundedFunctionIndex != -1)
         {
-            int operationIndex = commandSegments.FindIndex(o => o == operationName);
+            int operationIndex = commandSegments.FindIndex(o => operationName.Equals(o, StringComparison.OrdinalIgnoreCase));
             var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName, snippetModel);
             commandSegments[boundedFunctionIndex] = updatedSegment;
             commandSegments[operationIndex] = updatedOperation;
