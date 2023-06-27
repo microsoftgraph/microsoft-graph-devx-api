@@ -14,7 +14,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
     private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex overloadedBoundedFunctionWithNonDateRegex = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)");
+    private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)");
 
     private const string PathItemsKey = "default";
 
@@ -167,7 +167,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         var functionName = functionItems[0];
         var parameter = functionParams.Split("=")[0];
         var updatedSegment = $"{functionName}-with-{parameter}";
-        return overloadedBoundedFunctionWithNonDateRegex.IsMatch(snippetModel.Path) ? (updatedSegment,$"{operation} --{parameter}"+" '{"+parameter+"-id}'")
+        return apiPathWithSingleOrDoubleQuotesOnFunctions.IsMatch(snippetModel.Path) ? (updatedSegment,$"{operation} --{parameter}"+" '{"+parameter+"-id}'")
             : (updatedSegment, $"{operation} --{parameter}" + " {" + parameter + "-id}");
     }
 

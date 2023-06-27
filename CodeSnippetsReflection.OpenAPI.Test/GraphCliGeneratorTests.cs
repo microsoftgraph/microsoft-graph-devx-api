@@ -423,4 +423,19 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         // Then
         Assert.Equal("mgc reports get-yammer-device-usage-user-detail-with-date get --date {date-id}", result);
     }
+
+    [Fact]
+    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithDateParameterWithSingleOrDoubleQuotes()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/reports/getYammerDeviceUsageUserDetail(date='2018-03-05')";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc reports get-yammer-device-usage-user-detail-with-date get --date '{date-id}'", result);
+    }
 }
