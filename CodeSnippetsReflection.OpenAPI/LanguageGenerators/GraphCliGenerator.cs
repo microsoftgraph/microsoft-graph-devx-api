@@ -13,9 +13,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 {
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
-    private static readonly Regex overloadedBoundedFunctionWithNoneDateRegex = new(@"\w*\(\w*='{\w*\}'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex unBoundedFunctionRegex = new(@"\w*\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
     private const string PathItemsKey = "default";
 
@@ -122,15 +120,26 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         commandSegments.Add(operationName);
 
         commandSegments.AddRange(parameters.Select(p => $"{p.Key} {p.Value}"));
-        
+
         // Gets the request payload
         var payload = GetRequestPayLoad(snippetModel);
         if (!string.IsNullOrWhiteSpace(payload))
         {
             commandSegments.Add(payload);
         }
-        int boundedFunctionIndex = commandSegments.FindIndex(u => overloadedBoundedFunctionWithNoneDateRegex.IsMatch(u)
-        || overloadedBoundedFunctionWithDateRegex.IsMatch(u));
+        OverLoadedBoundFunctionsWithDate(commandSegments, operationName);
+
+    }
+    /// <summary>
+    /// Checks for segments that have overloaded bound functions with date parameter
+    /// Example of such a segment would be: getYammerDeviceUsageUserDetail(date=2018-03-05).
+    /// ProcessOverloadedBoundFunction is called to reconstruct the segment to the expected command segment.
+    /// </summary>
+    /// <param name="commandSegments"></param>
+    /// <param name="operationName"></param>
+    private static void OverLoadedBoundFunctionsWithDate(List<string> commandSegments, string operationName)
+    {
+        int boundedFunctionIndex = commandSegments.FindIndex(u => overloadedBoundedFunctionWithDateRegex.IsMatch(u));
 
         if (boundedFunctionIndex != -1)
         {
@@ -139,15 +148,17 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             commandSegments[boundedFunctionIndex] = updatedSegment;
             commandSegments[operationIndex] = updatedOperation;
         }
-
-        int unboundedFunctionIndex = commandSegments.FindIndex(u => unBoundedFunctionRegex.IsMatch(u));
-        if(unboundedFunctionIndex != -1)
-        {
-            var updatedSegment = ProcessUnBoundFunctions(commandSegments[unboundedFunctionIndex]);
-            commandSegments[unboundedFunctionIndex] = updatedSegment;
-        }
     }
 
+    /// <summary>
+    /// Reconstructs segments with overloaded bound functions to the expected command segments.
+    /// For example; "get-yammer-device-usage-user-detail(date={date})" get will be reconstructed to
+    /// "get-yammer-device-usage-user-detail-with-date get --date {date_id}" as expected by cli for it
+    /// to execute successfully.
+    /// </summary>
+    /// <param name="segment"></param>
+    /// <param name="operation"></param>
+    /// <returns></returns>
     private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation)
     {
         var functionItems = segment.Split("(");
