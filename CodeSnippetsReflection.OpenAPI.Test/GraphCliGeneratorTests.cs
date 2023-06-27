@@ -453,4 +453,19 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         // Then
         Assert.Equal("mgc drives items delta-with-token get --token '{token-id}' --drive-id {drive-id} --drive-item-id {driveItem-id}", result);
     }
+
+    [Fact]
+    public async Task GeneratesSnippetsContainingUnBoundedFunctions()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/identity/identityProviders/availableProviderTypes()";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc identity identity-providers available-provider-types get", result);
+    }
 }
