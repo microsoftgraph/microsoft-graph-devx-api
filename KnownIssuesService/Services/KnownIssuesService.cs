@@ -178,7 +178,7 @@ namespace KnownIssuesService.Services
 
             foreach(var knownIssue in _knownIssuesList.ToList())
             {
-                if(knownIssue.State == "New" || knownIssue.State == "Closed" || knownIssue.IsPublicIssue == false)
+                if(knownIssue.State == "New" || knownIssue.State == "Closed" || !knownIssue.IsPublicIssue)
                 {
                     _knownIssuesList.Remove(knownIssue);
                 }
