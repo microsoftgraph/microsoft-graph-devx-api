@@ -78,7 +78,8 @@ namespace KnownIssuesService.Test
                 Link = "/foo/bar",
                 CreatedDateTime = DateTime.Parse("01/06/2022 00:00:00"),
                 LastUpdatedDateTime = DateTime.Parse("01/07/2022 00:00:00"),
-                SubArea = "Test notifications"
+                SubArea = "Test notifications",
+                IsPublicIssue = true
             };
 
             //Act

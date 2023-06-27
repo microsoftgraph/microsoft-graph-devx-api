@@ -34,7 +34,8 @@ namespace KnownIssuesService.Test
                        {"System.State","Active"},
                        {"System.Title","Issue A"},
                        {"Custom.MSGraphM365Workload","Calendar"},
-                       {"Custom.Workaround","Test"}
+                       {"Custom.Workaround","Test"},
+                       {"Custom.PublicIssue", true}
                     }
                 },
                 new WorkItem(){  Id = 9076 , Url = "https://microsoftgraph.visualstudio.com/_apis/wit/workItems/9076",
@@ -45,7 +46,8 @@ namespace KnownIssuesService.Test
                        {"Custom.Workaround","Test"},
                        {"Custom.APIPathLink", "/foo/bar"},
                        {"Custom.Dateissuewasraised", DateTime.Parse("01/06/2022 00:00:00")},
-                       {"Custom.Lastupdate", DateTime.Parse("01/07/2022 00:00:00")}
+                       {"Custom.Lastupdate", DateTime.Parse("01/07/2022 00:00:00")},
+                       {"Custom.PublicIssue", true}
                     }
 
                 },
@@ -54,7 +56,8 @@ namespace KnownIssuesService.Test
                        {"System.State","Resolved"},
                        {"System.Title","Issue K"},
                        {"Custom.MSGraphM365Workload","Mail"},
-                       {"Custom.Workaround","Limit number of requests"}
+                       {"Custom.Workaround","Limit number of requests"},
+                       {"Custom.PublicIssue", true}
                     }
                 },
                 new WorkItem(){  Id = 9078 , Url = "https://microsoftgraph.visualstudio.com/_apis/wit/workItems/9078",
@@ -62,7 +65,8 @@ namespace KnownIssuesService.Test
                        {"System.State","New"},
                        {"System.Title","Issue F"},
                        {"Custom.MSGraphM365Workload","Mail"},
-                       {"Custom.Workaround","Limit number of requests"}
+                       {"Custom.Workaround","Limit number of requests"},
+                       {"Custom.PublicIssue", false}
                     }
                 },
                 new WorkItem()
@@ -71,7 +75,8 @@ namespace KnownIssuesService.Test
                        {"System.State","New"},
                        {"System.Title","Issue A"},
                        {"Custom.MSGraphM365Workload","Calendar"},
-                       {"Custom.Workaround","Test"}
+                       {"Custom.Workaround","Test"},
+                       {"Custom.PublicIssue", true}
                     }
                 }
             };
