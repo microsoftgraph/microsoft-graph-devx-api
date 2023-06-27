@@ -184,7 +184,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void writeSnippet(SnippetCodeGraph codeGraph, StringBuilder builder)
         {
-            builder.AppendLine($"{clientVarName}, err := msgraphsdk.New{clientVarType}({clientFactoryVariables}){Environment.NewLine}{Environment.NewLine}");
+            builder.AppendLine($"{clientVarName} := msgraphsdk.New{clientVarType}({clientFactoryVariables}){Environment.NewLine}{Environment.NewLine}");
             writeHeadersAndOptions(codeGraph, builder);
             WriteBody(codeGraph, builder);
             builder.AppendLine("");
