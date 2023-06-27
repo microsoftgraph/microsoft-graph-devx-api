@@ -16,6 +16,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex overloadedBoundedFunctionWithNoneDateRegex = new(@"\w*\(\w*='{\w*\}'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex unBoundFunctionRegex = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
     private const string PathItemsKey = "default";
 
@@ -129,9 +130,28 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         {
             commandSegments.Add(payload);
         }
-        OverLoadedBoundFunctionsWithDate(commandSegments, operationName, snippetModel);
+
+        FetchUnBoundFunctions(commandSegments);
+        FetchOverLoadedBoundFunctions(commandSegments, operationName, snippetModel);
 
     }
+
+    /// <summary>
+    /// Checks for segments that have unbound functions
+    /// Example "identity-providers available-provider-types() get"
+    /// will be reconstructed to identity-providers available-provider-types get
+    /// </summary>
+    /// <param name="commandSegments"></param>
+    private static void FetchUnBoundFunctions(List<string> commandSegments)
+    {
+        int unboundedFunctionIndex = commandSegments.FindIndex(static u => unBoundFunctionRegex.IsMatch(u));
+        if (unboundedFunctionIndex != -1)
+        {
+            var segment = commandSegments[unboundedFunctionIndex];
+            commandSegments[unboundedFunctionIndex] = segment.Replace("(", "").Replace(")", "");
+        }
+    }
+
     /// <summary>
     /// Checks for segments that have overloaded bound functions with date parameter
     /// Example of such a segment would be: getYammerDeviceUsageUserDetail(date=2018-03-05).
@@ -139,7 +159,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// </summary>
     /// <param name="commandSegments"></param>
     /// <param name="operationName"></param>
-    private static void OverLoadedBoundFunctionsWithDate(List<string> commandSegments, string operationName, SnippetModel snippetModel)
+    private static void FetchOverLoadedBoundFunctions(List<string> commandSegments, string operationName, SnippetModel snippetModel)
     {
         int boundedFunctionIndex = commandSegments.FindIndex(static u => overloadedBoundedFunctionWithDateRegex.IsMatch(u)
         || overloadedBoundedFunctionWithNoneDateRegex.IsMatch(u));
