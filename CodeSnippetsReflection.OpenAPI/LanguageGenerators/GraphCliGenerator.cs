@@ -155,6 +155,12 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             commandSegments[functionOperatorTypeIndex] = updatedSegment;
         }
 
+        if (commandSegments[1].Equals("me"))
+        {
+            commandSegments[1] = "users";
+            int operationIndex = commandSegments.FindIndex(o => o.Equals(operationName, StringComparison.OrdinalIgnoreCase));
+            commandSegments[operationIndex] = operationName + " --user-id {user-id}";
+        }
 
     }
 
