@@ -14,6 +14,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
     private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex overloadedBoundedFunctionWithNonDateRegex = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)");
 
     private const string PathItemsKey = "default";
 
@@ -127,7 +128,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         {
             commandSegments.Add(payload);
         }
-        OverLoadedBoundFunctionsWithDate(commandSegments, operationName);
+        OverLoadedBoundFunctionsWithDate(commandSegments, operationName, snippetModel);
 
     }
     /// <summary>
@@ -137,14 +138,14 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// </summary>
     /// <param name="commandSegments"></param>
     /// <param name="operationName"></param>
-    private static void OverLoadedBoundFunctionsWithDate(List<string> commandSegments, string operationName)
+    private static void OverLoadedBoundFunctionsWithDate(List<string> commandSegments, string operationName, SnippetModel snippetModel)
     {
         int boundedFunctionIndex = commandSegments.FindIndex(static u => overloadedBoundedFunctionWithDateRegex.IsMatch(u));
 
         if (boundedFunctionIndex != -1)
         {
             int operationIndex = commandSegments.FindIndex(o => o == operationName);
-            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName);
+            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName, snippetModel);
             commandSegments[boundedFunctionIndex] = updatedSegment;
             commandSegments[operationIndex] = updatedOperation;
         }
@@ -159,14 +160,14 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// <param name="segment"></param>
     /// <param name="operation"></param>
     /// <returns></returns>
-    private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation)
+    private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation, SnippetModel snippetModel)
     {
         var functionItems = segment.Split("(");
         var functionParams = functionItems[1];
         var functionName = functionItems[0];
         var parameter = functionParams.Split("=")[0];
         var updatedSegment = $"{functionName}-with-{parameter}";
-        return parameter.Equals("period")?(updatedSegment,$"{operation} --{parameter}"+" '{"+parameter+"-id}'")
+        return overloadedBoundedFunctionWithNonDateRegex.IsMatch(snippetModel.Path) ? (updatedSegment,$"{operation} --{parameter}"+" '{"+parameter+"-id}'")
             : (updatedSegment, $"{operation} --{parameter}" + " {" + parameter + "-id}");
     }
 
