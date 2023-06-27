@@ -14,7 +14,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
     private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)");
+    private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
     private const string PathItemsKey = "default";
 
