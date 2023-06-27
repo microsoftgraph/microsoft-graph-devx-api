@@ -438,4 +438,19 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         // Then
         Assert.Equal("mgc reports get-yammer-device-usage-user-detail-with-date get --date '{date-id}'", result);
     }
+    
+    [Fact]
+    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithNonDateParameter()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/drives/driveid/items/driveitemid/delta(token='token')";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc drives items delta-with-token get --token '{token-id}' --drive-id {drive-id} --drive-item-id {driveItem-id}", result);
+    }
 }
