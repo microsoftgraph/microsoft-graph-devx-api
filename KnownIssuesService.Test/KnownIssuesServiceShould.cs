@@ -100,7 +100,7 @@ namespace KnownIssuesService.Test
             Assert.Equal(contract.WorkAround, items[1].WorkAround);
             Assert.Equal(contract.CreatedDateTime, items[1].CreatedDateTime);
             Assert.Equal(contract.LastUpdatedDateTime, items[1].LastUpdatedDateTime);
-            Assert.True(items[1].IsUpdated);
+            Assert.True(items[1].IsDateUpdated);
         }
     }
 }

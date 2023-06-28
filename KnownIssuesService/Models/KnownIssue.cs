@@ -64,8 +64,8 @@ namespace KnownIssuesService.Models
         /// <summary>
         /// Determines if the Last Update is current compared to the Created date
         /// </summary>
-        [JsonProperty(nameof(IsUpdated))]
-        public bool IsUpdated => LastUpdatedDateTime > CreatedDateTime;
+        [JsonProperty(nameof(IsDateUpdated))]
+        public bool IsDateUpdated => LastUpdatedDateTime > CreatedDateTime;
 
         /// <summary>
         /// Known Issues Status i.e New, Active,Resolved
