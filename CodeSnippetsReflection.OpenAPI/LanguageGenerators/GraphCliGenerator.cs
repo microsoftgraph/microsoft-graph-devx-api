@@ -17,7 +17,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex unBoundedFunctionRegex = new(@"\w*\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex filtersWithFunctionOperatorRegex = new (@"--filter \w*\(", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex expandQueryOptionRegex = new(@"expand=\w*\(\D*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex systemQueryOptionRegex = new(@"\w*=\w*\(\D*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private const string PathItemsKey = "default";
 
     public string GenerateCodeSnippet(SnippetModel snippetModel)
@@ -198,12 +198,15 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         if (!string.IsNullOrWhiteSpace(snippetModel.QueryString))
         {
 
-            if (expandQueryOptionRegex.IsMatch(snippetModel.QueryString))
-            {
-                var val = snippetModel.QueryString.Split("expand=");
-                var updatedVal = val[1].Replace("$", "`$");
-                updatedVal = updatedVal.Replace(updatedVal, "\"" + updatedVal + "\"");
-                splitQueryString.Add("$expand", updatedVal);
+            if (systemQueryOptionRegex.IsMatch(snippetModel.QueryString))
+            {   
+                string pattern = "\\?\\$\\w*=";
+                string[] splittedQueryString = Regex.Split(snippetModel.QueryString, pattern);
+                var match = Regex.Match(snippetModel.QueryString, pattern);
+                string queryOption = match.Groups[0].Value.Replace("?", "").Replace("=", "");
+                var queryOptionFunction = splittedQueryString[1].Replace("$", "`$");
+                queryOptionFunction = queryOptionFunction.Replace(queryOptionFunction, "\"" + queryOptionFunction + "\"");
+                splitQueryString.Add(queryOption, queryOptionFunction);
             }
             else
             {
