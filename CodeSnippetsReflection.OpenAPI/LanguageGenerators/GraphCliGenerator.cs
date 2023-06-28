@@ -13,10 +13,11 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 {
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
-    private static readonly Regex overloadedBoundedFunctionWithNoneDateRegex = new(@"\w*\(\w*='{\w*\}'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex unBoundedFunctionRegex = new(@"\w*\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex filtersWithFunctionOperatorRegex = new (@"--filter \w*\(", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex overloadedBoundedFunctionWithNoneDateRegex = new(@"\w*\(\w*='{\w*\}'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex unBoundFunctionRegex = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    //private static readonly Regex filtersWithFunctionOperatorRegex = new (@"--filter \w*\(", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex systemQueryOptionRegex = new(@"\w*=\w*\(\D*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private const string PathItemsKey = "default";
 
@@ -130,30 +131,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         {
             commandSegments.Add(payload);
         }
-        int boundedFunctionIndex = commandSegments.FindIndex(u => overloadedBoundedFunctionWithNoneDateRegex.IsMatch(u)
-        || overloadedBoundedFunctionWithDateRegex.IsMatch(u));
-
-        if (boundedFunctionIndex != -1)
-        {
-            int operationIndex = commandSegments.FindIndex(o => o == operationName);
-            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName);
-            commandSegments[boundedFunctionIndex] = updatedSegment;
-            commandSegments[operationIndex] = updatedOperation;
-        }
-
-        int unboundedFunctionIndex = commandSegments.FindIndex(u => unBoundedFunctionRegex.IsMatch(u));
-        if (unboundedFunctionIndex != -1)
-        {
-            var updatedSegment = ProcessUnBoundFunctions(commandSegments[unboundedFunctionIndex]);
-            commandSegments[unboundedFunctionIndex] = updatedSegment;
-        }
-
-        int functionOperatorTypeIndex = commandSegments.FindIndex(f => f.Contains("--filter"));
-        if (functionOperatorTypeIndex != -1)
-        {
-            var updatedSegment = ProcessFunctionOperatorTypes(commandSegments[functionOperatorTypeIndex]);
-            commandSegments[functionOperatorTypeIndex] = updatedSegment;
-        }
+        FetchUnBoundFunctions(commandSegments);
+        FetchOverLoadedBoundFunctions(commandSegments, operationName, snippetModel);
         ProcessMeSegments(commandSegments, operationName);
 
     }
@@ -168,24 +147,61 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         }
     }
 
-    private static string ProcessFunctionOperatorTypes(string segment)
+    /// <summary>
+    /// Checks for segments that have unbound functions
+    /// Example "identity-providers available-provider-types() get"
+    /// will be reconstructed to identity-providers available-provider-types get
+    /// </summary>
+    /// <param name="commandSegments"></param>
+    private static void FetchUnBoundFunctions(List<string> commandSegments)
     {
-        var functionOperatorItems = segment.Split("--filter");
-        return segment.Replace(functionOperatorItems[1], " \""+functionOperatorItems[1].TrimStart()+"\"");
+        int unboundedFunctionIndex = commandSegments.FindIndex(static u => unBoundFunctionRegex.IsMatch(u));
+        if (unboundedFunctionIndex != -1)
+        {
+            var segment = commandSegments[unboundedFunctionIndex];
+            commandSegments[unboundedFunctionIndex] = segment.Replace("(", "").Replace(")", "");
+        }
     }
-    private static (string, string) ProcessOverloadedBoundFunctions(string segment, string operation)
+
+    /// <summary>
+    /// Checks for segments that have overloaded bound functions with date parameter
+    /// Example of such a segment would be: getYammerDeviceUsageUserDetail(date=2018-03-05).
+    /// ProcessOverloadedBoundFunction is called to reconstruct the segment to the expected command segment.
+    /// </summary>
+    /// <param name="commandSegments"></param>
+    /// <param name="operationName"></param>
+    private static void FetchOverLoadedBoundFunctions(List<string> commandSegments, string operationName, SnippetModel snippetModel)
+    {
+        int boundedFunctionIndex = commandSegments.FindIndex(static u => overloadedBoundedFunctionWithDateRegex.IsMatch(u)
+        || overloadedBoundedFunctionWithNoneDateRegex.IsMatch(u));
+
+        if (boundedFunctionIndex != -1)
+        {
+            int operationIndex = commandSegments.FindIndex(o => operationName.Equals(o, StringComparison.OrdinalIgnoreCase));
+            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName, snippetModel);
+            commandSegments[boundedFunctionIndex] = updatedSegment;
+            commandSegments[operationIndex] = updatedOperation;
+        }
+    }
+
+    /// <summary>
+    /// Reconstructs segments with overloaded bound functions to the expected command segments.
+    /// For example; "get-yammer-device-usage-user-detail(date={date})" get will be reconstructed to
+    /// "get-yammer-device-usage-user-detail-with-date get --date {date_id}" as expected by cli for it
+    /// to execute successfully.
+    /// </summary>
+    /// <param name="segment"></param>
+    /// <param name="operation"></param>
+    /// <returns></returns>
+    private static (string, string) ProcessOverloadedBoundFunctions(string segment, string operation, SnippetModel snippetModel)
     {
         var functionItems = segment.Split("(");
         var functionParams = functionItems[1];
         var functionName = functionItems[0];
         var parameter = functionParams.Split("=")[0];
         var updatedSegment = $"{functionName}-with-{parameter}";
-        return parameter.Equals("period") ? (updatedSegment, $"{operation} --{parameter}" + " '{" + parameter + "-id}'")
+        return apiPathWithSingleOrDoubleQuotesOnFunctions.IsMatch(snippetModel.Path) ? (updatedSegment, $"{operation} --{parameter}" + " '{" + parameter + "-id}'")
             : (updatedSegment, $"{operation} --{parameter}" + " {" + parameter + "-id}");
-    }
-    private static string ProcessUnBoundFunctions(string segment)
-    {
-        return segment.Replace("(", "").Replace(")", "");
     }
     private static IDictionary<string, string> ProcessHeaderParameters([NotNull] in SnippetModel snippetModel)
     {
@@ -204,7 +220,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                 string[] splittedQueryString = Regex.Split(snippetModel.QueryString, pattern);
                 var match = Regex.Match(snippetModel.QueryString, pattern);
                 string queryOption = match.Groups[0].Value.Replace("?", "").Replace("=", "");
-                var queryOptionFunction = splittedQueryString[1].Replace("$", "`$");
+                string queryOptionFunction = splittedQueryString[1].Replace("$", "`$");
                 queryOptionFunction = queryOptionFunction.Replace(queryOptionFunction, "\"" + queryOptionFunction + "\"");
                 splitQueryString.Add(queryOption, queryOptionFunction);
             }
