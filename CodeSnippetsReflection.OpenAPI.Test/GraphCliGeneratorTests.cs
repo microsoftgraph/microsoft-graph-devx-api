@@ -481,7 +481,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users calendar events list --user-id {user-id} --filter startsWith(subject,'All')", result);
+        Assert.Equal("mgc users calendar events list --user-id {user-id} --filter \"startsWith(subject,'All')\"", result);
     }
     [Fact]
     public async Task GeneratesSnippetsWithExpandQueryOptions()
