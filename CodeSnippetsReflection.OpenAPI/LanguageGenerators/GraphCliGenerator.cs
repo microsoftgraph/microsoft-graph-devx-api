@@ -241,8 +241,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                             var x = q.Split('=');
                             return x.Length > 1 ? (x[0], x[1]) : (x[0], string.Empty);
                         })
-                        .Where(t => !string.IsNullOrWhiteSpace(t.Item2))
-                        .ToDictionary(t => t.Item1, t => t.Item2);
+                        .Where(static t => !string.IsNullOrWhiteSpace(t.Item2))
+                        .ToDictionary(static t => t.Item1, static t => t.Item2);
             }
         }
 
