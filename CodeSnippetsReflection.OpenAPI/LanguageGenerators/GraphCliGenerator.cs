@@ -18,7 +18,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex unBoundFunctionRegex = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     //private static readonly Regex filtersWithFunctionOperatorRegex = new (@"--filter \w*\(", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex systemQueryOptionRegex = new(@"\w*=\w*\(\D*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex systemQueryOptionRegex = new(@"\w*=\w*\(\D*|\d*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private const string PathItemsKey = "default";
 
     public string GenerateCodeSnippet(SnippetModel snippetModel)
