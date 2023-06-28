@@ -85,6 +85,7 @@ namespace KnownIssuesService.Models
         /// <summary>
         /// Microsoft Graph Issue Visibility
         /// </summary>
+        [JsonProperty(nameof(SubArea))]
         public Boolean IsPublicIssue
         {
             get; set;
