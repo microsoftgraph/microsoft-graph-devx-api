@@ -228,7 +228,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                 var match = Regex.Match(snippetModel.QueryString, pattern, RegexOptions.Compiled, TimeSpan.FromSeconds(5));
                 string queryOption = match.Groups[0].Value.Replace("?", string.Empty, StringComparison.OrdinalIgnoreCase).Replace("=", string.Empty, StringComparison.OrdinalIgnoreCase);
                 string queryOptionFunction = splittedQueryString[1].Replace("$", "`$", StringComparison.OrdinalIgnoreCase);
-                queryOptionFunction = queryOptionFunction.Replace(queryOptionFunction, "\"" + queryOptionFunction + "\"");
+                queryOptionFunction = queryOptionFunction.Replace(queryOptionFunction, "\"" + queryOptionFunction + "\"", StringComparison.Ordinal);
                 splitQueryString.Add(queryOption, queryOptionFunction);
             }
             else
