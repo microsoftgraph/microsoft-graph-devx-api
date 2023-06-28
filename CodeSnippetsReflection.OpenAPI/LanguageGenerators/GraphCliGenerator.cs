@@ -17,6 +17,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex overloadedBoundedFunctionWithNoneDateRegex = new(@"\w*\(\w*='{\w*\}'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex unBoundFunctionRegex = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex systemQueryOptionRegex = new(@"\w*=\w*\(\D*|\d*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
     private const string PathItemsKey = "default";
 
@@ -220,16 +221,29 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         IDictionary<string, string> splitQueryString = new Dictionary<string, string>();
         if (!string.IsNullOrWhiteSpace(snippetModel.QueryString))
         {
-            splitQueryString = snippetModel.QueryString
-                    .Remove(0, 1)
-                    .Split('&')
-                    .Select(q =>
-                    {
-                        var x = q.Split('=');
-                        return x.Length > 1 ? (x[0], x[1]) : (x[0], string.Empty);
-                    })
-                    .Where(t => !string.IsNullOrWhiteSpace(t.Item2))
-                    .ToDictionary(t => t.Item1, t => t.Item2);
+            if (systemQueryOptionRegex.IsMatch(snippetModel.QueryString))
+            {
+                string pattern = "\\?\\$\\w*=";
+                string[] splittedQueryString = Regex.Split(snippetModel.QueryString, pattern);
+                var match = Regex.Match(snippetModel.QueryString, pattern);
+                string queryOption = match.Groups[0].Value.Replace("?", "").Replace("=", "");
+                string queryOptionFunction = splittedQueryString[1].Replace("$", "`$");
+                queryOptionFunction = queryOptionFunction.Replace(queryOptionFunction, "\"" + queryOptionFunction + "\"");
+                splitQueryString.Add(queryOption, queryOptionFunction);
+            }
+            else
+            {
+                splitQueryString = snippetModel.QueryString
+                        .Remove(0, 1)
+                        .Split('&')
+                        .Select(q =>
+                        {
+                            var x = q.Split('=');
+                            return x.Length > 1 ? (x[0], x[1]) : (x[0], string.Empty);
+                        })
+                        .Where(t => !string.IsNullOrWhiteSpace(t.Item2))
+                        .ToDictionary(t => t.Item1, t => t.Item2);
+            }
         }
 
         return splitQueryString;
