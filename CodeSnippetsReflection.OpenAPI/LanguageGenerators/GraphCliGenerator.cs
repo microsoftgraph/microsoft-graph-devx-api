@@ -236,7 +236,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
                 splitQueryString = snippetModel.QueryString
                         .Remove(0, 1)
                         .Split('&')
-                        .Select(q =>
+                        .Select(static q =>
                         {
                             var x = q.Split('=');
                             return x.Length > 1 ? (x[0], x[1]) : (x[0], string.Empty);
