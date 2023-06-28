@@ -468,4 +468,19 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         // Then
         Assert.Equal("mgc identity identity-providers available-provider-types get", result);
     }
+
+    [Fact]
+    public async Task GeneratesSnippetsWithSlashMeEndpoints()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith%28subject%2C%27All%27%29";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc users calendar events list --user-id {user-id} --filter startsWith(subject,'All')", result);
+    }
 }
