@@ -28,7 +28,7 @@ pool:
 parameters:
   - name: snippetLanguages
     type: object
-    default: ['C#', 'JavaScript', 'Java', 'Go', 'PowerShell', 'PHP', 'Python']
+    default: ['C#', 'JavaScript', 'Java', 'Go', 'PowerShell', 'PHP', 'Python', 'Cli']
     displayName: 'Languages to generate snippets for'
 
 variables:

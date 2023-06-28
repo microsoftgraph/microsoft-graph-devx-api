@@ -132,6 +132,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         }
 
         FetchUnBoundFunctions(commandSegments);
+        ProcessMeSegments(commandSegments, operationName);
         FetchOverLoadedBoundFunctions(commandSegments, operationName, snippetModel);
 
     }
@@ -191,6 +192,22 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         var updatedSegment = $"{functionName}-with-{parameter}";
         return apiPathWithSingleOrDoubleQuotesOnFunctions.IsMatch(snippetModel.Path) ? (updatedSegment,$"{operation} --{parameter}"+" '{"+parameter+"-id}'")
             : (updatedSegment, $"{operation} --{parameter}" + " {" + parameter + "-id}");
+    }
+
+    /// <summary>
+    /// Replaces /me endpoints with users and appends --user-id parameter to the command
+    /// See issue: https://github.com/microsoftgraph/msgraph-cli/issues/278
+    /// </summary>
+    /// <param name="commandSegments"></param>
+    /// <param name="operationName"></param>
+    private static void ProcessMeSegments(List<string> commandSegments, string operationName)
+    {
+        if (commandSegments[1].Equals("me", StringComparison.OrdinalIgnoreCase))
+        {
+            commandSegments[1] = "users";
+            int operationIndex = commandSegments.FindIndex(o => o.Equals(operationName, StringComparison.OrdinalIgnoreCase));
+            commandSegments[operationIndex] = $"{operationName} --user-id {{user-id}}";
+        }
     }
 
     private static IDictionary<string, string> ProcessHeaderParameters([NotNull] in SnippetModel snippetModel)
