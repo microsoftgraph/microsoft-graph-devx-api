@@ -35,7 +35,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static readonly Regex wrongQoutesInStringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex deltaWithParams = new(@"delta\(\w*='{\w*}\'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex deltaWithoutParams = new(@"delta\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private static readonly Regex stringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
