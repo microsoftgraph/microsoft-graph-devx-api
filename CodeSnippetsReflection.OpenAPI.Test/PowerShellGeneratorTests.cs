@@ -374,7 +374,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/drives/XXXX/items/XXXX/delta(token='token')");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Get-MgContactDelta", result);
+            Assert.Contains("Get-MgDriveItemDelta", result);
             Assert.Contains("-Token", result);
         }
         
