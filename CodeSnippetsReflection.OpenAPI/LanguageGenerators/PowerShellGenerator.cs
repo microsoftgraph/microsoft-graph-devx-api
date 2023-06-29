@@ -84,7 +84,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (RequiresMIMEContentOutPut(snippetModel, path))
                 {
                     //Allows genration of an output file for MIME content of the message
-                    snippetBuilder.Append($" -OutFile $outFileId");
+                    snippetBuilder.Append(" -OutFile $outFileId");
+                }
+
+                if (deltaWithParams.IsMatch(lastPathSegment))
+                {
+                    snippetBuilder.Append(" -Token $tokenId");
                 }
             }
             else

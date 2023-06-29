@@ -358,5 +358,25 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains(expectedParams, result);
             Assert.Contains("-BodyParameter $params", result);
         }
+
+        [Fact]
+        public async Task GeneratesSnippetForDeltaFunctionsWithoutParams()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/contacts/delta()?$select=displayName%2CjobTitle%2Cmail");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgContactDelta", result);
+        }
+
+        [Fact]
+        public async Task GeneratesSnippetForDeltaFunctionsWithParams()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/drives/XXXX/items/XXXX/delta(token='token')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgContactDelta", result);
+            Assert.Contains("-Token", result);
+        }
+        
     }
 }
