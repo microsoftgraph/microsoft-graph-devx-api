@@ -251,11 +251,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         return splitQueryString;
     }
 
-    private static bool IsUrlEncoded(string queryOptionParams)
-    {
-        return queryOptionParams != HttpUtility.UrlDecode(queryOptionParams);
-    }
-
     private static void PostProcessParameters([NotNull] in IDictionary<string, string> processedParameters, in OpenApiOperation operation, ParameterLocation? location, [NotNull] ref Dictionary<string, string> parameters)
     {
         var processed = processedParameters;
