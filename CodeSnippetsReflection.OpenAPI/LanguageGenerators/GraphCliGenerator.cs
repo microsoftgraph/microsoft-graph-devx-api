@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Web;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 
@@ -225,9 +226,11 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
             {
                 string pattern = "\\?\\$\\w*=";
                 string[] splittedQueryString = Regex.Split(snippetModel.QueryString, pattern, RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+                string queryOptionFunction = IsUrlEncoded(splittedQueryString[1]) ? HttpUtility.UrlDecode(splittedQueryString[1]) : splittedQueryString[1];
+                bool isUrlEncodedString = IsUrlEncoded(queryOptionFunction);
                 var match = Regex.Match(snippetModel.QueryString, pattern, RegexOptions.Compiled, TimeSpan.FromSeconds(5));
                 string queryOption = match.Groups[0].Value.Replace("?", string.Empty, StringComparison.OrdinalIgnoreCase).Replace("=", string.Empty, StringComparison.OrdinalIgnoreCase);
-                string queryOptionFunction = splittedQueryString[1].Replace("$", "`$", StringComparison.OrdinalIgnoreCase);
+                queryOptionFunction = queryOptionFunction.Replace("$", "`$", StringComparison.OrdinalIgnoreCase);
                 queryOptionFunction = queryOptionFunction.Replace(queryOptionFunction, "\"" + queryOptionFunction + "\"", StringComparison.Ordinal);
                 splitQueryString.Add(queryOption, queryOptionFunction);
             }
@@ -247,6 +250,11 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         }
 
         return splitQueryString;
+    }
+
+    private static bool IsUrlEncoded(string queryOptionParams)
+    {
+        return queryOptionParams != HttpUtility.UrlDecode(queryOptionParams);
     }
 
     private static void PostProcessParameters([NotNull] in IDictionary<string, string> processedParameters, in OpenApiOperation operation, ParameterLocation? location, [NotNull] ref Dictionary<string, string> parameters)
