@@ -386,6 +386,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgPlaceAsRoom", result);
         }
+
+        [Fact]
+        public async Task GeneratesSnippetForPathsWithIdentityProviderAsRootNode()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/identityProviders");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgIdentityProvider", result);
+        }
         
     }
 }

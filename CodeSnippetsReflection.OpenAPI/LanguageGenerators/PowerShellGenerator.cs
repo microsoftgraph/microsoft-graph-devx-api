@@ -136,7 +136,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         public static string ReturnCleanParamsPayload(string queryParamsPayload)
         {
             if(encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
-                return queryParamsPayload.Replace("+", string.Empty);
+                return queryParamsPayload.Replace("+", " ");
             return queryParamsPayload;
         }
         private static (string, string) SubstituteMeSegment(bool isMeSegment, string path, string lastPathSegment)
