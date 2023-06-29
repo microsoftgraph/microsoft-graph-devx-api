@@ -50,7 +50,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             cleanPath = SubstituteDeltaSegment(lastPathSegment, cleanPath);
             cleanPath = SubstituteGraphSegment(cleanPath, hasGraphPrefix);
             cleanPath = SubstituteMicrosoftSegment(cleanPath, hasMicrosoftPrefix, lastPathSegment);
-            cleanPath = AppendIdentityProtection(cleanPath, rootPathSegment);
             var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
@@ -177,15 +176,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             return path;
         }
-        private static string AppendIdentityProtection(string path, string rootPathSegment)
-        {
-            if (rootPathSegment.StartsWith("riskyUsers") || rootPathSegment.StartsWith("riskDetections"))
-            {
-                path = path.Replace(rootPathSegment, $"identityProtection/{rootPathSegment}");
-            }
-            return path;
-        }
-
         private static string SubstituteIdentityProviderSegment(string path, bool isIdentityProvider)
         {
             if (isIdentityProvider)
