@@ -321,6 +321,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case "application/zip":
                     payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = {snippetModel?.RequestBody}");
                     break;
+                case "text/plain":
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = {snippetModel?.RequestBody}");
+                    break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
             }
