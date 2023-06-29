@@ -481,6 +481,34 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users calendar events list --user-id {user-id} --filter startsWith(subject,'All')", result);
+        Assert.Equal("mgc users calendar events list --user-id {user-id} --filter \"startsWith(subject,'All')\"", result);
+    }
+    [Fact]
+    public async Task GeneratesSnippetsWithExpandQueryOptions()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/me/messages/XXXX?$expand=singleValueExtendedProperties%28$filter%3Did%20eq%20%27XXXX%27%29";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc users messages get --user-id {user-id} --message-id {message-id} --expand \"singleValueExtendedProperties(`$filter=id eq 'XXXX')\"", result);
+    }
+    [Fact]
+    public async Task GeneratesSnippetsWithFilterQueryOptions()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/identityGovernance/accessReviews/definitions?$filter=contains%28scope%2Fmicrosoft.graph.accessReviewQueryScope%2Fquery%2C%20%27.%2Fmembers%27%29";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc identity-governance access-reviews definitions list --filter \"contains(scope/microsoft.graph.accessReviewQueryScope/query, './members')\"", result);
     }
 }
