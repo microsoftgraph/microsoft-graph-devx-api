@@ -511,4 +511,19 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         // Then
         Assert.Equal("mgc identity-governance access-reviews definitions list --filter \"contains(scope/microsoft.graph.accessReviewQueryScope/query, './members')\"", result);
     }
+
+    [Fact]
+    public async Task GeneratesSnippetsForHttpSnippetsWithUrlEncodedValuesForSystemQueryOptionParameters()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/teams/XXXXXXX/members?$filter=%28microsoft.graph.aadUserConversationMember%2FdisplayName%2520eq%2520%27Harry%2520Johnson%27%2520or%2520microsoft.graph.aadUserConversationMember%2Femail%2520eq%2520%27admin%40M365x987948.OnMicrosoft.com%27%29";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc teams members list --team-id {team-id} --filter \"(microsoft.graph.aadUserConversationMember/displayName eq 'Harry Johnson' or microsoft.graph.aadUserConversationMember/email eq 'admin@M365x987948.OnMicrosoft.com')\"", result);
+    }
 }
