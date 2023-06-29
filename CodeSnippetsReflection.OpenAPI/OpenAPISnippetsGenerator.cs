@@ -70,7 +70,8 @@ namespace CodeSnippetsReflection.OpenAPI
             "go",
             "powershell",
             "php",
-            "python"
+            "python",
+            "cli"
         };
         private static ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> GetLanguageGenerator(string language) {
             return language.ToLowerInvariant() switch {
@@ -80,6 +81,7 @@ namespace CodeSnippetsReflection.OpenAPI
                 "powershell" => new PowerShellGenerator(),
                 "php" => new PhpGenerator(),
                 "python" => new PythonGenerator(),
+                "cli" => new GraphCliGenerator(),
                 _ => throw new ArgumentOutOfRangeException($"Language '{language}' is not supported"),
             };
         }

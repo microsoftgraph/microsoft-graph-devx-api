@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.Test;
@@ -407,5 +407,123 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         // Then
         Assert.Equal("mgc users create --body '{\\\n  \"name\": \"test\"\\\n}'", result);
+    }
+
+    [Fact]
+    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithDateParameter()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/reports/getYammerDeviceUsageUserDetail(date=2018-03-05)";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc reports get-yammer-device-usage-user-detail-with-date get --date {date-id}", result);
+    }
+
+    [Fact]
+    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithDateParameterWithSingleOrDoubleQuotes()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/reports/getYammerDeviceUsageUserDetail(date='2018-03-05')";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc reports get-yammer-device-usage-user-detail-with-date get --date '{date-id}'", result);
+    }
+    
+    [Fact]
+    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithNonDateParameter()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/drives/driveid/items/driveitemid/delta(token='token')";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc drives items delta-with-token get --token '{token-id}' --drive-id {drive-id} --drive-item-id {driveItem-id}", result);
+    }
+
+    [Fact]
+    public async Task GeneratesSnippetsContainingUnBoundedFunctions()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/identity/identityProviders/availableProviderTypes()";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc identity identity-providers available-provider-types get", result);
+    }
+
+    [Fact]
+    public async Task GeneratesSnippetsWithSlashMeEndpoints()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith%28subject%2C%27All%27%29";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc users calendar events list --user-id {user-id} --filter \"startsWith(subject,'All')\"", result);
+    }
+    [Fact]
+    public async Task GeneratesSnippetsWithExpandQueryOptions()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/me/messages/XXXX?$expand=singleValueExtendedProperties%28$filter%3Did%20eq%20%27XXXX%27%29";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc users messages get --user-id {user-id} --message-id {message-id} --expand \"singleValueExtendedProperties(`$filter=id eq 'XXXX')\"", result);
+    }
+    [Fact]
+    public async Task GeneratesSnippetsWithFilterQueryOptions()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/identityGovernance/accessReviews/definitions?$filter=contains%28scope%2Fmicrosoft.graph.accessReviewQueryScope%2Fquery%2C%20%27.%2Fmembers%27%29";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc identity-governance access-reviews definitions list --filter \"contains(scope/microsoft.graph.accessReviewQueryScope/query, './members')\"", result);
+    }
+
+    [Fact]
+    public async Task GeneratesSnippetsForHttpSnippetsWithUrlEncodedValuesForSystemQueryOptionParameters()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/teams/XXXXXXX/members?$filter=%28microsoft.graph.aadUserConversationMember%2FdisplayName%2520eq%2520%27Harry%2520Johnson%27%2520or%2520microsoft.graph.aadUserConversationMember%2Femail%2520eq%2520%27admin%40M365x987948.OnMicrosoft.com%27%29";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal("mgc teams members list --team-id {team-id} --filter \"(microsoft.graph.aadUserConversationMember/displayName eq 'Harry Johnson' or microsoft.graph.aadUserConversationMember/email eq 'admin@M365x987948.OnMicrosoft.com')\"", result);
     }
 }

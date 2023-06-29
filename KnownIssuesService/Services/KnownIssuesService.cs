@@ -172,12 +172,13 @@ namespace KnownIssuesService.Services
                 Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default,
                 CreatedDateTime = x.Fields.TryGetValue("Custom.Dateissuewasraised", out DateTime createdDate) ? createdDate : default,
                 LastUpdatedDateTime = x.Fields.TryGetValue("Custom.Lastupdate", out DateTime changedDate) ? changedDate : default,
-                SubArea = x.Fields.TryGetValue("Custom.MicrosoftGraphSubarea", out var subArea) ? subArea.ToString() : default
+                SubArea = x.Fields.TryGetValue("Custom.MicrosoftGraphSubarea", out var subArea) ? subArea.ToString() : default,
+                IsPublicIssue = x.Fields.TryGetValue("Custom.PublicIssue", out bool publicIssue) ? publicIssue : default
             }).ToList();
 
             foreach(var knownIssue in _knownIssuesList.ToList())
             {
-                if(knownIssue.State == "New" || knownIssue.State == "Closed")
+                if(knownIssue.State == "New" || knownIssue.State == "Closed" || !knownIssue.IsPublicIssue)
                 {
                     _knownIssuesList.Remove(knownIssue);
                 }
