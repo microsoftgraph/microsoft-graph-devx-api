@@ -377,6 +377,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Get-MgDriveItemDelta", result);
             Assert.Contains("-Token", result);
         }
+
+        [Fact]
+        public async Task GeneratesSnippetForHttpSnippetsWithGraphPrefixOnLastPathSegment()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/places/graph.room");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgPlaceAsRoom", result);
+        }
         
     }
 }
