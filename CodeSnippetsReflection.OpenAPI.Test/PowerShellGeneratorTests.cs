@@ -395,6 +395,52 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgIdentityProvider", result);
         }
+
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithTextContentType()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/me/drive/items/XXXX/content")
+            {
+                Content = new StringContent(
+                    "Plain text",
+                    Encoding.UTF8,
+                    "text/plain")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Set-MgDriveItemContent", result);
+        }
+
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithApplicationZipContentType()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/me/drive/items/XXXX/content")
+            {
+                Content = new StringContent(
+                    "Zip file content",
+                    Encoding.UTF8,
+                    "application/zip")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Set-MgDriveItemContent", result);
+        }
+
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithImageContentType()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/me/photo/$value")
+            {
+                Content = new StringContent(
+                    "Binary data for the image",
+                    Encoding.UTF8,
+                    "image/jpeg")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Set-MgUserPhotoContent", result);
+            Assert.Contains("-BodyParameter", result);
+        }
         
     }
 }
