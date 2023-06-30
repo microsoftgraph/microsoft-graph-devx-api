@@ -84,11 +84,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     //Allows genration of an output file for MIME content of the message
                     snippetBuilder.Append(" -OutFile $outFileId");
                 }
-
-                if (deltaWithParams.IsMatch(lastPathSegment))
-                {
-                    snippetBuilder.Append(" -Token $tokenId");
-                }
             }
             else
             {
@@ -126,11 +121,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!string.IsNullOrEmpty(parameterList))
                 payloadSB.Append($" {parameterList}");
 
+            var functionParameterList = GetFunctionParameterList(snippetModel);
+            if (!string.IsNullOrEmpty(functionParameterList))
+                payloadSB.Append($" {functionParameterList}");
+
             var requestHeadersPayload = GetSupportedRequestHeaders(snippetModel);
             if (!string.IsNullOrEmpty(requestHeadersPayload))
                 payloadSB.Append(requestHeadersPayload);
+
             return payloadSB.ToString();
         }
+
         public static string ReturnCleanParamsPayload(string queryParamsPayload)
         {
             if(encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
@@ -408,5 +409,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return string.Join(" ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}"));
             else return string.Empty;
         }
+
+        private static string GetFunctionParameterList(SnippetModel snippetModel)
+        {
+            var lastPathSegment = snippetModel.EndPathNode.Segment;
+            if (deltaWithParams.IsMatch(lastPathSegment))
+            {
+                var segmentItems = lastPathSegment.Split("(");
+                var snippetParameterItems = segmentItems[1].Split("=");
+                var snippetParameter = snippetParameterItems[0];
+                return $"-{snippetParameter.ToFirstCharacterUpperCase()} ${snippetParameter}Id";
+            }
+            else
+            {
+                return string.Empty;
+            }
+        }
+
     }
 }

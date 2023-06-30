@@ -441,6 +441,89 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Set-MgUserPhotoContent", result);
             Assert.Contains("-BodyParameter", result);
         }
+
+        [Fact]
+        public async Task GeneratesBetaSnippetForDeltaFunctionsWithoutParams()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/contacts/delta()?$select=displayName%2CjobTitle%2Cmail");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgBetaContactDelta", result);
+        }
+
+        [Fact]
+        public async Task GeneratesBetaSnippetForDeltaFunctionsWithParams()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/drives/XXXX/items/XXXX/delta(token='token')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgBetaDriveItemDelta", result);
+            Assert.Contains("-Token", result);
+        }
+
+        [Fact]
+        public async Task GeneratesBetaSnippetForHttpSnippetsWithGraphPrefixOnLastPathSegment()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/places/graph.room");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgBetaPlaceAsRoom", result);
+        }
+
+        [Fact]
+        public async Task GeneratesBetaSnippetForPathsWithIdentityProviderAsRootNode()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/identityProviders");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgBetaIdentityProvider", result);
+        }
+
+        [Fact]
+        public async Task GeneratesBetaSnippetForRequestWithTextContentType()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootBetaUrl}/me/drive/items/XXXX/content")
+            {
+                Content = new StringContent(
+                    "Plain text",
+                    Encoding.UTF8,
+                    "text/plain")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Set-MgBetaDriveItemContent", result);
+        }
+
+        [Fact]
+        public async Task GeneratesBetaSnippetForRequestWithApplicationZipContentType()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootBetaUrl}/me/drive/items/XXXX/content")
+            {
+                Content = new StringContent(
+                    "Zip file content",
+                    Encoding.UTF8,
+                    "application/zip")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Set-MgBetaDriveItemContent", result);
+        }
+
+        [Fact]
+        public async Task GeneratesBetaSnippetForRequestWithImageContentType()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootBetaUrl}/me/photo/$value")
+            {
+                Content = new StringContent(
+                    "Binary data for the image",
+                    Encoding.UTF8,
+                    "image/jpeg")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Set-MgBetaUserPhotoContent", result);
+            Assert.Contains("-BodyParameter", result);
+        }
         
     }
 }
