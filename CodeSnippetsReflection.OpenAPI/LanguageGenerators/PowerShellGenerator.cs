@@ -41,7 +41,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var snippetBuilder = new StringBuilder();
             var cleanPath = snippetModel.EndPathNode.Path.Replace("\\", "/");
             var isMeSegment = meSegmentRegex.IsMatch(cleanPath);
-            var hasGraphPrefix = snippetModel.EndPathNode.Path.Contains("graph", StringComparison.OrdinalIgnoreCase);
+            var hasGraphPrefix = cleanPath.Contains("graph", StringComparison.OrdinalIgnoreCase);
             var isIdentityProvider = snippetModel.RootPathNode.Path.StartsWith("\\identityProviders", StringComparison.OrdinalIgnoreCase);
             var lastPathSegment = snippetModel.EndPathNode.Segment;
             var hasMicrosoftPrefix = lastPathSegment.StartsWith("microsoft", StringComparison.OrdinalIgnoreCase);
