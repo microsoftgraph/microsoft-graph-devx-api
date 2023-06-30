@@ -388,6 +388,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
+        public async Task GeneratesSnippetForHttpSnippetsWithoutGraphPrefixOnLastPathSegment()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/places/microsoft.graph.room");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgPlaceAsRoom", result);
+        }
+
+        [Fact]
         public async Task GeneratesSnippetForPathsWithIdentityProviderAsRootNode()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/identityProviders");
@@ -443,7 +452,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForDeltaFunctionsWithoutParams()
+        public async Task GeneratesBetaSnippetForFunctionsWithoutParams()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/contacts/delta()?$select=displayName%2CjobTitle%2Cmail");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
@@ -452,13 +461,23 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForDeltaFunctionsWithParams()
+        public async Task GeneratesBetaSnippetForFunctionsWithSingleParam()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/drives/XXXX/items/XXXX/delta(token='token')");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaDriveItemDelta", result);
             Assert.Contains("-Token", result);
+        }
+
+        [Fact]
+        public async Task GeneratesBetaSnippetForFunctionsWithMultipleParam()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/communications/callRecords/getPstnBlockedUsersLog(fromDateTime=XXXXXX,toDateTime=XXXXX)");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Get-MgCommunicationCallRecord", result);
+            Assert.Contains("-ToDateTime", result);
         }
 
         [Fact]

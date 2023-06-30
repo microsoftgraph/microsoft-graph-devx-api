@@ -20,7 +20,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
-        private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/features/2.0/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
+        private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
         private readonly Lazy<IList<PowerShellCommandInfo>> psCommands = new(
             () =>
             {
@@ -33,8 +33,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex wrongQoutesInStringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private static readonly Regex deltaWithParams = new(@"delta\(\w*='{\w*}\'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private static readonly Regex deltaWithoutParams = new(@"delta\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex functionWithParams = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='{\w*}\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='\w*\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*={w*},]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*=<w*>,]*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex functionWithoutParams = new(@"\w*\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -46,7 +46,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var lastPathSegment = snippetModel.EndPathNode.Segment;
             var hasMicrosoftPrefix = lastPathSegment.StartsWith("microsoft", StringComparison.OrdinalIgnoreCase);
             cleanPath = SubstituteIdentityProviderSegment(cleanPath, isIdentityProvider);
-            cleanPath = SubstituteDeltaSegment(lastPathSegment, cleanPath);
+            cleanPath = ReplaceFunctionSegments(lastPathSegment, cleanPath);
             cleanPath = SubstituteGraphSegment(cleanPath, hasGraphPrefix);
             cleanPath = SubstituteMicrosoftSegment(cleanPath, hasMicrosoftPrefix, lastPathSegment);
             var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
@@ -148,15 +148,16 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             if (lastPathSegment.Contains("()"))
             {
-                path = path.Replace("()", string.Empty);
+                path = path.RemoveFunctionBraces();
             }
             return (path, additionalKeySegmentParmeter);
         }
 
-        private static string SubstituteDeltaSegment(string lastPathSegment, string path)
+        private static string ReplaceFunctionSegments(string lastPathSegment, string path)
         {
-            if (deltaWithoutParams.IsMatch(lastPathSegment) || deltaWithParams.IsMatch(lastPathSegment))
-                path = path.Replace(lastPathSegment, "delta");
+            var segmentItems = lastPathSegment.Split("(");
+            if (functionWithoutParams.IsMatch(lastPathSegment) || functionWithParams.IsMatch(lastPathSegment))
+                path = path.Replace(lastPathSegment, segmentItems[0]);
             return path;
         }
 
@@ -412,18 +413,23 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetFunctionParameterList(SnippetModel snippetModel)
         {
-            var lastPathSegment = snippetModel.EndPathNode.Segment;
-            if (deltaWithParams.IsMatch(lastPathSegment))
+            var snippetPaths = snippetModel.Path;
+            var paramBuilder = new StringBuilder();
+            if (functionWithParams.IsMatch(snippetPaths))
             {
-                var segmentItems = lastPathSegment.Split("(");
-                var snippetParameterItems = segmentItems[1].Split("=");
-                var snippetParameter = snippetParameterItems[0];
-                return $"-{snippetParameter.ToFirstCharacterUpperCase()} ${snippetParameter}Id";
+                var paths = snippetPaths.Split("/");
+                var function = paths.Last();
+                var functionItems = function.Split("(");
+                var functionParameters = functionItems[1].Split(",");
+                foreach(var param in functionParameters)
+                {
+                    var paramKeys = param.Split("=")[0];
+                    var paramKey = $"-{paramKeys.ToFirstCharacterUpperCase()} ${paramKeys}Id ";
+                    paramBuilder.Append(paramKey);
+                }
+        
             }
-            else
-            {
-                return string.Empty;
-            }
+            return paramBuilder.ToString();
         }
 
     }
