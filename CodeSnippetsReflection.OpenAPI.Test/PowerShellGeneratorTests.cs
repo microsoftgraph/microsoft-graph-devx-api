@@ -455,7 +455,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesBetaSnippetForFunctionsWithoutParams()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/contacts/delta()?$select=displayName%2CjobTitle%2Cmail");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaContactDelta", result);
         }
@@ -464,7 +464,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesBetaSnippetForFunctionsWithSingleParam()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/drives/XXXX/items/XXXX/delta(token='token')");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaDriveItemDelta", result);
             Assert.Contains("-Token", result);
@@ -474,7 +474,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesBetaSnippetForFunctionsWithMultipleParam()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/communications/callRecords/getPstnBlockedUsersLog(fromDateTime=XXXXXX,toDateTime=XXXXX)");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaCommunicationCallRecordPstnBlockedUserLog", result);
             Assert.Contains("-ToDateTime", result);
@@ -484,7 +484,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesBetaSnippetForHttpSnippetsWithGraphPrefixOnLastPathSegment()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/places/graph.room");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaPlaceAsRoom", result);
         }
@@ -493,7 +493,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesBetaSnippetForPathsWithIdentityProviderAsRootNode()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/identityProviders");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaIdentityProvider", result);
         }
@@ -508,7 +508,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "text/plain")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-MgBetaDriveItemContent", result);
         }
@@ -523,7 +523,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "application/zip")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-MgBetaDriveItemContent", result);
         }
@@ -538,7 +538,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "image/jpeg")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-MgBetaUserPhotoContent", result);
             Assert.Contains("-BodyParameter", result);
