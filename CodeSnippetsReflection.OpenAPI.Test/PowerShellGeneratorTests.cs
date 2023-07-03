@@ -476,7 +476,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/communications/callRecords/getPstnBlockedUsersLog(fromDateTime=XXXXXX,toDateTime=XXXXX)");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Get-MgCommunicationCallRecord", result);
+            Assert.Contains("Get-MgBetaCommunicationCallRecordPstnBlockedUserLog", result);
             Assert.Contains("-ToDateTime", result);
         }
 
