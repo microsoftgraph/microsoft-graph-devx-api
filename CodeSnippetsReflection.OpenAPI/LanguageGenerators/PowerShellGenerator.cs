@@ -33,13 +33,23 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex wrongQoutesInStringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex functionWithParams = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='{\w*}\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='\w*\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*={w*},]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*=<w*>,]*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex functionWithoutParams = new(@"\w*\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
             var snippetBuilder = new StringBuilder();
             var cleanPath = snippetModel.EndPathNode.Path.Replace("\\", "/");
             var isMeSegment = meSegmentRegex.IsMatch(cleanPath);
-            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath);
+            var hasGraphPrefix = cleanPath.Contains("graph", StringComparison.OrdinalIgnoreCase);
+            var isIdentityProvider = snippetModel.RootPathNode.Path.StartsWith("\\identityProviders", StringComparison.OrdinalIgnoreCase);
+            var lastPathSegment = snippetModel.EndPathNode.Segment;
+            var hasMicrosoftPrefix = lastPathSegment.StartsWith("microsoft", StringComparison.OrdinalIgnoreCase);
+            cleanPath = SubstituteIdentityProviderSegment(cleanPath, isIdentityProvider);
+            cleanPath = ReplaceFunctionSegments(lastPathSegment, cleanPath);
+            cleanPath = SubstituteGraphSegment(cleanPath, hasGraphPrefix);
+            cleanPath = SubstituteMicrosoftSegment(cleanPath, hasMicrosoftPrefix, lastPathSegment);
+            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
             IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
@@ -72,8 +82,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (RequiresMIMEContentOutPut(snippetModel, path))
                 {
                     //Allows genration of an output file for MIME content of the message
-                    snippetBuilder.Append($" -OutFile $outFileId");
+                    snippetBuilder.Append(" -OutFile $outFileId");
                 }
+            }
+            else
+            {
+                throw new NotImplementedException($"{path} and {snippetModel.Method} operation is not supported in the sdk");
             }
             return snippetBuilder.ToString();
         }
@@ -92,8 +106,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (lastValue.Equals("$value") && snippetModel.Method == HttpMethod.Get) return true;
             return false;
         }
-
-
         private static string GetCommandParameters(SnippetModel snippetModel, string payloadVarName)
         {
             var payloadSB = new StringBuilder();
@@ -109,19 +121,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!string.IsNullOrEmpty(parameterList))
                 payloadSB.Append($" {parameterList}");
 
+            var functionParameterList = GetFunctionParameterList(snippetModel);
+            if (!string.IsNullOrEmpty(functionParameterList))
+                payloadSB.Append($" {functionParameterList}");
+
             var requestHeadersPayload = GetSupportedRequestHeaders(snippetModel);
             if (!string.IsNullOrEmpty(requestHeadersPayload))
                 payloadSB.Append(requestHeadersPayload);
+
             return payloadSB.ToString();
         }
+
         public static string ReturnCleanParamsPayload(string queryParamsPayload)
         {
             if(encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
                 return queryParamsPayload.Replace("+", " ");
             return queryParamsPayload;
         }
-
-        private static (string, string) SubstituteMeSegment(bool isMeSegment, string path)
+        private static (string, string) SubstituteMeSegment(bool isMeSegment, string path, string lastPathSegment)
         {
             string additionalKeySegmentParmeter = default;
             if (isMeSegment)
@@ -129,7 +146,42 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 path = meSegmentRegex.Replace(path, "/users/{user-id}");
                 additionalKeySegmentParmeter = $" -UserId $userId";
             }
+            if (lastPathSegment.Contains("()"))
+            {
+                path = path.RemoveFunctionBraces();
+            }
             return (path, additionalKeySegmentParmeter);
+        }
+
+        private static string ReplaceFunctionSegments(string lastPathSegment, string path)
+        {
+            var segmentItems = lastPathSegment.Split("(");
+            if (functionWithoutParams.IsMatch(lastPathSegment) || functionWithParams.IsMatch(lastPathSegment))
+                path = path.Replace(lastPathSegment, segmentItems[0]);
+            return path;
+        }
+
+        private static string SubstituteGraphSegment(string path, bool hasGraphPrefix)
+        {
+            if (hasGraphPrefix)
+                path = path.Replace("graph.", string.Empty);
+            return path;
+        }
+        private static string SubstituteMicrosoftSegment(string path, bool hasMicrosoftSegment, string lastSegmentPath)
+        {
+            if (hasMicrosoftSegment)
+            {
+                var splittedPath = path.Split('/');
+                path = path.Replace(splittedPath[splittedPath.Length - 1], lastSegmentPath);
+            }
+
+            return path;
+        }
+        private static string SubstituteIdentityProviderSegment(string path, bool isIdentityProvider)
+        {
+            if (isIdentityProvider)
+                path = path.Replace("identityProviders", "identity/identityProviders");
+            return path;
         }
 
         private static string GetSupportedRequestHeaders(SnippetModel snippetModel)
@@ -147,7 +199,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             return payloadSB.ToString();
         }
-
         private static string GetKeySegmentParameters(IEnumerable<OpenApiUrlTreeNode> pathNodes)
         {
             if (!pathNodes.Any()) return string.Empty;
@@ -160,7 +211,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return $"{x} {y}";
             });
         }
-
         private static string GetRequestQueryParameters(SnippetModel model)
         {
             var payloadSB = new StringBuilder();
@@ -182,7 +232,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             return default;
         }
-
         private static string GetQueryParameterValue(string normalizedParameterName, string originalValue, Dictionary<string, string> replacements)
         {
             if (normalizedParameterName.Equals("CountVariable"))
@@ -260,6 +309,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
                         payloadSB.AppendLine("}");
                     }
+                    break;
+                case "image/jpeg":
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = Binary data for the image");
+                    break;
+                case "application/zip":
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = {snippetModel?.RequestBody}");
+                    break;
+                case "text/plain":
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = {snippetModel?.RequestBody}");
                     break;
                 default:
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
@@ -352,5 +410,27 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return string.Join(" ", nonEmptyParameters.Aggregate((a, b) => $"{a}, {b}"));
             else return string.Empty;
         }
+
+        private static string GetFunctionParameterList(SnippetModel snippetModel)
+        {
+            var snippetPaths = snippetModel.Path;
+            var paramBuilder = new StringBuilder();
+            if (functionWithParams.IsMatch(snippetPaths))
+            {
+                var paths = snippetPaths.Split("/");
+                var function = paths.Last();
+                var functionItems = function.Split("(");
+                var functionParameters = functionItems[1].Split(",");
+                foreach(var param in functionParameters)
+                {
+                    var paramKeys = param.Split("=")[0];
+                    var paramKey = $"-{paramKeys.ToFirstCharacterUpperCase()} ${paramKeys}Id ";
+                    paramBuilder.Append(paramKey);
+                }
+        
+            }
+            return paramBuilder.ToString();
+        }
+
     }
 }
