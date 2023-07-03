@@ -166,19 +166,23 @@ namespace KnownIssuesService.Services
                 Id = x.Id,
                 State = x.Fields.TryGetValue("System.State", out var state) ? state.ToString(): default,
                 Title = x.Fields.TryGetValue("System.Title", out var title) ? title.ToString() : default,
-                WorkLoadArea = x.Fields.TryGetValue("Custom.MicrosoftGraphArea", out var workLoadArea) ? workLoadArea.ToString() : (x.Fields.TryGetValue("Custom.MSGraphM365Workload", out workLoadArea) ? workLoadArea.ToString() : default),
+                WorkLoadArea = x.Fields.TryGetValue("Custom.MicrosoftGraphArea", out var workLoadArea) ? workLoadArea.ToString() : default,
                 Description = x.Fields.TryGetValue("System.Description", out var description) ? description.ToString() : default,
                 WorkAround = x.Fields.TryGetValue("Custom.Workaround", out var workAround) ? workAround.ToString() : "Working on it",
                 Link = x.Fields.TryGetValue("Custom.APIPathLink", out var link) ? link.ToString() : default,
                 CreatedDateTime = x.Fields.TryGetValue("Custom.Dateissuewasraised", out DateTime createdDate) ? createdDate : default,
                 LastUpdatedDateTime = x.Fields.TryGetValue("Custom.Lastupdate", out DateTime changedDate) ? changedDate : default,
-                SubArea = x.Fields.TryGetValue("Custom.MicrosoftGraphSubarea", out var subArea) ? subArea.ToString() : (x.Fields.TryGetValue("Custom.MSGraphM365SubArea", out workLoadArea) ? workLoadArea.ToString() : default),
+                SubArea = x.Fields.TryGetValue("Custom.MicrosoftGraphSubarea", out var subArea) ? subArea.ToString() :  default,
                 IsPublicIssue = x.Fields.TryGetValue("Custom.PublicIssue", out bool publicIssue) ? publicIssue : default
             }).ToList();
 
             foreach(var knownIssue in _knownIssuesList.ToList())
             {
-                if(knownIssue.State == "New" || knownIssue.State == "Closed" || !knownIssue.IsPublicIssue)
+                if (String.Equals(knownIssue.State, "New", StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(knownIssue.State, "Closed", StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(knownIssue.State, "By design", StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(knownIssue.State, "Unconfirmed", StringComparison.OrdinalIgnoreCase) ||
+                    !knownIssue.IsPublicIssue)
                 {
                     _knownIssuesList.Remove(knownIssue);
                 }
