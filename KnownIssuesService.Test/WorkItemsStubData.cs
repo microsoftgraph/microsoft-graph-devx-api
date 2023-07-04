@@ -33,7 +33,7 @@ namespace KnownIssuesService.Test
                     Fields = new Dictionary<string, object>() {
                        {"System.State","Active"},
                        {"System.Title","Issue A"},
-                       {"Custom.MSGraphM365Workload","Calendar"},
+                       {"Custom.MicrosoftGraphArea","Calendar"},
                        {"Custom.Workaround","Test"},
                        {"Custom.PublicIssue", true}
                     }
@@ -42,7 +42,7 @@ namespace KnownIssuesService.Test
                   Fields = new Dictionary<string, object>() {
                        {"System.State","Active"},
                        {"System.Title","Issue B"},
-                       {"Custom.MSGraphM365Workload","Notifications"},
+                       {"Custom.MicrosoftGraphArea","Notifications"},
                        {"Custom.Workaround","Test"},
                        {"Custom.APIPathLink", "/foo/bar"},
                        {"Custom.Dateissuewasraised", DateTime.Parse("01/06/2022 00:00:00")},
@@ -55,7 +55,7 @@ namespace KnownIssuesService.Test
                   Fields = new Dictionary<string, object>() {
                        {"System.State","Resolved"},
                        {"System.Title","Issue K"},
-                       {"Custom.MSGraphM365Workload","Mail"},
+                       {"Custom.MicrosoftGraphArea","Mail"},
                        {"Custom.Workaround","Limit number of requests"},
                        {"Custom.PublicIssue", true}
                     }
@@ -64,7 +64,7 @@ namespace KnownIssuesService.Test
                  Fields = new Dictionary<string, object>() {
                        {"System.State","New"},
                        {"System.Title","Issue F"},
-                       {"Custom.MSGraphM365Workload","Mail"},
+                       {"Custom.MicrosoftGraphArea","Mail"},
                        {"Custom.Workaround","Limit number of requests"},
                        {"Custom.PublicIssue", false}
                     }
@@ -74,7 +74,7 @@ namespace KnownIssuesService.Test
                     Fields = new Dictionary<string, object>() {
                        {"System.State","New"},
                        {"System.Title","Issue A"},
-                       {"Custom.MSGraphM365Workload","Calendar"},
+                       {"Custom.MicrosoftGraphArea","Calendar"},
                        {"Custom.Workaround","Test"},
                        {"Custom.PublicIssue", true}
                     }
