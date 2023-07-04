@@ -369,7 +369,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("$requestBody->setAttendees($attendeesArray);", result);
     }
 
-    [Fact (Skip = "This is still not passing. Keeping to use during fixing of bug related.")]
+    [Fact]
     public async Task GenerateWithValidRequestBody()
     {
         var url = "/groups/{id}/acceptedSenders/$ref";
@@ -381,6 +381,20 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("= new DirectoryObject();", result);
+        Assert.Contains("= new ReferenceCreate();", result);
+    }
+
+    [Fact]
+    public async Task GenerateWithOdataId()
+    {
+        var url = "/devices/{id}/registeredUsers/$ref";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent("{\"@odata.id\":\"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"}", Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("= new ReferenceCreate();", result);
     }
 }
