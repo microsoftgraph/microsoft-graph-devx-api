@@ -399,7 +399,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("= new ReferenceCreate();", result);
     }
 
-    [Fact (Skip = "Currently working on a fix")]
+    [Fact]
     public async Task GenerateWithFilters()
     {
         var url =
@@ -407,7 +407,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/{url}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->me()->get()", result);
+        Assert.Contains("new \\DateTime('{endDateTime}'),new \\DateTime('{startDateTime}')", result);
     }
 
     [Fact]
@@ -444,5 +444,15 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("->setDaysOfWeek([new DayOfWeek('monday'),new DayOfWeek('wednesday'),new DayOfWeek('friday'),]);", result);
+    }
+
+    [Fact]
+    public async Task GenerateForOnPathParameters()
+    {
+        var url = "/identityGovernance/appConsent/appConsentRequests/filterByCurrentUser(on='parameterValue')";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{url}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("->identityGovernance()->appConsent()->appConsentRequests()->filterByCurrentUserWithOn('reviewer', )->get()", result);
     }
 }

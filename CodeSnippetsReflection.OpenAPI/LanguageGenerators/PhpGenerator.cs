@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Web;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
-using Microsoft.ApplicationInsights.Metrics.Extensibility;
 using Microsoft.OpenApi.Extensions;
-using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -52,7 +48,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var returnVar = codeGraph.HasReturnedBody() ? "$result = " : string.Empty;
         var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
         payloadSb.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-        payloadSb.AppendLine($"{returnVar}{ClientVarName}->{GetFluentApiPath(codeGraph.Nodes)}->{method}({parameterList});");
+        payloadSb.AppendLine($"{returnVar}{ClientVarName}->{GetFluentApiPath(codeGraph.Nodes, codeGraph)}->{method}({parameterList});");
     }
     private static string GetRequestQueryParameters(SnippetCodeGraph model, string configClassName) 
     {
@@ -127,7 +123,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return default;
     }
     private static string NormalizeQueryParameterName(string queryParam) => queryParam?.TrimStart('$').ToFirstCharacterLowerCase();
-    private static void WriteObjectProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default, SnippetCodeGraph codeGraph = default)
+    private static void WriteObjectProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty codeProperty, IndentManager indentManager, string childPropertyName = default)
     {
         var childPosition = 0;
         var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToFirstCharacterUpperCase();
@@ -343,14 +339,37 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         return propertyName?.Split('.', '@', '-').Select(x => x.ToFirstCharacterUpperCase()).Aggregate((a, b) => a + b);
     }
-    private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
+    private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph codeGraph)
     {
         var openApiUrlTreeNodes = nodes.ToList();
         if (!(openApiUrlTreeNodes?.Any() ?? false)) return string.Empty;
-        var result = openApiUrlTreeNodes.Select(static x =>
+        var result = openApiUrlTreeNodes.Select(x =>
             {
                 if (x.Segment.IsCollectionIndex())
-                    return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}";
+                    return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}"; 
+                if (x.Segment.IsFunctionWithParameters())
+                {
+                    var functionName = x.Segment.Split('(').First();
+                    functionName = functionName.Split(".",StringSplitOptions.RemoveEmptyEntries)
+                                                .Select(static s => s.ToFirstCharacterUpperCase())
+                                                .Aggregate(static (a, b) => $"{a}{b}");
+                    var parameters = codeGraph.PathParameters
+                        .Select(static s => $"With{s.Name.ToFirstCharacterUpperCase()}")
+                        .Aggregate(static (a, b) => $"{a}{b}");
+
+                    // use the existing WriteObjectFromCodeProperty functionality to write the parameters as if they were a comma seperated array so as to automatically infer type handling from the codeDom :)
+                    var parametersBuilder = new StringBuilder();
+                    foreach (var codeProperty in codeGraph.PathParameters.OrderBy(static parameter => parameter.Name, StringComparer.OrdinalIgnoreCase))
+                    {
+                        var parameter = new StringBuilder();
+                        WriteCodeProperty(string.Empty, parametersBuilder,new CodeProperty{PropertyType = PropertyType.Array}, codeProperty, new IndentManager(), 0, codeProperty.Name);
+                        parametersBuilder.Append(parameter.ToString().Trim());//Do this to trim the surrounding whitespace generated
+                    }
+                    
+                    return functionName.ToFirstCharacterLowerCase()
+                           + parameters
+                           + $"({parametersBuilder.ToString().TrimEnd(',')})" ;
+                }
                 if (x.Segment.IsFunction())
                     return x.Segment.Split('.')
                         .Select(static s => s.ToFirstCharacterUpperCase())
@@ -367,7 +386,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                         prev = prev[..^3];
                     }
 
-                    next = $"by{prev.ToFirstCharacterUpperCase()}Id{inBrackets}";
+                    next = $"by{prev.TrimEnd(')', '(').ToFirstCharacterUpperCase()}Id{inBrackets}";
                 }
                 current.Add(next);
                 return current;
