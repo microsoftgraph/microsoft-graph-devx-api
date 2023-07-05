@@ -265,6 +265,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             indentManager.Unindent();
         }
 
+        private const string StringTypeName = "string";
 
         private static string GetTypeString(CodeProperty codeProperty, string apiVersion)
         {
@@ -279,13 +280,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         : ReplaceIfReservedTypeName(typeString);
                     if(string.IsNullOrEmpty(collectionTypeString)) 
                         collectionTypeString = "object";
+                    else if(typeString.Equals(StringTypeName,StringComparison.OrdinalIgnoreCase)) 
+                        collectionTypeString = StringTypeName; // use the conventional casing if need be
                     return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{collectionTypeString}>";
                 case PropertyType.Object:
                     return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString)}";
                 case PropertyType.Map:
                     return "Dictionary<string, object>";
                 case PropertyType.String:
-                    return "string";
+                    return StringTypeName;
                 case PropertyType.Enum:
                     return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString.Split('.').First())}?";
                 case PropertyType.DateOnly:

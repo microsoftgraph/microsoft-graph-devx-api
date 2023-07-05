@@ -613,7 +613,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("PermissionGrantPoliciesAssigned = new List<String>", result);
+            Assert.Contains("PermissionGrantPoliciesAssigned = new List<string>", result);
         }
         [Fact]
         public async Task CorrectlyHandlesOdataFunction()
