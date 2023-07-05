@@ -276,7 +276,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     // For objects, rely on the typeDefinition from the array definition otherwise look deeper for primitive collections
                     var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children[0].PropertyType != PropertyType.Object
                         ? GetTypeString(codeProperty.Children[0], apiVersion)
-                        : typeString;
+                        : ReplaceIfReservedTypeName(typeString);
                     if(string.IsNullOrEmpty(collectionTypeString)) 
                         collectionTypeString = "object";
                     return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{collectionTypeString}>";

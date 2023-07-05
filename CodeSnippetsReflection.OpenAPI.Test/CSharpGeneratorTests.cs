@@ -796,6 +796,82 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
         
         [Fact]
+        public async Task GeneratesCorrectTypeInCollectionInitializer() {
+            var sampleJson = @"{
+                ""workflow"":{
+                    ""category"": ""joiner"",
+                    ""description"": ""Configure new hire tasks for onboarding employees on their first day"",
+                    ""displayName"": ""Global onboard new hire employee"",
+                    ""isEnabled"": true,
+                    ""isSchedulingEnabled"": false,
+                    ""executionConditions"": {
+                        ""@odata.type"": ""#microsoft.graph.identityGovernance.triggerAndScopeBasedConditions"",
+                        ""scope"": {
+                            ""@odata.type"": ""#microsoft.graph.identityGovernance.ruleBasedSubjectSet"",
+                            ""rule"": ""(department eq 'Marketing')""
+                        },
+                        ""trigger"": {
+                            ""@odata.type"": ""#microsoft.graph.identityGovernance.timeBasedAttributeTrigger"",
+                            ""timeBasedAttribute"": ""employeeHireDate"",
+                            ""offsetInDays"": 1
+                        }
+                    },
+                    ""tasks"": [
+                        {
+                            ""continueOnError"": false,
+                            ""description"": ""Enable user account in the directory"",
+                            ""displayName"": ""Enable User Account"",
+                            ""isEnabled"": true,
+                            ""taskDefinitionId"": ""6fc52c9d-398b-4305-9763-15f42c1676fc"",
+                            ""arguments"": []
+                        },
+                        {
+                            ""continueOnError"": false,
+                            ""description"": ""Send welcome email to new hire"",
+                            ""displayName"": ""Send Welcome Email"",
+                            ""isEnabled"": true,
+                            ""taskDefinitionId"": ""70b29d51-b59a-4773-9280-8841dfd3f2ea"",
+                            ""arguments"": []
+                        }
+                    ]
+                }
+            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identityGovernance/lifecycleWorkflows/workflows/{{workflowId}}/createNewVersion"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("new List<Microsoft.Graph.Models.IdentityGovernance.TaskObject>", result);//Assert the type is escaped in the collection initializzer.
+        }
+        
+        [Fact]
+        public async Task GeneratesCorrectStringsIfEscaped() {
+            var sampleJson = @"{
+                ""subject"": null,
+                ""body"": {
+                    ""contentType"": ""html"",
+                    ""content"": ""<attachment id=\""74d20c7f34aa4a7fb74e2b30004247c5\""></attachment>""
+                },
+                ""attachments"": [
+                    {
+                        ""id"": ""74d20c7f34aa4a7fb74e2b30004247c5"",
+                        ""contentType"": ""application/vnd.microsoft.card.thumbnail"",
+                        ""contentUrl"": null,
+                        ""content"": ""{\r\n  \""title\"": \""This is an example of posting a card\"",\r\n  \""subtitle\"": \""<h3>This is the subtitle</h3>\"",\r\n  \""text\"": \""Here is some body text. <br>\\r\\nAnd a <a href=\\\""http://microsoft.com/\\\"">hyperlink</a>. <br>\\r\\nAnd below that is some buttons:\"",\r\n  \""buttons\"": [\r\n    {\r\n      \""type\"": \""messageBack\"",\r\n      \""title\"": \""Login to FakeBot\"",\r\n      \""text\"": \""login\"",\r\n      \""displayText\"": \""login\"",\r\n      \""value\"": \""login\""\r\n    }\r\n  ]\r\n}"",
+                        ""name"": null,
+                        ""thumbnailUrl"": null
+                    }
+                ]
+            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}//teams/fbe2bf47-16c8-47cf-b4a5-4b9b187c508b/channels/19:4a95f7d8db4c4e7fae857bcebe0623e6@thread.tacv2/messages"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("new List<Microsoft.Graph.Models.IdentityGovernance.TaskObject>", result);//Assert the type is escaped in the collection initializzer.
+        }
+        
+        [Fact]
         public async Task CorrectlyHandlesTypeFromInUrl()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/mailFolders/?includehiddenfolders=true");
