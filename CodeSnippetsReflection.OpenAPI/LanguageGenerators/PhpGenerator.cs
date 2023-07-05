@@ -17,7 +17,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 {
     private const string ClientVarName = "$graphServiceClient";
     private const string ClientVarType = "GraphServiceClient";
-    private const string HttpCoreVarName = "$requestAdapter";
     private const string ScopesVarName = "$scopes";
     private const string TokenContextVarName = "$tokenRequestContext";
     private const string RequestBodyVarName = "requestBody";
