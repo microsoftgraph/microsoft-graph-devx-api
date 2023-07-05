@@ -422,7 +422,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static String escapeSpecialCharacters(string value)
         {
-            return value?.Replace("\"", "\\\"")?.Replace("\n", "\\n")?.Replace("\r", "\\r");
+            return value?.EscapeQuotes()?.Replace("\n", "\\n")?.Replace("\r", "\\r");
         }
         
         private static string GetModelsNamespaceNameFromReferenceId(string referenceId) {

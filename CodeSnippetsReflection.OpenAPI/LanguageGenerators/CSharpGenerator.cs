@@ -265,6 +265,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             indentManager.Unindent();
         }
 
+        private const string StringTypeName = "string";
 
         private static string GetTypeString(CodeProperty codeProperty, string apiVersion)
         {
@@ -276,16 +277,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     // For objects, rely on the typeDefinition from the array definition otherwise look deeper for primitive collections
                     var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children[0].PropertyType != PropertyType.Object
                         ? GetTypeString(codeProperty.Children[0], apiVersion)
-                        : typeString;
+                        : ReplaceIfReservedTypeName(typeString);
                     if(string.IsNullOrEmpty(collectionTypeString)) 
                         collectionTypeString = "object";
+                    else if(typeString.Equals(StringTypeName,StringComparison.OrdinalIgnoreCase)) 
+                        collectionTypeString = StringTypeName; // use the conventional casing if need be
                     return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{collectionTypeString}>";
                 case PropertyType.Object:
                     return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString)}";
                 case PropertyType.Map:
                     return "Dictionary<string, object>";
                 case PropertyType.String:
-                    return "string";
+                    return StringTypeName;
                 case PropertyType.Enum:
                     return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString.Split('.').First())}?";
                 case PropertyType.DateOnly:
