@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Xunit;
+using Xunit.Sdk;
 
 namespace CodeSnippetsReflection.OpenAPI.Test;
 
@@ -396,5 +397,16 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("= new ReferenceCreate();", result);
+    }
+
+    [Fact (Skip = "Currently working on a fix")]
+    public async Task GenerateWithFilters()
+    {
+        var url =
+            "/identityGovernance/lifecycleWorkflows/workflows/{workflowId}/userProcessingResults/summary(startDateTime={TimeStamp},endDateTime={TimeStamp})";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/{url}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("->me()->get()", result);
     }
 }

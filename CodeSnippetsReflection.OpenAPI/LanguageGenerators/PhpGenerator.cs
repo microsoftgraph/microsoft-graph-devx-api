@@ -219,7 +219,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         CodeProperty child, IndentManager indentManager)
     {
         var fromObject = parent.PropertyType == PropertyType.Object;
-        var assignmentValue = $"new DateTime(\'{child.Value}\')";
+        var assignmentValue = $"new \\DateTime(\'{child.Value}\')";
         if (fromObject)
             payloadSb.AppendLine(
                 $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}({assignmentValue});");
