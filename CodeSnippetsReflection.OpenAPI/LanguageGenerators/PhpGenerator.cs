@@ -18,6 +18,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private const string ClientVarName = "$graphServiceClient";
     private const string ClientVarType = "GraphServiceClient";
     private const string HttpCoreVarName = "$requestAdapter";
+    private const string ScopesVarName = "$scopes";
+    private const string TokenContextVarName = "$tokenRequestContext";
     private const string RequestBodyVarName = "requestBody";
     private const string QueryParametersVarName = "queryParameters";
     private const string RequestConfigurationVarName = "requestConfiguration";
@@ -29,7 +31,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var payloadSb = new StringBuilder(
             "<?php" + Environment.NewLine + Environment.NewLine +
             "// THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-            $"{ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+            $"{ClientVarName} = new {ClientVarType}({TokenContextVarName}, {ScopesVarName});{Environment.NewLine}{Environment.NewLine}");
         if (codeGraph.HasBody())
         {
             WriteObjectProperty(RequestBodyVarName, payloadSb, codeGraph.Body, indentManager);
@@ -185,7 +187,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, payloadSb, parent, child, indentManager); 
                 break;
             case PropertyType.Enum:
-                WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), child);
+                WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), child, parent);
                 break;
             case PropertyType.Base64Url:
                 WriteBase64Url(propertyAssignment, parent, payloadSb, indentManager, child);
@@ -231,7 +233,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var fromObject = parent.PropertyType == PropertyType.Object;
         if (fromObject)
             payloadSb.AppendLine(
-                $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}(null);");
+                $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}(null);");
         else
             payloadSb.Append($"{indentManager.GetIndent()}null,");
     }
@@ -297,23 +299,29 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         indentManager.Unindent();
     }
 
-    private static void WriteEnumValue(StringBuilder payloadSb,string parentPropertyName, CodeProperty currentProperty)
+    private static void WriteEnumValue(StringBuilder payloadSb,string parentPropertyName, CodeProperty currentProperty, CodeProperty parent)
     {
         var enumParts = currentProperty.Value.Split('.');
         var enumClass = enumParts.First();
         var enumValue = enumParts.Last().ToLower();
-        payloadSb.AppendLine(
-            $"${parentPropertyName}->set{EscapePropertyNameForSetterAndGetter(currentProperty.Name)}(new {enumClass}('{enumValue}'));");
+        var fromObject = parent.PropertyType == PropertyType.Object;
+        var value = $"new {enumClass}('{enumValue}')";
+        if (fromObject)
+            payloadSb.AppendLine(
+                $"${parentPropertyName}->set{EscapePropertyNameForSetterAndGetter(currentProperty.Name)}({value});");
+        else
+            payloadSb.Append($"{value},");
     }
 
     private static void WriteBase64Url(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty child)
     {
         var fromObject = parent.PropertyType == PropertyType.Object;
+        var value = $"base64_decode(\'{child.Value}\')";
         if (fromObject)
             payloadSb.AppendLine(
-                $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}(base64_decode(\'{child.Value}\'));");
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}({value});");
         else
-            payloadSb.Append("null,");
+            payloadSb.Append($"{value},");
     }
 
     private static void WriteStringProperty(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty codeProperty)
