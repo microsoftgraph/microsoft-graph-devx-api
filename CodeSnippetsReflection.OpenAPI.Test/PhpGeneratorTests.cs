@@ -454,4 +454,33 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("->identityGovernance()->appConsent()->appConsentRequests()->filterByCurrentUserWithOn('reviewer', )->get()", result);
     }
+    [Fact]
+    public async Task GenerateForEscapedTypes()
+    {
+        const string url = "/sites/{site-id}/lists";
+        const string body = @"{
+                  ""displayName"": ""Books"",
+                  ""columns"": [
+                    {
+                        ""name"": ""Author"",
+                        ""text"": { }
+                    },
+                    {
+                        ""name"": ""PageCount"",
+                        ""number"": { }
+                    }
+                    ],
+                    ""list"": {
+                        ""template"": ""genericList""
+                    }
+                 }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestBody = new EscapedList();", result);
+    }
 }

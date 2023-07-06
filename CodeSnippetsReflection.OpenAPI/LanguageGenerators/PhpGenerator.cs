@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Extensions;
@@ -18,6 +19,80 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private const string RequestBodyVarName = "requestBody";
     private const string QueryParametersVarName = "queryParameters";
     private const string RequestConfigurationVarName = "requestConfiguration";
+
+    private static readonly HashSet<string> ReservedTypeNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "abstract",
+        "and",
+        "array",
+        "as",
+        "break",
+        "callable",
+        "case",
+        "catch",
+        "class",
+        "clone",
+        "const",
+        "continue",
+        "declare",
+        "default",
+        "die",
+        "do",
+        "echo",
+        "else",
+        "elseif",
+        "empty",
+        "enddeclare",
+        "endfor",
+        "endforeach",
+        "endif",
+        "endswitch",
+        "endwhile",
+        "eval",
+        "exit",
+        "extends",
+        "final",
+        "finally",
+        "fn",
+        "for",
+        "foreach",
+        "function",
+        "global",
+        "goto",
+        "if",
+        "implements",
+        "include",
+        "include_once",
+        "instanceof",
+        "insteadof",
+        "interface",
+        "isset",
+        "list",
+        "match",
+        "namespace",
+        "new",
+        "or",
+        "print",
+        "private",
+        "protected",
+        "public",
+        "readonly",
+        "require",
+        "require_once",
+        "return",
+        "static",
+        "switch",
+        "throw",
+        "trait",
+        "try",
+        "unset",
+        "use",
+        "var",
+        "while",
+        "xor",
+        "yield",
+        "yield from"
+    };
 
     public string GenerateCodeSnippet(SnippetModel snippetModel)
     {
@@ -127,7 +202,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         var childPosition = 0;
         var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToFirstCharacterUpperCase();
-        payloadSb.AppendLine($"${(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = new {objectType}();");
+        payloadSb.AppendLine($"${(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = new {ReplaceReservedWord(objectType)}();");
         foreach(CodeProperty child in codeProperty.Children)
         {
             var newChildName = (childPropertyName ?? "") + child.Name.ToFirstCharacterUpperCase();
@@ -293,6 +368,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
         indentManager.Unindent();
     }
+    private static string ReplaceReservedWord(string type) =>
+        ReservedTypeNames.Contains(type) ? $"Escaped{type.ToFirstCharacterUpperCase()}" : type;
 
     private static void WriteEnumValue(StringBuilder payloadSb,string parentPropertyName, CodeProperty currentProperty, CodeProperty parent)
     {
@@ -300,7 +377,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var enumClass = enumParts.First();
         var enumValue = enumParts.Last().ToLower();
         var fromObject = parent.PropertyType == PropertyType.Object;
-        var value = $"new {enumClass}('{enumValue}')";
+        var value = $"new {ReplaceReservedWord(enumClass)}('{enumValue}')";
         if (fromObject)
             payloadSb.AppendLine(
                 $"${parentPropertyName}->set{EscapePropertyNameForSetterAndGetter(currentProperty.Name)}({value});");
