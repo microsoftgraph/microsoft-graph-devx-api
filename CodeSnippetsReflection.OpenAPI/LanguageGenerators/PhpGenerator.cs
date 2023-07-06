@@ -379,14 +379,9 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             {
                 if (next.StartsWith("ById"))
                 {
-                    var prev = current.Last();
                     var inBrackets = next[4..];
-                    if (prev.EndsWith("s()"))
-                    {
-                        prev = prev[..^3];
-                    }
-
-                    next = $"by{prev.TrimEnd(')', '(').ToFirstCharacterUpperCase()}Id{inBrackets}";
+                    var indexerName = next[6..^5];
+                    next = $"by{indexerName.ToFirstCharacterUpperCase()}Id{inBrackets}";
                 }
                 current.Add(next);
                 return current;
