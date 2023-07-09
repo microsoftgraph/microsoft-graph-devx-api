@@ -197,7 +197,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setState(new UsageRightState('active'));", result);
+        Assert.Contains("$requestBody->setState(new UsageRightState('Active'));", result);
     }
 
     [Fact]
@@ -442,7 +442,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->setDaysOfWeek([new DayOfWeek('monday'),new DayOfWeek('wednesday'),new DayOfWeek('friday'),]);", result);
+        Assert.Contains("->setDaysOfWeek([new DayOfWeek('Monday'),new DayOfWeek('Wednesday'),new DayOfWeek('Friday'),]);", result);
     }
 
     [Fact]
@@ -482,5 +482,82 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$requestBody = new EscapedList();", result);
+    }
+    
+    [Fact]
+    public async Task GenerateForComplexMapValues()
+    {
+        const string url = "/communications/calls/{id}/transfer";
+        const string body = @"
+                {
+                  ""transferTarget"": {
+                        ""endpointType"": ""default"",
+                        ""identity"": {
+                            ""phone"": {
+                                ""@odata.type"": ""#microsoft.graph.identity"",
+                                ""id"": ""+12345678901""
+                            }
+                        },
+                        ""languageId"": ""languageId-value"",
+                        ""region"": ""region-value""
+                    },
+                    ""clientContext"": ""9e90d1c1-f61e-43e7-9f75-d420159aae08""
+                }
+       ";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains(@"'phone' => [", result);
+        Assert.Contains("'@odata.type' => '#microsoft.graph.identity',", result);
+        Assert.Contains("'id' => '+12345678901', ", result);
+    }
+
+    [Fact]
+    public async Task GenerateForMoreComplexMapping()
+    {
+        const string url = "/planner/tasks/{task-id}/details";
+        const string body = @"
+               {
+              ""previewType"": ""noPreview"",
+                    ""references"": {
+                        ""http%3A//developer%2Emicrosoft%2Ecom"":{
+                            ""@odata.type"": ""microsoft.graph.plannerExternalReference"",
+                            ""alias"": ""Documentation"",
+                            ""previewPriority"": "" !"",
+                            ""type"": ""Other""
+                        },
+                        ""https%3A//developer%2Emicrosoft%2Ecom/en-us/graph/graph-explorer"":{
+                            ""@odata.type"": ""microsoft.graph.plannerExternalReference"",
+                            ""previewPriority"": ""  !!"",
+                        },
+                        ""http%3A//www%2Ebing%2Ecom"": null
+                    },
+                    ""checklist"": {
+                        ""95e27074-6c4a-447a-aa24-9d718a0b86fa"":{
+                            ""@odata.type"": ""microsoft.graph.plannerChecklistItem"",
+                            ""title"": ""Update task details"",
+                            ""isChecked"": true
+                        },
+                        ""d280ed1a-9f6b-4f9c-a962-fb4d00dc50ff"":{
+                            ""@odata.type"": ""microsoft.graph.plannerChecklistItem"",
+                            ""isChecked"": true,
+                        },
+                        ""a93c93c5-10a6-4167-9551-8bafa09967a7"": null
+                    }
+                }
+       ";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("'http%3A//developer%2Emicrosoft%2Ecom' => [", result);
+        Assert.Contains("'https%3A//developer%2Emicrosoft%2Ecom/en-us/graph/graph-explorer' => [", result);
     }
 }
