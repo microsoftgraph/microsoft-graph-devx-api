@@ -388,7 +388,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         var enumParts = currentProperty.Value.Split('.');
         var enumClass = enumParts.First();
-        var enumValue = enumParts.Last();
+        var enumValue = enumParts.Last().ToFirstCharacterLowerCase();
         var fromObject = parent.PropertyType == PropertyType.Object;
         var value = $"new {ReplaceReservedWord(enumClass)}('{enumValue}')";
         if (fromObject)

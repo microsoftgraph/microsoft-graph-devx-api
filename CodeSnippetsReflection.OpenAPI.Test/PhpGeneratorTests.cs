@@ -197,7 +197,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody->setState(new UsageRightState('Active'));", result);
+        Assert.Contains("$requestBody->setState(new UsageRightState('active'));", result);
     }
 
     [Fact]
@@ -442,7 +442,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->setDaysOfWeek([new DayOfWeek('Monday'),new DayOfWeek('Wednesday'),new DayOfWeek('Friday'),]);", result);
+        Assert.Contains("->setDaysOfWeek([new DayOfWeek('monday'),new DayOfWeek('wednesday'),new DayOfWeek('friday'),]);", result);
     }
 
     [Fact]
