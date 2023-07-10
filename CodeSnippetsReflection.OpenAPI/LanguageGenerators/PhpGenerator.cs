@@ -253,7 +253,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                         $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{EscapePropertyNameForSetterAndGetter(child.Name.ToFirstCharacterUpperCase())}(${(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()});");
                 break;
 			case PropertyType.Array:
-				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, payloadSb, parent, child, indentManager); 
+				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, payloadSb, parent, child, indentManager, fromMap: fromMap); 
                 break;
             case PropertyType.Enum:
                 WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), child, parent);
@@ -262,7 +262,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 WriteBase64Url(propertyAssignment, parent, payloadSb, indentManager, child);
                 break;
             case PropertyType.Map:
-                WriteMapValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager, fromMap);
+                WriteMapValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager, fromMap: fromMap);
                 break;
             case PropertyType.DateTime:
                 WriteDateTimeValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager);
@@ -313,10 +313,10 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         {
             payloadSb.AppendLine($"${currentProperty.Name} = [");
         }
-
         if (fromMap)
         {
-            payloadSb.AppendLine("[");
+            if (parent.PropertyType == PropertyType.Array) indentManager.Indent();
+            payloadSb.AppendLine($"{indentManager.GetIndent()}[");
         }
 
         var childPosition = 0;
@@ -338,24 +338,41 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if (parent.PropertyType == PropertyType.Object)
             payloadSb.AppendLine(
                 $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(currentProperty.Name)}(${EscapePropertyNameForSetterAndGetter(currentProperty.Name).ToFirstCharacterLowerCase()});");
-        if(!fromMap) payloadSb.AppendLine();
+        if (parent.PropertyType == PropertyType.Array) indentManager.Unindent();
+        if(!fromMap && parent.PropertyType != PropertyType.Array) payloadSb.AppendLine();
     }
-    private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder payloadSb, CodeProperty parentProperty, CodeProperty codeProperty, IndentManager indentManager)
+
+    private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder payloadSb,
+        CodeProperty parentProperty, CodeProperty codeProperty, IndentManager indentManager, bool fromMap = false)
     {
         var hasSchema = codeProperty.PropertyType == PropertyType.Object;
         var arrayName = $"{objectName.ToFirstCharacterLowerCase()}Array";
         StringBuilder builder = new StringBuilder();
         if (hasSchema) 
             builder.AppendLine($"${arrayName} = [];");
+        else if (fromMap)
+        {
+            builder.AppendLine($"{indentManager.GetIndent()}[");
+            indentManager.Indent();
+        }
         else if (codeProperty.Children.FirstOrDefault().PropertyType != PropertyType.Object)
-             builder.Append('[');
+        {
+            builder.Append($"{indentManager.GetIndent()}[");
+            indentManager.Indent();
+        }
+
         int childPosition = 0;
         CodeProperty lastProperty = default;
         foreach (var property in codeProperty.Children)
         {
             var childPropertyName = $"{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}{EscapePropertyNameForSetterAndGetter(property.Name)}{++childPosition}".ToFirstCharacterLowerCase();
-            WriteCodeProperty(propertyAssignment, builder, codeProperty, property, indentManager, childPosition, childPropertyName);
-            if (property.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array)
+            var propertyCopy = property;
+            if (fromMap) propertyCopy.PropertyType = PropertyType.Map;
+
+            WriteCodeProperty(propertyAssignment, builder, codeProperty, propertyCopy, indentManager, childPosition,
+                    childPropertyName, fromMap: fromMap);
+
+            if (property.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array && !fromMap)
             {
                 builder.AppendLine($"${arrayName} []= ${childPropertyName};");
             }
@@ -363,7 +380,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             lastProperty = property;
         }
 
-        if (lastProperty.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array)
+        if (lastProperty.PropertyType == PropertyType.Object && codeProperty.PropertyType == PropertyType.Array && !fromMap)
         {
             builder.AppendLine(
                 $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}(${arrayName});");
@@ -371,12 +388,12 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         }
         else
         {
-            builder.Append(']');
+            builder.Append($"{indentManager.GetIndent()}]");
             if (parentProperty.PropertyType == PropertyType.Object)
                 payloadSb.AppendLine(
-                    $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}({builder.ToString()});");
+                    $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}({builder.ToString().Trim(' ')});");
             else
-                payloadSb.Append($"{builder.ToString()},");
+                payloadSb.Append($"{builder.ToString().Trim(' ')},");
         }
 
         indentManager.Unindent();

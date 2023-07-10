@@ -442,7 +442,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->setDaysOfWeek([new DayOfWeek('monday'),new DayOfWeek('wednesday'),new DayOfWeek('friday'),]);", result);
+        Assert.Contains("->setDaysOfWeek([new DayOfWeek('monday'),new DayOfWeek('wednesday'),new DayOfWeek('friday'),	]);", result);
     }
 
     [Fact]
@@ -511,7 +511,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(@"'phone' => [", result);
+        Assert.Contains(@"'phone' => 		[", result);
         Assert.Contains("'@odata.type' => '#microsoft.graph.identity',", result);
         Assert.Contains("'id' => '+12345678901', ", result);
     }
@@ -557,7 +557,107 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("'http%3A//developer%2Emicrosoft%2Ecom' => [", result);
-        Assert.Contains("'https%3A//developer%2Emicrosoft%2Ecom/en-us/graph/graph-explorer' => [", result);
+        Assert.Contains("'http%3A//developer%2Emicrosoft%2Ecom' => 		[", result);
+        Assert.Contains("'https%3A//developer%2Emicrosoft%2Ecom/en-us/graph/graph-explorer' => 		[", result);
+    }
+
+    [Fact]
+    public async Task GenerateForNestedObjectInsideMap()
+    {
+        const string url = "/security/triggers/retentionEvents";
+        const string body = @"
+            {
+              ""@odata.type"": ""#microsoft.graph.security.retentionEvent"",
+                    ""displayName"": ""String"",
+                    ""description"": ""String"",
+                    ""eventQuery"": [
+                    {
+                        ""@odata.type"": ""microsoft.graph.security.eventQuery""
+                    }
+                    ],
+                    ""eventTriggerDateTime"": ""String (timestamp)"",
+                    ""retentionEventType@odata.bind"": ""https://graph.microsoft.com/v1.0/security/triggerTypes/retentionEventType/9eecef97-fb3c-4c68-825b-4dd74530863a""
+            }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("'eventQuery' => 		[", result);
+        Assert.Contains("'@odata.type' => 'microsoft.graph.security.eventQuery', ", result);
+    }
+
+    [Fact]
+    public async Task GenerateWithMoreMapsWithArrayOfObjects()
+    {
+        const string url = "/identityGovernance/lifecycleWorkflows/workflows/{workflowId}/createNewVersion";
+        const string body = @"
+            {
+                ""category"": ""joiner"",
+                    ""description"": ""Configure new hire tasks for onboarding employees on their first day"",
+                    ""displayName"": ""custom email marketing API test"",
+                    ""isEnabled"": true,
+                    ""isSchedulingEnabled"": false,
+                    ""executionConditions"": {
+                        ""@odata.type"": ""#microsoft.graph.identityGovernance.triggerAndScopeBasedConditions"",
+                        ""scope"": {
+                            ""@odata.type"": ""#microsoft.graph.identityGovernance.ruleBasedSubjectSet"",
+                            ""rule"": ""(department eq 'Marketing')""
+                        },
+                        ""trigger"": {
+                            ""@odata.type"": ""#microsoft.graph.identityGovernance.timeBasedAttributeTrigger"",
+                            ""timeBasedAttribute"": ""employeeHireDate"",
+                            ""offsetInDays"": 0
+                        }
+                    },
+                    ""tasks"": [
+                    {
+                        ""continueOnError"": false,
+                        ""description"": ""Enable user account in the directory"",
+                        ""displayName"": ""Enable User Account"",
+                        ""isEnabled"": true,
+                        ""taskDefinitionId"": ""6fc52c9d-398b-4305-9763-15f42c1676fc"",
+                        ""arguments"": []
+                    },
+                    {
+                        ""continueOnError"": false,
+                        ""description"": ""Send welcome email to new hire"",
+                        ""displayName"": ""Send Welcome Email"",
+                        ""isEnabled"": true,
+                        ""taskDefinitionId"": ""70b29d51-b59a-4773-9280-8841dfd3f2ea"",
+                        ""arguments"": [
+                        {
+                            ""name"": ""cc"",
+                            ""value"": ""1baa57fa-3c4e-4526-ba5a-db47a9df95f0""
+                        },
+                        {
+                            ""name"": ""customSubject"",
+                            ""value"": ""Welcome to the organization {{userDisplayName}}!""
+                        },
+                        {
+                            ""name"": ""customBody"",
+                            ""value"": ""Welcome to our organization {{userGivenName}}!""
+                        },
+                        {
+                            ""name"": ""locale"",
+                            ""value"": ""en-us""
+                        }
+                        ]
+                    }
+                    ]
+            }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("'value' => 'Welcome to the organization {{userDisplayName}}!',", result);
+        Assert.Contains("'executionConditions' => 		[", result);
+        Assert.Contains("'scope' => 				[", result);
+        Assert.Contains("'trigger' => 				[", result);
     }
 }
