@@ -369,7 +369,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("$requestBody->setAttendees($attendeesArray);", result);
     }
 
-    [Fact (Skip = "This is still not passing. Keeping to use during fixing of bug related.")]
+    [Fact]
     public async Task GenerateWithValidRequestBody()
     {
         var url = "/groups/{id}/acceptedSenders/$ref";
@@ -381,6 +381,106 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("= new DirectoryObject();", result);
+        Assert.Contains("= new ReferenceCreate();", result);
+    }
+
+    [Fact]
+    public async Task GenerateWithOdataId()
+    {
+        var url = "/devices/{id}/registeredUsers/$ref";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent("{\"@odata.id\":\"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"}", Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("= new ReferenceCreate();", result);
+    }
+
+    [Fact]
+    public async Task GenerateWithFilters()
+    {
+        const string url =
+            "/identityGovernance/lifecycleWorkflows/workflows/{workflowId}/userProcessingResults/summary(startDateTime={TimeStamp},endDateTime={TimeStamp})";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/{url}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("new \\DateTime('{endDateTime}'),new \\DateTime('{startDateTime}')", result);
+    }
+
+    [Fact]
+    public async Task GenerateForArraysOfEnums()
+    {
+        const string url = "/users/{userId}/settings/shiftPreferences";
+
+        const string body = @"
+        {
+            ""id"": ""SHPR_eeab4fb1-20e5-48ca-ad9b-98119d94bee7"",
+            ""@odata.etag"": ""1a371e53-f0a6-4327-a1ee-e3c56e4b38aa"",
+            ""availability"": [
+                {
+                    ""recurrence"": {
+                        ""pattern"": {
+                            ""type"": ""Weekly"",
+                            ""daysOfWeek"": [""Monday"", ""Wednesday"", ""Friday""],
+                            ""interval"": 1
+                        },
+                        ""range"": {
+                            ""type"": ""noEnd""
+                          }
+                    },
+                    ""timeZone"": ""Pacific Standard Time"",
+                    ""timeSlots"": null
+            }
+           ]
+        }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("->setDaysOfWeek([new DayOfWeek('monday'),new DayOfWeek('wednesday'),new DayOfWeek('friday'),]);", result);
+    }
+
+    [Fact]
+    public async Task GenerateForOnPathParameters()
+    {
+        const string url = "/identityGovernance/appConsent/appConsentRequests/filterByCurrentUser(on='parameterValue')";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{url}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("->identityGovernance()->appConsent()->appConsentRequests()->filterByCurrentUserWithOn('reviewer', )->get()", result);
+    }
+    [Fact]
+    public async Task GenerateForEscapedTypes()
+    {
+        const string url = "/sites/{site-id}/lists";
+        const string body = @"{
+                  ""displayName"": ""Books"",
+                  ""columns"": [
+                    {
+                        ""name"": ""Author"",
+                        ""text"": { }
+                    },
+                    {
+                        ""name"": ""PageCount"",
+                        ""number"": { }
+                    }
+                    ],
+                    ""list"": {
+                        ""template"": ""genericList""
+                    }
+                 }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestBody = new EscapedList();", result);
     }
 }
