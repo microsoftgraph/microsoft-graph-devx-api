@@ -131,7 +131,7 @@ namespace ChangesService.Test
         }
 
         [Fact]
-        public async Task<Dictionary<string, string>> GetWorkloadServiceMappingsFile()
+        public async Task GetWorkloadServiceMappingsFile()
         {
             // Arrange & Act
             var workloadServiceMappings = await _changesStore.FetchWorkloadServiceMappingsAsync();
@@ -139,8 +139,6 @@ namespace ChangesService.Test
             // Assert
             Assert.NotNull(workloadServiceMappings);
             Assert.Equal(106, workloadServiceMappings.Count);
-
-            return workloadServiceMappings;
         }
 
         public async Task<ChangeLogRecords> FetchChangeLogRecordsAsync(CultureInfo cultureInfo)
