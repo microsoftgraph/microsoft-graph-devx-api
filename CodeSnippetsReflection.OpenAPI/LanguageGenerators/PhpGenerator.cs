@@ -391,7 +391,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             builder.Append($"{indentManager.GetIndent()}]");
             if (parentProperty.PropertyType == PropertyType.Object)
                 payloadSb.AppendLine(
-                    $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}({builder.ToString().Trim(' ')});");
+                    $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}({builder.ToString().Trim()});");
             else
                 payloadSb.Append($"{builder.ToString().Trim(' ')},");
         }
