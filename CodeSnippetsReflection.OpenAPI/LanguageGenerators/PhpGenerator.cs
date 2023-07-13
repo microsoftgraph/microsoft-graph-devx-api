@@ -339,7 +339,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             payloadSb.AppendLine(
                 $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(currentProperty.Name)}(${EscapePropertyNameForSetterAndGetter(currentProperty.Name).ToFirstCharacterLowerCase()});");
         if (parent.PropertyType == PropertyType.Array) indentManager.Unindent();
-        if(!fromMap && parent.PropertyType != PropertyType.Array) payloadSb.AppendLine();
+        if(!fromMap) payloadSb.AppendLine();
     }
 
     private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder payloadSb,
