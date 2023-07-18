@@ -369,7 +369,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("$requestBody->setAttendees($attendeesArray);", result);
     }
 
-    [Fact (Skip = "This is still not passing. Keeping to use during fixing of bug related.")]
+    [Fact]
     public async Task GenerateWithValidRequestBody()
     {
         var url = "/groups/{id}/acceptedSenders/$ref";
@@ -381,6 +381,283 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("= new DirectoryObject();", result);
+        Assert.Contains("= new ReferenceCreate();", result);
+    }
+
+    [Fact]
+    public async Task GenerateWithOdataId()
+    {
+        var url = "/devices/{id}/registeredUsers/$ref";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent("{\"@odata.id\":\"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"}", Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("= new ReferenceCreate();", result);
+    }
+
+    [Fact]
+    public async Task GenerateWithFilters()
+    {
+        const string url =
+            "/identityGovernance/lifecycleWorkflows/workflows/{workflowId}/userProcessingResults/summary(startDateTime={TimeStamp},endDateTime={TimeStamp})";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/{url}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("new \\DateTime('{endDateTime}'),new \\DateTime('{startDateTime}')", result);
+    }
+
+    [Fact]
+    public async Task GenerateForArraysOfEnums()
+    {
+        const string url = "/users/{userId}/settings/shiftPreferences";
+
+        const string body = @"
+        {
+            ""id"": ""SHPR_eeab4fb1-20e5-48ca-ad9b-98119d94bee7"",
+            ""@odata.etag"": ""1a371e53-f0a6-4327-a1ee-e3c56e4b38aa"",
+            ""availability"": [
+                {
+                    ""recurrence"": {
+                        ""pattern"": {
+                            ""type"": ""Weekly"",
+                            ""daysOfWeek"": [""Monday"", ""Wednesday"", ""Friday""],
+                            ""interval"": 1
+                        },
+                        ""range"": {
+                            ""type"": ""noEnd""
+                          }
+                    },
+                    ""timeZone"": ""Pacific Standard Time"",
+                    ""timeSlots"": null
+            }
+           ]
+        }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("->setDaysOfWeek([new DayOfWeek('monday'),new DayOfWeek('wednesday'),new DayOfWeek('friday'),	]);", result);
+    }
+
+    [Fact]
+    public async Task GenerateForOnPathParameters()
+    {
+        const string url = "/identityGovernance/appConsent/appConsentRequests/filterByCurrentUser(on='parameterValue')";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{url}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("->identityGovernance()->appConsent()->appConsentRequests()->filterByCurrentUserWithOn('reviewer', )->get()", result);
+    }
+    [Fact]
+    public async Task GenerateForEscapedTypes()
+    {
+        const string url = "/sites/{site-id}/lists";
+        const string body = @"{
+                  ""displayName"": ""Books"",
+                  ""columns"": [
+                    {
+                        ""name"": ""Author"",
+                        ""text"": { }
+                    },
+                    {
+                        ""name"": ""PageCount"",
+                        ""number"": { }
+                    }
+                    ],
+                    ""list"": {
+                        ""template"": ""genericList""
+                    }
+                 }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestBody = new EscapedList();", result);
+    }
+    
+    [Fact]
+    public async Task GenerateForComplexMapValues()
+    {
+        const string url = "/communications/calls/{id}/transfer";
+        const string body = @"
+                {
+                  ""transferTarget"": {
+                        ""endpointType"": ""default"",
+                        ""identity"": {
+                            ""phone"": {
+                                ""@odata.type"": ""#microsoft.graph.identity"",
+                                ""id"": ""+12345678901""
+                            }
+                        },
+                        ""languageId"": ""languageId-value"",
+                        ""region"": ""region-value""
+                    },
+                    ""clientContext"": ""9e90d1c1-f61e-43e7-9f75-d420159aae08""
+                }
+       ";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains(@"'phone' => 		[", result);
+        Assert.Contains("'@odata.type' => '#microsoft.graph.identity',", result);
+        Assert.Contains("'id' => '+12345678901', ", result);
+    }
+
+    [Fact]
+    public async Task GenerateForMoreComplexMapping()
+    {
+        const string url = "/planner/tasks/{task-id}/details";
+        const string body = @"
+               {
+              ""previewType"": ""noPreview"",
+                    ""references"": {
+                        ""http%3A//developer%2Emicrosoft%2Ecom"":{
+                            ""@odata.type"": ""microsoft.graph.plannerExternalReference"",
+                            ""alias"": ""Documentation"",
+                            ""previewPriority"": "" !"",
+                            ""type"": ""Other""
+                        },
+                        ""https%3A//developer%2Emicrosoft%2Ecom/en-us/graph/graph-explorer"":{
+                            ""@odata.type"": ""microsoft.graph.plannerExternalReference"",
+                            ""previewPriority"": ""  !!"",
+                        },
+                        ""http%3A//www%2Ebing%2Ecom"": null
+                    },
+                    ""checklist"": {
+                        ""95e27074-6c4a-447a-aa24-9d718a0b86fa"":{
+                            ""@odata.type"": ""microsoft.graph.plannerChecklistItem"",
+                            ""title"": ""Update task details"",
+                            ""isChecked"": true
+                        },
+                        ""d280ed1a-9f6b-4f9c-a962-fb4d00dc50ff"":{
+                            ""@odata.type"": ""microsoft.graph.plannerChecklistItem"",
+                            ""isChecked"": true,
+                        },
+                        ""a93c93c5-10a6-4167-9551-8bafa09967a7"": null
+                    }
+                }
+       ";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("'http%3A//developer%2Emicrosoft%2Ecom' => 		[", result);
+        Assert.Contains("'https%3A//developer%2Emicrosoft%2Ecom/en-us/graph/graph-explorer' => 		[", result);
+    }
+
+    [Fact]
+    public async Task GenerateForNestedObjectInsideMap()
+    {
+        const string url = "/security/triggers/retentionEvents";
+        const string body = @"
+            {
+              ""@odata.type"": ""#microsoft.graph.security.retentionEvent"",
+                    ""displayName"": ""String"",
+                    ""description"": ""String"",
+                    ""eventQuery"": [
+                    {
+                        ""@odata.type"": ""microsoft.graph.security.eventQuery""
+                    }
+                    ],
+                    ""eventTriggerDateTime"": ""String (timestamp)"",
+                    ""retentionEventType@odata.bind"": ""https://graph.microsoft.com/v1.0/security/triggerTypes/retentionEventType/9eecef97-fb3c-4c68-825b-4dd74530863a""
+            }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("'eventQuery' => [", result);
+        Assert.Contains("'@odata.type' => 'microsoft.graph.security.eventQuery', ", result);
+    }
+
+    [Fact]
+    public async Task GenerateWithMoreMapsWithArrayOfObjects()
+    {
+        const string url = "/identityGovernance/lifecycleWorkflows/workflows/{workflowId}/createNewVersion";
+        const string body = @"
+            {
+                ""category"": ""joiner"",
+                    ""description"": ""Configure new hire tasks for onboarding employees on their first day"",
+                    ""displayName"": ""custom email marketing API test"",
+                    ""isEnabled"": true,
+                    ""isSchedulingEnabled"": false,
+                    ""executionConditions"": {
+                        ""@odata.type"": ""#microsoft.graph.identityGovernance.triggerAndScopeBasedConditions"",
+                        ""scope"": {
+                            ""@odata.type"": ""#microsoft.graph.identityGovernance.ruleBasedSubjectSet"",
+                            ""rule"": ""(department eq 'Marketing')""
+                        },
+                        ""trigger"": {
+                            ""@odata.type"": ""#microsoft.graph.identityGovernance.timeBasedAttributeTrigger"",
+                            ""timeBasedAttribute"": ""employeeHireDate"",
+                            ""offsetInDays"": 0
+                        }
+                    },
+                    ""tasks"": [
+                    {
+                        ""continueOnError"": false,
+                        ""description"": ""Enable user account in the directory"",
+                        ""displayName"": ""Enable User Account"",
+                        ""isEnabled"": true,
+                        ""taskDefinitionId"": ""6fc52c9d-398b-4305-9763-15f42c1676fc"",
+                        ""arguments"": []
+                    },
+                    {
+                        ""continueOnError"": false,
+                        ""description"": ""Send welcome email to new hire"",
+                        ""displayName"": ""Send Welcome Email"",
+                        ""isEnabled"": true,
+                        ""taskDefinitionId"": ""70b29d51-b59a-4773-9280-8841dfd3f2ea"",
+                        ""arguments"": [
+                        {
+                            ""name"": ""cc"",
+                            ""value"": ""1baa57fa-3c4e-4526-ba5a-db47a9df95f0""
+                        },
+                        {
+                            ""name"": ""customSubject"",
+                            ""value"": ""Welcome to the organization {{userDisplayName}}!""
+                        },
+                        {
+                            ""name"": ""customBody"",
+                            ""value"": ""Welcome to our organization {{userGivenName}}!""
+                        },
+                        {
+                            ""name"": ""locale"",
+                            ""value"": ""en-us""
+                        }
+                        ]
+                    }
+                    ]
+            }";
+        using var requestPayload =
+            new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{url}")
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("'value' => 'Welcome to the organization {{userDisplayName}}!',", result);
+        Assert.Contains("'executionConditions' => 		[", result);
+        Assert.Contains("'scope' => 				[", result);
+        Assert.Contains("'trigger' => 				[", result);
     }
 }
