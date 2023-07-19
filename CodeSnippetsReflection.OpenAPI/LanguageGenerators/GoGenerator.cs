@@ -338,8 +338,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var methodName = $"{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}";
 
             var parametersList = GetActionParametersList(parameters);
-            var returnStatement = codeGraph.HasReturnedBody() ? "result, err := " : "";
+            var resultVarName = GetResultVarName(codeGraph);
+            var returnStatement = codeGraph.HasReturnedBody() ? $"{resultVarName}, err := " : "";
             builder.AppendLine($"{returnStatement}{clientVarName}.{GetFluentApiPath(codeGraph.Nodes)}{methodName}(context.Background(), {parametersList})");
+        }
+
+        private static string GetResultVarName(SnippetCodeGraph codeGraph)
+        {
+            var path = codeGraph.Nodes.LastOrDefault(x => !x.IsParameter)?.Path?.Split("\\").Last(x => !string.IsNullOrWhiteSpace(x));
+            return String.IsNullOrWhiteSpace(path) ? "result" : path;
         }
 
         private static void WriteBody(SnippetCodeGraph codeGraph, StringBuilder builder)
