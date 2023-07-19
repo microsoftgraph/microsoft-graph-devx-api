@@ -345,7 +345,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetResultVarName(SnippetCodeGraph codeGraph)
         {
-            var path = codeGraph.Nodes.LastOrDefault()?.Path?.Split("\\").First(x => !string.IsNullOrWhiteSpace(x));
+            var path = codeGraph.Nodes.LastOrDefault(x => !x.IsParameter)?.Path?.Split("\\").Last(x => !string.IsNullOrWhiteSpace(x));
             return String.IsNullOrWhiteSpace(path) ? "result" : path;
         }
 

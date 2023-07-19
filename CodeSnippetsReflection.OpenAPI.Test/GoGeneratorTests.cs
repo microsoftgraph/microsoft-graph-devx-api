@@ -155,7 +155,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("result, err := graphClient.Me().Messages().Get(context.Background(), nil)", result);
+            Assert.Contains("messages, err := graphClient.Me().Messages().Get(context.Background(), nil)", result);
         }
         [Fact]
         public async Task GeneratesThePostMethodCall() {
@@ -167,7 +167,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Post", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("result, err := graphClient.Me().Messages().Post(context.Background(), requestBody, nil)", result);
+            Assert.Contains("messages, err := graphClient.Me().Messages().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task GeneratesThePatchMethodCall() {
@@ -306,7 +306,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("configuration :=", result);
             Assert.Contains("requestParameters :=", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("result, err := graphClient.Me().Get(context.Background(), configuration)", result);
+            Assert.Contains("me, err := graphClient.Me().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesNestedParameterNames()
@@ -320,7 +320,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("&graphusers.UserItemRequestBuilderGetRequestConfiguration", result);
             Assert.Contains("configuration :=", result);
             Assert.Contains("requestParameters :=", result);
-            Assert.Contains("result, err := graphClient.Users().ByUserId(\"user-id\").Get(context.Background(), configuration)", result);
+            Assert.Contains("users, err := graphClient.Users().ByUserId(\"user-id\").Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesODataTypesAreEscaped()
@@ -350,7 +350,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.DoesNotContain("\"true\"", result);
             Assert.Contains("true", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("result, err := graphClient.Users().Get(context.Background(), configuration)", result);
+            Assert.Contains("users, err := graphClient.Users().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesSkipQueryParameters() {
@@ -360,7 +360,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.DoesNotContain("\"10\"", result);
             Assert.Contains("10", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("result, err := graphClient.Users().Get(context.Background(), configuration)", result);
+            Assert.Contains("users, err := graphClient.Users().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesSelectExpandQueryParameters() {
@@ -371,7 +371,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("members($select=id,displayName)", result);
             Assert.DoesNotContain("Select", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("result, err := graphClient.Groups().Get(context.Background(), configuration)", result);
+            Assert.Contains("groups, err := graphClient.Groups().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task GeneratesRequestHeaders() {
@@ -386,7 +386,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("graphgroups.GroupsRequestBuilderGetRequestConfiguration", result);
             Assert.Contains("Headers: headers", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("result, err := graphClient.Groups().Get(context.Background(), configuration)", result);
+            Assert.Contains("groups, err := graphClient.Groups().Get(context.Background(), configuration)", result);
         }
         [Fact]
         public async Task SupportsODataOldIndexFormat() {
