@@ -14,7 +14,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 {
     private readonly GraphCliGenerator _generator = new();
-    
+    private static string notice = "// THE CLI IS IN PREVIEW. NON-PRODUCTION USE ONLY";
     public static IEnumerable<object[]> GetSnippetData()
     {
         return new[] {
@@ -39,7 +39,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal(expectedCommand, result);
+        Assert.Equal(notice + Environment.NewLine + expectedCommand, result);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users todo lists tasks attachments get --user-id {user-id} --todo-task-list-id {todoTaskList-id} --todo-task-id {todoTask-id} --attachment-base-id {attachmentBase-id}", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc users todo lists tasks attachments get --user-id {user-id} --todo-task-list-id {todoTaskList-id} --todo-task-id {todoTask-id} --attachment-base-id {attachmentBase-id}", result);
     }
 
     [Theory]
@@ -78,7 +78,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal(expectedCommand, result);
+        Assert.Equal(notice + Environment.NewLine + expectedCommand, result);
     }
 
     // Powershell metadata doesn't have /$count endpoints
@@ -98,7 +98,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc tests count get", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc tests count get", result);
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users manager ref get --user-id {user-id}", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc users manager ref get --user-id {user-id}", result);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users photo content get --user-id {user-id}", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc users photo content get --user-id {user-id}", result);
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users list", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc users list", result);
     }
 
     [Theory]
@@ -187,7 +187,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal($"mgc tests results get {commandSuffix}", result);
+        Assert.Equal(notice + Environment.NewLine + $"mgc tests results get {commandSuffix}", result);
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal("mgc tests results get --id {id}", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc tests results get --id {id}", result);
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc tests results get --id {id}", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc tests results get --id {id}", result);
     }
 
     [Fact]
@@ -250,7 +250,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc tests results get --id {id} --id-header test-header", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc tests results get --id {id} --id-header test-header", result);
     }
 
     [Theory]
@@ -267,7 +267,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal($"mgc users list{commandOptions}", result);
+        Assert.Equal(notice + Environment.NewLine + $"mgc users list{commandOptions}", result);
     }
 
     [Fact]
@@ -287,7 +287,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal("mgc tests get", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc tests get", result);
     }
 
     [Fact]
@@ -307,7 +307,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal("mgc tests get --id 10", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc tests get --id 10", result);
     }
 
     [Theory]
@@ -329,7 +329,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal(expectedCommand, result);
+        Assert.Equal(notice + Environment.NewLine + expectedCommand, result);
     }
 
     [Theory]
@@ -365,7 +365,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users create", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc users create", result);
     }
 
     [Fact]
@@ -406,7 +406,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users create --body '{\\\n  \"name\": \"test\"\\\n}'", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc users create --body '{\\\n  \"name\": \"test\"\\\n}'", result);
     }
 
     [Fact]
@@ -421,7 +421,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc reports get-yammer-device-usage-user-detail-with-date get --date {date-id}", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc reports get-yammer-device-usage-user-detail-with-date get --date {date-id}", result);
     }
 
     [Fact]
@@ -436,7 +436,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc reports get-yammer-device-usage-user-detail-with-date get --date '{date-id}'", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc reports get-yammer-device-usage-user-detail-with-date get --date '{date-id}'", result);
     }
     
     [Fact]
@@ -451,7 +451,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc drives items delta-with-token get --token '{token-id}' --drive-id {drive-id} --drive-item-id {driveItem-id}", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc drives items delta-with-token get --token '{token-id}' --drive-id {drive-id} --drive-item-id {driveItem-id}", result);
     }
 
     [Fact]
@@ -466,7 +466,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc identity identity-providers available-provider-types get", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc identity identity-providers available-provider-types get", result);
     }
 
     [Fact]
@@ -481,7 +481,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users calendar events list --user-id {user-id} --filter \"startsWith(subject,'All')\"", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc users calendar events list --user-id {user-id} --filter \"startsWith(subject,'All')\"", result);
     }
     [Fact]
     public async Task GeneratesSnippetsWithExpandQueryOptions()
@@ -495,7 +495,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc users messages get --user-id {user-id} --message-id {message-id} --expand \"singleValueExtendedProperties(`$filter=id eq 'XXXX')\"", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc users messages get --user-id {user-id} --message-id {message-id} --expand \"singleValueExtendedProperties(`$filter=id eq 'XXXX')\"", result);
     }
     [Fact]
     public async Task GeneratesSnippetsWithFilterQueryOptions()
@@ -509,7 +509,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc identity-governance access-reviews definitions list --filter \"contains(scope/microsoft.graph.accessReviewQueryScope/query, './members')\"", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc identity-governance access-reviews definitions list --filter \"contains(scope/microsoft.graph.accessReviewQueryScope/query, './members')\"", result);
     }
 
     [Fact]
@@ -524,6 +524,6 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal("mgc teams members list --team-id {team-id} --filter \"(microsoft.graph.aadUserConversationMember/displayName eq 'Harry Johnson' or microsoft.graph.aadUserConversationMember/email eq 'admin@M365x987948.OnMicrosoft.com')\"", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc teams members list --team-id {team-id} --filter \"(microsoft.graph.aadUserConversationMember/displayName eq 'Harry Johnson' or microsoft.graph.aadUserConversationMember/email eq 'admin@M365x987948.OnMicrosoft.com')\"", result);
     }
 }
