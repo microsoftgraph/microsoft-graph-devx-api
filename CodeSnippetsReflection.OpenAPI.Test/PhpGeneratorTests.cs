@@ -1,10 +1,8 @@
-﻿using System;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Xunit;
-using Xunit.Sdk;
 
 namespace CodeSnippetsReflection.OpenAPI.Test;
 
