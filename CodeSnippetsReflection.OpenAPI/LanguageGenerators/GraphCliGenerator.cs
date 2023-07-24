@@ -36,7 +36,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         // List has an initial capacity of 4. Reserve more based on the number of nodes.
         // Reduces reallocations at the expense of more memory used.
         var initialCapacity = Math.Max(snippetModel.PathNodes.Count, 20);
-        var notice = "// THE CLI SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY";
+        var notice = "// THE CLI IS IN PREVIEW. NON-PRODUCTION USE ONLY";
         var commandSegments = new List<string>(initialCapacity)
         {
             GetCommandName(snippetModel)

@@ -14,7 +14,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 {
     private readonly GraphCliGenerator _generator = new();
-    private static string notice = "// THE CLI SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY";
+    private static string notice = "// THE CLI IS IN PREVIEW. NON-PRODUCTION USE ONLY";
     public static IEnumerable<object[]> GetSnippetData()
     {
         return new[] {
