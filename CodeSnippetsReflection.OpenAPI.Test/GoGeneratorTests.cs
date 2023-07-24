@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Xunit;
 
@@ -49,7 +50,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Drives().ByDriveId(\"drive-id\").Items().ByItemId(\"driveItem-id\").Checkin().", result);
+            Assert.Contains("Drives().ByDriveId(\"drive-id\").Items().ByDriveItemId(\"driveItem-id\").Checkin().Post(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task IgnoreOdataTypeWhenGenerating() {
@@ -521,6 +522,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("maxCandidates := int32(100)", result);
             Assert.Contains("minimumAttendeePercentage := float64(200)", result);
             Assert.Contains("isOrganizerOptional := false", result);
+        }
+        [Fact]
+        public async Task GeneratesPathSegmentsUsingVariableName()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/drive/items/{{id}}/workbook/worksheets/{{id|name}}/charts");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains(".Drives().ByDriveId(\"drive-id\").Items().ByDriveItemId(\"driveItem-id\").Workbook().Worksheets().ByWorkbookWorksheetId(\"workbookWorksheet-id\").Charts().Get(context.Background(), nil)", result);
         }
         //TODO test for DateTimeOffset
     }

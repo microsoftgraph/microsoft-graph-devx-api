@@ -565,7 +565,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var elements = nodes.Select(static (x, i) =>
             {
                 if (x.Segment.IsCollectionIndex())
-                    return $"ByTypeId{x.Segment.Replace("{", "(\"").Replace("}", "\")")}.";
+                {
+                    var pathName = string.IsNullOrEmpty(x.Segment) ? x.Segment : x.Segment.ReplaceMultiple("", "{", "}").Split('-').Where(static s => !string.IsNullOrEmpty(s)).Select(static s => s.ToFirstCharacterUpperCase()).Aggregate(static (a, b) => $"By{a}{b}");
+                    return $"{pathName ?? "ByTypeId"}{x.Segment.Replace("{", "(\"", StringComparison.OrdinalIgnoreCase).Replace("}", "\")", StringComparison.OrdinalIgnoreCase)}.";
+                }
                 else if (x.Segment.IsFunction())
                     return x.Segment.Split('.')
                                     .Select(static s => s.ToFirstCharacterUpperCase())
