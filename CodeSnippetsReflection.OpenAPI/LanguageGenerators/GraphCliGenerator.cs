@@ -20,8 +20,9 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex overloadedBoundedFunctionWithSingleOrMultipleParameters = new(@"\w+\([a-zA-Z,={}'-]+\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex overloadedBoundedHyphenatedFunctionWithSingleOrMultipleParameters = new(@"(?:\w+-)+\w+\([a-zA-Z,={}'-]+\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex unBoundFunctionRegex = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex systemQueryOptionRegex = new(@"(\w*=\w*\(\D*|\d*\))|(\w*=\w*\D*)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-
+    private static readonly Regex systemQueryOptionRegex = new(@"\w*=\w*\(\D*|\d*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    
     private const string PathItemsKey = "default";
 
     public string GenerateCodeSnippet(SnippetModel snippetModel)
@@ -239,6 +240,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         {
             if (systemQueryOptionRegex.IsMatch(snippetModel.QueryString))
             {
+                Console.WriteLine("Query string ==> "+snippetModel.QueryString);
                 string pattern = "\\?\\$\\w*=";
                 string[] splittedQueryString = Regex.Split(snippetModel.QueryString, pattern, RegexOptions.Compiled, TimeSpan.FromSeconds(5));
                 string queryOptionFunction = HttpUtility.UrlDecode(splittedQueryString[1]);
