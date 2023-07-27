@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using Microsoft.OpenApi.Models;
@@ -14,12 +14,11 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 {
     private static readonly Regex camelCaseRegex = CamelCaseRegex();
     private static readonly Regex delimitedRegex = DelimitedRegex();
-    private static readonly Regex overloadedBoundedFunctionWithDateRegex = new(@"\w*\(\w*={\w*\}\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex overloadedBoundedFunctionWithNoneDateRegex = new(@"\w*\(\w*='{\w*\}'\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex overloadedBoundedFunctionWithSingleOrMultipleParameters = new(@"\w+\([a-zA-Z,={}'-]+\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+    private static readonly Regex overloadedBoundedHyphenatedFunctionWithSingleOrMultipleParameters = new(@"(?:\w+-)+\w+\([a-zA-Z,={}'-]+\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex unBoundFunctionRegex = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex systemQueryOptionRegex = new(@"\w*=\w*\(\D*|\d*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-
+    
     private const string PathItemsKey = "default";
 
     public string GenerateCodeSnippet(SnippetModel snippetModel)
@@ -136,7 +135,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
         FetchUnBoundFunctions(commandSegments);
         ProcessMeSegments(commandSegments, operationName);
-        FetchOverLoadedBoundFunctions(commandSegments, operationName, snippetModel);
+        if (commandSegments.Any(static u => u.Contains("=")))
+            FetchOverLoadedBoundFunctions(commandSegments, operationName, snippetModel);
 
     }
 
@@ -165,13 +165,12 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// <param name="operationName"></param>
     private static void FetchOverLoadedBoundFunctions(List<string> commandSegments, string operationName, SnippetModel snippetModel)
     {
-        int boundedFunctionIndex = commandSegments.FindIndex(static u => overloadedBoundedFunctionWithDateRegex.IsMatch(u)
-        || overloadedBoundedFunctionWithNoneDateRegex.IsMatch(u));
+        int boundedFunctionIndex = commandSegments.FindIndex(static u => overloadedBoundedFunctionWithSingleOrMultipleParameters.IsMatch(u) || overloadedBoundedHyphenatedFunctionWithSingleOrMultipleParameters.IsMatch(u));
 
         if (boundedFunctionIndex != -1)
         {
             int operationIndex = commandSegments.FindIndex(o => operationName.Equals(o, StringComparison.OrdinalIgnoreCase));
-            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName, snippetModel);
+            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName);
             commandSegments[boundedFunctionIndex] = updatedSegment;
             commandSegments[operationIndex] = updatedOperation;
         }
@@ -186,15 +185,26 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// <param name="segment"></param>
     /// <param name="operation"></param>
     /// <returns></returns>
-    private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation, SnippetModel snippetModel)
-    {
+    private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation)
+    {   
+        StringBuilder parameterBuilder = new StringBuilder();
+        StringBuilder SegmentBuilder = new StringBuilder();
         var functionItems = segment.Split("(");
         var functionParams = functionItems[1];
         var functionName = functionItems[0];
-        var parameter = functionParams.Split("=")[0];
-        var updatedSegment = $"{functionName}-with-{parameter}";
-        return apiPathWithSingleOrDoubleQuotesOnFunctions.IsMatch(snippetModel.Path) ? (updatedSegment,$"{operation} --{parameter}"+" '{"+parameter+"-id}'")
-            : (updatedSegment, $"{operation} --{parameter}" + " {" + parameter + "-id}");
+        SegmentBuilder.Append(functionName);
+        var parameters = functionParams.Split(",");
+
+        foreach (var parameter in parameters)
+        {
+            var parameterValue = parameter.Split("=")[0];
+            var updateSegmentDetails = !parameterValue.Contains("-id")? parameterValue + " {" + parameterValue + "-id}" : parameterValue + " {" + parameterValue + "}";
+            parameterBuilder.Append(parameters.Length>1?$"--{updateSegmentDetails} ": $"--{updateSegmentDetails}");
+            var updatedSegment = $"-with-{parameterValue}";
+            SegmentBuilder.Append(updatedSegment);
+        }
+
+        return (SegmentBuilder.ToString(), $"{operation} {parameterBuilder.ToString()}");
     }
 
     /// <summary>
@@ -225,6 +235,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         {
             if (systemQueryOptionRegex.IsMatch(snippetModel.QueryString))
             {
+                Console.WriteLine("Query string ==> "+snippetModel.QueryString);
                 string pattern = "\\?\\$\\w*=";
                 string[] splittedQueryString = Regex.Split(snippetModel.QueryString, pattern, RegexOptions.Compiled, TimeSpan.FromSeconds(5));
                 string queryOptionFunction = HttpUtility.UrlDecode(splittedQueryString[1]);

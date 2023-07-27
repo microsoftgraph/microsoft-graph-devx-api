@@ -408,39 +408,9 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         // Then
         Assert.Equal(notice + Environment.NewLine + "mgc users create --body '{\\\n  \"name\": \"test\"\\\n}'", result);
     }
-
-    [Fact]
-    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithDateParameter()
-    {
-        // Given
-        string url = $"{ServiceRootUrl}/reports/getYammerDeviceUsageUserDetail(date=2018-03-05)";
-        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
-
-        // When
-        var result = _generator.GenerateCodeSnippet(snippetModel);
-
-        // Then
-        Assert.Equal(notice + Environment.NewLine + "mgc reports get-yammer-device-usage-user-detail-with-date get --date {date-id}", result);
-    }
-
-    [Fact]
-    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithDateParameterWithSingleOrDoubleQuotes()
-    {
-        // Given
-        string url = $"{ServiceRootUrl}/reports/getYammerDeviceUsageUserDetail(date='2018-03-05')";
-        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
-
-        // When
-        var result = _generator.GenerateCodeSnippet(snippetModel);
-
-        // Then
-        Assert.Equal(notice + Environment.NewLine + "mgc reports get-yammer-device-usage-user-detail-with-date get --date '{date-id}'", result);
-    }
     
     [Fact]
-    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithNonDateParameter()
+    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithSingleParameter()
     {
         // Given
         string url = $"{ServiceRootUrl}/drives/driveid/items/driveitemid/delta(token='token')";
@@ -451,7 +421,22 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal(notice + Environment.NewLine + "mgc drives items delta-with-token get --token '{token-id}' --drive-id {drive-id} --drive-item-id {driveItem-id}", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc drives items delta-with-token get --token {token-id} --drive-id {drive-id} --drive-item-id {driveItem-id}", result);
+    }
+
+    [Fact]
+    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithMultipleParameters()
+    {
+        // Given
+        string url = $"{ServiceRootUrl}/drives/driveid/items/driveitemid/getActivitiesByInterval(startDateTime='startdatetime',endDateTime='enddatetime',interval='interval')";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal(notice + Environment.NewLine + "mgc drives items get-activities-by-interval-with-start-date-time-with-end-date-time-with-interval get --start-date-time {start-date-time-id} --end-date-time {end-date-time-id} --interval {interval-id}  --drive-id {drive-id} --drive-item-id {driveItem-id}", result);
     }
 
     [Fact]
