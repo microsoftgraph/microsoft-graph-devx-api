@@ -268,6 +268,10 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             case PropertyType.DateTime:
                 WriteDateTimeValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager);
                 break;
+            case PropertyType.TimeOnly:
+            case PropertyType.DateOnly:
+                WriteDateOnlyTimeOnly(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager, child.PropertyType == PropertyType.TimeOnly ? "Time" : "Date");
+                break;
             case PropertyType.Duration:
                 WriteDurationValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child,
                     indentManager);
@@ -281,6 +285,16 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         CodeProperty child, IndentManager indentManager) {
         var fromObject = parent.PropertyType == PropertyType.Object;
         var assignmentValue = $"new \\DateInterval(\'{child.Value}\')";
+        if (fromObject)
+            payloadSb.AppendLine(
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}({assignmentValue});");
+        else
+            payloadSb.Append($"{indentManager.GetIndent()}{assignmentValue},");
+    } 
+    private static void WriteDateOnlyTimeOnly(StringBuilder payloadSb, string propertyAssignment, CodeProperty parent,
+        CodeProperty child, IndentManager indentManager, string typeName) {
+        var fromObject = parent.PropertyType == PropertyType.Object;
+        var assignmentValue = $"new {typeName}(\'{child.Value}\')";
         if (fromObject)
             payloadSb.AppendLine(
                 $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}({assignmentValue});");
