@@ -338,8 +338,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var methodName = $"{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}";
 
             var parametersList = GetActionParametersList(parameters);
-            var returnStatement = codeGraph.HasReturnedBody() ? "result, err := " : "";
+            var resultVarName = GetResultVarName(codeGraph);
+            var returnStatement = codeGraph.HasReturnedBody() ? $"{resultVarName}, err := " : "";
             builder.AppendLine($"{returnStatement}{clientVarName}.{GetFluentApiPath(codeGraph.Nodes)}{methodName}(context.Background(), {parametersList})");
+        }
+
+        private static string GetResultVarName(SnippetCodeGraph codeGraph)
+        {
+            var path = codeGraph.Nodes.LastOrDefault(x => !x.IsParameter)?.Path?.Split("\\").Last(x => !string.IsNullOrWhiteSpace(x));
+            return String.IsNullOrWhiteSpace(path) ? "result" : path;
         }
 
         private static void WriteBody(SnippetCodeGraph codeGraph, StringBuilder builder)
@@ -558,7 +565,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var elements = nodes.Select(static (x, i) =>
             {
                 if (x.Segment.IsCollectionIndex())
-                    return $"ByTypeId{x.Segment.Replace("{", "(\"").Replace("}", "\")")}.";
+                {
+                    var pathName = string.IsNullOrEmpty(x.Segment) ? x.Segment : x.Segment.ReplaceMultiple("", "{", "}").Split('-').Where(static s => !string.IsNullOrEmpty(s)).Select(static s => s.ToFirstCharacterUpperCase()).Aggregate(static (a, b) => $"By{a}{b}");
+                    return $"{pathName ?? "ByTypeId"}{x.Segment.Replace("{", "(\"", StringComparison.OrdinalIgnoreCase).Replace("}", "\")", StringComparison.OrdinalIgnoreCase)}.";
+                }
                 else if (x.Segment.IsFunction())
                     return x.Segment.Split('.')
                                     .Select(static s => s.ToFirstCharacterUpperCase())

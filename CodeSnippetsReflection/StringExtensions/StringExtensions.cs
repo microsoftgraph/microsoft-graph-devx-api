@@ -1,6 +1,6 @@
 ﻿using System.Text;
-using System.Globalization;
 using System.Linq;
+using System;
 
 namespace CodeSnippetsReflection.StringExtensions
 {
@@ -29,6 +29,18 @@ namespace CodeSnippetsReflection.StringExtensions
         public static string ToFirstCharacterUpperCase(this string stringValue) {
             if(string.IsNullOrEmpty(stringValue)) return stringValue;
             return char.ToUpper(stringValue[0]) + stringValue[1..];
+        }
+
+        public static string ReplaceMultiple(this string stringValue, string haystack, params string []needles)
+        {
+            if (string.IsNullOrEmpty(stringValue)) return stringValue;
+            if (needles == null || needles.Length == 0) return stringValue;
+            foreach (var needle in needles)
+            {
+                if (string.IsNullOrEmpty(needle) || !stringValue.Contains(needle, StringComparison.InvariantCulture)) continue;
+                stringValue = stringValue.Replace(needle, haystack, StringComparison.OrdinalIgnoreCase);
+            }
+            return stringValue;
         }
 
         public static string ToFirstCharacterUpperCaseAfterCharacter(this string stringValue, char character)
