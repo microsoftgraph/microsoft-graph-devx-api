@@ -226,8 +226,13 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                                              .SelectMany(static pathItem => pathItem.Value.Operations)
                                              .Where(operation => operation.Key.ToString().Equals(snippetModel.Method.ToString(), StringComparison.OrdinalIgnoreCase)) // get the operations that match the method
                                              .SelectMany(static operation => operation.Value.Parameters)
-                                             .Where(static parameter => parameter.In == ParameterLocation.Path); // find the parameters in the path
-
+                                             .Where(static parameter => parameter.In == ParameterLocation.Path)// find the parameters in the path based on operation
+                                             .Union(snippetModel.EndPathNode.PathItems.Values.SelectMany(static pathItem => pathItem.Parameters)
+                                                 .Where(parameter => parameter.In == ParameterLocation.Path && 
+                                                                     snippetModel.EndPathNode.Segment.IsFunctionWithParameters() && // don't include indexers
+                                                                     snippetModel.EndPathNode.Segment.Contains(parameter.Name,StringComparison.OrdinalIgnoreCase))// alternate keys will show up in the path item and not the operation
+                                             );
+            
             var parameters = new List<CodeProperty>();
             foreach (var parameter in pathParameters)
             {
