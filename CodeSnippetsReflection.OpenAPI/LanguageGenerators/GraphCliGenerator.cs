@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Net.Http;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -21,7 +18,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex overloadedBoundedHyphenatedFunctionWithSingleOrMultipleParameters = new(@"(?:\w+-)+\w+\([a-zA-Z,={}'-]+\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex unBoundFunctionRegex = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex systemQueryOptionRegex = new(@"\w*=\w*\(\D*|\d*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex apiPathWithSingleOrDoubleQuotesOnFunctions = new(@"(\/\w+)+\(\w*=(?:'|"").*(?:'|"")\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     
     private const string PathItemsKey = "default";
 
@@ -139,8 +135,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
         FetchUnBoundFunctions(commandSegments);
         ProcessMeSegments(commandSegments, operationName);
-        int boundedFunctionIndexIndicator = commandSegments.FindIndex(static u => u.Contains("="));
-        if (boundedFunctionIndexIndicator!=-1)
+        if (commandSegments.Any(static u => u.Contains("=")))
             FetchOverLoadedBoundFunctions(commandSegments, operationName, snippetModel);
 
     }
@@ -175,7 +170,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         if (boundedFunctionIndex != -1)
         {
             int operationIndex = commandSegments.FindIndex(o => operationName.Equals(o, StringComparison.OrdinalIgnoreCase));
-            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName, snippetModel);
+            var (updatedSegment, updatedOperation) = ProcessOverloadedBoundFunctions(commandSegments[boundedFunctionIndex], operationName);
             commandSegments[boundedFunctionIndex] = updatedSegment;
             commandSegments[operationIndex] = updatedOperation;
         }
@@ -190,7 +185,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// <param name="segment"></param>
     /// <param name="operation"></param>
     /// <returns></returns>
-    private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation, SnippetModel snippetModel)
+    private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation)
     {   
         StringBuilder parameterBuilder = new StringBuilder();
         StringBuilder SegmentBuilder = new StringBuilder();
