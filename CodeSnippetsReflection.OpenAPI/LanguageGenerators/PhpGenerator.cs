@@ -220,6 +220,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var propertyName = NormalizeQueryParameterName(child.Name.ToFirstCharacterLowerCase());
         switch (child.PropertyType) {
 			case PropertyType.String:
+            case PropertyType.Guid:
                 WriteStringProperty(propertyAssignment, parent, payloadSb, indentManager, child);
                 break;
 			case PropertyType.Int32:
