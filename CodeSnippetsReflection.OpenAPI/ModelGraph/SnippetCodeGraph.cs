@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
@@ -253,6 +253,9 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                         break;
                     case "double":
                         parameters.Add(new CodeProperty { Name = parameter.Name, Value = double.TryParse(parameter.Name, out _) ? parameter.Name : "1.0d", PropertyType = PropertyType.Double, Children = new List<CodeProperty>() });
+                        break;
+                    case "boolean":
+                        parameters.Add(new CodeProperty { Name = parameter.Name, Value = bool.TryParse(parameter.Name, out _) ? parameter.Name : "false", PropertyType = PropertyType.Boolean, Children = new List<CodeProperty>() });
                         break;
                 }
             }
