@@ -863,6 +863,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("var result = await graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Worksheets[\"{workbookWorksheet-id}\"].RangeWithAddress(\"{address}\").GetAsync()", result);
         }
+        
+        [Fact]
+        public async Task MatchesPathAlternateKeys()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/applications(appId='46e6adf4-a9cf-4b60-9390-0ba6fb00bf6b')?$select=id,appId,displayName,requiredResourceAccess");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("await graphClient.ApplicationsWithAppId(\"{appId}\").GetAsync(", result);
+        }
         [Theory]
         [InlineData("/me/drive/root/delta","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Delta.GetAsync()")]
         [InlineData("/groups/{group-id}/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
