@@ -419,7 +419,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
     private static OpenApiOperation GetMatchingOperation(in SnippetModel snippetModel)
     {
-        if (snippetModel == null || snippetModel.ApiVersion == "beta")
+        if (snippetModel == null)
         {
             return null;
         }
