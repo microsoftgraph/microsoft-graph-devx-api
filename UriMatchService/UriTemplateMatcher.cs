@@ -76,7 +76,7 @@ namespace UriMatchingService
                     {
                         if (parameters.Count == 0)
                             return new TemplateMatch() { Key = template.Key, Template = template.Value }; // exact match, no ids
-                        else
+                        else if(!templateMatches.ContainsKey(template))
                             templateMatches.Add(template, parameters.Count);
                     }
                 }
