@@ -70,8 +70,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             string pathSegment;
             if(codeGraph.Nodes.Last().Segment.Contains("delta") && 
-               codeGraph.Parameters.Any( property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) || property.Name.Equals("deltatoken",StringComparison.OrdinalIgnoreCase)))
-            {// its a delta query and has an opaque url
+               codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) || 
+                                                            property.Name.Equals("deltatoken",StringComparison.OrdinalIgnoreCase)))
+            {// its a delta query and needs the opaque url passed over.
                 pathSegment = "deltaRequestBuilder";
                 codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
                 payloadSb.AppendLine($"var deltaRequestBuilder = new {GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph)}.DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.RequestAdapter);");
