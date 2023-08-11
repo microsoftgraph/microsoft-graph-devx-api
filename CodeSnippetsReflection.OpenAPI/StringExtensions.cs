@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using CodeSnippetsReflection.StringExtensions;
@@ -33,7 +34,53 @@ internal static class StringExtensions
     internal static string RemoveFunctionBraces(this string pathSegment) => pathSegment.TrimEnd('(',')');
     internal static string ReplaceValueIdentifier(this string original) =>
         original?.Replace("$value", "Content", StringComparison.Ordinal);
-   
+
+    private static readonly Regex FunctionWithParams = new(@"^(\w+)\(([^)]+)\)$", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>
+    /// Returns a Tuple with values
+    /// 1. Boolean -> Whether the syntax maches a func with parameters
+    /// 2. String -> Name of the function if it is a function, this value is nullable
+    /// 3. Dictionary<String,String> -> Key value pair of the variables if its a function
+    /// </summary>
+    /// <param name="pathSegment"></param>
+    /// <returns></returns>
+    internal static Tuple<Boolean, String, Dictionary<String, String>> GetFunctionWithParameters(this string pathSegment)
+    {
+        Dictionary<string, string> variables = new Dictionary<string, string>();
+
+        if (string.IsNullOrEmpty(pathSegment)) return new Tuple<Boolean, string, Dictionary<string, string>>(false, null, variables);
+
+        // Use Regex.Match to find the matches in the function declaration
+        Match match = FunctionWithParams.Match(pathSegment);
+
+        if (match.Success)
+        {
+            string funcName = match.Groups[1].Value;
+            string varsContent = match.Groups[2].Value;
+
+            string[] vars = varsContent.Split(',');
+            foreach (string variable in vars)
+            {
+                // Split each variable into name and value
+                string[] parts = variable.Split('=');
+                if (parts.Length == 2)
+                {
+                    string varName = parts[0].Trim();
+                    string varValue = parts[1].Trim().Trim('\'');
+
+                    variables[varName] = varValue;
+                }
+            }
+
+            return new Tuple<Boolean, string, Dictionary<string, string>>(true, funcName, variables);
+        }
+        else
+        {
+            return new Tuple<Boolean, string, Dictionary<string, string>>(false, null, variables);
+        }
+    }
+
     internal static string Append(this string original, string suffix) =>
         string.IsNullOrEmpty(original) ? original : original + suffix;
         

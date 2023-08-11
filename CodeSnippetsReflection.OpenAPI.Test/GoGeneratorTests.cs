@@ -467,7 +467,28 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("NewAddPasswordPostRequestBody", result);
         }
-        
+
+        [Fact]
+        public async Task GeneratePathParametersInFluentPath()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/reports/getYammerActivityCounts(period='D7')");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("period := \"{period}\"", result);
+            Assert.Contains("graphClient.Reports().GetYammerActivityCountsWithPeriod(&period).Get(context.Background(), nil)", result);
+        }
+
+        [Fact]
+        public async Task GeneratePathParametersInFluentPathWithPeriodsInName()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/communications/callRecords/getPstnCalls(fromDateTime=2019-11-01,toDateTime=2019-12-01)");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("fromDateTime , err := time.Parse(time.RFC3339, \"{fromDateTime}\")", result);
+            Assert.Contains("toDateTime , err := time.Parse(time.RFC3339, \"{toDateTime}\")", result);
+            Assert.Contains("microsoftGraphCallRecordsGetPstnCalls, err := graphClient.Communications().CallRecords().MicrosoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(&fromDateTime, &toDateTime).Get(context.Background(), nil)", result);
+        }
+
         [Fact]
         public async Task GenerateFindMeetingTime()
         {
