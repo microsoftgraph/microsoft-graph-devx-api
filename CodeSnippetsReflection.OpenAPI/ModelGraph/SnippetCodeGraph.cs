@@ -56,6 +56,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             PathParameters = parsePathParameters(snippetModel);
             Body = parseBody(snippetModel);
             ApiVersion = snippetModel.ApiVersion;
+            RequestUrl = $"https://graph.microsoft.com/{snippetModel.ApiVersion}{snippetModel.Path}{snippetModel.QueryString}";
         }
 
         public OpenApiSchema ResponseSchema
@@ -67,7 +68,12 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         {
             get; set;
         }
-
+        
+        public string RequestUrl
+        {
+            get; set;
+        }
+        
         public string ApiVersion
         {
             get; set;
