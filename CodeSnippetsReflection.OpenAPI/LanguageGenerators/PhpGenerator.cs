@@ -99,7 +99,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var codeGraph = new SnippetCodeGraph(snippetModel);
         var payloadSb = new StringBuilder(
             "<?php" + Environment.NewLine + Environment.NewLine +
-            "// THIS SNIPPET IS A PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
+            "// THIS SNIPPET IS A PREVIEW VERSION OF THE SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
             $"{ClientVarName} = new {ClientVarType}({TokenContextVarName}, {ScopesVarName});{Environment.NewLine + Environment.NewLine}");
         if (codeGraph.HasBody())
         {
@@ -332,26 +332,36 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         }
 
         var childPosition = 0;
-        indentManager.Indent(2);
+        indentManager.Indent();
         foreach (var child in currentProperty.Children)
         {
+            var payLoad = new StringBuilder();
             payloadSb.Append($"{indentManager.GetIndent()}\'{child.Name}\' => ");
             CodeProperty p2 = child;
             if (p2.PropertyType == PropertyType.Object)
             {
                 p2.PropertyType = PropertyType.Map;
             }
-            WriteCodeProperty(propertyAssignment, payloadSb, currentProperty, p2, indentManager, ++childPosition, default, true);
-            payloadSb.AppendLine();
+            WriteCodeProperty(propertyAssignment, payLoad, currentProperty, p2, indentManager, ++childPosition, default, true);
+            payLoad.AppendLine();
+            payloadSb.AppendLine(payLoad.ToString().Trim(' ', '\t', '\n'));
         }
         indentManager.Unindent();
-        indentManager.Unindent();
         payloadSb.AppendLine($"{indentManager.GetIndent()}{(parent.PropertyType == PropertyType.Object ? "];" : "]," )}");
-        if (parent.PropertyType == PropertyType.Object)
-            payloadSb.AppendLine(
-                $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(currentProperty.Name)}(${EscapePropertyNameForSetterAndGetter(currentProperty.Name).ToFirstCharacterLowerCase()});");
-        if (parent.PropertyType == PropertyType.Array) indentManager.Unindent();
-        if(!fromMap) payloadSb.AppendLine();
+        var fromObject = false;
+        switch (parent.PropertyType)
+        {
+            case PropertyType.Object:
+                fromObject = true;
+                payloadSb.AppendLine(
+                    $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(currentProperty.Name)}(${EscapePropertyNameForSetterAndGetter(currentProperty.Name).ToFirstCharacterLowerCase()});");
+                break;
+            case PropertyType.Array:
+                indentManager.Unindent();
+                break;
+        }
+
+        if(!fromMap && !fromObject) payloadSb.AppendLine();
     }
 
     private static void WriteArrayProperty(string propertyAssignment, string objectName, StringBuilder payloadSb,
