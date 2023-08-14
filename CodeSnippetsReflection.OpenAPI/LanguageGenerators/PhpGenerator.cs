@@ -389,7 +389,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         {
             var childPropertyName = $"{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}{EscapePropertyNameForSetterAndGetter(property.Name)}{++childPosition}".ToFirstCharacterLowerCase();
             var propertyCopy = property;
-            if (fromMap) propertyCopy.PropertyType = PropertyType.Map;
+            if (fromMap && property.PropertyType == PropertyType.Object) propertyCopy.PropertyType = PropertyType.Map;
 
             WriteCodeProperty(propertyAssignment, builder, codeProperty, propertyCopy, indentManager, childPosition,
                     childPropertyName, fromMap: fromMap);

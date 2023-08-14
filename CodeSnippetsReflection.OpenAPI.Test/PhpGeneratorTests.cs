@@ -849,7 +849,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("->setScheduledInstallTime(new Time('11:59:31.3170000'))", result);
     }
 
-    [Fact (Skip = "This is a known failure. Working on a fix")]
+    [Fact]
     public async Task GenerateWithComplexArray()
     {
         const string body = @"
@@ -875,8 +875,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody = new Group()s;\n" +
-                        "$requestBody->setDescription('Self help community for library');\n" +
-                        "$requestBody->setDisplayName('Library Assist');", result);
+        Assert.Contains("'owners@odata.bind' => [\n"+
+        "'https://graph.microsoft.com/v1.0/users/26be1845-4119-4801-a799-aea79d09f1a2', 		],", result);
     }
 }
