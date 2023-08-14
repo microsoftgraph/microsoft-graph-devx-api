@@ -36,7 +36,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->users()->byUserId('user-id')->messages()->get();", result);
+        Assert.Contains("->users()->byUserId('user-id')->messages()->get()->wait();", result);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$result = $graphServiceClient->directory()->deletedItems()->graphGroup()->get();", result);
+        Assert.Contains("$result = $graphServiceClient->directory()->deletedItems()->graphGroup()->get()->wait();", result);
     }
 
     [Fact]
@@ -232,7 +232,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$result = $graphServiceClient->me()->activities()->recent()->get();", result);
+        Assert.Contains("$result = $graphServiceClient->me()->activities()->recent()->get()->wait();", result);
     }
 
     [Fact /*(Skip = "Should fail by default.")*/]
