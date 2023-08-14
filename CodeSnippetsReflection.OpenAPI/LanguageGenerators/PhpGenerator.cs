@@ -98,15 +98,15 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var indentManager = new IndentManager();
         var codeGraph = new SnippetCodeGraph(snippetModel);
         var payloadSb = new StringBuilder(
-            "<?php" + Environment.NewLine + Environment.NewLine +
+            "<?php" + Environment.NewLine +
             "// THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-            $"{ClientVarName} = new {ClientVarType}({TokenContextVarName}, {ScopesVarName});{Environment.NewLine}{Environment.NewLine}");
+            $"{ClientVarName} = new {ClientVarType}({TokenContextVarName}, {ScopesVarName});{Environment.NewLine}");
         if (codeGraph.HasBody())
         {
             WriteObjectProperty(RequestBodyVarName, payloadSb, codeGraph.Body, indentManager);
         }
         WriteRequestExecutionPath(codeGraph, payloadSb, indentManager);
-        return payloadSb.ToString();
+        return payloadSb.ToString().Trim('\n');
     }
 
     private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
@@ -122,7 +122,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var returnVar = codeGraph.HasReturnedBody() ? "$result = " : string.Empty;
         var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
         payloadSb.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-        payloadSb.AppendLine($"{returnVar}{ClientVarName}->{GetFluentApiPath(codeGraph.Nodes, codeGraph)}->{method}({parameterList});");
+        payloadSb.AppendLine($"{returnVar}{ClientVarName}->{GetFluentApiPath(codeGraph.Nodes, codeGraph)}->{method}({parameterList})->wait();");
     }
     private static string GetRequestQueryParameters(SnippetCodeGraph model, string configClassName) 
     {
@@ -201,15 +201,13 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         var childPosition = 0;
         var objectType = (codeProperty.TypeDefinition ?? codeProperty.Name).ToFirstCharacterUpperCase();
+        payloadSb.AppendLine("");
         payloadSb.AppendLine($"${(childPropertyName ?? propertyAssignment).ToFirstCharacterLowerCase()} = new {ReplaceReservedWord(objectType)}();");
         foreach(CodeProperty child in codeProperty.Children)
         {
             var newChildName = (childPropertyName ?? "") + child.Name.ToFirstCharacterUpperCase();
             WriteCodeProperty(childPropertyName ?? propertyAssignment, payloadSb, codeProperty, child, indentManager, ++childPosition, newChildName);
-            if (child.PropertyType != PropertyType.Object) 
-                payloadSb.AppendLine();
         }
-        payloadSb.AppendLine();
     }
     private static void WriteCodeProperty(string propertyAssignment, StringBuilder payloadSb, CodeProperty parent, CodeProperty child, IndentManager indentManager, int childPosition = 0, string childPropertyName = default, bool fromMap = false)
     {
