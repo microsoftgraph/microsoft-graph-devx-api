@@ -10,7 +10,7 @@ using Microsoft.OpenApi.Services;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 
-public partial class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
+public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 {
     private const string ClientVarName = "$graphServiceClient";
     private const string ClientVarType = "GraphServiceClient";
