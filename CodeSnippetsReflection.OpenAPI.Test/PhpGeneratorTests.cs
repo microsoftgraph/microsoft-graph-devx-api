@@ -36,7 +36,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("->users()->byUserId('user-id')->messages()->get();", result);
+        Assert.Contains("->users()->byUserId('user-id')->messages()->get()->wait();", result);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             $"{ServiceRootBetaUrl}/directory/deleteditems/microsoft.graph.group");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$result = $graphServiceClient->directory()->deletedItems()->graphGroup()->get();", result);
+        Assert.Contains("$result = $graphServiceClient->directory()->deletedItems()->graphGroup()->get()->wait();", result);
     }
 
     [Fact]
@@ -123,6 +123,31 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("'Accept' => 'application/json',", result);
     }
 
+    [Fact]
+    public async Task GenerateForGroupPostTestSpacing()
+    {
+        const string body = @"
+            {
+                ""description"": ""Self help community for library"",
+                ""displayName"": ""Library Assist"",
+                ""groupTypes"": [
+                ""Unified""
+                    ],
+                ""mailEnabled"": true,
+                ""mailNickname"": ""library"",
+                ""securityEnabled"": false
+            }
+        ";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups")
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestBody = new Group();\n" +
+                        "$requestBody->setDescription('Self help community for library');\n" +
+                        "$requestBody->setDisplayName('Library Assist');", result);
+    }
     [Fact]
     public async Task GeneratesComplicatedObjectsWithNesting()
     {
@@ -232,7 +257,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/activities/recent");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$result = $graphServiceClient->me()->activities()->recent()->get();", result);
+        Assert.Contains("$result = $graphServiceClient->me()->activities()->recent()->get()->wait();", result);
     }
 
     [Fact /*(Skip = "Should fail by default.")*/]
@@ -511,9 +536,9 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains(@"'phone' => 		[", result);
+        Assert.Contains(@"'phone' => [", result);
         Assert.Contains("'@odata.type' => '#microsoft.graph.identity',", result);
-        Assert.Contains("'id' => '+12345678901', ", result);
+        Assert.Contains("'id' => '+12345678901',", result);
     }
 
     [Fact]
@@ -557,8 +582,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("'http%3A//developer%2Emicrosoft%2Ecom' => 		[", result);
-        Assert.Contains("'https%3A//developer%2Emicrosoft%2Ecom/en-us/graph/graph-explorer' => 		[", result);
+        Assert.Contains("'http%3A//developer%2Emicrosoft%2Ecom' => [", result);
+        Assert.Contains("'https%3A//developer%2Emicrosoft%2Ecom/en-us/graph/graph-explorer' => [", result);
     }
 
     [Fact]
@@ -586,7 +611,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("'eventQuery' => [", result);
-        Assert.Contains("'@odata.type' => 'microsoft.graph.security.eventQuery', ", result);
+        Assert.Contains("'@odata.type' => 'microsoft.graph.security.eventQuery',", result);
     }
 
     [Fact]
@@ -656,9 +681,9 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("'value' => 'Welcome to the organization {{userDisplayName}}!',", result);
-        Assert.Contains("'executionConditions' => 		[", result);
-        Assert.Contains("'scope' => 				[", result);
-        Assert.Contains("'trigger' => 				[", result);
+        Assert.Contains("'executionConditions' => [", result);
+        Assert.Contains("'scope' => [", result);
+        Assert.Contains("'trigger' => [", result);
     }
 
     [Fact]
@@ -821,5 +846,35 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("->setQualityUpdatesPauseStartDate(new Date('2016-12-31'))", result);
         Assert.Contains("->setScheduledInstallTime(new Time('11:59:31.3170000'))", result);
+    }
+
+    [Fact]
+    public async Task GenerateWithComplexArray()
+    {
+        const string body = @"
+          {
+          ""description"": ""Group with designated owner and members"",
+                ""displayName"": ""Operations group"",
+                ""groupTypes"": [
+                ],
+                ""mailEnabled"": false,
+                ""mailNickname"": ""operations2019"",
+                ""securityEnabled"": true,
+                ""owners@odata.bind"": [
+                     ""https://graph.microsoft.com/v1.0/users/26be1845-4119-4801-a799-aea79d09f1a2""
+                ],
+                ""members@odata.bind"": [
+                    ""https://graph.microsoft.com/v1.0/users/ff7cb387-6688-423c-8188-3da9532a73cc"",
+                    ""https://graph.microsoft.com/v1.0/users/69456242-0067-49d3-ba96-9de6f2728e14""
+                ]
+            }";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups")
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("'owners@odata.bind' => [\n"+
+        "'https://graph.microsoft.com/v1.0/users/26be1845-4119-4801-a799-aea79d09f1a2', ],", result);
     }
 }
