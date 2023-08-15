@@ -106,7 +106,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             WriteObjectProperty(RequestBodyVarName, payloadSb, codeGraph.Body, indentManager);
         }
         WriteRequestExecutionPath(codeGraph, payloadSb, indentManager);
-        return payloadSb.ToString().Trim('\n');
+        return payloadSb.ToString().Trim();
     }
 
     private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
@@ -344,7 +344,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             }
             WriteCodeProperty(propertyAssignment, payLoad, currentProperty, p2, indentManager, ++childPosition, default, true);
             payLoad.AppendLine();
-            payloadSb.AppendLine(payLoad.ToString().Trim(' ', '\t', '\n'));
+            payloadSb.AppendLine(payLoad.ToString().Trim());
         }
         indentManager.Unindent();
         payloadSb.AppendLine($"{indentManager.GetIndent()}{(parent.PropertyType == PropertyType.Object ? "];" : "]," )}");
