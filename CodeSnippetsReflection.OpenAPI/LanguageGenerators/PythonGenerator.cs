@@ -23,7 +23,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var codeGraph = new SnippetCodeGraph(snippetModel);
         var snippetBuilder = new StringBuilder(
                                     "# THE PYTHON SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
-                    $"{ClientVarName} =  {ClientVarType}({HttpCoreVarName}){Environment.NewLine}{Environment.NewLine}");
+                    $"{ClientVarName} = {ClientVarType}({HttpCoreVarName}){Environment.NewLine}{Environment.NewLine}");
 
         if (codeGraph.HasBody())
         {
@@ -172,7 +172,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
             case PropertyType.Float64:
                 if (!isMap && !isArray)
                     snippetBuilder.AppendLine(
-                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{propertyName.ToFirstCharacterUpperCase()} = {child.Value}");
+                        $"{indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}.{propertyName.ToSnakeCase()} = {child.Value}");
                 else
                     snippetBuilder.Append($"{child.Value},");
                 break;
@@ -222,10 +222,10 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
     private static void WriteDurationValue(StringBuilder snippetBuilder, string propertyAssignment, CodeProperty parent,
         CodeProperty child, IndentManager indentManager) {
         var fromObject = parent.PropertyType == PropertyType.Object;
-        var assignmentValue = $" \\DateInterval(\'{child.Value}\')";
+        var assignmentValue = $" \\parser.parse(\'{child.Value}\').timedelta()";
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name.ToLower())} = {assignmentValue}");
+                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name.ToSnakeCase())} = {assignmentValue}");
         else
             snippetBuilder.Append($"{indentManager.GetIndent()}{assignmentValue},");
     }
@@ -233,10 +233,10 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         CodeProperty child, IndentManager indentManager)
     {
         var fromObject = parent.PropertyType == PropertyType.Object;
-        var assignmentValue = $"DateTime(\'{child.Value}\')";
+        var assignmentValue = $"parser.parse(\'{child.Value}\')";
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name)} = {assignmentValue}");
+                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name.ToSnakeCase())} = {assignmentValue}");
         else
             snippetBuilder.Append($"{indentManager.GetIndent()}{assignmentValue},");
     }
@@ -245,9 +245,9 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var fromObject = parent.PropertyType == PropertyType.Object;
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name)}=null");
+                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name)} = None");
         else
-            snippetBuilder.Append($"{indentManager.GetIndent()}null,");
+            snippetBuilder.Append($"{indentManager.GetIndent()}None,");
     }
 
     private static void WriteMapValue(StringBuilder snippetBuilder, string propertyAssignment, CodeProperty parent, CodeProperty currentProperty, IndentManager indentManager)
@@ -325,7 +325,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var fromObject = parent.PropertyType == PropertyType.Object;
         if (fromObject)
             snippetBuilder.AppendLine(
-                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name.ToFirstCharacterUpperCase())}(base64_decode(\'{child.Value}\'))");
+                $"{indentManager.GetIndent()}{propertyAssignment}.{NormalizeVariableName(child.Name.ToSnakeCase())}(base64_decode(\'{child.Value}\'))");
         else
             snippetBuilder.Append("null,");
     }
