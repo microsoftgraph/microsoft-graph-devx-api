@@ -218,7 +218,17 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("imAddresses/any(i:i eq 'admin@contoso.com')", result);
         }
         [Fact]
-        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjuction()
+        public async Task GeneratesSnippetForRequestWithDeltaAndSkipToken()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/calendarView/delta?$skiptoken=R0usmcCM996atia_s");
+            requestPayload.Headers.Add("Prefer", "odata.maxpagesize=2");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("var result = await deltaRequestBuilder.GetAsync(", result);
+            Assert.Contains("var deltaRequestBuilder = new Microsoft.Graph.Me.CalendarView.Delta.DeltaRequestBuilder(", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjunction()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" AND \"displayName:al\"");
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");

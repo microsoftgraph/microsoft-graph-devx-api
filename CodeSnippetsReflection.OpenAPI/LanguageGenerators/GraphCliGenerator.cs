@@ -235,7 +235,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         {
             if (systemQueryOptionRegex.IsMatch(snippetModel.QueryString))
             {
-                Console.WriteLine("Query string ==> "+snippetModel.QueryString);
                 string pattern = "\\?\\$\\w*=";
                 string[] splittedQueryString = Regex.Split(snippetModel.QueryString, pattern, RegexOptions.Compiled, TimeSpan.FromSeconds(5));
                 string queryOptionFunction = HttpUtility.UrlDecode(splittedQueryString[1]);
@@ -419,7 +418,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
 
     private static OpenApiOperation GetMatchingOperation(in SnippetModel snippetModel)
     {
-        if (snippetModel == null || snippetModel.ApiVersion == "beta")
+        if (snippetModel == null)
         {
             return null;
         }
