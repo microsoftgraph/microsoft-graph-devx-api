@@ -875,6 +875,6 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("'owners@odata.bind' => [\n"+
-        "'https://graph.microsoft.com/v1.0/users/26be1845-4119-4801-a799-aea79d09f1a2', 		],", result);
+        "'https://graph.microsoft.com/v1.0/users/26be1845-4119-4801-a799-aea79d09f1a2', ],", result);
     }
 }
