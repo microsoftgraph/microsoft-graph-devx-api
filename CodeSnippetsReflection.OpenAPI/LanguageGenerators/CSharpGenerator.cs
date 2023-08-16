@@ -67,9 +67,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var requestPayloadParameterName = codeGraph.HasBody() ? RequestBodyVarName : default;
             if (string.IsNullOrEmpty(requestPayloadParameterName) && ((codeGraph.RequestSchema?.Properties?.Any() ?? false) || (codeGraph.RequestSchema?.AllOf?.Any(schema => schema.Properties.Any()) ?? false)))
                 requestPayloadParameterName = "null";// pass a null parameter if we have a request schema expected but there is not body provided
+
+            string pathSegment;
+            if(codeGraph.Nodes.Last().Segment.Contains("delta") && 
+               codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) || 
+                                                            property.Name.Equals("deltatoken",StringComparison.OrdinalIgnoreCase)))
+            {// its a delta query and needs the opaque url passed over.
+                pathSegment = "deltaRequestBuilder";
+                codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
+                payloadSb.AppendLine($"var deltaRequestBuilder = new {GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph)}.DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.RequestAdapter);");
+            }
+            else
+            {
+                pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph)}";
+            }
+            
             var requestConfigurationPayload = GetRequestConfiguration(codeGraph, indentManager);
             var parametersList = GetActionParametersList(requestPayloadParameterName , requestConfigurationPayload);
-            payloadSb.AppendLine($"{responseAssignment}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes,codeGraph)}.{methodName}({parametersList});");
+            payloadSb.AppendLine($"{responseAssignment}await {pathSegment}.{methodName}({parametersList});");
         }
 
         private static string GetRequestConfiguration(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager)

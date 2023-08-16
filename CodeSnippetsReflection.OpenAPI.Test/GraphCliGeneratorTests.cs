@@ -114,8 +114,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         // Then
         // TODO: Check snippet generation support after beta releases.
-        // Assert.Equal("mgc-beta users list", result);
-        Assert.Equal(string.Empty, result);
+        Assert.Equal(notice + Environment.NewLine + "mgc-beta users list", result);
     }
 
     [Fact]
@@ -408,7 +407,22 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         // Then
         Assert.Equal(notice + Environment.NewLine + "mgc users create --body '{\\\n  \"name\": \"test\"\\\n}'", result);
     }
-    
+
+   [Fact]
+    public async Task GeneratesEscapedBetaSnippetsForMultilineCommand()
+    {
+        // Given
+        string url = $"{ServiceRootBetaUrl}/users";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, url);
+        requestPayload.Content = new StringContent("{\n  \"name\": \"test\"\n}");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+
+        // When
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+
+        // Then
+        Assert.Equal(notice + Environment.NewLine + "mgc-beta users create --body '{\\\n  \"name\": \"test\"\\\n}'", result);
+    }
     [Fact]
     public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithSingleParameter()
     {
