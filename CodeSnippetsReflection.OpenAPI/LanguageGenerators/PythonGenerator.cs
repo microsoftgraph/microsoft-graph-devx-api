@@ -22,7 +22,7 @@ public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNo
         var indentManager = new IndentManager();
         var codeGraph = new SnippetCodeGraph(snippetModel);
         var snippetBuilder = new StringBuilder(
-                                    "// THE PYTHON SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
+                                    "# THE PYTHON SDK IS IN PREVIEW. NON-PRODUCTION USE ONLY" + Environment.NewLine +
                     $"{ClientVarName} =  {ClientVarType}({HttpCoreVarName}){Environment.NewLine}{Environment.NewLine}");
 
         if (codeGraph.HasBody())
