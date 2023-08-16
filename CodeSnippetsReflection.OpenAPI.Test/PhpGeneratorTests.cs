@@ -847,6 +847,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("->setQualityUpdatesPauseStartDate(new Date('2016-12-31'))", result);
         Assert.Contains("->setScheduledInstallTime(new Time('11:59:31.3170000'))", result);
     }
+	
     [Fact]
     public async Task GenerateWithComplexArray()
     {
