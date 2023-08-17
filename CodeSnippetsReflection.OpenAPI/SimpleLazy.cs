@@ -21,7 +21,7 @@ namespace CodeSnippetsReflection.OpenAPI
 
         public SimpleLazy(Func<T> valueFactory)
         {
-            this.valueFactory = valueFactory ?? throw new ArgumentNullException("valueFactory");
+            this.valueFactory = valueFactory ?? throw new ArgumentNullException(nameof(valueFactory));
             this.instance = null;
         }
 

@@ -279,7 +279,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
 
         private static readonly Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
+        private static IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
         {
             if (psCommands.Value.Count == 0)
                 return default;
