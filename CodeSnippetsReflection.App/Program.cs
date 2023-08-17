@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -90,14 +91,13 @@ namespace CodeSnippetsReflection.App
             Console.WriteLine($"Running snippet generation for these languages: {string.Join(" ", supportedLanguages)}");
 
             var originalGeneration = generation;
-            
+
+            // cache the generators by generation rather than creating a new one on each generation to avoid multiple loads of the metadata.
+            var snippetGenerators = new ConcurrentDictionary<string, ISnippetsGenerator>();
             Parallel.ForEach(supportedLanguages, language =>
             {
-                if(OpenApiSnippetsGenerator.SupportedLanguages.Contains(language))
-                    generation = "openapi";
-                else
-                    generation = originalGeneration;
-                var generator = GetSnippetsGenerator(generation, customMetadataPathArg);
+                generation = OpenApiSnippetsGenerator.SupportedLanguages.Contains(language) ? "openapi" : originalGeneration;
+                var generator = snippetGenerators.GetOrAdd(generation,  generationKey => GetSnippetsGenerator(generationKey, customMetadataPathArg));
                 Parallel.ForEach(files, file =>
                 {
                     ProcessFile(generator, language, file);
@@ -133,7 +133,7 @@ namespace CodeSnippetsReflection.App
                 // With async-await, the same operation takes 1 minute 7 seconds.
                 using var message = streamContent.ReadAsHttpRequestMessageAsync().Result;
                 snippet = generator.ProcessPayloadRequest(message, language);
-             }
+            }
             catch (Exception e)
             {
                 var message = $"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}";

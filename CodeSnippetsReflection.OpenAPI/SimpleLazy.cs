@@ -21,10 +21,7 @@ namespace CodeSnippetsReflection.OpenAPI
 
         public SimpleLazy(Func<T> valueFactory)
         {
-            if (valueFactory == null)
-                throw new ArgumentNullException("valueFactory");
-
-            this.valueFactory = valueFactory;
+            this.valueFactory = valueFactory ?? throw new ArgumentNullException("valueFactory");
             this.instance = null;
         }
 
@@ -32,8 +29,11 @@ namespace CodeSnippetsReflection.OpenAPI
         {
             get
             {
+                if (instance != null)
+                    return instance;// no need to acquire the lock if the instance is already initialized.
+                
                 lock (locker)
-                    return instance ?? (instance = valueFactory());
+                    return instance ??= valueFactory();
             }
         }
     }
