@@ -137,7 +137,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("content_bytes = base64.urlsafe_b64decode(\"wiubviuwbegviwubiu\")", result);
     }
     [Fact]
-    public async Task GeneratesADateTimePayload() {
+    public async Task GeneratesADateTimePayload()
+    {
         const string userJsonObject = "{\r\n  \"receivedDateTime\": \"2021-08-30T20:00:00:00Z\"\r\n\r\n}";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/messages") {
             Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
@@ -148,7 +149,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("received_date_time = \"2021-08-30T20:00:00:00Z\"", result);
     }
     [Fact]
-    public async Task GeneratesAnArrayPayloadInAdditionalData() {
+    public async Task GeneratesAnArrayPayloadInAdditionalData()
+    {
         const string userJsonObject = "{\r\n  \"members@odata.bind\": [\r\n    \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\",\r\n    \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\",\r\n    \"https://graph.microsoft.com/v1.0/directoryObjects/{id}\"\r\n    ]\r\n}";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/groups/{{group-id}}") {
             Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
@@ -161,7 +163,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("\"https://graph.microsoft.com/v1.0/directoryObjects/{id}\",", result);
     }
     [Fact]
-    public async Task GeneratesSelectQueryParameters() {
+    public async Task GeneratesSelectQueryParameters()
+    {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$select=displayName,id");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -171,7 +174,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("query_parameters = query_params,", result);
     }
     [Fact]
-    public async Task GeneratesCountBooleanQueryParameters() {
+    public async Task GeneratesCountBooleanQueryParameters()
+    {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$select=displayName,id");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -183,7 +187,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("query_parameters = query_params,", result);
     }
     [Fact]
-    public async Task GeneratesSkipQueryParameters() {
+    public async Task GeneratesSkipQueryParameters()
+    {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$skip=10");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -191,7 +196,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("skip = 10", result);
     }
     [Fact]
-    public async Task GeneratesSelectExpandQueryParameters() {
+    public async Task GeneratesSelectExpandQueryParameters()
+    {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=id,displayName)");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -200,7 +206,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.DoesNotContain("Select", result);
     }
     [Fact]
-    public async Task GeneratesRequestHeaders() {
+    public async Task GeneratesRequestHeaders()
+    {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups");
         requestPayload.Headers.Add("ConsistencyLevel", "eventual");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
@@ -210,7 +217,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("'ConsistencyLevel' : \"eventual\"", result);
     }
     [Fact]
-    public async Task GeneratesFilterParameters() {
+    public async Task GeneratesFilterParameters()
+    {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$filter=Department eq 'Finance'&$orderBy=displayName&$select=id,displayName,department");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -221,7 +229,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("select = [\"id\",\"displayName\",\"department\"],", result);
     }
     [Fact]
-    public async Task GeneratesFilterParametersWithSpecialCharacters() {
+    public async Task GeneratesFilterParametersWithSpecialCharacters()
+    {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$filter=imAddresses/any(i:i eq 'admin@contoso.com')");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -252,7 +261,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("search = \"\\\"displayName:di\\\" AND \\\"displayName:al\\\"\"", result);
     }
     [Fact]
-    public async Task HandlesOdataTypeWhenGenerating() {
+    public async Task HandlesOdataTypeWhenGenerating()
+    {
         var sampleJson = @"
             {
             ""@odata.type"": ""#microsoft.graph.socialIdentityProvider"",
@@ -271,7 +281,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("odata_type = \"#microsoft.graph.socialIdentityProvider\",", result);
     }
     [Fact]
-    public async Task HandlesOdataReferenceSegmentsInUrl() {
+    public async Task HandlesOdataReferenceSegmentsInUrl()
+    {
         var sampleJson = @"
             {
             ""@odata.id"": ""https://graph.microsoft.com/beta/users/alexd@contoso.com""
@@ -391,7 +402,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("is_required = False,", result);
         Assert.Contains("location_email_address = \"conf32room1368@imgeek.onmicrosoft.com\",", result);
     }
-    
     [Theory]
     [InlineData("sendMail")]
     [InlineData("microsoft.graph.sendMail")]
@@ -433,7 +443,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("request_body = SendMailPostRequestBody(", result);
         Assert.Contains("to_recipients = [", result);
     }
-    
     [Fact]
     public async Task TypeArgumentsForListArePlacedCorrectly()
     {
@@ -454,7 +463,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("business_phones = [", result);
         Assert.Contains("+1 425 555 0109", result);        
     }
-        
     [Fact]
     public async Task ModelsInNestedNamespacesAreDisambiguated()
     {
@@ -506,7 +514,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("type = RecurrencePatternType.Weekly,", result);
         Assert.Contains("type = RecurrenceRangeType.NoEnd,", result);
     }
-    
     [Fact]
     public async Task CorrectlyGeneratesMultipleFlagsEnumMembers()
     {
@@ -525,7 +532,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("client_context = \"clientContext-value\",", result);
         Assert.Contains("status = RecordingStatus.NotRecording | RecordingStatus.Recording | RecordingStatus.Failed", result);
     }
-    
     [Fact]
     public async Task CorrectlyOptionalRequestBodyParameter()
     {
@@ -535,7 +541,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         Assert.Contains("await graph_client.teams.by_team_id('team-id').archive.post()", result);
     }
-    
     [Fact]
     public async Task CorrectlyEvaluatesDatePropertyTypeRequestBodyParameter()
     {
@@ -559,7 +564,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("start_date = \"2017-09-04\",", result);
         Assert.Contains("end_date = \"2017-12-31\",", result);
     }
-    
     [Fact]
     public async Task CorrectlyEvaluatesOdataActionRequestBodyParameter()
     {
@@ -647,8 +651,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("query_params = DeltaRequestBuilder.DeltaRequestBuilderGetQueryParameters(", result);
         Assert.Contains("select = [\"displayName\",\"jobTitle\",\"mobilePhone\"]", result);
         Assert.Contains("request_configuration = DeltaRequestBuilder.DeltaRequestBuilderGetRequestConfiguration(", result);
-    }
-    
+    } 
     [Fact]
     public async Task CorrectlyHandlesDateTimeOffsetInUrl()
     {
@@ -658,7 +661,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         Assert.Contains("await graph_client.reports.get_user_archived_print_jobs(user_id='{user_id}',start_date_time={start_date_time},end_date_time={end_date_time}.get()", result);
     }
-
     [Fact]
     public async Task CorrectlyHandlesNumberInUrl()
     {
@@ -822,7 +824,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("v8_0 = True,", result);
         Assert.Contains("\"v16_0\" : True,", result);
     }
-    
     [Fact]
     public async Task GeneratesCorrectTypeInCollectionInitializer() {
         var sampleJson = @"{
@@ -874,8 +875,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("scope = RuleBasedSubjectSet(", result);
         Assert.Contains("tasks = [", result);
         Assert.Contains("Task(", result);
-    }
-    
+    } 
     [Fact]
     public async Task CorrectlyHandlesTypeFromInUrl()
     {
@@ -887,7 +887,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("include_hidden_folders = \"true\"", result);
         Assert.Contains("request_configuration = MailFoldersRequestBuilder.MailFoldersRequestBuilderGetRequestConfiguration(", result);
     }
-
     [Fact]
     public async Task MatchesPathWithPathParameter()
     {
@@ -896,8 +895,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         Assert.Contains("result = await graph_client.drives.by_drive_id('drive-id').items.by_item_id('driveItem-id').workbook.worksheets.by_worksheet_id('workbookWorksheet-id').range(address='{address}'.get()", result);
-    }
-    
+    }   
     [Fact]
     public async Task MatchesPathAlternateKeys()
     {
@@ -906,8 +904,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         Assert.Contains("result = await graph_client.applications(app_id='{app_id}'.get(request_configuration = request_configuration)", result);
-    }
-        
+    }      
     [Fact]
     public async Task GeneratesCorrectLongPaths()
     {
@@ -937,7 +934,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("select = [\"displayName\",\"mailNickName\"],", result);
         Assert.Contains("account_enabled = True", result);
     }
-
     [Fact]
     public async Task IncludesRequestBodyClassName()
     {
@@ -952,7 +948,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("request_body = AddPasswordPostRequestBody(", result);
     }
-
     [Fact]
     public async Task FindsPathItemsWithDifferentCasing()
     {
@@ -962,7 +957,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(".directory.deleted_items.graph_group.get()", result);
     }
-
     [Fact]
     public async Task DoesntFailOnTerminalSlash()
     {
@@ -1011,7 +1005,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains(".me.messages.by_message_id('message-id').delete()", result);
 
     }
-    
     [Fact]
     public async Task GenerateForRequestBodyCornerCase()
     {
@@ -1024,7 +1017,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
        var result = _generator.GenerateCodeSnippet(snippetModel);
        Assert.Contains("request_body = CreateReplyPostRequestBody(", result);
     }
-
     [Fact]
     public async Task GenerateForRefRequests()
     {
@@ -1037,7 +1029,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         Assert.Contains(".token_issuance_policies.ref.get()", result);
     }
-
     [Fact]
     public async Task GenerateForPostBodyWithEnums()
     {
@@ -1069,7 +1060,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("\"field\" : \"Nothing to be done\"", result); 
 
     }
-
     [Fact]
     public async Task GenerateFluentApiPathCornerCase()
     {
@@ -1078,7 +1068,6 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains(".me.activities.recent.get()", result);
     }
-
     [Fact]
     public async Task GenerateWithODataTypeAndODataId()
     {

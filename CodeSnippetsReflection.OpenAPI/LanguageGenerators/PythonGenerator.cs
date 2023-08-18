@@ -18,46 +18,46 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string RequestParametersPropertyName = "query_params";
         
         private static readonly HashSet<string> ReservedTypeNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-         "and",
-        "as",
-        "assert",
-        "async",
-        "await",
-        "break",
-        "class",
-        "continue",
-        "def",
-        "del",
-        "dict",
-        "elif",
-        "else",
-        "except",
-        "finally",
-        "False",
-        "for",
-        "from",
-        "global",
-        "if",
-        "import",
-        "in",
-        "is",
-        "lambda",
-        "list",
-        "nonlocal",
-        "None",
-        "not",
-        "or",
-        "pass",
-        "raise",
-        "return",
-        "True",
-        "try",
-        "with",
-        "while",
-        "yield",
-        "property",
-    };
+        {
+            "and",
+            "as",
+            "assert",
+            "async",
+            "await",
+            "break",
+            "class",
+            "continue",
+            "def",
+            "del",
+            "dict",
+            "elif",
+            "else",
+            "except",
+            "finally",
+            "False",
+            "for",
+            "from",
+            "global",
+            "if",
+            "import",
+            "in",
+            "is",
+            "lambda",
+            "list",
+            "nonlocal",
+            "None",
+            "not",
+            "or",
+            "pass",
+            "raise",
+            "return",
+            "True",
+            "try",
+            "with",
+            "while",
+            "yield",
+            "property",
+        };
         
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
@@ -87,21 +87,21 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList})");
         }
         private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager, string classNameQueryParameters)
+        {
+            var snippetBuilder = new StringBuilder();
+            if (!model.HasParameters())
+                return default;
+            snippetBuilder.AppendLine($"{RequestParametersPropertyName} = {classNameQueryParameters}(");
+            indentManager.Indent(2);
+            foreach (var queryParam in model.Parameters)
             {
-                var snippetBuilder = new StringBuilder();
-                if (!model.HasParameters())
-                    return default;
-                snippetBuilder.AppendLine($"{RequestParametersPropertyName} = {classNameQueryParameters}(");
-                indentManager.Indent(2);
-                foreach (var queryParam in model.Parameters)
-                {
-                    var queryParameterName = NormalizeQueryParameterName(queryParam.Name.ToSnakeCase()).ToFirstCharacterLowerCase();
-                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}{queryParameterName} = {EvaluateParameter(queryParam)},");
-                }
-                indentManager.Unindent();
-                snippetBuilder.AppendLine(")");
-                return snippetBuilder.ToString();
+                var queryParameterName = NormalizeQueryParameterName(queryParam.Name.ToSnakeCase()).ToFirstCharacterLowerCase();
+                snippetBuilder.AppendLine($"{indentManager.GetIndent()}{queryParameterName} = {EvaluateParameter(queryParam)},");
             }
+            indentManager.Unindent();
+            snippetBuilder.AppendLine(")");
+            return snippetBuilder.ToString();
+        }
         private static string EvaluateParameter(CodeProperty param)
         {
             return param.PropertyType switch
@@ -114,37 +114,37 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             };
         }
         private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
-            {
-                var snippetBuilder = new StringBuilder();
-                var requestBuilderName = codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase();
-                var className = $"{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
-                
-                var classNameQueryParameters = $"{requestBuilderName}.{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
-                
-                var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager, classNameQueryParameters);
-                if (codeGraph.HasParameters() || codeGraph.HasHeaders()){
-                    snippetBuilder.AppendLine(queryParamsPayload); 
-                    snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{className}(");
-                    indentManager.Indent(); 
+        {
+            var snippetBuilder = new StringBuilder();
+            var requestBuilderName = codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase();
+            var className = $"{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            
+            var classNameQueryParameters = $"{requestBuilderName}.{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
+            
+            var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager, classNameQueryParameters);
+            if (codeGraph.HasParameters() || codeGraph.HasHeaders()){
+                snippetBuilder.AppendLine(queryParamsPayload); 
+                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{className}(");
+                indentManager.Indent(); 
 
-                    var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
-                    if (codeGraph.HasHeaders()){
-                        if(queryParamsPayload != null){
-                            snippetBuilder.AppendLine($"query_parameters = {RequestParametersPropertyName},");
-                        }
-                        snippetBuilder.AppendLine(requestHeadersPayload);
-                        indentManager.Unindent();
-                        snippetBuilder.AppendLine(")");
-                    }         
-                    if (!codeGraph.HasHeaders()){
+                var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
+                if (codeGraph.HasHeaders()){
+                    if(queryParamsPayload != null){
                         snippetBuilder.AppendLine($"query_parameters = {RequestParametersPropertyName},");
-                        indentManager.Unindent();
-                        snippetBuilder.AppendLine(")");
                     }
-                    
-                }    
-                return snippetBuilder.ToString();
-            }
+                    snippetBuilder.AppendLine(requestHeadersPayload);
+                    indentManager.Unindent();
+                    snippetBuilder.AppendLine(")");
+                }         
+                if (!codeGraph.HasHeaders()){
+                    snippetBuilder.AppendLine($"query_parameters = {RequestParametersPropertyName},");
+                    indentManager.Unindent();
+                    snippetBuilder.AppendLine(")");
+                }
+                
+            }    
+            return snippetBuilder.ToString();
+        }
         private static string GetActionParametersList(params string[] parameters) {
             var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
             var emptyParameters = nonEmptyParameters.ToList();
@@ -153,24 +153,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return string.Empty;
         }
         
-    private static string GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager)
+        private static string GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager)
         {
-            var filteredHeaders = snippetModel.Headers?.Where(static h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
-                .ToList();
             var headersvar = new StringBuilder();
-
             if (!snippetModel.HasHeaders())
                 headersvar.AppendLine("headers = {}");
-            if (filteredHeaders != null && filteredHeaders.Any()){
-                headersvar.AppendLine("headers = {");
-                indentManager.Indent();
-                foreach (var header in snippetModel.Headers)
-                {
-                    headersvar.AppendLine($"{indentManager.GetIndent()}'{header.Name}' : {EvaluateParameter(header)},");
-                }
-                indentManager.Unindent();
-                headersvar.AppendLine("}");
+            headersvar.AppendLine("headers = {");
+            indentManager.Indent();
+            foreach (var header in snippetModel.Headers)
+            {
+                headersvar.AppendLine($"{indentManager.GetIndent()}'{header.Name}' : {EvaluateParameter(header)},");
             }
+            indentManager.Unindent();
+            headersvar.AppendLine("}");
             return headersvar.ToString();
     
         }
