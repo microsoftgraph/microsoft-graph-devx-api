@@ -86,7 +86,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
             snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList})");
         }
-        private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager, string classNameQueryParameters = default)
+        private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager, string classNameQueryParameters)
             {
                 var snippetBuilder = new StringBuilder();
                 if (!model.HasParameters())
