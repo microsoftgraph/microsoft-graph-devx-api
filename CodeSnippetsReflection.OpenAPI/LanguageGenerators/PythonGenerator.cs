@@ -80,7 +80,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var bodyParameter = codeGraph.HasBody()
                 ? $"{RequestBodyVarName} = {RequestBodyVarName}"
                 : string.Empty;
-            var optionsParameter = codeGraph.HasOptions() ? $"options =" : string.Empty;
+            var optionsParameter = codeGraph.HasOptions() ? "options =" : string.Empty;
             var returnVar = codeGraph.HasReturnedBody() ? "result = " : string.Empty;
             var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
             snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
