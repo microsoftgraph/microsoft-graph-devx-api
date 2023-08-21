@@ -25,6 +25,7 @@ The API currently supports the generation of snippets to the Microsoft Graph API
 - PowerShell
 - TypeScript
 - PHP
+- Python
 
 ### 2. Samples
 This endpoint serves up the list of sample queries queryable by their *category name*, *human name* or *tip*.

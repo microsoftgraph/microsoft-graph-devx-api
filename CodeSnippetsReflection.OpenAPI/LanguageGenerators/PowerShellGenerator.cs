@@ -9,7 +9,6 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -21,14 +20,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string requestBodyVarName = "params";
         private const string modulePrefix = "Microsoft.Graph";
         private const string mgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
-        private readonly Lazy<IList<PowerShellCommandInfo>> psCommands = new(
+        private static readonly SimpleLazy<IList<PowerShellCommandInfo>> psCommands = new(
             () =>
             {
                 using var httpClient = new HttpClient();
                 using var stream = httpClient.GetStreamAsync(mgCommandMetadataUrl).GetAwaiter().GetResult();
                 return JsonSerializer.Deserialize<IList<PowerShellCommandInfo>>(stream);
-            },
-            LazyThreadSafetyMode.PublicationOnly
+            }
         );
         private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
@@ -281,7 +279,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
 
         private static readonly Regex keyIndexRegex = new(@"(?<={)(.*?)(?=})", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
+        private static IList<PowerShellCommandInfo> GetCommandForRequest(string path, string method, string apiVersion)
         {
             if (psCommands.Value.Count == 0)
                 return default;
