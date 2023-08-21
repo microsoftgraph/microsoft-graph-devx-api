@@ -75,7 +75,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {// its a delta query and needs the opaque url passed over.
                 pathSegment = "deltaRequestBuilder";
                 codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
-                payloadSb.AppendLine($"var deltaRequestBuilder = new {GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph)}.DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.RequestAdapter);");
+                payloadSb.AppendLine($"var deltaRequestBuilder = new {GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph, true)}.DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.RequestAdapter);");
             }
             else
             {
@@ -338,14 +338,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string ReplaceIfReservedTypeName(string originalString, string suffix = "Object")
             => ReservedNames.Value.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
-        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph)
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph, bool useIndexerNamespaces = false)
         {
             if(!(nodes?.Any() ?? false)) 
                 return string.Empty;
 
             return nodes.Select(x => {
                                         if(x.Segment.IsCollectionIndex())
-                                            return x.Segment.Replace("{", "[\"{").Replace("}", "}\"]");
+                                            return useIndexerNamespaces ? "Item" : x.Segment.Replace("{", "[\"{").Replace("}", "}\"]");
                                         if (x.Segment.IsFunctionWithParameters())
                                         {
                                             var functionName = x.Segment.Split('(').First();
