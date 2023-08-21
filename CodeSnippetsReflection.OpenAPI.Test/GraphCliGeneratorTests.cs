@@ -253,8 +253,8 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Theory]
-    [InlineData("?$select=name", " --select name")]
-    [InlineData("?$filter=test&$select=name", " --filter test --select name")]
+    [InlineData("?$select=name", " --select \"name\"")]
+    [InlineData("?$filter=test&$select=name", " --filter \"test\" --select \"name\"")]
     public async Task GeneratesSnippetsForCommandWithODataParameters(string queryString, string commandOptions)
     {
         // Given
@@ -306,7 +306,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         // Then
         // TODO: What should happen to the query parameter?
-        Assert.Equal(notice + Environment.NewLine + "mgc tests get --id 10", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc tests get --id \"10\"", result);
     }
 
     [Theory]
@@ -494,7 +494,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
         // Then
-        Assert.Equal(notice + Environment.NewLine + "mgc users messages get --user-id {user-id} --message-id {message-id} --expand \"singleValueExtendedProperties(`$filter=id eq 'XXXX')\"", result);
+        Assert.Equal(notice + Environment.NewLine + "mgc users messages get --user-id {user-id} --message-id {message-id} --expand \"singleValueExtendedProperties(\\$filter=id eq 'XXXX')\"", result);
     }
     [Fact]
     public async Task GeneratesSnippetsWithFilterQueryOptions()
