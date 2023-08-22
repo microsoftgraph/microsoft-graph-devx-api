@@ -242,7 +242,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 }
                 break;
 			case PropertyType.Null:
-                WriteNullProperty(propertyAssignment, parent, payloadSb, indentManager, child);
+                WriteNullProperty(propertyAssignment.ToFirstCharacterLowerCase(), parent, payloadSb, indentManager, child);
                 break;
             case PropertyType.Object: 
                 WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), payloadSb, child, indentManager, childPropertyName);

@@ -162,7 +162,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             "\"emailAddress\": {\r\n                      \"address\": \"jose@con'stoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ],\r\n   " +
             " \"ccRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          " +
             "\"address\": null\r\n        }\r\n      }\r\n    ]\r\n," +
-            "\"categories\": [\"one\", \"category\", \"away\", null]  },\r\n  \"saveToSentItems\": false\r\n}";
+            "\"categories\": [\"one\", \"category\", \"away\", null], \"webLink\": null  },\r\n  \"saveToSentItems\": false\r\n}";
 
             using var requestPayload =
                 new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/sendMail")
@@ -173,6 +173,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
             Assert.Contains("$ccRecipientsArray []= $ccRecipientsRecipient1;", result);
+            Assert.Contains("$message->setWebLink(null);", result);
     }
     
     [Fact]
