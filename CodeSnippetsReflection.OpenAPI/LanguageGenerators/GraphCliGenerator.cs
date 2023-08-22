@@ -17,8 +17,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static readonly Regex overloadedBoundedFunctionWithSingleOrMultipleParameters = new(@"\w+\([a-zA-Z,={}'-]+\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex overloadedBoundedHyphenatedFunctionWithSingleOrMultipleParameters = new(@"(?:\w+-)+\w+\([a-zA-Z,={}'-]+\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private static readonly Regex unBoundFunctionRegex = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    private static readonly Regex systemQueryOptionRegex = new(@"\w*=\w*\(\D*|\d*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-    
+
     private const string PathItemsKey = "default";
 
     public string GenerateCodeSnippet(SnippetModel snippetModel)
@@ -185,8 +184,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     /// <param name="segment"></param>
     /// <param name="operation"></param>
     /// <returns></returns>
-    private static (string,string) ProcessOverloadedBoundFunctions(string segment, string operation)
-    {   
+    private static (string, string) ProcessOverloadedBoundFunctions(string segment, string operation)
+    {
         StringBuilder parameterBuilder = new StringBuilder();
         StringBuilder SegmentBuilder = new StringBuilder();
         var functionItems = segment.Split("(");
@@ -198,8 +197,8 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         foreach (var parameter in parameters)
         {
             var parameterValue = parameter.Split("=")[0];
-            var updateSegmentDetails = !parameterValue.Contains("-id")? parameterValue + " {" + parameterValue + "-id}" : parameterValue + " {" + parameterValue + "}";
-            parameterBuilder.Append(parameters.Length>1?$"--{updateSegmentDetails} ": $"--{updateSegmentDetails}");
+            var updateSegmentDetails = !parameterValue.Contains("-id") ? parameterValue + " {" + parameterValue + "-id}" : parameterValue + " {" + parameterValue + "}";
+            parameterBuilder.Append(parameters.Length > 1 ? $"--{updateSegmentDetails} " : $"--{updateSegmentDetails}");
             var updatedSegment = $"-with-{parameterValue}";
             SegmentBuilder.Append(updatedSegment);
         }
@@ -231,32 +230,36 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
     private static IDictionary<string, string> ProcessQueryParameters([NotNull] in SnippetModel snippetModel)
     {
         IDictionary<string, string> splitQueryString = new Dictionary<string, string>();
+
         if (!string.IsNullOrWhiteSpace(snippetModel.QueryString))
         {
-            if (systemQueryOptionRegex.IsMatch(snippetModel.QueryString))
-            {
-                string pattern = "\\?\\$\\w*=";
-                string[] splittedQueryString = Regex.Split(snippetModel.QueryString, pattern, RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-                string queryOptionFunction = HttpUtility.UrlDecode(splittedQueryString[1]);
-                var match = Regex.Match(snippetModel.QueryString, pattern, RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-                string queryOption = match.Groups[0].Value.Replace("?", string.Empty, StringComparison.OrdinalIgnoreCase).Replace("=", string.Empty, StringComparison.OrdinalIgnoreCase);
-                queryOptionFunction = queryOptionFunction.Replace("$", "`$", StringComparison.OrdinalIgnoreCase);
-                queryOptionFunction = queryOptionFunction.Replace(queryOptionFunction, "\"" + queryOptionFunction + "\"", StringComparison.Ordinal);
-                splitQueryString.Add(queryOption, queryOptionFunction);
-            }
-            else
-            {
-                splitQueryString = snippetModel.QueryString
-                        .Remove(0, 1)
-                        .Split('&')
-                        .Select(static q =>
+            splitQueryString = snippetModel.QueryString
+                    .Remove(0, 1)
+                    .Split('&')
+                    .Select(static q =>
+                    {
+                        if (q.Contains("("))
                         {
-                            var x = q.Split('=');
-                            return x.Length > 1 ? (x[0], x[1]) : (x[0], string.Empty);
-                        })
-                        .Where(static t => !string.IsNullOrWhiteSpace(t.Item2))
-                        .ToDictionary(static t => t.Item1, static t => t.Item2);
-            }
+                            var qs = q;
+                            int fl = q.Length;
+                            qs = qs.Substring(0, qs.IndexOf("("));
+                            int isl = qs.Length;
+                            StringBuilder sb = new();
+                            for (int i = isl; i < fl; i++)
+                            {
+                                sb.Append(q[i]);
+                            }
+                            var xs = qs.Split("=");
+                            return xs.Length > 1 ? (xs[0], xs[1] + sb.Replace("$", "\\$")) : (xs[0], string.Empty);
+
+                        }
+
+                        var x = q.Split('=');
+                        return x.Length > 1 ? (x[0], x[1]) : (x[0], string.Empty);
+                    })
+                    .Where(static t => !string.IsNullOrWhiteSpace(t.Item2))
+                    .ToDictionary(static t => t.Item1, static t => t.Item2);
+
         }
 
         return splitQueryString;
@@ -394,7 +397,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         }
         else
         {
-            parameters.Add(key, paramValue);
+            parameters.Add(key, !paramValue.Contains("{") ? $"\"{paramValue}\"" : paramValue);
         }
     }
 
@@ -456,7 +459,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         return result.ToLower();
     }
 
-    [GeneratedRegex("(?<=[a-z])([A-Z])", RegexOptions.Compiled)]
+    [GeneratedRegex("(?<=[0-9a-z])([A-Z])", RegexOptions.Compiled)]
     private static partial Regex CamelCaseRegex();
 
     [GeneratedRegex("(?<=[a-z])[-_\\.]+([A-Za-z])", RegexOptions.Compiled)]
