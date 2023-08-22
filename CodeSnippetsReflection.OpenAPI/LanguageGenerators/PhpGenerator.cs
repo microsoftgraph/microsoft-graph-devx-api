@@ -443,7 +443,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private static void WriteBase64Url(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty child)
     {
         var fromObject = parent.PropertyType == PropertyType.Object;
-        var value = $"base64_decode(\'{child.Value}\')";
+        var value = $"\\GuzzleHttp\\Psr7\\Utils::streamFor(base64_decode(\'{child.Value}\'))";
         if (fromObject)
             payloadSb.AppendLine(
                 $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}({value});");

@@ -898,6 +898,6 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$dataRecoveryCertificate->setCertificate(base64_decode('Y2VydGlmaWNhdGU='));", result);
+        Assert.Contains("$dataRecoveryCertificate->setCertificate(\\GuzzleHttp\\Psr7\\Utils::streamFor(base64_decode('Y2VydGlmaWNhdGU=')));", result);
     }
 }
