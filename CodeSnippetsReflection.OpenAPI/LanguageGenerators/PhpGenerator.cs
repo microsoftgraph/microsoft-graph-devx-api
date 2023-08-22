@@ -257,7 +257,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), child, parent);
                 break;
             case PropertyType.Base64Url:
-                WriteBase64Url(propertyAssignment, parent, payloadSb, indentManager, child);
+                WriteBase64Url(propertyAssignment.ToFirstCharacterLowerCase(), parent, payloadSb, indentManager, child);
                 break;
             case PropertyType.Map:
                 WriteMapValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager, fromMap: fromMap);

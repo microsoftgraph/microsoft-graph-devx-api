@@ -878,4 +878,26 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("'owners@odata.bind' => [\n"+
         "'https://graph.microsoft.com/v1.0/users/26be1845-4119-4801-a799-aea79d09f1a2', ],", result);
     }
+
+    [Fact]
+    public async Task GeneratesStreamInterfaceInModelSetter()
+    {
+        var body = @"
+        {
+            ""dataRecoveryCertificate"": {
+                ""@odata.type"": ""microsoft.graph.windowsInformationProtectionDataRecoveryCertificate"",
+                ""subjectName"": ""Subject Name value"",
+                ""description"": ""Description value"",
+                ""expirationDateTime"": ""2016-12-31T23:57:57.2481234-08:00"",
+                ""certificate"": ""Y2VydGlmaWNhdGU=""
+            }
+        }";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/deviceAppManagement/mdmWindowsInformationProtectionPolicies")
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$dataRecoveryCertificate->setCertificate(base64_decode('Y2VydGlmaWNhdGU='));", result);
+    }
 }
