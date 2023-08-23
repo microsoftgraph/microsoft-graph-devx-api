@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -7,6 +8,7 @@ using System.Web;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
+using SharpYaml.Model;
 
 namespace CodeSnippetsReflection.OpenAPI
 {
@@ -21,7 +23,7 @@ namespace CodeSnippetsReflection.OpenAPI
         /// node representing the <c>{user-id}</c> segment.
         /// </remarks>
         public OpenApiUrlTreeNode EndPathNode => PathNodes.LastOrDefault();
-        
+
         /// <summary>
         /// An OpenAPI node that represents the root segment in the request URL.
         /// </summary>
@@ -32,8 +34,10 @@ namespace CodeSnippetsReflection.OpenAPI
         /// </remarks>
         public OpenApiUrlTreeNode RootPathNode => PathNodes.FirstOrDefault();
         public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
-        public IDictionary<string, OpenApiSchema> Schemas{ get; private set; }
-        
+        public IDictionary<string, OpenApiSchema> Schemas { get; private set; }
+
+        private static readonly Regex overloadedBoundedFunctionWithSingleOrMultipleParameters = new(@"[a-zA-Z-]+\([a-zA-Z0-9,={}""'@-]+\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+
         public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiSnippetMetadata openApiSnippetMetadata) : base(requestPayload, serviceRootUrl)
         {
             if (openApiSnippetMetadata == null) throw new ArgumentNullException(nameof(openApiSnippetMetadata));
@@ -61,7 +65,7 @@ namespace CodeSnippetsReflection.OpenAPI
             { new Regex(@"/users/[A-z0-9{}\-]+/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
             { new Regex(@"/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
         };
-        
+
         private static HttpRequestMessage RemapKnownPathsIfNeeded(HttpRequestMessage originalRequest)
         {
             var originalUri = originalRequest.RequestUri.OriginalString;
@@ -81,7 +85,8 @@ namespace CodeSnippetsReflection.OpenAPI
         /// Replaces OData style ids to path segments
         /// events('AAMkAGI1AAAt9AHjAAA=') to events/AAMkAGI1AAAt9AHjAAA=
         /// </summary>
-        private static string ReplaceIndexParametersByPathSegment(string original) {
+        private static string ReplaceIndexParametersByPathSegment(string original)
+        {
             if (string.IsNullOrEmpty(original)) return original;
             return oDataIndexReplacementRegex.Replace(original, match => $"/{match.Groups[1].Value}");
         }
@@ -105,7 +110,8 @@ namespace CodeSnippetsReflection.OpenAPI
                 return _responseSchema;
             }
         }
-        private OpenApiOperation GetOperation(OperationType type) {
+        private OpenApiOperation GetOperation(OperationType type)
+        {
             EndPathNode.PathItems[OpenApiSnippetsGenerator.treeNodeLabel].Operations.TryGetValue(type, out var operation);
             return operation;
         }
@@ -119,7 +125,7 @@ namespace CodeSnippetsReflection.OpenAPI
                     var contentType = ContentType ?? defaultContentType;
                     var operationType = GetOperationType(Method);
                     var operation = GetOperation(operationType);
-                    if(operation != default)
+                    if (operation != default)
                         _requestSchema = operation
                                             .RequestBody?
                                             .Content?
@@ -128,9 +134,13 @@ namespace CodeSnippetsReflection.OpenAPI
                 return _requestSchema;
             }
         }
-        public bool IsRequestBodyValid { get {
-            return !string.IsNullOrEmpty(RequestBody) && !RandomGEEmptyValues.Contains(RequestBody);
-        }}
+        public bool IsRequestBodyValid
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(RequestBody) && !RandomGEEmptyValues.Contains(RequestBody);
+            }
+        }
         private static HashSet<string> RandomGEEmptyValues = new(StringComparer.OrdinalIgnoreCase)  {
             "undefined",
             "\"\"",
@@ -175,14 +185,44 @@ namespace CodeSnippetsReflection.OpenAPI
                 throw new EntryPointNotFoundException($"HTTP Method '{httpMethod}' not found for path.");//path exists but Method does not
             }
 
-            
+
             var pathSegment = HttpUtility.UrlDecode(pathSegments.First());
-            var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Equals(pathSegment)).Value;
-            if (childNode != null)
+            if (overloadedBoundedFunctionWithSingleOrMultipleParameters.IsMatch(pathSegment))
             {
-                LoadNextNode(childNode, pathSegments, httpMethod);
-                return;
+
+                var functionItems = pathSegment.Split("(");
+                var functionName = functionItems[0];
+                var functionParams = functionItems[1].Remove(functionItems[1].Length - 1);
+                var paramItems = functionParams.Split(",");
+                int noOfParamItems = paramItems.Length;
+                var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Contains(functionName)).Value;
+                if (childNode != null)
+                {
+                    var pathSegmenFromOpenApi = childNode.Segment;
+                    var openApifunctionItems = pathSegmenFromOpenApi.Split("(");
+                    var openApifunctionName = openApifunctionItems[0];
+                    var openApifunctionParams = openApifunctionItems[1].Remove(openApifunctionItems[1].Length - 1);
+                    var openApiParamItems = openApifunctionParams.Split(",");
+                    int openApiNoOfParamItems = openApiParamItems.Length;
+                    bool allparamExists = openApiParamItems.All(x => paramItems.Any(y => x.Split("=")[0] == y.Split("=")[0]));
+                    if ((openApiNoOfParamItems == noOfParamItems) && allparamExists)
+                    {
+                        LoadNextNode(childNode, pathSegments, httpMethod);
+                        return;
+                    }
+                }
+
             }
+            else
+            {
+                var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Equals(pathSegment)).Value;
+                if (childNode != null)
+                {
+                    LoadNextNode(childNode, pathSegments, httpMethod);
+                    return;
+                }
+            }
+
             if (node.Children.Keys.Any(x => x.RemoveFunctionBraces().Equals(pathSegment, StringComparison.OrdinalIgnoreCase)))
             { // the casing in the description might be different than the casing in the snippet and this dictionary is CS
                 var caseChildNode = node.Children.First(x => x.Key.RemoveFunctionBraces().Equals(pathSegment, StringComparison.OrdinalIgnoreCase)).Value;
@@ -192,7 +232,7 @@ namespace CodeSnippetsReflection.OpenAPI
             if (node.Children.Keys.Any(x => x.IsFunction()) || pathSegment.IsFunction())
             {
                 var actionChildNode = node.Children.FirstOrDefault(x => x.Key.Split('.').Last().Equals(pathSegment.Split('.').Last(), StringComparison.OrdinalIgnoreCase));
-                if(actionChildNode.Value != null)
+                if (actionChildNode.Value != null)
                 {
                     LoadNextNode(actionChildNode.Value, pathSegments, httpMethod);
                     return;
@@ -218,13 +258,13 @@ namespace CodeSnippetsReflection.OpenAPI
                     return;
                 }
             }
-            
+
             throw new EntryPointNotFoundException($"Path segment '{pathSegment}' not found in path");
         }
         private void LoadNextNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments, HttpMethod httpMethod)
         {
             PathNodes.Add(node);
-            LoadPathNodes(node, pathSegments.Skip(1),httpMethod);
+            LoadPathNodes(node, pathSegments.Skip(1), httpMethod);
         }
         protected override OpenApiUrlTreeNode GetLastPathSegment()
         {
