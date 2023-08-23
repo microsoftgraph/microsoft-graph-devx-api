@@ -195,7 +195,7 @@ namespace CodeSnippetsReflection.OpenAPI
                 var functionParams = functionItems[1].Remove(functionItems[1].Length - 1);
                 var paramItems = functionParams.Split(",");
                 int noOfParamItems = paramItems.Length;
-                var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Contains(functionName)).Value;
+                var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Contains(functionName) && TrimNamespace(x.Key).Contains(functionParams.Split("=")[0])).Value;
                 if (childNode != null)
                 {
                     var pathSegmenFromOpenApi = childNode.Segment;
