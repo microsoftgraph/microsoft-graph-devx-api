@@ -69,20 +69,13 @@ namespace UriMatchingService
             var templateMatches = new Dictionary<KeyValuePair<string, string>, int>(); // {{ templateKey, foundParameterCount }}
             foreach (var template in _templates)
             {
-                try
+                var parameters = GetParameters(absolutePath, template.Value);
+                if (parameters != null)
                 {
-                    var parameters = GetParameters(absolutePath, template.Value);
-                    if (parameters != null)
-                    {
-                        if (parameters.Count == 0)
-                            return new TemplateMatch() { Key = template.Key, Template = template.Value }; // exact match, no ids
-                        else if(!templateMatches.ContainsKey(template))
-                            templateMatches.Add(template, parameters.Count);
-                    }
-                }
-                catch (Exception)
-                {
-                    continue;
+                    if (parameters.Count == 0)
+                        return new TemplateMatch() { Key = template.Key, Template = template.Value }; // exact match, no ids
+                    else if (!templateMatches.ContainsKey(template))
+                        templateMatches.Add(template, parameters.Count);
                 }
             }
 
@@ -119,12 +112,17 @@ namespace UriMatchingService
         {
             Regex parameterRegex = null;
 
-            if (parameterRegex == null)
+            int count = 0;
+            template = placeholderRegex.Replace(template, m => $"{{{++count}}}");
+            var matchingRegex = CreateMatchingRegex(template);
+            
+            try
             {
-                int count = 0;
-                template = placeholderRegex.Replace(template, m => $"{{{++count}}}");
-                var matchingRegex = CreateMatchingRegex(template);
                 parameterRegex = new Regex(matchingRegex, RegexOptions.None, TimeSpan.FromSeconds(5));
+            }
+            catch (Exception)
+            {
+                return null;
             }
 
             var match = parameterRegex.Match(uri.OriginalString);
