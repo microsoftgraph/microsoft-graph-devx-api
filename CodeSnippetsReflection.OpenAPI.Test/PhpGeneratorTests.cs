@@ -900,4 +900,13 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$dataRecoveryCertificate->setCertificate(\\GuzzleHttp\\Psr7\\Utils::streamFor(base64_decode('Y2VydGlmaWNhdGU=')));", result);
     }
+
+    [Fact]
+    public async Task ReplacesReservedWordsInFluentApiPath()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/print/printers/{{printerId}}/shares");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$graphServiceClient->escapedPrint()->printers()->byPrinterId('printer-id')->shares()->get()->wait();", result);
+    }
 }
