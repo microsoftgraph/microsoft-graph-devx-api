@@ -909,4 +909,13 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$graphServiceClient->escapedPrint()->printers()->byPrinterId('printer-id')->shares()->get()->wait();", result);
     }
+
+    [Fact]
+    public async Task ReplacesValueIdentifierInPathSegement()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/photo/$value");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$graphServiceClient->me()->photo()->content()->get()->wait();", result);
+    }
 }

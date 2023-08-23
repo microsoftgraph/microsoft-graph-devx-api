@@ -506,8 +506,9 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     return x.Segment.Split('.')
                         .Select(static s => s.ToFirstCharacterUpperCase())
                         .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterLowerCase() + "()";
-                var segment = ReplaceReservedWord(x.Segment).ToFirstCharacterLowerCase();
-                return segment.ToFirstCharacterLowerCase() + "()";
+
+                var segment = ReplaceReservedWord(x.Segment);
+                return segment.ReplaceValueIdentifier().ToFirstCharacterLowerCase() + "()";
             }).Aggregate(new List<string>(), (current, next) =>
             {
                 if (next.StartsWith("ById"))
