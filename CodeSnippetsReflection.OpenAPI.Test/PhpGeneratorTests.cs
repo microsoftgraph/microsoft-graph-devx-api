@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -144,8 +145,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody = new Group();\n" +
-                        "$requestBody->setDescription('Self help community for library');\n" +
+        Assert.Contains($"$requestBody = new Group();{Environment.NewLine}" +
+                        $"$requestBody->setDescription('Self help community for library');{Environment.NewLine}" +
                         "$requestBody->setDisplayName('Library Assist');", result);
     }
     [Fact]
@@ -874,7 +875,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("'owners@odata.bind' => [\n"+
+        Assert.Contains($"'owners@odata.bind' => [{Environment.NewLine}"+
         "'https://graph.microsoft.com/v1.0/users/26be1845-4119-4801-a799-aea79d09f1a2', ],", result);
     }
 }
