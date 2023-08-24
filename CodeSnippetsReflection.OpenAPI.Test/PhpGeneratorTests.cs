@@ -918,4 +918,13 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$graphServiceClient->me()->photo()->content()->get()->wait();", result);
     }
+
+    [Fact]
+    public async Task GeneratesCorrectRequestconfigurationObjectForIndexedCollections()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}?$select=ext55gb1l09_msLearnCourses");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestConfiguration = new UserItemRequestBuilderGetRequestConfiguration();", result);
+    }
 }
