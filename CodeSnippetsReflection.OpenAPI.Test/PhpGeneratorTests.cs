@@ -931,10 +931,12 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
     [Fact]
     public async Task GeneratesRequestConfigurationClassNameWithMeEndpoints()
     {
-        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$expand=manager($levels=max;$select=id,displayName)");
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$expand=manager($levels=max;$select=id,displayName)&$filter=distributionMethod eq 'organization'");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$requestConfiguration = new UserItemRequestBuilderGetRequestConfiguration();", result);
+        Assert.Contains("$queryParameters->expand = [\"manager(\\$levels=max;\\$select=id,displayName)\"]", result);
+        Assert.Contains("$queryParameters->filter = \"distributionMethod eq 'organization'\"", result);
     }
 
     [Fact]

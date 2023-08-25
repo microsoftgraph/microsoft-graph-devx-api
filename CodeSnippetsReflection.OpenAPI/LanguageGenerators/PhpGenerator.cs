@@ -135,7 +135,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         foreach(var (key, value) in requestQueryParameters)
         {
             payloadSb.AppendLine(
-                $"${QueryParametersVarName}->{NormalizeVariableName(key)} = {EvaluateParameter(value)};");
+                $"${QueryParametersVarName}->{NormalizeVariableName(key)} = {EvaluateParameter(value).Replace("$", "\\$")};");
         }
 
         payloadSb.AppendLine($"${RequestConfigurationVarName}->queryParameters = ${QueryParametersVarName};");
