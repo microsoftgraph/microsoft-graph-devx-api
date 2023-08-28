@@ -990,4 +990,13 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$graphServiceClient->policies()->crossTenantAccessPolicy()->partners()->byCrossTenantAccessPolicyConfigurationPartnerTenantId('crossTenantAccessPolicyConfigurationPartner-tenantId')->identitySynchronization()->delete()->wait();", result);
     }
+
+    [Fact]
+    public async Task GeneratesCorrectRequestConfigNameWithOdataCast()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups/{{id}}/members/microsoft.graph.user?$count=true&$orderby=displayName");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestConfiguration = new GraphUserRequestBuilderGetRequestConfiguration();", result);
+    }
 }

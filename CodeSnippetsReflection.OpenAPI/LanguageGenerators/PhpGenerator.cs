@@ -160,7 +160,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if (codeGraph.HasParameters() || codeGraph.HasHeaders() || codeGraph.HasOptions())
         {
             var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
-            var rawClassName = codeGraph.Nodes.Last().GetClassName();
+            var prefix = codeGraph.Nodes.Last().Segment.IsFunction() ? codeGraph.Nodes.Last().Segment.Split(".").First() : "";
+            var rawClassName = prefix + codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
             rawClassName = "Me".Equals(rawClassName, StringComparison.OrdinalIgnoreCase) ? "UserItem" : rawClassName;
             var className = $"{rawClassName.ToFirstCharacterUpperCase()}{itemSuffix}RequestBuilder{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             payloadSb.AppendLine($"${RequestConfigurationVarName} = new {className}();");
