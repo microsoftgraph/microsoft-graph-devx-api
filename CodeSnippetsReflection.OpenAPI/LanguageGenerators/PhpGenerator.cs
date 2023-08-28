@@ -472,7 +472,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
     private static string EscapePropertyNameForSetterAndGetter(string propertyName)
     {
-        return propertyName?.Split('.', '@', '-').Select(x => x.ToFirstCharacterUpperCase()).Aggregate((a, b) => a + b);
+        return propertyName?.Split('.', '@', '-', '_').Select(x => x.ToFirstCharacterUpperCase()).Aggregate((a, b) => a + b);
     }
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph codeGraph)
     {

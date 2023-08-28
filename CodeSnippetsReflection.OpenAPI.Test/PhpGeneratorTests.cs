@@ -957,4 +957,28 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$requestBody->setEscapedList($list);", result);
     }
+
+    [Fact]
+    public async Task CleansUnderscoresFromSetters()
+    {
+        var body = @"
+        {
+            ""@odata.type"": ""#microsoft.graph.androidLobApp"",
+            ""minimumSupportedOperatingSystem"": {
+                ""@odata.type"": ""microsoft.graph.androidMinimumOperatingSystem"",
+                ""v8_0"": true,
+                ""v8_1"": true,
+                ""v10_0"": true
+            },
+        }";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/deviceAppManagement/mobileApps")
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$minimumSupportedOperatingSystem->setV80(true);", result);
+        Assert.Contains("$minimumSupportedOperatingSystem->setV81(true);", result);
+        Assert.Contains("$minimumSupportedOperatingSystem->setV100(true);", result);
+    }
 }
