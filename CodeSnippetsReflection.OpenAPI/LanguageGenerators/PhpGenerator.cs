@@ -481,7 +481,11 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var result = openApiUrlTreeNodes.Select(x =>
             {
                 if (x.Segment.IsCollectionIndex())
-                    return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}"; 
+                {
+                    var collectionIndexName = x.Segment.Replace("{", "").Replace("}", "");
+                    var fluentMethodName = collectionIndexName.Split("-").Select(x => x.ToFirstCharacterUpperCase()).Aggregate((a, b) => a + b);
+                    return $"by{fluentMethodName}('{collectionIndexName}')";
+                }
                 if (x.Segment.IsFunctionWithParameters())
                 {
                     var functionName = x.Segment.Split('(').First();
@@ -512,16 +516,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
                 var segment = ReplaceReservedWord(x.Segment);
                 return segment.ReplaceValueIdentifier().ToFirstCharacterLowerCase() + "()";
-            }).Aggregate(new List<string>(), (current, next) =>
-            {
-                if (next.StartsWith("ById"))
-                {
-                    var inBrackets = next[4..];
-                    var indexerName = next[6..].Split('-')[0];
-                    next = $"by{indexerName.ToFirstCharacterUpperCase()}Id{inBrackets}";
-                }
-                current.Add(next);
-                return current;
             }).Aggregate(static (x, y) => $"{x.Trim('$')}->{y.Trim('$')}")
             .Replace("()()->", "()->");
 

@@ -981,4 +981,13 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("$minimumSupportedOperatingSystem->setV81(true);", result);
         Assert.Contains("$minimumSupportedOperatingSystem->setV100(true);", result);
     }
+
+    [Fact]
+    public async Task GeneratesFromHyphenSeparatedRequestBuilderPath()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/policies/crossTenantAccessPolicy/partners/{{crossTenantAccessPolicyConfigurationPartner-tenantId}}/identitySynchronization");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$graphServiceClient->policies()->crossTenantAccessPolicy()->partners()->byCrossTenantAccessPolicyConfigurationPartnerTenantId('crossTenantAccessPolicyConfigurationPartner-tenantId')->identitySynchronization()->delete()->wait();", result);
+    }
 }
