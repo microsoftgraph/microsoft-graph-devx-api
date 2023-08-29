@@ -295,7 +295,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("request_body = ReferenceCreate(", result);
         Assert.Contains("odata_id = \"https://graph.microsoft.com/beta/users/alexd@contoso.com\"", result);
-        Assert.Contains(".accepted_senders.ref.post(request_body = request_body)", result);
+        Assert.Contains(".accepted_senders.ref.post(body = request_body)", result);
     }
     [Fact]
     public async Task GenerateSnippetsWithArrayNesting()
@@ -439,7 +439,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("graph_client.users.by_user_id('user-id').send_mail.post(request_body = request_body)", result);
+        Assert.Contains("graph_client.users.by_user_id('user-id').send_mail.post(body = request_body)", result);
         Assert.Contains("request_body = SendMailPostRequestBody(", result);
         Assert.Contains("to_recipients = [", result);
     }
