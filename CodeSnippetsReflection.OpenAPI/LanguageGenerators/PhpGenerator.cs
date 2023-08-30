@@ -160,7 +160,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if (codeGraph.HasParameters() || codeGraph.HasHeaders() || codeGraph.HasOptions())
         {
             var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
-            var prefix = codeGraph.Nodes.Last().Segment.IsFunction() ? codeGraph.Nodes.Last().Segment.Split(".").First() : "";
+            var prefix = codeGraph.Nodes.Last().Segment.IsFunction() ? codeGraph.Nodes.Last().Segment.Split(".")[0] : "";
             var rawClassName = prefix + codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
             rawClassName = "Me".Equals(rawClassName, StringComparison.OrdinalIgnoreCase) ? "UserItem" : rawClassName;
             var className = $"{rawClassName.ToFirstCharacterUpperCase()}{itemSuffix}RequestBuilder{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
@@ -478,7 +478,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph codeGraph)
     {
         var openApiUrlTreeNodes = nodes.ToList();
-        if (!(openApiUrlTreeNodes?.Any() ?? false)) return string.Empty;
+        if (!openApiUrlTreeNodes.Any()) return string.Empty;
         var result = openApiUrlTreeNodes.Select(x =>
             {
                 if (x.Segment.IsCollectionIndex())
