@@ -1,3 +1,4 @@
 {
-    "omnisharp.enableRoslynAnalyzers": true
+    "omnisharp.enableRoslynAnalyzers": true,
+    "dotnet.defaultSolution": "MSGraphWebApi.sln"
 }
