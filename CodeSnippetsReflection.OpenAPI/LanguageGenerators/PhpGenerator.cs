@@ -163,7 +163,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             var prefix = codeGraph.Nodes.Last().Segment.IsFunction() ? codeGraph.Nodes.Last().Segment.Split(".")[0] : "";
             var rawClassName = prefix + codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
             rawClassName = "Me".Equals(rawClassName, StringComparison.OrdinalIgnoreCase) ? "UserItem" : rawClassName;
-            var className = $"{rawClassName.ToFirstCharacterUpperCase()}{itemSuffix}RequestBuilder{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            var className = $"{rawClassName}{itemSuffix}RequestBuilder{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             payloadSb.AppendLine($"${RequestConfigurationVarName} = new {className}();");
             var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
             var queryParamsPayload = GetRequestQueryParameters(codeGraph, className);
@@ -484,7 +484,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 if (x.Segment.IsCollectionIndex())
                 {
                     var collectionIndexName = x.Segment.Replace("{", "").Replace("}", "");
-                    var fluentMethodName = collectionIndexName.Split("-").Select(x => x.ToFirstCharacterUpperCase()).Aggregate((a, b) => a + b);
+                    var fluentMethodName = collectionIndexName.Split("-").Select(static x => x.ToFirstCharacterUpperCase()).Aggregate(static (a, b) => a + b);
                     return $"by{fluentMethodName}('{collectionIndexName}')";
                 }
                 if (x.Segment.IsFunctionWithParameters())
