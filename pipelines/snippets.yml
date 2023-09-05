@@ -114,8 +114,6 @@ stages:
         publishLocation: 'Container'
         StoreAsTar: true
 
-    - template: templates/commit-changes.yml
-
     - pwsh: $(Build.SourcesDirectory)/microsoft-graph-devx-api/scripts/cleanupUnusedSnippets.ps1
       displayName: 'Cleanup unused snippets'
       workingDirectory: microsoft-graph-docs
