@@ -12,7 +12,7 @@ internal static class StringExtensions
         !string.IsNullOrEmpty(pathSegment) && pathSegment.StartsWith('{') && pathSegment.EndsWith('}');
     internal static bool IsFunction(this string pathSegment) => !string.IsNullOrEmpty(pathSegment) && pathSegment.Contains('.');
 
-    private static readonly Regex FunctionWithParameterRegex = new(@"\([\w\s\d=':${}<>|\-,]+\)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
+    private static readonly Regex FunctionWithParameterRegex = new(@"\([\w\s\d=':${}<>|\-,""@]+\)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
     internal static bool IsFunctionWithParameters(this string pathSegment) => !string.IsNullOrEmpty(pathSegment) 
                                                                               && FunctionWithParameterRegex.Match(pathSegment).Success;
 
