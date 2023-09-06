@@ -129,6 +129,11 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             return Parameters.Any();
         }
 
+        public Boolean HasPathParameters()
+        {
+            return PathParameters.Any();
+        }
+
         public Boolean HasBody()
         {
             return Body.PropertyType != PropertyType.Default;
