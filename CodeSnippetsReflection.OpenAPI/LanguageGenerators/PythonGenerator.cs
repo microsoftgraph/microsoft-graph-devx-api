@@ -84,7 +84,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var returnVar = codeGraph.HasReturnedBody() ? "result = " : string.Empty;
             var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
             snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-            snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList}))");
+            snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph)}.{method}({parameterList})");
+
+
         }
         private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager, string classNameQueryParameters)
         {
@@ -301,19 +303,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string ReplaceIfReservedTypeName(string originalString, string suffix = "_")
             => ReservedTypeNames.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
-        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph codeGraph)
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
             var elements = nodes.Select(static (x, i) =>
                 {
                     if (x.Segment.IsCollectionIndex())
-                        return $"by_type_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
-                    else if (x.Segment.IsFunction())
-                        return x.Segment.Replace(".", "_").RemoveFunctionBraces().Split('.')
-                            .Select(static s => s.ToSnakeCase())
-                            .Aggregate(static (a, b) => $"{a}{b}");
-                    return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces()
-                        .ToSnakeCase();
+                        return $"by_type_id{x.Segment.Replace("{", "('").Replace("}", "')")}"; 
+                    
+                    var segmentValue = x.Segment.IsFunction() ? x.Segment.Split('.')
+                                .Select(static s => s.ToSnakeCase())
+                                .Aggregate(static (a, b) => $"{a}{b}") : x.Segment;
+                    var functionWithParameters = segmentValue.GetFunctionWithParameters();
+                    if (!functionWithParameters.Item1)
+                        return segmentValue.ToSnakeCase();
+
+                    string withNames = string.Join("", functionWithParameters.Item3.Keys.Select(static key => "With" + key.ToFirstCharacterUpperCase()));
+                    string varNames = String.Join(", ", functionWithParameters.Item3.Keys.Select(item => "&" + item));
+                    return $"{functionWithParameters.Item2.ToSnakeCase()}{withNames}({varNames}).";
                 })
                 .Aggregate(new List<String>(), (current, next) =>
                 {
