@@ -276,7 +276,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("DeltaResponse result = deltaRequestBuilder.get(", result);
-            Assert.Contains("DeltaRequestBuilder deltaRequestBuilder = new com.microsoft.graph.me.calendarView.delta.DeltaRequestBuilder(", result);
+            Assert.Contains("DeltaRequestBuilder deltaRequestBuilder = new com.microsoft.graph.users.item.calendarview.delta.DeltaRequestBuilder(", result);
         }
 
         [Fact]
@@ -774,7 +774,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("com.microsoft.graph.me.assignlicense.AssignLicensePostRequestBody assignLicensePostRequestBody = new com.microsoft.graph.me.assignlicense.AssignLicensePostRequestBody();", result);
+            Assert.Contains("com.microsoft.graph.users.item.assignlicense.AssignLicensePostRequestBody assignLicensePostRequestBody = new com.microsoft.graph.users.item.assignlicense.AssignLicensePostRequestBody();", result);
             Assert.Contains("LinkedList<UUID> disabledPlans0 = new LinkedList<UUID>", result);
             Assert.Contains("LinkedList<UUID> removeLicenses = new LinkedList<UUID>", result);
             Assert.Contains("UUID.fromString(\"bea13e0c-3828-4daa-a392-28af7ff61a0f\")", result);
@@ -813,7 +813,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("SendMailPostRequestBody sendMailPostRequestBody = new com.microsoft.graph.me.sendmail.SendMailPostRequestBody()", result);
+            Assert.Contains("SendMailPostRequestBody sendMailPostRequestBody = new com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody()", result);
             Assert.Contains("LinkedList<Attachment> attachments = new LinkedList<Attachment>", result);// Collection defines Base type
             Assert.Contains("new FileAttachment", result);// Individual items are derived types
             Assert.Contains("byte[] contentBytes0 = Base64.getDecoder().decode(\"SGVsbG8gV29ybGQh\")", result);

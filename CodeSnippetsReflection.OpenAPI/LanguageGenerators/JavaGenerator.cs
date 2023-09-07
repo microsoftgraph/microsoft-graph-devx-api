@@ -114,7 +114,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {// its a delta query and needs the opaque url passed over.
                 pathSegment = "deltaRequestBuilder.";
                 codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
-                payloadSb.AppendLine($"DeltaRequestBuilder deltaRequestBuilder = new com.{GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph).Replace("()","")}DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.getRequestAdapter()).");
+                payloadSb.AppendLine($"DeltaRequestBuilder deltaRequestBuilder = new com.{GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph).Replace("()","").Replace("me.", "users.item.").ToLowerInvariant()}DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.getRequestAdapter());");
                 responseAssignment = "DeltaResponse result = ";
             }
             else
@@ -449,7 +449,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 .Select(static x => ReplaceIfReservedName(x, "Namespace").ToLowerInvariant())
                 .Aggregate(static (z, y) => z + '.' + y);
 
-            return $"com.{GetDefaultNamespaceName(apiVersion)}.{normalizedNameSpaceName}.";
+            return $"com.{GetDefaultNamespaceName(apiVersion)}.{normalizedNameSpaceName.Replace("me.", "users.item.")}.";
         }
 
         private static string GetDefaultNamespaceName(string apiVersion) =>
