@@ -135,7 +135,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         foreach(var (key, value) in requestQueryParameters)
         {
             payloadSb.AppendLine(
-                $"${QueryParametersVarName}->{NormalizeVariableName(key)} = {EvaluateParameter(value)};");
+                $"${QueryParametersVarName}->{NormalizeVariableName(key)} = {EvaluateParameter(value).Replace("$", "\\$")};");
         }
 
         payloadSb.AppendLine($"${RequestConfigurationVarName}->queryParameters = ${QueryParametersVarName};");
@@ -159,7 +159,11 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
         if (codeGraph.HasParameters() || codeGraph.HasHeaders() || codeGraph.HasOptions())
         {
-            var className = $"{codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase()}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
+            var prefix = codeGraph.Nodes.Last().Segment.IsFunction() ? codeGraph.Nodes.Last().Segment.Split(".")[0] : "";
+            var rawClassName = prefix.ToFirstCharacterUpperCase() + codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
+            rawClassName = "Me".Equals(rawClassName, StringComparison.OrdinalIgnoreCase) ? "UserItem" : rawClassName;
+            var className = $"{rawClassName}{itemSuffix}RequestBuilder{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             payloadSb.AppendLine($"${RequestConfigurationVarName} = new {className}();");
             var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
             var queryParamsPayload = GetRequestQueryParameters(codeGraph, className);
@@ -227,14 +231,14 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             case PropertyType.Float64:
                 if (!isMap && !isArray)
                     payloadSb.AppendLine(
-                        $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{EscapePropertyNameForSetterAndGetter(propertyName.ToFirstCharacterUpperCase())}({child.Value});");
+                        $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(propertyName.ToFirstCharacterUpperCase()))}({child.Value});");
                 else
                     payloadSb.Append($"{child.Value},");
                 break;
 			case PropertyType.Boolean:
                 if (!isMap && !isArray) {
                     payloadSb.AppendLine(
-                        $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{EscapePropertyNameForSetterAndGetter(propertyName.ToFirstCharacterUpperCase())}({child.Value.ToLower()});");
+                        $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(propertyName.ToFirstCharacterUpperCase()))}({child.Value.ToLower()});");
                 }
                 else
                 {
@@ -242,13 +246,13 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 }
                 break;
 			case PropertyType.Null:
-                WriteNullProperty(propertyAssignment, parent, payloadSb, indentManager, child);
+                WriteNullProperty(propertyAssignment.ToFirstCharacterLowerCase(), parent, payloadSb, indentManager, child);
                 break;
             case PropertyType.Object: 
                 WriteObjectProperty(propertyAssignment.ToFirstCharacterLowerCase(), payloadSb, child, indentManager, childPropertyName);
                 if (!fromArray)
                     payloadSb.AppendLine(
-                        $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{EscapePropertyNameForSetterAndGetter(child.Name.ToFirstCharacterUpperCase())}(${(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()});");
+                        $"${propertyAssignment.ToFirstCharacterLowerCase()}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(child.Name.ToFirstCharacterUpperCase()))}(${(childPropertyName ?? propertyName).ToFirstCharacterLowerCase()});");
                 break;
 			case PropertyType.Array:
 				WriteArrayProperty(propertyAssignment.ToFirstCharacterLowerCase(), child.Name, payloadSb, parent, child, indentManager, fromMap: fromMap); 
@@ -257,7 +261,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 WriteEnumValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), child, parent);
                 break;
             case PropertyType.Base64Url:
-                WriteBase64Url(propertyAssignment, parent, payloadSb, indentManager, child);
+                WriteBase64Url(propertyAssignment.ToFirstCharacterLowerCase(), parent, payloadSb, indentManager, child);
                 break;
             case PropertyType.Map:
                 WriteMapValue(payloadSb, propertyAssignment.ToFirstCharacterLowerCase(), parent, child, indentManager, fromMap: fromMap);
@@ -284,7 +288,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var assignmentValue = $"new \\DateInterval(\'{child.Value}\')";
         if (fromObject)
             payloadSb.AppendLine(
-                $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}({assignmentValue});");
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(child.Name))}({assignmentValue});");
         else
             payloadSb.Append($"{indentManager.GetIndent()}{assignmentValue},");
     } 
@@ -294,7 +298,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var assignmentValue = $"new {typeName}(\'{child.Value}\')";
         if (fromObject)
             payloadSb.AppendLine(
-                $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}({assignmentValue});");
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(child.Name))}({assignmentValue});");
         else
             payloadSb.Append($"{indentManager.GetIndent()}{assignmentValue},");
     }
@@ -305,7 +309,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var assignmentValue = $"new \\DateTime(\'{child.Value}\')";
         if (fromObject)
             payloadSb.AppendLine(
-                $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}({assignmentValue});");
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(child.Name))}({assignmentValue});");
         else
             payloadSb.Append($"{indentManager.GetIndent()}{assignmentValue},");
     }
@@ -314,7 +318,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var fromObject = parent.PropertyType == PropertyType.Object;
         if (fromObject)
             payloadSb.AppendLine(
-                $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}(null);");
+                $"${propertyAssignment}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(child.Name))}(null);");
         else
             payloadSb.Append($"{indentManager.GetIndent()}null,");
     }
@@ -354,7 +358,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             case PropertyType.Object:
                 fromObject = true;
                 payloadSb.AppendLine(
-                    $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(currentProperty.Name)}(${EscapePropertyNameForSetterAndGetter(currentProperty.Name).ToFirstCharacterLowerCase()});");
+                    $"${propertyAssignment}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(currentProperty.Name))}(${EscapePropertyNameForSetterAndGetter(currentProperty.Name).ToFirstCharacterLowerCase()});");
                 break;
             case PropertyType.Array:
                 indentManager.Unindent();
@@ -405,7 +409,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if (lastProperty.PropertyType == PropertyType.Object && !fromMap)
         {
             builder.AppendLine(
-                $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}(${arrayName});");
+                $"${propertyAssignment}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(codeProperty.Name))}(${arrayName});");
             payloadSb.AppendLine(builder.ToString());
         }
         else if (lastProperty.PropertyType != PropertyType.Object && lastProperty.PropertyType != PropertyType.Map && parentProperty.PropertyType != PropertyType.Object)
@@ -416,7 +420,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             builder.Append($"{indentManager.GetIndent()}]");
             if (parentProperty.PropertyType == PropertyType.Object)
                 payloadSb.AppendLine(
-                    $"${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}({builder.ToString().Trim()});");
+                    $"${propertyAssignment}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(codeProperty.Name))}({builder.ToString().Trim()});");
             else
                 payloadSb.Append($"{builder.ToString().Trim()},");
         }
@@ -435,7 +439,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var value = $"new {ReplaceReservedWord(enumClass)}('{enumValue}')";
         if (fromObject)
             payloadSb.AppendLine(
-                $"${parentPropertyName}->set{EscapePropertyNameForSetterAndGetter(currentProperty.Name)}({value});");
+                $"${parentPropertyName}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(currentProperty.Name))}({value});");
         else
             payloadSb.Append($"{value},");
     }
@@ -443,10 +447,10 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private static void WriteBase64Url(string propertyAssignment, CodeProperty parent, StringBuilder payloadSb, IndentManager indentManager, CodeProperty child)
     {
         var fromObject = parent.PropertyType == PropertyType.Object;
-        var value = $"base64_decode(\'{child.Value}\')";
+        var value = $"\\GuzzleHttp\\Psr7\\Utils::streamFor(base64_decode(\'{child.Value}\'))";
         if (fromObject)
             payloadSb.AppendLine(
-                $"{indentManager.GetIndent()}${propertyAssignment}->set{EscapePropertyNameForSetterAndGetter(child.Name)}({value});");
+                $"{indentManager.GetIndent()}${propertyAssignment}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(child.Name))}({value});");
         else
             payloadSb.Append($"{value},");
     }
@@ -458,7 +462,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         if (fromObject)
         {
             payloadSb.AppendLine(
-                $"${indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}->set{EscapePropertyNameForSetterAndGetter(codeProperty.Name)}('{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}');");
+                $"${indentManager.GetIndent()}{propertyAssignment.ToFirstCharacterLowerCase()}->set{ReplaceReservedWord(EscapePropertyNameForSetterAndGetter(codeProperty.Name))}('{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}');");
         }
         else
             payloadSb.Append($"\'{codeProperty.Value.EscapeQuotesInLiteral("\"", "\\'")}\', ");
@@ -469,16 +473,20 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
     private static string EscapePropertyNameForSetterAndGetter(string propertyName)
     {
-        return propertyName?.Split('.', '@', '-').Select(x => x.ToFirstCharacterUpperCase()).Aggregate((a, b) => a + b);
+        return propertyName?.Split('.', '@', '-', '_').Select(x => x.ToFirstCharacterUpperCase()).Aggregate((a, b) => a + b);
     }
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph codeGraph)
     {
         var openApiUrlTreeNodes = nodes.ToList();
-        if (!(openApiUrlTreeNodes?.Any() ?? false)) return string.Empty;
+        if (!openApiUrlTreeNodes.Any()) return string.Empty;
         var result = openApiUrlTreeNodes.Select(x =>
             {
                 if (x.Segment.IsCollectionIndex())
-                    return $"ById{x.Segment.Replace("{", "('").Replace("}", "')")}"; 
+                {
+                    var collectionIndexName = x.Segment.Replace("{", "").Replace("}", "");
+                    var fluentMethodName = collectionIndexName.Split("-").Select(static x => x.ToFirstCharacterUpperCase()).Aggregate(static (a, b) => a + b);
+                    return $"by{fluentMethodName}('{collectionIndexName}')";
+                }
                 if (x.Segment.IsFunctionWithParameters())
                 {
                     var functionName = x.Segment.Split('(').First();
@@ -506,17 +514,9 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     return x.Segment.Split('.')
                         .Select(static s => s.ToFirstCharacterUpperCase())
                         .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterLowerCase() + "()";
-                return x.Segment.ToFirstCharacterLowerCase() + "()";
-            }).Aggregate(new List<string>(), (current, next) =>
-            {
-                if (next.StartsWith("ById"))
-                {
-                    var inBrackets = next[4..];
-                    var indexerName = next[6..].Split('-')[0];
-                    next = $"by{indexerName.ToFirstCharacterUpperCase()}Id{inBrackets}";
-                }
-                current.Add(next);
-                return current;
+
+                var segment = ReplaceReservedWord(x.Segment);
+                return segment.ReplaceValueIdentifier().ToFirstCharacterLowerCase() + "()";
             }).Aggregate(static (x, y) => $"{x.Trim('$')}->{y.Trim('$')}")
             .Replace("()()->", "()->");
 

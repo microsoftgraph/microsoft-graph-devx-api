@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -144,8 +145,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("$requestBody = new Group();\n" +
-                        "$requestBody->setDescription('Self help community for library');\n" +
+        Assert.Contains($"$requestBody = new Group();{Environment.NewLine}" +
+                        $"$requestBody->setDescription('Self help community for library');{Environment.NewLine}" +
                         "$requestBody->setDisplayName('Library Assist');", result);
     }
     [Fact]
@@ -162,7 +163,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             "\"emailAddress\": {\r\n                      \"address\": \"jose@con'stoso.onmicrosoft.com\"\r\n        }\r\n      }\r\n    ],\r\n   " +
             " \"ccRecipients\": [\r\n      {\r\n        \"emailAddress\": {\r\n          " +
             "\"address\": null\r\n        }\r\n      }\r\n    ]\r\n," +
-            "\"categories\": [\"one\", \"category\", \"away\", null]  },\r\n  \"saveToSentItems\": false\r\n}";
+            "\"categories\": [\"one\", \"category\", \"away\", null], \"webLink\": null  },\r\n  \"saveToSentItems\": false\r\n}";
 
             using var requestPayload =
                 new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/sendMail")
@@ -173,6 +174,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("$message->setCcRecipients($ccRecipientsArray);", result);
             Assert.Contains("$ccRecipientsArray []= $ccRecipientsRecipient1;", result);
+            Assert.Contains("$message->setWebLink(null);", result);
     }
     
     [Fact]
@@ -874,7 +876,128 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("'owners@odata.bind' => [\n"+
+        Assert.Contains($"'owners@odata.bind' => [{Environment.NewLine}"+
         "'https://graph.microsoft.com/v1.0/users/26be1845-4119-4801-a799-aea79d09f1a2', ],", result);
+    }
+
+    [Fact]
+    public async Task GeneratesStreamInterfaceInModelSetter()
+    {
+        var body = @"
+        {
+            ""dataRecoveryCertificate"": {
+                ""@odata.type"": ""microsoft.graph.windowsInformationProtectionDataRecoveryCertificate"",
+                ""subjectName"": ""Subject Name value"",
+                ""description"": ""Description value"",
+                ""expirationDateTime"": ""2016-12-31T23:57:57.2481234-08:00"",
+                ""certificate"": ""Y2VydGlmaWNhdGU=""
+            }
+        }";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/deviceAppManagement/mdmWindowsInformationProtectionPolicies")
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$dataRecoveryCertificate->setCertificate(\\GuzzleHttp\\Psr7\\Utils::streamFor(base64_decode('Y2VydGlmaWNhdGU=')));", result);
+    }
+
+    [Fact]
+    public async Task ReplacesReservedWordsInFluentApiPath()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/print/printers/{{printerId}}/shares");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$graphServiceClient->escapedPrint()->printers()->byPrinterId('printer-id')->shares()->get()->wait();", result);
+    }
+
+    [Fact]
+    public async Task ReplacesValueIdentifierInPathSegement()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/photo/$value");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$graphServiceClient->me()->photo()->content()->get()->wait();", result);
+    }
+
+    [Fact]
+    public async Task GeneratesCorrectRequestconfigurationObjectForIndexedCollections()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}?$select=ext55gb1l09_msLearnCourses");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestConfiguration = new UserItemRequestBuilderGetRequestConfiguration();", result);
+    }
+
+    [Fact]
+    public async Task GeneratesRequestConfigurationClassNameWithMeEndpoints()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$expand=manager($levels=max;$select=id,displayName)&$filter=distributionMethod eq 'organization'");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestConfiguration = new UserItemRequestBuilderGetRequestConfiguration();", result);
+        Assert.Contains("$queryParameters->expand = [\"manager(\\$levels=max;\\$select=id,displayName)\"]", result);
+        Assert.Contains("$queryParameters->filter = \"distributionMethod eq 'organization'\"", result);
+    }
+
+    [Fact]
+    public async Task EscapesRequestBodySetterNames()
+    {
+        var body = @"
+        {
+            ""displayName"": ""Books"",
+            ""list"": {
+                ""template"": ""genericList""
+            }
+        }";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/sites/{{site-id}}/lists")
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestBody->setEscapedList($list);", result);
+    }
+
+    [Fact]
+    public async Task CleansUnderscoresFromSetters()
+    {
+        var body = @"
+        {
+            ""@odata.type"": ""#microsoft.graph.androidLobApp"",
+            ""minimumSupportedOperatingSystem"": {
+                ""@odata.type"": ""microsoft.graph.androidMinimumOperatingSystem"",
+                ""v8_0"": true,
+                ""v8_1"": true,
+                ""v10_0"": true
+            },
+        }";
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/deviceAppManagement/mobileApps")
+        {
+            Content = new StringContent(body, Encoding.UTF8, "application/json")
+        };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$minimumSupportedOperatingSystem->setV80(true);", result);
+        Assert.Contains("$minimumSupportedOperatingSystem->setV81(true);", result);
+        Assert.Contains("$minimumSupportedOperatingSystem->setV100(true);", result);
+    }
+
+    [Fact]
+    public async Task GeneratesFromHyphenSeparatedRequestBuilderPath()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/policies/crossTenantAccessPolicy/partners/{{crossTenantAccessPolicyConfigurationPartner-tenantId}}/identitySynchronization");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$graphServiceClient->policies()->crossTenantAccessPolicy()->partners()->byCrossTenantAccessPolicyConfigurationPartnerTenantId('crossTenantAccessPolicyConfigurationPartner-tenantId')->identitySynchronization()->delete()->wait();", result);
+    }
+
+    [Fact]
+    public async Task GeneratesCorrectRequestConfigNameWithOdataCast()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups/{{id}}/members/microsoft.graph.user?$count=true&$orderby=displayName");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("$requestConfiguration = new GraphUserRequestBuilderGetRequestConfiguration();", result);
     }
 }

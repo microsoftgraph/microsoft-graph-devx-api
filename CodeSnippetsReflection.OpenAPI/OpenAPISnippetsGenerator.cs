@@ -37,10 +37,11 @@ namespace CodeSnippetsReflection.OpenAPI
             if(!string.IsNullOrEmpty(customOpenApiPathOrUrl))
                 _customOpenApiSnippetMetadata = new SimpleLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferences(customOpenApiPathOrUrl).GetAwaiter().GetResult());
         }
-        private static async Task<OpenApiSnippetMetadata> GetOpenApiReferences(string url) {
+        private async Task<OpenApiSnippetMetadata> GetOpenApiReferences(string url) {
             Stream stream;
             if(url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) {
                 using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromMinutes(5);
                 stream = await httpClient.GetStreamAsync(url);
             } else {
                 stream = File.OpenRead(url);
@@ -48,8 +49,18 @@ namespace CodeSnippetsReflection.OpenAPI
             var reader = new OpenApiStreamReader();
             var doc = reader.Read(stream, out var diags);
             await stream.DisposeAsync();
-            if(diags.Errors.Any())
-                throw new InvalidOperationException($"Failed to load the OpenAPI document:{Environment.NewLine}{diags.Errors.Select(x => x.Message).Aggregate((x, y) => x + Environment.NewLine + y)}");
+            
+            if(doc == null)
+                throw new InvalidOperationException("Failed to load the OpenAPI document");
+            
+            if (diags.Errors.Any())
+            {
+                _telemetryClient?.TrackTrace($"Parsed OpenAPI with errors. {doc?.Paths?.Count ?? 0} paths found.", SeverityLevel.Error);
+                foreach (var parsingError in diags.Errors)
+                {
+                    _telemetryClient?.TrackTrace($"OpenAPI error: {parsingError.Pointer} - {parsingError.Message}", SeverityLevel.Error);
+                }
+            }
             return new OpenApiSnippetMetadata(OpenApiUrlTreeNode.Create(doc, treeNodeLabel), doc.Components.Schemas) ;
         }
         public string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language)
