@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
@@ -97,8 +95,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var responseAssignment = codeGraph.HasReturnedBody() ? $"{codeGraph.ResponseSchema.Reference?.Id.Replace($"{DefaultNamespace}.", string.Empty).ToPascalCase() ?? "var"} result = " : string.Empty;
             var methodName = codeGraph.HttpMethod.Method.ToLower();
-            var requestPayloadParameterName = codeGraph.HasBody() ? codeGraph.Body.PropertyType == PropertyType.Binary ? "stream" : GetPropertyObjectName(codeGraph.Body).ToFirstCharacterLowerCase() : default;
 
+            string requestPayloadParameterName = default;
+            if (codeGraph.HasBody())
+            {
+                if (codeGraph.Body.PropertyType == PropertyType.Binary)
+                    requestPayloadParameterName = "stream";
+                else
+                    requestPayloadParameterName = GetPropertyObjectName(codeGraph.Body).ToFirstCharacterLowerCase();
+            }
             if (string.IsNullOrEmpty(requestPayloadParameterName) && ((codeGraph.RequestSchema?.Properties?.Any() ?? false) || (codeGraph.RequestSchema?.AllOf?.Any(schema => schema.Properties.Any()) ?? false)))
                 requestPayloadParameterName = "null";// pass a null parameter if we have a request schema expected but there is not body provided
 
@@ -122,8 +127,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             payloadSb.AppendLine($"{responseAssignment}{pathSegment}{methodName}({parametersList}).get();");
         }
 
-
-
         private static string GetRequestConfiguration(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager)
         {
             if (!snippetCodeGraph.HasHeaders() && !snippetCodeGraph.HasParameters())
@@ -133,7 +136,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             requestConfigurationBuilder.AppendLine($"{RequestConfigurationVarName} -> {{");
             WriteRequestQueryParameters(snippetCodeGraph, indentManager, requestConfigurationBuilder);
             WriteRequestHeaders(snippetCodeGraph, indentManager, requestConfigurationBuilder);
-            requestConfigurationBuilder.Append($"}}");
+            requestConfigurationBuilder.Append('}');
             return requestConfigurationBuilder.ToString();
         }
 
@@ -188,7 +191,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-
         private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph codeGraph)
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
@@ -205,8 +207,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 }
                 if (x.Segment.IsFunctionWithParameters())
                 {
-                    //var functionName = x.Segment.Split('(').First();
-                    var functionName = x.Segment.Split('(').First()
+                    var functionName = x.Segment.Split('(')[0]
                                                 .Split(".", StringSplitOptions.RemoveEmptyEntries)
                                                 .Select(static s => s.ToPascalCase())
                                                 .Aggregate(static (a, b) => $"{a}{b}");
@@ -231,7 +232,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         .Aggregate(new List<string>(), static (current, next) =>
                         {
                             var element = next.Contains("ByTypeId", StringComparison.OrdinalIgnoreCase) ?
-                            next.Replace("ByTypeId", $"By{current.Last().Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}Id") :
+                            next.Replace("ByTypeId", $"By{current[current.Count-1].Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}Id") :
                             $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
 
                             current.Add(element);
@@ -296,11 +297,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty, StringBuilder snippetBuilder, IndentManager indentManager, string apiVersion, string parentEnumerableValue = "", string enumerableValue = "")
+        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty, StringBuilder snippetBuilder, IndentManager indentManager, string apiVersion, string parentEnumerableValue = "", string currentEnumerableValue = "")
         {
             var setterPrefix = "set";
             var typeString = GetTypeString(codeProperty, apiVersion);
-            var currentPropertyName = $"{GetPropertyObjectName(codeProperty) ?? "property"}{enumerableValue}";
+            var currentPropertyName = $"{GetPropertyObjectName(codeProperty) ?? "property"}{currentEnumerableValue}";
             var parentPropertyName = $"{GetPropertyObjectName(parentProperty) ?? "parentProperty"}{parentEnumerableValue}";
             
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
@@ -312,14 +313,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             var assignment = $"{propertyAssignment}{currentPropertyName.ToFirstCharacterLowerCase() ?? "property"});";
 
-            parentEnumerableValue = enumerableValue == "" ? string.Empty : enumerableValue; 
-
+            parentEnumerableValue = currentEnumerableValue == "" ? string.Empty : currentEnumerableValue; 
 
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Object:
                     snippetBuilder.AppendLine($"{typeString} {currentPropertyName.ToFirstCharacterLowerCase()} = new {typeString}();");
-                    codeProperty.Children.ForEach(child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, apiVersion, parentEnumerableValue, enumerableValue));
+                    codeProperty.Children.ForEach(child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, apiVersion, parentEnumerableValue, currentEnumerableValue));
                     snippetBuilder.AppendLine(assignment);
                     break;
                 case PropertyType.Array:
@@ -342,7 +342,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         {
                             var enumHint = x.Split('.').Last().Trim();
                             // the enum member may be invalid so default to generating the first value in case a look up fails.
-                            var enumMember = codeProperty.Children.FirstOrDefault( member => member.Value.Equals(enumHint,StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
+                            var enumMember = codeProperty.Children.Find(member => member.Value.Equals(enumHint, StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
                             return $"{enumTypeString}.{enumMember.ToFirstCharacterUpperCase()}";
                         })
                         .Aggregate(static (x, y) => $"{x} | {y}");
@@ -413,7 +413,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.String:
                     return StringTypeName;
                 case PropertyType.Enum:
-                    return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedName(typeString.Split('.').First())}";
+                    return $"{GetNamespaceName(codeProperty.NamespaceName, apiVersion)}{ReplaceIfReservedName(typeString.Split('.')[0])}";
                 case PropertyType.DateOnly:
                     return "LocalDate";
                 case PropertyType.TimeOnly:
@@ -454,6 +454,5 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetDefaultNamespaceName(string apiVersion) =>
             apiVersion.Equals("beta", StringComparison.OrdinalIgnoreCase) ?  $"{DefaultNamespace}.beta" : DefaultNamespace;
-    
     }
 }

@@ -18,6 +18,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains(".me().messages()", result);
         }
+
         [Fact]
         public async Task GeneratesTheCorrectFluentApiPathForIndexedCollections()
         {
@@ -26,6 +27,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains(".me().messages().byMessageId(\"{message-id}\")", result);
         }
+
         [Fact]
         public async Task GeneratesTheSnippetHeader()
         {
@@ -34,6 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("GraphServiceClient graphClient = new GraphServiceClient(requestAdapter)", result);
         }
+
         [Fact]
         public async Task GeneratesTheGetMethodCall()
         {
@@ -42,6 +45,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("get()", result);
         }
+
         [Fact]
         public async Task GeneratesThePostMethodCall()
         {
@@ -50,6 +54,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("post(", result);
         }
+
         [Fact]
         public async Task GeneratesThePatchMethodCall()
         {
@@ -58,6 +63,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("patch(", result);
         }
+
         [Fact]
         public async Task GeneratesThePutMethodCall()
         {
@@ -66,6 +72,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("put(", result);
         }
+
         [Fact]
         public async Task GeneratesTheDeleteMethodCall()
         {
@@ -75,6 +82,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("delete(", result);
             Assert.DoesNotContain("result =", result);
         }
+
         [Fact]
         public async Task WritesTheRequestPayload()
         {
@@ -95,6 +103,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("setPasswordProfile(passwordProfile);", result);
             Assert.Contains("setDisplayName(\"displayName-value\");", result);
         }
+
         [Fact]
         public async Task WritesALongAndFindsAnAction()
         {
@@ -110,6 +119,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("setChainId", result);
             Assert.Contains("sendActivityNotificationPostRequestBody", result);
         }
+
         [Fact]
         public async Task WritesADouble()
         {
@@ -124,6 +134,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("10d", result);
             Assert.Contains("setMinimumAttendeePercentage", result);
         }
+
         [Fact]
         public async Task GeneratesABinaryPayload()
         {
@@ -136,6 +147,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("new ByteArrayInputStream", result);
         }
+
         [Fact]
         public async Task GeneratesABase64UrlPayload()
         {
@@ -149,6 +161,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Base64.getDecoder().decode", result);
             Assert.Contains("setContentBytes", result);
         }
+
         [Fact]
         public async Task GeneratesADateTimeOffsetPayload()
         {
@@ -162,6 +175,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("OffsetDateTime.parse(", result);
             Assert.Contains("message.setReceivedDateTime(receivedDateTime);", result);
         }
+
         [Fact]
         public async Task GeneratesAnArrayPayloadInAdditionalData()
         {
@@ -176,6 +190,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("AdditionalData", result);
             Assert.Contains("members", result); // property name hasn't been changed
         }
+
         [Fact]
         public async Task GeneratesSelectQueryParameters()
         {
@@ -186,6 +201,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration ->", result);
             Assert.Contains("requestConfiguration.queryParameters.select", result);
         }
+
         [Fact]
         public async Task GeneratesCountBooleanQueryParameters()
         {
@@ -197,6 +213,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.DoesNotContain("\"true\"", result);
             Assert.Contains("true", result);
         }
+
         [Fact]
         public async Task GeneratesSkipQueryParameters()
         {
@@ -206,6 +223,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.DoesNotContain("\"10\"", result);
             Assert.Contains("10", result);
         }
+
         [Fact]
         public async Task GeneratesSelectExpandQueryParameters()///
         {
@@ -216,6 +234,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("members($select=id,displayName)", result);
             Assert.DoesNotContain("Select", result);
         }
+
         [Fact]
         public async Task GeneratesRequestHeaders()
         {
@@ -226,6 +245,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.headers.add(\"ConsistencyLevel\", \"eventual\");", result);
             Assert.Contains("requestConfiguration ->", result);
         }
+
         [Fact]
         public async Task GeneratesFilterParameters()
         {
@@ -237,6 +257,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.queryParameters.select", result);
             Assert.Contains("requestConfiguration.queryParameters.orderby", result);
         }
+
         [Fact]
         public async Task GeneratesFilterParametersWithSpecialCharacters()
         {
@@ -246,6 +267,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.queryParameters.filter", result);
             Assert.Contains("imAddresses/any(i:i eq 'admin@contoso.com')", result);
         }
+
         [Fact]
         public async Task GeneratesSnippetForRequestWithDeltaAndSkipToken()
         {
@@ -256,6 +278,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("DeltaResponse result = deltaRequestBuilder.get(", result);
             Assert.Contains("DeltaRequestBuilder deltaRequestBuilder = new com.microsoft.graph.me.calendarView.delta.DeltaRequestBuilder(", result);
         }
+
         [Fact]
         public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjunction()
         {
@@ -266,6 +289,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.queryParameters.search", result);
             Assert.Contains("requestConfiguration.queryParameters.search = \"\\\"displayName:di\\\" AND \\\"displayName:al\\\"\";", result);
         }
+
         [Fact]
         public async Task HandlesOdataTypeWhenGenerating()
         {
@@ -287,6 +311,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("setOdataType(\"#microsoft.graph.socialIdentityProvider\")", result);
             Assert.Contains("new SocialIdentityProvider", result);// ensure the derived type is used
         }
+
         [Fact]
         public async Task HandlesOdataReferenceSegmentsInUrl()
         {
@@ -303,6 +328,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains(".acceptedSenders().ref().post(", result);
         }
+
         [Fact]
         public async Task GenerateSnippetsWithArrayNesting()
         {
@@ -354,6 +380,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("setStart(start)", result);
             Assert.Contains("setDisplayName(null)", result);
         }
+
         [Fact]
         public async Task GenerateFindMeetingTime()
         {
@@ -608,6 +635,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("AddKeyPostRequestBody addKeyPostRequestBody = new com.microsoft.graph.applications.item.addkey.AddKeyPostRequestBody()", result);
         }
+
         [Fact]
         public async Task CorrectlyEvaluatesGuidInRequestBodyParameter()
         {
@@ -627,6 +655,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("UUID.fromString(\"8e881353-1735-45af-af21-ee1344582a4d\")", result);
             Assert.Contains("UUID.fromString(\"00000000-0000-0000-0000-000000000000\")", result);
         }
+
         [Fact]
         public async Task DefaultsEnumIfNoneProvided()
         {
@@ -646,6 +675,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("setContentType(BodyType.Text)", result);
         }
+
         [Fact]
         public async Task HandlesEmptyCollection()
         {
@@ -662,6 +692,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("permissionGrantPoliciesAssigned = new LinkedList<String>", result);
         }
+
         [Fact]
         public async Task CorrectlyHandlesOdataFunction()
         {
@@ -692,6 +723,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("graphClient.drives().byDriveId(\"{drive-id}\").items().byDriveItemId(\"{driveItem-id}\").workbook().worksheets().byWorkbookWorksheetId(\"{workbookWorksheet-id}\").cellWithRowWithColumn(1, 1).get()", result);
         }
+
         [Fact]
         public async Task CorrectlyHandlesDateInUrl()
         {
@@ -701,6 +733,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("graphClient.reports().getYammerGroupsActivityDetailWithDate(LocalDate.parse(\"{date}\")).get()", result);
         }
+
         [Fact]
         public async Task CorrectlyHandlesDateInUrl2()
         {
@@ -710,6 +743,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("graphClient.communications().callRecords().microsoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(OffsetDateTime.parse(\"{fromDateTime}\"), OffsetDateTime.parse(\"{toDateTime}\")).get()", result);
         }
+
         [Fact]
         public async Task CorrectlyHandlesEnumInUrl()
         {
@@ -719,6 +753,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("graphClient.identityGovernance().appConsent().appConsentRequests().filterByCurrentUserWithOn(\"reviewer\").get", result);
         }
+
         [Fact]
         public async Task GeneratesObjectsInArray()
         {
@@ -744,6 +779,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("LinkedList<UUID> removeLicenses = new LinkedList<UUID>", result);
             Assert.Contains("UUID.fromString(\"bea13e0c-3828-4daa-a392-28af7ff61a0f\")", result);
         }
+
         [Fact]
         public async Task GeneratesCorrectCollectionTypeAndDerivedInstances()
         {
@@ -782,6 +818,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("new FileAttachment", result);// Individual items are derived types
             Assert.Contains("byte[] contentBytes0 = Base64.getDecoder().decode(\"SGVsbG8gV29ybGQh\")", result);
         }
+
         [Fact]
         public async Task GeneratesPropertiesWithSpecialCharacters()
         {
@@ -928,6 +965,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("graphClient.applicationsWithAppId(\"{appId}\").get(", result);
         }
+
         [Theory]
         [InlineData("/me/drive/root/delta", "graphClient.drives().byDriveId(\"{drive-id}\").items().byDriveItemId(\"{driveItem-id}\").delta().get()")]
         [InlineData("/groups/{group-id}/drive/items/{item-id}/children", "graphClient.drives().byDriveId(\"{drive-id}\").items().byDriveItemId(\"{driveItem-id}\").children().get()")]
