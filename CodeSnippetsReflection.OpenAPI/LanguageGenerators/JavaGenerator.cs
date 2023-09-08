@@ -258,7 +258,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.TimeOnly:
                     return $"{GetTypeString(pathParameter, apiVersion)}.parse(\"{pathParameter.Value}\")";
                 case PropertyType.Duration:
-                    return $"PeriodAndDuration.ofDuration(Duration.Parse(\"{pathParameter.Value}\"))";
+                    return $"PeriodAndDuration.ofDuration(Duration.parse(\"{pathParameter.Value}\"))";
                 case PropertyType.Float32:
                 case PropertyType.Float64:
                     return $"{pathParameter.Value}f";
@@ -374,7 +374,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"{propertyAssignment}{codeProperty.Value.ToFirstCharacterLowerCase()});");
                     break;
                 case PropertyType.Duration:
-                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName.ToFirstCharacterLowerCase()} = PeriodAndDuration.ofDuration(Duration.Parse(\"{codeProperty.Value}\"));");
+                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName.ToFirstCharacterLowerCase()} = PeriodAndDuration.ofDuration(Duration.parse(\"{codeProperty.Value}\"));");
                     snippetBuilder.AppendLine(assignment);
                     break;
                 case PropertyType.Binary:

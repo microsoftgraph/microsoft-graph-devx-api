@@ -428,7 +428,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("meetingDuration = PeriodAndDuration.ofDuration(Duration.Parse(\"PT1H\"));", result);
+            Assert.Contains("meetingDuration = PeriodAndDuration.ofDuration(Duration.parse(\"PT1H\"));", result);
             Assert.Contains("setMeetingDuration(meetingDuration)", result);
             Assert.Contains("setIsRequired(false)", result);
             Assert.Contains("setLocationEmailAddress(\"conf32room1368@imgeek.onmicrosoft.com\")", result);
