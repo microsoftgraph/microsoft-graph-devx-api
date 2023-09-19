@@ -41,10 +41,10 @@ namespace FileService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfRequestMessageIsNull()
+        public async Task ThrowArgumentNullExceptionIfRequestMessageIsNull()
         {
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() => _httpClientUtility.ReadFromDocumentAsync(null).GetAwaiter().GetResult());
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await _httpClientUtility.ReadFromDocumentAsync(null));
         }
     }
 }
