@@ -112,10 +112,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) || 
                                                             property.Name.Equals("deltatoken",StringComparison.OrdinalIgnoreCase)))
             {// its a delta query and needs the opaque url passed over.
+                var deltaNamespace = $"com.{GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph, true).Replace("()", "").Replace("me.", "users.item.").ToLowerInvariant()}";
                 pathSegment = "deltaRequestBuilder.";
                 codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
-                payloadSb.AppendLine($"DeltaRequestBuilder deltaRequestBuilder = new com.{GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph).Replace("()","").Replace("me.", "users.item.").ToLowerInvariant()}DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.getRequestAdapter());");
-                responseAssignment = "DeltaResponse result = ";
+                payloadSb.AppendLine($"{deltaNamespace}DeltaRequestBuilder deltaRequestBuilder = new {deltaNamespace}DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.getRequestAdapter());");
+                responseAssignment = $"{deltaNamespace}DeltaResponse result = ";
             }
             else
             {
@@ -191,13 +192,16 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph codeGraph)
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph codeGraph, bool isDeltaNamespce = false)
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
             var elements = nodes.Select(x =>
             {
                 if (x.Segment.IsCollectionIndex())
                 {
+                    if (isDeltaNamespce)
+                        return "item.";
+                    
                     var pathName = string.IsNullOrEmpty(x.Segment) ? x.Segment : x.Segment.ReplaceMultiple("", "{", "}")
                                                                                           .Split('-')
                                                                                           .Where(static s => !string.IsNullOrEmpty(s))
@@ -230,7 +234,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return x.Segment.ToFirstCharacterLowerCase()+"().";
             })
                         .Aggregate(new List<string>(), static (current, next) =>
-                        {
+                            {
                             var element = next.Contains("ByTypeId", StringComparison.OrdinalIgnoreCase) ?
                             next.Replace("ByTypeId", $"By{current[current.Count-1].Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}Id") :
                             $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
