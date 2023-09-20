@@ -86,7 +86,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var snippetBuilder = new StringBuilder($"// Code snippets are only available for the latest version. Current version is 6.x{Environment.NewLine}{Environment.NewLine}" +
                                                    $"{ClientVarType} {ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
 
-            WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
+            WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
             return snippetBuilder.ToString();
         }    
@@ -278,20 +278,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string ReplaceIfReservedName(string originalString, string suffix = "Object")
             => ReservedNames.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
-        private static void WriteRequestPayloadAndVariableName(SnippetCodeGraph snippetCodeGraph, StringBuilder snippetBuilder, IndentManager indentManager)
+        private static void WriteRequestPayloadAndVariableName(SnippetCodeGraph snippetCodeGraph, StringBuilder snippetBuilder)
         {
             if (!snippetCodeGraph.HasBody())
                 return;// No body
-
-            if (indentManager == null)
-                throw new ArgumentNullException(nameof(indentManager));
-
             switch (snippetCodeGraph.Body.PropertyType)
             {
                 case PropertyType.Object:
                     var typeString = GetTypeString(snippetCodeGraph.Body, snippetCodeGraph.ApiVersion);
-                    snippetBuilder.AppendLine($"{typeString} {GetPropertyObjectName(snippetCodeGraph.Body).ToFirstCharacterLowerCase()} = new {typeString}();");
-                    snippetCodeGraph.Body.Children.ForEach( child => WriteObjectFromCodeProperty(snippetCodeGraph.Body, child, snippetBuilder, indentManager,snippetCodeGraph.ApiVersion));
+                    var objectName = GetPropertyObjectName(snippetCodeGraph.Body).ToFirstCharacterLowerCase();
+                    List<string> usedVariableNames = new List<string>() {objectName};
+                    snippetBuilder.AppendLine($"{typeString} {objectName} = new {typeString}();");
+                    snippetCodeGraph.Body.Children.ForEach( child => WriteObjectFromCodeProperty(snippetCodeGraph.Body, child, snippetBuilder,snippetCodeGraph.ApiVersion, objectName, usedVariableNames));
                     break;
                 case PropertyType.Binary:
                     snippetBuilder.AppendLine($"ByteArrayInputStream stream = new ByteArrayInputStream(new byte[0]); //stream to upload"); 
@@ -301,12 +299,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty, StringBuilder snippetBuilder, IndentManager indentManager, string apiVersion, string parentEnumerableValue = "", string currentEnumerableValue = "")
+        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty, StringBuilder snippetBuilder, string apiVersion, string parentPropertyName, List<string> usedVariableNames)
         {
             var setterPrefix = "set";
             var typeString = GetTypeString(codeProperty, apiVersion);
-            var currentPropertyName = $"{GetPropertyObjectName(codeProperty) ?? "property"}{currentEnumerableValue}";
-            var parentPropertyName = $"{GetPropertyObjectName(parentProperty) ?? "parentProperty"}{parentEnumerableValue}";
+            var currentPropertyName = EnsureJavaVariableNameIsUnique($"{GetPropertyObjectName(codeProperty) ?? "property"}", usedVariableNames);
+            usedVariableNames.Add(currentPropertyName);
             
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
             var isParentMap = parentProperty.PropertyType == PropertyType.Map;
@@ -317,13 +315,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             var assignment = $"{propertyAssignment}{currentPropertyName.ToFirstCharacterLowerCase() ?? "property"});";
 
-            parentEnumerableValue = currentEnumerableValue == "" ? string.Empty : currentEnumerableValue; 
-
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Object:
                     snippetBuilder.AppendLine($"{typeString} {currentPropertyName.ToFirstCharacterLowerCase()} = new {typeString}();");
-                    codeProperty.Children.ForEach(child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, apiVersion, parentEnumerableValue, currentEnumerableValue));
+                    codeProperty.Children.ForEach(child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, apiVersion, currentPropertyName, usedVariableNames));
                     snippetBuilder.AppendLine(assignment);
                     break;
                 case PropertyType.Array:
@@ -331,7 +327,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"{typeString} {currentPropertyName.ToFirstCharacterLowerCase()} = new {typeString}();");
                     var childEnumerationValue = 0;
                     codeProperty.Children.ForEach(child => {
-                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, apiVersion, parentEnumerableValue, $"{childEnumerationValue}");
+                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, apiVersion, currentPropertyName, usedVariableNames);
                         childEnumerationValue++;
                     });
                     snippetBuilder.AppendLine(assignment);
@@ -455,6 +451,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             return $"com.{GetDefaultNamespaceName(apiVersion)}.{normalizedNameSpaceName.Replace("me.", "users.item.")}.";
         }
+
+        private static string EnsureJavaVariableNameIsUnique(string variableName, List<string> usedVariableNames)
+        {
+            var count = usedVariableNames.Count(x => x.Equals(variableName));
+            if (count > 0)
+            {
+                return $"{variableName}{count}";//append the count to the end of string since we've used it before
+            }
+            return variableName;
+        }
+
 
         private static string GetDefaultNamespaceName(string apiVersion) =>
             apiVersion.Equals("beta", StringComparison.OrdinalIgnoreCase) ?  $"{DefaultNamespace}.beta" : DefaultNamespace;
