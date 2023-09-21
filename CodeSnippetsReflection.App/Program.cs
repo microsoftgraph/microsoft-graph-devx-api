@@ -96,7 +96,10 @@ namespace CodeSnippetsReflection.App
             var snippetGenerators = new ConcurrentDictionary<string, ISnippetsGenerator>();
             Parallel.ForEach(supportedLanguages, language =>
             {
-                generation = OpenApiSnippetsGenerator.SupportedLanguages.Contains(language) ? "openapi" : originalGeneration;
+                //Generation will still be originalGeneration if language is java since it is not stable
+                //Remove the condition when java is stable
+                generation = (language != "java" && OpenApiSnippetsGenerator.SupportedLanguages.Contains(language)) ? "openapi" : originalGeneration;
+
                 var generator = snippetGenerators.GetOrAdd(generation,  generationKey => GetSnippetsGenerator(generationKey, customMetadataPathArg));
                 Parallel.ForEach(files, file =>
                 {

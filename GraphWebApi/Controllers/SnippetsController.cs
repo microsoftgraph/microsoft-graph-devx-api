@@ -74,7 +74,7 @@ namespace GraphWebApi.Controllers
         {
             // Default to openapi generation if supported and not explicitly requested for.
             if (string.IsNullOrEmpty(generation))
-                generation = OpenApiSnippetsGenerator.SupportedLanguages.Contains(lang) ? "openapi" : "odata";
+                generation = (lang != "java" && OpenApiSnippetsGenerator.SupportedLanguages.Contains(lang)) ? "openapi" : "odata";
             
             Request.EnableBuffering();
             using var streamContent = new StreamContent(Request.Body);

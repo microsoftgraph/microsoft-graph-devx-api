@@ -303,32 +303,29 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var setterPrefix = "set";
             var typeString = GetTypeString(codeProperty, apiVersion);
-            var currentPropertyName = EnsureJavaVariableNameIsUnique($"{GetPropertyObjectName(codeProperty) ?? "property"}", usedVariableNames);
-            usedVariableNames.Add(currentPropertyName);
+            var currentPropertyName = EnsureJavaVariableNameIsUnique($"{GetPropertyObjectName(codeProperty)?.ToFirstCharacterLowerCase() ?? "property"}", usedVariableNames);
             
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
             var isParentMap = parentProperty.PropertyType == PropertyType.Map;
             
-            var propertyAssignment = $"{parentPropertyName.ToFirstCharacterLowerCase()}.{setterPrefix}{GetPropertyObjectName(codeProperty)}("; // default assignments to the usual "primitive x = setX();"
-            propertyAssignment = isParentArray ? $"{parentPropertyName.ToFirstCharacterLowerCase()}.add(" : propertyAssignment;
-            propertyAssignment = isParentMap ? $"{parentPropertyName.ToFirstCharacterLowerCase()}.put(\"{codeProperty.Name}\", " : propertyAssignment;
+            var propertyAssignment = $"{parentPropertyName}.{setterPrefix}{GetPropertyObjectName(codeProperty)}("; // default assignments to the usual "primitive x = setX();"
+            propertyAssignment = isParentArray ? $"{parentPropertyName}.add(" : propertyAssignment;
+            propertyAssignment = isParentMap ? $"{parentPropertyName}.put(\"{codeProperty.Name}\", " : propertyAssignment;
 
-            var assignment = $"{propertyAssignment}{currentPropertyName.ToFirstCharacterLowerCase() ?? "property"});";
+            var assignment = $"{propertyAssignment}{currentPropertyName ?? "property"});";
 
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Object:
-                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName.ToFirstCharacterLowerCase()} = new {typeString}();");
+                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName} = new {typeString}();");
                     codeProperty.Children.ForEach(child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, apiVersion, currentPropertyName, usedVariableNames));
                     snippetBuilder.AppendLine(assignment);
                     break;
                 case PropertyType.Array:
                 case PropertyType.Map:
-                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName.ToFirstCharacterLowerCase()} = new {typeString}();");
-                    var childEnumerationValue = 0;
+                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName} = new {typeString}();");
                     codeProperty.Children.ForEach(child => {
                         WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, apiVersion, currentPropertyName, usedVariableNames);
-                        childEnumerationValue++;
                     });
                     snippetBuilder.AppendLine(assignment);
                     break;
@@ -351,11 +348,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.DateTime:
                 case PropertyType.DateOnly:
                 case PropertyType.TimeOnly:
-                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName.ToFirstCharacterLowerCase()} = {typeString}.parse(\"{codeProperty.Value}\");");
+                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName} = {typeString}.parse(\"{codeProperty.Value}\");");
                     snippetBuilder.AppendLine(assignment);
                     break;
                 case PropertyType.Base64Url:
-                    snippetBuilder.AppendLine($"byte[] {currentPropertyName.ToFirstCharacterLowerCase()} = Base64.getDecoder().decode(\"{codeProperty.Value.EscapeQuotes()}\");");
+                    snippetBuilder.AppendLine($"byte[] {currentPropertyName} = Base64.getDecoder().decode(\"{codeProperty.Value.EscapeQuotes()}\");");
                     snippetBuilder.AppendLine(assignment);
                     break;
                 case PropertyType.Float32:
@@ -374,7 +371,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"{propertyAssignment}{codeProperty.Value.ToFirstCharacterLowerCase()});");
                     break;
                 case PropertyType.Duration:
-                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName.ToFirstCharacterLowerCase()} = PeriodAndDuration.ofDuration(Duration.parse(\"{codeProperty.Value}\"));");
+                    snippetBuilder.AppendLine($"{typeString} {currentPropertyName} = PeriodAndDuration.ofDuration(Duration.parse(\"{codeProperty.Value}\"));");
                     snippetBuilder.AppendLine(assignment);
                     break;
                 case PropertyType.Binary:
@@ -454,7 +451,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string EnsureJavaVariableNameIsUnique(string variableName, List<string> usedVariableNames)
         {
-            var count = usedVariableNames.Count(x => x.Equals(variableName));
+            var count = usedVariableNames.Count(x => x.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+            usedVariableNames.Add(variableName);
             if (count > 0)
             {
                 return $"{variableName}{count}";//append the count to the end of string since we've used it before
