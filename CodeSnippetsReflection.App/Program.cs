@@ -98,7 +98,7 @@ namespace CodeSnippetsReflection.App
             {
                 //Generation will still be originalGeneration if language is java since it is not stable
                 //Remove the condition when java is stable
-                generation = (!"java".Equals(language, StringComparison.OrdinalIgnoreCase) && OpenApiSnippetsGenerator.SupportedLanguages.Contains(language)) ? "openapi" : originalGeneration;
+                generation = (OpenApiSnippetsGenerator.SupportedLanguages.Contains(language)) ? "openapi" : originalGeneration;
 
                 var generator = snippetGenerators.GetOrAdd(generation,  generationKey => GetSnippetsGenerator(generationKey, customMetadataPathArg));
                 Parallel.ForEach(files, file =>
