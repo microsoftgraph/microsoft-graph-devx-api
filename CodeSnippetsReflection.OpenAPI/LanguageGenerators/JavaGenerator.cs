@@ -99,10 +99,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             string requestPayloadParameterName = default;
             if (codeGraph.HasBody())
             {
-                if (codeGraph.Body.PropertyType == PropertyType.Binary)
-                    requestPayloadParameterName = "stream";
-                else
-                    requestPayloadParameterName = GetPropertyObjectName(codeGraph.Body).ToFirstCharacterLowerCase();
+                requestPayloadParameterName = codeGraph.Body.PropertyType switch
+                {
+                    PropertyType.Binary => "stream",
+                    _ => GetPropertyObjectName(codeGraph.Body).ToFirstCharacterLowerCase()
+                };
             }
             if (string.IsNullOrEmpty(requestPayloadParameterName) && ((codeGraph.RequestSchema?.Properties?.Any() ?? false) || (codeGraph.RequestSchema?.AllOf?.Any(schema => schema.Properties.Any()) ?? false)))
                 requestPayloadParameterName = "null";// pass a null parameter if we have a request schema expected but there is not body provided
