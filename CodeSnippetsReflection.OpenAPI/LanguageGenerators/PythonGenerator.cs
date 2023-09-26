@@ -233,7 +233,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     {
                         WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager);
                     });
-                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}]");
+                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}],");
                     break;
                 case PropertyType.Guid:
                     snippetBuilder.AppendLine($"{propertyAssignment}UUID(\"{codeProperty.Value}\"){assignmentSuffix}");
