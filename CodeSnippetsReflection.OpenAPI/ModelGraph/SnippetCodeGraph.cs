@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using CodeSnippetsReflection.StringExtensions;
+using Microsoft.OpenApi.MicrosoftExtensions;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -465,13 +466,16 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             if ((propSchema?.Enum.Count ?? 0) == 0 && enumSchema == null)
                 return new CodeProperty { Name = propertyName, Value = escapeSpecialCharacters(value), PropertyType = PropertyType.String, Children = new List<CodeProperty>() };
             enumSchema ??= propSchema;
+
+            bool isFlagsEnum = enumSchema.Extensions.TryGetValue(OpenApiEnumFlagsExtension.Name, out var rawExtension) && rawExtension is OpenApiEnumFlagsExtension { IsFlags: true };
+
             // Pass the list of options in the enum as children so that the language generators may use them for validation if need be, 
             var enumValueOptions = enumSchema?.Enum.Where(option => option is OpenApiString)
                                                                 .Select(option => new CodeProperty{Name = ((OpenApiString)option).Value,Value = ((OpenApiString)option).Value,PropertyType = PropertyType.String})
                                                                 .ToList() ?? new List<CodeProperty>();
             var propValue = String.IsNullOrWhiteSpace(value) ? $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{enumValueOptions.FirstOrDefault().Value.ToFirstCharacterUpperCase()}" : $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{value.ToFirstCharacterUpperCase()}";
 
-            return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = enumValueOptions ,NamespaceName = GetNamespaceFromSchema(enumSchema)};
+            return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = enumValueOptions ,NamespaceName = GetNamespaceFromSchema(enumSchema), isFlagsEnum = isFlagsEnum};
         }
 
         private static CodeProperty evaluateNumericProperty(string propertyName, JsonElement value, OpenApiSchema propSchema)

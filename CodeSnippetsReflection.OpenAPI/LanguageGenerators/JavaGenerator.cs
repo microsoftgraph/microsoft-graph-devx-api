@@ -343,8 +343,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             var enumMember = codeProperty.Children.Find(member => member.Value.Equals(enumHint, StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
                             return $"{enumTypeString}.{enumMember.ToFirstCharacterUpperCase()}";
                         })
-                        .Aggregate(static (x, y) => $"{x} | {y}");
-                    snippetBuilder.AppendLine($"{propertyAssignment}{enumValues});");
+                        .Aggregate(static (x, y) => $"{x} , {y}");
+
+                    if(codeProperty.isFlagsEnum && !isParentArray && !isParentMap)
+                      snippetBuilder.AppendLine($"{propertyAssignment}EnumSet.of({enumValues}));");
+                    else
+                      snippetBuilder.AppendLine($"{propertyAssignment}{enumValues});");
                     break;
                 case PropertyType.DateTime:
                 case PropertyType.DateOnly:
