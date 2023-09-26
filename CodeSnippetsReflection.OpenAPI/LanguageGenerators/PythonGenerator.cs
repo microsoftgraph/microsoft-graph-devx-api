@@ -78,7 +78,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 ? $"{RequestConfigurationVarName} = {RequestConfigurationVarName}"
                 : string.Empty;
             var bodyParameter = codeGraph.HasBody()
-                ? $"body = {RequestBodyVarName}"
+                ? $"{RequestBodyVarName}"
                 : string.Empty;
             var optionsParameter = codeGraph.HasOptions() ? "options =" : string.Empty;
             var returnVar = codeGraph.HasReturnedBody() ? "result = " : string.Empty;
