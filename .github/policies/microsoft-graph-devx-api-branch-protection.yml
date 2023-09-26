@@ -40,7 +40,7 @@ configuration:
     - DevX API Validate PR
     - CodeQL
     # Require branches to be up to date before merging. Requires requiredStatusChecks. boolean
-    requiresStrictStatusChecks: true
+    requiresStrictStatusChecks: false
     # Indicates whether there are restrictions on who can push. boolean. Requires whoCanPush.
     restrictsPushes: false
     # Restrict who can dismiss pull request reviews. boolean
@@ -79,7 +79,7 @@ configuration:
     - DevX API Validate PR
     - CodeQL
     # Require branches to be up to date before merging. Requires requiredStatusChecks. boolean
-    requiresStrictStatusChecks: true
+    requiresStrictStatusChecks: false
     # Indicates whether there are restrictions on who can push. boolean. Requires whoCanPush.
     restrictsPushes: false
     # Restrict who can dismiss pull request reviews. boolean
