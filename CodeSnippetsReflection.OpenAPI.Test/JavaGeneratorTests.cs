@@ -516,15 +516,28 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task ReplacesReservedTypeNames()
+        public async Task ModelSubNamspacesAreExplicitlyTyped()
         {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/directory/administrativeUnits/8a07f5a8-edc9-4847-bbf2-dde106594bf4/scopedRoleMembers");
+            var bodyContent = """
+                {
+                    "classification": "TruePositive",
+                    "determination": "MultiStagedAttack",
+                    "customTags": [
+                      "Demo"
+                    ]
+                }
+                """;
+            
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/security/incidents/{{id}}")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            // Assert `Directory` is replaced with `DirectoryObject`
-            Assert.Contains("graphClient.directory().administrativeUnits().byAdministrativeUnitId(\"{administrativeUnit-id}\").scopedRoleMembers().get()", result);
+            Assert.Contains("com.microsoft.graph.models.security.Incident result = ", result);
         }
+
 
         [Fact]
         public async Task CorrectlyGeneratesEnumMember()

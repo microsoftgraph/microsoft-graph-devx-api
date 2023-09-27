@@ -93,7 +93,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
         {
-            var responseAssignment = codeGraph.HasReturnedBody() ? $"{codeGraph.ResponseSchema.Reference?.Id.Replace($"{DefaultNamespace}.", string.Empty).ToPascalCase() ?? "var"} result = " : string.Empty;
+            string responseAssignment = string.Empty;
+            if(codeGraph.HasReturnedBody())
+            {
+                var namespaceSegments = codeGraph.ResponseSchema?.Reference.Id.Replace($"{DefaultNamespace}", "com.microsoft.graph.models").ToLowerInvariant().Split('.', StringSplitOptions.RemoveEmptyEntries);
+                if (namespaceSegments != null)
+                {
+                    namespaceSegments[namespaceSegments.Length - 1] = namespaceSegments?.Last().ToPascalCase();
+                    var returnTypeNamespace = namespaceSegments?.Length > 5 ? string.Join(".", namespaceSegments) : namespaceSegments?.Last();
+                    responseAssignment = $"{returnTypeNamespace} result = ";
+                }
+                else
+                {
+                    responseAssignment = "var result = ";
+                }
+            }
+
             var methodName = codeGraph.HttpMethod.Method.ToLower();
 
             string requestPayloadParameterName = default;
@@ -453,6 +468,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             return $"com.{GetDefaultNamespaceName(apiVersion)}.{normalizedNameSpaceName.Replace("me.", "users.item.")}.";
         }
+
+        //private static string GetResponseModelType()
 
         private static string EnsureJavaVariableNameIsUnique(string variableName, List<string> usedVariableNames)
         {
