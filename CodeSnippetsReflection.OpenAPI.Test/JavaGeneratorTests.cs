@@ -538,7 +538,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("com.microsoft.graph.models.security.Incident result = ", result);
         }
 
-
         [Fact]
         public async Task CorrectlyGeneratesEnumMember()
         {
