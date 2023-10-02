@@ -5,8 +5,6 @@ using System.Text;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
-using Microsoft.VisualBasic;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
@@ -158,7 +156,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     {
                         namespaceSegments[i] = (i < namespaceSegments.Length - 1) ? namespaceSegments[i].ToLowerInvariant() : namespaceSegments[i].ToPascalCase();
                     }
-                    return namespaceSegments?.Length > 5 ? $"{string.Join(".", namespaceSegments)}" : $"{namespaceSegments?.Last()}";
+                    return namespaceSegments.Length > 5 ? $"{string.Join(".", namespaceSegments)}" : $"{namespaceSegments.Last()}";
                 }
                 return "var";
             }
@@ -476,8 +474,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             return $"com.{GetDefaultNamespaceName(apiVersion)}.{normalizedNameSpaceName.Replace("me.", "users.item.")}.";
         }
-
-        //private static string GetResponseModelType()
 
         private static string EnsureJavaVariableNameIsUnique(string variableName, List<string> usedVariableNames)
         {
