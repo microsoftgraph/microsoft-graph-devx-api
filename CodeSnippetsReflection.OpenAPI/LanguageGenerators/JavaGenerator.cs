@@ -93,7 +93,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
         {
-            var responseAssignment = codeGraph.HasReturnedBody() ? $"{codeGraph.ResponseSchema.Reference?.Id.Replace($"{DefaultNamespace}.", string.Empty).ToPascalCase() ?? "var"} result = " : string.Empty;
+            string responseAssignment = GetResponseTypeName(codeGraph);
+            responseAssignment = string.IsNullOrEmpty(responseAssignment) ? string.Empty : $"{responseAssignment} result = ";
+
             var methodName = codeGraph.HttpMethod.Method.ToLower();
 
             string requestPayloadParameterName = default;
@@ -140,6 +142,25 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             WriteRequestHeaders(snippetCodeGraph, indentManager, requestConfigurationBuilder);
             requestConfigurationBuilder.Append('}');
             return requestConfigurationBuilder.ToString();
+        }
+
+        private static string GetResponseTypeName(SnippetCodeGraph codeGraph)
+        {
+            if (codeGraph.HasReturnedBody())
+            {
+                var namespaceSegments = codeGraph.ResponseSchema?.Reference?.Id?.Replace($"{DefaultNamespace}", "com.microsoft.graph.models").Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+                if (namespaceSegments != null)
+                {
+                    for (int i = 0; i < namespaceSegments.Length; i++)
+                    {
+                        namespaceSegments[i] = (i < namespaceSegments.Length - 1) ? namespaceSegments[i].ToLowerInvariant() : namespaceSegments[i].ToPascalCase();
+                    }
+                    return namespaceSegments.Length > 5 ? $"{string.Join(".", namespaceSegments)}" : $"{namespaceSegments.Last()}";
+                }
+                return "var";
+            }
+            return string.Empty;
         }
 
         private static void WriteRequestQueryParameters(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, StringBuilder stringBuilder)
@@ -343,8 +364,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             var enumMember = codeProperty.Children.Find(member => member.Value.Equals(enumHint, StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
                             return $"{enumTypeString}.{enumMember.ToFirstCharacterUpperCase()}";
                         })
-                        .Aggregate(static (x, y) => $"{x} | {y}");
-                    snippetBuilder.AppendLine($"{propertyAssignment}{enumValues});");
+                        .Aggregate(static (x, y) => $"{x} , {y}");
+
+                    if(codeProperty.isFlagsEnum && !isParentArray && !isParentMap)
+                      snippetBuilder.AppendLine($"{propertyAssignment}EnumSet.of({enumValues}));");
+                    else
+                      snippetBuilder.AppendLine($"{propertyAssignment}{enumValues});");
                     break;
                 case PropertyType.DateTime:
                 case PropertyType.DateOnly:

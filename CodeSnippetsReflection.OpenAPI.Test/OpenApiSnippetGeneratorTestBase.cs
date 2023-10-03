@@ -37,7 +37,9 @@ public class OpenApiSnippetGeneratorTestBase
         {
             stream = File.OpenRead(url);
         }
-        var reader = new OpenApiStreamReader();
+        var openApiReaderSettings = new OpenApiReaderSettings();
+        openApiReaderSettings.AddMicrosoftExtensionParsers();
+        var reader = new OpenApiStreamReader(openApiReaderSettings);
         var doc = reader.Read(stream, out var diags);
         await stream.DisposeAsync();
         return new OpenApiSnippetMetadata(OpenApiUrlTreeNode.Create(doc, "default"), doc.Components.Schemas);
