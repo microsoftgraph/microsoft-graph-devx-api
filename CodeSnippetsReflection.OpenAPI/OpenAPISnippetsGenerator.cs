@@ -46,7 +46,10 @@ namespace CodeSnippetsReflection.OpenAPI
             } else {
                 stream = File.OpenRead(url);
             }
-            var reader = new OpenApiStreamReader();
+
+            var openApiReaderSettings = new OpenApiReaderSettings();
+            openApiReaderSettings.AddMicrosoftExtensionParsers();
+            var reader = new OpenApiStreamReader(openApiReaderSettings);
             var doc = reader.Read(stream, out var diags);
             await stream.DisposeAsync();
             

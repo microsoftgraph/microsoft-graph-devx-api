@@ -475,7 +475,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                                                                 .ToList() ?? new List<CodeProperty>();
             var propValue = String.IsNullOrWhiteSpace(value) ? $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{enumValueOptions.FirstOrDefault().Value.ToFirstCharacterUpperCase()}" : $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{value.ToFirstCharacterUpperCase()}";
 
-            return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = enumValueOptions ,NamespaceName = GetNamespaceFromSchema(enumSchema), isFlagsEnum = isFlagsEnum};
+            return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = enumValueOptions, NamespaceName = GetNamespaceFromSchema(enumSchema), isFlagsEnum = isFlagsEnum};
         }
 
         private static CodeProperty evaluateNumericProperty(string propertyName, JsonElement value, OpenApiSchema propSchema)
