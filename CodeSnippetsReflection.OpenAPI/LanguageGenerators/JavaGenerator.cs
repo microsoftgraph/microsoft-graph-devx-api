@@ -356,20 +356,30 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     break;
                 case PropertyType.Enum:
                     var enumTypeString = GetTypeString(codeProperty, apiVersion);
-                    var enumValues = codeProperty.Value.Split(new []{'|',','}, StringSplitOptions.RemoveEmptyEntries)
+                    var enumValues = codeProperty.Value.Split(new[] { '|', ',' }, StringSplitOptions.RemoveEmptyEntries)
                         .Select(x =>
                         {
                             var enumHint = x.Split('.').Last().Trim();
                             // the enum member may be invalid so default to generating the first value in case a look up fails.
                             var enumMember = codeProperty.Children.Find(member => member.Value.Equals(enumHint, StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
                             return $"{enumTypeString}.{enumMember.ToFirstCharacterUpperCase()}";
-                        })
-                        .Aggregate(static (x, y) => $"{x} , {y}");
-
-                    if(codeProperty.isFlagsEnum && !isParentArray && !isParentMap)
-                      snippetBuilder.AppendLine($"{propertyAssignment}EnumSet.of({enumValues}));");
+                        });
+                    if (codeProperty.isFlagsEnum && !isParentArray && !isParentMap)
+                    {
+                        snippetBuilder.AppendLine($"{propertyAssignment}EnumSet.of({string.Join(", ", enumValues)}));");
+                    }
+                    else if (isParentArray || isParentMap)
+                    {
+                        foreach (var enumValue in enumValues)
+                        {
+                            snippetBuilder.AppendLine($"{propertyAssignment}{enumValue.Replace(" ", string.Empty)});");
+                        }
+                    }
                     else
-                      snippetBuilder.AppendLine($"{propertyAssignment}{enumValues});");
+                    {
+                        // Some example payloads have multiple enum values, unless it is a array of enums, we will only use the first value.
+                        snippetBuilder.AppendLine($"{propertyAssignment}{enumValues.FirstOrDefault()});");
+                    }
                     break;
                 case PropertyType.DateTime:
                 case PropertyType.DateOnly:

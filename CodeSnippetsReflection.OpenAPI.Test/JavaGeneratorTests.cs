@@ -815,7 +815,47 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains($"setStartMenuAppListVisibility(EnumSet.of(WindowsStartMenuAppListVisibilityType.Collapse , WindowsStartMenuAppListVisibilityType.Remove , WindowsStartMenuAppListVisibilityType.UserDefined))", result);
+            Assert.Contains($"setStartMenuAppListVisibility(EnumSet.of(WindowsStartMenuAppListVisibilityType.Collapse, WindowsStartMenuAppListVisibilityType.Remove, WindowsStartMenuAppListVisibilityType.UserDefined))", result);
+        }
+
+        [Fact]
+        public async Task CorrectlyAddsEnumsToEnumList()
+        {
+            var bodyContent = """
+                                {
+                  "allowedCombinations": [
+                      "password, voice"
+                  ]
+                }
+                """;
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/policies/authenticationStrengthPolicies/{{policy-id}}/updateAllowedCombinations")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("allowedCombinations.add(AuthenticationMethodModes.Password);", result);
+            Assert.Contains("allowedCombinations.add(AuthenticationMethodModes.Voice);", result);
+        }
+
+        [Fact]
+        public async Task CorrectlyPicksSingleEnumWhenPayloadDescribesMultipleButRequestOnlyAcceptsOne()
+        {
+            var bodyContent = """
+                                {
+                  "clientContext": "clientContext-value",
+                  "status": "notRecording | recording | failed"
+                }
+                """;
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/communications/calls/{{id}}/updateRecordingStatus")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("setStatus(RecordingStatus.NotRecording)", result);
         }
 
         [Fact]
