@@ -250,10 +250,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (x.Segment.IsFunction())
                 {
                     return x.Segment.Split('.', StringSplitOptions.RemoveEmptyEntries)
-                              .Select(static s => s.ToPascalCase())
+                              .Select(static s => ReplaceIfReservedName(s).ToPascalCase())
                               .Aggregate(static (a, b) => $"{a}{b}")+"().";
                 }
-                return x.Segment.ToFirstCharacterLowerCase()+"().";
+                return ReplaceIfReservedName(x.Segment).ToFirstCharacterLowerCase()+"().";
             })
                         .Aggregate(new List<string>(), static (current, next) =>
                             {
@@ -297,7 +297,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        private static string ReplaceIfReservedName(string originalString, string suffix = "Object")
+        private static string ReplaceIfReservedName(string originalString, string suffix = "Escaped")
             => ReservedNames.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
         private static void WriteRequestPayloadAndVariableName(SnippetCodeGraph snippetCodeGraph, StringBuilder snippetBuilder)

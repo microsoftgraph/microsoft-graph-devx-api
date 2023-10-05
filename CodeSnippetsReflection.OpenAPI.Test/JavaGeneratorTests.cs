@@ -13,19 +13,19 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Fact]
         public async Task GeneratesTheCorrectFluentApiPath()
         {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/policies/crossTenantAccessPolicy/default/resetToSystemDefault");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".me().messages()", result);
+            Assert.Contains(".policies().crossTenantAccessPolicy().defaultEscaped().resetToSystemDefault()", result);
         }
 
         [Fact]
         public async Task GeneratesTheCorrectFluentApiPathForIndexedCollections()
         {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/security/cases/ediscoveryCases/{{case-id}}/close");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains(".me().messages().byMessageId(\"{message-id}\")", result);
+            Assert.Contains(".security().cases().ediscoveryCases().byEdiscoveryCaseId(\"{ediscoveryCase-id}\").microsoftGraphSecurityClose()", result);
         }
 
         [Fact]
@@ -373,7 +373,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("setContentType(BodyType.Html)", result);
             Assert.Contains("new LinkedList<Attendee>()", result);
             Assert.Contains("setAttendees(attendees)", result);
@@ -470,7 +469,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("graphClient.users().byUserId(\"{user-id}\").sendMail().post(sendMailPostRequestBody).get();", result);
             Assert.Contains("SendMailPostRequestBody sendMailPostRequestBody = new com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody()", result);
             Assert.Contains("toRecipients = new LinkedList<Recipient>", result);
@@ -492,7 +490,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("new LinkedList<String>", result);
         }
 
@@ -510,7 +507,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("new com.microsoft.graph.models.externalconnectors.Identity", result);
             Assert.Contains("setType(com.microsoft.graph.models.externalconnectors.IdentityType.ExternalGroup)", result);
         }
@@ -534,18 +530,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("com.microsoft.graph.models.security.Incident result = ", result);
-        }
-
-        [Fact]
-        public async Task CorrectlyCasesNamespaces()
-        {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/security/cases/ediscoveryCases/{{case-id}}/close");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
-            var result = _generator.GenerateCodeSnippet(snippetModel);
-
-            Assert.Contains("microsoftGraphSecurityClose", result);
         }
 
         [Fact]
@@ -577,7 +562,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("setType(RecurrencePatternType.Weekly)", result);
             Assert.Contains("setType(RecurrenceRangeType.NoEnd)", result);
         }
@@ -844,7 +828,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("allowedCombinations.add(AuthenticationMethodModes.Password);", result);
             Assert.Contains("allowedCombinations.add(AuthenticationMethodModes.Voice);", result);
         }
@@ -864,7 +847,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("setStatus(RecordingStatus.NotRecording)", result);
         }
 
@@ -874,7 +856,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/teams/{{id}}/archive");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("graphClient.teams().byTeamId(\"{team-id}\").archive().post(null).get()", result);
         }
 
@@ -897,7 +878,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("startDate = LocalDate.parse(\"2017-09-04\");", result);
             Assert.Contains("endDate = LocalDate.parse(\"2017-12-31\");", result);
             Assert.Contains("setStartDate(startDate)", result);
@@ -922,7 +902,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("AddKeyPostRequestBody addKeyPostRequestBody = new com.microsoft.graph.applications.item.addkey.AddKeyPostRequestBody()", result);
         }
 
@@ -940,7 +919,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("UUID.fromString(\"cde330e5-2150-4c11-9c5b-14bfdc948c79\")", result);
             Assert.Contains("UUID.fromString(\"8e881353-1735-45af-af21-ee1344582a4d\")", result);
             Assert.Contains("UUID.fromString(\"00000000-0000-0000-0000-000000000000\")", result);
@@ -989,7 +967,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/delta?$select=displayName,jobTitle,mobilePhone");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("graphClient.users().delta().get(", result);
             Assert.Contains("requestConfiguration.queryParameters.select = new String []{\"displayName\", \"jobTitle\", \"mobilePhone\"};", result);
         }
@@ -1000,7 +977,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/reports/getUserArchivedPrintJobs(userId='{{id}}',startDateTime=<timestamp>,endDateTime=<timestamp>)");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("graphClient.reports().getUserArchivedPrintJobsWithUserIdWithStartDateTimeWithEndDateTime(OffsetDateTime.parse(\"{endDateTime}\"), OffsetDateTime.parse(\"{startDateTime}\"), \"{userId}\").get().get()", result);
         }
 
@@ -1010,7 +986,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/drive/items/{{id}}/workbook/worksheets/{{id|name}}/cell(row=<row>,column=<column>)");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("graphClient.drives().byDriveId(\"{drive-id}\").items().byDriveItemId(\"{driveItem-id}\").workbook().worksheets().byWorkbookWorksheetId(\"{workbookWorksheet-id}\").cellWithRowWithColumn(1, 1).get()", result);
         }
 
@@ -1020,7 +995,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/reports/getYammerGroupsActivityDetail(date='2018-03-05')");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("graphClient.reports().getYammerGroupsActivityDetailWithDate(LocalDate.parse(\"{date}\")).get()", result);
         }
 
@@ -1030,7 +1004,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/communications/callRecords/getPstnCalls(fromDateTime=2019-11-01,toDateTime=2019-12-01)");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("graphClient.communications().callRecords().microsoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(OffsetDateTime.parse(\"{fromDateTime}\"), OffsetDateTime.parse(\"{toDateTime}\")).get()", result);
         }
 
@@ -1040,7 +1013,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/identityGovernance/appConsent/appConsentRequests/filterByCurrentUser(on='reviewer')?$filter=userConsentRequests/any(u:u/status eq 'InProgress')");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("graphClient.identityGovernance().appConsent().appConsentRequests().filterByCurrentUserWithOn(\"reviewer\").get", result);
         }
 
@@ -1181,8 +1153,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/mailFolders/?includehiddenfolders=true");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
-           Assert.Contains("requestConfiguration.queryParameters.includeHiddenFolders = \"true\";", result);
+            Assert.Contains("requestConfiguration.queryParameters.includeHiddenFolders = \"true\";", result);
         }
 
         [Fact]
@@ -1191,7 +1162,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/drive/items/{{id}}/workbook/worksheets/{{id|name}}/range(address='A1:B2')");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("var result = graphClient.drives().byDriveId(\"{drive-id}\").items().byDriveItemId(\"{driveItem-id}\").workbook().worksheets().byWorkbookWorksheetId(\"{workbookWorksheet-id}\").rangeWithAddress(\"{address}\").get()", result);
         }
 
@@ -1201,7 +1171,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/applications(appId='46e6adf4-a9cf-4b60-9390-0ba6fb00bf6b')?$select=id,appId,displayName,requiredResourceAccess");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-
             Assert.Contains("graphClient.applicationsWithAppId(\"{appId}\").get(", result);
         }
 
