@@ -539,6 +539,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
+        public async Task CorrectlyCasesNamespaces()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/security/cases/ediscoveryCases/{{case-id}}/close");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("microsoftGraphSecurityClose", result);
+        }
+
+        [Fact]
         public async Task CorrectlyGeneratesEnumMember()
         {
             var bodyContent = @"{

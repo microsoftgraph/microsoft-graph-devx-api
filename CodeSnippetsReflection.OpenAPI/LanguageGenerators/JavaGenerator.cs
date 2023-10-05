@@ -249,9 +249,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 }
                 if (x.Segment.IsFunction())
                 {
-                    return x.Segment.Split('.')
-                              .Select(static s => s.ToFirstCharacterLowerCase())
-                              .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterUpperCase()+"().";
+                    return x.Segment.Split('.', StringSplitOptions.RemoveEmptyEntries)
+                              .Select(static s => s.ToPascalCase())
+                              .Aggregate(static (a, b) => $"{a}{b}")+"().";
                 }
                 return x.Segment.ToFirstCharacterLowerCase()+"().";
             })
