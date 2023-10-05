@@ -80,11 +80,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var bodyParameter = codeGraph.HasBody()
                 ? $"{RequestBodyVarName}"
                 : string.Empty;
+            if (string.IsNullOrEmpty(bodyParameter) && ((codeGraph.RequestSchema?.Properties?.Any() ?? false) || (codeGraph.RequestSchema?.AllOf?.Any(schema => schema.Properties.Any()) ?? false)))
+                bodyParameter = "None";// pass a null parameter if we have a request schema expected but there is not body provided
+            
             var optionsParameter = codeGraph.HasOptions() ? "options =" : string.Empty;
             var returnVar = codeGraph.HasReturnedBody() ? "result = " : string.Empty;
+            string pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph)}";
             var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
             snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-            snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList})");
+            snippetBuilder.AppendLine($"{returnVar}await {pathSegment}.{method}({parameterList})");
         }
         private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager, string classNameQueryParameters)
         {
@@ -301,39 +305,54 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string ReplaceIfReservedTypeName(string originalString, string suffix = "_")
             => ReservedTypeNames.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
-        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph, bool useIndexerNamespaces = false)
         {
-            if (!(nodes?.Any() ?? false)) return string.Empty;
-            var elements = nodes.Select(static (x, i) =>
-                {
-                    if (x.Segment.IsCollectionIndex())
-                        return $"by_type_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
-                    else if (x.Segment.IsFunction())
-                        return x.Segment.Replace(".", "_").RemoveFunctionBraces().Split('.')
-                            .Select(static s => s.ToSnakeCase())
-                            .Aggregate(static (a, b) => $"{a}{b}");
-                    return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces()
-                        .ToSnakeCase();
-                })
-                .Aggregate(new List<String>(), (current, next) =>
-                {
-                    var element = next.Contains("by_type_id", StringComparison.OrdinalIgnoreCase)
-                        ? next.Replace("by_type_id",
-                            $"by_{current.Last().Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}_id")
-                        : $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
+            if(!(nodes?.Any() ?? false)) 
+                return string.Empty;
 
-                    current.Add(element);
-                    return current;
-                }).Aggregate(static (x, y) =>
-                {
-                    return $"{x.Trim('$').Replace("s_", "_")}.{y.Trim('$', '.').Replace("()", string.Empty).Replace("s_", "_")}";
-                }).Replace("..", ".")
-                .Replace("().", ".")
-                .Replace("()().", ".");
-                
+            return nodes.Select(x => {
+                                        if(x.Segment.IsCollectionIndex())
+                                        {
+                                            var collectionIndexName = x.Segment.Replace("{", "").Replace("}", "");
+                                            var fluentMethodName = collectionIndexName.Split("-").Select(static x => x.ToSnakeCase()).Aggregate(static (a, b) => a + $"_{b}");
+                                            return $"by_{fluentMethodName}('{collectionIndexName}')";
+                                        }
+                                        if (x.Segment.IsFunctionWithParameters())
+                                        {
+                                            var functionName = x.Segment.Split('(').First();
+                                            functionName = functionName.Split(".",StringSplitOptions.RemoveEmptyEntries)
+                                                                        .Select(static s => s.ToFirstCharacterUpperCase())
+                                                                        .Aggregate(static (a, b) => $"{a}{b}")
+                                                                        .ToSnakeCase();
+                                            var parameters = snippetCodeGraph.PathParameters
+                                                .Select(static s => $"_with_{s.Name.ToSnakeCase()}")
+                                                .Aggregate(static (a, b) => $"{a}{b}");
 
-            return string.Join("", elements).Replace("()()", "()");
-
+                                            // use the existing WriteObjectFromCodeProperty functionality to write the parameters as if they were a comma seperated array so as to automatically infer type handling from the codeDom :)
+                                            var parametersBuilder = new StringBuilder();
+                                            foreach (var codeProperty in snippetCodeGraph.PathParameters.OrderBy(static parameter => parameter.Name, StringComparer.OrdinalIgnoreCase))
+                                            {
+                                                var parameter = new StringBuilder();
+                                                WriteObjectFromCodeProperty(new CodeProperty{PropertyType = PropertyType.Array}, codeProperty, parameter, new IndentManager());
+                                                parametersBuilder.Append(parameter.ToString().Trim());//Do this to trim the surrounding whitespace generated
+                                            }
+                                            
+                                            return functionName
+                                                   + parameters
+                                                   + $"({parametersBuilder.ToString().TrimEnd(',')})" ;
+                                        }
+                                        if (x.Segment.IsFunction())
+                                            return x.Segment.RemoveFunctionBraces().Split('.')
+                                                .Select(static s => s.ToFirstCharacterUpperCase())
+                                                .Aggregate(static (a, b) => $"{a}{b}")
+                                                .ToSnakeCase();
+                                        return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces().ToSnakeCase();
+                                      })
+                                .Aggregate(static (x, y) =>
+                                {
+                                    var dot = y.StartsWith("[") ? string.Empty : ".";
+                                    return $"{x}{dot}{y}";
+                                });
         }
     }
 }
