@@ -249,11 +249,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 }
                 if (x.Segment.IsFunction())
                 {
-                    return x.Segment.Split('.')
-                              .Select(static s => s.ToFirstCharacterLowerCase())
-                              .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterUpperCase()+"().";
+                    return x.Segment.Split('.', StringSplitOptions.RemoveEmptyEntries)
+                              .Select(static s => ReplaceIfReservedName(s).ToPascalCase())
+                              .Aggregate(static (a, b) => $"{a}{b}")+"().";
                 }
-                return x.Segment.ToFirstCharacterLowerCase()+"().";
+                return ReplaceIfReservedName(x.Segment).ToFirstCharacterLowerCase()+"().";
             })
                         .Aggregate(new List<string>(), static (current, next) =>
                             {
@@ -297,7 +297,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        private static string ReplaceIfReservedName(string originalString, string suffix = "Object")
+        private static string ReplaceIfReservedName(string originalString, string suffix = "Escaped")
             => ReservedNames.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
         private static void WriteRequestPayloadAndVariableName(SnippetCodeGraph snippetCodeGraph, StringBuilder snippetBuilder)
@@ -356,20 +356,30 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     break;
                 case PropertyType.Enum:
                     var enumTypeString = GetTypeString(codeProperty, apiVersion);
-                    var enumValues = codeProperty.Value.Split(new []{'|',','}, StringSplitOptions.RemoveEmptyEntries)
+                    var enumValues = codeProperty.Value.Split(new[] { '|', ',' }, StringSplitOptions.RemoveEmptyEntries)
                         .Select(x =>
                         {
                             var enumHint = x.Split('.').Last().Trim();
                             // the enum member may be invalid so default to generating the first value in case a look up fails.
                             var enumMember = codeProperty.Children.Find(member => member.Value.Equals(enumHint, StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
                             return $"{enumTypeString}.{enumMember.ToFirstCharacterUpperCase()}";
-                        })
-                        .Aggregate(static (x, y) => $"{x} , {y}");
-
-                    if(codeProperty.isFlagsEnum && !isParentArray && !isParentMap)
-                      snippetBuilder.AppendLine($"{propertyAssignment}EnumSet.of({enumValues}));");
+                        });
+                    if (codeProperty.isFlagsEnum && !isParentArray && !isParentMap)
+                    {
+                        snippetBuilder.AppendLine($"{propertyAssignment}EnumSet.of({string.Join(", ", enumValues)}));");
+                    }
+                    else if (isParentArray || isParentMap)
+                    {
+                        foreach (var enumValue in enumValues)
+                        {
+                            snippetBuilder.AppendLine($"{propertyAssignment}{enumValue.Replace(" ", string.Empty)});");
+                        }
+                    }
                     else
-                      snippetBuilder.AppendLine($"{propertyAssignment}{enumValues});");
+                    {
+                        // Some example payloads have multiple enum values, unless it is a array of enums, we will only use the first value.
+                        snippetBuilder.AppendLine($"{propertyAssignment}{enumValues.FirstOrDefault()});");
+                    }
                     break;
                 case PropertyType.DateTime:
                 case PropertyType.DateOnly:
