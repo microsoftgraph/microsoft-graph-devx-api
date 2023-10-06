@@ -59,10 +59,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     if (wrongQoutesInStringLiterals.IsMatch(requestPayload))
                     {
                         requestPayload = requestPayload.Replace("\"{", "'{").Replace("}\"", "}'");
-                    }    
+                    }
                     snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
                 }
-                    
+
 
                 if (isMeSegment)
                     snippetBuilder.Append($"{Environment.NewLine}# A UPN can also be used as -UserId.");
@@ -130,7 +130,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         public static string ReturnCleanParamsPayload(string queryParamsPayload)
         {
-            if(encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
+            if (encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
                 return queryParamsPayload.Replace("+", " ");
             return queryParamsPayload;
         }
@@ -408,13 +408,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var function = paths.Last();
                 var functionItems = function.Split("(");
                 var functionParameters = functionItems[1].Split(",");
-                foreach(var param in functionParameters)
+                foreach (var param in functionParameters)
                 {
                     var paramKeys = param.Split("=")[0];
                     var paramKey = $"-{paramKeys.ToFirstCharacterUpperCase()} ${paramKeys}Id ";
                     paramBuilder.Append(paramKey);
                 }
-        
+
             }
             return paramBuilder.ToString();
         }
