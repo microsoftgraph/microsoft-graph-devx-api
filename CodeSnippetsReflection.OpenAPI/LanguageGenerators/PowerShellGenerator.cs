@@ -32,7 +32,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex wrongQoutesInStringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex functionWithParams = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='{\w*}\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='\w*\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*={w*},]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*=<w*>,]*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private static readonly Regex functionWithoutParams = new(@"\w*\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -44,7 +43,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var lastPathSegment = snippetModel.EndPathNode.Segment;
             var hasMicrosoftPrefix = lastPathSegment.StartsWith("microsoft", StringComparison.OrdinalIgnoreCase);
             cleanPath = SubstituteIdentityProviderSegment(cleanPath, isIdentityProvider);
-            cleanPath = ReplaceFunctionSegments(lastPathSegment, cleanPath);
             cleanPath = SubstituteGraphSegment(cleanPath, hasGraphPrefix);
             cleanPath = SubstituteMicrosoftSegment(cleanPath, hasMicrosoftPrefix, lastPathSegment);
             var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
@@ -150,15 +148,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             return (path, additionalKeySegmentParmeter);
         }
-
-        private static string ReplaceFunctionSegments(string lastPathSegment, string path)
-        {
-            var segmentItems = lastPathSegment.Split("(");
-            if (functionWithoutParams.IsMatch(lastPathSegment) || functionWithParams.IsMatch(lastPathSegment))
-                path = path.Replace(lastPathSegment, segmentItems[0]);
-            return path;
-        }
-
         private static string SubstituteGraphSegment(string path, bool hasGraphPrefix)
         {
             if (hasGraphPrefix)
