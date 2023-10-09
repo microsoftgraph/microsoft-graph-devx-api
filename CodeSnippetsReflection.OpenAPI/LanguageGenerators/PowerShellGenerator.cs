@@ -32,7 +32,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex wrongQoutesInStringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex functionWithParams = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='{\w*}\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='\w*\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*={w*},]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*=<w*>,]*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private static readonly Regex functionWithoutParams = new(@"\w*\(\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var indentManager = new IndentManager();
@@ -44,7 +43,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var lastPathSegment = snippetModel.EndPathNode.Segment;
             var hasMicrosoftPrefix = lastPathSegment.StartsWith("microsoft", StringComparison.OrdinalIgnoreCase);
             cleanPath = SubstituteIdentityProviderSegment(cleanPath, isIdentityProvider);
-            cleanPath = ReplaceFunctionSegments(lastPathSegment, cleanPath);
             cleanPath = SubstituteGraphSegment(cleanPath, hasGraphPrefix);
             cleanPath = SubstituteMicrosoftSegment(cleanPath, hasMicrosoftPrefix, lastPathSegment);
             var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
@@ -61,10 +59,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     if (wrongQoutesInStringLiterals.IsMatch(requestPayload))
                     {
                         requestPayload = requestPayload.Replace("\"{", "'{").Replace("}\"", "}'");
-                    }    
+                    }
                     snippetBuilder.Append($"{Environment.NewLine}{requestPayload}");
                 }
-                    
+
 
                 if (isMeSegment)
                     snippetBuilder.Append($"{Environment.NewLine}# A UPN can also be used as -UserId.");
@@ -129,10 +127,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             return payloadSB.ToString();
         }
-
         public static string ReturnCleanParamsPayload(string queryParamsPayload)
         {
-            if(encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
+            if (encodedQueryParamsPayLoad.IsMatch(queryParamsPayload))
                 return queryParamsPayload.Replace("+", " ");
             return queryParamsPayload;
         }
@@ -150,15 +147,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
             return (path, additionalKeySegmentParmeter);
         }
-
-        private static string ReplaceFunctionSegments(string lastPathSegment, string path)
-        {
-            var segmentItems = lastPathSegment.Split("(");
-            if (functionWithoutParams.IsMatch(lastPathSegment) || functionWithParams.IsMatch(lastPathSegment))
-                path = path.Replace(lastPathSegment, segmentItems[0]);
-            return path;
-        }
-
         private static string SubstituteGraphSegment(string path, bool hasGraphPrefix)
         {
             if (hasGraphPrefix)
@@ -192,7 +180,21 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 {
                     var parameter = operation?.Parameters.FirstOrDefault(p => p.Name.Equals(header.Key, StringComparison.OrdinalIgnoreCase));
                     if (parameter != null)
-                        payloadSB.AppendLine($"-{parameter.Name} {header.Value.FirstOrDefault()} ");
+                    {
+                        var headerValue = header.Value.FirstOrDefault();
+                        var headerName = parameter.Name;
+                        if(headerName.Contains("-"))
+                        {
+                            headerName = headerName.Replace("-", string.Empty);
+                        }
+                        var collection = Regex.Matches(headerValue, "\\\"(.*?)\\\"");
+                        if(collection != null)
+                        {
+                            string quotedString = collection.First().Value;
+                            headerValue = headerValue.Replace(quotedString, "'" + quotedString + "'");
+                        }
+                        payloadSB.AppendLine($" -{headerName} {headerValue} ");
+                    }
                 }
             }
             return payloadSB.ToString();
@@ -419,13 +421,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var function = paths.Last();
                 var functionItems = function.Split("(");
                 var functionParameters = functionItems[1].Split(",");
-                foreach(var param in functionParameters)
+                foreach (var param in functionParameters)
                 {
                     var paramKeys = param.Split("=")[0];
                     var paramKey = $"-{paramKeys.ToFirstCharacterUpperCase()} ${paramKeys}Id ";
                     paramBuilder.Append(paramKey);
                 }
-        
+
             }
             return paramBuilder.ToString();
         }
