@@ -192,7 +192,21 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 {
                     var parameter = operation?.Parameters.FirstOrDefault(p => p.Name.Equals(header.Key, StringComparison.OrdinalIgnoreCase));
                     if (parameter != null)
-                        payloadSB.AppendLine($"-{parameter.Name} {header.Value.FirstOrDefault()} ");
+                    {
+                        var headerValue = header.Value.FirstOrDefault();
+                        var headerName = parameter.Name;
+                        if (headerName.Contains("-"))
+                        {
+                            headerName = headerName.Replace("-", string.Empty);
+                        }
+                        var collection = Regex.Matches(headerValue, "\\\"(.*?)\\\"");
+                        if (collection != null)
+                        {
+                            string quotedString = collection.First().Value;
+                            headerValue = headerValue.Replace(quotedString, "'" + quotedString + "'");
+                        }
+                        payloadSB.AppendLine($" -{headerName} {headerValue} ");
+                    }
                 }
             }
             return payloadSB.ToString();
