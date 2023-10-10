@@ -200,7 +200,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             headerName = headerName.Replace("-", string.Empty);
                         }
                         var collection = Regex.Matches(headerValue, "\\\"(.*?)\\\"");
-                        if (collection != null)
+                        if (collection.Count()>0)
                         {
                             string quotedString = collection.First().Value;
                             headerValue = headerValue.Replace(quotedString, "'" + quotedString + "'");
