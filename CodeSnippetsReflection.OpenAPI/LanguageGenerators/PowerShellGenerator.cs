@@ -194,17 +194,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     if (parameter != null)
                     {
                         var headerValue = header.Value.FirstOrDefault();
-                        var headerName = parameter.Name;
-                        if (headerName.Contains("-"))
-                        {
-                            headerName = headerName.Replace("-", string.Empty);
-                        }
+                        var headerName = parameter.Name.Replace("-", string.Empty);
                         var collection = Regex.Matches(headerValue, "\\\"(.*?)\\\"");
-                        if (collection.Count()>0)
-                        {
-                            string quotedString = collection.First().Value;
-                            headerValue = headerValue.Replace(quotedString, "'" + quotedString + "'");
-                        }
+
+                        string quotedString = collection.Count > 0 ? collection.First().Value : string.Empty;
+                        headerValue = collection.Count > 0 ? headerValue.Replace(quotedString, "'" + quotedString + "'") : headerValue;
+
                         payloadSB.AppendLine($" -{headerName} {headerValue} ");
                     }
                 }
