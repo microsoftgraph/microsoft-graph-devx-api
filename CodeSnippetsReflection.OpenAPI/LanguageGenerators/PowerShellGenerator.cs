@@ -198,9 +198,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         var collection = Regex.Matches(headerValue, "\\\"(.*?)\\\"", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
                         string quotedString = collection.Count > 0 ? collection.First().Value : string.Empty;
-                        string requestHeaderValue = collection.Count > 0 ? headerValue.Replace(quotedString, "'" + quotedString + "'"):headerValue;
+                        headerValue = (!string.IsNullOrEmpty(quotedString) && !string.IsNullOrEmpty(headerValue)) ? headerValue.Replace(quotedString, "'" + quotedString + "'") : headerValue;
             
-                        payloadSB.AppendLine($" -{headerName} {requestHeaderValue} ");
+                        payloadSB.AppendLine($" -{headerName} {headerValue} ");
                     }
                 }
             }
