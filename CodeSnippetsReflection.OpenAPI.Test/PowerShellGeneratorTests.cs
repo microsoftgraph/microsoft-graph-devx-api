@@ -543,6 +543,17 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Set-MgBetaUserPhotoContent", result);
             Assert.Contains("-BodyParameter", result);
         }
-        
+
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithHyphenatedRequestHeaderNames()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootBetaUrl}/planner/tasks/xxxxxxxx");
+            requestPayload.Headers.Add("If-Match", "W/\"lastEtagId\"");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-IfMatch W/'\"lastEtagId\"'", result);
+            Assert.Contains("Update-MgBetaPlannerTask", result);
+        }
     }
+
 }
