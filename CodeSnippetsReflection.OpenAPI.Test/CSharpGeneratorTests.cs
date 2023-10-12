@@ -751,6 +751,29 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("ContentBytes = Convert.FromBase64String(\"SGVsbG8gV29ybGQh\"),", result);
         }
         [Fact]
+        public async Task GeneratesCorrectTypesInstancesInAdditionalData() {
+            var sampleJson = @"{
+              ""transferTarget"": {
+                ""endpointType"": ""default"",
+                ""identity"": {
+                    ""phone"": {
+                      ""@odata.type"": ""#microsoft.graph.identity"",
+                      ""id"": ""+12345678901""
+                    }
+                },
+                ""languageId"": ""languageId-value"",
+                ""region"": ""region-value""
+              },
+              ""clientContext"": ""9e90d1c1-f61e-43e7-9f75-d420159aae08""
+            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/communications/calls/{{id}}/transfer"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("\"phone\" , new Identity", result);//phone should be initialized with specified type.
+        }
+        [Fact]
         public async Task GeneratesPropertiesWithSpecialCharacters() {
             var sampleJson = @"{
               ""@odata.type"": ""#microsoft.graph.managedIOSLobApp"",
