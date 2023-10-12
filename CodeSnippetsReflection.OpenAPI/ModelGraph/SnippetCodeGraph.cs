@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
@@ -390,11 +390,18 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             var propertiesWithoutSchema = propertiesAndSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
             if (propertiesWithoutSchema.Any())
             {
-
                 var additionalChildren = new List<CodeProperty>();
                 foreach (var property in propertiesWithoutSchema)
-                    additionalChildren.Add(parseProperty(property.Name, property.Value, null,snippetModelSchemas));
-
+                {
+                    OpenApiSchema openApiSchema = null;
+                    if (property.Value.ValueKind == JsonValueKind.Object && 
+                        property.Value.TryGetProperty("@odata.type", out var discriminatorValue) &&
+                        snippetModelSchemas.TryGetValue(discriminatorValue.GetString()?.TrimStart('#') ?? string.Empty, out OpenApiSchema specifiedSchema)) 
+                    {
+                        openApiSchema = specifiedSchema; //property object may have a discriminator value that can be used to determine the schema for additionalData items.
+                    }
+                    additionalChildren.Add(parseProperty(property.Name, property.Value, openApiSchema,snippetModelSchemas));
+                }
                 if (additionalChildren.Any())
                     children.Add(new CodeProperty { Name = "additionalData", PropertyType = PropertyType.Map, Children = additionalChildren });
             }
