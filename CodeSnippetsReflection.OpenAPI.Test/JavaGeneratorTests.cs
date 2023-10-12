@@ -192,6 +192,37 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
+        public async Task GeneratesCorrectTypeForObjectsInAdditionalDataWithSpecifiedOdataType()
+        {
+            var bodyContent = """
+                {
+                  "transferTarget": {
+                    "endpointType": "default",
+                    "identity": {
+                        "phone": {
+                          "@odata.type": "#microsoft.graph.identity",
+                          "id": "+12345678901"
+                        }
+                    },
+                    "languageId": "languageId-value",
+                    "region": "region-value"
+                  },
+                  "clientContext": "9e90d1c1-f61e-43e7-9f75-d420159aae08"
+                }
+                """;
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/communications/calls/{{call-id}}/transfer")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("new Identity()", result);
+            Assert.Contains("phone.setOdataType(\"#microsoft.graph.identity\")", result);
+            Assert.Contains("phone.setId(\"+12345678901\")", result);
+            Assert.Contains("additionalData.put(\"phone\", phone);", result);
+        }
+
+        [Fact]
         public async Task GeneratesSelectQueryParameters()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$select=displayName,id");
