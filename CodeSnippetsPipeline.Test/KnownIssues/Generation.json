@@ -1,0 +1,13 @@
+{
+    "$schema": "KnownIssues.schema.json",
+    "knownIssues": {
+        "Unsupported content type": {
+            "category": "Metadata",
+            "githubIssue": "https://github.com/microsoftgraph/msgraph-sdk-raptor/issues/1072",
+            "message": "siteLocations and mailboxLocations should be camelCase"
+        }
+    },
+    "tests": {
+        "post-opentypeextension-2-v1": "Unsupported content type"
+    }
+}

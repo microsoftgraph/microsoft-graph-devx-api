@@ -3,6 +3,24 @@
 [TestFixture]
 public class CodeSnippetsPipeline
 {
+    // public static string[] snippetCategories = new string[] { "Stable", "KnownIssues", "All" };
+
+    public static string [] GetStableTestsList(string language, string version)
+    {
+        var stableTestsListPath = Path.Combine(
+            Path.GetDirectoryName(typeof(CodeSnippetsPipeline).Assembly.Location),
+            "GenerationStableTestLists",
+            $"{language.ToUpperInvariant()}-{version.ToUpperInvariant()}.testlist"
+        );
+        if (File.Exists(stableTestsListPath))
+        {
+            return File.ReadAllLines(stableTestsListPath);
+        }
+        else
+        {
+            throw new FileNotFoundException($"Stable test list file not found at {stableTestsListPath}");
+        }
+    }
     public static IEnumerable<TestCaseData> TestData => GetTestData();
 
     private static IEnumerable<TestCaseData> GetTestData()
@@ -10,17 +28,35 @@ public class CodeSnippetsPipeline
         var getEnv = (string name) => Environment.GetEnvironmentVariable(name) ?? throw new ArgumentNullException($"env:{name}");
 
         // enumerate all HTTP snippets in the folder
+        var snippetCategory = getEnv("SNIPPET_CATEGORY");
         var snippetsPath = getEnv("SNIPPETS_PATH");
         var language = getEnv("SNIPPET_LANGUAGE").ToLowerInvariant();
         var version = getEnv("GRAPH_VERSION");
         var snippets = Directory.EnumerateFiles(snippetsPath, $"*{version}-httpSnippet*", SearchOption.AllDirectories);
 
+        var stableTestsList = GetStableTestsList(language, version);
         foreach(var snippetFullPath in snippets)
         {
             var snippetName = Path.GetFileNameWithoutExtension(snippetFullPath).Replace("-httpSnippet", "");
-            var testCase = new TestCaseData(snippetFullPath, language);
-            testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
-            yield return testCase;
+            TestCaseData testCase;
+            if (snippetCategory.Equals("Stable", StringComparison.OrdinalIgnoreCase))
+            {
+                if (stableTestsList.Contains(snippetName))
+                {
+                    testCase = new TestCaseData(snippetFullPath, language);
+                    testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
+                    yield return testCase;
+                }
+            }
+            else
+            {
+                if (!stableTestsList.Contains(snippetName))
+                {
+                    testCase = new TestCaseData(snippetFullPath, language);
+                    testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
+                    yield return testCase;
+                }
+            }
         }
     }
 
@@ -53,10 +89,10 @@ public class CodeSnippetsPipeline
                 var expectedLanguageSnippetErrorFileFullPath = string.Concat(expectedLanguageSnippetFileFullPath, "-error");
                 if (File.Exists(expectedLanguageSnippetErrorFileFullPath))
                 {
-                    var message = "Original HTTP Snippet:" + Environment.NewLine + 
+                    var message = "Original HTTP Snippet:" + Environment.NewLine +
                         File.ReadAllText(httpSnippetFilePath).TrimStart() + Environment.NewLine +
                         File.ReadAllText(expectedLanguageSnippetErrorFileFullPath);
-                    Assert.Fail(message);     
+                    Assert.Fail(message);
                 }
                 else
                 {
