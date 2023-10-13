@@ -201,11 +201,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var isParentMap = parentProperty.PropertyType == PropertyType.Map;
             var assignmentSuffix = ",";
             var propertyName = codeProperty.Name?.CleanupSymbolName()?.ToSnakeCase();
-            if (propertyName!= null && propertyName.Equals("additional_data", StringComparison.OrdinalIgnoreCase))
-            {
-                fromAdditionalData = true;
-            }
-
+            fromAdditionalData = fromAdditionalData || (propertyName != null &&
+                                                        propertyName.Equals("additional_data",
+                                                            StringComparison.OrdinalIgnoreCase));
             if (fromAdditionalData && codeProperty.PropertyType==PropertyType.Object)
             {
                 codeProperty.PropertyType = PropertyType.Map;
