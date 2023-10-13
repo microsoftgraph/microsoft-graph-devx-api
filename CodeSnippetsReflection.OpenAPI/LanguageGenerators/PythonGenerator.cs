@@ -194,13 +194,23 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager) 
+        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager, bool fromAdditionalData = false) 
         {
             indentManager.Indent();
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
             var isParentMap = parentProperty.PropertyType == PropertyType.Map;
             var assignmentSuffix = ",";
-            var propertyAssignment = $"{indentManager.GetIndent()}{codeProperty.Name.CleanupSymbolName().ToSnakeCase()} = "; // default assignments to the usual "x = xyz"
+            var propertyName = codeProperty.Name?.CleanupSymbolName()?.ToSnakeCase();
+            if (propertyName!= null && propertyName.Equals("additional_data", StringComparison.OrdinalIgnoreCase))
+            {
+                fromAdditionalData = true;
+            }
+
+            if (fromAdditionalData && codeProperty.PropertyType==PropertyType.Object)
+            {
+                codeProperty.PropertyType = PropertyType.Map;
+            }
+            var propertyAssignment = $"{indentManager.GetIndent()}{propertyName} = "; // default assignments to the usual "x = xyz"
             if (isParentMap)
             {
                 propertyAssignment = $"{indentManager.GetIndent()}\"{codeProperty.Name.ToSnakeCase()}\" : "; // if its in the additionalData assignments happen using string value keys
@@ -214,7 +224,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 case PropertyType.Object:
                     snippetBuilder.AppendLine($"{propertyAssignment}{GetTypeString(codeProperty)}");
-                    codeProperty.Children.ForEach( child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager));
+                    codeProperty.Children.ForEach( child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, fromAdditionalData));
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}){assignmentSuffix}");
                     break;
                 case PropertyType.Map:
@@ -222,16 +232,16 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     indentManager.Indent();
                     codeProperty.Children.ForEach(child =>
                     {
-                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager);
+                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, fromAdditionalData);
                     });
                     indentManager.Unindent();
-                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}");
+                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}{((isParentArray || isParentMap) ? "," : string.Empty)}");
                     break;
                 case PropertyType.Array :
                     snippetBuilder.AppendLine($"{propertyAssignment}{GetTypeString(codeProperty)}");
                     codeProperty.Children.ForEach(child =>
                     {
-                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager);
+                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, fromAdditionalData);
                     });
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}]");
                     break;
