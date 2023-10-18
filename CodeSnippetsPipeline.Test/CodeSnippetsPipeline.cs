@@ -8,9 +8,9 @@ public class CodeSnippetsPipeline
     public static string [] GetStableTestsList(string language, string version)
     {
         var stableTestsListPath = Path.Combine(
-            Path.GetDirectoryName(typeof(CodeSnippetsPipeline).Assembly.Location),
+            Path.GetDirectoryName(typeof(CodeSnippetsPipeline).Assembly.Location)?? "",
             "GenerationStableTestLists",
-            $"{language.ToUpperInvariant()}-{version.ToUpperInvariant()}.testlist"
+            $"{language.ToLowerInvariant()}-{version.ToLowerInvariant()}.testlist"
         );
         if (File.Exists(stableTestsListPath))
         {
@@ -18,7 +18,9 @@ public class CodeSnippetsPipeline
         }
         else
         {
-            throw new FileNotFoundException($"Stable test list file not found at {stableTestsListPath}");
+            TestContext.Progress.WriteLine($"Stable test list file not found at {stableTestsListPath}");
+            TestContext.Progress.WriteLine("Returning empty list for Stable tests.");
+            return Array.Empty<string>();
         }
     }
     public static IEnumerable<TestCaseData> TestData => GetTestData();

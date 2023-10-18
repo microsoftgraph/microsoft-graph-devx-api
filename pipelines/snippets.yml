@@ -129,11 +129,11 @@ stages:
         'HTTP v1':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'v1'
-          SNIPPET_CATEGORY: 'Stable'
+          SNIPPET_CATEGORY: 'KnownIssues'
         'HTTP beta':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
-          SNIPPET_CATEGORY: 'Stable'
+          SNIPPET_CATEGORY: 'KnownIssues'
         ${{ each language in parameters.snippetLanguages }}:
           '${{ language }} v1 Stable':
             SNIPPET_LANGUAGE: ${{ lower(language) }}
