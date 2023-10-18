@@ -126,11 +126,19 @@ stages:
   - job: RunTests
     strategy:
       matrix:
-        'HTTP v1':
+        'HTTP v1 Stable':
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'v1'
+          SNIPPET_CATEGORY: 'Stable'
+        'HTTP v1 KnownIssues':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'v1'
           SNIPPET_CATEGORY: 'KnownIssues'
-        'HTTP beta':
+        'HTTP beta Stable':
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'beta'
+          SNIPPET_CATEGORY: 'Stable'
+        'HTTP beta KnownIssues':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
           SNIPPET_CATEGORY: 'KnownIssues'

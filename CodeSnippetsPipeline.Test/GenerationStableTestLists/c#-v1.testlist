@@ -3360,3 +3360,7 @@ worksheet-usedrange-valuesonly-v1
 worksheetcollection-add-v1
 worksheetprotection-protect-v1
 worksheetprotection-unprotect-v1
+get-accesspackageassignmentrequestworkflowextension-v1
+intune-deviceconfig-devicecompliancescheduledactionforrule-get-get-devicecompliancescheduledactionforrule-v1
+reportroot-getteamsdeviceusageusercounts-v1
+update-contactfolder-v1

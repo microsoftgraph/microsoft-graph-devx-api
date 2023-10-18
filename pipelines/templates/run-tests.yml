@@ -31,8 +31,8 @@ steps:
     arguments: '--configuration $(buildConfiguration)'
 
 - pwsh: |
-    Write-Host "Running tests for language: $env:SNIPPET_LANGUAGE, version: $env:GRAPH_VERSION"
-    dotnet test ./CodeSnippetsPipeline.Test/ --configuration $env:BUILD_CONFIGURATION --logger "trx;logfilename=TestResults.trx" --results-directory $env:BUILD_ARTIFACTSTAGINGDIRECTORY/TestResults
+    Write-Host "Running tests for language: $env:SNIPPET_LANGUAGE, version: $env:GRAPH_VERSION, $env:SNIPPET_CATEGORY "
+    dotnet test ./CodeSnippetsPipeline.Test/ --configuration $env:BUILD_CONFIGURATION --logger "trx;logfilename=$(SNIPPET_LANGUAGE) $(GRAPH_VERSION) $(SNIPPET_CATEGORY) TestResults.trx" --results-directory $env:BUILD_ARTIFACTSTAGINGDIRECTORY/TestResults
   displayName: 'Run CodeSnippetsPipeline.Test'
   env:
     BUILD_CONFIGURATION: '$(buildConfiguration)'
@@ -43,8 +43,15 @@ steps:
   displayName: 'Publish test results'
   inputs:
     testResultsFormat: 'VSTest'
-    testResultsFiles: '**/TestResults.trx'
-    testRunTitle: '$(Build.Reason) Snippet Generation $(SNIPPET_LANGUAGE) $(GRAPH_VERSION)'
+    testResultsFiles: '**/$(SNIPPET_LANGUAGE) $(GRAPH_VERSION) $(SNIPPET_CATEGORY) TestResults.trx'
+    testRunTitle: '$(Build.Reason) Snippet Generation $(SNIPPET_LANGUAGE) $(GRAPH_VERSION) $(SNIPPET_CATEGORY)'
     searchFolder: '$(Build.ArtifactStagingDirectory)/TestResults'
     mergeTestResults: false
     failTaskOnFailedTests: false
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish test results as artifact'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/TestResults'
+    ArtifactName: '$(RUN_NAME) Test Results'
+    publishLocation: 'Container'
