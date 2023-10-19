@@ -50,7 +50,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("post()", result);
+        Assert.Contains("post(None)", result);
     }
     [Fact]
     public async Task GeneratesThePatchMethodCall()
@@ -58,7 +58,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/me/messages/{{message-id}}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("patch()", result);
+        Assert.Contains("patch(None)", result);
     }
     [Fact]
     public async Task GeneratesThePutMethodCall()
@@ -295,7 +295,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("request_body = ReferenceCreate(", result);
         Assert.Contains("odata_id = \"https://graph.microsoft.com/beta/users/alexd@contoso.com\"", result);
-        Assert.Contains(".accepted_senders.ref.post(body = request_body)", result);
+        Assert.Contains(".accepted_senders.ref.post(request_body)", result);
     }
     [Fact]
     public async Task GenerateSnippetsWithArrayNesting()
@@ -439,9 +439,10 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("graph_client.users.by_user_id('user-id').send_mail.post(body = request_body)", result);
+        Assert.Contains("graph_client.users.by_user_id('user-id').send_mail.post(request_body)", result);
         Assert.Contains("request_body = SendMailPostRequestBody(", result);
         Assert.Contains("to_recipients = [", result);
+        Assert.Contains("],", result);
     }
     [Fact]
     public async Task TypeArgumentsForListArePlacedCorrectly()
@@ -539,7 +540,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("await graph_client.teams.by_team_id('team-id').archive.post()", result);
+        Assert.Contains("await graph_client.teams.by_team_id('team-id').archive.post(None)", result);
     }
     [Fact]
     public async Task CorrectlyEvaluatesDatePropertyTypeRequestBodyParameter()
@@ -659,7 +660,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("await graph_client.reports.get_user_archived_print_jobs(user_id='{user_id}',start_date_time={start_date_time},end_date_time={end_date_time}.get()", result);
+        Assert.Contains("await graph_client.reports.get_user_archived_print_jobs_with_user_id_with_start_date_time_with_end_date_time(\"{endDateTime}\",\"{startDateTime}\",\"{userId}\").get()", result);
     }
     [Fact]
     public async Task CorrectlyHandlesNumberInUrl()
@@ -668,7 +669,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("await graph_client.drives.by_drive_id('drive-id').items.by_item_id('driveItem-id').workbook.worksheets.by_worksheet_id('workbookWorksheet-id').cell(row={row},column={column}.get()",result);
+        Assert.Contains(" await graph_client.drives.by_drive_id('drive-id').items.by_drive_item_id('driveItem-id').workbook.worksheets.by_workbook_worksheet_id('workbookWorksheet-id').cell_with_row_with_column(1,1).get()",result);
     }
     [Fact]
     public async Task CorrectlyHandlesDateInUrl()
@@ -677,7 +678,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("await graph_client.reports.get_yammer_group_activity_detail(date={date}.get()", result);
+        Assert.Contains("await graph_client.reports.get_yammer_groups_activity_detail_with_date(\"{date}\").get()", result);
     }
     [Fact]
     public async Task CorrectlyHandlesDateInUrl2()
@@ -686,7 +687,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("await graph_client.communications.call_records.microsoft_graph_call_record_get_pstn_calls(from_date_time={from_date_time},to_date_time={to_date_time}.get()", result);
+        Assert.Contains("await graph_client.communications.call_records.microsoft_graph_call_records_get_pstn_calls_with_from_date_time_with_to_date_time(\"{fromDateTime}\",\"{toDateTime}\").get()", result);
     }
     [Fact]
     public async Task CorrectlyHandlesEnumInUrl()
@@ -697,7 +698,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
 
         Assert.Contains("query_params = FilterByCurrentUserWithOnRequestBuilder.FilterByCurrentUserWithOnRequestBuilderGetQueryParameters(", result);
         Assert.Contains("filter = \"userConsentRequests/any(u:u/status eq 'InProgress')\",", result);
-        Assert.Contains("result = await graph_client.identity_governance.app_consent.app_consent_requests.filter_by_current_user(on='{on}'.get(request_configuration = request_configuration)", result);
+        Assert.Contains("result = await graph_client.identity_governance.app_consent.app_consent_requests.filter_by_current_user_with_on(\"reviewer\").get(request_configuration = request_configuration)", result);
     }
     [Fact]
     public async Task GeneratesObjectsInArray() {
@@ -894,7 +895,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("result = await graph_client.drives.by_drive_id('drive-id').items.by_item_id('driveItem-id').workbook.worksheets.by_worksheet_id('workbookWorksheet-id').range(address='{address}'.get()", result);
+        Assert.Contains("result = await graph_client.drives.by_drive_id('drive-id').items.by_drive_item_id('driveItem-id').workbook.worksheets.by_workbook_worksheet_id('workbookWorksheet-id').range_with_address(\"{address}\").get()", result);
     }   
     [Fact]
     public async Task MatchesPathAlternateKeys()
@@ -903,7 +904,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
 
-        Assert.Contains("result = await graph_client.applications(app_id='{app_id}'.get(request_configuration = request_configuration)", result);
+        Assert.Contains("result = await graph_client.applications_with_app_id(\"{appId}\").get(request_configuration = request_configuration)", result);
     }      
     [Fact]
     public async Task GeneratesCorrectLongPaths()
