@@ -119,7 +119,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 pathSegment = "deltaRequestBuilder.";
                 codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
                 payloadSb.AppendLine($"{deltaNamespace}DeltaRequestBuilder deltaRequestBuilder = new {deltaNamespace}DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.getRequestAdapter());");
-                responseAssignment = $"{deltaNamespace}DeltaResponse result = ";
+                responseAssignment = $"{deltaNamespace}DeltaGetResponse result = ";
             }
             else
             {

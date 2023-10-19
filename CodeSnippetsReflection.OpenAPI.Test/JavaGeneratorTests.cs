@@ -306,7 +306,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("Prefer", "odata.maxpagesize=2");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("DeltaResponse result = deltaRequestBuilder.get(", result);
+            Assert.Contains("DeltaGetResponse result = deltaRequestBuilder.get(", result);
             Assert.Contains("DeltaRequestBuilder deltaRequestBuilder = new com.microsoft.graph.users.item.calendarview.delta.DeltaRequestBuilder(", result);
         }
 
