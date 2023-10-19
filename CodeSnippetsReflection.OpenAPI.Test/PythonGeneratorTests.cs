@@ -42,7 +42,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("graph_client = GraphServiceClient(credential, scopes)", result);
+        Assert.Contains("graph_client = GraphServiceClient(credentials, scopes)", result);
     }
     [Fact]
     public async Task GeneratesThePostMethodCall()

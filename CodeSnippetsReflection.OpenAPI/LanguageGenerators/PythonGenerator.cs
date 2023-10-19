@@ -12,7 +12,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         private const string ClientVarName = "graph_client";
         private const string ClientVarType = "GraphServiceClient";
-        private const string CredentialVarName = "credential";
+        private const string CredentialVarName = "credentials";
         private const string ScopesVarName = "scopes";
         private const string RequestBodyVarName = "request_body";
         private const string RequestConfigurationVarName = "request_configuration";
