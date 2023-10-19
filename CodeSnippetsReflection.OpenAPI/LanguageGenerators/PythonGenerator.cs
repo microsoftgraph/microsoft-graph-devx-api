@@ -121,15 +121,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
         {
             var snippetBuilder = new StringBuilder();
-            var requestBuilderName = codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase();
-            var className = $"{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            var className = codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
+            var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
+            var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";
+            var requestConfigurationName =
+                $"{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             
             var classNameQueryParameters = $"{requestBuilderName}.{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
             
             var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager, classNameQueryParameters);
             if (codeGraph.HasParameters() || codeGraph.HasHeaders()){
                 snippetBuilder.AppendLine(queryParamsPayload); 
-                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{className}(");
+                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{requestConfigurationName}(");
                 indentManager.Indent(); 
 
                 var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
