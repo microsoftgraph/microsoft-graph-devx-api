@@ -3,7 +3,7 @@
 [TestFixture]
 public class CodeSnippetsPipeline
 {
-    // public static string[] snippetCategories = new string[] { "Stable", "KnownIssues", "All" };
+    // Assumption made below: snippetCategories = new string[] { "Stable", "KnownIssues"};
 
     public static string [] GetStableTestsList(string language, string version)
     {

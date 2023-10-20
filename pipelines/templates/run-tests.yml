@@ -53,5 +53,5 @@ steps:
   displayName: 'Publish test results as artifact'
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)/TestResults'
-    ArtifactName: '$(RUN_NAME) Test Results'
+    ArtifactName: 'Generation Test Results'
     publishLocation: 'Container'
