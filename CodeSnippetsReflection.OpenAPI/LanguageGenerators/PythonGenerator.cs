@@ -12,7 +12,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         private const string ClientVarName = "graph_client";
         private const string ClientVarType = "GraphServiceClient";
-        private const string HttpCoreVarName = "request_adapter";
+        private const string CredentialVarName = "credentials";
+        private const string ScopesVarName = "scopes";
         private const string RequestBodyVarName = "request_body";
         private const string RequestConfigurationVarName = "request_configuration";
         private const string RequestParametersPropertyName = "query_params";
@@ -64,7 +65,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
             var snippetBuilder = new StringBuilder($"# THE PYTHON SDK IS IN PREVIEW. FOR NON-PRODUCTION USE ONLY{Environment.NewLine}{Environment.NewLine}" +
-                                                   $"{ClientVarName} = {ClientVarType}({HttpCoreVarName}){Environment.NewLine}{Environment.NewLine}");
+                                                   $"{ClientVarName} = {ClientVarType}({CredentialVarName}, {ScopesVarName}){Environment.NewLine}{Environment.NewLine}");
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
@@ -120,15 +121,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
         {
             var snippetBuilder = new StringBuilder();
-            var requestBuilderName = codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase();
-            var className = $"{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            var className = codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
+            var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
+            var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";
+            var requestConfigurationName =
+                $"{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             
             var classNameQueryParameters = $"{requestBuilderName}.{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
             
             var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager, classNameQueryParameters);
             if (codeGraph.HasParameters() || codeGraph.HasHeaders()){
                 snippetBuilder.AppendLine(queryParamsPayload); 
-                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{className}(");
+                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{requestConfigurationName}(");
                 indentManager.Indent(); 
 
                 var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);

@@ -42,7 +42,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("graph_client = GraphServiceClient(request_adapter)", result);
+        Assert.Contains("graph_client = GraphServiceClient(credentials, scopes)", result);
     }
     [Fact]
     public async Task GeneratesThePostMethodCall()
@@ -1117,6 +1117,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("odata_id = \"https://graph.microsoft.com/v1.0/users/alexd@contoso.com\",", result);
 
     }
+    
     [Fact]
     public async Task GenerateWithMoreMapsWithArrayOfObjects()
     {
@@ -1187,5 +1188,15 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("\"trigger\" : {", result);
         Assert.Contains("\"scope\" : {", result);
         Assert.Contains("\"trigger\" : {", result);
+    }
+
+    [Fact]
+    public async Task GeneratesCorrectRequestBuilderNameForIndexedCollections()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{user-id}}?$select=ext55gb1l09_msLearnCourses");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("query_params = UserItemRequestBuilder.UserItemRequestBuilderGetQueryParameters(", result);
+        Assert.Contains("request_configuration = UserItemRequestBuilder.UserItemRequestBuilderGetRequestConfiguration(", result);
     }
 }
