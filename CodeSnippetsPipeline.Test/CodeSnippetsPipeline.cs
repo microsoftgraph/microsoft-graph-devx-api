@@ -5,7 +5,7 @@ public class CodeSnippetsPipeline
 {
     // Assumption made below: snippetCategories = new string[] { "Stable", "KnownIssues"};
 
-    public static string [] GetStableTestsList(string language, string version)
+    public static HashSet<string> GetStableTestsList(string language, string version)
     {
         var stableTestsListPath = Path.Combine(
             Path.GetDirectoryName(typeof(CodeSnippetsPipeline).Assembly.Location)?? "",
@@ -14,13 +14,13 @@ public class CodeSnippetsPipeline
         );
         if (File.Exists(stableTestsListPath))
         {
-            return File.ReadAllLines(stableTestsListPath);
+            return File.ReadAllLines(stableTestsListPath).ToHashSet();
         }
         else
         {
             TestContext.Progress.WriteLine($"Stable test list file not found at {stableTestsListPath}");
             TestContext.Progress.WriteLine("Returning empty list for Stable tests.");
-            return Array.Empty<string>();
+            return new HashSet<string>();
         }
     }
     public static IEnumerable<TestCaseData> TestData => GetTestData();
@@ -41,23 +41,18 @@ public class CodeSnippetsPipeline
         {
             var snippetName = Path.GetFileNameWithoutExtension(snippetFullPath).Replace("-httpSnippet", "");
             TestCaseData testCase;
-            if (snippetCategory.Equals("Stable", StringComparison.OrdinalIgnoreCase))
+            if (snippetCategory.Equals("Stable", StringComparison.OrdinalIgnoreCase) && stableTestsList.Contains(snippetName))
             {
-                if (stableTestsList.Contains(snippetName))
-                {
-                    testCase = new TestCaseData(snippetFullPath, language);
-                    testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
-                    yield return testCase;
-                }
+                testCase = new TestCaseData(snippetFullPath, language);
+                testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
+                yield return testCase;
             }
-            else
+            else  //default to a known Issues test suite
             {
-                if (!stableTestsList.Contains(snippetName))
-                {
-                    testCase = new TestCaseData(snippetFullPath, language);
-                    testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
-                    yield return testCase;
-                }
+                testCase = new TestCaseData(snippetFullPath, language);
+                testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
+                yield return testCase;
+
             }
         }
     }
