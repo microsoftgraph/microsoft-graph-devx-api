@@ -126,18 +126,39 @@ stages:
   - job: RunTests
     strategy:
       matrix:
-        'HTTP v1':
+        'HTTP v1 Stable':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'v1'
-        'HTTP beta':
+          SNIPPET_CATEGORY: 'Stable'
+        'HTTP v1 KnownIssues':
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'v1'
+          SNIPPET_CATEGORY: 'KnownIssues'
+        'HTTP beta Stable':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
+          SNIPPET_CATEGORY: 'Stable'
+        'HTTP beta KnownIssues':
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'beta'
+          SNIPPET_CATEGORY: 'KnownIssues'
         ${{ each language in parameters.snippetLanguages }}:
-          '${{ language }} v1':
+          '${{ language }} v1 Stable':
             SNIPPET_LANGUAGE: ${{ lower(language) }}
             GRAPH_VERSION: 'v1'
-          '${{ language }} beta':
+            SNIPPET_CATEGORY: 'Stable'
+          '${{ language }} v1 KnownIssues':
+            SNIPPET_LANGUAGE: ${{ lower(language) }}
+            GRAPH_VERSION: 'v1'
+            SNIPPET_CATEGORY: 'KnownIssues'
+          '${{ language }} beta Stable':
             SNIPPET_LANGUAGE: ${{ lower(language) }}
             GRAPH_VERSION: 'beta'
+            SNIPPET_CATEGORY: 'Stable'
+          '${{ language }} beta KnownIssues':
+            SNIPPET_LANGUAGE: ${{ lower(language) }}
+            GRAPH_VERSION: 'beta'
+            SNIPPET_CATEGORY: 'KnownIssues'
+
     steps:
     - template: templates/run-tests.yml
