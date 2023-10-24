@@ -52,10 +52,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder($"// Code snippets are only available for the latest version. Current version is 5.x{Environment.NewLine}{Environment.NewLine}" +
-                                                   $"var {ClientVarName} = new {ClientVarType}({HttpCoreVarName});{Environment.NewLine}{Environment.NewLine}");
+            var snippetBuilder = new StringBuilder($"// Code snippets are only available for the latest version. Current version is 5.x{Environment.NewLine}{Environment.NewLine}");
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
+            snippetBuilder.AppendLine("// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=csharp");
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
             return snippetBuilder.ToString();
         }

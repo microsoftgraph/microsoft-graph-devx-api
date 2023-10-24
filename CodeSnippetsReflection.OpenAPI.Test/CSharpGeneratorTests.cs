@@ -29,7 +29,9 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("var graphClient = new GraphServiceClient(requestAdapter)", result);
+            Assert.DoesNotContain("var graphClient = new GraphServiceClient(requestAdapter)", result); // no initialization statement present
+            Assert.Contains("// Code snippets are only available for the latest version. Current version is", result);// ensure version comment is present
+            Assert.Contains("// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client", result);// ensure initialization guidance is present 
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall() {
