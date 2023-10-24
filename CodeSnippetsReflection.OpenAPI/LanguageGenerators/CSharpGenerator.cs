@@ -15,7 +15,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string RequestConfigurationVarName = "requestConfiguration";
         private const string RequestHeadersPropertyName = "Headers";
         private const string RequestParametersPropertyName = "QueryParameters";
-        private const string ModelNamespacePrefixToTrim = $"Models.{DefaultNamespace}";
         private const string DefaultNamespace = "Microsoft.Graph";
         private const string VersionInformationString = "// Code snippets are only available for the latest version. Current version is 5.x";
         private const string InitializationInfoString = "// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=csharp";
@@ -59,7 +58,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             
             return snippetBuilder.Append(dependenciesBuilder) // dependencies first
                 .Append(requestPayloadAndVariableNameBuilder) // request body
-                .AppendLine($"{Environment.NewLine}{InitializationInfoString}")
+                .AppendLine(InitializationInfoString)
                 .Append(requestExecutionPathBuilder)// request executor 
                 .ToString();
         }
@@ -74,9 +73,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 {
                     dependenciesStringBuilder.AppendLine($"using {modelNamespace};");
                 }
+                dependenciesStringBuilder.AppendLine();
             }
 
-            return dependenciesStringBuilder.AppendLine();
+            return dependenciesStringBuilder;
         }
 
         private static StringBuilder WriteRequestExecutionPath(SnippetCodeGraph codeGraph, IndentManager indentManager,HashSet<string> usedNamespaces)
@@ -198,7 +198,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     throw new InvalidOperationException($"Unsupported property type for request: {snippetCodeGraph.Body.PropertyType}");
             }
 
-            return snippetBuilder;
+            return snippetBuilder.AppendLine();
         }
 
         private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager, string apiVersion, HashSet<string> usedNamespaces) 
