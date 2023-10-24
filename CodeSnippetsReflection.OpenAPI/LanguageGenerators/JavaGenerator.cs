@@ -259,7 +259,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             {
                             var element = next.Contains("ByTypeId", StringComparison.OrdinalIgnoreCase) ?
                             next.Replace("ByTypeId", $"By{current[current.Count-1].Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}Id") :
-                            $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
+                            $"{next.ReplaceValueIdentifier().Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
 
                             current.Add(element);
                             return current;
