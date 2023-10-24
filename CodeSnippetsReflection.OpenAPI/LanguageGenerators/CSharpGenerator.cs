@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
@@ -12,14 +11,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     public class CSharpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         private const string ClientVarName = "graphClient";
-        private const string ClientVarType = "GraphServiceClient";
-        private const string HttpCoreVarName = "requestAdapter";
         private const string RequestBodyVarName = "requestBody";
         private const string RequestConfigurationVarName = "requestConfiguration";
         private const string RequestHeadersPropertyName = "Headers";
         private const string RequestParametersPropertyName = "QueryParameters";
         private const string ModelNamespacePrefixToTrim = $"Models.{DefaultNamespace}";
         private const string DefaultNamespace = "Microsoft.Graph";
+        private const string VersionInformationString = "// Code snippets are only available for the latest version. Current version is 5.x";
+        private const string InitializationInfoString = "// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=csharp";
         
         private static HashSet<string> GetSystemTypeNames()
         {
@@ -50,18 +49,39 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
+            var usedNamespaces = new HashSet<string>();// list of used namespaces in generation
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder($"// Code snippets are only available for the latest version. Current version is 5.x{Environment.NewLine}{Environment.NewLine}");
-
-            WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
-            snippetBuilder.AppendLine("// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=csharp");
-            WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
-            return snippetBuilder.ToString();
+            var snippetBuilder = new StringBuilder($"{VersionInformationString}{Environment.NewLine}{Environment.NewLine}");
+            var requestPayloadAndVariableNameBuilder = WriteRequestPayloadAndVariableName(codeGraph, indentManager, usedNamespaces);
+            var requestExecutionPathBuilder = WriteRequestExecutionPath(codeGraph, indentManager,usedNamespaces);
+            var dependenciesBuilder = WriteDependencies(usedNamespaces);
+            
+            return snippetBuilder.Append(dependenciesBuilder) // dependencies first
+                .Append(requestPayloadAndVariableNameBuilder) // request body
+                .AppendLine($"{Environment.NewLine}{InitializationInfoString}")
+                .Append(requestExecutionPathBuilder)// request executor 
+                .ToString();
         }
 
-        private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
+        private static StringBuilder WriteDependencies(HashSet<string> usedNamespaces)
         {
+            var dependenciesStringBuilder = new StringBuilder();
+            if (usedNamespaces.Any())
+            {
+                dependenciesStringBuilder.AppendLine("// Dependencies");
+                foreach (var modelNamespace in usedNamespaces.Where( static ns => !string.IsNullOrEmpty(ns)))
+                {
+                    dependenciesStringBuilder.AppendLine($"using {modelNamespace};");
+                }
+            }
+
+            return dependenciesStringBuilder.AppendLine();
+        }
+
+        private static StringBuilder WriteRequestExecutionPath(SnippetCodeGraph codeGraph, IndentManager indentManager,HashSet<string> usedNamespaces)
+        {
+            var payloadSb = new StringBuilder();
             var responseAssignment = codeGraph.HasReturnedBody() ? "var result = " : string.Empty;
             var methodName = codeGraph.HttpMethod.Method.ToLower().ToFirstCharacterUpperCase() + "Async";
             var requestPayloadParameterName = codeGraph.HasBody() ? RequestBodyVarName : default;
@@ -75,16 +95,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {// its a delta query and needs the opaque url passed over.
                 pathSegment = "deltaRequestBuilder";
                 codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
-                payloadSb.AppendLine($"var deltaRequestBuilder = new {GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph, true)}.DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.RequestAdapter);");
+                payloadSb.AppendLine($"var deltaRequestBuilder = new {GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph, usedNamespaces,true)}.DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.RequestAdapter);");
             }
             else
             {
-                pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph)}";
+                pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph,usedNamespaces)}";
             }
             
             var requestConfigurationPayload = GetRequestConfiguration(codeGraph, indentManager);
             var parametersList = GetActionParametersList(requestPayloadParameterName , requestConfigurationPayload);
             payloadSb.AppendLine($"{responseAssignment}await {pathSegment}.{methodName}({parametersList});");
+            return payloadSb;
         }
 
         private static string GetRequestConfiguration(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager)
@@ -103,7 +124,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetActionParametersList(params string[] parameters)
         {
-            var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
+            var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p)).ToArray();
             return nonEmptyParameters.Any() ? string.Join(", ", nonEmptyParameters.Aggregate(static (a, b) => $"{a}, {b}")) : string.Empty;
         }
 
@@ -152,20 +173,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        private static void WriteRequestPayloadAndVariableName(SnippetCodeGraph snippetCodeGraph, StringBuilder snippetBuilder, IndentManager indentManager)
+        private static StringBuilder WriteRequestPayloadAndVariableName(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, HashSet<string> usedNamespaces)
         {
             if (!snippetCodeGraph.HasBody())
-                return;// No body
+                return new StringBuilder();// No body
 
             if(indentManager == null) 
                 throw new ArgumentNullException(nameof(indentManager));
 
+            var snippetBuilder = new StringBuilder();
             switch (snippetCodeGraph.Body.PropertyType)
             {
                 case PropertyType.Object:
-                    snippetBuilder.AppendLine($"var {RequestBodyVarName} = new {GetTypeString(snippetCodeGraph.Body, snippetCodeGraph.ApiVersion)}");
+                    snippetBuilder.AppendLine($"var {RequestBodyVarName} = new {GetTypeString(snippetCodeGraph.Body)}");
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
-                    snippetCodeGraph.Body.Children.ForEach( child => WriteObjectFromCodeProperty(snippetCodeGraph.Body, child, snippetBuilder, indentManager,snippetCodeGraph.ApiVersion));
+                    usedNamespaces.Add(GetNamespaceName(snippetCodeGraph.Body.NamespaceName, snippetCodeGraph.ApiVersion));
+                    snippetCodeGraph.Body.Children.ForEach( child => WriteObjectFromCodeProperty(snippetCodeGraph.Body, child, snippetBuilder, indentManager,snippetCodeGraph.ApiVersion,usedNamespaces));
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}}};");
                     break;
                 case PropertyType.Binary:
@@ -174,9 +197,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 default:
                     throw new InvalidOperationException($"Unsupported property type for request: {snippetCodeGraph.Body.PropertyType}");
             }
+
+            return snippetBuilder;
         }
 
-        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager, string apiVersion) 
+        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager, string apiVersion, HashSet<string> usedNamespaces) 
         {
             indentManager.Indent();
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
@@ -192,33 +217,34 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 propertyAssignment = $"{indentManager.GetIndent()}"; // no assignments as entries as added directly to the collection/array
             }
 
+            usedNamespaces.Add(GetNamespaceName(codeProperty.NamespaceName, apiVersion));
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Object:
-                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty,apiVersion)}");
+                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty)}");
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
-                    codeProperty.Children.ForEach( child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager,apiVersion));
+                    codeProperty.Children.ForEach( child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager,apiVersion,usedNamespaces));
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}{assignmentSuffix}");
                     break;
                 case PropertyType.Map:
-                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty,apiVersion)}");
+                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty)}");
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
                     indentManager.Indent();
                     codeProperty.Children.ForEach(child =>
                     {
                         snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
-                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager,apiVersion);
+                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager,apiVersion,usedNamespaces);
                         snippetBuilder.AppendLine($"{indentManager.GetIndent()}}},");
                     });
                     indentManager.Unindent();
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}}},");
                     break;
                 case PropertyType.Array :
-                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty, apiVersion)}");
+                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty)}");
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
                     codeProperty.Children.ForEach(child =>
                     {
-                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager,apiVersion);
+                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager,apiVersion,usedNamespaces);
                     });
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}{assignmentSuffix}");
                     break;
@@ -229,7 +255,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetBuilder.AppendLine($"{propertyAssignment}\"{codeProperty.Value}\"{assignmentSuffix}");
                     break;
                 case PropertyType.Enum:
-                    var enumTypeString = GetTypeString(codeProperty, apiVersion);
+                    var enumTypeString = GetTypeString(codeProperty);
                     var enumValues = codeProperty.Value.Split(new []{'|',','}, StringSplitOptions.RemoveEmptyEntries)
                         .Select(x =>
                         {
@@ -246,7 +272,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     break;
                 case PropertyType.DateOnly:
                 case PropertyType.TimeOnly:
-                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty, apiVersion)}(DateTime.Parse(\"{codeProperty.Value}\")){assignmentSuffix}");
+                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty)}(DateTime.Parse(\"{codeProperty.Value}\")){assignmentSuffix}");
                     break;
                 case PropertyType.Base64Url:
                     snippetBuilder.AppendLine($"{propertyAssignment}Convert.FromBase64String(\"{codeProperty.Value.EscapeQuotes()}\"){assignmentSuffix}");
@@ -282,7 +308,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private const string StringTypeName = "string";
 
-        private static string GetTypeString(CodeProperty codeProperty, string apiVersion)
+        private static string GetTypeString(CodeProperty codeProperty)
         {
             var typeString = codeProperty.TypeDefinition.ToFirstCharacterUpperCase() ??
                              codeProperty.Value.ToFirstCharacterUpperCase();
@@ -291,21 +317,21 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.Array:
                     // For objects, rely on the typeDefinition from the array definition otherwise look deeper for primitive collections
                     var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children[0].PropertyType != PropertyType.Object
-                        ? GetTypeString(codeProperty.Children[0], apiVersion)
+                        ? GetTypeString(codeProperty.Children[0])
                         : ReplaceIfReservedTypeName(typeString);
                     if(string.IsNullOrEmpty(collectionTypeString)) 
                         collectionTypeString = "object";
                     else if(typeString.Equals(StringTypeName,StringComparison.OrdinalIgnoreCase)) 
                         collectionTypeString = StringTypeName; // use the conventional casing if need be
-                    return $"List<{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{collectionTypeString}>";
+                    return $"List<{collectionTypeString}>";
                 case PropertyType.Object:
-                    return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString)}";
+                    return $"{ReplaceIfReservedTypeName(typeString)}";
                 case PropertyType.Map:
                     return "Dictionary<string, object>";
                 case PropertyType.String:
                     return StringTypeName;
                 case PropertyType.Enum:
-                    return $"{GetNamespaceName(codeProperty.NamespaceName,apiVersion)}{ReplaceIfReservedTypeName(typeString.Split('.').First())}?";
+                    return $"{ReplaceIfReservedTypeName(typeString.Split('.').First())}?";
                 case PropertyType.DateOnly:
                     return "Date";
                 case PropertyType.TimeOnly:
@@ -319,7 +345,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetNamespaceName(string namespaceName, string apiVersion)
         {
-            if (string.IsNullOrEmpty(namespaceName) || namespaceName.Equals(ModelNamespacePrefixToTrim, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(namespaceName))
                 return string.Empty;
 
             //strip the default namespace name from the original as the models are typically already in Microsoft.Graph namespace
@@ -329,7 +355,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 .Select(static x => ReplaceIfReservedTypeName(x, "Namespace").ToFirstCharacterUpperCase())
                 .Aggregate(static (z, y) => z + '.' + y);
 
-            return $"{GetDefaultNamespaceName(apiVersion)}.{normalizedNameSpaceName}.";
+            return $"{GetDefaultNamespaceName(apiVersion)}.{normalizedNameSpaceName}";
         }
 
         private static string GetDefaultNamespaceName(string apiVersion) =>
@@ -338,7 +364,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string ReplaceIfReservedTypeName(string originalString, string suffix = "Object")
             => ReservedNames.Value.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
-        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph, bool useIndexerNamespaces = false)
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph, HashSet<string> usedNamespaces,bool useIndexerNamespaces = false)
         {
             if(!(nodes?.Any() ?? false)) 
                 return string.Empty;
@@ -361,7 +387,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             foreach (var codeProperty in snippetCodeGraph.PathParameters.OrderBy(static parameter => parameter.Name, StringComparer.OrdinalIgnoreCase))
                                             {
                                                 var parameter = new StringBuilder();
-                                                WriteObjectFromCodeProperty(new CodeProperty{PropertyType = PropertyType.Array}, codeProperty, parameter, new IndentManager(), snippetCodeGraph.ApiVersion);
+                                                WriteObjectFromCodeProperty(new CodeProperty{PropertyType = PropertyType.Array}, codeProperty, parameter, new IndentManager(), snippetCodeGraph.ApiVersion, usedNamespaces);
                                                 parametersBuilder.Append(parameter.ToString().Trim());//Do this to trim the surrounding whitespace generated
                                             }
                                             

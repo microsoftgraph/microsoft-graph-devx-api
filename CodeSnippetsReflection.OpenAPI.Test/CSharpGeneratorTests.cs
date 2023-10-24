@@ -421,7 +421,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             Assert.Contains("await graphClient.Users[\"{user-id}\"].SendMail.PostAsync(requestBody);", result);
-            Assert.Contains("var requestBody = new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody", result);
+            Assert.Contains("var requestBody = new SendMailPostRequestBody", result);
+            Assert.Contains("using Microsoft.Graph.Users.Item.SendMail", result);
             Assert.Contains("ToRecipients = new List<Recipient>", result);
         }
         
@@ -460,8 +461,10 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("new Microsoft.Graph.Models.ExternalConnectors.Identity", result);
-            Assert.Contains("Type = Microsoft.Graph.Models.ExternalConnectors.IdentityType.ExternalGroup", result);
+            Assert.Contains("new Identity", result);
+            Assert.Contains("using Microsoft.Graph.Models.ExternalConnectors;", result);
+            Assert.Contains("Type = IdentityType.ExternalGroup", result);
+            Assert.Contains("using Microsoft.Graph.Models.ExternalConnectors;", result);
         }
         
         [Fact]
@@ -580,7 +583,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("var requestBody = new Microsoft.Graph.Applications.Item.AddKey.AddKeyPostRequestBody", result);
+            Assert.Contains("var requestBody = new AddKeyPostRequestBody", result);
+            Assert.Contains("using Microsoft.Graph.Applications.Item.AddKey;", result);
         }
         [Fact]
         public async Task CorrectlyEvaluatesGuidInRequestBodyParameter()
@@ -711,7 +715,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("var requestBody = new Microsoft.Graph.Me.AssignLicense.AssignLicensePostRequestBody", result);
+            Assert.Contains("var requestBody = new AssignLicensePostRequestBody", result);
+            Assert.Contains("using Microsoft.Graph.Me.AssignLicense;", result);
             Assert.Contains("DisabledPlans = new List<Guid?>", result);
             Assert.Contains("RemoveLicenses = new List<Guid?>", result);
             Assert.Contains("Guid.Parse(\"bea13e0c-3828-4daa-a392-28af7ff61a0f\"),", result);
@@ -747,7 +752,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("var requestBody = new Microsoft.Graph.Me.SendMail.SendMailPostRequestBody", result);
+            Assert.Contains("var requestBody = new SendMailPostRequestBody", result);
+            Assert.Contains("using Microsoft.Graph.Me.SendMail;", result);
             Assert.Contains("Attachments = new List<Attachment>", result);// Collection defines Base type
             Assert.Contains("new FileAttachment", result);// Individual items are derived types
             Assert.Contains("ContentBytes = Convert.FromBase64String(\"SGVsbG8gV29ybGQh\"),", result);
@@ -885,7 +891,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("new List<Microsoft.Graph.Models.IdentityGovernance.TaskObject>", result);//Assert the type is escaped in the collection initializzer.
+            Assert.Contains("new List<TaskObject>", result);//Assert the type is escaped in the collection initializzer.
+            Assert.Contains("using Microsoft.Graph.Models.IdentityGovernance", result);//Assert the type is escaped in the collection initializzer.
         }
         
         [Fact]
