@@ -66,7 +66,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static StringBuilder WriteDependencies(HashSet<string> usedNamespaces)
         {
             var dependenciesStringBuilder = new StringBuilder();
-            if (usedNamespaces.Any())
+            if (usedNamespaces.Any(static ns => !string.IsNullOrEmpty(ns)))
             {
                 dependenciesStringBuilder.AppendLine("// Dependencies");
                 foreach (var modelNamespace in usedNamespaces.Where( static ns => !string.IsNullOrEmpty(ns)))
@@ -187,7 +187,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.Object:
                     snippetBuilder.AppendLine($"var {RequestBodyVarName} = new {GetTypeString(snippetCodeGraph.Body)}");
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
-                    usedNamespaces.Add(GetNamespaceName(snippetCodeGraph.Body.NamespaceName, snippetCodeGraph.ApiVersion));
+                    usedNamespaces.Add(GetNamespaceName(snippetCodeGraph.Body.NamespaceName, snippetCodeGraph.ApiVersion));// add the namespace for the object for tracking
                     snippetCodeGraph.Body.Children.ForEach( child => WriteObjectFromCodeProperty(snippetCodeGraph.Body, child, snippetBuilder, indentManager,snippetCodeGraph.ApiVersion,usedNamespaces));
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}}};");
                     break;
@@ -217,7 +217,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 propertyAssignment = $"{indentManager.GetIndent()}"; // no assignments as entries as added directly to the collection/array
             }
 
-            usedNamespaces.Add(GetNamespaceName(codeProperty.NamespaceName, apiVersion));
+            usedNamespaces.Add(GetNamespaceName(codeProperty.NamespaceName, apiVersion));// add the namespace for the object for tracking
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Object:
