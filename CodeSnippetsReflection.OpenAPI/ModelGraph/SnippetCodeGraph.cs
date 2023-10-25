@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using CodeSnippetsReflection.StringExtensions;
+using Microsoft.OpenApi.MicrosoftExtensions;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Services;
@@ -127,6 +128,11 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         public Boolean HasParameters()
         {
             return Parameters.Any();
+        }
+
+        public Boolean HasPathParameters()
+        {
+            return PathParameters.Any();
         }
 
         public Boolean HasBody()
@@ -384,11 +390,18 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             var propertiesWithoutSchema = propertiesAndSchema.Where(x => x.Item2 == null).Select(x => x.Item1);
             if (propertiesWithoutSchema.Any())
             {
-
                 var additionalChildren = new List<CodeProperty>();
                 foreach (var property in propertiesWithoutSchema)
-                    additionalChildren.Add(parseProperty(property.Name, property.Value, null,snippetModelSchemas));
-
+                {
+                    OpenApiSchema openApiSchema = null;
+                    if (property.Value.ValueKind == JsonValueKind.Object && 
+                        property.Value.TryGetProperty("@odata.type", out var discriminatorValue) &&
+                        snippetModelSchemas.TryGetValue(discriminatorValue.GetString()?.TrimStart('#') ?? string.Empty, out OpenApiSchema specifiedSchema)) 
+                    {
+                        openApiSchema = specifiedSchema; //property object may have a discriminator value that can be used to determine the schema for additionalData items.
+                    }
+                    additionalChildren.Add(parseProperty(property.Name, property.Value, openApiSchema,snippetModelSchemas));
+                }
                 if (additionalChildren.Any())
                     children.Add(new CodeProperty { Name = "additionalData", PropertyType = PropertyType.Map, Children = additionalChildren });
             }
@@ -460,13 +473,16 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             if ((propSchema?.Enum.Count ?? 0) == 0 && enumSchema == null)
                 return new CodeProperty { Name = propertyName, Value = escapeSpecialCharacters(value), PropertyType = PropertyType.String, Children = new List<CodeProperty>() };
             enumSchema ??= propSchema;
+
+            bool isFlagsEnum = enumSchema.Extensions.TryGetValue(OpenApiEnumFlagsExtension.Name, out var rawExtension) && rawExtension is OpenApiEnumFlagsExtension { IsFlags: true };
+
             // Pass the list of options in the enum as children so that the language generators may use them for validation if need be, 
             var enumValueOptions = enumSchema?.Enum.Where(option => option is OpenApiString)
                                                                 .Select(option => new CodeProperty{Name = ((OpenApiString)option).Value,Value = ((OpenApiString)option).Value,PropertyType = PropertyType.String})
                                                                 .ToList() ?? new List<CodeProperty>();
             var propValue = String.IsNullOrWhiteSpace(value) ? $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{enumValueOptions.FirstOrDefault().Value.ToFirstCharacterUpperCase()}" : $"{enumSchema?.Title.ToFirstCharacterUpperCase()}.{value.ToFirstCharacterUpperCase()}";
 
-            return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = enumValueOptions ,NamespaceName = GetNamespaceFromSchema(enumSchema)};
+            return new CodeProperty { Name = propertyName, Value = propValue, PropertyType = PropertyType.Enum, Children = enumValueOptions, NamespaceName = GetNamespaceFromSchema(enumSchema), isFlagsEnum = isFlagsEnum};
         }
 
         private static CodeProperty evaluateNumericProperty(string propertyName, JsonElement value, OpenApiSchema propSchema)

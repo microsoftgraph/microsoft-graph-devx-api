@@ -12,7 +12,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         private const string ClientVarName = "graph_client";
         private const string ClientVarType = "GraphServiceClient";
-        private const string HttpCoreVarName = "request_adapter";
+        private const string CredentialVarName = "credentials";
+        private const string ScopesVarName = "scopes";
         private const string RequestBodyVarName = "request_body";
         private const string RequestConfigurationVarName = "request_configuration";
         private const string RequestParametersPropertyName = "query_params";
@@ -64,7 +65,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
             var snippetBuilder = new StringBuilder($"# THE PYTHON SDK IS IN PREVIEW. FOR NON-PRODUCTION USE ONLY{Environment.NewLine}{Environment.NewLine}" +
-                                                   $"{ClientVarName} = {ClientVarType}({HttpCoreVarName}){Environment.NewLine}{Environment.NewLine}");
+                                                   $"{ClientVarName} = {ClientVarType}({CredentialVarName}, {ScopesVarName}){Environment.NewLine}{Environment.NewLine}");
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
@@ -78,13 +79,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 ? $"{RequestConfigurationVarName} = {RequestConfigurationVarName}"
                 : string.Empty;
             var bodyParameter = codeGraph.HasBody()
-                ? $"body = {RequestBodyVarName}"
+                ? $"{RequestBodyVarName}"
                 : string.Empty;
+            if (string.IsNullOrEmpty(bodyParameter) && ((codeGraph.RequestSchema?.Properties?.Any() ?? false) || (codeGraph.RequestSchema?.AllOf?.Any(schema => schema.Properties.Any()) ?? false)))
+                bodyParameter = "None";// pass a null parameter if we have a request schema expected but there is not body provided
+            
             var optionsParameter = codeGraph.HasOptions() ? "options =" : string.Empty;
             var returnVar = codeGraph.HasReturnedBody() ? "result = " : string.Empty;
+            string pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph)}";
             var parameterList = GetActionParametersList(bodyParameter, configParameter, optionsParameter);
             snippetBuilder.AppendLine(GetRequestConfiguration(codeGraph, indentManager));
-            snippetBuilder.AppendLine($"{returnVar}await {ClientVarName}.{GetFluentApiPath(codeGraph.Nodes)}.{method}({parameterList})");
+            snippetBuilder.AppendLine($"{returnVar}await {pathSegment}.{method}({parameterList})");
         }
         private static string GetRequestQueryParameters(SnippetCodeGraph model, IndentManager indentManager, string classNameQueryParameters)
         {
@@ -116,15 +121,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string GetRequestConfiguration(SnippetCodeGraph codeGraph, IndentManager indentManager)
         {
             var snippetBuilder = new StringBuilder();
-            var requestBuilderName = codeGraph.Nodes.Last().GetClassName("RequestBuilder").ToFirstCharacterUpperCase();
-            var className = $"{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
+            var className = codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
+            var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
+            var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";
+            var requestConfigurationName =
+                $"{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration";
             
             var classNameQueryParameters = $"{requestBuilderName}.{requestBuilderName}{codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase()}QueryParameters";
             
             var queryParamsPayload = GetRequestQueryParameters(codeGraph, indentManager, classNameQueryParameters);
             if (codeGraph.HasParameters() || codeGraph.HasHeaders()){
                 snippetBuilder.AppendLine(queryParamsPayload); 
-                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{className}(");
+                snippetBuilder.AppendLine($"{RequestConfigurationVarName} = {requestBuilderName}.{requestConfigurationName}(");
                 indentManager.Indent(); 
 
                 var requestHeadersPayload = GetRequestHeaders(codeGraph, indentManager);
@@ -194,13 +202,21 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager) 
+        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager, bool fromAdditionalData = false) 
         {
             indentManager.Indent();
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
             var isParentMap = parentProperty.PropertyType == PropertyType.Map;
             var assignmentSuffix = ",";
-            var propertyAssignment = $"{indentManager.GetIndent()}{codeProperty.Name.CleanupSymbolName().ToSnakeCase()} = "; // default assignments to the usual "x = xyz"
+            var propertyName = codeProperty.Name?.CleanupSymbolName()?.ToSnakeCase();
+            fromAdditionalData = fromAdditionalData || (propertyName != null &&
+                                                        propertyName.Equals("additional_data",
+                                                            StringComparison.OrdinalIgnoreCase));
+            if (fromAdditionalData && codeProperty.PropertyType==PropertyType.Object)
+            {
+                codeProperty.PropertyType = PropertyType.Map;
+            }
+            var propertyAssignment = $"{indentManager.GetIndent()}{propertyName} = "; // default assignments to the usual "x = xyz"
             if (isParentMap)
             {
                 propertyAssignment = $"{indentManager.GetIndent()}\"{codeProperty.Name.ToSnakeCase()}\" : "; // if its in the additionalData assignments happen using string value keys
@@ -214,7 +230,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 case PropertyType.Object:
                     snippetBuilder.AppendLine($"{propertyAssignment}{GetTypeString(codeProperty)}");
-                    codeProperty.Children.ForEach( child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager));
+                    codeProperty.Children.ForEach( child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, fromAdditionalData));
                     snippetBuilder.AppendLine($"{indentManager.GetIndent()}){assignmentSuffix}");
                     break;
                 case PropertyType.Map:
@@ -222,18 +238,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     indentManager.Indent();
                     codeProperty.Children.ForEach(child =>
                     {
-                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager);
+                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, fromAdditionalData);
                     });
                     indentManager.Unindent();
-                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}");
+                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}{((isParentArray || isParentMap) ? "," : string.Empty)}");
                     break;
                 case PropertyType.Array :
                     snippetBuilder.AppendLine($"{propertyAssignment}{GetTypeString(codeProperty)}");
                     codeProperty.Children.ForEach(child =>
                     {
-                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager);
+                        WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager, fromAdditionalData);
                     });
-                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}]");
+                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}],");
                     break;
                 case PropertyType.Guid:
                     snippetBuilder.AppendLine($"{propertyAssignment}UUID(\"{codeProperty.Value}\"){assignmentSuffix}");
@@ -301,39 +317,54 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string ReplaceIfReservedTypeName(string originalString, string suffix = "_")
             => ReservedTypeNames.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
-        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes)
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph, bool useIndexerNamespaces = false)
         {
-            if (!(nodes?.Any() ?? false)) return string.Empty;
-            var elements = nodes.Select(static (x, i) =>
-                {
-                    if (x.Segment.IsCollectionIndex())
-                        return $"by_type_id{x.Segment.Replace("{", "('").Replace("}", "')")}";
-                    else if (x.Segment.IsFunction())
-                        return x.Segment.Replace(".", "_").RemoveFunctionBraces().Split('.')
-                            .Select(static s => s.ToSnakeCase())
-                            .Aggregate(static (a, b) => $"{a}{b}");
-                    return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces()
-                        .ToSnakeCase();
-                })
-                .Aggregate(new List<String>(), (current, next) =>
-                {
-                    var element = next.Contains("by_type_id", StringComparison.OrdinalIgnoreCase)
-                        ? next.Replace("by_type_id",
-                            $"by_{current.Last().Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}_id")
-                        : $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
+            if(!(nodes?.Any() ?? false)) 
+                return string.Empty;
 
-                    current.Add(element);
-                    return current;
-                }).Aggregate(static (x, y) =>
-                {
-                    return $"{x.Trim('$').Replace("s_", "_")}.{y.Trim('$', '.').Replace("()", string.Empty).Replace("s_", "_")}";
-                }).Replace("..", ".")
-                .Replace("().", ".")
-                .Replace("()().", ".");
-                
+            return nodes.Select(x => {
+                                        if(x.Segment.IsCollectionIndex())
+                                        {
+                                            var collectionIndexName = x.Segment.Replace("{", "").Replace("}", "");
+                                            var fluentMethodName = collectionIndexName.Split("-").Select(static x => x.ToSnakeCase()).Aggregate(static (a, b) => a + $"_{b}");
+                                            return $"by_{fluentMethodName}('{collectionIndexName}')";
+                                        }
+                                        if (x.Segment.IsFunctionWithParameters())
+                                        {
+                                            var functionName = x.Segment.Split('(').First();
+                                            functionName = functionName.Split(".",StringSplitOptions.RemoveEmptyEntries)
+                                                                        .Select(static s => s.ToFirstCharacterUpperCase())
+                                                                        .Aggregate(static (a, b) => $"{a}{b}")
+                                                                        .ToSnakeCase();
+                                            var parameters = snippetCodeGraph.PathParameters
+                                                .Select(static s => $"_with_{s.Name.ToSnakeCase()}")
+                                                .Aggregate(static (a, b) => $"{a}{b}");
 
-            return string.Join("", elements).Replace("()()", "()");
-
+                                            // use the existing WriteObjectFromCodeProperty functionality to write the parameters as if they were a comma seperated array so as to automatically infer type handling from the codeDom :)
+                                            var parametersBuilder = new StringBuilder();
+                                            foreach (var codeProperty in snippetCodeGraph.PathParameters.OrderBy(static parameter => parameter.Name, StringComparer.OrdinalIgnoreCase))
+                                            {
+                                                var parameter = new StringBuilder();
+                                                WriteObjectFromCodeProperty(new CodeProperty{PropertyType = PropertyType.Array}, codeProperty, parameter, new IndentManager());
+                                                parametersBuilder.Append(parameter.ToString().Trim());//Do this to trim the surrounding whitespace generated
+                                            }
+                                            
+                                            return functionName
+                                                   + parameters
+                                                   + $"({parametersBuilder.ToString().TrimEnd(',')})" ;
+                                        }
+                                        if (x.Segment.IsFunction())
+                                            return x.Segment.RemoveFunctionBraces().Split('.')
+                                                .Select(static s => s.ToFirstCharacterUpperCase())
+                                                .Aggregate(static (a, b) => $"{a}{b}")
+                                                .ToSnakeCase();
+                                        return x.Segment.ReplaceValueIdentifier().TrimStart('$').RemoveFunctionBraces().ToSnakeCase();
+                                      })
+                                .Aggregate(static (x, y) =>
+                                {
+                                    var dot = y.StartsWith("[") ? string.Empty : ".";
+                                    return $"{x}{dot}{y}";
+                                });
         }
     }
 }

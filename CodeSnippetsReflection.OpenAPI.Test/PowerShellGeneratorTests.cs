@@ -369,16 +369,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesSnippetForDeltaFunctionsWithParams()
-        {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/drives/XXXX/items/XXXX/delta(token='token')");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
-            var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Get-MgDriveItemDelta", result);
-            Assert.Contains("-Token", result);
-        }
-
-        [Fact]
         public async Task GeneratesSnippetForHttpSnippetsWithGraphPrefixOnLastPathSegment()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/places/graph.room");
@@ -463,11 +453,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Fact]
         public async Task GeneratesBetaSnippetForFunctionsWithSingleParam()
         {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/drives/XXXX/items/XXXX/delta(token='token')");
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/roleManagement/directory/roleEligibilitySchedules/filterByCurrentUser(on='principal')");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Get-MgBetaDriveItemDelta", result);
-            Assert.Contains("-Token", result);
+            Assert.Contains("Invoke-MgBetaFilterRoleManagementDirectoryRoleEligibilityScheduleByCurrentUser", result);
+            Assert.Contains("-On", result);
         }
 
         [Fact]
@@ -543,6 +533,17 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Set-MgBetaUserPhotoContent", result);
             Assert.Contains("-BodyParameter", result);
         }
-        
+
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithHyphenatedRequestHeaderNames()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootBetaUrl}/planner/tasks/xxxxxxxx");
+            requestPayload.Headers.Add("If-Match", "W/\"lastEtagId\"");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("-IfMatch W/'\"lastEtagId\"'", result);
+            Assert.Contains("Update-MgBetaPlannerTask", result);
+        }
     }
+
 }
