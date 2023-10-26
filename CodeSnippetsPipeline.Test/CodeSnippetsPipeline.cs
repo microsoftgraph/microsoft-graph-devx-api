@@ -3,7 +3,7 @@
 [TestFixture]
 public class CodeSnippetsPipeline
 {
-    // Assumption made below: snippetCategories = new string[] { "Stable", "KnownIssues"};
+    private static readonly string[] TestCategories = new string[] { "Stable", "KnownIssues"};
 
     public static HashSet<string> GetStableTestsList(string language, string version)
     {
@@ -30,10 +30,16 @@ public class CodeSnippetsPipeline
         var getEnv = (string name) => Environment.GetEnvironmentVariable(name) ?? throw new ArgumentNullException($"env:{name}");
 
         // enumerate all HTTP snippets in the folder
-        var snippetCategory = getEnv("SNIPPET_CATEGORY");
+        var testCategory = getEnv("TEST_CATEGORY");
         var snippetsPath = getEnv("SNIPPETS_PATH");
         var language = getEnv("SNIPPET_LANGUAGE").ToLowerInvariant();
         var version = getEnv("GRAPH_VERSION");
+
+        if (!TestCategories.Contains(testCategory))
+        {
+            throw new ArgumentException($"Invalid test category: {testCategory}. Valid values are: {string.Join(",", TestCategories)}.");
+        }
+
         var snippets = Directory.EnumerateFiles(snippetsPath, $"*{version}-httpSnippet*", SearchOption.AllDirectories);
 
         var stableTestsList = GetStableTestsList(language, version);
@@ -41,18 +47,24 @@ public class CodeSnippetsPipeline
         {
             var snippetName = Path.GetFileNameWithoutExtension(snippetFullPath).Replace("-httpSnippet", "");
             TestCaseData testCase;
-            if (snippetCategory.Equals("Stable", StringComparison.OrdinalIgnoreCase) && stableTestsList.Contains(snippetName))
+            if (testCategory.Equals("Stable", StringComparison.OrdinalIgnoreCase) && stableTestsList.Contains(snippetName))
             {
                 testCase = new TestCaseData(snippetFullPath, language);
                 testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
                 yield return testCase;
             }
-            else  //default to a known Issues test suite
+            else if (testCategory.Equals("KnownIssues", StringComparison.OrdinalIgnoreCase) && !stableTestsList.Contains(snippetName))
             {
                 testCase = new TestCaseData(snippetFullPath, language);
                 testCase.SetName(snippetName).SetCategory(nameof(CodeSnippetsPipeline));
                 yield return testCase;
 
+            }
+            else {
+                // if test category is stable and snippet name not in stable list,
+                // or test category is known issues and snippet name in stable list
+                // do not return the test case, ignore and skip it.
+                continue;
             }
         }
     }

@@ -129,36 +129,36 @@ stages:
         'HTTP v1 Stable':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'v1'
-          SNIPPET_CATEGORY: 'Stable'
+          TEST_CATEGORY: 'Stable'
         'HTTP v1 KnownIssues':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'v1'
-          SNIPPET_CATEGORY: 'KnownIssues'
+          TEST_CATEGORY: 'KnownIssues'
         'HTTP beta Stable':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
-          SNIPPET_CATEGORY: 'Stable'
+          TEST_CATEGORY: 'Stable'
         'HTTP beta KnownIssues':
           SNIPPET_LANGUAGE: 'http'
           GRAPH_VERSION: 'beta'
-          SNIPPET_CATEGORY: 'KnownIssues'
+          TEST_CATEGORY: 'KnownIssues'
         ${{ each language in parameters.snippetLanguages }}:
           '${{ language }} v1 Stable':
             SNIPPET_LANGUAGE: ${{ lower(language) }}
             GRAPH_VERSION: 'v1'
-            SNIPPET_CATEGORY: 'Stable'
+            TEST_CATEGORY: 'Stable'
           '${{ language }} v1 KnownIssues':
             SNIPPET_LANGUAGE: ${{ lower(language) }}
             GRAPH_VERSION: 'v1'
-            SNIPPET_CATEGORY: 'KnownIssues'
+            TEST_CATEGORY: 'KnownIssues'
           '${{ language }} beta Stable':
             SNIPPET_LANGUAGE: ${{ lower(language) }}
             GRAPH_VERSION: 'beta'
-            SNIPPET_CATEGORY: 'Stable'
+            TEST_CATEGORY: 'Stable'
           '${{ language }} beta KnownIssues':
             SNIPPET_LANGUAGE: ${{ lower(language) }}
             GRAPH_VERSION: 'beta'
-            SNIPPET_CATEGORY: 'KnownIssues'
+            TEST_CATEGORY: 'KnownIssues'
 
     steps:
     - template: templates/run-tests.yml
