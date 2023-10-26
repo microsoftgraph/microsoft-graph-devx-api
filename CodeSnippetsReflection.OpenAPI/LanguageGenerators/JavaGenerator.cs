@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
@@ -229,7 +230,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                                                                           .Where(static s => !string.IsNullOrEmpty(s))
                                                                                           .Select(static s => s.ToFirstCharacterUpperCase())
                                                                                           .Aggregate(static (a, b) => $"By{a}{b}");
-                    return $"{pathName ?? "ByTypeId"}{x.Segment.Replace("{", "(\"{", StringComparison.OrdinalIgnoreCase).Replace("}", "}\")", StringComparison.OrdinalIgnoreCase)}.";
+
+                    //Handle cases where the collection is indexed by a integer value rather than a string
+                    bool isIntParam = false;
+                    if (x.PathItems.TryGetValue("default", out var pathItem))
+                    {
+                        isIntParam = pathItem.Parameters.Any(parameter => x.Segment.Contains(parameter.Name) && parameter.Schema.Type.Equals("integer", StringComparison.OrdinalIgnoreCase));
+
+                    }
+                    return $"{pathName ?? "ByTypeId"}{(isIntParam ? "(2)": x.Segment.Replace("{", "(\"{", StringComparison.OrdinalIgnoreCase).Replace("}", "}\")", StringComparison.OrdinalIgnoreCase))}.";
                 }
                 if (x.Segment.IsFunctionWithParameters())
                 {

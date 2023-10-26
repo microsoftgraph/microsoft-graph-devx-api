@@ -18,6 +18,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains(".Me.Messages", result);
         }
         [Fact]
+        public async Task GeneratesTheCorrectFluentApiPath_2()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/identityGovernance/lifecycleWorkflows/workflows/{{workflowId}}/versions/{{workflowVersion-versionNumber}}");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("Versions[2]", result);
+        }
+        [Fact]
         public async Task GeneratesTheCorrectFluentApiPathForIndexedCollections() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
