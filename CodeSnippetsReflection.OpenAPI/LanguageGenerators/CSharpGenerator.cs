@@ -51,25 +51,25 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var usedNamespaces = new HashSet<string>();// list of used namespaces in generation
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder($"{VersionInformationString}{Environment.NewLine}{Environment.NewLine}");
-            var requestPayloadAndVariableNameBuilder = WriteRequestPayloadAndVariableName(codeGraph, indentManager, usedNamespaces);
-            var requestExecutionPathBuilder = WriteRequestExecutionPath(codeGraph, indentManager,usedNamespaces);
-            var dependenciesBuilder = WriteDependencies(usedNamespaces);
+            var codeSnippetBuilder = new StringBuilder($"{VersionInformationString}{Environment.NewLine}{Environment.NewLine}");
+            var requestPayloadAndVariableNameBuilder = WriteRequestPayloadAndVariableNameBuilder(codeGraph, indentManager, usedNamespaces);
+            var requestExecutionPathBuilder = WriteRequestExecutionPathBuilder(codeGraph, indentManager,usedNamespaces);
+            var dependenciesBuilder = WriteDependenciesBuilder(usedNamespaces.Where( static ns => !string.IsNullOrEmpty(ns)).ToArray());
             
-            return snippetBuilder.Append(dependenciesBuilder) // dependencies first
+            return codeSnippetBuilder.Append(dependenciesBuilder) // dependencies first
                 .Append(requestPayloadAndVariableNameBuilder) // request body
                 .AppendLine(InitializationInfoString)
                 .Append(requestExecutionPathBuilder)// request executor 
                 .ToString();
         }
 
-        private static StringBuilder WriteDependencies(HashSet<string> usedNamespaces)
+        private static StringBuilder WriteDependenciesBuilder(string [] usedNamespaces)
         {
             var dependenciesStringBuilder = new StringBuilder();
-            if (usedNamespaces.Any(static ns => !string.IsNullOrEmpty(ns)))
+            if (usedNamespaces.Any())
             {
                 dependenciesStringBuilder.AppendLine("// Dependencies");
-                foreach (var modelNamespace in usedNamespaces.Where( static ns => !string.IsNullOrEmpty(ns)))
+                foreach (var modelNamespace in usedNamespaces)
                 {
                     dependenciesStringBuilder.AppendLine($"using {modelNamespace};");
                 }
@@ -79,7 +79,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return dependenciesStringBuilder;
         }
 
-        private static StringBuilder WriteRequestExecutionPath(SnippetCodeGraph codeGraph, IndentManager indentManager,HashSet<string> usedNamespaces)
+        private static StringBuilder WriteRequestExecutionPathBuilder(SnippetCodeGraph codeGraph, IndentManager indentManager,HashSet<string> usedNamespaces)
         {
             var payloadSb = new StringBuilder();
             var responseAssignment = codeGraph.HasReturnedBody() ? "var result = " : string.Empty;
@@ -173,7 +173,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        private static StringBuilder WriteRequestPayloadAndVariableName(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, HashSet<string> usedNamespaces)
+        private static StringBuilder WriteRequestPayloadAndVariableNameBuilder(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, HashSet<string> usedNamespaces)
         {
             if (!snippetCodeGraph.HasBody())
                 return new StringBuilder();// No body
@@ -261,7 +261,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         {
                             var enumHint = x.Split('.').Last().Trim();
                             // the enum member may be invalid so default to generating the first value in case a look up fails.
-                            var enumMember = codeProperty.Children.FirstOrDefault( member => member.Value.Equals(enumHint,StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
+                            var enumMember = codeProperty.Children.Find( member => member.Value.Equals(enumHint,StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
                             return $"{enumTypeString.TrimEnd('?')}.{enumMember.ToFirstCharacterUpperCase()}";
                         })
                         .Aggregate(static (x, y) => $"{x} | {y}");
@@ -331,7 +331,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.String:
                     return StringTypeName;
                 case PropertyType.Enum:
-                    return $"{ReplaceIfReservedTypeName(typeString.Split('.').First())}?";
+                    return $"{ReplaceIfReservedTypeName(typeString.Split('.')[0])}?";
                 case PropertyType.DateOnly:
                     return "Date";
                 case PropertyType.TimeOnly:
@@ -374,7 +374,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             return useIndexerNamespaces ? "Item" : x.Segment.Replace("{", "[\"{").Replace("}", "}\"]");
                                         if (x.Segment.IsFunctionWithParameters())
                                         {
-                                            var functionName = x.Segment.Split('(').First();
+                                            var functionName = x.Segment.Split('(')[0];
                                             functionName = functionName.Split(".",StringSplitOptions.RemoveEmptyEntries)
                                                                         .Select(static s => s.ToFirstCharacterUpperCase())
                                                                         .Aggregate(static (a, b) => $"{a}{b}");
@@ -403,7 +403,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                       })
                                 .Aggregate(static (x, y) =>
                                 {
-                                    var dot = y.StartsWith("[") ? string.Empty : ".";
+                                    var dot = y.StartsWith('[') ? string.Empty : ".";
                                     return $"{x}{dot}{y}";
                                 });
         }
