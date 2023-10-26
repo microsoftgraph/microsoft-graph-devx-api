@@ -15,7 +15,9 @@ trigger:
 pr: none
 
 pool:
-  vmImage: 'windows-latest'
+  name: Azure-Pipelines-1ESPT-ExDShared
+  image: windows-latest
+  os: windows
 
 variables:
   solution: '**/*.sln'
