@@ -148,7 +148,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 {
                     if (!codeGraph.HasParameters())
                         snippetBuilder.AppendLine(")");
-                    snippetBuilder.AppendLine(GetRequestHeaders(codeGraph, indentManager));
+                    snippetBuilder.AppendLine(GetRequestHeaders(codeGraph));
                 }
                 
             }    
@@ -162,7 +162,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return string.Empty;
         }
         
-        private static string GetRequestHeaders(SnippetCodeGraph snippetModel, IndentManager indentManager)
+        private static string GetRequestHeaders(SnippetCodeGraph snippetModel)
         {
             var headersVar = new StringBuilder();
             foreach (var header in snippetModel.Headers)
