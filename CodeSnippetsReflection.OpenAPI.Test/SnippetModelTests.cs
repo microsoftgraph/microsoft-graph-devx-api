@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -93,7 +93,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             // When
             // Then
-            var entryPointNotFoundException = await Assert.ThrowsAsync<EntryPointNotFoundException>(async () => new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata()));
+            var snippetMetadata = await GetV1SnippetMetadata();
+            var entryPointNotFoundException = Assert.Throws<EntryPointNotFoundException>(() => new SnippetModel(requestPayload, ServiceRootUrl, snippetMetadata));
             Assert.Equal("HTTP Method 'DELETE' not found for path.",entryPointNotFoundException.Message);
         }
         
@@ -107,7 +108,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             // When
             // Then
-            var entryPointNotFoundException = await Assert.ThrowsAsync<EntryPointNotFoundException>(async () => new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata()));
+            var snippetMetadata = await GetV1SnippetMetadata();
+            var entryPointNotFoundException = Assert.Throws<EntryPointNotFoundException>(() => new SnippetModel(requestPayload, ServiceRootUrl, snippetMetadata));
             Assert.Equal("Path segment 'deltaTest' not found in path",entryPointNotFoundException.Message);
         }
     }
