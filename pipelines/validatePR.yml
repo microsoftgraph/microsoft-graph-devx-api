@@ -76,11 +76,3 @@ extends:
           clean: true
           fetchDepth: 1
           submodules: recursive
-          
-          # CredScan
-          - task: securedevelopmentteam.vss-secure-development-tools.build-task-credscan.CredScan@3
-            displayName: 'Run CredScan'
-            inputs:
-              toolMajorVersion: 'V2'
-              scanFolder: '$(Build.SourcesDirectory)'
-              debugMode: false          
