@@ -27,6 +27,9 @@ extends:
       name: Azure-Pipelines-1ESPT-ExDShared
       image: windows-latest
       os: windows
+    sdl:
+      credscan:
+        suppressionsFile: $(Build.SourcesDirectory)\pipelines\.config\CredScanSuppressions.json
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
