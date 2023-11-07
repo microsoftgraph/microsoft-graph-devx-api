@@ -44,7 +44,7 @@ namespace FileService.Test
         public async Task ThrowArgumentNullExceptionIfRequestMessageIsNull()
         {
             // Act and Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(async () => await _httpClientUtility.ReadFromDocumentAsync(null));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _httpClientUtility.ReadFromDocumentAsync(null));
         }
     }
 }

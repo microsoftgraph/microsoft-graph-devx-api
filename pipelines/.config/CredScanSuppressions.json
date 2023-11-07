@@ -1,0 +1,9 @@
+{
+    "tool": "Credential Scanner",
+    "suppressions": [
+      {
+        "hash": "XMECj1+fRGzp6GOpjOevn4ej/nV7FFe9JbA6mdGA0tE=",
+        "_justification": "CredScan results for SamplesServiceShould.cs line 139 and line 244 are fake credentials for testing purposes. Hash acquired via SDL Analysis pipeline artifacts."
+      }
+    ]
+ }
