@@ -31,6 +31,7 @@ add-incompatibleaccesspackage-to-accesspackage-v1
 add-incompatiblegroup-to-accesspackage-v1
 add-member-to-group-v1
 add-multiple-members-to-group-v1
+add-profilecardproperty-v1
 add-tab-to-chat-v1
 add-to-bundle-v1
 addlargegalleryview-1-v1
@@ -47,6 +48,9 @@ api-referencev10apibookingstaffmember-deletemd0-v1
 api-referencev10apibookingstaffmember-getmd0-v1
 api-referencev10apibookingstaffmember-updatemd0-v1
 api-referencev10apichannel-post-messagereplymd1-v1
+api-referencev10apidevicelocalcredentialinfo-getmd0-v1
+api-referencev10apidevicelocalcredentialinfo-getmd1-v1
+api-referencev10apidirectory-list-devicelocalcredentialsmd0-v1
 api-referencev10resourcesplannermd0-v1
 api-referencev10resourcessecuritymd0-v1
 appconsentrequest-filterbycurrentuser-v1
@@ -146,6 +150,7 @@ change-notifications-subscriptions-example-v1
 channel-add-member-1-v1
 channel-add-member-2-v1
 channel-add-member-3-v1
+channel-add-member-6-v1
 channel-doesuserhaveaccess-externaluser-v1
 channel-doesuserhaveaccess-usingupn-v1
 channel-doesuserhaveaccess-v1
@@ -291,7 +296,6 @@ create-chat-group-with-guest-user-v1
 create-chat-group-with3-members-v1
 create-chat-oneonone-e1-v1
 create-chat-oneonone-federated-e5-v1
-create-chat-oneonone-federated-v1
 create-chat-oneonone-upn-v1
 create-checklistitem-from--v1
 create-claimsmappingpolicy-from-claimsmappingpolicies-v1
@@ -469,6 +473,7 @@ create-rangeborder-from-rangeformat-v1
 create-reference-attachment-with-post-v1
 create-rejectedsenders-from-group-v1
 create-relation-from-1-v1
+create-remotedesktopsecurityconfiguration-from--v1
 create-request-for-principal-from-admin-v1-e1-v1
 create-retentionevent-from--v1
 create-retentioneventtype-from--v1
@@ -486,6 +491,7 @@ create-selfinitiated-learning-courseactivity-v1
 create-send-invitation-v1
 create-serviceprincipal-from-serviceprincipals-v1
 create-shared-channel-v1
+create-simulations-v1
 create-sitesource-from--v1
 create-socialidentityprovider-from-identityproviderbase-v1
 create-subjectrightsrequest-from--v1
@@ -495,6 +501,7 @@ create-synchronizationjob-from-synchronization-v1
 create-table-from-workbook-v1
 create-table-from-worksheet-01-v1
 create-tablecolumn-from-table-v1
+create-targetdevicegroup-from--v1
 create-taskfileattachment-from--v1
 create-team-from-group-v1
 create-team-post-minimal-v1
@@ -700,8 +707,10 @@ delete-printer-v1
 delete-printershare-v1
 delete-printtaskdefinition-v1
 delete-printtasktrigger-v1
+delete-profilephoto-v1
 delete-registeredowners-v1
 delete-registeredusers-v1
+delete-remotedesktopsecurityconfiguration-v1
 delete-retentionevent-v1
 delete-retentioneventtype-v1
 delete-schemaextension-v1
@@ -710,12 +719,14 @@ delete-serviceprincipal-v1
 delete-set-v1
 delete-sharedwithchannelteaminfo-for-channel-v1
 delete-sharedwithteamschannelteaminfo-v1
+delete-simulation-v1
 delete-smsauthenticationmethodconfiguration-v1
 delete-softwareoathauthenticationmethod-v1
 delete-softwareoathauthenticationmethodconfiguration-v1
 delete-subscription-v1
 delete-synchronizationjob-v1
 delete-tab-in-chat-v1
+delete-targetdevicegroup-v1
 delete-taskfileattachment-v1
 delete-teamsapp-v1
 delete-teamworktag-v1
@@ -770,6 +781,10 @@ domain-verify-v1
 download-item-content-v1
 download-item-partial-v1
 drive-root-subscriptions-socketio-v1
+driveitem-getretentionlabel-v1
+driveitem-lockorunlockrecord-v1
+driveitem-removeretentionlabel-v1
+driveitem-setretentionlabel-v1
 drives-get-remoteitem-metadata-v1
 ediscoverycustodianthisactivate-v1
 ediscoverycustodianthisapplyhold-id-custodians-v1
@@ -918,6 +933,7 @@ get-assignments-delta-nextlink-v1
 get-assignments-delta-query-support-v1
 get-assignments-resources-v1
 get-assignments-v1
+get-attacksimulationoperation-v1
 get-attendancereport-by-id-v1
 get-attendancereports-v1
 get-attendee-report-v1
@@ -973,6 +989,7 @@ get-calltranscript-v1
 get-caseoperation-v1
 get-certificatebasedauthconfiguration-v1
 get-certificatebasedauthconfigurations-v1
+get-channel-summary-v1
 get-channel-v1
 get-chart-v1
 get-chartaxis-v1
@@ -1114,6 +1131,7 @@ get-emailauthenticationmethod-2-v1
 get-emailauthenticationmethodconfiguration-v1
 get-emailfileassessmentrequest-v1
 get-enabled-dynamic-groups-v1
+get-endusernotification-v1
 get-entitlementmanagementsettings-v1
 get-event-based-on-eventmessage-v1
 get-event-multiple-locations-v1
@@ -1175,6 +1193,7 @@ get-hostedcontentschannelmessage-1-v1
 get-hostedcontentschannelmessage-2-v1
 get-hostedcontentschatmessage-1-v1
 get-hostpair-v1
+get-hostport-v1
 get-hostreputation-v1
 get-hostsslcertificate-v1
 get-hosttracker-v1
@@ -1208,6 +1227,7 @@ get-item-permission-v1
 get-item-permissions-v1
 get-jobs-3-v1
 get-joinedteams-v1
+get-landingpage-v1
 get-learning-courseactivity-details-externalid-v1
 get-learning-courseactivity-details-id-v1
 get-learning-courseactivity-details-v1
@@ -1226,6 +1246,7 @@ get-listchannelmessages-1-v1
 get-listchannelmessages-2-v1
 get-listchannelmessages-3-v1
 get-listmessagereplies-1-v1
+get-loginpage-v1
 get-longrunningoperation-v1
 get-mailassessmentrequest-v1
 get-mailboxsettings-1-v1
@@ -1306,6 +1327,9 @@ get-participants-v1
 get-passivedns-v1
 get-passwordauthenticationmethod-v1
 get-passwordmethods-v1
+get-payload-v1
+get-payloaddetail-v1
+get-peopleadminsettings-v1
 get-permission-v1
 get-permissiongrantpolicy-v1
 get-person-collection-v1
@@ -1361,6 +1385,7 @@ get-privilegedaccessgroupeligibilityschedule-v1
 get-privilegedaccessgroupeligibilityscheduleinstance-v1
 get-privilegedaccessgroupeligibilityschedulerequest-v1-e1-v1
 get-privilegedaccessgroupeligibilityschedulerequest-v1-e2-v1
+get-profilecardproperty-v1
 get-range-v1
 get-rangeborder-v1
 get-rangebordercollection-v1
@@ -1375,6 +1400,7 @@ get-registeredowners-v1
 get-registeredusers-v1
 get-rejectedsenders-v1
 get-relation-v1
+get-remotedesktopsecurityconfiguration-v1
 get-replies-v1
 get-resource-v1
 get-resources-1-v1
@@ -1443,6 +1469,10 @@ get-sharedwithchannelteaminfo-v1
 get-shiftpreferences-v1
 get-signin-v1
 get-signinname-users-v1
+get-simulation-endusernotificationsetting-v1
+get-simulation-excludedaccounttarget-v1
+get-simulation-includedaccounttarget-v1
+get-simulation-trainingsetting-v1
 get-simulation-v1
 get-simulationautomation-v1
 get-simulationreportoverview-v1
@@ -1487,6 +1517,7 @@ get-tables-1-v1
 get-tables-2-v1
 get-tables-3-v1
 get-tablesort-v1
+get-targetdevicegroup-v1
 get-taskfileattachment-v1
 get-teachers-v1
 get-team-photo-metadata-v1-e4-v1
@@ -1521,6 +1552,8 @@ get-todotasklist-2-v1
 get-tokenissuancepolicy-v1
 get-tokenlifetimepolicies-v1
 get-tokenlifetimepolicy-v1
+get-training-v1
+get-traininglanguagedetail-v1
 get-transitive-managers-v1
 get-transitivememberof-v1
 get-unifiedroleassignment-expand-relationships-v1
@@ -2682,6 +2715,7 @@ list-education-classes-v1
 list-educationclass-for-userid-thaughtclass-v1
 list-educationschool-v1
 list-educationuser-v1
+list-endusernotifications-v1
 list-externalconnection-v1
 list-federatedidentitycredential-v1
 list-filter-serviceprincipalriskdetection-v1
@@ -2696,6 +2730,7 @@ list-host-v1
 list-hostcomponent-v1
 list-hostcookie-v1
 list-hostpair-v1
+list-hostport-v1
 list-hosttracker-v1
 list-identityapiconnectors-v1
 list-identityproviders-v1
@@ -2711,9 +2746,12 @@ list-installed-apps-in-team-v1
 list-installed-teams-apps-expand-v1
 list-intelligenceprofile-v1
 list-intelligenceprofileindicator-v1
+list-internaldomainfederation-v1
+list-landingpages-v1
 list-learningcontent-v1
 list-learningcourseactivity-v1
 list-learningprovider-v1
+list-loginpages-v1
 list-manageddevicecompliancetrend-v1
 list-microsoftauthenticatorauthenticationmethod-v1
 list-oauth2permissiongrants-v1
@@ -2723,6 +2761,7 @@ list-orgcontacts-startswith-v1
 list-parenthostpair-v1
 list-passivedns-e1-v1
 list-passivedns-v1
+list-payloads-v1
 list-permission-for-site-v1
 list-permission-for-specifiedsite-v1
 list-permissiongrantpolicies-v1
@@ -2753,6 +2792,7 @@ list-privilegedaccessgroupassignmentschedulerequest-v1
 list-privilegedaccessgroupeligibilityschedule-v1-e1-v1
 list-privilegedaccessgroupeligibilityschedule-v1-e2-v1
 list-privilegedaccessgroupeligibilityscheduleinstance-v1
+list-profilecardproperties-v1
 list-provisioningobjectsummary-error-v1
 list-provisioningobjectsummary-v1
 list-retentionevent-v1
@@ -2791,6 +2831,7 @@ list-tabs-in-channel-app-filter-1-v1
 list-tabs-in-channel-app-filter-2-v1
 list-tabs-in-chat-app-filter-v1
 list-tabs-in-chat-v1
+list-targetdevicegroup-v1
 list-taskfileattachment-v1
 list-teamsapp-filter-externalid-v1
 list-teamsapp-filter-id-v1
@@ -2803,6 +2844,7 @@ list-teamworktagmember-v1
 list-temporaryaccesspassauthenticationmethod-v1
 list-tokenissuancepolicies-on-application-v1
 list-tokenlifetimepolicies-on-application-v1
+list-trainings-v1
 list-unifiedgroupsource-v1
 list-unifiedroleassignmentschedule-v1
 list-unifiedroleassignmentscheduleinstance-v1
@@ -2824,6 +2866,7 @@ list-user-v1
 list-userconsentrequest-v1
 list-userflowattributes-v1
 list-userregistrationdetails-v1
+list-users-memberof-approleassignments-v1
 list-users-schemaextension-v1
 list-usersimulationdetails-v1
 list-usersource-v1
@@ -2890,7 +2933,6 @@ page-copytosection-v1
 page-get-v1
 paging-top-plus-skiptoken-v1
 paging-top-v1
-participant-configuremixer-v1
 participant-invite-2-v1
 participant-invite-existing-v1
 participant-invite-move-v1
@@ -2928,6 +2970,7 @@ post-channelmessage-1-v1
 post-channelmessage-2-v1
 post-channelmessage-3-v1
 post-chatmessage-1-v1
+post-chatmessage-10-v1
 post-chatmessage-11-v1
 post-chatmessage-2-v1
 post-chatmessage-3-v1
@@ -3016,6 +3059,7 @@ remove-from-bundle-v1
 remove-incompatibleaccesspackage-from-accesspackage-v1
 remove-incompatiblegroup-from-accesspackage-v1
 remove-manager-v1
+remove-profilecardproperty-v1
 remove-rejectedsender-from-group-v1
 remove-user-from-school-v1-e1-v1
 rename-bundle-v1
@@ -3257,6 +3301,7 @@ team-sendactivitynotification-custom-topic-v1-e4-v1
 team-sendactivitynotification-customer-task-v1
 team-sendactivitynotification-for-userid-v1
 team-sendactivitynotification-pending-fin-approval-request-v1-e1-v1
+team-sendactivitynotification-take-a-break-v1
 team-sendactivitynotification-task-created-in-teams-v1
 team-sendactivitynotification-to-user-about-tab-v1-e2-v1
 team-sendactivitynotification-upn-v1-e3-v1
@@ -3509,6 +3554,7 @@ update-messagerule-v1
 update-microsoftauthenticatorauthenticationmethodconfiguration-v1
 update-nameditem-v1
 update-oauth2permissiongrant-v1
+update-onpremisesdirectorysynchronization-v1
 update-openshift-v1
 update-opentypeextension-v1
 update-organization-v1
@@ -3540,6 +3586,7 @@ update-printjob-v1
 update-printsettings-v1
 update-printtask-v1
 update-printtaskdefinition-v1
+update-profilecardproperty-v1
 update-profilephoto-v1
 update-range-v1
 update-rangeborder-v1
@@ -3562,6 +3609,7 @@ update-rangeformat-three-v1
 update-rangeformat-two-e4-v1
 update-rangeformat-two-v1
 update-rangeformat-v1
+update-remotedesktopsecurityconfiguration-v1
 update-retentioneventtype-v1
 update-room-v1
 update-roomlist-v1
@@ -3570,6 +3618,10 @@ update-schemaextension-owner-to-appid-v1
 update-selfinitiated-learning-courseactivity-v1
 update-serviceprincipal-v1
 update-set-v1
+update-simulation-cancel-v1
+update-simulation-exclude-v1
+update-simulation-from-draft-to-scheduled-v1
+update-simulation-v1
 update-smsauthenticationmethodconfiguration-v1
 update-socialidentityprovider-v1
 update-softwareoathauthenticationmethodconfiguration-v1
@@ -3583,6 +3635,7 @@ update-table-v1
 update-tablecolumn-v1
 update-tablerow-v1
 update-tabs-in-chat-v1
+update-targetdevicegroup-v1
 update-team-photo-v1
 update-team-v1
 update-teamsapp-v1-e1-v1
@@ -3620,7 +3673,6 @@ upload-via-put-v1
 upsert-activity-v1-e1-v1
 upsert-activity2-v1-e2-v1
 upsert-historyitem-v1
-user-add-teamsapp-consent-resource-specific-permissions-v1
 user-add-teamsapp-consent-resource-specific-permissions-v1-e2-v1
 user-add-teamsapp-v1-e1-v1
 user-assignlicense-v1
