@@ -178,9 +178,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             var parameters = new List<CodeProperty>();
             if (!string.IsNullOrEmpty(snippetModel.QueryString))
             {
-                var (queryString, replacements) = ReplaceNestedOdataQueryParameters(snippetModel.QueryString);
-
-                NameValueCollection queryCollection = HttpUtility.ParseQueryString(queryString);
+                NameValueCollection queryCollection = HttpUtility.ParseQueryString(snippetModel.QueryString);
                 foreach (String key in queryCollection.AllKeys)
                 {
                     //try to lookup the parameter from the schema
@@ -190,7 +188,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
                     //setup defaults
                     var name = NormalizeQueryParameterName(key).Trim();
-                    var value = GetQueryParameterValue(queryCollection[key], replacements);
+                    var value = GetQueryParameterValue(queryCollection[key]);
                     var schema = "string";
                     if (NumberParameters.Contains(name))
                         schema = "integer";
@@ -219,7 +217,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                             parameters.Add(new CodeProperty { Name = name, Value = bool.TryParse(value, out _) ? value : "false", PropertyType = PropertyType.Boolean, Children = new List<CodeProperty>() });
                             break;
                         case "array":
-                            var children = splitCommasExcludingBracketsRegex.Split(GetQueryParameterValue(queryCollection[key], replacements))
+                            var children = splitCommasExcludingBracketsRegex.Split(GetQueryParameterValue(queryCollection[key]))
                                 .Where(x => !String.IsNullOrEmpty(x) && !x.StartsWith("(") && !x.Equals(","))
                                 .Select(x => new CodeProperty() { Name = null, Value = x, PropertyType = PropertyType.String }).ToList();
                             parameters.Add(new CodeProperty { Name = name, Value = null, PropertyType = PropertyType.Array, Children = children });
@@ -276,34 +274,14 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static string NormalizeQueryParameterName(string queryParam) => HttpUtility.UrlDecode(queryParam.TrimStart('$').ToFirstCharacterLowerCase());
 
-        private static (string, Dictionary<string, string>) ReplaceNestedOdataQueryParameters(string queryParams)
-        {
-            var replacements = new Dictionary<string, string>();
-            var matches = nestedStatementRegex.Matches(queryParams);
-            if (matches.Any())
-                foreach (var groups in matches.Select(m => m.Groups))
-                {
-                    var key = groups[1].Value;
-                    var value = groups[2].Value;
-                    replacements.Add(key, value);
-                    queryParams = queryParams.Replace(value, string.Empty);
-                }
-            return (queryParams, replacements);
-        }
-
-        private static string GetQueryParameterValue(string originalValue, Dictionary<string, string> replacements)
+        private static string GetQueryParameterValue(string originalValue)
         {
             var escapedParam = System.Web.HttpUtility.UrlDecode(originalValue);
             if (escapedParam.Equals("true", StringComparison.OrdinalIgnoreCase) || escapedParam.Equals("false", StringComparison.OrdinalIgnoreCase))
                 return escapedParam.ToLowerInvariant();
             else if (int.TryParse(escapedParam, out var intValue))
                 return intValue.ToString();
-            else
-            {
-                return escapedParam.Split(',')
-                    .Select(v => replacements.ContainsKey(v) ? v + replacements[v] : v)
-                    .Aggregate((a, b) => $"{a},{b}");
-            }
+            return escapedParam;
         }
 
         private static CodeProperty parseBody(SnippetModel snippetModel)
