@@ -1,4 +1,3 @@
-using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -212,9 +211,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         requestPayload.Headers.Add("ConsistencyLevel", "eventual");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("GetRequestConfiguration(", result);
-        Assert.Contains("headers = {", result);
-        Assert.Contains("'ConsistencyLevel' : \"eventual\"", result);
+        Assert.Contains("request_configuration = GroupsRequestBuilder.GroupsRequestBuilderGetRequestConfiguration()", result);
+        Assert.Contains("request_configuration.headers.add(\"ConsistencyLevel\", \"eventual\")", result);
     }
     [Fact]
     public async Task GeneratesFilterParameters()
@@ -246,8 +244,9 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("DeltaRequestBuilderGetQueryParameters(", result);
         Assert.Contains("skiptoken = \"R0usmcCM996atia_s\",", result);
-        Assert.Contains("headers = {", result);
-        Assert.Contains("'Prefer' : \"odata.maxpagesize=2\",", result);
+        Assert.Contains("request_configuration = DeltaRequestBuilder.DeltaRequestBuilderGetRequestConfiguration(", result);
+        Assert.Contains("query_parameters = query_params,", result);
+        Assert.Contains("request_configuration.headers.add(\"Prefer\", \"odata.maxpagesize=2\")", result);
         Assert.Contains("result = await graph_client.me.calendar_view.delta.get", result);
     }
     [Fact]
@@ -259,6 +258,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("RequestBuilderGetQueryParameters(", result);
         Assert.Contains("search = \"\\\"displayName:di\\\" AND \\\"displayName:al\\\"\"", result);
+        Assert.Contains("request_configuration.headers.add(\"ConsistencyLevel\", \"eventual\")", result);
     }
     [Fact]
     public async Task HandlesOdataTypeWhenGenerating()
