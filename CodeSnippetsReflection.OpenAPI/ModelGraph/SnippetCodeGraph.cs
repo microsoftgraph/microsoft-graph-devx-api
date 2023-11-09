@@ -17,9 +17,6 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 {
     public record SnippetCodeGraph
     {
-
-        private static readonly Regex nestedStatementRegex = new(@"([/\w]+)(\([^)]+\))", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-
         private static readonly Regex splitCommasExcludingBracketsRegex = new(@"([^,\(\)]+(\(.*?\))*)+", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         private static readonly CodeProperty EMPTY_PROPERTY = new() { Name = null, Value = null, Children = null, PropertyType = PropertyType.Default };
