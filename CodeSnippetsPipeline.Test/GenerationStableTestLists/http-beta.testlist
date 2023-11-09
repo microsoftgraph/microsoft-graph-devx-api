@@ -45,7 +45,7 @@ api-referencebetaapiaccesspackageassignmentrequest-resumemd1-beta
 api-referencebetaapicontenttype-post-columnsmd0-beta
 api-referencebetaapidevicelocalcredentialinfo-getmd0-beta
 api-referencebetaapidevicelocalcredentialinfo-getmd1-beta
-api-referencebetaapidevicelocalcredentialinfo-listmd0-beta
+api-referencebetaapidirectory-list-devicelocalcredentialsmd0-beta
 api-referencebetaapidomain-post-domainsmd0-beta
 api-referencebetaapilist-post-columnsmd0-beta
 api-referencebetaapiopenshiftchangerequest-postmd0-beta
@@ -94,7 +94,6 @@ bookingbusiness-publish-beta
 bookingbusiness-unpublish-beta
 browsersitelist-publish-e1-beta
 browsersitelist-publish-e2-beta
-bulk-upload-for-delete-beta
 bulk-upload-for-update-beta
 bulk-upload-from-scim-custom-schema-beta
 bulk-upload-from-scim-standard-schema-beta
@@ -139,7 +138,6 @@ caseexportoperation-getdownloadurl-beta
 channel-add-member-1-beta
 channel-add-member-2-beta
 channel-add-member-3-beta
-channel-add-member-6-beta
 channel-add-member-e6-beta
 channel-doesuserhaveaccess-beta
 channel-doesuserhaveaccess-externaluser-beta
@@ -194,6 +192,7 @@ cloudpcbulkresize-beta
 cloudpcdeviceimage-getsourceimages-beta
 cloudpcgetcloudpcconnectivityhistory-beta
 cloudpcgetcloudpclaunchinfo-beta
+cloudpcgetfrontlinecloudpcaccessstate-beta
 cloudpcgetprovisionedcloudpcs-beta
 cloudpcgetshiftworkcloudpcaccessstate-beta
 cloudpconpremisesconnection-runhealthcheck-2-beta
@@ -344,6 +343,7 @@ create-chartpoints-from-chartseries-beta
 create-chartseries-from-chart-beta
 create-chat-group-with-tenant-guest-user-beta
 create-chat-oneonone-beta
+create-chat-oneonone-federated-beta
 create-chat-oneonone-upn-beta
 create-chat-oneonone-with-installed-apps-beta
 create-checklistitem-as-substask-beta
@@ -622,6 +622,7 @@ create-reference-attachment-from-message-beta
 create-reference-attachment-with-post-beta
 create-registration-beta
 create-rejectedsender-beta
+create-remotedesktopsecurityconfiguration-from--beta
 create-request-for-principal-from-admin-beta-e1-beta
 create-retentionevent-from--beta
 create-retentioneventtype-from--beta
@@ -662,6 +663,7 @@ create-table-from-workbook-beta
 create-table-from-worksheet-beta
 create-tablecolumn-from-table-beta
 create-tag-from--beta
+create-targetdevicegroup-from--beta
 create-taskfileattachment-from--beta
 create-tasklist-from--beta
 create-team-beta
@@ -976,11 +978,12 @@ delete-plannerplanconfigurationlocalization-beta
 delete-plannerroster-beta
 delete-plannerrostermember-beta
 delete-plannertask-beta
+delete-platformcredentialauthenticationmethod-beta
 delete-printer-beta
 delete-printer-tasktrigger-beta
 delete-printershare-beta
 delete-profile-beta
-delete-profilecardproperty-beta
+delete-profilephoto-beta
 delete-program-beta
 delete-programcontrol-beta
 delete-projectparticipation-beta
@@ -991,6 +994,7 @@ delete-registeredowners-beta
 delete-registeredusers-beta
 delete-registration-beta
 delete-registratrant-user-beta
+delete-remotedesktopsecurityconfiguration-beta
 delete-resourceconnection-beta
 delete-retentionevent-beta
 delete-retentioneventtype-beta
@@ -1017,6 +1021,7 @@ delete-subscription-beta
 delete-synchronizationjob-beta
 delete-tab-in-chat-beta
 delete-tag-beta
+delete-targetdevicegroup-beta
 delete-taskdefinition-beta
 delete-taskfileattachment-beta
 delete-tasklist-beta
@@ -1336,6 +1341,7 @@ get-bookingservice-beta
 get-bookingstaffmember-beta
 get-bookmark-beta
 get-borders-beta
+get-branchconnectivityconfiguration-beta
 get-branchsite-beta
 get-browsersharedcookie-beta
 get-browsersite-beta
@@ -1701,6 +1707,7 @@ get-hostedcontentschannelmessage-1-beta
 get-hostedcontentschannelmessage-2-beta
 get-hostedcontentschatmessage-1-beta
 get-hostpair-beta
+get-hostport-beta
 get-hostreputation-beta
 get-hostsslcertificate-beta
 get-hosttracker-beta
@@ -1959,6 +1966,8 @@ get-planneruser-beta
 get-plans-1-beta
 get-plans-2-beta
 get-plans-3-beta
+get-platformcredentialauthenticationmethod-1-beta
+get-platformcredentialauthenticationmethod-2-beta
 get-points-beta
 get-policies-beta
 get-policyrule-beta
@@ -2027,6 +2036,7 @@ get-registration-beta
 get-rejectedsenders-beta
 get-relation-beta
 get-relyingpartydetailedsummary-beta
+get-remotedesktopsecurityconfiguration-beta
 get-replies-2-beta
 get-req-for-given-user-beta
 get-resource-beta
@@ -2184,6 +2194,7 @@ get-tables-2-beta
 get-tables-3-beta
 get-tablesort-beta
 get-tag-beta
+get-targetdevicegroup-beta
 get-task-beta
 get-taskdefinition-beta
 get-taskfileattachment-beta
@@ -2720,6 +2731,7 @@ list-host-beta
 list-hostcomponent-beta
 list-hostcookie-beta
 list-hostpair-beta
+list-hostport-beta
 list-hosttracker-beta
 list-identityapiconnectors-beta
 list-impactedresource-beta
@@ -2738,6 +2750,7 @@ list-installed-apps-in-team-select-consentedpermissionset-beta
 list-installed-teams-apps-expand-beta
 list-intelligenceprofile-beta
 list-intelligenceprofileindicator-beta
+list-internaldomainfederation-beta
 list-landingpages-beta
 list-learningcontent-beta
 list-learningcourseactivity-beta
@@ -2855,6 +2868,7 @@ list-tabs-in-chat-app-filter-beta
 list-tabs-in-chat-beta
 list-tag-1-beta
 list-tag-2-beta
+list-targetdevicegroup-beta
 list-taskfileattachment-beta
 list-teamsapp-filter-externalid-beta
 list-teamsapp-filter-id-beta
@@ -2919,6 +2933,7 @@ list-usageright-4-beta
 list-userconsentrequest-beta
 list-userflowattributes-beta
 list-userregistrationdetails-beta
+list-users-memberof-approleassignments-beta
 list-usersimulationdetails-beta
 list-usersource-for-caseid-beta
 list-usersource-for-custodian-beta
@@ -2998,7 +3013,6 @@ outlooktask-complete-beta
 outlooktaskfolder-get-tasks-beta
 outlookuser-get-tasks-beta
 page-copytosection-beta
-participant-configuremixer-beta
 participant-invite-2-beta
 participant-invite-existing-beta
 participant-invite-move-beta
@@ -3047,7 +3061,6 @@ post-channelmessage-1-beta
 post-channelmessage-2-beta
 post-channelmessage-3-beta
 post-chatmessage-1-beta
-post-chatmessage-10-beta
 post-chatmessage-11-beta
 post-chatmessage-12-beta
 post-chatmessage-2-beta
@@ -3142,6 +3155,7 @@ recommendationthiscomplete-beta
 recommendationthisdismiss-beta
 recommendationthispostpone-beta
 recommendationthisreactivate-beta
+recommendationthistenantsecurescores-beta
 refresh-excel-session-beta
 remove-accessreview-reviewer-beta
 remove-appliesto-e1-beta
@@ -3152,6 +3166,7 @@ remove-group-from-rejectedsenderslist-of-group-beta
 remove-incompatibleaccesspackage-from-accesspackage-beta
 remove-incompatiblegroup-from-accesspackage-beta
 remove-manager-beta
+remove-profilecardproperty-beta
 remove-user-from-acceptedsenderslist-of-group-beta
 remove-user-from-rejectedsenderslist-of-group-beta
 removeonpremisesagentfromanonpremisesagentgroup-beta
@@ -3220,6 +3235,11 @@ sensitivitylabelthisevaluateapplication-beta
 sensitivitylabelthisevaluateclassificationresults-beta
 sensitivitylabelthisevaluateremoval-beta
 sensitivitylabelthisextractcontentlabel-beta
+serviceactivitythisgetmetricsforconditionalaccesscompliantdevicessigninsuccess-beta
+serviceactivitythisgetmetricsforconditionalaccessmanageddevicessigninsuccess-beta
+serviceactivitythisgetmetricsformfasigninfailure-beta
+serviceactivitythisgetmetricsformfasigninsuccess-beta
+serviceactivitythisgetmetricsforsamlsigninsuccess-beta
 servicehealthissue-incidentreport-beta
 serviceprincipal-addkey-1-beta
 serviceprincipal-addkey-2-beta
@@ -3578,6 +3598,7 @@ update-conversationthread-beta
 update-countrynamedlocation-beta
 update-crosstenantaccesspolicy-beta
 update-crosstenantaccesspolicyconfigurationdefault-beta
+update-crosstenantaccesspolicyconfigurationdefault-idpconfiguration-beta
 update-crosstenantaccesspolicyconfigurationpartner-automaticuserconsentsettings-beta
 update-crosstenantaccesspolicyconfigurationpartner-beta
 update-crosstenantaccesspolicyconfigurationpartner-tenantrestriction-beta
@@ -3699,7 +3720,6 @@ update-nameditem-beta
 update-oauth2permissiongrant-beta
 update-onpremisesagentgroup-beta
 update-onpremisesconnections-beta
-update-onpremisesdirectorysynchronization-beta
 update-onpremisesdirectorysynchronization-e1-beta
 update-onpremisespublishingprofile-1-beta
 update-onpremisespublishingprofile-2-beta
@@ -3773,6 +3793,7 @@ update-rangeformat-font-two-beta
 update-rangeformat-three-beta
 update-rangeformat-two-beta
 update-registration-beta
+update-remotedesktopsecurityconfiguration-beta
 update-retentioneventtype-beta
 update-retentionlabel-beta
 update-reviewsetquery-beta
@@ -3810,6 +3831,7 @@ update-tablecolumn-beta
 update-tablerow-beta
 update-tabs-in-chat-beta
 update-tag-beta
+update-targetdevicegroup-beta
 update-task-beta
 update-tasklist-beta
 update-team-beta
@@ -3867,6 +3889,7 @@ upgrade-teamsapp-in-team-beta
 upload-via-put-beta
 upload-via-put-id-beta
 user-add-teamsapp-beta
+user-add-teamsapp-consent-resource-specific-permissions-beta
 user-assignlicense-beta
 user-assignlicense-removelicenses-beta
 user-changepassword-beta
@@ -3921,6 +3944,8 @@ userconsentrequest-filterbycurrentuser-beta
 userteamwork-sendactivitynotification-beta
 view-recent-files-beta
 virtualendpoint-geteffectivepermissions-beta
+virtualeventwebinarthisgetbyuseridandrole-beta
+virtualeventwebinarthisgetbyuserrole-beta
 workbook-tablerowoperationresult-beta
 workbook-tablerowoperationresult-e1-beta
 workbookapplication-calculate-beta

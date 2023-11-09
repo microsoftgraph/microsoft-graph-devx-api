@@ -113,7 +113,6 @@ case-reopen-beta
 channel-add-member-1-beta
 channel-add-member-2-beta
 channel-add-member-3-beta
-channel-add-member-6-beta
 channel-add-member-e6-beta
 channel-doesuserhaveaccess-beta
 channel-get-member-beta
@@ -155,6 +154,7 @@ cloudpcbulkresize-beta
 cloudpcdeviceimage-getsourceimages-beta
 cloudpcgetcloudpcconnectivityhistory-beta
 cloudpcgetcloudpclaunchinfo-beta
+cloudpcgetfrontlinecloudpcaccessstate-beta
 cloudpcgetprovisionedcloudpcs-beta
 cloudpcgetshiftworkcloudpcaccessstate-beta
 cloudpconpremisesconnection-runhealthcheck-2-beta
@@ -278,6 +278,7 @@ create-channel-from-group-beta
 create-channel-with-moderation-settings-beta
 create-chat-group-with-tenant-guest-user-beta
 create-chat-oneonone-beta
+create-chat-oneonone-federated-beta
 create-chat-oneonone-upn-beta
 create-chat-oneonone-with-installed-apps-beta
 create-checklistitem-as-substask-beta
@@ -551,6 +552,7 @@ create-subscription-withresourcedata-for-message-resource-basedonfilter-beta
 create-subscription-withresourcedata-for-message-resource-beta
 create-synchronizationjob-from-synchronization-beta
 create-tag-from--beta
+create-targetdevicegroup-from--beta
 create-taskfileattachment-from--beta
 create-team-beta
 create-team-from-group-e4-beta
@@ -816,11 +818,11 @@ delete-plannerplanconfigurationlocalization-beta
 delete-plannerroster-beta
 delete-plannerrostermember-beta
 delete-plannertask-beta
+delete-platformcredentialauthenticationmethod-beta
 delete-printer-beta
 delete-printer-tasktrigger-beta
 delete-printershare-beta
 delete-profile-beta
-delete-profilecardproperty-beta
 delete-program-beta
 delete-programcontrol-beta
 delete-projectparticipation-beta
@@ -831,6 +833,7 @@ delete-registeredowners-beta
 delete-registeredusers-beta
 delete-registration-beta
 delete-registratrant-user-beta
+delete-remotedesktopsecurityconfiguration-beta
 delete-resourceconnection-beta
 delete-retentionevent-beta
 delete-retentioneventtype-beta
@@ -1438,6 +1441,7 @@ get-hostedcontentschannelmessage-1-beta
 get-hostedcontentschannelmessage-2-beta
 get-hostedcontentschatmessage-1-beta
 get-hostpair-beta
+get-hostport-beta
 get-hostreputation-beta
 get-hostsslcertificate-beta
 get-hosttracker-beta
@@ -1670,6 +1674,8 @@ get-planneruser-beta
 get-plans-1-beta
 get-plans-2-beta
 get-plans-3-beta
+get-platformcredentialauthenticationmethod-1-beta
+get-platformcredentialauthenticationmethod-2-beta
 get-policies-beta
 get-positions-beta
 get-post-beta
@@ -1724,6 +1730,7 @@ get-registeredusers-beta
 get-registration-beta
 get-rejectedsenders-beta
 get-relyingpartydetailedsummary-beta
+get-remotedesktopsecurityconfiguration-beta
 get-resource-beta
 get-resourceconnection-beta
 get-resources-1-beta
@@ -1837,6 +1844,7 @@ get-synchronizationschema-1-beta
 get-synchronizationtemplate-beta
 get-tab-in-chat-beta
 get-tag-beta
+get-targetdevicegroup-beta
 get-task-beta
 get-taskdefinition-beta
 get-taskfileattachment-beta
@@ -2326,6 +2334,7 @@ list-installed-apps-in-team-select-consentedpermissionset-beta
 list-installed-teams-apps-expand-beta
 list-intelligenceprofile-beta
 list-intelligenceprofileindicator-beta
+list-internaldomainfederation-beta
 list-landingpages-beta
 list-legalhold-beta
 list-loginpages-beta
@@ -2430,6 +2439,7 @@ list-tabs-in-chat-app-filter-beta
 list-tabs-in-chat-beta
 list-tag-1-beta
 list-tag-2-beta
+list-targetdevicegroup-beta
 list-taskfileattachment-beta
 list-teamsapp-filter-externalid-beta
 list-teamsapp-filter-id-beta
@@ -2488,6 +2498,7 @@ list-usageright-2-beta
 list-userconsentrequest-beta
 list-userflowattributes-beta
 list-userregistrationdetails-beta
+list-users-memberof-approleassignments-beta
 list-usersource-for-caseid-beta
 list-usersource-for-custodian-beta
 list-virtualevent-attendancereport-beta
@@ -2594,7 +2605,6 @@ post-alertrule-beta
 post-case-beta
 post-channelmessage-1-beta
 post-chatmessage-1-beta
-post-chatmessage-10-beta
 post-chatmessage-11-beta
 post-chatmessage-12-beta
 post-chatmessage-2-beta
@@ -2657,11 +2667,13 @@ recommendationthiscomplete-beta
 recommendationthisdismiss-beta
 recommendationthispostpone-beta
 recommendationthisreactivate-beta
+recommendationthistenantsecurescores-beta
 remove-accessreview-reviewer-beta
 remove-appliesto-e1-beta
 remove-incompatibleaccesspackage-from-accesspackage-beta
 remove-incompatiblegroup-from-accesspackage-beta
 remove-manager-beta
+remove-profilecardproperty-beta
 rename-bundle-beta
 reopen-ediscoverycase-beta
 reportroot-getattacksimulationrepeatoffenders-beta
@@ -2959,6 +2971,7 @@ update-conversationthread-beta
 update-countrynamedlocation-beta
 update-crosstenantaccesspolicy-beta
 update-crosstenantaccesspolicyconfigurationdefault-beta
+update-crosstenantaccesspolicyconfigurationdefault-idpconfiguration-beta
 update-crosstenantaccesspolicyconfigurationpartner-automaticuserconsentsettings-beta
 update-crosstenantaccesspolicyconfigurationpartner-beta
 update-crosstenantaccesspolicyconfigurationpartner-tenantrestriction-beta
@@ -3056,7 +3069,6 @@ update-multitenantorganizationpartnerconfigurationtemplate-beta
 update-oauth2permissiongrant-beta
 update-onpremisesagentgroup-beta
 update-onpremisesconnections-beta
-update-onpremisesdirectorysynchronization-beta
 update-onpremisesdirectorysynchronization-e1-beta
 update-openidconnectprovider-azure-ad-b2c-beta
 update-openidconnectprovider-forazure-ad-b2c-beta
@@ -3106,6 +3118,7 @@ update-pronounssettings-beta
 update-provisioningpolicy-beta
 update-qna-beta
 update-registration-beta
+update-remotedesktopsecurityconfiguration-beta
 update-retentionlabel-beta
 update-reviewsetquery-beta
 update-room-beta
@@ -3125,6 +3138,7 @@ update-subjectrightsrequest-beta
 update-subscription-beta
 update-tabs-in-chat-beta
 update-tag-beta
+update-targetdevicegroup-beta
 update-team-beta
 update-team-photo-beta
 update-teamsapp-beta-e1-beta
@@ -3171,6 +3185,7 @@ upgrade-installedapps-in-chat-e2-beta
 upgrade-installedapps-in-team-beta
 upload-via-put-id-beta
 user-add-teamsapp-beta
+user-add-teamsapp-consent-resource-specific-permissions-beta
 user-assignlicense-beta
 user-assignlicense-removelicenses-beta
 user-changepassword-beta
@@ -3215,3 +3230,4 @@ userconsentrequest-filterbycurrentuser-beta
 userteamwork-sendactivitynotification-beta
 view-recent-files-beta
 virtualendpoint-geteffectivepermissions-beta
+virtualeventwebinarthisgetbyuseridandrole-beta
