@@ -135,7 +135,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 snippetBuilder.Append($"{RequestConfigurationVarName} = {requestBuilderName}.{requestConfigurationName}(");
 
                 if (codeGraph.HasParameters()){
-                    if (queryParamsPayload != null)
+                    if (!string.IsNullOrEmpty(queryParamsPayload))
                     {
                         snippetBuilder.AppendLine();
                         indentManager.Indent();
