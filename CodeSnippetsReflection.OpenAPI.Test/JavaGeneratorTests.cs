@@ -25,7 +25,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/security/alerts_v2");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("alerts_v2", result);
+            Assert.Contains("alertsV2", result);
         }
 
         [Fact]
@@ -527,7 +527,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.users().byUserId(\"{user-id}\").sendMail().post(sendMailPostRequestBody).get();", result);
+            Assert.Contains("graphClient.users().byUserId(\"{user-id}\").sendMail().post(sendMailPostRequestBody);", result);
             Assert.Contains("SendMailPostRequestBody sendMailPostRequestBody = new com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody()", result);
             Assert.Contains("toRecipients = new LinkedList<Recipient>", result);
         }
@@ -914,7 +914,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/teams/{{id}}/archive");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.teams().byTeamId(\"{team-id}\").archive().post(null).get()", result);
+            Assert.Contains("graphClient.teams().byTeamId(\"{team-id}\").archive().post(null);", result);
         }
 
         [Fact]
@@ -1035,7 +1035,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/reports/getUserArchivedPrintJobs(userId='{{id}}',startDateTime=<timestamp>,endDateTime=<timestamp>)");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.reports().getUserArchivedPrintJobsWithUserIdWithStartDateTimeWithEndDateTime(OffsetDateTime.parse(\"{endDateTime}\"), OffsetDateTime.parse(\"{startDateTime}\"), \"{userId}\").get().get()", result);
+            Assert.Contains("graphClient.reports().getUserArchivedPrintJobsWithUserIdWithStartDateTimeWithEndDateTime(OffsetDateTime.parse(\"{endDateTime}\"), OffsetDateTime.parse(\"{startDateTime}\"), \"{userId}\").get();", result);
         }
 
         [Fact]

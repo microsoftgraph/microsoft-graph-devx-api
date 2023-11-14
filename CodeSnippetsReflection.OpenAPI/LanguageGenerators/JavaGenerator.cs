@@ -129,7 +129,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             
             var requestConfigurationPayload = GetRequestConfiguration(codeGraph, indentManager);
             var parametersList = GetActionParametersList(requestPayloadParameterName , requestConfigurationPayload);
-            payloadSb.AppendLine($"{responseAssignment}{pathSegment}{methodName}({parametersList}).get();");
+            payloadSb.AppendLine($"{responseAssignment}{pathSegment}{methodName}({parametersList});");
         }
 
         private static string GetRequestConfiguration(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager)
@@ -262,7 +262,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                               .Select(static s => ReplaceIfReservedName(s).ToPascalCase())
                               .Aggregate(static (a, b) => $"{a}{b}")+"().";
                 }
-                return ReplaceIfReservedName(x.Segment).ToFirstCharacterLowerCase()+"().";
+                return ReplaceIfReservedName(x.Segment).ToPascalCase()+"().";
             })
                         .Aggregate(new List<string>(), static (current, next) =>
                             {
