@@ -370,8 +370,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return string.Empty;
 
             return nodes.Select(x => {
-                                        if(x.Segment.IsCollectionIndex())
-                                            return useIndexerNamespaces ? "Item" : x.Segment.Replace("{", "[\"{").Replace("}", "}\"]");
+                                        if (x.Segment.IsCollectionIndex())
+                                        {
+                                            //Handle cases where the indexer is an integer type
+                                            var isIntParam = false; 
+                                            if (x.PathItems.TryGetValue("default", out var pathItem))
+                                            {
+                                                isIntParam = pathItem.Parameters.Any(parameter => x.Segment.Contains(parameter.Name) && parameter.Schema.Type.Equals("integer", StringComparison.OrdinalIgnoreCase));
+
+                                            }
+                                            return useIndexerNamespaces ? "Item" : (isIntParam ? "[2]" : x.Segment.Replace("{", "[\"{").Replace("}", "}\"]"));
+                                        }
                                         if (x.Segment.IsFunctionWithParameters())
                                         {
                                             var functionName = x.Segment.Split('(')[0];

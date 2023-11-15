@@ -20,6 +20,33 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
+        public async Task GeneratesTheCorrectFluentApiPath_2()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/security/alerts_v2");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("alertsV2", result);
+        }
+
+        [Fact]
+        public async Task GeneratesTheCorrectFluentApiPath_3()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/print/printers/{{printerId}}/jobs/{{printJobId}}/documents/{{printDocumentId}}/$value");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains(".content()", result);
+        }
+
+        [Fact]
+        public async Task GeneratesTheCorrectFluentApiPath_4()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/identityGovernance/lifecycleWorkflows/workflows/{{workflowId}}/versions/{{workflowVersion-versionNumber}}");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("byWorkflowVersionVersionNumber(2)", result);
+        }
+
+        [Fact]
         public async Task GeneratesTheCorrectFluentApiPathForIndexedCollections()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/security/cases/ediscoveryCases/{{case-id}}/close");
@@ -192,6 +219,37 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
+        public async Task GeneratesCorrectTypeForObjectsInAdditionalDataWithSpecifiedOdataType()
+        {
+            var bodyContent = """
+                {
+                  "transferTarget": {
+                    "endpointType": "default",
+                    "identity": {
+                        "phone": {
+                          "@odata.type": "#microsoft.graph.identity",
+                          "id": "+12345678901"
+                        }
+                    },
+                    "languageId": "languageId-value",
+                    "region": "region-value"
+                  },
+                  "clientContext": "9e90d1c1-f61e-43e7-9f75-d420159aae08"
+                }
+                """;
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/communications/calls/{{call-id}}/transfer")
+            {
+                Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("new Identity()", result);
+            Assert.Contains("phone.setOdataType(\"#microsoft.graph.identity\")", result);
+            Assert.Contains("phone.setId(\"+12345678901\")", result);
+            Assert.Contains("additionalData.put(\"phone\", phone);", result);
+        }
+
+        [Fact]
         public async Task GeneratesSelectQueryParameters()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$select=displayName,id");
@@ -275,7 +333,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("Prefer", "odata.maxpagesize=2");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("DeltaResponse result = deltaRequestBuilder.get(", result);
+            Assert.Contains("DeltaGetResponse result = deltaRequestBuilder.get(", result);
             Assert.Contains("DeltaRequestBuilder deltaRequestBuilder = new com.microsoft.graph.users.item.calendarview.delta.DeltaRequestBuilder(", result);
         }
 
@@ -469,7 +527,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.users().byUserId(\"{user-id}\").sendMail().post(sendMailPostRequestBody).get();", result);
+            Assert.Contains("graphClient.users().byUserId(\"{user-id}\").sendMail().post(sendMailPostRequestBody);", result);
             Assert.Contains("SendMailPostRequestBody sendMailPostRequestBody = new com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody()", result);
             Assert.Contains("toRecipients = new LinkedList<Recipient>", result);
         }
@@ -856,7 +914,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/teams/{{id}}/archive");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.teams().byTeamId(\"{team-id}\").archive().post(null).get()", result);
+            Assert.Contains("graphClient.teams().byTeamId(\"{team-id}\").archive().post(null);", result);
         }
 
         [Fact]
@@ -977,7 +1035,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/reports/getUserArchivedPrintJobs(userId='{{id}}',startDateTime=<timestamp>,endDateTime=<timestamp>)");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.reports().getUserArchivedPrintJobsWithUserIdWithStartDateTimeWithEndDateTime(OffsetDateTime.parse(\"{endDateTime}\"), OffsetDateTime.parse(\"{startDateTime}\"), \"{userId}\").get().get()", result);
+            Assert.Contains("graphClient.reports().getUserArchivedPrintJobsWithUserIdWithStartDateTimeWithEndDateTime(OffsetDateTime.parse(\"{endDateTime}\"), OffsetDateTime.parse(\"{startDateTime}\"), \"{userId}\").get();", result);
         }
 
         [Fact]

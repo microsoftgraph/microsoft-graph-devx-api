@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
@@ -119,7 +120,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 pathSegment = "deltaRequestBuilder.";
                 codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
                 payloadSb.AppendLine($"{deltaNamespace}DeltaRequestBuilder deltaRequestBuilder = new {deltaNamespace}DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.getRequestAdapter());");
-                responseAssignment = $"{deltaNamespace}DeltaResponse result = ";
+                responseAssignment = $"{deltaNamespace}DeltaGetResponse result = ";
             }
             else
             {
@@ -128,7 +129,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             
             var requestConfigurationPayload = GetRequestConfiguration(codeGraph, indentManager);
             var parametersList = GetActionParametersList(requestPayloadParameterName , requestConfigurationPayload);
-            payloadSb.AppendLine($"{responseAssignment}{pathSegment}{methodName}({parametersList}).get();");
+            payloadSb.AppendLine($"{responseAssignment}{pathSegment}{methodName}({parametersList});");
         }
 
         private static string GetRequestConfiguration(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager)
@@ -229,7 +230,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                                                                           .Where(static s => !string.IsNullOrEmpty(s))
                                                                                           .Select(static s => s.ToFirstCharacterUpperCase())
                                                                                           .Aggregate(static (a, b) => $"By{a}{b}");
-                    return $"{pathName ?? "ByTypeId"}{x.Segment.Replace("{", "(\"{", StringComparison.OrdinalIgnoreCase).Replace("}", "}\")", StringComparison.OrdinalIgnoreCase)}.";
+
+                    //Handle cases where the collection is indexed by a integer value rather than a string
+                    bool isIntParam = false;
+                    if (x.PathItems.TryGetValue("default", out var pathItem))
+                    {
+                        isIntParam = pathItem.Parameters.Any(parameter => x.Segment.Contains(parameter.Name) && parameter.Schema.Type.Equals("integer", StringComparison.OrdinalIgnoreCase));
+
+                    }
+                    return $"{pathName ?? "ByTypeId"}{(isIntParam ? "(2)": x.Segment.Replace("{", "(\"{", StringComparison.OrdinalIgnoreCase).Replace("}", "}\")", StringComparison.OrdinalIgnoreCase))}.";
                 }
                 if (x.Segment.IsFunctionWithParameters())
                 {
@@ -253,13 +262,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                               .Select(static s => ReplaceIfReservedName(s).ToPascalCase())
                               .Aggregate(static (a, b) => $"{a}{b}")+"().";
                 }
-                return ReplaceIfReservedName(x.Segment).ToFirstCharacterLowerCase()+"().";
+                return ReplaceIfReservedName(x.Segment).ToPascalCase()+"().";
             })
                         .Aggregate(new List<string>(), static (current, next) =>
                             {
                             var element = next.Contains("ByTypeId", StringComparison.OrdinalIgnoreCase) ?
                             next.Replace("ByTypeId", $"By{current[current.Count-1].Replace("s().", string.Empty, StringComparison.OrdinalIgnoreCase)}Id") :
-                            $"{next.Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
+                            $"{next.ReplaceValueIdentifier().Replace("$", string.Empty, StringComparison.OrdinalIgnoreCase).ToFirstCharacterLowerCase()}";
 
                             current.Add(element);
                             return current;
