@@ -193,7 +193,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Fact]
         public async Task ParsesParametersWithExpressionsCorrectly()
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$filter=groupTypes/any(c:c+eq+'Unified')");
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$filter=groupTypes/any(c:c eq 'Unified')");
             request.Headers.Add("Host", "graph.microsoft.com");
 
             var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1SnippetMetadata());
@@ -202,7 +202,29 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.True(result.HasParameters());
             var param = result.Parameters.First();
             Assert.Equal("filter",param.Name);
-            Assert.Equal("groupTypes/any(c:c+eq+'Unified')",param.Value);
+            Assert.Equal("groupTypes/any(c:c eq 'Unified')",param.Value);
+        }
+        
+        [Fact]
+        public async Task ParsesParametersWithExpressionsCorrectlyComplex()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$filter=mailEnabled eq false and securityEnabled eq true and NOT(groupTypes/any(s:s eq 'Unified')) and membershipRuleProcessingState eq 'On'&$count=true&$select=id,membershipRule,membershipRuleProcessingState");
+            request.Headers.Add("Host", "graph.microsoft.com");
+
+            var snippetModel = new SnippetModel(request, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = new SnippetCodeGraph(snippetModel);
+
+            Assert.True(result.HasParameters());
+            var parameters = result.Parameters.ToList();
+            Assert.Equal("filter",parameters[0].Name);
+            Assert.Equal("mailEnabled eq false and securityEnabled eq true and NOT(groupTypes/any(s:s eq 'Unified')) and membershipRuleProcessingState eq 'On'",parameters[0].Value);
+            Assert.Equal("count",parameters[1].Name);
+            Assert.Equal("true",parameters[1].Value);
+            Assert.Equal("select",parameters[2].Name);
+            Assert.Equal(PropertyType.Array,parameters[2].PropertyType);
+            Assert.Equal("id",parameters[2].Children[0].Value);
+            Assert.Equal("membershipRule",parameters[2].Children[1].Value);
+            Assert.Equal("membershipRuleProcessingState",parameters[2].Children[2].Value);
         }
 
         [Fact]

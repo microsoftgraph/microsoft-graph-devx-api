@@ -98,7 +98,12 @@ public class CodeSnippetsPipeline
                 var expectedLanguageSnippetErrorFileFullPath = string.Concat(expectedLanguageSnippetFileFullPath, "-error");
                 if (File.Exists(expectedLanguageSnippetErrorFileFullPath))
                 {
-                    var message = "Original HTTP Snippet:" + Environment.NewLine +
+                    var docsUrlVersionSegment = httpSnippetFilePath.Contains("beta") ? "beta" : "1.0";
+                    var snippetVersionPrefix = httpSnippetFilePath.Contains("beta") ? "-beta" : "-v1";
+                    var docsUrlFileSegment = Path.GetFileName(httpSnippetFilePath.AsSpan(0, httpSnippetFilePath.LastIndexOf($"{snippetVersionPrefix}", StringComparison.Ordinal)));
+                    var documentationLink = $"https://learn.microsoft.com/en-us/graph/api/{docsUrlFileSegment}?view=graph-rest-{docsUrlVersionSegment}&tabs={language}";
+                    var message = "DocsLink: " + documentationLink + Environment.NewLine +
+                        "Original HTTP Snippet:" + Environment.NewLine +
                         File.ReadAllText(httpSnippetFilePath).TrimStart() + Environment.NewLine +
                         File.ReadAllText(expectedLanguageSnippetErrorFileFullPath);
                     Assert.Fail(message);
