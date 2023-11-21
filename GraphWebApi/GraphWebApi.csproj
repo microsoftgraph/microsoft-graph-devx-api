@@ -65,7 +65,6 @@
     <ProjectReference Include="..\PermissionsService\PermissionsService.csproj" />
     <ProjectReference Include="..\SamplesService\SamplesService.csproj" />
     <ProjectReference Include="..\TelemetryService\TelemetrySanitizerService.csproj" />
-    <ProjectReference Include="..\TourStepsService\TourStepsService.csproj" />
     <ProjectReference Include="..\UtilityService\UtilityService.csproj" />
     <ProjectReference Include="..\CodeSnippetsReflection.OpenAPI\CodeSnippetsReflection.OpenAPI.csproj" />
     <ProjectReference Include="..\CodeSnippetsReflection.OData\CodeSnippetsReflection.OData.csproj" />
