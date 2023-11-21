@@ -58,7 +58,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ChangesService\ChangesService.csproj" />
     <ProjectReference Include="..\FileService\FileService.csproj" />
     <ProjectReference Include="..\KnownIssuesService\KnownIssuesService.csproj" />
     <ProjectReference Include="..\OpenAPIService\OpenAPIService.csproj" />

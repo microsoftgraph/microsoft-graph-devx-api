@@ -9,8 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using FileService.Interfaces;
 using FileService.Services;
 using Serilog;
-using ChangesService.Services;
-using ChangesService.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Microsoft.ApplicationInsights.Extensibility.PerfCounterCollector.QuickPulse;
 using System.Globalization;
@@ -75,8 +73,6 @@ namespace GraphWebApi
             services.AddSingleton<IFileUtility, AzureBlobStorageUtility>();
             services.AddSingleton<IPermissionsStore, PermissionsStore>();
             services.AddSingleton<ISamplesStore, SamplesStore>();
-            services.AddSingleton<IChangesService, ChangesService.Services.ChangesService>();
-            services.AddSingleton<IChangesStore, ChangesStore>();
             services.AddSingleton<IOpenApiService, OpenApiService>();
             services.AddSingleton<IKnownIssuesService, KnownIssuesService.Services.KnownIssuesService>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
@@ -126,7 +122,6 @@ namespace GraphWebApi
             var localizationOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value;
             app.UseRequestLocalization(localizationOptions);
 
-            app.ApplicationServices.GetRequiredService<IChangesService>();
             app.ApplicationServices.GetRequiredService<IOpenApiService>();
 
             app.UseEndpoints(endpoints =>
