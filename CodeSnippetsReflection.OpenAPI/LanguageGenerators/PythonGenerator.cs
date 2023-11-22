@@ -64,7 +64,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder($"# THE PYTHON SDK IS IN PREVIEW. FOR NON-PRODUCTION USE ONLY{Environment.NewLine}{Environment.NewLine}" +
+            var snippetBuilder = new StringBuilder($"{Environment.NewLine}{Environment.NewLine}" +
                                                    $"{ClientVarName} = {ClientVarType}({CredentialVarName}, {ScopesVarName}){Environment.NewLine}{Environment.NewLine}");
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
