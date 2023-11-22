@@ -88,18 +88,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (string.IsNullOrEmpty(requestPayloadParameterName) && ((codeGraph.RequestSchema?.Properties?.Any() ?? false) || (codeGraph.RequestSchema?.AllOf?.Any(schema => schema.Properties.Any()) ?? false)))
                 requestPayloadParameterName = "null";// pass a null parameter if we have a request schema expected but there is not body provided
 
-            string pathSegment;
-            if(codeGraph.Nodes.Last().Segment.Contains("delta") && 
-               codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) || 
+            string pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph,usedNamespaces)}";
+            if(codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) || 
                                                             property.Name.Equals("deltatoken",StringComparison.OrdinalIgnoreCase)))
             {// its a delta query and needs the opaque url passed over.
-                pathSegment = "deltaRequestBuilder";
+                payloadSb.AppendLine("// Note: The URI string parameter used with WithUrl() can be retrieved using the OdataNextLink or OdataDeltaLink property from a response object");
+                pathSegment = $"{pathSegment}.WithUrl(\"{codeGraph.RequestUrl}\")";
                 codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
-                payloadSb.AppendLine($"var deltaRequestBuilder = new {GetDefaultNamespaceName(codeGraph.ApiVersion)}.{GetFluentApiPath(codeGraph.Nodes, codeGraph, usedNamespaces,true)}.DeltaRequestBuilder(\"{codeGraph.RequestUrl}\", {ClientVarName}.RequestAdapter);");
-            }
-            else
-            {
-                pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph,usedNamespaces)}";
             }
             
             var requestConfigurationPayload = GetRequestConfiguration(codeGraph, indentManager);
@@ -259,7 +254,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     var enumValues = codeProperty.Value.Split(new []{'|',','}, StringSplitOptions.RemoveEmptyEntries)
                         .Select(x =>
                         {
-                            var enumHint = x.Split('.').Last().Trim();
+                            var enumHint = x.Split('.')[^1].Trim();
                             // the enum member may be invalid so default to generating the first value in case a look up fails.
                             var enumMember = codeProperty.Children.Find( member => member.Value.Equals(enumHint,StringComparison.OrdinalIgnoreCase)).Value ?? codeProperty.Children.FirstOrDefault().Value ?? enumHint;
                             return $"{enumTypeString.TrimEnd('?')}.{enumMember.ToFirstCharacterUpperCase()}";
@@ -364,7 +359,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string ReplaceIfReservedTypeName(string originalString, string suffix = "Object")
             => ReservedNames.Value.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
-        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph, HashSet<string> usedNamespaces,bool useIndexerNamespaces = false)
+        private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph, HashSet<string> usedNamespaces)
         {
             if(!(nodes?.Any() ?? false)) 
                 return string.Empty;
@@ -379,7 +374,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                                 isIntParam = pathItem.Parameters.Any(parameter => x.Segment.Contains(parameter.Name) && parameter.Schema.Type.Equals("integer", StringComparison.OrdinalIgnoreCase));
 
                                             }
-                                            return useIndexerNamespaces ? "Item" : (isIntParam ? "[2]" : x.Segment.Replace("{", "[\"{").Replace("}", "}\"]"));
+                                            return isIntParam ? "[2]" : x.Segment.Replace("{", "[\"{").Replace("}", "}\"]");
                                         }
                                         if (x.Segment.IsFunctionWithParameters())
                                         {

@@ -234,8 +234,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             requestPayload.Headers.Add("Prefer", "odata.maxpagesize=2");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("var result = await deltaRequestBuilder.GetAsync(", result);
-            Assert.Contains("var deltaRequestBuilder = new Microsoft.Graph.Me.CalendarView.Delta.DeltaRequestBuilder(", result);
+            Assert.Contains("var result = await graphClient.Me.CalendarView.Delta.WithUrl(\"", result);
+            Assert.Contains("requestConfiguration.Headers.Add(\"Prefer\", \"odata.maxpagesize=2\");", result);
         }
         [Fact]
         public async Task GeneratesSnippetForRequestWithIndexerDeltaAndSkipToken()
@@ -243,8 +243,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/education/classes/72a7baec-c3e9-4213-a850-f62de0adad5f/assignments/delta?$skiptoken=U43TyYWKlRvJ6wWxZOfJvkp22nMqShRw9f-GxBtG2FDy9b1hMDaAJGdLb7n2fh1IdHoweKQs1czM4Ry1LVsNqwIFXftTcRHvgSCbcszvbJHEWDCO3QO7K7zwCM8DdXNepZOa1gqldecjIUM0NFRbGQoQ5yR6RmGnMgtko8TDMOyMH_yg1my82PTXA_t4Nj-DhMDZWvuNTd_lbLeTngc7mIJPMCR2gHN9CSKsW_kw850.UM9tUqwOu5Ln1pnxaP6KdMmfJHszGqY3EKPlQkOiyGs");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("var result = await deltaRequestBuilder.GetAsync(", result);
-            Assert.Contains("var deltaRequestBuilder = new Microsoft.Graph.Education.Classes.Item.Assignments.Delta.DeltaRequestBuilder(", result);
+            Assert.Contains("var result = await graphClient.Education.Classes[\"{educationClass-id}\"].Assignments.Delta.WithUrl(\"", result);
         }
         [Fact]
         public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjunction()
