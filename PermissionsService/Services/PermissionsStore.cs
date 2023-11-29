@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FileService.Common;
 using FileService.Interfaces;
+using Kibali;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
@@ -35,7 +36,7 @@ namespace PermissionsService
         private readonly Dictionary<string, string> _permissionsTracePropertiesWithSanitizeIgnore =
             new() { { UtilityConstants.TelemetryPropertyKey_Permissions, nameof(PermissionsStore) },
                     { UtilityConstants.TelemetryPropertyKey_SanitizeIgnore, nameof(PermissionsStore) } };
-        private readonly Dictionary<ScopeType, string> permissionDescriptionGroups = 
+        private readonly Dictionary<ScopeType, string> permissionDescriptionGroups =
             new() { { ScopeType.DelegatedWork, Delegated },
                     { ScopeType.DelegatedPersonal, Delegated },
                     { ScopeType.Application, Application } };
@@ -63,7 +64,7 @@ namespace PermissionsService
             public Dictionary<int, Dictionary<string, Dictionary<ScopeType, SchemePermissions>>> PathPermissions
             {
                 get; set;
-            } = new ();
+            } = new();
         }
 
         public PermissionsStore(IConfiguration configuration, IHttpClientUtility httpClientUtility,
@@ -95,6 +96,34 @@ namespace PermissionsService
                 return permissionsData;
             });
 
+        private Task<PermissionsDocument> LoadDocument =>
+            _cache.GetOrCreateAsync("Permissionsdocument", async entry =>
+            {
+                _telemetryClient?.TrackTrace($"Fetching permissions from file source '{_permissionsBlobName}'",
+                             SeverityLevel.Information,
+                             _permissionsTracePropertiesWithSanitizeIgnore);
+                PermissionsDocument permissionsDocument;
+
+                try
+                {
+                    var permissions = "https://raw.githubusercontent.com/microsoftgraph/microsoft-graph-devx-content/dev/permissions/permissions-beta.json";
+                    var permissionDescriptions = @"https://raw.githubusercontent.com/microsoftgraph/microsoft-graph-devx-content/dev/permissions/permissions-descriptions.json";
+                    var importer = new PermissionsImporter();
+
+                    permissionsDocument = importer.Import(permissions, permissionDescriptions).Result;
+
+                    entry.AbsoluteExpirationRelativeToNow = permissionsDocument is not null ? TimeSpan.FromHours(_defaultRefreshTimeInHours) : TimeSpan.FromMilliseconds(1);
+                }
+                catch (Exception exception)
+                {
+
+                    _telemetryClient?.TrackException(exception);
+                    permissionsDocument = null;
+                }
+                return permissionsDocument;
+
+            });
+
         /// <summary>
         /// Populates the template table with the request urls and the scopes table with the permission scopes.
         /// </summary>
@@ -110,6 +139,7 @@ namespace PermissionsService
 
                 // Get file contents from source
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _permissionsBlobName);
+
                 string permissionsJson = await _fileUtility.ReadFromFile(relativePermissionPath);
                 var fetchedPermissions = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<ScopeType, SchemePermissions>>>>(permissionsJson);
 
@@ -117,7 +147,7 @@ namespace PermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
 
-                
+
                 int count = 0;
                 var urlTemplateMatcher = new UriTemplateMatcher();
                 var pathPermissions = new Dictionary<int, Dictionary<string, Dictionary<ScopeType, SchemePermissions>>>();
@@ -137,7 +167,7 @@ namespace PermissionsService
                     urlTemplateMatcher.Add(count.ToString(), requestUrl);
 
                     // Add the permission scopes for path
-                    pathPermissions.Add(count, fetchedPermissions[key]);                    
+                    pathPermissions.Add(count, fetchedPermissions[key]);
                 }
 
                 permissionsData = new PermissionsDataInfo()
@@ -157,7 +187,7 @@ namespace PermissionsService
             }
 
             return permissionsData;
-        }       
+        }
 
         /// <summary>
         /// Gets or creates the localized permissions descriptions from the cache.
@@ -316,8 +346,13 @@ namespace PermissionsService
                                                    string org = null,
                                                    string branchName = null)
         {
-            var permissionsData = await PermissionsData;
-            if (permissionsData?.PathPermissions == null)
+            var graphPermissions = await LoadDocument;
+            var authZChecker = new AuthZChecker();
+            authZChecker.Load(graphPermissions);
+
+    
+
+            if (graphPermissions == null)
                 throw new InvalidOperationException("Failed to fetch permissions");
 
             var scopes = new List<ScopeInformation>();
@@ -340,7 +375,10 @@ namespace PermissionsService
                 {
                     try
                     {
-                        var scopesForUrl = await GetScopesForRequestUrlAsync(request.RequestUrl, request.HttpMethod, scopeType);
+                        var requestUrl = CleanRequestUrl(request.RequestUrl);
+                        var resource = authZChecker.FindResource(requestUrl);
+                        resource.SupportedMethods.TryGetValue(request.HttpMethod, out var methodPermiissions);
+                        var scopesForUrl = new List<ScopeInformation>();
                         if (scopesForUrl == null || !scopesForUrl.Any())
                             throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
 
@@ -385,11 +423,11 @@ namespace PermissionsService
 
             // Get consent display name and description
             var scopesInfo = GetAdditionalScopesInformation(
-                scopesInformationDictionary, 
+                scopesInformationDictionary,
                 scopes.DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase).ToList(),
-                scopeType, 
+                scopeType,
                 getAllScopes);
-            
+
             // exclude hidden permissions unless stated otherwise
             scopesInfo = scopesInfo.Where(x => includeHidden || !x.IsHidden).ToList();
 
@@ -401,9 +439,9 @@ namespace PermissionsService
                 });
             }
 
-            _telemetryClient?.TrackTrace(requests == null || !requests.Any() ? 
-                "Return all permissions" : $"Return permissions for '{string.Join(", ", requests.Select(x => x.RequestUrl))}'", 
-                SeverityLevel.Information, 
+            _telemetryClient?.TrackTrace(requests == null || !requests.Any() ?
+                "Return all permissions" : $"Return permissions for '{string.Join(", ", requests.Select(x => x.RequestUrl))}'",
+                SeverityLevel.Information,
                 _permissionsTraceProperties);
 
             return new PermissionResult()
@@ -440,11 +478,14 @@ namespace PermissionsService
             if (string.IsNullOrEmpty(method))
                 throw new InvalidOperationException("The HTTP method value cannot be null or empty.");
 
-            var permissionsData = await PermissionsData;
+            var permissionsDocument = await LoadDocument;
+
+            var authZChecker = new AuthZChecker();
+            authZChecker.Load(permissionsDocument);
 
             requestUrl = CleanRequestUrl(requestUrl);
 
-            var resultMatch = permissionsData.UriTemplateMatcher.Match(new Uri(requestUrl, UriKind.RelativeOrAbsolute));
+            var resultMatch = authZChecker.FindResource(requestUrl);
 
             if (resultMatch is null)
             {
@@ -452,10 +493,7 @@ namespace PermissionsService
                 return Enumerable.Empty<ScopeInformation>();
             }
 
-            if (!int.TryParse(resultMatch.Key, out int key))
-                throw new InvalidOperationException($"Failed to parse '{resultMatch.Key}' to int.");
-
-            if (!permissionsData.PathPermissions.TryGetValue(key, out var pathPermissions))
+            if (!permissionsDocument.Permissions.TryGetValue(requestUrl, out var pathPermissions))
             {
                 _telemetryClient?.TrackTrace($"Permissions information for {requestUrl} were not found.", SeverityLevel.Error, _permissionsTraceProperties);
                 return Enumerable.Empty<ScopeInformation>();
@@ -463,14 +501,16 @@ namespace PermissionsService
 
             if (pathPermissions == null)
             {
-                _telemetryClient?.TrackTrace($"Key '{permissionsData.PathPermissions[key]}' in the {nameof(permissionsData.PathPermissions)} has a null value.",
+                _telemetryClient?.TrackTrace($"Key '{permissionsDocument.Permissions[requestUrl]}' in the {nameof(permissionsDocument.Permissions)} has a null value.",
                                              SeverityLevel.Error,
                                              _permissionsTraceProperties);
 
                 return Enumerable.Empty<ScopeInformation>();
             }
 
-            var scopes = pathPermissions
+            var scopes = new List<ScopeInformation>();
+
+            /*var scopes = pathPermissions
                 .Where(x => x.Key.Equals(method, StringComparison.OrdinalIgnoreCase))
                 .SelectMany(static x => x.Value)
                 .Where(x => scopeType == null || x.Key == scopeType)
@@ -481,7 +521,7 @@ namespace PermissionsService
                         ScopeName = permission,
                         IsLeastPrivilege = x.Value.LeastPrivilegePermissions.Contains(permission)
                     })
-                .DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase);
+                .DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase)*/;
 
             return scopes;
         }
@@ -550,15 +590,15 @@ namespace PermissionsService
                 if (scopesInformationDictionary[schemeKey].TryGetValue(scope.ScopeName, out var scopeInfo))
                 {
                     return new ScopeInformation()
-                        {
-                            ScopeName = scopeInfo.ScopeName,
-                            DisplayName = scopeInfo.DisplayName,
-                            IsAdmin = scopeInfo.IsAdmin,
-                            IsHidden = scopeInfo.IsHidden,
-                            Description = scopeInfo.Description,
-                            ScopeType = scope.ScopeType,
-                            IsLeastPrivilege = scope.IsLeastPrivilege
-                        };                  
+                    {
+                        ScopeName = scopeInfo.ScopeName,
+                        DisplayName = scopeInfo.DisplayName,
+                        IsAdmin = scopeInfo.IsAdmin,
+                        IsHidden = scopeInfo.IsHidden,
+                        Description = scopeInfo.Description,
+                        ScopeType = scope.ScopeType,
+                        IsLeastPrivilege = scope.IsLeastPrivilege
+                    };
                 }
                 return scope;
             }).ToList();
