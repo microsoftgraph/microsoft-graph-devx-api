@@ -380,8 +380,8 @@ namespace PermissionsService
                         if (resource == null)
                             throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
                         var leastPrivilege = resource.FetchLeastPrivilege(request.HttpMethod);
-                        leastPrivilege.TryGetValue(request.HttpMethod, out var methodPermissions);
-                        methodPermissions.TryGetValue(scopeType.ToString(), out var leastPrivilegedPermissions);
+                        if (leastPrivilege.TryGetValue(request.HttpMethod, out var methodPermissions) 
+                            && methodPermissions.TryGetValue(scopeType.ToString(), out var leastPrivilegedPermissions))
                         IEnumerable<ScopeInformation> scopesForUrl = new List<ScopeInformation>
                         {
                             new ScopeInformation
