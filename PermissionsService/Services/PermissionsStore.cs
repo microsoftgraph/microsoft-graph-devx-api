@@ -5,9 +5,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FileService.Common;
@@ -370,7 +372,6 @@ namespace PermissionsService
             {
                 var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
                 var uniqueRequests = requests.DistinctBy(static x => $"{x.HttpMethod}{x.RequestUrl}", StringComparer.OrdinalIgnoreCase);
-
                 await Parallel.ForEachAsync(uniqueRequests, async (request, _) =>
                 {
                     try
@@ -379,23 +380,43 @@ namespace PermissionsService
 
                         if (resource == null)
                             throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
-                        var leastPrivilege = resource.FetchLeastPrivilege(request.HttpMethod);
-                        if (leastPrivilege.TryGetValue(request.HttpMethod, out var methodPermissions) 
-                            && methodPermissions.TryGetValue(scopeType.ToString(), out var leastPrivilegedPermissions))
-                        IEnumerable<ScopeInformation> scopesForUrl = new List<ScopeInformation>
+                        if (leastPrivilegeOnly)
                         {
-                            new ScopeInformation
+                            var leastPrivilege = resource.FetchLeastPrivilege(request.HttpMethod);
+                            if (leastPrivilege.TryGetValue(request.HttpMethod, out var methodLeastPermissions)
+                                && methodLeastPermissions.TryGetValue(scopeType.ToString(), out var leastPrivilegedPermissions))
                             {
-                                Description = "",
-                                DisplayName = "",
-                                IsAdmin = false,
-                                IsHidden = false,
-                                IsLeastPrivilege = true,
-                                ScopeName = leastPrivilegedPermissions.First(),
-                                ScopeType = scopeType
+                                List<ScopeInformation> listOfLeastPrivilegedPermissions = new List<ScopeInformation>();
+                                foreach( var grant in leastPrivilegedPermissions) {
+                                    listOfLeastPrivilegedPermissions.Add(new ScopeInformation()
+                                    {
+                                        IsLeastPrivilege = true,
+                                        ScopeName = grant,
+                                        ScopeType = scopeType
+                                    });
+                                }
+                                scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", listOfLeastPrivilegedPermissions);
                             }
-                        };
-                        scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", scopesForUrl);
+                        }
+                        else
+                        {
+                            if (resource.SupportedMethods.TryGetValue(request.HttpMethod, out var methodPermissions)
+                        && methodPermissions.TryGetValue(scopeType.ToString(), out var permissions))
+                            {
+                                List<ScopeInformation> list = new List<ScopeInformation>();
+                                foreach (var grant in permissions)
+                                {
+                                    list.Add(new ScopeInformation()
+                                    {
+                                        IsLeastPrivilege = grant.Least,
+                                        ScopeName = grant.Permission,
+                                        ScopeType = scopeType
+                                    });
+                                }
+                                scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", list);
+                            }
+                        }
+
                     }
                     catch (Exception exception)
                     {
@@ -407,7 +428,6 @@ namespace PermissionsService
                         _telemetryClient?.TrackException(exception);
                     }
                 });
-
                 var allLeastPrivilegeScopes = scopesByRequestUrl.Values
                     .SelectMany(static x => x).Where(static x => x.IsLeastPrivilege == true)
                     .DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase).ToList();
@@ -456,11 +476,10 @@ namespace PermissionsService
                 "Return all permissions" : $"Return permissions for '{string.Join(", ", requests.Select(x => x.RequestUrl))}'",
                 SeverityLevel.Information,
                 _permissionsTraceProperties);
-
             return new PermissionResult()
             {
                 Results = scopesInfo,
-                Errors = errors.Any() ? errors : null
+                Errors = errors.Any() ? errors : null,
             };
         }
 
