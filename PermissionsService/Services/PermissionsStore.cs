@@ -368,34 +368,30 @@ namespace PermissionsService
             {
                 var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
                 var uniqueRequests = requests.DistinctBy(static x => $"{x.HttpMethod}{x.RequestUrl}", StringComparer.OrdinalIgnoreCase);
-                await Parallel.ForEachAsync(uniqueRequests, async (request, _) =>
-                {
-                    try
+                var tasks = uniqueRequests.Select(request =>
+                    Task.Run(() =>
                     {
-                        var resource = authZChecker.FindResource(request.RequestUrl);
-
-                        if (resource == null)
-                            throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
-                        if (leastPrivilegeOnly)
+                        try
                         {
-                            scopesByRequestUrl = GetLeastPrivilegeOnlyPermissions(scopeType, request, resource);
+                            var resource = authZChecker.FindResource(request.RequestUrl) ?? throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
+                            scopesByRequestUrl = (leastPrivilegeOnly)
+                            ? GetLeastPrivilegeOnlyPermissions(scopeType, request, resource)
+                            : GetPermissions(scopeType, request, resource);
                         }
-                        else
+                        catch (Exception exception)
                         {
-                            scopesByRequestUrl = GetPermissions(scopeType, request, resource);
+                            errors.Add(new PermissionError()
+                            {
+                                RequestUrl = request.RequestUrl,
+                                Message = exception.Message
+                            });
+                            _telemetryClient?.TrackException(exception);
                         }
+                    })
+                );
 
-                    }
-                    catch (Exception exception)
-                    {
-                        errors.Add(new PermissionError()
-                        {
-                            RequestUrl = request.RequestUrl,
-                            Message = exception.Message
-                        });
-                        _telemetryClient?.TrackException(exception);
-                    }
-                });
+                await Task.WhenAll(tasks);
+
                 var allLeastPrivilegeScopes = scopesByRequestUrl.Values
                     .SelectMany(static x => x).Where(static x => x.IsLeastPrivilege == true)
                     .DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase).ToList();
@@ -438,7 +434,7 @@ namespace PermissionsService
             }
 
             _telemetryClient?.TrackTrace(requests == null || !requests.Any() ?
-                "Return all permissions" : $"Return permissions for '{string.Join(", ", requests.Select(x => x.RequestUrl))}'",
+                        "Return all permissions" : $"Return permissions for '{string.Join(", ", requests.Select(x => x.RequestUrl))}'",
                 SeverityLevel.Information,
                 _permissionsTraceProperties);
             return new PermissionResult()
@@ -465,23 +461,20 @@ namespace PermissionsService
             return scopes;
         }
 
-               private ConcurrentDictionary<string, IEnumerable<ScopeInformation>> GetLeastPrivilegeOnlyPermissions(ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
+        private ConcurrentDictionary<string, IEnumerable<ScopeInformation>> GetLeastPrivilegeOnlyPermissions(ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
         {
             var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
             var leastPrivilege = resource.FetchLeastPrivilege(request.HttpMethod);
             if (leastPrivilege.TryGetValue(request.HttpMethod, out var methodLeastPermissions)
                 && methodLeastPermissions.TryGetValue(scopeType.ToString(), out var leastPrivilegedPermissions))
             {
-                List<ScopeInformation> listOfLeastPrivilegedPermissions = new List<ScopeInformation>();
-                foreach (var grant in leastPrivilegedPermissions)
+                var listOfLeastPrivilegedPermissions = leastPrivilegedPermissions.Select(grant => new ScopeInformation
                 {
-                    listOfLeastPrivilegedPermissions.Add(new ScopeInformation()
-                    {
-                        IsLeastPrivilege = true,
-                        ScopeName = grant,
-                        ScopeType = scopeType
-                    });
-                }
+                    IsLeastPrivilege = true,
+                    ScopeName = grant,
+                    ScopeType = scopeType
+                }).ToList();
+
                 scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", listOfLeastPrivilegedPermissions);
             }
             return scopesByRequestUrl;
@@ -491,18 +484,15 @@ namespace PermissionsService
         {
             var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
             if (resource.SupportedMethods.TryGetValue(request.HttpMethod, out var methodPermissions)
-                                    && methodPermissions.TryGetValue(scopeType.ToString(), out var permissions))
+                && methodPermissions.TryGetValue(scopeType.ToString(), out var permissions))
             {
-                List<ScopeInformation> list = new List<ScopeInformation>();
-                foreach (var grant in permissions)
+                var list = permissions.Select(grant => new ScopeInformation
                 {
-                    list.Add(new ScopeInformation()
-                    {
-                        IsLeastPrivilege = grant.Least,
-                        ScopeName = grant.Permission,
-                        ScopeType = scopeType
-                    });
-                }
+                    IsLeastPrivilege = grant.Least,
+                    ScopeName = grant.Permission,
+                    ScopeType = scopeType
+                }).ToList();
+
                 scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", list);
             }
             return scopesByRequestUrl;
