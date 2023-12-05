@@ -374,9 +374,14 @@ namespace PermissionsService
                         try
                         {
                             var resource = authZChecker.FindResource(request.RequestUrl) ?? throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
-                            scopesByRequestUrl = (leastPrivilegeOnly)
-                            ? GetLeastPrivilegeOnlyPermissions(scopeType, request, resource)
-                            : GetPermissions(scopeType, request, resource);
+                            if (leastPrivilegeOnly)
+                            {
+                                GetLeastPrivilegeOnlyPermissionsFromResource(scopesByRequestUrl, scopeType, request, resource);
+                            }
+                            else
+                            {
+                                GetPermissionsFromResource(scopesByRequestUrl, scopeType, request, resource);
+                            }
                         }
                         catch (Exception exception)
                         {
@@ -461,9 +466,8 @@ namespace PermissionsService
             return scopes;
         }
 
-        private ConcurrentDictionary<string, IEnumerable<ScopeInformation>> GetLeastPrivilegeOnlyPermissions(ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
+        private void GetLeastPrivilegeOnlyPermissionsFromResource(ConcurrentDictionary<string, IEnumerable<ScopeInformation>> scopesByRequestUrl, ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
         {
-            var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
             var leastPrivilege = resource.FetchLeastPrivilege(request.HttpMethod);
             if (leastPrivilege.TryGetValue(request.HttpMethod, out var methodLeastPermissions)
                 && methodLeastPermissions.TryGetValue(scopeType.ToString(), out var leastPrivilegedPermissions))
@@ -474,15 +478,12 @@ namespace PermissionsService
                     ScopeName = grant,
                     ScopeType = scopeType
                 }).ToList();
-
                 scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", listOfLeastPrivilegedPermissions);
             }
-            return scopesByRequestUrl;
         }
 
-        private ConcurrentDictionary<string, IEnumerable<ScopeInformation>> GetPermissions(ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
+        private void GetPermissionsFromResource(ConcurrentDictionary<string, IEnumerable<ScopeInformation>> scopesByRequestUrl, ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
         {
-            var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
             if (resource.SupportedMethods.TryGetValue(request.HttpMethod, out var methodPermissions)
                 && methodPermissions.TryGetValue(scopeType.ToString(), out var permissions))
             {
@@ -495,7 +496,6 @@ namespace PermissionsService
 
                 scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", list);
             }
-            return scopesByRequestUrl;
         }
 
         /// <summary>
