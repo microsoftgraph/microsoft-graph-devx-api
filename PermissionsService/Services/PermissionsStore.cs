@@ -361,7 +361,7 @@ namespace PermissionsService
             {
                 // Get all scopes if no request URLs are provided
                 getAllScopes = true;
-                var allScopes = await GetAllScopesAsync(scopeType);
+                var allScopes = GetAllScopesFromDocument(permissionsDocument, scopeType);
                 scopes.AddRange(allScopes);
             }
             else
@@ -449,19 +449,15 @@ namespace PermissionsService
             };
         }
 
-        private async Task<IEnumerable<ScopeInformation>> GetAllScopesAsync(ScopeType? scopeType)
+        private IEnumerable<ScopeInformation> GetAllScopesFromDocument(PermissionsDocument permissionsDocument, ScopeType? scopeType)
         {
-            var permissionsData = await PermissionsData;
-            var scopes = permissionsData.PathPermissions.Values
-                .SelectMany(static x => x.Values)
-                .SelectMany(static x => x)
-                .Where(x => scopeType == null || x.Key == scopeType)
-                .SelectMany(static x => x.Value.AllPermissions, static (x, permission) => new ScopeInformation
+            var scopes = permissionsDocument.Permissions
+                .Where(x => scopeType == null || x.Value.Schemes.Keys.Any(k => k == scopeType.ToString()))
+                .Select(grant => new ScopeInformation
                 {
-                    ScopeType = x.Key,
-                    ScopeName = permission
-                })
-               .DistinctBy(static x => $"{x.ScopeName}{x.ScopeType}", StringComparer.OrdinalIgnoreCase);
+                    ScopeName = grant.Key,
+                    ScopeType = scopeType
+                }).ToList();
 
             return scopes;
         }
