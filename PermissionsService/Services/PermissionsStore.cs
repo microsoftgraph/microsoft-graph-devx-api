@@ -346,9 +346,6 @@ namespace PermissionsService
             if (permissionsDocument == null)
                 throw new InvalidOperationException("Failed to fetch permissions");
 
-            var authZChecker = new AuthZChecker();
-            authZChecker.Load(permissionsDocument);
-
             var scopes = new List<ScopeInformation>();
             var errors = new List<PermissionError>();
 
@@ -362,6 +359,9 @@ namespace PermissionsService
             }
             else
             {
+                var authZChecker = new AuthZChecker();
+                authZChecker.Load(permissionsDocument);
+                
                 var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
                 var uniqueRequests = requests.DistinctBy(static x => $"{x.HttpMethod}{x.RequestUrl}", StringComparer.OrdinalIgnoreCase);
                 var tasks = uniqueRequests.Select(request =>
