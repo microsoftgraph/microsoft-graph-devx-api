@@ -449,7 +449,7 @@ namespace PermissionsService
             };
         }
 
-        private IEnumerable<ScopeInformation> GetAllScopesFromDocument(PermissionsDocument permissionsDocument, ScopeType? scopeType)
+        private static IEnumerable<ScopeInformation> GetAllScopesFromDocument(PermissionsDocument permissionsDocument, ScopeType? scopeType)
         {
             var scopes = permissionsDocument.Permissions
                 .Where(x => scopeType == null || x.Value.Schemes.Keys.Any(k => k == scopeType.ToString()))
@@ -462,7 +462,7 @@ namespace PermissionsService
             return scopes;
         }
 
-        private void GetLeastPrivilegeOnlyPermissionsFromResource(ConcurrentDictionary<string, IEnumerable<ScopeInformation>> scopesByRequestUrl, ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
+        private static void GetLeastPrivilegeOnlyPermissionsFromResource(ConcurrentDictionary<string, IEnumerable<ScopeInformation>> scopesByRequestUrl, ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
         {
             var leastPrivilege = resource.FetchLeastPrivilege(request.HttpMethod);
             if (leastPrivilege.TryGetValue(request.HttpMethod, out var methodLeastPermissions)
@@ -478,7 +478,7 @@ namespace PermissionsService
             }
         }
 
-        private void GetPermissionsFromResource(ConcurrentDictionary<string, IEnumerable<ScopeInformation>> scopesByRequestUrl, ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
+        private static void GetPermissionsFromResource(ConcurrentDictionary<string, IEnumerable<ScopeInformation>> scopesByRequestUrl, ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
         {
             if (resource.SupportedMethods.TryGetValue(request.HttpMethod, out var methodPermissions)
                 && methodPermissions.TryGetValue(scopeType.ToString(), out var permissions))
