@@ -5,12 +5,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Security;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FileService.Common;
 using FileService.Interfaces;
