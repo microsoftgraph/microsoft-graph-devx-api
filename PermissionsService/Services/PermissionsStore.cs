@@ -491,7 +491,7 @@ namespace PermissionsService
             }
         }
 
-        private List<ScopeInformation> GetPermissionsFromResource(ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
+        private static List<ScopeInformation> GetPermissionsFromResource(ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
         {
 
             if (resource.SupportedMethods.TryGetValue(request.HttpMethod, out var methodPermissions))
