@@ -28,10 +28,10 @@ namespace FileService.Common
             string directoryName = null;
             string fileName = null;
 
-            if (filePathSource.IndexOfAny(new char[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar}) > -1)
+            if (filePathSource.IndexOfAny(new char[] {Path.DirectorySeparatorChar}) > -1)
             {
                 // File path source format --> directoryName\\fileName
-                var storageValues = filePathSource.Split(new char[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar});
+                var storageValues = filePathSource.Split(new char[] {Path.DirectorySeparatorChar});
                 directoryName = storageValues[0];
                 fileName = storageValues[1];
             }

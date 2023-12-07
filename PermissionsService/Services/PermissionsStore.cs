@@ -106,7 +106,8 @@ namespace PermissionsService
 
                 try
                 {
-                    string permissions = await FetchHttpSourceDocument(permissionsUrl);
+                    string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _permissionsBlobName);
+                    string permissions = await _fileUtility.ReadFromFile(relativePermissionPath);
                     permissionsDocument = PermissionsDocument.Load(permissions);
                     entry.AbsoluteExpirationRelativeToNow = permissionsDocument is not null ? TimeSpan.FromHours(_defaultRefreshTimeInHours) : TimeSpan.FromMilliseconds(1);
                 }
@@ -117,7 +118,6 @@ namespace PermissionsService
                     permissionsDocument = null;
                 }
                 return permissionsDocument;
-
             });
 
         /// <summary>
