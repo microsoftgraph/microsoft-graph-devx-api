@@ -420,6 +420,20 @@ namespace PermissionsService
                     scopes = scopes.Where(static x => x.IsLeastPrivilege == true).ToList();
             }
 
+
+            if (!scopes.Any() && !errors.Any())
+            {
+                errors.Add(new PermissionError()
+                {
+                    Message = "No permissions found."
+                });
+                return new PermissionResult()
+                {
+                    Results = scopes,
+                    Errors = errors.Any() ? errors : null,
+                };
+            }
+
             // Create a dict of scopes information from GitHub files or cached files
             var scopesInformationDictionary = !(string.IsNullOrEmpty(org) || string.IsNullOrEmpty(branchName))
                 ? await GetPermissionsDescriptionsFromGithub(org, branchName, locale)
