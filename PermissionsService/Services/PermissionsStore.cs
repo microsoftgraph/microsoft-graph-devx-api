@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FileService.Common;
 using FileService.Interfaces;
@@ -375,7 +376,9 @@ namespace PermissionsService
                             if (string.IsNullOrEmpty(request.HttpMethod))
                                 throw new InvalidOperationException("The HTTP method value cannot be null or empty.");
 
-                            var resource = authZChecker.FindResource(request.RequestUrl) ?? throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
+                            var requestUrl = CleanRequestUrl(request.RequestUrl);
+
+                            var resource = authZChecker.FindResource(requestUrl) ?? throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
                             var permissions = GetPermissionsFromResource(scopeType, request, resource);
                             if (!permissions.Any())
                                 throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
@@ -475,7 +478,7 @@ namespace PermissionsService
                     });
             }
         }
-   
+
         private List<ScopeInformation> GetPermissionsFromResource(ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
         {
 
@@ -485,7 +488,7 @@ namespace PermissionsService
                 {
                     return methodPermissions.Keys
                         .Where(key => Enum.TryParse(key, out ScopeType type))
-                        .SelectMany(key => 
+                        .SelectMany(key =>
                         {
                             var type = Enum.Parse<ScopeType>(key);
                             var least = FetchLeastPrivilege(resource, request.HttpMethod, type);
@@ -520,6 +523,37 @@ namespace PermissionsService
             var leastPrivilege = resource.FetchLeastPrivilege(requestHttpMethod, type.ToString());
             var scopedPermission = leastPrivilege?.Values.FirstOrDefault()?.GetValueOrDefault(type.ToString());
             return scopedPermission?.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Cleans up the request url by applying string formatting operations
+        /// on the target value in line with the expected standardized output value.
+        /// </summary>
+        /// <remarks>The expected standardized output value is the request url value
+        /// format as captured in the permissions doc. This is to ensure efficacy
+        /// of the uri template matching.</remarks>
+        /// <param name="requestUrl">The target request url string value.</param>
+        /// <returns>The target request url formatted to the expected standardized
+        /// output value.</returns>
+        private static string CleanRequestUrl(string requestUrl)
+        {
+            if (string.IsNullOrEmpty(requestUrl))
+            {
+                return requestUrl;
+            }
+
+            requestUrl = requestUrl.BaseUriPath() // remove any query params
+                                   .UriTemplatePathFormat(true)
+                                   .RemoveParentheses();
+
+            /* Remove ${value} segments from paths,
+             * ex: /me/photo/$value --> $value or /applications/{application-id}/owners/$ref --> $ref
+             * Because these segments are not accounted for in the permissions doc.
+             * ${value} segments will always appear as the last segment in a path.
+            */
+            return Regex.Replace(requestUrl, @"(\$.*)", string.Empty, RegexOptions.None, TimeSpan.FromSeconds(5))
+                        .TrimEnd('/')
+                        .ToLowerInvariant();
         }
 
         /// <summary>

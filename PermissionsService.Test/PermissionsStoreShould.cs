@@ -292,6 +292,7 @@ namespace PermissionsService.Test
             var result =
                 await _permissionsStore.GetScopesAsync(
                     scopeType: ScopeType.DelegatedWork,
+                    leastPrivilegeOnly: false,
                     requests: new List<RequestInfo>() { new RequestInfo { RequestUrl = url, HttpMethod = "GET" } });
 
             // Assert
