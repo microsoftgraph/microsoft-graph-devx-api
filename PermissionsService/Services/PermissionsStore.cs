@@ -53,8 +53,6 @@ namespace PermissionsService
         private const string PermissionsNameBlobConfig = "BlobStorage:Blobs:Permissions:Name";
         private const string PermissionsContainerBlobConfig = "BlobStorage:Containers:Permissions";
         private const string NullValueError = "Value cannot be null";
-        private const string permissionsUrl = @"https://raw.githubusercontent.com/microsoftgraph/microsoft-graph-devx-content/dev/permissions/new/permissions.json";
-
         private class PermissionsDataInfo
         {
             public UriTemplateMatcher UriTemplateMatcher
