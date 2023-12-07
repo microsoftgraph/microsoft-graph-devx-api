@@ -361,7 +361,7 @@ namespace PermissionsService
             {
                 var authZChecker = new AuthZChecker();
                 authZChecker.Load(permissionsDocument);
-                
+
                 var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
                 var uniqueRequests = requests.DistinctBy(static x => $"{x.HttpMethod}{x.RequestUrl}", StringComparer.OrdinalIgnoreCase);
                 var tasks = uniqueRequests.Select(request =>
@@ -369,15 +369,18 @@ namespace PermissionsService
                     {
                         try
                         {
+                            if (string.IsNullOrEmpty(request.RequestUrl))
+                                throw new InvalidOperationException("The request URL cannot be null or empty.");
+
+                            if (string.IsNullOrEmpty(request.HttpMethod))
+                                throw new InvalidOperationException("The HTTP method value cannot be null or empty.");
+
                             var resource = authZChecker.FindResource(request.RequestUrl) ?? throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
-                            if (leastPrivilegeOnly)
-                            {
-                                GetLeastPrivilegeOnlyPermissionsFromResource(scopesByRequestUrl, scopeType, request, resource);
-                            }
-                            else
-                            {
-                                GetPermissionsFromResource(scopesByRequestUrl, scopeType, request, resource);
-                            }
+                            var permissions = GetPermissionsFromResource(scopeType, request, resource);
+                            if (!permissions.Any())
+                                throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
+
+                            scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", permissions);
                         }
                         catch (Exception exception)
                         {
@@ -409,6 +412,9 @@ namespace PermissionsService
                     if (!foundInOthers)
                         scopes.AddRange(scopeSet);
                 }
+
+                if (leastPrivilegeOnly)
+                    scopes = scopes.Where(static x => x.IsLeastPrivilege == true).ToList();
             }
 
             // Create a dict of scopes information from GitHub files or cached files
@@ -474,20 +480,41 @@ namespace PermissionsService
             }
         }
 
-        private static void GetPermissionsFromResource(ConcurrentDictionary<string, IEnumerable<ScopeInformation>> scopesByRequestUrl, ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
+        private List<ScopeInformation> GetPermissionsFromResource(ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
         {
-            if (resource.SupportedMethods.TryGetValue(request.HttpMethod, out var methodPermissions)
-                && methodPermissions.TryGetValue(scopeType.ToString(), out var permissions))
-            {
-                var list = permissions.Select(grant => new ScopeInformation
-                {
-                    IsLeastPrivilege = grant.Least,
-                    ScopeName = grant.Permission,
-                    ScopeType = scopeType
-                }).ToList();
+            var leastPrivilege = resource.FetchLeastPrivilege(request.HttpMethod, scopeType.ToString());
+            var scopedPermission = leastPrivilege?.Values.FirstOrDefault()?.GetValueOrDefault(scopeType.ToString());
+            var least = scopedPermission?.FirstOrDefault();
 
-                scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", list);
+            if (resource.SupportedMethods.TryGetValue(request.HttpMethod, out var methodPermissions))
+            {
+                if (scopeType == null)
+                {
+                    return methodPermissions.Keys
+                        .SelectMany(key => Enum.TryParse(key, out ScopeType type)
+                            ? methodPermissions[key].Select(grant => new ScopeInformation
+                            {
+                                ScopeName = grant.Permission,
+                                ScopeType = type,
+                                IsLeastPrivilege = grant.Permission == least
+                            })
+                            : Enumerable.Empty<ScopeInformation>())
+                        .ToList();
+                }
+                else
+                {
+                    if (methodPermissions.TryGetValue(scopeType.ToString(), out var scopedPermissions))
+                    {
+                        return scopedPermissions.Select(grant => new ScopeInformation
+                        {
+                            ScopeName = grant.Permission,
+                            ScopeType = scopeType.Value,
+                            IsLeastPrivilege = grant.Permission == least
+                        }).ToList();
+                    }
+                }
             }
+            return new List<ScopeInformation>();
         }
 
         /// <summary>
