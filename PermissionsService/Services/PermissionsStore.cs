@@ -530,7 +530,7 @@ namespace PermissionsService
             return new List<ScopeInformation>();
         }
 
-        private string FetchLeastPrivilege(ProtectedResource resource, string requestHttpMethod, ScopeType? type)
+        private static string FetchLeastPrivilege(ProtectedResource resource, string requestHttpMethod, ScopeType? type)
         {
             var leastPrivilege = resource.FetchLeastPrivilege(requestHttpMethod, type.ToString());
             var scopedPermission = leastPrivilege?.Values.FirstOrDefault()?.GetValueOrDefault(type.ToString());
