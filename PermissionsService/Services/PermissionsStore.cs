@@ -453,58 +453,56 @@ namespace PermissionsService
 
         private static IEnumerable<ScopeInformation> GetAllScopesFromDocument(PermissionsDocument permissionsDocument, ScopeType? scopeType)
         {
-            var scopes = permissionsDocument.Permissions
-                .Where(x => scopeType == null || x.Value.Schemes.Keys.Any(k => k == scopeType.ToString()))
-                .Select(grant => new ScopeInformation
-                {
-                    ScopeName = grant.Key,
-                    ScopeType = scopeType
-                }).ToList();
+            var allPermissions = permissionsDocument.Permissions;
 
-            return scopes;
-        }
-
-        private static void GetLeastPrivilegeOnlyPermissionsFromResource(ConcurrentDictionary<string, IEnumerable<ScopeInformation>> scopesByRequestUrl, ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
-        {
-            var leastPrivilege = resource.FetchLeastPrivilege(request.HttpMethod);
-            if (leastPrivilege.TryGetValue(request.HttpMethod, out var methodLeastPermissions)
-                && methodLeastPermissions.TryGetValue(scopeType.ToString(), out var leastPrivilegedPermissions))
+            if (scopeType == null)
             {
-                var listOfLeastPrivilegedPermissions = leastPrivilegedPermissions.Select(grant => new ScopeInformation
-                {
-                    IsLeastPrivilege = true,
-                    ScopeName = grant,
-                    ScopeType = scopeType
-                }).ToList();
-                scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", listOfLeastPrivilegedPermissions);
+                return allPermissions.SelectMany(item => item.Value.Schemes.Keys,
+                    (item, scope) => new ScopeInformation
+                    {
+                        ScopeType = Enum.TryParse(scope, out ScopeType type) ? type : default,
+                        ScopeName = item.Key
+                    });
+            }
+            else
+            {
+                return allPermissions
+                    .Where(x => x.Value.Schemes.Keys.Any(k => k == scopeType.ToString()))
+                    .Select(grant => new ScopeInformation
+                    {
+                        ScopeName = grant.Key,
+                        ScopeType = scopeType.Value
+                    });
             }
         }
-
+   
         private List<ScopeInformation> GetPermissionsFromResource(ScopeType? scopeType, RequestInfo request, ProtectedResource resource)
         {
-            var leastPrivilege = resource.FetchLeastPrivilege(request.HttpMethod, scopeType.ToString());
-            var scopedPermission = leastPrivilege?.Values.FirstOrDefault()?.GetValueOrDefault(scopeType.ToString());
-            var least = scopedPermission?.FirstOrDefault();
 
             if (resource.SupportedMethods.TryGetValue(request.HttpMethod, out var methodPermissions))
             {
                 if (scopeType == null)
                 {
                     return methodPermissions.Keys
-                        .SelectMany(key => Enum.TryParse(key, out ScopeType type)
-                            ? methodPermissions[key].Select(grant => new ScopeInformation
+                        .Where(key => Enum.TryParse(key, out ScopeType type))
+                        .SelectMany(key => 
+                        {
+                            var type = Enum.Parse<ScopeType>(key);
+                            var least = FetchLeastPrivilege(resource, request.HttpMethod, type);
+                            return methodPermissions[key].Select(grant => new ScopeInformation
                             {
                                 ScopeName = grant.Permission,
                                 ScopeType = type,
                                 IsLeastPrivilege = grant.Permission == least
-                            })
-                            : Enumerable.Empty<ScopeInformation>())
+                            });
+                        })
                         .ToList();
                 }
                 else
                 {
                     if (methodPermissions.TryGetValue(scopeType.ToString(), out var scopedPermissions))
                     {
+                        var least = FetchLeastPrivilege(resource, request.HttpMethod, scopeType);
                         return scopedPermissions.Select(grant => new ScopeInformation
                         {
                             ScopeName = grant.Permission,
@@ -515,6 +513,13 @@ namespace PermissionsService
                 }
             }
             return new List<ScopeInformation>();
+        }
+
+        private string FetchLeastPrivilege(ProtectedResource resource, string requestHttpMethod, ScopeType? type)
+        {
+            var leastPrivilege = resource.FetchLeastPrivilege(requestHttpMethod, type.ToString());
+            var scopedPermission = leastPrivilege?.Values.FirstOrDefault()?.GetValueOrDefault(type.ToString());
+            return scopedPermission?.FirstOrDefault();
         }
 
         /// <summary>

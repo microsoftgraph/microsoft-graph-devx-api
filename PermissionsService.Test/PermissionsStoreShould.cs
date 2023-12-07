@@ -189,7 +189,7 @@ namespace PermissionsService.Test
 
             // Assert
             Assert.NotEmpty(result.Results);
-            Assert.Equal(625, result.Results.Count);
+            Assert.Equal(939, result.Results.Count);
         }
 
         [Fact]
@@ -252,7 +252,7 @@ namespace PermissionsService.Test
 
             var request2 = new List<RequestInfo>()
             {
-                new RequestInfo { RequestUrl = "/me/tasks/lists/{lists_id}", HttpMethod = "GET" }
+                new RequestInfo { RequestUrl = "/me/tasks/lists/{id}", HttpMethod = "GET" }
             };
 
             // Act
