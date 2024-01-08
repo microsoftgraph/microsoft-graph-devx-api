@@ -279,7 +279,7 @@ namespace PermissionsService.Test
             Assert.Empty(result.Results);
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
-            Assert.Equal("No permissions found.", result.Errors.First().Message);
+            Assert.Equal("Permissions information for 'DELETE /no/least/privileged/permissions' was not found.", result.Errors.First().Message);
         }
 
         [Theory]
