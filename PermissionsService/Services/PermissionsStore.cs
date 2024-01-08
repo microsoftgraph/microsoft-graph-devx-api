@@ -478,7 +478,7 @@ namespace PermissionsService
             else
             {
                 return allPermissions
-                    .Where(x => x.Value.Schemes.Keys.Any(k => k == scopeType.ToString()))
+                    .Where(x => x.Value.Schemes.Keys.Any(k => k.Equals(scopeType.ToString(),StringComparison.OrdinalIgnoreCase)))
                     .Select(grant => new ScopeInformation
                     {
                         ScopeName = grant.Key,
