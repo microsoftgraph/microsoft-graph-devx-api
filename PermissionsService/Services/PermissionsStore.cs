@@ -363,39 +363,35 @@ namespace PermissionsService
 
                 var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
                 var uniqueRequests = requests.DistinctBy(static x => $"{x.HttpMethod}{x.RequestUrl}", StringComparer.OrdinalIgnoreCase);
-                var tasks = uniqueRequests.Select(request =>
-                    Task.Run(() =>
+                Parallel.ForEach(uniqueRequests, (request) =>
+                {
+                    try
                     {
-                        try
+                        if (string.IsNullOrEmpty(request.RequestUrl))
+                            throw new InvalidOperationException("The request URL cannot be null or empty.");
+
+                        if (string.IsNullOrEmpty(request.HttpMethod))
+                            throw new InvalidOperationException("The HTTP method value cannot be null or empty.");
+
+                        var requestUrl = CleanRequestUrl(request.RequestUrl);
+
+                        var resource = authZChecker.FindResource(requestUrl) ?? throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
+                        var permissions = GetPermissionsFromResource(scopeType, request, resource);
+                        if (!permissions.Any())
+                            throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
+
+                        scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", permissions);
+                    }
+                    catch (Exception exception)
+                    {
+                        errors.Add(new PermissionError()
                         {
-                            if (string.IsNullOrEmpty(request.RequestUrl))
-                                throw new InvalidOperationException("The request URL cannot be null or empty.");
-
-                            if (string.IsNullOrEmpty(request.HttpMethod))
-                                throw new InvalidOperationException("The HTTP method value cannot be null or empty.");
-
-                            var requestUrl = CleanRequestUrl(request.RequestUrl);
-
-                            var resource = authZChecker.FindResource(requestUrl) ?? throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
-                            var permissions = GetPermissionsFromResource(scopeType, request, resource);
-                            if (!permissions.Any())
-                                throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
-
-                            scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", permissions);
-                        }
-                        catch (Exception exception)
-                        {
-                            errors.Add(new PermissionError()
-                            {
-                                RequestUrl = request.RequestUrl,
-                                Message = exception.Message
-                            });
-                            _telemetryClient?.TrackException(exception);
-                        }
-                    })
-                );
-
-                await Task.WhenAll(tasks);
+                            RequestUrl = request.RequestUrl,
+                            Message = exception.Message
+                        });
+                        _telemetryClient?.TrackException(exception);
+                    }
+                });
 
                 var allLeastPrivilegeScopes = scopesByRequestUrl.Values
                     .SelectMany(static x => x).Where(static x => x.IsLeastPrivilege == true)
@@ -513,18 +509,15 @@ namespace PermissionsService
                         })
                         .ToList();
                 }
-                else
+                if (methodPermissions.TryGetValue(scopeType.ToString(), out var scopedPermissions))
                 {
-                    if (methodPermissions.TryGetValue(scopeType.ToString(), out var scopedPermissions))
+                    var least = FetchLeastPrivilege(resource, request.HttpMethod, scopeType);
+                    return scopedPermissions.Select(grant => new ScopeInformation
                     {
-                        var least = FetchLeastPrivilege(resource, request.HttpMethod, scopeType);
-                        return scopedPermissions.Select(grant => new ScopeInformation
-                        {
-                            ScopeName = grant.Permission,
-                            ScopeType = scopeType.Value,
-                            IsLeastPrivilege = grant.Permission == least
-                        }).ToList();
-                    }
+                        ScopeName = grant.Permission,
+                        ScopeType = scopeType.Value,
+                        IsLeastPrivilege = grant.Permission == least
+                    }).ToList();
                 }
             }
             return new List<ScopeInformation>();
