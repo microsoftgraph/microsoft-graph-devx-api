@@ -100,7 +100,7 @@ namespace PermissionsService.Test
                         Assert.True(item.IsAdmin);
                         Assert.True(item.IsLeastPrivilege);
                         Assert.False(item.IsHidden);
-                    },
+                },
                     item =>
                     {
                         Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
@@ -279,7 +279,7 @@ namespace PermissionsService.Test
             Assert.Empty(result.Results);
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
-            //Assert.Equal("No permissions found.", result.Errors.First().Message);
+            Assert.Equal("No permissions found.", result.Errors.First().Message);
         }
 
         [Theory]
