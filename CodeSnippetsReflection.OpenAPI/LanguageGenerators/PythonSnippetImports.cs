@@ -42,7 +42,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         // Method to infer import statements based on snippet text
         public string GenerateImportStatements(string snippetText)
         {
-            string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*RequestBuilder)\b";// matches request builders
+            // string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*RequestBuilder)\b";// matches request builders
+            string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*)\b";
+
             Regex regex = new Regex(pattern);
 
             string[] lines = snippetText.Split('\n');
