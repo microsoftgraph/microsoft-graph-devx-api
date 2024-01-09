@@ -29,7 +29,7 @@ namespace PermissionsService.Test
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
-                requests: new List<RequestInfo> { new RequestInfo { RequestUrl = "/security/alerts/{alert_id}", HttpMethod = "GET" } });
+                requests: new List<RequestInfo> { new RequestInfo { RequestUrl = "/security/alerts/{id}", HttpMethod = "GET" } }, leastPrivilegeOnly: false);
 
             // Assert
             Assert.Collection(result.Results,
@@ -83,7 +83,7 @@ namespace PermissionsService.Test
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
-                new List<RequestInfo> { new RequestInfo { RequestUrl = "/security/alerts/{alert_id}", HttpMethod = "GET" } },
+                new List<RequestInfo> { new RequestInfo { RequestUrl = "/security/alerts/{id}", HttpMethod = "GET" } },
                 scopeType: scopeType);
 
             // Assert
@@ -100,7 +100,7 @@ namespace PermissionsService.Test
                         Assert.True(item.IsAdmin);
                         Assert.True(item.IsLeastPrivilege);
                         Assert.False(item.IsHidden);
-                    },
+                },
                     item =>
                     {
                         Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
@@ -149,7 +149,7 @@ namespace PermissionsService.Test
             // Act
             var result = await _permissionsStore.GetScopesAsync(
                 new List<RequestInfo> { new RequestInfo { RequestUrl = "/security/alerts/{alert_id}", HttpMethod = "GET" } },
-                scopeType: ScopeType.Application, 
+                scopeType: ScopeType.Application,
                 leastPrivilegeOnly: true);
 
             // Assert
@@ -168,9 +168,9 @@ namespace PermissionsService.Test
         }
 
         [Theory]
-        [InlineData(ScopeType.DelegatedWork, 311)]
-        [InlineData(ScopeType.DelegatedPersonal, 113)]
-        [InlineData(ScopeType.Application, 279)]
+        [InlineData(ScopeType.DelegatedWork, 497)]
+        [InlineData(ScopeType.DelegatedPersonal, 468)]
+        [InlineData(ScopeType.Application, 475)]
         public async Task GetAllPermissionScopesGivenNoRequestUrlFilteredByScopeType(ScopeType scopeType, int expectedCount)
         {
             // Act
@@ -189,7 +189,7 @@ namespace PermissionsService.Test
 
             // Assert
             Assert.NotEmpty(result.Results);
-            Assert.Equal(625, result.Results.Count);
+            Assert.Equal(939, result.Results.Count);
         }
 
         [Fact]
@@ -208,9 +208,9 @@ namespace PermissionsService.Test
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
-                new List<RequestInfo> { 
-                    new RequestInfo { 
-                        RequestUrl = "/security/alerts/{alert_id}", 
+                new List<RequestInfo> {
+                    new RequestInfo {
+                        RequestUrl = "/security/alerts/{alert_id}",
                         HttpMethod = "Foobar" } }); // non-existent http verb
 
             // Assert
@@ -225,14 +225,14 @@ namespace PermissionsService.Test
             // Arrange
             var requests = new List<RequestInfo>()
             {
-                new RequestInfo { RequestUrl = "/security/alerts/{alert_id}", HttpMethod = "GET" },
-                new RequestInfo { RequestUrl = "/sites/{site_id}", HttpMethod = "GET" },
-                new RequestInfo { RequestUrl = "/me/tasks/lists/delta", HttpMethod = "GET" }          
+                new RequestInfo { RequestUrl = "/security/alerts/{id}", HttpMethod = "GET" },
+                new RequestInfo { RequestUrl = "/sites/{id}", HttpMethod = "GET" },
+                new RequestInfo { RequestUrl = "/me/tasks/lists/delta", HttpMethod = "GET" }
             };
 
             // Act
             var result = await _permissionsStore.GetScopesAsync(
-                requests: requests, 
+                requests: requests,
                 leastPrivilegeOnly: leastPrivilegeOnly);
 
             // Assert
@@ -252,7 +252,7 @@ namespace PermissionsService.Test
 
             var request2 = new List<RequestInfo>()
             {
-                new RequestInfo { RequestUrl = "/me/tasks/lists/{lists_id}", HttpMethod = "GET" }
+                new RequestInfo { RequestUrl = "/me/tasks/lists/{id}", HttpMethod = "GET" }
             };
 
             // Act
@@ -279,7 +279,7 @@ namespace PermissionsService.Test
             Assert.Empty(result.Results);
             Assert.NotNull(result.Errors);
             Assert.Single(result.Errors);
-            Assert.Equal("No permissions found.", result.Errors.First().Message);
+            Assert.Equal("Permissions information for 'DELETE /no/least/privileged/permissions' was not found.", result.Errors.First().Message);
         }
 
         [Theory]
@@ -292,6 +292,7 @@ namespace PermissionsService.Test
             var result =
                 await _permissionsStore.GetScopesAsync(
                     scopeType: ScopeType.DelegatedWork,
+                    leastPrivilegeOnly: false,
                     requests: new List<RequestInfo>() { new RequestInfo { RequestUrl = url, HttpMethod = "GET" } });
 
             // Assert
@@ -306,41 +307,11 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnScopesForRequestUrlWhoseScopesInformationNotAvailable()
-        {
-            // Act
-            var result = await _permissionsStore.GetScopesAsync(
-                new List<RequestInfo> { 
-                    new RequestInfo { 
-                        RequestUrl = "/lorem/ipsum/{id}", // bogus URL whose scopes info are unavailable
-                        HttpMethod = "GET" 
-                    } 
-               });
-
-            // Assert
-            Assert.Collection(result.Results,
-                item =>
-                {
-                    Assert.Equal("LoremIpsum.Read", item.ScopeName);
-                    Assert.Equal("Consent name unavailable", item.DisplayName);
-                    Assert.Equal("Consent description unavailable", item.Description);
-                    Assert.False(item.IsAdmin);
-                },
-                item =>
-                {
-                    Assert.Equal("LoremIpsum.ReadWrite", item.ScopeName);
-                    Assert.Equal("Consent name unavailable", item.DisplayName);
-                    Assert.Equal("Consent description unavailable", item.Description);
-                    Assert.False(item.IsAdmin);
-                });
-        }
-
-        [Fact]
         public async Task ReturnLocalizedPermissionsDescriptionsForSupportedLanguage()
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
-                requests: new List<RequestInfo>() { new RequestInfo { RequestUrl = "/security/alerts/{alert_id}", HttpMethod = "GET" } },
+                requests: new List<RequestInfo>() { new RequestInfo { RequestUrl = "/security/alerts/{id}", HttpMethod = "GET" } },
                 scopeType: ScopeType.DelegatedWork,
                 locale: "es-ES");
 
@@ -427,9 +398,9 @@ namespace PermissionsService.Test
         {
             // Act
             PermissionResult result =
-                await _permissionsStore.GetScopesAsync(requests: new List<RequestInfo>() { 
-                    new RequestInfo { RequestUrl = "/accessreviews", HttpMethod = "GET" }, 
-                    new RequestInfo { RequestUrl = "/accessreviews/{id}", HttpMethod = "GET" } }, 
+                await _permissionsStore.GetScopesAsync(requests: new List<RequestInfo>() {
+                    new RequestInfo { RequestUrl = "/accessreviews", HttpMethod = "GET" },
+                    new RequestInfo { RequestUrl = "/accessreviews/{id}", HttpMethod = "GET" } },
                     scopeType: ScopeType.DelegatedWork);
 
             // Assert
