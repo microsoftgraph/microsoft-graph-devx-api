@@ -44,7 +44,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*RequestBuilder)\b";// matches request builders
             Regex regex = new Regex(pattern);
 
-            string[] lines = snippetText.Split('\n');
+            string[] allMatches = snippetText.Split('\n');
+            List<string> lines = allMatches.Distinct().ToList();
 
             foreach (string line in lines)
             {
