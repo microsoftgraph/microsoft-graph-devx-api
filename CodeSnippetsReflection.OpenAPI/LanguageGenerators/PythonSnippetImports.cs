@@ -20,16 +20,16 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     
     
         static bool NonModelClass(string input)
-    {
-        foreach (string suffix in NonModelDeclarationSuffixes)
         {
-            if (input.EndsWith(suffix))
+            foreach (string suffix in NonModelDeclarationSuffixes)
             {
-                return true;
+                if (input.EndsWith(suffix))
+                {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
-    }
 
         public GetImports()
         {
@@ -41,7 +41,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         // Method to infer import statements based on snippet text
         public string GenerateImportStatements(string snippetText)
         {
-            string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*RequestBuilder)\b";
+            string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*RequestBuilder)\b";// matches request builders
             Regex regex = new Regex(pattern);
 
             string[] lines = snippetText.Split('\n');
@@ -97,7 +97,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     
                 }
             }
-            return importPaths.ToString();
+            return  string.Join("\n", importPaths);
         }
 
         // Method to generate import statements in new lines
