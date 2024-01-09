@@ -99,7 +99,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var codeGraph = new SnippetCodeGraph(snippetModel);
         var payloadSb = new StringBuilder(
             "<?php" + Environment.NewLine + Environment.NewLine +
-            "// THIS SNIPPET IS A PREVIEW VERSION OF THE SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine +
+            Environment.NewLine +
             $"{ClientVarName} = new {ClientVarType}({TokenContextVarName}, {ScopesVarName});{Environment.NewLine + Environment.NewLine}");
         if (codeGraph.HasBody())
         {
