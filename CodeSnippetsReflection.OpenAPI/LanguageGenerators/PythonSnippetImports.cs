@@ -41,21 +41,27 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         // Method to infer import statements based on snippet text
         public string GenerateImportStatements(string snippetText)
+{
+    string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*RequestBuilder)\b"; // matches request builders
+    string patternRequestBody = @"request_body\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*)\("; 
+    Regex regex = new Regex(pattern);
+    Regex regexRequestBody = new Regex(patternRequestBody);
+
+    string[] lines = snippetText.Split('\n');
+
+    foreach (string line in lines)
+    {
+        Match match = regex.Match(line);
+        Match matchRequestBody = regexRequestBody.Match(line);
+
+        if (match.Success || matchRequestBody.Success)
         {
-            // string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*RequestBuilder)\b";// matches request builders
-            string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*)\b";
-
-            Regex regex = new Regex(pattern);
-
-            string[] lines = snippetText.Split('\n');
-
-            foreach (string line in lines)
+            string className = match.Groups["pascalCase"].Value;
+            if (matchRequestBody.Success)
             {
-                Match match = regex.Match(line);
-                if (match.Success)
-                {
-                    string className = match.Groups["pascalCase"].Value;
-                    var modelDeclarations = ModelDeclarationRegex.Matches(snippetText);
+                className = matchRequestBody.Groups["pascalCase"].Value;
+            }
+            var modelDeclarations = ModelDeclarationRegex.Matches(snippetText);
                     var enumsAndRequestBuilderDeclarations = EnumsAndRequestBuilderDeclarationRegex.Matches(snippetText);
 
                     IEnumerable<Match> combinedDeclarations = modelDeclarations.OfType<Match>()
@@ -93,18 +99,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                 else if (ModelDeclarationRegex.IsMatch(className)){
                                        Console.WriteLine($"import {declarationName}");
                                        importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");// check out for nesting
-                                    }              
-                                
+                                    }                       
                         }
                     }
-                    
-                    
-                }
-            }
-            List<string> UninqueImportPaths  = importPaths.Distinct().ToList();
-
-            return  string.Join("\n", UninqueImportPaths);
         }
+    }
+    List<string> UninqueImportPaths  = importPaths.Distinct().ToList();
+    return String.Join("\n", UninqueImportPaths);
+    
+}
 
         // Method to generate import statements in new lines
         public string GenerateImports()
