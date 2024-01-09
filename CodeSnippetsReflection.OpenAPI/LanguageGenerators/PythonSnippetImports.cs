@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
+using CodeSnippetsReflection.StringExtensions;
 
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
@@ -44,8 +45,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*RequestBuilder)\b";// matches request builders
             Regex regex = new Regex(pattern);
 
-            string[] allMatches = snippetText.Split('\n');
-            List<string> lines = allMatches.Distinct().ToList();
+            string[] lines = snippetText.Split('\n');
 
             foreach (string line in lines)
             {
@@ -86,10 +86,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                 else if (NonModelClass(declarationName)) {
                                    
                                         Console.WriteLine($"import {declarationName}");
-                                        importPaths.Add($"{importPrefix}.generated.{requestBuilderImportNamespaceStr}.{declarationName.ToLowerInvariant()} import {declarationName}");
+                                        importPaths.Add($"{importPrefix}.generated.{requestBuilderImportNamespaceStr}.{declarationName.ToSnakeCase()} import {declarationName}");
                                 }
                                 else if (ModelDeclarationRegex.IsMatch(className)){
-                                       // Model imports 
+                                       Console.WriteLine($"import {declarationName}");
+                                       importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");// check out for nesting
                                     }              
                                 
                         }
@@ -98,7 +99,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     
                 }
             }
-            return  string.Join("\n", importPaths);
+            List<string> UninqueImportPaths  = importPaths.Distinct().ToList();
+
+            return  string.Join("\n", UninqueImportPaths);
         }
 
         // Method to generate import statements in new lines
