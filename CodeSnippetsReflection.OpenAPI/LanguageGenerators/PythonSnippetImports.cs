@@ -15,8 +15,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static readonly String[] NonModelDeclarationSuffixes = new String[]{"RequestConfiguration", "QueryParameters", "RequestBody", "RequestBuilder"};
         private static readonly Regex RequestExecutorLineRegex = new Regex(@"await graph_client\.(.+)\.", RegexOptions.Singleline | RegexOptions.Compiled);
         private static readonly Regex ModelDeclarationRegex = new Regex(@"[=,\[]\s*([A-Z]\w+)\(", RegexOptions.Compiled);
-    private static readonly Regex EnumsAndRequestBuilderDeclarationRegex = new Regex(@"[=,\[]\s*([A-Z]\w+)\.", RegexOptions.Compiled); //Enums and RequestBuilders
-    private static readonly HashSet<string> PythonStandardTypes = new HashSet<string>{"base64"};
+        private static readonly Regex EnumsAndRequestBuilderDeclarationRegex = new Regex(@"[=,\[]\s*([A-Z]\w+)\.", RegexOptions.Compiled); //Enums and RequestBuilders
+        private static readonly HashSet<string> PythonStandardTypes = new HashSet<string>{"base64"};
+        private static readonly Regex NestedModelNamespaceImportErrorRegex = new Regex(@"Unable to import.+'\w+\.generated\.models\.(\w+)\.(\w+)'.+import-error", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly HashSet<string> PythonInternalTypes = new HashSet<string>{"UUID"};
+
 
     
     
@@ -40,74 +43,59 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
 
         // Method to infer import statements based on snippet text
-        public string GenerateImportStatements(string snippetText)
-{
-    string pattern = @"\b\w+\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*RequestBuilder)\b"; // matches request builders
-    string patternRequestBody = @"request_body\s*=\s*(?<pascalCase>[A-Z][a-zA-Z]*)\("; 
-    Regex regex = new Regex(pattern);
-    Regex regexRequestBody = new Regex(patternRequestBody);
-
-    string[] lines = snippetText.Split('\n');
-
-    foreach (string line in lines)
+    public string GenerateImportStatements(string snippetText)
     {
-        Match match = regex.Match(line);
-        Match matchRequestBody = regexRequestBody.Match(line);
+        var modelDeclarations = ModelDeclarationRegex.Matches(snippetText);
+        var enumsAndRequestBuilderDeclarations = EnumsAndRequestBuilderDeclarationRegex.Matches(snippetText);
 
-        if (match.Success || matchRequestBody.Success)
-        {
-            string className = match.Groups["pascalCase"].Value;
-            if (matchRequestBody.Success)
-            {
-                className = matchRequestBody.Groups["pascalCase"].Value;
-            }
-            var modelDeclarations = ModelDeclarationRegex.Matches(snippetText);
-                    var enumsAndRequestBuilderDeclarations = EnumsAndRequestBuilderDeclarationRegex.Matches(snippetText);
-
-                    IEnumerable<Match> combinedDeclarations = modelDeclarations.OfType<Match>()
+        IEnumerable<Match> combinedDeclarations = modelDeclarations.OfType<Match>()
                                                     .Concat(enumsAndRequestBuilderDeclarations.OfType<Match>())
                                                     .Where(m => m.Success);
 
-                    var declarationNames = new HashSet<string>(
-                        combinedDeclarations.Where(match => !String.Equals("GraphServiceClient", match.Groups[1].Value, StringComparison.OrdinalIgnoreCase)
+
+        var declarationNames = new HashSet<string>(
+            combinedDeclarations.Where(match => !String.Equals("GraphServiceClient", match.Groups[1].Value, StringComparison.OrdinalIgnoreCase)
                                         && !match.Groups[1].Value.StartsWith('.')) // Ignore relative imports for built in types
                         .Select(match => match.Groups[1].Value)
-                        );
-                        Console.WriteLine($"Declaration Names {declarationNames}");
-                   
-                        
-                        if (declarationNames.Any())
+        );
+        Console.WriteLine("Declaration Names: " + declarationNames);
+        if (declarationNames.Any())
+            {
+                var importNamespacePaths = InferRequestBuilderNamespacePath(snippetText);
+                var requestBuilderImportNamespaceStr = String.Join(".", importNamespacePaths);
+                Console.WriteLine($"Request Builder import namespace {requestBuilderImportNamespaceStr}");
+
+                var uniqueImportPaths = new HashSet<string>(importNamespacePaths);
+                Console.WriteLine($"Unique import paths {uniqueImportPaths}");
+
+                foreach (string declarationName in declarationNames)
+                {
+                    // Custom Kiota types
+                    if (PythonStandardTypes.Contains(declarationName))
                         {
-                            var importNamespacePaths = InferRequestBuilderNamespacePath(snippetText);
-                            var requestBuilderImportNamespaceStr = String.Join(".", importNamespacePaths);
-                            Console.WriteLine($"Request Builder import namespace {requestBuilderImportNamespaceStr}");
-
-                            var uniqueImportPaths = new HashSet<string>(importNamespacePaths);
-                            Console.WriteLine($"Unique import paths {uniqueImportPaths}");
-
-                            foreach (string declarationName in declarationNames)
-                            {
-                                // Custom Kiota types
-                                if (PythonStandardTypes.Contains(declarationName)) {
-                                    Console.WriteLine($"import {declarationName}");
-                                }
-                                else if (NonModelClass(declarationName)) {
-                                   
-                                        Console.WriteLine($"import {declarationName}");
-                                        importPaths.Add($"{importPrefix}.generated.{requestBuilderImportNamespaceStr}.{declarationName.ToSnakeCase()} import {declarationName}");
-                                }
-                                else if (ModelDeclarationRegex.IsMatch(className)){
-                                       Console.WriteLine($"import {declarationName}");
-                                       importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");// check out for nesting
-                                    }                       
-                        }
+                            Console.WriteLine($"import {declarationName}");
+                            importPaths.Add($"import {declarationName}");
                     }
-        }
+                    else if (PythonInternalTypes.Contains(declarationName)) {
+                    importPaths.Add($"from {declarationName.ToLowerInvariant()} import {declarationName}");
+                    }
+                    else if (NonModelClass(declarationName)) {
+                        
+                                Console.WriteLine($"import {declarationName}");
+                                importPaths.Add($"{importPrefix}.generated.{requestBuilderImportNamespaceStr}.{declarationName.ToSnakeCase()} import {declarationName}");
+                        }
+                    else if (ModelDeclarationRegex.IsMatch(declarationName)){
+                    Console.WriteLine($"import {declarationName}");
+                    importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");// check out for nesting
+                    }                       
+            }}
+            else
+            {
+                Console.WriteLine("No declaration names");
+            }
+
+        return string.Join("\n", importPaths);
     }
-    List<string> UninqueImportPaths  = importPaths.Distinct().ToList();
-    return String.Join("\n", UninqueImportPaths);
-    
-}
 
         // Method to generate import statements in new lines
         public string GenerateImports()
