@@ -20,6 +20,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static readonly Regex NestedModelNamespaceImportErrorRegex = new Regex(@"Unable to import.+'\w+\.generated\.models\.(\w+)\.(\w+)'.+import-error", RegexOptions.Singleline | RegexOptions.Compiled);
         private static readonly HashSet<string> PythonInternalTypes = new HashSet<string>{"UUID"};
 
+        private static readonly Dictionary<string, string> PathItemToNestedModelNamespace = new Dictionary<string, string>{
+        {"term_store", "term_store"},
+        {"call_records", "call_records"},
+        {"external_connectors", "external_connectors"},
+        {"external", "external_connectors"},
+        {"security", "security"},
+        {"ediscovery", "ediscovery"},
+        {"identity_governance", "identity_governance"},
+        {"industry_data", "industry_data"},
+        {"updates", "windows_updates"},
+        {"device_management", "device_management"},
+        {"managed_tenants", "managed_tenants"},
+        {"search", "search"}
+    };
+
+
 
     
     
@@ -95,7 +111,21 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     }
                     else{
                         // Also for models - no nesting yet
-                        importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");
+                        var nestedModelPath = new List<string>();
+                        foreach (var path in uniqueImportPaths)
+                        {
+                            if (PathItemToNestedModelNamespace.ContainsKey(path))
+                            {
+                                nestedModelPath.Add(path);
+                            }
+                        }
+                        if (nestedModelPath.Count > 0) {    
+                            var nestedModelNamespace = PathItemToNestedModelNamespace.TryGetValue(nestedModelPath.Last(), out var value) ? value : null;
+                            importPaths.Add($"{importPrefix}.generated.models.{nestedModelNamespace.ToSnakeCase()}.{declarationName.ToSnakeCase()} import {declarationName}");
+                        }
+                        else{
+                            importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");
+                        }
                     }                       
                 }
             }
