@@ -91,8 +91,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 }
                     else if (IsModelClass(declarationName)){
                         // No nesting yet
-                    Console.WriteLine($"import {declarationName}");
                     importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");// check out for nesting
+                    }
+                    else{
+                        // Also for models - no nesting yet
+                        importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");
                     }                       
                 }
             }
