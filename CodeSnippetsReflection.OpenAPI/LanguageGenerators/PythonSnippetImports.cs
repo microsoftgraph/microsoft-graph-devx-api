@@ -5,6 +5,7 @@ using System.Linq;
 using CodeSnippetsReflection.StringExtensions;
 
 
+
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
     public class GetImports
@@ -17,7 +18,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static readonly Regex ModelDeclarationRegex = new Regex(@"[=,\[]\s*([A-Z]\w+)\(", RegexOptions.Compiled);
         private static readonly Regex EnumsAndRequestBuilderDeclarationRegex = new Regex(@"[=,\[]\s*([A-Z]\w+)\.", RegexOptions.Compiled); //Enums and RequestBuilders
         private static readonly HashSet<string> PythonStandardTypes = new HashSet<string>{"base64"};
-        private static readonly Regex NestedModelNamespaceImportErrorRegex = new Regex(@"Unable to import.+'\w+\.generated\.models\.(\w+)\.(\w+)'.+import-error", RegexOptions.Singleline | RegexOptions.Compiled);
         private static readonly HashSet<string> PythonInternalTypes = new HashSet<string>{"UUID"};
 
         private static readonly Dictionary<string, string> PathItemToNestedModelNamespace = new Dictionary<string, string>{
@@ -84,17 +84,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 var importNamespacePaths = InferRequestBuilderNamespacePath(snippetText);
                 var requestBuilderImportNamespaceStr = String.Join(".", importNamespacePaths);
-                Console.WriteLine($"Request Builder import namespace {requestBuilderImportNamespaceStr}");
-
                 var uniqueImportPaths = new HashSet<string>(importNamespacePaths);
-                Console.WriteLine($"Unique import paths {uniqueImportPaths}");
-
                 foreach (string declarationName in declarationNames)
                 {
                     // Custom Kiota types
                     if (PythonStandardTypes.Contains(declarationName))
                         {
-                            Console.WriteLine($"import {declarationName}");
                             importPaths.Add($"import {declarationName}");
                     }
                     else if (PythonInternalTypes.Contains(declarationName)) {
@@ -102,15 +97,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     }
                     else if (IsNonModelClass(declarationName)) {
                         
-                        Console.WriteLine($"import {declarationName}");
                         importPaths.Add($"{importPrefix}.generated.{requestBuilderImportNamespaceStr}.{declarationName.ToSnakeCase()} import {declarationName}");
                 }
                     else if (IsModelClass(declarationName)){
-                        // No nesting yet
                     importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");// check out for nesting
                     }
                     else{
-                        // Also for models - no nesting yet
                         var nestedModelPath = new List<string>();
                         foreach (var path in uniqueImportPaths)
                         {
@@ -129,32 +121,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     }                       
                 }
             }
-            else
-            {
-                Console.WriteLine("No declaration names");
-            }
-
         return string.Join("\n", importPaths);
-    }
-
-        // Method to generate import statements in new lines
-        public string GenerateImports()
-        {
-            if (importPaths.Count == 0)
-            {
-                return "No imports added.";
-            }
-
-            string imports = "";
-
-            foreach (var path in importPaths)
-            {
-                imports += $"{path}\n";
-            }
-
-            return imports;
-        }
-
+    }        
         private static IEnumerable<string> InferRequestBuilderNamespacePath(string snippetText)
     {
         var requestExecutorMatch = RequestExecutorLineRegex.Match(snippetText);
@@ -169,11 +137,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return indexOfOpenParenthesis >= 0 ? methodName[..indexOfOpenParenthesis] : methodName;
         })
         .ToList();
-            Console.WriteLine($"Request Builder Methods {requestBuilderMethods}");
 
         if (!requestBuilderMethods.Any())
         {
-           // Assert.Fail($"Request executor line does NOT contain request builder methods: {requestExecutorMatch.Groups[1].Value}");
            Console.WriteLine($"Request executor line does NOT contain request builder methods: {requestExecutorMatch.Groups[1].Value}");
         }
         List<string> importNamespaceValues = new List<string>();
