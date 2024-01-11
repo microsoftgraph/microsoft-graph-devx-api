@@ -23,7 +23,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
     
     
-        static bool NonModelClass(string input)
+        static bool IsNonModelClass(string input)
         {
             foreach (string suffix in NonModelDeclarationSuffixes)
             {
@@ -33,6 +33,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 }
             }
             return false;
+        }
+
+        static bool IsModelClass(string input)
+        {
+            return ModelDeclarationRegex.IsMatch(input);
         }
 
         public GetImports()
@@ -79,16 +84,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     else if (PythonInternalTypes.Contains(declarationName)) {
                     importPaths.Add($"from {declarationName.ToLowerInvariant()} import {declarationName}");
                     }
-                    else if (NonModelClass(declarationName)) {
+                    else if (IsNonModelClass(declarationName)) {
                         
-                                Console.WriteLine($"import {declarationName}");
-                                importPaths.Add($"{importPrefix}.generated.{requestBuilderImportNamespaceStr}.{declarationName.ToSnakeCase()} import {declarationName}");
-                        }
-                    else if (ModelDeclarationRegex.IsMatch(declarationName)){
+                        Console.WriteLine($"import {declarationName}");
+                        importPaths.Add($"{importPrefix}.generated.{requestBuilderImportNamespaceStr}.{declarationName.ToSnakeCase()} import {declarationName}");
+                }
+                    else if (IsModelClass(declarationName)){
+                        // No nesting yet
                     Console.WriteLine($"import {declarationName}");
                     importPaths.Add($"{importPrefix}.generated.models.{declarationName.ToSnakeCase()} import {declarationName}");// check out for nesting
                     }                       
-            }}
+                }
+            }
             else
             {
                 Console.WriteLine("No declaration names");
