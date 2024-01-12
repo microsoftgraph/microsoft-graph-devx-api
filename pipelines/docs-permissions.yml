@@ -6,8 +6,8 @@
 trigger: none
 pr: none
 schedules:
-  - cron: "0 9 * * 2"
-    displayName: Weekly Tuesday graph docs permissions updates
+  - cron: "0 11 * * 1-5"
+    displayName: Every weekday MS Graph docs permissions tables updates
     branches:
       include:
       - master
@@ -61,10 +61,16 @@ steps:
 
 - pwsh: |
     # override branch prefix incase the run is manually triggered
-    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-permissions-table-update" } else { "permissions-table-update" }
+    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-permissions-tables-update" } else { "permissions-tables-update" }
     Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
     Write-Host "Branch prefix is $branchPrefix"
   displayName: 'Evaluate branch prefix to use'
+  
+- pwsh: |
+    # set commit message to use when there are changes to push
+    $commitMessage = "Update generated permissions tables with build $env:BUILD_BUILDID"
+    Write-Host "##vso[task.setvariable variable=commitMessage]$commitMessage"
+  displayName: 'Set commit message to use'
 
 - template: templates/git-config.yml
 
