@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
 using CodeSnippetsReflection.StringExtensions;
+using System.Threading;
 
 
 
@@ -14,11 +15,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private string importPrefix;
 
         private static readonly String[] NonModelDeclarationSuffixes = new String[]{"RequestConfiguration", "QueryParameters", "RequestBody", "RequestBuilder"};
-        private static readonly Regex RequestExecutorLineRegex = new Regex(@"await graph_client\.(.+)\.", RegexOptions.Singleline | RegexOptions.Compiled);
-        private static readonly Regex ModelDeclarationRegex = new Regex(@"[=,\[]\s*([A-Z]\w+)\(", RegexOptions.Compiled);
-        private static readonly Regex EnumsAndRequestBuilderDeclarationRegex = new Regex(@"[=,\[]\s*([A-Z]\w+)\.", RegexOptions.Compiled); //Enums and RequestBuilders
+        private static readonly Regex RequestExecutorLineRegex = new Regex(@"await graph_client\.(.+)\.", RegexOptions.Singleline | RegexOptions.Compiled, TimeSpan.FromSeconds(60));
+        private static readonly Regex ModelDeclarationRegex = new Regex(@"[=,\[]\s*([A-Z]\w+)\(", RegexOptions.Compiled, TimeSpan.FromSeconds(60));
+        private static readonly Regex EnumsAndRequestBuilderDeclarationRegex = new Regex(@"[=,\[]\s*([A-Z]\w+)\.", RegexOptions.Compiled, TimeSpan.FromSeconds(60)); //Enums and RequestBuilders
         private static readonly HashSet<string> PythonStandardTypes = new HashSet<string>{"base64"};
         private static readonly HashSet<string> PythonInternalTypes = new HashSet<string>{"UUID"};
+        
 
         private static readonly Dictionary<string, string> PathItemToNestedModelNamespace = new Dictionary<string, string>{
         {"term_store", "term_store"},
@@ -125,7 +127,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     }        
         private static IEnumerable<string> InferRequestBuilderNamespacePath(string snippetText)
     {
-        var requestExecutorMatch = RequestExecutorLineRegex.Match(snippetText);
+        var requestExecutorMatch = RequestExecutorLineRegex.Match(snippetText, Timeout.Infinite);
         if (!requestExecutorMatch.Success)
         {
             throw new ArgumentException($"Snippet does NOT contain request executor line: {snippetText}");
@@ -138,7 +140,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         })
         .ToList();
 
-        if (!requestBuilderMethods.Any())
+        if (requestBuilderMethods.Count == 0)
         {
            Console.WriteLine($"Request executor line does NOT contain request builder methods: {requestExecutorMatch.Groups[1].Value}");
         }

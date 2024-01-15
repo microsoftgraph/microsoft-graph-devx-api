@@ -70,7 +70,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
             GetImports imports = new GetImports();
-            ;
             snippetBuilder.Insert(0, imports.GenerateImportStatements(snippetBuilder.ToString()));
 
             return snippetBuilder.ToString();
