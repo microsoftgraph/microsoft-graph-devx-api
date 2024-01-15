@@ -1,4 +1,4 @@
-
+﻿
 using System.Collections.Generic;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Xunit;

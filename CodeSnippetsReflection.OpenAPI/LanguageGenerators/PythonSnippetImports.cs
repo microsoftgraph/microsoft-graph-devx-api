@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
@@ -127,7 +127,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     }        
         private static IEnumerable<string> InferRequestBuilderNamespacePath(string snippetText)
     {
-        var requestExecutorMatch = RequestExecutorLineRegex.Match(snippetText, Timeout.Infinite);
+        var requestExecutorMatch = RequestExecutorLineRegex.Match(snippetText);
         if (!requestExecutorMatch.Success)
         {
             throw new ArgumentException($"Snippet does NOT contain request executor line: {snippetText}");
