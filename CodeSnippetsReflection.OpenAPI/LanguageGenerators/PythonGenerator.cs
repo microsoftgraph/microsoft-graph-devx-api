@@ -67,13 +67,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var snippetBuilder = new StringBuilder($"{Environment.NewLine}{Environment.NewLine}" +
                                                    $"{ClientVarName} = {ClientVarType}({CredentialVarName}, {ScopesVarName}){Environment.NewLine}{Environment.NewLine}");
 
+            writeImportStatements(codeGraph, snippetBuilder, indentManager);
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
-            GetImports imports = new GetImports();
-            snippetBuilder.Insert(0, imports.GenerateImportStatements(snippetBuilder.ToString()));
+            // GetImports imports = new GetImports();
+            // snippetBuilder.Insert(0, imports.GenerateImportStatements(snippetBuilder.ToString()));
 
             return snippetBuilder.ToString();
         }
+        private string  writeImportStatements(SnippetCodeGraph codeGraph, StringBuilder builder, IndentManager indentManager)
+        {
+            List<string> imports = new List<string>{};
+            imports.Append("from msgraph import GraphServiceClient");
+            // add request builder imports
+            //add model imports
+            //add python standard type imports
+            return string.Join("\n", imports);
+        }
+
 
         private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder snippetBuilder, IndentManager indentManager)
         {
