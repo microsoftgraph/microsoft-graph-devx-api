@@ -69,7 +69,25 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
+            var importStatements = GetImportStatements(snippetModel);
+            snippetBuilder.Insert(0, string.Join(Environment.NewLine, importStatements));
             return snippetBuilder.ToString();
+        }
+        private static List<string> GetImportStatements(SnippetModel snippetBaseModel){
+            string modelImportPrefix = "from msgraph.generated.models.";
+        
+            List<string> snippetImports = new List<string>();
+            snippetImports.Add("from msgraph import GraphServiceClient");
+
+           var  _importsGenerator = new ImportsGenerator();
+            var imports = _importsGenerator.GenerateImportTemplates(snippetBaseModel);
+            foreach(var import in imports){
+                if (import["NameSpace"].ToString().Contains("models")) {
+                    snippetImports.Add($"{modelImportPrefix} import {import["Name"]}");
+                }
+
+            }
+            return snippetImports;
         }
 
         private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder snippetBuilder, IndentManager indentManager)
