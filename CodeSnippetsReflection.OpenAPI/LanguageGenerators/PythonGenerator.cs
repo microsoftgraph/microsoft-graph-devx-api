@@ -73,16 +73,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             snippetBuilder.Insert(0, string.Join(Environment.NewLine, importStatements));
             return snippetBuilder.ToString();
         }
-        private static List<string> GetImportStatements(SnippetModel snippetBaseModel){
-            string modelImportPrefix = "from msgraph.generated.models.";
+        private static List<string> GetImportStatements(SnippetModel snippetModel){
+            string modelImportPrefix = "from msgraph.generated.models";
+            string requestBuilderImportPrefix = "from msgraph.generated";
         
             List<string> snippetImports = new List<string>();
             snippetImports.Add("from msgraph import GraphServiceClient");
 
-           var  _importsGenerator = new ImportsGenerator();
-            var imports = _importsGenerator.GenerateImportTemplates(snippetBaseModel);
+            var  _importsGenerator = new ImportsGenerator();
+            var imports = _importsGenerator.GenerateImportTemplates(snippetModel);
             foreach(var import in imports){
-                if (import["NameSpace"].ToString().Contains("models")) {
+                if (import["NamespaceName"] == null)
+                    continue;
+                if (import["NamespaceName"].Contains("models")) {
                     snippetImports.Add($"{modelImportPrefix} import {import["Name"]}");
                 }
 
