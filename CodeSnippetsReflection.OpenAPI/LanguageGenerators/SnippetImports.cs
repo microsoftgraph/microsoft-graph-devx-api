@@ -12,16 +12,17 @@ public class ImportsGenerator{
     public List<Dictionary<string, string>> imports  = new();
     public List<Dictionary<string, string>> GenerateImportTemplates(SnippetModel snippetModel){
         var codeGraph = new SnippetCodeGraph(snippetModel);
-        if(codeGraph.Body.NamespaceName != null){
-            var import = new Dictionary<string, string>(){
-                {"Name", codeGraph.Body.Name},
-                {"TypeDefinition", codeGraph.Body.TypeDefinition},
-                {"NamespaceName", codeGraph.Body.NamespaceName}
-            };
-            imports.Append(import);
+        if(string.IsNullOrEmpty(codeGraph.Body.NamespaceName)){
+            Console.WriteLine("No namespace found");
 
             }
-            if (codeGraph.Body.Children.Count > 0){
+        var import = new Dictionary<string, string>(){
+            {"Name", codeGraph.Body.Name},
+            {"TypeDefinition", codeGraph.Body.TypeDefinition},
+            {"NamespaceName", codeGraph.Body.NamespaceName}
+        };
+        imports.Add(import);
+        if (codeGraph.Body.Children.Count > 0){
             foreach ( var child in codeGraph.Body.Children)
             {
                 if(child.NamespaceName != null){
@@ -30,7 +31,7 @@ public class ImportsGenerator{
                         {"TypeDefinition", child.TypeDefinition},
                         {"NamespaceName", child.NamespaceName}
                     };
-                    imports.Append(childimport);
+                    imports.Add(childimport);
                 }
                 if (child.Children.Count > 0){
                     foreach ( var grandchild in child.Children)
@@ -42,7 +43,7 @@ public class ImportsGenerator{
                                 {"NamespaceName", grandchild.NamespaceName}
                             };
 
-                            imports.Append(grandchildimport);
+                            imports.Add(grandchildimport);
                         }
                         if(grandchild.Children != null){
                             foreach ( var grandchild2 in grandchild.Children)
@@ -54,7 +55,7 @@ public class ImportsGenerator{
                                         {"NamespaceName", grandchild2.NamespaceName}
                                     };
                                   
-                                    imports.Append(grandchildimport);
+                                    imports.Add(grandchildimport);
                                 }
                             }
                         }
@@ -63,6 +64,7 @@ public class ImportsGenerator{
             }
         
         }
+        
         return imports;
         }
         
