@@ -12,60 +12,32 @@ public class ImportsGenerator{
     public List<Dictionary<string, string>> imports  = new();
     public List<Dictionary<string, string>> GenerateImportTemplates(SnippetModel snippetModel){
         var codeGraph = new SnippetCodeGraph(snippetModel);
-        if(string.IsNullOrEmpty(codeGraph.Body.NamespaceName)){
-            Console.WriteLine("No namespace found");
-
-            }
-        var import = new Dictionary<string, string>(){
-            {"Name", codeGraph.Body.Name},
-            {"TypeDefinition", codeGraph.Body.TypeDefinition},
-            {"NamespaceName", codeGraph.Body.NamespaceName}
-        };
-        imports.Add(import);
-        if (codeGraph.Body.Children.Count > 0){
-            foreach ( var child in codeGraph.Body.Children)
-            {
-                if(child.NamespaceName != null){
-                    var childimport = new Dictionary<string, string>(){
-                        {"Name", child.Name},
-                        {"TypeDefinition", child.TypeDefinition},
-                        {"NamespaceName", child.NamespaceName}
-                    };
-                    imports.Add(childimport);
-                }
-                if (child.Children.Count > 0){
-                    foreach ( var grandchild in child.Children)
-                    {
-                        if(grandchild.NamespaceName != null){
-                            var grandchildimport = new Dictionary<string, string>(){
-                                {"Name", grandchild.Name},
-                                {"TypeDefinition", grandchild.TypeDefinition},
-                                {"NamespaceName", grandchild.NamespaceName}
-                            };
-
-                            imports.Add(grandchildimport);
-                        }
-                        if(grandchild.Children != null){
-                            foreach ( var grandchild2 in grandchild.Children)
-                            {
-                                if(grandchild2.NamespaceName != null){
-                                    var grandchildimport = new Dictionary<string, string>(){
-                                        {"Name", grandchild2.Name},
-                                        {"TypeDefinition", grandchild2.TypeDefinition},
-                                        {"NamespaceName", grandchild2.NamespaceName}
-                                    };
-                                  
-                                    imports.Add(grandchildimport);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        
-        }
+        // Call recursive function to get all model import to be added to the template
+        var imports = new List<Dictionary<string, string>>();
+        AddModelImportTemplates(codeGraph.Body, imports);
         
         return imports;
+        }
+    private static void AddModelImportTemplates(CodeProperty node, List<Dictionary<string, string>> imports)
+        {
+            if (!string.IsNullOrEmpty(node.NamespaceName))
+            {
+                var import = new Dictionary<string, string>
+                {
+                    { "Name", node.Name },
+                    { "TypeDefinition", node.TypeDefinition },
+                    { "NamespaceName", node.NamespaceName }
+                };
+                imports.Add(import);
+            }
+
+            if (node.Children.Count > 0)
+            {
+                foreach (var child in node.Children)
+                {
+                    AddModelImportTemplates(child, imports);
+                }
+            }
         }
         
     }
