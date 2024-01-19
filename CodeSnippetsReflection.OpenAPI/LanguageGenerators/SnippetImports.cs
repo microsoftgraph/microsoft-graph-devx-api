@@ -16,6 +16,15 @@ public class ImportsGenerator{
         var imports = new List<Dictionary<string, string>>();
         AddModelImportTemplates(codeGraph.Body, imports);
         // check and add request builder imports
+        if (codeGraph.Nodes.Any()){
+            var pathNodes = new Dictionary<string, string>
+            {
+                { "Path", codeGraph.Nodes.First().Path },
+                { "Segment", codeGraph.Nodes.First().Segment},
+            };
+            imports.Add(pathNodes);
+            
+        };
         
         return imports;
         }
