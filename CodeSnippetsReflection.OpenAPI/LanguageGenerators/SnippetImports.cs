@@ -15,6 +15,7 @@ public class ImportsGenerator{
         // Call recursive function to get all model import to be added to the template
         var imports = new List<Dictionary<string, string>>();
         AddModelImportTemplates(codeGraph.Body, imports);
+        // check and add request builder imports
         
         return imports;
         }
