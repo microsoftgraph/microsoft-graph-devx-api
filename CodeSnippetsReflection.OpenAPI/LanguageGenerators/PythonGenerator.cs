@@ -86,7 +86,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (import["NamespaceName"] == null)
                     continue;
                 if (import["NamespaceName"].Contains("models")) {
-                    snippetImports.Add($"{modelImportPrefix} import {import["Name"]}");
+                    snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["Name"]}");
                 }
 
             }
