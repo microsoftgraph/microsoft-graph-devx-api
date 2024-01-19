@@ -83,13 +83,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var  _importsGenerator = new ImportsGenerator();
             var imports = _importsGenerator.GenerateImportTemplates(snippetModel);
             foreach(var import in imports){
-                if (import["NamespaceName"] == null)
+                if (import.ContainsKey("NamespaceName") && string.IsNullOrEmpty(import["NamespaceName"]))
                     continue;
-                if (import["NamespaceName"].Contains("models")) {
+                if (import.ContainsKey("NamespaceName") &&   import["NamespaceName"].Contains("models")) {
                     snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["Name"]}");
+                }
+                if(import.ContainsKey("Path") && import.ContainsKey("Segment")){
+                    snippetImports.Add($"{requestBuilderImportPrefix}.{import["Segment"]}.{import["Segment"]+"_request_builder"} import {import["Segment"].ToFirstCharacterUpperCase()}RequestBuilder");
                 }
 
             }
+
             return snippetImports;
         }
 
