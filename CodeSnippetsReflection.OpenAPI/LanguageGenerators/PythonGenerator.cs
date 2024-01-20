@@ -73,11 +73,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             snippetBuilder.Insert(0, string.Join(Environment.NewLine, importStatements));
             return snippetBuilder.ToString();
         }
-        private static List<string> GetImportStatements(SnippetModel snippetModel){
+        private static HashSet<string> GetImportStatements(SnippetModel snippetModel){
             string modelImportPrefix = "from msgraph.generated.models";
             string requestBuilderImportPrefix = "from msgraph.generated";
         
-            List<string> snippetImports = new List<string>();
+            HashSet<string> snippetImports = new HashSet<string>();
+
             snippetImports.Add("from msgraph import GraphServiceClient");
 
             var  _importsGenerator = new ImportsGenerator();
