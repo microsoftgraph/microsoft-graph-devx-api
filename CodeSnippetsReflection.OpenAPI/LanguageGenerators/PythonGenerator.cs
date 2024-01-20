@@ -90,7 +90,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 }
                 if(import.ContainsKey("NamespaceName") & !import["NamespaceName"].Contains("models")){
                     // snippetImports.Add($"{requestBuilderImportPrefix}.{import["NamespaceName"].ToSnakeCase()}.{import["TypeDefinition"]+"_request_builder"} import {import["Name"]}");
-                    snippetImports.Add($"{requestBuilderImportPrefix}.{import["NamespaceName"].ToSnakeCase()} import {import["Name"]}");
+                    snippetImports.Add($"{requestBuilderImportPrefix}.{import["NamespaceName"]} import {import["Name"]}");
                     //import["NamespaceName"].EndsWith("RequestBuilder") ||
                 }
 
