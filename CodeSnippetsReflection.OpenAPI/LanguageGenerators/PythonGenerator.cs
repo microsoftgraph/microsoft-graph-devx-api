@@ -89,9 +89,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["Name"]}");
                 }
                 if(import.ContainsKey("NamespaceName") & !import["NamespaceName"].Contains("models")){
-                    // snippetImports.Add($"{requestBuilderImportPrefix}.{import["NamespaceName"].ToSnakeCase()}.{import["TypeDefinition"]+"_request_builder"} import {import["Name"]}");
-                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))} import {import["Name"]}");
-                    
+                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}");                    
                     //import["NamespaceName"].EndsWith("RequestBuilder") ||
                 }
 
