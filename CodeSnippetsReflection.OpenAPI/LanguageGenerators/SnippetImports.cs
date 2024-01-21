@@ -14,21 +14,22 @@ public class ImportsGenerator{
         var codeGraph = new SnippetCodeGraph(snippetModel);
         // Call recursive function to get all model import to be added to the template
         var imports = new List<Dictionary<string, string>>();
-        AddModelImportTemplates(codeGraph.Body, imports);
-        // check and add request builder imports
-        // if (codeGraph.Nodes.Any()){
-        //     var pathNodes = new Dictionary<string, string>
-        //     {
-        //         { "Path", codeGraph.Nodes.First().Path },
-        //         { "Segment", codeGraph.Nodes.First().Segment},
-        //     };
-        //     imports.Add(pathNodes);
-            
-        // };
+        if(codeGraph.HasHeaders() || codeGraph.HasParameters() || codeGraph.HasOptions()){
+            // we have a request builder
+            var className = codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
+            var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
+            var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";
+            // request builder name exists, call recursive function with request builder name, default null
+            AddModelImportTemplates(codeGraph.Body, imports, requestBuilderName = requestBuilderName);
+
+        }
+        // else call the normal recursive function without request builder name
+       AddModelImportTemplates(codeGraph.Body, imports);
+        
         
         return imports;
         }
-    private static void AddModelImportTemplates(CodeProperty node, List<Dictionary<string, string>> imports)
+    private static void AddModelImportTemplates(CodeProperty node, List<Dictionary<string, string>> imports, string requestBuilderName = null)
         {
             if (!string.IsNullOrEmpty(node.NamespaceName))
             {
@@ -36,7 +37,8 @@ public class ImportsGenerator{
                 {
                     { "Name", node.Name },
                     { "TypeDefinition", node.TypeDefinition },
-                    { "NamespaceName", node.NamespaceName }
+                    { "NamespaceName", node.NamespaceName },
+                    { "RequestBuilderName", requestBuilderName}
                 };
                 imports.Add(import);
             }

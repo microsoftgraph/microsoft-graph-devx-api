@@ -89,9 +89,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (import.ContainsKey("NamespaceName") &&   import["NamespaceName"].Contains("models")) {
                     snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["Name"]}");
                 }
-                if(import.ContainsKey("NamespaceName") & !import["NamespaceName"].Contains("models")){
+                if(import.ContainsKey("NamespaceName") && !import["NamespaceName"].Contains("models")){
+                    // import and path to request Body
                     snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}");                    
                     //import["NamespaceName"].EndsWith("RequestBuilder") ||
+                }
+                if(import.ContainsKey("NamespaceName") && !import["NamespaceName"].Contains("models") && import["requestBuilderName"] != null){
+                    // import and path to request builder
+                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["requestBuilderName"].ToSnakeCase()} import {import["Name"]}");                    
                 }
 
             }
