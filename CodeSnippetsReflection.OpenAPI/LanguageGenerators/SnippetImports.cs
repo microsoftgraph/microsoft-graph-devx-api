@@ -20,7 +20,7 @@ public class ImportsGenerator{
             var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
             var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";
             // request builder name exists, call recursive function with request builder name, default null
-            AddModelImportTemplates(codeGraph.Body, imports, requestBuilderName = requestBuilderName);
+            AddModelImportTemplates(codeGraph.Body, imports, requestBuilderName);
 
         }
         // else call the normal recursive function without request builder name
