@@ -99,6 +99,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     var className = import["NamespaceName"].Split('.').Last();
                     var requestBuilderClassName = $"{className}RequestBuilder";
                     snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["RequestBuilderName"].ToSnakeCase()} import {requestBuilderClassName}");                    
+                }else if(import["RequestBuilderName"] != null){
+                  var className = import["NamespaceName"].Split('.').Last();
+                    var requestBuilderClassName = $"{className}RequestBuilder";
+                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["RequestBuilderName"].ToSnakeCase()} import {requestBuilderClassName}");                      
                 }
                 
             }
