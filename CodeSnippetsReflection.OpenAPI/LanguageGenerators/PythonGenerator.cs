@@ -92,13 +92,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if(import.ContainsKey("NamespaceName") && !import["NamespaceName"].Contains("models")){
                     // import and path to request Body
                     snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}");                    
-                    //import["NamespaceName"].EndsWith("RequestBuilder") ||
-                }
-                if(import.ContainsKey("NamespaceName")  && import["RequestBuilderName"] != null){
+                    // Assume custome types that are not models are likely to be request builders
+                    if(import.ContainsKey("NamespaceName")  && import["RequestBuilderName"] != null){
                     // import and path to request builder
                     snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["RequestBuilderName"].ToSnakeCase()} import {import["Name"]}");                    
                 }
 
+                }
+                
             }
 
             return snippetImports;
