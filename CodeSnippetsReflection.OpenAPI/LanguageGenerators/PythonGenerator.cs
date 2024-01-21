@@ -95,7 +95,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     // Assume custome types that are not models are likely to be request builders
                     if(import.ContainsKey("NamespaceName")  && import["RequestBuilderName"] != null){
                     // import and path to request builder
-                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["RequestBuilderName"].ToSnakeCase()} import {import["NamespaceName"].Split('.').Length - 1}");                    
+                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["RequestBuilderName"].ToSnakeCase()} import {import["NamespaceName"].Split('.').Last()}");                    
                 }
 
                 }
