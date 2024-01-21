@@ -43,7 +43,7 @@ public class ImportsGenerator{
                 imports.Add(import);
             }
 
-            if (node.Children.Count > 0)
+            if (node.Children != null && node.Children.Count > 0)
             {
                 foreach (var child in node.Children)
                 {
