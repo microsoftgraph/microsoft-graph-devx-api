@@ -19,8 +19,18 @@ public class ImportsGenerator{
             var className = codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
             var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
             var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";
+            //check path and include last part to request builder name
+            if(codeGraph.Nodes.Last().Path != null){
+                var path = codeGraph.Nodes.Last().Path;
+                var pathParts = path.Split('/');
+                var lastPathPart = pathParts.Last();
+                if(lastPathPart != null){
+                    requestBuilderName = $"{requestBuilderName}{lastPathPart.ToFirstCharacterUpperCase()}";
+                }
+
+            }
             // request builder name exists, call recursive function with request builder name, default null
-            AddModelImportTemplates(codeGraph.Body, imports, requestBuilderName);
+            AddModelImportTemplates(codeGraph.Body, imports, requestBuilderName, codeGraph.Nodes.Last().Path.Replace("/","."));
 
         }
         // else call the normal recursive function without request builder name
@@ -29,7 +39,7 @@ public class ImportsGenerator{
         
         return imports;
         }
-    private static void AddModelImportTemplates(CodeProperty node, List<Dictionary<string, string>> imports, string requestBuilderName = null)
+    private static void AddModelImportTemplates(CodeProperty node, List<Dictionary<string, string>> imports, string requestBuilderName = null, string path = null)
         {
             if (!string.IsNullOrEmpty(node.NamespaceName))
             {
@@ -38,6 +48,7 @@ public class ImportsGenerator{
                     { "Name", node.Name },
                     { "TypeDefinition", node.TypeDefinition },
                     { "NamespaceName", node.NamespaceName },
+                    {"Path", path},
                     { "RequestBuilderName", requestBuilderName}
                 };
                 imports.Add(import);
@@ -47,7 +58,7 @@ public class ImportsGenerator{
             {
                 foreach (var child in node.Children)
                 {
-                    AddModelImportTemplates(child, imports, requestBuilderName);
+                    AddModelImportTemplates(child, imports, requestBuilderName, path);
                 }
             }
         }
