@@ -47,7 +47,7 @@ public class ImportsGenerator{
             {
                 foreach (var child in node.Children)
                 {
-                    AddModelImportTemplates(child, imports);
+                    AddModelImportTemplates(child, imports, requestBuilderName);
                 }
             }
         }
