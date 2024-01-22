@@ -99,6 +99,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"]}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");                    
 
                 }
+                if(import.ContainsKey("PropertyType") && import["PropertyType"] == "Enum"){
+                    //construct path to request builder
+                    snippetImports.Add($"from {import["PropertyType"].ToLowerInvariant()} import {import["PropertyType"]}");                    
+
+                }
                 
             }
 
