@@ -28,7 +28,7 @@ public class ImportsGenerator{
                     requestBuilderName = $"{requestBuilderName}";
                     imports.Add(new Dictionary<string, string>
                     {
-                        { "Path", Regex.Replace(path.Replace("\\", ".").Replace("()", ""), @"\{[^}]*-id\}", "item")},
+                        { "Path", Regex.Replace(path.Replace("\\", ".").Replace("()", ""), @"\{[^}]*-id\}", "item", RegexOptions.None, TimeSpan.FromSeconds(60))},
                         { "RequestBuilderName", requestBuilderName}
                     });
                 }
