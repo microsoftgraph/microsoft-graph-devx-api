@@ -89,13 +89,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (import.ContainsKey("NamespaceName") &&   import["NamespaceName"].Contains("models")) {
                     snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["Name"]}");
                 }
-                // if(import.ContainsKey("NamespaceName") && !import["NamespaceName"].Contains("models")){
-                //     // import and path to request Body
-                //     snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}");                    
-                //     // Assume custome types that are not models are likely to be request builders
-                // }
+                if(import.ContainsKey("NamespaceName") && !import["NamespaceName"].Contains("models")){
+                    // import and path to request Body
+                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}");                    
+                }
                 
                 if(import.ContainsKey("Path") && import["Path"] != null && import["RequestBuilderName"] != null){
+                    //construct path to request builder
                     snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"]}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");                    
 
                 }
