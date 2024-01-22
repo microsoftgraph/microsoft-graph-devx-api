@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
@@ -28,7 +28,7 @@ public class ImportsGenerator{
                     requestBuilderName = $"{requestBuilderName}";
                     imports.Add(new Dictionary<string, string>
                     {
-                        { "Path", path.Replace("\\", ".").Replace("()", "")},
+                        { "Path", Regex.Replace(path.Replace("\\", ".").Replace("()", ""), @"\{[^}]*-id\}", "item")},
                         { "RequestBuilderName", requestBuilderName}
                     });
                 }
