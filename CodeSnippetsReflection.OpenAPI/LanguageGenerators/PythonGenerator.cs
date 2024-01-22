@@ -87,7 +87,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (import.ContainsKey("NamespaceName") && string.IsNullOrEmpty(import["NamespaceName"]))
                     continue;
                 if (import.ContainsKey("NamespaceName") &&   import["NamespaceName"].Contains("models")) {
-                    snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["Name"]}");
+                    snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["Name"].ToFirstCharacterUpperCase()}");
                 }
                 if(import.ContainsKey("NamespaceName") && !import["NamespaceName"].Contains("models")){
                     // import and path to request Body
