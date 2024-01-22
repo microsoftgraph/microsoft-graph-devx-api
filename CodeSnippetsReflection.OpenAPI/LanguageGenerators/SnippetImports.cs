@@ -25,12 +25,16 @@ public class ImportsGenerator{
                 var pathParts = path.Split('/');
                 var lastPathPart = pathParts.Last();
                 if(lastPathPart != null){
-                    requestBuilderName = $"{requestBuilderName}{lastPathPart.ToFirstCharacterUpperCase()}";
+                    requestBuilderName = $"{requestBuilderName}";
+                    imports.Add(new Dictionary<string, string>
+                    {
+                        { "Path", path.Replace("\\", ".").Replace("()", "")},
+                        { "RequestBuilderName", requestBuilderName}
+                    });
                 }
 
             }
             // request builder name exists, call recursive function with request builder name, default null
-            AddModelImportTemplates(codeGraph.Body, imports, requestBuilderName, codeGraph.Nodes.Last().Path.Replace("/","."));
 
         }
         // else call the normal recursive function without request builder name
@@ -47,9 +51,8 @@ public class ImportsGenerator{
                 {
                     { "Name", node.Name },
                     { "TypeDefinition", node.TypeDefinition },
-                    { "NamespaceName", node.NamespaceName },
-                    {"Path", path},
-                    { "RequestBuilderName", requestBuilderName}
+                    { "NamespaceName", node.NamespaceName }
+                   
                 };
                 imports.Add(import);
             }
