@@ -87,17 +87,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (import.ContainsKey("NamespaceName") && string.IsNullOrEmpty(import["NamespaceName"]))
                     continue;
                 if (import.ContainsKey("NamespaceName") &&   import["NamespaceName"].Contains("models") && import["TypeDefinition"] != null) {
-                    snippetImports.Add($"{modelImportPrefix}.{import["TypeDefinition"].ToSnakeCase()} import {import["TypeDefinition"]}");
+                    snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["TypeDefinition"]}");
+                    
                 }
                 if(import.ContainsKey("NamespaceName") && !import["NamespaceName"].Contains("models")){
                     // import and path to request Body
-                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}");                    
+                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}");
+                    
                 }
                 if(import.ContainsKey("Path") && import["Path"] != null && import["RequestBuilderName"] != null){
                     //construct path to request builder
                     snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"]}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");                    
 
                 }
+                if(import.ContainsKey("NamespaceName") &&   import["NamespaceName"].Contains("models") && import["PropertyType"] == "Enum"){
+                        snippetImports.Add($"{modelImportPrefix}.{import["Value"].Split(".")[0].ToSnakeCase()} import {import["Value"]}");
+                    }
                 if(import.ContainsKey("PropertyType") && import["PropertyType"] == "Enum" ){
                     //construct path to request builder
                     snippetImports.Add($"from {import["PropertyType"].ToLowerInvariant()} import {import["PropertyType"]}");                    
