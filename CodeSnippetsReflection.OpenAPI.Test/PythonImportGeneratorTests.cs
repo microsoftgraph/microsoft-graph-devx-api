@@ -73,8 +73,5 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("from msgraph.generated.models.email_address import EmailAddress", result);
         Assert.Contains("from msgraph.generated.models.extension import Extension", result);
         Assert.Contains("from msgraph.generated.models.open_type_extension import OpenTypeExtension", result);
-
-
-
     }
 }
