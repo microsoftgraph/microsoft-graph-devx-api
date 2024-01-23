@@ -12,7 +12,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test;
 public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
 {
     [Fact]
-    public async Task TestGenerateImportTemplates()
+    public async Task TestGenerateImportTemplatesForModelImports()
     {
         // Arrange
 
@@ -42,6 +42,28 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.NotNull(result);
         Assert.IsType<List<Dictionary<string, string>>>(result);
         Assert.Equal(2, result.Count);
+        Assert.Contains("Name", result[0].Keys);
+        Assert.Contains("TypeDefinition", result[0].Keys);
+        Assert.Contains("NamespaceName", result[0].Keys);
+        Assert.Contains("PropertyType", result[0].Keys);
+        Assert.Contains("Value", result[0].Keys);
         }
+    // another test for path and request builder name
+    [Fact]
+    public async Task TestGenerateImportTemplatesForRequestBuilderImports()
+    {
+        // Arrange
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith(subject,'All')");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var importsGenerator = new ImportsGenerator();
 
+        // Act
+        var result = importsGenerator.GenerateImportTemplates(snippetModel);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<List<Dictionary<string, string>>>(result);
+        Assert.Contains("Path", result[0].Keys);
+        Assert.Contains("RequestBuilderName", result[0].Keys);
+    }
 }
