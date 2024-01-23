@@ -96,7 +96,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (import.TryGetValue("NamespaceName", out var nameSpace) && !nameSpace.Contains("models"))
                 {
                     // import and path to request Body
-                    snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant())).Replace(".me.", ".users.item.")}.{import["Name"].ToSnakeCase()} import {import["Name"]}");
+                    var importString = $"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}";
+                    importString = importString.Replace(".me.", ".users.item.");
+                    snippetImports.Add(importString);
 
                 }
                 if (import.TryGetValue("Path", out var path) && path != null && import.TryGetValue("RequestBuilderName", out var requestBuilderName) && requestBuilderName != null)
