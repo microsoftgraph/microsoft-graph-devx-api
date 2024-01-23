@@ -52,7 +52,8 @@ public class ImportsGenerator{
                     { "Name", node.Name },
                     { "TypeDefinition", node.TypeDefinition },
                     { "NamespaceName", node.NamespaceName },
-                    {"PropertyType", node.PropertyType.ToString()}
+                    {"PropertyType", node.PropertyType.ToString()},
+                    {"Value", node.Value}
                    
                 };
                 imports.Add(import);
