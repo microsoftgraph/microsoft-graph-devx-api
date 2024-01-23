@@ -6,12 +6,11 @@ using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
 
-namespace CodeSnippetsReflection.OpenAPI.ModelGraph;
+namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 
 public class ImportsGenerator
 {
-    public List<Dictionary<string, string>> imports = new();
-    public List<Dictionary<string, string>> GenerateImportTemplates(SnippetModel snippetModel)
+    public  List<Dictionary<string, string>> GenerateImportTemplates(SnippetModel snippetModel)
     {
         var codeGraph = new SnippetCodeGraph(snippetModel);
         // Call recursive function to get all model import to be added to the template
@@ -48,7 +47,7 @@ public class ImportsGenerator
 
         return imports;
     }
-    private static void AddModelImportTemplates(CodeProperty node, List<Dictionary<string, string>> imports, string requestBuilderName = null, string path = null)
+    private static void AddModelImportTemplates(CodeProperty node, List<Dictionary<string, string>> imports)
     {
         if (!string.IsNullOrEmpty(node.NamespaceName))
         {
@@ -68,7 +67,7 @@ public class ImportsGenerator
         {
             foreach (var child in node.Children)
             {
-                AddModelImportTemplates(child, imports, requestBuilderName, path);
+                AddModelImportTemplates(child, imports);
             }
         }
     }

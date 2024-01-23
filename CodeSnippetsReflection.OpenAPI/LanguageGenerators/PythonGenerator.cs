@@ -75,37 +75,37 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
         {
-            string modelImportPrefix = "from msgraph.generated.models";
-            string requestBuilderImportPrefix = "from msgraph.generated";
+            const string modelImportPrefix = "from msgraph.generated.models";
+            const string requestBuilderImportPrefix = "from msgraph.generated";
 
             HashSet<string> snippetImports = new HashSet<string>();
 
             snippetImports.Add("from msgraph import GraphServiceClient");
 
-            var _importsGenerator = new ImportsGenerator();
-            var imports = _importsGenerator.GenerateImportTemplates(snippetModel);
+            var importsGenerator = new ImportsGenerator();
+            var imports = importsGenerator.GenerateImportTemplates(snippetModel);
             foreach (var import in imports)
             {
-                if (import.ContainsKey("NamespaceName") && string.IsNullOrEmpty(import["NamespaceName"]))
+                if (import.TryGetValue("NamespaceName", out var namespaceName) && string.IsNullOrEmpty(namespaceName))
                     continue;
-                if (import.ContainsKey("NamespaceName") && import["NamespaceName"].Contains("models") && import["TypeDefinition"] != null)
+                if (import.TryGetValue("NamespaceName", out var nameSpaceName) && nameSpaceName.Contains("models") && import.TryGetValue("TypeDefinition", out var typeDefinition) && typeDefinition != null)
                 {
                     snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["TypeDefinition"]}");
 
                 }
-                if (import.ContainsKey("NamespaceName") && !import["NamespaceName"].Contains("models"))
+                if (import.TryGetValue("NamespaceName", out var nameSpace) && !nameSpace.Contains("models"))
                 {
                     // import and path to request Body
                     snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant())).Replace(".me.", ".users.item.")}.{import["Name"].ToSnakeCase()} import {import["Name"]}");
 
                 }
-                if (import.ContainsKey("Path") && import["Path"] != null && import["RequestBuilderName"] != null)
+                if (import.TryGetValue("Path", out var path) && path != null && import.TryGetValue("RequestBuilderName", out var requestBuilderName) && requestBuilderName != null)
                 {
                     //construct path to request builder
                     snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"]}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");
 
                 }
-                if (import.ContainsKey("NamespaceName") && import["NamespaceName"].Contains("models") && import["PropertyType"] == "Enum")
+                if (import.TryGetValue("NamespaceName", out var NamespaceName) && NamespaceName.Contains("models") && import.TryGetValue("PropertyType", out var propertyType) && propertyType == "Enum")
                 {
                     snippetImports.Add($"{modelImportPrefix}.{import["Value"].Split(".")[0].ToSnakeCase()} import {import["Value"]}");
                 }
