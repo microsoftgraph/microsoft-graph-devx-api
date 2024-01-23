@@ -102,7 +102,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (import.TryGetValue("Path", out var path) && path != null && import.TryGetValue("RequestBuilderName", out var requestBuilderName) && requestBuilderName != null)
                 {
                     //construct path to request builder
-                    snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"].Replace(".me.", ".users.item.")}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");
+                    var importString = $"{requestBuilderImportPrefix}{import["Path"]}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}";
+                    importString = importString.Replace(".me.", ".users.item.");
+                    snippetImports.Add(importString);
 
                 }
                 if (import.TryGetValue("NamespaceName", out var NamespaceName) && NamespaceName.Contains("models") && import.TryGetValue("PropertyType", out var propertyType) && propertyType == "Enum")
