@@ -1,7 +1,6 @@
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using System.Collections.Generic;
 
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
@@ -14,8 +13,6 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
     [Fact]
     public async Task TestGenerateImportTemplatesForModelImports()
     {
-        // Arrange
-
             const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
                             "\"displayName\": \"displayName-value\",\r\n  " +
                             "\"mailNickname\": \"mailNickname-value\",\r\n  " +
@@ -27,18 +24,8 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
             Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
-
-
-
-
         var importsGenerator = new ImportsGenerator();
-        
-
-
-        // Act
         var result = importsGenerator.GenerateImportTemplates(snippetModel);
-
-        // Assert
         Assert.NotNull(result);
         Assert.IsType<List<Dictionary<string, string>>>(result);
         Assert.Equal(2, result.Count);
@@ -52,15 +39,10 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
     [Fact]
     public async Task TestGenerateImportTemplatesForRequestBuilderImports()
     {
-        // Arrange
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith(subject,'All')");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var importsGenerator = new ImportsGenerator();
-
-        // Act
         var result = importsGenerator.GenerateImportTemplates(snippetModel);
-
-        // Assert
         Assert.NotNull(result);
         Assert.IsType<List<Dictionary<string, string>>>(result);
         Assert.Contains("Path", result[0].Keys);
