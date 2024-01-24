@@ -97,12 +97,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         {
                             var namespaceParts = NamespaceName.Split('.').Select((s, i) => i == NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
                             var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{Name.ToSnakeCase()} import {Name}";
-                            snippetImports.Add(importString);
+                            snippetImports.Add(importString.Replace(".me.", ".users.item."));
                         }
                 }
                 if(import.ContainsKey("Path") && import["Path"] != null && import["RequestBuilderName"] != null){
                     //construct path to request builder
-                    snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"]}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");                    
+                    snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"].Replace(".me.", ".users.item.")}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");                    
 
                 }
 
