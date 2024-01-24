@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -14,11 +14,11 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
     [Fact]
     public async Task TestGenerateImportTemplatesForModelImports()
     {
-            const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
-                            "\"displayName\": \"displayName-value\",\r\n  " +
-                            "\"mailNickname\": \"mailNickname-value\",\r\n  " +
-                            "\"userPrincipalName\": \"upn-value@tenant-value.onmicrosoft.com\",\r\n " +
-                            " \"passwordProfile\" : {\r\n    \"forceChangePasswordNextSignIn\": true,\r\n    \"password\": \"password-value\"\r\n  }\r\n}";//nested passwordProfile Object
+        const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
+                        "\"displayName\": \"displayName-value\",\r\n  " +
+                        "\"mailNickname\": \"mailNickname-value\",\r\n  " +
+                        "\"userPrincipalName\": \"upn-value@tenant-value.onmicrosoft.com\",\r\n " +
+                        " \"passwordProfile\" : {\r\n    \"forceChangePasswordNextSignIn\": true,\r\n    \"password\": \"password-value\"\r\n  }\r\n}";//nested passwordProfile Object
 
         using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users")
         {
@@ -35,7 +35,7 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("NamespaceName", result[0].Keys);
         Assert.Contains("PropertyType", result[0].Keys);
         Assert.Contains("Value", result[0].Keys);
-        }
+    }
     // another test for path and request builder name
     [Fact]
     public async Task TestGenerateImportTemplatesForRequestBuilderImports()

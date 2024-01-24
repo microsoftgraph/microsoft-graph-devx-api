@@ -88,21 +88,23 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 if (import.TryGetValue("NamespaceName", out var namespaceName) && string.IsNullOrEmpty(namespaceName))
                     continue;
-                if (import.ContainsKey("NamespaceName") &&   import["NamespaceName"].Contains("models") && import["TypeDefinition"] != null) {
+                if (import.ContainsKey("NamespaceName") && import["NamespaceName"].Contains("models") && import["TypeDefinition"] != null)
+                {
                     snippetImports.Add($"{modelImportPrefix}.{import["TypeDefinition"].ToSnakeCase()} import {import["TypeDefinition"]}");
                 }
                 if (import.TryGetValue("NamespaceName", out var NamespaceName) && !string.IsNullOrEmpty(NamespaceName) && !NamespaceName.Contains("models"))
                 {
                     if (import.TryGetValue("Name", out var Name) && !string.IsNullOrEmpty(Name))
-                        {
-                            var namespaceParts = NamespaceName.Split('.').Select((s, i) => i == NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
-                            var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{Name.ToSnakeCase()} import {Name}";
-                            snippetImports.Add(importString.Replace(".me.", ".users.item."));
-                        }
+                    {
+                        var namespaceParts = NamespaceName.Split('.').Select((s, i) => i == NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
+                        var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{Name.ToSnakeCase()} import {Name}";
+                        snippetImports.Add(importString.Replace(".me.", ".users.item."));
+                    }
                 }
-                if(import.ContainsKey("Path") && import["Path"] != null && import["RequestBuilderName"] != null){
+                if (import.ContainsKey("Path") && import["Path"] != null && import["RequestBuilderName"] != null)
+                {
                     //construct path to request builder
-                    snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"].Replace(".me.", ".users.item.")}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");                    
+                    snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"].Replace(".me.", ".users.item.")}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");
 
                 }
 
