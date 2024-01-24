@@ -35,7 +35,6 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("PropertyType", result[0].Keys);
         Assert.Contains("Value", result[0].Keys);
         }
-    // another test for path and request builder name
     [Fact]
     public async Task TestGenerateImportTemplatesForRequestBuilderImports()
     {
