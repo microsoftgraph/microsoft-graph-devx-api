@@ -17,7 +17,7 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("from msgraph import GraphServiceClient", result);
-        Assert.Contains("from msgraph.generated.users.item.calendar.events.events_request_builder import EventsRequestBuilder", result);
+        Assert.Contains("from msgraph.generated.me.calendar.events.events_request_builder import EventsRequestBuilder", result);
     }
 
     [Fact]
