@@ -9,7 +9,17 @@ using Microsoft.OpenApi.Services;
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 
 public class ImportsGenerator
-{
+{   
+    /// <summary>
+    /// Generates a list of import templates for a given snippet model.
+    /// </summary>
+    /// <param name="snippetModel">The snippet model for which to generate import templates.</param>
+    /// <returns>A list of dictionaries, each representing an import template with keys "Path" and "RequestBuilderName".</returns>
+    /// <remarks>
+    /// This method first creates a code graph from the snippet model. If the code graph has headers, parameters, or options, 
+    /// it generates a request builder name and potentially modifies it based on the last path part of the last node in the code graph. 
+    /// It then adds a new import template to the list of imports. Finally, it calls `AddModelImportTemplates` to add more import templates based on the body of the code graph.
+    /// </remarks>
     public List<Dictionary<string, string>> imports = new();
     public List<Dictionary<string, string>> GenerateImportTemplates(SnippetModel snippetModel)
     {
@@ -48,6 +58,18 @@ public class ImportsGenerator
 
         return imports;
     }
+
+    /// <summary>
+    /// Adds model import templates to the provided list based on the given code property node.
+    /// </summary>
+    /// <param name="node">The code property node from which to generate import templates.</param>
+    /// <param name="imports">The list to which import templates will be added.</param>
+    /// <param name="requestBuilderName">The name of the request builder, if any. Default is null.</param>
+    /// <param name="path">The path for the import, if any. Default is null.</param>
+    /// <remarks>
+    /// This method checks if the namespace name of the node is not empty. If it's not, it creates a new import template dictionary 
+    /// with keys "Name", "TypeDefinition", "NamespaceName", "PropertyType", and "Value", and adds this dictionary to the provided list of imports.
+    /// </remarks>
     private static void AddModelImportTemplates(CodeProperty node, List<Dictionary<string, string>> imports, string requestBuilderName = null, string path = null)
     {
         if (!string.IsNullOrEmpty(node.NamespaceName))
