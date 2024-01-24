@@ -88,8 +88,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 if (import.TryGetValue("NamespaceName", out var namespaceName) && string.IsNullOrEmpty(namespaceName))
                     continue;
-                if (import.ContainsKey("NamespaceName") && import["NamespaceName"].Contains("models") && import["TypeDefinition"] != null)
-                {
+                if (import.TryGetValue("NamespaceName", out var nameSpaceName) && nameSpaceName.Contains("models") && import.TryGetValue("TypeDefinition", out var typeDefinition) && typeDefinition != null)                {
                     snippetImports.Add($"{modelImportPrefix}.{import["TypeDefinition"].ToSnakeCase()} import {import["TypeDefinition"]}");
                 }
                 if (import.TryGetValue("NamespaceName", out var NamespaceName) && !string.IsNullOrEmpty(NamespaceName) && !NamespaceName.Contains("models"))
@@ -101,8 +100,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         snippetImports.Add(importString.Replace(".me.", ".users.item."));
                     }
                 }
-                if (import.ContainsKey("Path") && import["Path"] != null && import["RequestBuilderName"] != null)
-                {
+                if (import.TryGetValue("Path", out var path) && path != null && import.TryGetValue("RequestBuilderName", out var requestBuilderName) && requestBuilderName != null)                {
                     //construct path to request builder
                     snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"].Replace(".me.", ".users.item.")}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");
 
