@@ -88,11 +88,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 if (import.TryGetValue("NamespaceName", out var namespaceName) && string.IsNullOrEmpty(namespaceName))
                     continue;
-                if (import.TryGetValue("NamespaceName", out var nameSpaceName) && nameSpaceName.Contains("models") && import.TryGetValue("TypeDefinition", out var typeDefinition) && typeDefinition != null)
-                {
-                    snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["TypeDefinition"]}");
-
-                 }
+                if (import.ContainsKey("NamespaceName") &&   import["NamespaceName"].Contains("models") && import["TypeDefinition"] != null) {
+                    snippetImports.Add($"{modelImportPrefix}.{import["TypeDefinition"].ToSnakeCase()} import {import["TypeDefinition"]}");
+                }
                 if (import.TryGetValue("NamespaceName", out var NamespaceName) && !string.IsNullOrEmpty(NamespaceName) && !NamespaceName.Contains("models"))
                 {
                     if (import.TryGetValue("Name", out var Name) && !string.IsNullOrEmpty(Name))
@@ -102,14 +100,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             snippetImports.Add(importString);
                         }
                 }
-                if (import.TryGetValue("Path", out var pathNode) && pathNode != null && 
-                    import.TryGetValue("RequestBuilderName", out var RequestBuilderName) && RequestBuilderName != null &&
-                        import.TryGetValue("PropertyType", out var propertyType) && !string.IsNullOrEmpty(propertyType)) 
-                    {
-                        //construct path to request builder
-                        var importStatement = $"from {propertyType.ToLowerInvariant()} import {propertyType}";
-                        snippetImports.Add(importStatement);
-                    }
+                if(import.ContainsKey("Path") && import["Path"] != null && import["RequestBuilderName"] != null){
+                    //construct path to request builder
+                    snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"]}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");                    
+
+                }
 
             }
 
