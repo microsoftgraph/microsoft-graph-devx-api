@@ -2,8 +2,9 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
+using CodeSnippetsReflection.OpenAPI.ModelGraph;
+
 using Xunit;
 
 namespace CodeSnippetsReflection.OpenAPI.Test;
@@ -35,6 +36,7 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("PropertyType", result[0].Keys);
         Assert.Contains("Value", result[0].Keys);
         }
+    // another test for path and request builder name
     [Fact]
     public async Task TestGenerateImportTemplatesForRequestBuilderImports()
     {
