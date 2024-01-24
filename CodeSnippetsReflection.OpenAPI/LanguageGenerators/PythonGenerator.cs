@@ -92,29 +92,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 {
                     snippetImports.Add($"{modelImportPrefix}.{import["Name"].ToSnakeCase()} import {import["TypeDefinition"]}");
 
-                }
-                if (import.TryGetValue("NamespaceName", out var nameSpace) && !nameSpace.Contains("models"))
-                {
+                                }
+                                if(import.ContainsKey("NamespaceName") && !import["NamespaceName"].Contains("models")){
                     // import and path to request Body
-                    var importString = $"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}";
-                    importString = importString.Replace(".me.", ".users.item.");
-                    snippetImports.Add(importString);
-
-                }
-                if (import.TryGetValue("Path", out var path) && path != null && import.TryGetValue("RequestBuilderName", out var requestBuilderName) && requestBuilderName != null)
-                {
-                    //construct path to request builder
-                    var importString = $"{requestBuilderImportPrefix}{import["Path"]}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}";
-                    importString = importString.Replace(".me.", ".users.item.");
-                    snippetImports.Add(importString);
-
-                }
-                if (import.TryGetValue("NamespaceName", out var NamespaceName) && NamespaceName.Contains("models") && import.TryGetValue("PropertyType", out var propertyType) && propertyType == "Enum")
-                {
-                    snippetImports.Add($"{modelImportPrefix}.{import["Value"].Split(".")[0].ToSnakeCase()} import {import["Value"]}");
+                snippetImports.Add($"{requestBuilderImportPrefix}.{string.Join(".", import["NamespaceName"].Split('.').Select((s, i) => i == import["NamespaceName"].Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant()))}.{import["Name"].ToSnakeCase()} import {import["Name"]}");                    
                 }
 
-            }
+                if(import.ContainsKey("Path") && import["Path"] != null && import["RequestBuilderName"] != null){
+                //construct path to request builder
+                snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"]}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");                    
+
+                }
+                if(import.ContainsKey("PropertyType") && import["PropertyType"] == "Enum"){
+                //construct path to request builder
+                snippetImports.Add($"from {import["PropertyType"].ToLowerInvariant()} import {import["PropertyType"]}");                    
+
+                }
+
+        }
 
             return snippetImports;
         }
