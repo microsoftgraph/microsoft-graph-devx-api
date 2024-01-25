@@ -78,7 +78,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             const string modelImportPrefix = "from msgraph.generated.models";
             const string requestBuilderImportPrefix = "from msgraph.generated";
 
-            HashSet<string> snippetImports = new HashSet<string>();
+            var  snippetImports = new HashSet<string>();
 
             snippetImports.Add("from msgraph import GraphServiceClient");
 
@@ -89,7 +89,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (import.TryGetValue("NamespaceName", out var namespaceName) && string.IsNullOrEmpty(namespaceName))
                     continue;
                 if (import.TryGetValue("NamespaceName", out var nameSpaceName) && nameSpaceName.Contains("models") && import.TryGetValue("TypeDefinition", out var typeDefinition) && typeDefinition != null)                {
-                    snippetImports.Add($"{modelImportPrefix}.{import["TypeDefinition"].ToSnakeCase()} import {import["TypeDefinition"]}");
+                    snippetImports.Add($"{modelImportPrefix}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
                 }
                 if (import.TryGetValue("NamespaceName", out var NamespaceName) && !string.IsNullOrEmpty(NamespaceName) && !NamespaceName.Contains("models"))
                 {
@@ -102,7 +102,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 }
                 if (import.TryGetValue("Path", out var path) && path != null && import.TryGetValue("RequestBuilderName", out var requestBuilderName) && requestBuilderName != null)                {
                     //construct path to request builder
-                    snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"].Replace(".me.", ".users.item.")}.{import["RequestBuilderName"].ToSnakeCase()} import {import["RequestBuilderName"]}");
+                    snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"].Replace(".me.", ".users.item.")}.{requestBuilderName.ToSnakeCase()} import {requestBuilderName}");
 
                 }
 
