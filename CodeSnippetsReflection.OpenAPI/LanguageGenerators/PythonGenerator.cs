@@ -78,7 +78,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             const string modelImportPrefix = "from msgraph.generated.models";
             const string requestBuilderImportPrefix = "from msgraph.generated";
 
-            var  snippetImports = new HashSet<string>();
+            var snippetImports = new HashSet<string>();
 
             snippetImports.Add("from msgraph import GraphServiceClient");
 
@@ -86,26 +86,31 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var imports = importsGenerator.GenerateImportTemplates(snippetModel);
             foreach (var import in imports)
             {
-                if (import.TryGetValue("NamespaceName", out var namespaceName) && string.IsNullOrEmpty(namespaceName))
-                    continue;
-                if (import.TryGetValue("NamespaceName", out var nameSpaceName) && nameSpaceName.Contains("models") && import.TryGetValue("TypeDefinition", out var typeDefinition) && typeDefinition != null)                {
-                    snippetImports.Add($"{modelImportPrefix}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
-                }
-                if (import.TryGetValue("NamespaceName", out var NamespaceName) && !string.IsNullOrEmpty(NamespaceName) && !NamespaceName.Contains("models"))
+                switch (import.Kind)
                 {
-                    if (import.TryGetValue("Name", out var Name) && !string.IsNullOrEmpty(Name))
-                    {
-                        var namespaceParts = NamespaceName.Split('.').Select((s, i) => i == NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
-                        var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{Name.ToSnakeCase()} import {Name}";
-                        snippetImports.Add(importString.Replace(".me.", ".users.item."));
-                    }
+                    case ImportKind.Model:
+                        var typeDefinition = import.ModelProperty.TypeDefinition;
+                        if (typeDefinition != null)
+                        {
+                            snippetImports.Add($"{modelImportPrefix}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
+                        }
+                        break;
+                    case ImportKind.RequestBuilder:
+                        if (!string.IsNullOrEmpty(import.ModelProperty.Name))
+                        {
+                            var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
+                            var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{import.ModelProperty.Name.ToSnakeCase()} import {import.ModelProperty.Name}";
+                            snippetImports.Add(importString.Replace(".me.", ".users.item."));
+                        }
+                        break;
+                    case ImportKind.Path:
+                        if (import.Path != null && import.RequestBuilderName != null)
+                        {
+                            //construct path to request builder
+                            snippetImports.Add($"{requestBuilderImportPrefix}{import.Path.Replace(".me.", ".users.item.")}.{import.RequestBuilderName.ToSnakeCase()} import {import.RequestBuilderName}");
+                        }
+                        break;
                 }
-                if (import.TryGetValue("Path", out var path) && path != null && import.TryGetValue("RequestBuilderName", out var requestBuilderName) && requestBuilderName != null)                {
-                    //construct path to request builder
-                    snippetImports.Add($"{requestBuilderImportPrefix}{import["Path"].Replace(".me.", ".users.item.")}.{requestBuilderName.ToSnakeCase()} import {requestBuilderName}");
-
-                }
-
             }
 
             return snippetImports;

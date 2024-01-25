@@ -28,15 +28,9 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
         var importsGenerator = new ImportsGenerator();
         var result = importsGenerator.GenerateImportTemplates(snippetModel);
         Assert.NotNull(result);
-        Assert.IsType<List<Dictionary<string, string>>>(result);
+        Assert.IsType<List<ImportTemplate>>(result);
         Assert.Equal(2, result.Count);
-        Assert.Contains("Name", result[0].Keys);
-        Assert.Contains("TypeDefinition", result[0].Keys);
-        Assert.Contains("NamespaceName", result[0].Keys);
-        Assert.Contains("PropertyType", result[0].Keys);
-        Assert.Contains("Value", result[0].Keys);
     }
-    // another test for path and request builder name
     [Fact]
     public async Task TestGenerateImportTemplatesForRequestBuilderImports()
     {
@@ -45,8 +39,8 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
         var importsGenerator = new ImportsGenerator();
         var result = importsGenerator.GenerateImportTemplates(snippetModel);
         Assert.NotNull(result);
-        Assert.IsType<List<Dictionary<string, string>>>(result);
-        Assert.Contains("Path", result[0].Keys);
-        Assert.Contains("RequestBuilderName", result[0].Keys);
+        Assert.IsType<List<ImportTemplate>>(result);
+        Assert.NotNull(result[0].Path);
+        Assert.NotNull(result[0].RequestBuilderName);
     }
 }
