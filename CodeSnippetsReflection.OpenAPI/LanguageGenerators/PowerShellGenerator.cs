@@ -188,7 +188,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
                         string quotedString = collection.Count > 0 ? collection.First().Value : string.Empty;
                         headerValue = (!string.IsNullOrEmpty(quotedString) && !string.IsNullOrEmpty(headerValue)) ? headerValue.Replace(quotedString, "'" + quotedString + "'") : headerValue;
-            
+
                         payloadSB.AppendLine($" -{headerName} {headerValue} ");
                     }
                 }
@@ -294,6 +294,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return (default, default);
             if (indentManager == null) throw new ArgumentNullException(nameof(indentManager));
 
+            if (isValidJson(snippetModel?.RequestBody) && string.IsNullOrWhiteSpace(snippetModel?.ContentType))
+            {
+                snippetModel.ContentType = "application/json";
+            }
+
             var payloadSB = new StringBuilder();
             switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant())
             {
@@ -319,6 +324,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
             }
             return (payloadSB.ToString(), $"-BodyParameter ${requestBodyVarName}");
+        }
+
+        private static bool isValidJson(string requestBody)
+        {
+            try
+            {
+                JsonDocument.Parse(requestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private static void WriteJsonObjectValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, bool includePropertyAssignment = true)
