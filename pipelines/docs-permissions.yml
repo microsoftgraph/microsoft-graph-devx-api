@@ -17,12 +17,12 @@ resources:
  repositories:
    - repository: microsoft-graph-docs
      type: github
-     endpoint: microsoftgraphdocs
+     endpoint: microsoftgraph (22)
      name: microsoftgraph/microsoft-graph-docs
      ref: main   
    - repository: api-doctor
      type: github
-     endpoint: microsoftgraphdocs
+     endpoint: microsoftgraph (22)
      name: OneDrive/apidoctor
      ref: master
 
