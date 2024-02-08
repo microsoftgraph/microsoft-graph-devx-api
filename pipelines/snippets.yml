@@ -17,7 +17,7 @@ resources:
  repositories:
    - repository: microsoft-graph-docs
      type: github
-     endpoint: microsoftgraph
+     endpoint: microsoftgraph (22)
      name: microsoftgraph/microsoft-graph-docs
      ref: main
 
