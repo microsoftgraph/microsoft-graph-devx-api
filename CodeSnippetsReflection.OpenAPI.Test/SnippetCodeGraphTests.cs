@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -348,7 +348,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         {
             if (codeProperty.Name == name) return codeProperty;
 
-            if (codeProperty.Children.Any())
+            if (codeProperty.Children.Count != 0)
             {
                 foreach (var param in codeProperty.Children)
                 {

@@ -175,7 +175,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static Boolean searchProperty(CodeProperty property, PropertyType propertyType)
         {
-            if (property.Children != null && property.Children.Any())
+            if (property.Children != null && property.Children.Count != 0)
             {
                 var existingChild = property.Children.FirstOrDefault(x => x.PropertyType == propertyType);
                 return propertyType == existingChild.PropertyType;

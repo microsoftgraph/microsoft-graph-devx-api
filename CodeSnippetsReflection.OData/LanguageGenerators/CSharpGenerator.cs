@@ -970,7 +970,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                 }
 
                 //if search failed default to first element
-                if (!enumStringList.Any())
+                if (enumStringList.Count == 0)
                 {
                     enumStringList.Add($"{typeName}.{CommonGenerator.UppercaseFirstLetter(edmEnumType.Members.First().Name)}");
                 }

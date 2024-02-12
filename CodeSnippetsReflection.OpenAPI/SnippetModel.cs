@@ -209,7 +209,7 @@ namespace CodeSnippetsReflection.OpenAPI
             }
             // always match indexer last as functions on collections may be interpreted as indexers if processed after.
             var collectionIndices = node.Children.Keys.Where(static x => x.IsCollectionIndex()).ToArray();
-            if (collectionIndices.Any())
+            if (collectionIndices.Length != 0)
             {
                 var collectionIndexValue = node.Children[collectionIndices[0]];//lookup the node using the key
                 if (collectionIndexValue != null)

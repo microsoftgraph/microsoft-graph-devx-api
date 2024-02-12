@@ -59,7 +59,7 @@ namespace GraphWebApi.Controllers
                              (x.HumanName != null && x.HumanName.ToLower().Contains(search.ToLower())) ||
                              (x.Tip != null && x.Tip.ToLower().Contains(search.ToLower())));
 
-            if (!filteredSampleQueries.Any())
+            if (filteredSampleQueries.Count == 0)
             {
                 _telemetryClient?.TrackTrace($"Search value: '{search}' not found in: category, humanName or tip properties of sample queries",
                                                 SeverityLevel.Error,
@@ -156,7 +156,7 @@ namespace GraphWebApi.Controllers
         /// <returns>Status code response.</returns>
         private IActionResult Validate(SampleQueriesList sampleQueriesList)
         {
-            if (sampleQueriesList == null || !sampleQueriesList.SampleQueries.Any())
+            if (sampleQueriesList == null || sampleQueriesList.SampleQueries.Count == 0)
             {
                 return NoContent(); // list is empty, just return status code 204 - No Content
             }

@@ -178,7 +178,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private static string GetActionParametersList(params string[] parameters) {
         var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
         var emptyParameters = nonEmptyParameters.ToList();
-        if(emptyParameters.Any())
+        if(emptyParameters.Count != 0)
             return string.Join(", ", emptyParameters.Select(static x => $"${x}").Aggregate(static (a, b) => $"{a}, {b}"));
         return string.Empty;
     }
@@ -187,7 +187,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         var payloadSb = new StringBuilder();
         var filteredHeaders = snippetModel.Headers?.Where(static h => !h.Name.Equals("Host", StringComparison.OrdinalIgnoreCase))
             .ToList();
-        if(filteredHeaders != null && filteredHeaders.Any()) {
+        if(filteredHeaders != null && filteredHeaders.Count != 0) {
             payloadSb.AppendLine("$headers = [");
             indentManager.Indent(2);
             filteredHeaders.ForEach(h =>
@@ -478,7 +478,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph codeGraph)
     {
         var openApiUrlTreeNodes = nodes.ToList();
-        if (!openApiUrlTreeNodes.Any()) return string.Empty;
+        if (openApiUrlTreeNodes.Count == 0) return string.Empty;
         var result = openApiUrlTreeNodes.Select(x =>
             {
                 if (x.Segment.IsCollectionIndex())

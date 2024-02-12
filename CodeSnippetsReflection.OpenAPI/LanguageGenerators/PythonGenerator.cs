@@ -204,7 +204,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
             var emptyParameters = nonEmptyParameters.ToList();
-            if (emptyParameters.Any())
+            if (emptyParameters.Count != 0)
                 return string.Join(", ", emptyParameters.Select(static x => $"{x}").Aggregate(static (a, b) => $"{a}, {b}"));
             return string.Empty;
         }

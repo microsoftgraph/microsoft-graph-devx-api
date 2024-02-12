@@ -66,7 +66,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static StringBuilder WriteDependenciesBuilder(string [] usedNamespaces)
         {
             var dependenciesStringBuilder = new StringBuilder();
-            if (usedNamespaces.Any())
+            if (usedNamespaces.Length != 0)
             {
                 dependenciesStringBuilder.AppendLine("// Dependencies");
                 foreach (var modelNamespace in usedNamespaces)
@@ -120,7 +120,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string GetActionParametersList(params string[] parameters)
         {
             var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p)).ToArray();
-            return nonEmptyParameters.Any() ? string.Join(", ", nonEmptyParameters.Aggregate(static (a, b) => $"{a}, {b}")) : string.Empty;
+            return nonEmptyParameters.Length != 0 ? string.Join(", ", nonEmptyParameters.Aggregate(static (a, b) => $"{a}, {b}")) : string.Empty;
         }
 
         private static void WriteRequestHeaders(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, StringBuilder stringBuilder)

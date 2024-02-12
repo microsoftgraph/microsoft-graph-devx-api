@@ -265,7 +265,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var replacements = new Dictionary<string, string>();
             var matches = nestedStatementRegex.Matches(queryParams);
-            if (matches.Any())
+            if (matches.Count != 0)
                 foreach (GroupCollection groupCollection in matches.Select(x => x.Groups))
                 {
                     var key = groupCollection[1].Value;

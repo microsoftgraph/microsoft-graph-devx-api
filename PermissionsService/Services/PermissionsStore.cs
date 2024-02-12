@@ -349,7 +349,7 @@ namespace PermissionsService
             var errors = new List<PermissionError>();
 
             bool getAllScopes = false;
-            if (requests == null || !requests.Any())
+            if (requests == null || requests.Count == 0)
             {
                 // Get all scopes if no request URLs are provided
                 getAllScopes = true;
@@ -377,7 +377,7 @@ namespace PermissionsService
 
                         var resource = authZChecker.FindResource(requestUrl) ?? throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
                         var permissions = GetPermissionsFromResource(scopeType, request, resource);
-                        if (!permissions.Any())
+                        if (permissions.Count == 0)
                             throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
 
                         scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", permissions);
@@ -415,7 +415,7 @@ namespace PermissionsService
             }
 
 
-            if (!scopes.Any() && !errors.Any())
+            if (scopes.Count == 0 && errors.Count == 0)
             {
                 errors.Add(new PermissionError()
                 {
@@ -424,7 +424,7 @@ namespace PermissionsService
                 return new PermissionResult()
                 {
                     Results = scopes,
-                    Errors = errors.Any() ? errors : null,
+                    Errors = errors.Count != 0 ? errors : null,
                 };
             }
 
@@ -443,7 +443,7 @@ namespace PermissionsService
             // exclude hidden permissions unless stated otherwise
             scopesInfo = scopesInfo.Where(x => includeHidden || !x.IsHidden).ToList();
 
-            if (!scopesInfo.Any() && !errors.Any())
+            if (scopesInfo.Count == 0 && errors.Count == 0)
             {
                 errors.Add(new PermissionError()
                 {
@@ -451,14 +451,14 @@ namespace PermissionsService
                 });
             }
 
-            _telemetryClient?.TrackTrace(requests == null || !requests.Any() ?
+            _telemetryClient?.TrackTrace(requests == null || requests.Count == 0 ?
                         "Return all permissions" : $"Return permissions for '{string.Join(", ", requests.Select(x => x.RequestUrl))}'",
                 SeverityLevel.Information,
                 _permissionsTraceProperties);
             return new PermissionResult()
             {
                 Results = scopesInfo,
-                Errors = errors.Any() ? errors : null,
+                Errors = errors.Count != 0 ? errors : null,
             };
         }
 

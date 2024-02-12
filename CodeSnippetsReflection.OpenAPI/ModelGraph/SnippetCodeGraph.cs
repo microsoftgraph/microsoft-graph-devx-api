@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
@@ -112,40 +112,40 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         }
 
        
-        public Boolean HasHeaders()
+        public bool HasHeaders()
         {
             return Headers.Any();
         }
 
-        public Boolean HasOptions()
+        public bool HasOptions()
         {
             return Options.Any();
         }
 
-        public Boolean HasParameters()
+        public bool HasParameters()
         {
             return Parameters.Any();
         }
 
-        public Boolean HasPathParameters()
+        public bool HasPathParameters()
         {
             return PathParameters.Any();
         }
 
-        public Boolean HasBody()
+        public bool HasBody()
         {
             return Body.PropertyType != PropertyType.Default;
         }
 
-        public Boolean HasReturnedBody(){
+        public bool HasReturnedBody(){
             return !(ResponseSchema == null || (ResponseSchema.Properties.Count == 1 && ResponseSchema.Properties.First().Key.Equals("error", StringComparison.OrdinalIgnoreCase)));
         }
-        public Boolean RequiresRequestConfig()
+        public bool RequiresRequestConfig()
         {
             return HasHeaders() || HasOptions() || HasParameters();
         }
 
-        public Boolean HasJsonBody(){
+        public bool HasJsonBody(){
             return HasBody() && Body.PropertyType != PropertyType.Binary;
         }
 
@@ -377,7 +377,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                     }
                     additionalChildren.Add(parseProperty(property.Name, property.Value, openApiSchema,snippetModelSchemas));
                 }
-                if (additionalChildren.Any())
+                if (additionalChildren.Count != 0)
                     children.Add(new CodeProperty { Name = "additionalData", PropertyType = PropertyType.Map, Children = additionalChildren });
             }
 
