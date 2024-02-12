@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FileService.Common;
@@ -16,7 +17,6 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using PermissionsService.Interfaces;
 using PermissionsService.Models;
 using UriMatchingService;
@@ -136,7 +136,7 @@ namespace PermissionsService
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _permissionsBlobName);
 
                 string permissionsJson = await _fileUtility.ReadFromFile(relativePermissionPath);
-                var fetchedPermissions = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<ScopeType, SchemePermissions>>>>(permissionsJson);
+                var fetchedPermissions = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<ScopeType, SchemePermissions>>>>(permissionsJson);
 
                 _telemetryClient?.TrackTrace("Finished fetching permissions from file",
                                          SeverityLevel.Information,
@@ -315,7 +315,7 @@ namespace PermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
 
-            var scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+            var scopesInformationList = JsonSerializer.Deserialize<ScopesInformationList>(scopesInfoJson);
             var delegatedScopesInfoTable = scopesInformationList.DelegatedScopesList.ToDictionary(x => x.ScopeName);
             var applicationScopesInfoTable = scopesInformationList.ApplicationScopesList.ToDictionary(x => x.ScopeName);
 

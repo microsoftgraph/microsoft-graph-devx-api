@@ -2,11 +2,11 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Newtonsoft.Json;
 using SamplesService.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 namespace SamplesService.Services
 {
@@ -23,12 +23,12 @@ namespace SamplesService.Services
         /// <returns>The deserialized list of <see cref="SampleQueryModel"/> objects.</returns>
         public static SampleQueriesList DeserializeSampleQueriesList(string jsonString, bool orderSamples = false)
         {
-            if (string.IsNullOrEmpty(jsonString))
+            if (string.IsNullOrWhiteSpace(jsonString))
             {
                 throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null or empty.");
             }
 
-            SampleQueriesList sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(jsonString);
+            SampleQueriesList sampleQueriesList = JsonSerializer.Deserialize<SampleQueriesList>(jsonString);
 
             if (orderSamples)
             {
@@ -50,7 +50,9 @@ namespace SamplesService.Services
                 throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null.");
             }
 
-            string sampleQueriesJson = JsonConvert.SerializeObject(sampleQueriesList, Formatting.Indented);
+            var sampleQueriesJson = JsonSerializer.Serialize(
+                sampleQueriesList, 
+                new JsonSerializerOptions { WriteIndented = true });
             return sampleQueriesJson;
         }
 

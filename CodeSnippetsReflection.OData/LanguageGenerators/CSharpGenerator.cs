@@ -1,22 +1,29 @@
-using Microsoft.OData.UriParser;
-using Newtonsoft.Json;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using Microsoft.OData.Edm;
+using System.Text.Json;
 using CodeSnippetsReflection.OData.TypeProperties;
+using Microsoft.OData.Edm;
+using Microsoft.OData.UriParser;
 
 namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
-    public class CSharpGenerator
+    /// <summary>
+    /// CSharpGenerator constructor
+    /// </summary>
+    /// <param name="model">Model representing metadata</param>
+    /// <param name="isCommandLine">
+    /// Determines whether the snippet generation is running through the command line interface
+    /// (as opposed to in DevX HTTP API)
+    /// </param>
+    public class CSharpGenerator(IEdmModel model, bool isCommandLine = false)
     {
         /// <summary>
         /// CommonGenerator instance
         /// </summary>
-        private readonly CommonGenerator CommonGenerator;
+        private readonly CommonGenerator CommonGenerator = new(model);
 
         /// <summary>
         /// Represents the types that need a trailing ? to make it nullable.
@@ -24,23 +31,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         ///     such as String and Stream (System namespace)
         ///     or Duration, Date, TimeOfDay (Microsoft.Graph namespace)
         /// </summary>
-        private static readonly HashSet<string> EdmTypesNonNullableByDefault = new() { "Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte" };
-
-        /// <summary>
-        /// Determines whether the snippet generation is running through the command line interface
-        /// (as opposed to in DevX HTTP API)
-        /// </summary>
-        private readonly bool IsCommandLine;
-
-        /// <summary>
-        /// CSharpGenerator constructor
-        /// </summary>
-        /// <param name="model">Model representing metadata</param>
-        public CSharpGenerator(IEdmModel model, bool isCommandLine = false)
-        {
-            IsCommandLine = isCommandLine;
-            CommonGenerator = new CommonGenerator(model);
-        }
+        private static readonly HashSet<string> EdmTypesNonNullableByDefault = ["Int32", "Single", "Double", "Boolean", "Guid", "DateTimeOffset", "Byte"];
 
         /// <summary>
         /// Formulates the requested Graph snippets and returns it as string for Csharp
@@ -54,9 +45,9 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
 
             try
             {
-                snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n");
+                snippetBuilder.Append("GraphServiceClient graphClient = new GraphServiceClient(authProvider);\r\n\r\n");
                 var segment = snippetModel.Segments.Last();
-                snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName , languageExpressions);
+                snippetModel.ResponseVariableName = CommonGenerator.EnsureVariableNameIsNotReserved(snippetModel.ResponseVariableName, languageExpressions);
                 var actions = CommonGenerator.GenerateQuerySection(snippetModel, languageExpressions);
 
                 //append any custom queries present
@@ -74,7 +65,6 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                     snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = ");
                     snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.GetAsync();"));
                     snippetBuilder.Append(extraSnippet);
-
                 }
                 else if (snippetModel.Method == HttpMethod.Post)
                 {
@@ -95,63 +85,72 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             if (string.IsNullOrEmpty(snippetModel.RequestBody))
                                 throw new InvalidOperationException($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
 
-                            if (JObject.Parse(snippetModel.RequestBody).TryGetValue("@odata.id",out JToken odataId))
+                            using (var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody))
                             {
-                                snippetModel.ResponseVariableName += "Reference"; // append suffix
-                                snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = new ReferenceRequestBody\n{{\n");
-                                snippetBuilder.Append($"\tODataId = \"{odataId}\"\n}};\n\n");
-                                snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+                                if (jsonDoc.RootElement.TryGetProperty("@odata.id", out JsonElement odataId))
+                                {
+                                    snippetModel.ResponseVariableName += "Reference"; // append suffix
+                                    snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = new ReferenceRequestBody\n{{\n");
+                                    snippetBuilder.Append($"\tODataId = \"{odataId}\"\n}};\n\n");
+                                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
+                                }
                             }
                             break;
 
                         case OperationSegment os:
                             //deserialize the object since the json top level contains the list of parameter objects
-                            if (JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
+                            if (!string.IsNullOrEmpty(snippetModel.RequestBody))
                             {
-                                foreach (var (key, jToken) in testObj)
+                                using JsonDocument jsonDoc = JsonDocument.Parse(snippetModel.RequestBody);
+                                if (jsonDoc.RootElement.ValueKind == JsonValueKind.Object)
                                 {
-                                    var jsonString = JsonConvert.SerializeObject(jToken);
+                                    JsonElement testObj = jsonDoc.RootElement;
 
-                                    // see examples in TypeIsInferredFromActionParametersForNonNullableType
-                                    // and TypeIsInferredFromActionParametersForNullableType tests.
-
-                                    var parameter = CommonGenerator.LowerCaseFirstLetter(key);
-
-                                    var path = new List<string> { CommonGenerator.LowerCaseFirstLetter(key) };
-                                    var value = CSharpGenerateObjectFromJson(segment, jsonString, path);
-                                    var typeHintOnTheLeftHandSide = "var";
-
-                                    // If the value is null we can't resolve the type by using var on the left hand side.
-                                    // For example, we can't say "var index = null;". That won't be a compilable snippet.
-                                    // In these cases, we look for the type of "index" in action parameters.
-                                    if (value.Trim() == "null;")
+                                    foreach (var property in testObj.EnumerateObject())
                                     {
-                                        var parameterType = os.Operations?
-                                            .SingleOrDefault(o => o.Name == os.Identifier)?
-                                            .Parameters?
-                                            .SingleOrDefault(p => p.Name == parameter)?
-                                            .Type;
+                                        var jsonString = JsonSerializer.Serialize(property.Value);
 
-                                        if (parameterType == null)
-                                        {
-                                            throw new NotSupportedException("Parameter type from URL is not found in metadata!");
-                                        }
+                                        // see examples in TypeIsInferredFromActionParametersForNonNullableType
+                                        // and TypeIsInferredFromActionParametersForNullableType tests.
 
-                                        if (parameterType.IsNullable)
+                                        var parameter = CommonGenerator.LowerCaseFirstLetter(property.Name);
+
+                                        var path = new List<string> { CommonGenerator.LowerCaseFirstLetter(property.Name) };
+                                        var value = CSharpGenerateObjectFromJson(segment, jsonString, path);
+                                        var typeHintOnTheLeftHandSide = "var";
+
+                                        // If the value is null we can't resolve the type by using var on the left hand side.
+                                        // For example, we can't say "var index = null;". That won't be a compilable snippet.
+                                        // In these cases, we look for the type of "index" in action parameters.
+                                        if (value.Trim() == "null;")
                                         {
-                                            typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName;
-                                            if (EdmTypesNonNullableByDefault.Contains(typeHintOnTheLeftHandSide))
+                                            var parameterType = os.Operations?
+                                                .SingleOrDefault(o => o.Name == os.Identifier)?
+                                                .Parameters?
+                                                .SingleOrDefault(p => p.Name == parameter)?
+                                                .Type;
+
+                                            if (parameterType == null)
                                             {
-                                                typeHintOnTheLeftHandSide += "?";
+                                                throw new NotSupportedException("Parameter type from URL is not found in metadata!");
+                                            }
+
+                                            if (parameterType.IsNullable)
+                                            {
+                                                typeHintOnTheLeftHandSide = new CSharpTypeProperties(parameterType.Definition, false).ClassName;
+                                                if (EdmTypesNonNullableByDefault.Contains(typeHintOnTheLeftHandSide))
+                                                {
+                                                    typeHintOnTheLeftHandSide += "?";
+                                                }
+                                            }
+                                            else
+                                            {
+                                                throw new NotSupportedException("Not nullable type is set to null in the sample!");
                                             }
                                         }
-                                        else
-                                        {
-                                            throw new NotSupportedException("Not nullable type is set to null in the sample!");
-                                        }
-                                    }
 
-                                    snippetBuilder.Append($"{typeHintOnTheLeftHandSide} {parameter} = {value}");
+                                        snippetBuilder.Append($"{typeHintOnTheLeftHandSide} {parameter} = {value}");
+                                    }
                                 }
                             }
                             snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.PostAsync();"));
@@ -192,12 +191,15 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                         {
                             // if we are putting reference, we should send id to that object in PutAsync()
                             // and the request body should contain a JSON with @odata.id key
-                            var body = JsonConvert.DeserializeObject(snippetModel.RequestBody) as JObject;
+                            using var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody);
 
                             // HTTP sample is in this format: https://graph.microsoft.com/v1.0/users/{id}
                             // but C# SDK reconstructs the URL from {id}
-                            var id = body["@odata.id"].ToString().Split("/").Last();
-                            objectToBePut = $"\"{id}\"";
+                            if (jsonDoc.RootElement.TryGetProperty("@odata.id", out JsonElement odataId))
+                            {
+                                var id = odataId.GetString().Split("/").Last();
+                                objectToBePut = $"\"{id}\"";
+                            }
                         }
                         else
                         {
@@ -263,7 +265,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                     //handle functions/actions and any parameters present into collections
                     case OperationSegment operationSegment:
                         var paramList = CommonGenerator.GetParameterListFromOperationSegment(
-                            operationSegment, snippetModel, returnEnumTypeIfEnum:true);
+                            operationSegment, snippetModel, returnEnumTypeIfEnum: true);
                         var parameters = string.Join(",", paramList.Select(x =>
                         {
                             if (x.Contains("'"))
@@ -308,7 +310,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
 
                             var nextSegmentIndex = snippetModel.Segments.IndexOf(item) + 1;
                             if (nextSegmentIndex >= snippetModel.Segments.Count)
-                                nextSegmentIndex = snippetModel.Segments.Count-1;
+                                nextSegmentIndex = snippetModel.Segments.Count - 1;
 
                             var nextSegment = snippetModel.Segments[nextSegmentIndex];
                             //check if the next segment is a KeySegment to know if we will be accessing a single entity of a collection.
@@ -350,7 +352,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         /// </returns>
         private string GetIDPlaceholder(ODataPathSegment currentSegment, ODataPathSegment previousSegment)
         {
-            if (IsCommandLine)
+            if (isCommandLine)
             {
                 const string unknownId = "{UNKNOWN-id}";
                 if (previousSegment is null || previousSegment.EdmType is null)
@@ -383,7 +385,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         /// <param name="pathSegment">Odata Function/Entity from which the object is needed</param>
         /// <param name="jsonBody">Json string from which the information of the object to be initialized is held</param>
         /// <param name="path">List of strings/identifier showing the path through the Edm/json structure to reach the Class Identifier from the segment</param>
-        private string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody , ICollection<string> path)
+        private string CSharpGenerateObjectFromJson(ODataPathSegment pathSegment, string jsonBody, ICollection<string> path)
         {
             if (pathSegment is PropertySegment && pathSegment.EdmType?.FullTypeName() == "Edm.Stream")
             {
@@ -393,28 +395,30 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             }
 
             var stringBuilder = new StringBuilder();
-            var jsonObject = JsonConvert.DeserializeObject(jsonBody);
-            var tabSpace = new string('\t', path.Count -1);//d
+            using var jsonDoc = JsonDocument.Parse(jsonBody);
+            var jsonObject = jsonDoc.RootElement.Clone();
+            var tabSpace = new string('\t', path.Count - 1);//d
             var typeProperties = GetCSharpTypeProperties(pathSegment, path);
             var className = typeProperties.ClassName;
             if (className == "JToken") // handle special case of JToken
             {
-                var jToken = jsonObject is string _
+                var jsonString = jsonObject.ValueKind == JsonValueKind.String
                     ? $"JsonDocument.Parse(@\"\"{jsonBody}\"\")"     // parse string differently
                     : $"JsonDocument.Parse(\"{jsonBody}\")";    // complex objects need JToken.Parse()
-                stringBuilder.Append($"{jToken}\r\n");
+                stringBuilder.Append($"{jsonString}\r\n");
             }
-            else if (jsonObject is JObject _ && className == "String") // special case where empty string is represented as {}
+            else if (jsonObject.ValueKind == JsonValueKind.Object && className == "String") // special case where empty string is represented as {}
             {
                 stringBuilder.Append("\"\"\r\n");
             }
             else
             {
-                switch (jsonObject)
+                switch (jsonObject.ValueKind)
                 {
-                    case string _:
+                    case JsonValueKind.String:
                         {
-                            var enumString = GenerateEnumString(jsonObject.ToString(), pathSegment, path);
+                            var stringValue = jsonObject.GetString();
+                            var enumString = GenerateEnumString(stringValue, pathSegment, path);
                             if (className == "String")
                             {
                                 stringBuilder.Append($"{jsonBody}\r\n");
@@ -424,39 +428,41 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                                 //Enum is accessed as the Classname then enum type e.g Importance.Low
                                 stringBuilder.Append($"{tabSpace}{enumString}\r\n");
                             }
-                            else if (jsonObject.Equals("true") || jsonObject.Equals("false"))
+                            else if (stringValue.Equals("true") || stringValue.Equals("false"))
                             {
-                                stringBuilder.Append($"{tabSpace}{jsonObject}\r\n");//boolean primitives values masquerading as strings.
+                                stringBuilder.Append($"{tabSpace}{stringValue}\r\n");//boolean primitives values masquerading as strings.
                             }
                             else
                             {
-                                stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString($"{jsonObject}", pathSegment, path)}");
+                                stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString($"{stringValue}", pathSegment, path)}");
                             }
                         }
                         break;
-                    case JObject jObject:
+                    case JsonValueKind.Object:
                         {
                             stringBuilder.Append($"new {className}\r\n");
                             stringBuilder.Append($"{tabSpace}{{\r\n");//opening curly brace
 
                             var additionalData = new Dictionary<string, string>();
 
-                            //initialize each member/property of the object
-                            foreach (var (key, jToken) in jObject)
+                            // initialize each member/property of the object
+                            foreach (var property in jsonObject.EnumerateObject())
                             {
-                                var value = JsonConvert.SerializeObject(jToken);
-                                var newPath = path.Append(key).ToList();//add new identifier to the path
-
-                                if (key.Contains("@odata") || key.StartsWith("@")) // sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
+                                var propertyName = property.Name;
+                                var propertyValue = property.Value;
+                                var serializedValue = JsonSerializer.Serialize(propertyValue);
+                                
+                                var newPath = path.Append(propertyName).ToList(); // add new identifier to the path
+                                if (propertyName.Contains("@odata") || propertyName.StartsWith('@')) // sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
                                 {
-                                    switch (key)
+                                    switch (propertyName)
                                     {
                                         case "@odata.id" when className.Equals("DirectoryObject"):
                                         case "@odata.type":
-                                            stringBuilder = ProcessOdataIdAndType(stringBuilder, key, jToken.Value<string>(), className, tabSpace);
+                                            stringBuilder = ProcessOdataIdAndType(stringBuilder, propertyName, propertyValue.GetString(), className, tabSpace);
                                             break;
                                         default:
-                                            additionalData.Add(key, value);
+                                            additionalData.Add(propertyName, serializedValue);
                                             break;
                                     }
                                     continue;
@@ -473,7 +479,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                                 {
                                     if (typeProperties.IsOpenType)
                                     {
-                                        additionalData.Add(key, value);
+                                        additionalData.Add(propertyName, serializedValue);
                                         continue;
                                     }
                                     else
@@ -484,31 +490,31 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
 
                                 // following rename logic is taken from:
                                 // https://github.com/microsoftgraph/MSGraph-SDK-Code-Generator/blob/a5dffbf6db77c3830e45530f5c29622e06078b7e/src/GraphODataTemplateWriter/CodeHelpers/CSharp/TypeHelperCSharp.cs#L254
-                                var propertyName = CommonGenerator.UppercaseFirstLetter(key);
-                                if (propertyName == className) // one such example is list->list
+                                var renamedProperty = CommonGenerator.UppercaseFirstLetter(propertyName);
+                                if (renamedProperty == className) // one such example is list->list
                                 {
                                     var propertyClassName = GetCsharpClassName(pathSegment, newPath);
-                                    if (propertyName == propertyClassName)
+                                    if (renamedProperty == propertyClassName)
                                     {
-                                        propertyName += "Property";
+                                        renamedProperty += "Property";
                                     }
                                     else
                                     {
-                                        propertyName = propertyClassName;
+                                        renamedProperty = propertyClassName;
                                     }
                                 }
 
-                                switch (jToken.Type)
+                                switch (propertyValue.ValueKind)
                                 {
-                                    case JTokenType.Array:
-                                    case JTokenType.Object:
+                                    case JsonValueKind.Array:
+                                    case JsonValueKind.Object:
                                         //new nested object needs to be constructed so call this function recursively to make it
-                                        var newObject = CSharpGenerateObjectFromJson(pathSegment, value, newPath);
-                                        stringBuilder.Append($"{tabSpace}\t{propertyName} = {newObject}".TrimEnd() + ",\r\n");
+                                        var newObject = CSharpGenerateObjectFromJson(pathSegment, serializedValue, newPath);
+                                        stringBuilder.Append($"{tabSpace}\t{renamedProperty} = {newObject}".TrimEnd() + ",\r\n");
                                         break;
                                     default:
                                         // we can call the function recursively to handle the other states of string/enum/special classes
-                                        stringBuilder.Append($"{tabSpace}\t{propertyName} = {CSharpGenerateObjectFromJson(pathSegment, value, newPath).Trim()},\r\n");
+                                        stringBuilder.Append($"{tabSpace}\t{renamedProperty} = {CSharpGenerateObjectFromJson(pathSegment, serializedValue, newPath).Trim()},\r\n");
                                         break;
                                 }
                             }
@@ -561,10 +567,8 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             stringBuilder.Append($"{tabSpace}}}\r\n");
                         }
                         break;
-                    case JArray array:
+                    case JsonValueKind.Array:
                         {
-                            var objectList = array.Children<JObject>();
-
                             if (typeProperties.IsNavigationProperty)
                             {
                                 stringBuilder.Append($"new {GetCollectionPageClassName(pathSegment, path)}()\r\n{tabSpace}{{\r\n");
@@ -574,11 +578,13 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                                 stringBuilder.Append($"new List<{typeProperties.ClassName}>()\r\n{tabSpace}{{\r\n");
                             }
 
+                            var array = jsonObject.EnumerateArray().ToArray();
+                            var objectList = array.Where(x => x.ValueKind == JsonValueKind.Object);
                             if (objectList.Any())
                             {
                                 foreach (var item in objectList)
                                 {
-                                    var jsonString = JsonConvert.SerializeObject(item);
+                                    var jsonString = JsonSerializer.Serialize(item);
                                     //we need to create a new object
                                     var objectStringFromJson = CSharpGenerateObjectFromJson(pathSegment, jsonString, path).TrimEnd(";\r\n".ToCharArray());
                                     //indent it one tab level then append it to the string builder
@@ -591,7 +597,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             {
                                 foreach (var element in array)
                                 {
-                                    var listItem = CSharpGenerateObjectFromJson(pathSegment, JsonConvert.SerializeObject(element), path).TrimEnd(";\r\n".ToCharArray());
+                                    var listItem = CSharpGenerateObjectFromJson(pathSegment, JsonSerializer.Serialize(element), path).TrimEnd(";\r\n".ToCharArray());
                                     stringBuilder.Append($"{tabSpace}\t{listItem.TrimStart()},\r\n");
                                 }
                                 //remove the trailing comma if we appended anything
@@ -603,10 +609,10 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             stringBuilder.Append($"{tabSpace}}}\r\n");
                         }
                         break;
-                    case DateTime _:
-                        stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString(jsonBody.Replace("\"", ""), pathSegment, path)}");
-                        break;
-                    case null:
+                    //case JsonValueKind.:
+                    //    stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString(jsonBody.Replace("\"", ""), pathSegment, path)}");
+                    //    break;
+                    case JsonValueKind.Null:
                         stringBuilder.Append($"{tabSpace}null");
                         break;
                     default:
@@ -645,14 +651,14 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         /// <returns>a string builder with the relevant odata code added</returns>
         private static StringBuilder ProcessOdataIdAndType(StringBuilder stringBuilder, string key, string value, string className, string tabSpace)
         {
-            if(String.IsNullOrEmpty(value))
+            if (String.IsNullOrEmpty(value))
             {
                 throw new ArgumentNullException(nameof(value), "Value for @odata.type cannot be empty");
             }
 
             switch (key)
             {
-                case "@odata.id" when className.Equals("DirectoryObject") :
+                case "@odata.id" when className.Equals("DirectoryObject"):
                     try
                     {
                         var uriLastSegmentString = new Uri(value).Segments.Last();
@@ -670,13 +676,15 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                     // If type contains subnamespace of Microsoft.Graph e.g Microsoft.Graph.Ediscovery.LegalHold, prefix the namespace to the typeName
                     // else if type not in graph namespace e.g Microsoft.OutlookServices or is a type directly within the graph subnamespace e.g Microsoft.Graph.IdentitySet
                     // then proposedType is the <typeName> without prefix
-                    var graphSubspaces = value.StartsWith("#microsoft.graph.") ? value["#microsoft.graph.".Length..].Split(".".ToCharArray()) : new string[] {} ;
-                    if (graphSubspaces.Length > 1) {
+                    var graphSubspaces = value.StartsWith("#microsoft.graph.") ? value["#microsoft.graph.".Length..].Split(".".ToCharArray()) : new string[] { };
+                    if (graphSubspaces.Length > 1)
+                    {
                         // Remove the prefixed `#`, then uppercase the individual strings in the odata path
                         var namespacedTypeName = value.Split("#").Last().Split(".").Select((item, _) => CommonGenerator.UppercaseFirstLetter(item));
                         proposedType = String.Join(".", namespacedTypeName);
                     }
-                    else{
+                    else
+                    {
                         proposedType = CommonGenerator.UppercaseFirstLetter(value.Split(".").Last());
                     }
                     proposedType = proposedType.EndsWith("Request") ? proposedType + "Object" : proposedType; // disambiguate class names that end with Request
@@ -717,7 +725,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                         return $"Guid.Parse({specialClassString})";
 
                     case "Date"://try to parse the date to get the day,month and year params
-                        string parsedDate = DateTime.TryParse(stringParameter,out var dateTime)
+                        string parsedDate = DateTime.TryParse(stringParameter, out var dateTime)
                             ? $"{dateTime.Year},{dateTime.Month},{dateTime.Day}"
                             : "1900,1,1";//use default params on parse failure
                         return $"new Date({parsedDate})";
@@ -802,14 +810,14 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         /// <returns>ICollectionPage Interface name</returns>
         private string GetCollectionPageClassName(ODataPathSegment pathSegment, ICollection<string> path)
         {
-            var type = GetCsharpClassName(pathSegment, path.Take(path.Count-1).ToList());
+            var type = GetCsharpClassName(pathSegment, path.Take(path.Count - 1).ToList());
             var property = path.Last();
             var uppercasedProperty = CommonGenerator.UppercaseFirstLetter(property);
 
             var structuredType = (pathSegment.EdmType as IEdmCollectionType)?.ElementType?.Definition as IEdmStructuredType;
             var containsTarget = (structuredType?.FindProperty(property) as IEdmNavigationProperty)?.ContainsTarget
                 ?? throw new InvalidOperationException("Path doesn't match with the metadata property description!" +
-                    $"path: { string.Join(' ', path) }");
+                    $"path: {string.Join(' ', path)}");
 
             var navCollectionType = containsTarget ? "CollectionPage" : "CollectionWithReferencesPage";
             return $"{type}{uppercasedProperty}{navCollectionType}";
@@ -835,7 +843,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                 desiredSegment = snippetModel.Segments[--segmentIndex];
             }
 
-            var selectField = snippetModel.Segments[segmentIndex+1].Identifier;
+            var selectField = snippetModel.Segments[segmentIndex + 1].Identifier;
 
             //generate path to the property
             var properties = "";
@@ -949,13 +957,13 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             if (nestEdmType is IEdmEnumType edmEnumType)
             {
                 var typeName = GetCsharpClassName(pathSegment, path);
-                var temp = enumHint.Split(", ".ToCharArray(),StringSplitOptions.RemoveEmptyEntries);//split incase we need to 'or' the members
+                var temp = enumHint.Split(", ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);//split incase we need to 'or' the members
                 var enumStringList = new List<string>();
 
                 //look for the proper name of the enum in the members
                 foreach (var member in edmEnumType.Members)
                 {
-                    if (temp.Contains(member.Name,StringComparer.OrdinalIgnoreCase))
+                    if (temp.Contains(member.Name, StringComparer.OrdinalIgnoreCase))
                     {
                         enumStringList.Add($"{typeName}.{CommonGenerator.UppercaseFirstLetter(member.Name)}");
                     }

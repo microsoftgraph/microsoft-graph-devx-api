@@ -19,7 +19,7 @@ resources:
      type: github
      endpoint: microsoftgraphdocs
      name: microsoftgraph/microsoft-graph-docs
-     ref: main   
+     ref: main
    - repository: api-doctor
      type: github
      endpoint: microsoftgraphdocs

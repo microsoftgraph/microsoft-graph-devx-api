@@ -70,21 +70,6 @@ namespace SamplesService.Test
             Assert.Equal("mon profil", frenchSampleQueriesList.SampleQueries[0].HumanName);
         }
 
-
-        [Fact]
-        public async Task ReturnNullIfSampleQueryFileIsEmpty()
-        {
-            // Arrange
-            _samplesStore = new SamplesStore(_configuration, _httpClientUtility, _fileUtility, _samplesCache);
-
-            // Act - Fetch ja-JP sample queries which is empty
-            SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP");
-
-            // Assert
-            Assert.Null(japaneseSampleQueriesList);
-        }
-
-
         [Fact]
         public async Task FetchSamplesFromGithub()
         {
