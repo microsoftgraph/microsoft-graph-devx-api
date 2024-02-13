@@ -45,7 +45,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
-            if (snippetModel == null) throw new ArgumentNullException("Argument snippetModel cannot be null");
+            ArgumentNullException.ThrowIfNull(snippetModel);
 
             var codeGraph = new SnippetCodeGraph(snippetModel);
             var snippetBuilder = new StringBuilder();
@@ -305,7 +305,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             })
                         .Aggregate(static (x, y) =>
                         {
-                            var w = x.EndsWith("s") && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
+                            var w = x.EndsWith('s') && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
                             w = "Me".Equals(w, StringComparison.Ordinal) ? "Item" : w;
                             return $"{w}{y}";
                         });

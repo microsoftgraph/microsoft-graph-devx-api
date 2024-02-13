@@ -173,8 +173,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!snippetCodeGraph.HasBody())
                 return new StringBuilder();// No body
 
-            if(indentManager == null) 
-                throw new ArgumentNullException(nameof(indentManager));
+            ArgumentNullException.ThrowIfNull(indentManager);
 
             var snippetBuilder = new StringBuilder();
             switch (snippetCodeGraph.Body.PropertyType)
@@ -311,7 +310,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 case PropertyType.Array:
                     // For objects, rely on the typeDefinition from the array definition otherwise look deeper for primitive collections
-                    var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children[0].PropertyType != PropertyType.Object
+                    var collectionTypeString = codeProperty.Children.Count != 0 && codeProperty.Children[0].PropertyType != PropertyType.Object
                         ? GetTypeString(codeProperty.Children[0])
                         : ReplaceIfReservedTypeName(typeString);
                     if(string.IsNullOrEmpty(collectionTypeString)) 

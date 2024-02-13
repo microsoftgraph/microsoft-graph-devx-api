@@ -6,7 +6,6 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Linq;
 using GraphWebApi.Common;
 using Microsoft.ApplicationInsights.DataContracts;
 using UtilityService;

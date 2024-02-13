@@ -292,7 +292,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody)
                 || "undefined".Equals(snippetModel?.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
                 return (default, default);
-            if (indentManager == null) throw new ArgumentNullException(nameof(indentManager));
+            
+            ArgumentNullException.ThrowIfNull(indentManager);
 
             if (isValidJson(snippetModel?.RequestBody) && string.IsNullOrWhiteSpace(snippetModel?.ContentType))
             {

@@ -133,8 +133,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         /// <returns></returns>
         public bool CanGetServiceCollectionNavigationPropertyForProperty(NavigationPropertyLinkSegment navigationPropertyLinkSegment)
         {
-            if (navigationPropertyLinkSegment == null)
-                throw new ArgumentNullException(nameof(navigationPropertyLinkSegment));
+            ArgumentNullException.ThrowIfNull(navigationPropertyLinkSegment);
 
             if (navigationPropertyLinkSegment.NavigationProperty.ContainsTarget)
                 return true;

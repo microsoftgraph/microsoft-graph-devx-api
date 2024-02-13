@@ -571,15 +571,9 @@ namespace PermissionsService
         private List<ScopeInformation> GetAdditionalScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
             List<ScopeInformation> scopes, ScopeType? scopeType = null, bool getAllPermissions = false)
         {
-            if (scopesInformationDictionary is null)
-            {
-                throw new ArgumentNullException(nameof(scopesInformationDictionary));
-            }
+            ArgumentNullException.ThrowIfNull(scopesInformationDictionary);
 
-            if (scopes is null)
-            {
-                throw new ArgumentNullException(nameof(scopes));
-            }
+            ArgumentNullException.ThrowIfNull(scopes);
 
             var descriptionGroups = permissionDescriptionGroups.Values.Distinct().Except(scopesInformationDictionary.Keys);
             foreach (var group in descriptionGroups)

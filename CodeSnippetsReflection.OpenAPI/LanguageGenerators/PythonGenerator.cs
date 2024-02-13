@@ -227,8 +227,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!snippetCodeGraph.HasBody())
                 return;// No body
 
-            if (indentManager == null)
-                throw new ArgumentNullException(nameof(indentManager));
+            ArgumentNullException.ThrowIfNull(indentManager);
 
             switch (snippetCodeGraph.Body.PropertyType)
             {
