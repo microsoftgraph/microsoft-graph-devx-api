@@ -215,7 +215,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                             break;
                         case "array":
                             var children = splitCommasExcludingBracketsRegex.Split(GetQueryParameterValue(queryCollection[key]))
-                                .Where(x => !String.IsNullOrEmpty(x) && !x.StartsWith("(") && !x.Equals(","))
+                                .Where(x => !String.IsNullOrEmpty(x) && !x.StartsWith('(') && !x.Equals(","))
                                 .Select(x => new CodeProperty() { Name = null, Value = x, PropertyType = PropertyType.String }).ToList();
                             parameters.Add(new CodeProperty { Name = name, Value = null, PropertyType = PropertyType.Array, Children = children });
                             break;

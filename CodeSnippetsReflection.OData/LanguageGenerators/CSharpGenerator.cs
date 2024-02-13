@@ -419,7 +419,11 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                         {
                             var stringValue = jsonObject.GetString();
                             var enumString = GenerateEnumString(stringValue, pathSegment, path);
-                            if (className == "String")
+                            if (DateTime.TryParse(stringValue, out var dateTimeValue))
+                            {
+                                stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString(jsonBody.Replace("\"", ""), pathSegment, path)}");
+                            }
+                            else if (className == "String")
                             {
                                 stringBuilder.Append($"{jsonBody}\r\n");
                             }
@@ -558,7 +562,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             }
 
                             //remove the trailing comma if we appended anything
-                            if (stringBuilder[stringBuilder.Length - 3].Equals(','))
+                            if (stringBuilder[^3].Equals(','))
                             {
                                 stringBuilder.Remove(stringBuilder.Length - 3, 1);
                             }
@@ -601,7 +605,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                                     stringBuilder.Append($"{tabSpace}\t{listItem.TrimStart()},\r\n");
                                 }
                                 //remove the trailing comma if we appended anything
-                                if (stringBuilder[stringBuilder.Length - 3].Equals(','))
+                                if (stringBuilder[^3].Equals(','))
                                 {
                                     stringBuilder.Remove(stringBuilder.Length - 3, 1);
                                 }
@@ -609,9 +613,6 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             stringBuilder.Append($"{tabSpace}}}\r\n");
                         }
                         break;
-                    //case JsonValueKind.:
-                    //    stringBuilder.Append($"{tabSpace}{GenerateSpecialClassString(jsonBody.Replace("\"", ""), pathSegment, path)}");
-                    //    break;
                     case JsonValueKind.Null:
                         stringBuilder.Append($"{tabSpace}null");
                         break;

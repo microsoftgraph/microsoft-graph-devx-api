@@ -36,7 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI
         
         public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiSnippetMetadata openApiSnippetMetadata) : base(requestPayload, serviceRootUrl)
         {
-            if (openApiSnippetMetadata == null) throw new ArgumentNullException(nameof(openApiSnippetMetadata));
+            ArgumentNullException.ThrowIfNull(openApiSnippetMetadata);
 
             var remappedPayload = RemapKnownPathsIfNeeded(requestPayload);
             var splatPath = ReplaceIndexParametersByPathSegment(remappedPayload.RequestUri
