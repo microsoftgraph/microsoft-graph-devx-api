@@ -66,8 +66,8 @@ namespace SamplesService.Services
         {
             // This currently applies to English supported sample queries only
             List<SampleQueryModel> sortedSampleQueries = sampleQueriesList.SampleQueries
-                .OrderBy(s => s.Category)
                 .Where(s => s.Category != "Getting Started") // skipped, as it should always be the top-most sample query in the list
+                .OrderBy(s => s.Category)
                 .ToList();
 
             SampleQueriesList sortedSampleQueriesList = new SampleQueriesList();

@@ -31,10 +31,7 @@ namespace SamplesService.Models
             get => _category;
             set
             {
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(Category));
-                }
+                ArgumentNullException.ThrowIfNull(value);
                 _category = value.Trim(' '); // remove all leading and trailing whitespaces before assigning
             }
         }
@@ -51,10 +48,7 @@ namespace SamplesService.Models
             get => _humanName;
             set
             {
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(HumanName));
-                }
+                ArgumentNullException.ThrowIfNull(value);
                 _humanName = value.Trim(' '); // remove all leading and trailing whitespaces before assigning
             }
         }
@@ -65,9 +59,9 @@ namespace SamplesService.Models
             get => _requestUrl;
             set
             {
-                string testValue = value ?? throw new ArgumentNullException(nameof(RequestUrl)); ;
+                string testValue = value ?? throw new ArgumentNullException(nameof(RequestUrl));
                 // Check if value starts with '/' and whether there are any subsequent '/'
-                if(!testValue.Trim(' ').StartsWith("/") || !testValue.TrimStart('/').Contains("/"))
+                if(!testValue.Trim(' ').StartsWith('/') || !testValue.TrimStart('/').Contains('/'))
                 {
                     throw new ArgumentException("Invalid request url.\r\nEx.: /v1.0/me/messages", nameof(RequestUrl));
                 }
