@@ -256,10 +256,12 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.QueryParameters.Search = \"\\\"displayName:di\\\" AND \\\"displayName:al\\\"\";", result);
         }
 
-        [Fact]
-        public async Task ObsoleteGetAsyncReplacedWithGetAsLastNodeNameGetResponseAsync() {
-            var expectedSuffix = "GetAsDeltaGetResponseAsync";
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/some-id/mailFolders/delta");
+        [Theory]
+        [InlineData("/users/some-id/mailFolders/delta","GetAsDeltaGetResponseAsync")]
+        [InlineData("/appCatalogs/teamsApps?requiresReview=true","await graphClient.AppCatalogs.TeamsApps.PostAsync(", "POST")]
+        [InlineData("/me/photos/48x48/$value","Content.GetAsync()")]
+        public async Task ObsoleteGetAsyncReplacedWithGetAsLastNodeNameGetResponseAsync(string inputPath, string expectedSuffix, string method = "") {
+            using var requestPayload = new HttpRequestMessage(string.IsNullOrEmpty(method) ? HttpMethod.Get : new HttpMethod(method), $"{ServiceRootUrl}{inputPath}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains(expectedSuffix, result);

@@ -93,7 +93,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             string pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph,usedNamespaces)}";
             //if codeGraph.ResponseSchema.Reference is null then recreate methodName for inline schema with following suffix
             //methodNameinPascalCase + "As" + functionName + methodNameinPascalCase + "ResponseAsync"
-            if (codeGraph.ResponseSchema.Reference is null && !codeGraph.ResponseSchema.AnyOf.Any(x => x.Reference is not null))
+            bool someNodeInPathHasReference = codeGraph.ResponseSchema?.AnyOf?.Any(x => x.Reference is not null) ?? false;
+            if (codeGraph.ResponseSchema?.Reference is null && !someNodeInPathHasReference)
             {
                 var lastItemInPath = codeGraph.Nodes.Last();
                 var functionName = new StringBuilder();
@@ -103,7 +104,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 }
                 else
                 {
-                    functionName.Append(lastItemInPath.Segment.Split('(').First().ToFirstCharacterUpperCase());
+                    functionName.Append(lastItemInPath.Segment.Split('(')[0].ToFirstCharacterUpperCase());
                 }
                 var parameters = AggregatePathParametersIntoString(codeGraph.PathParameters);
                 functionName = functionName.Append(parameters);
@@ -157,11 +158,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetFunctionNameFromNameSpacedSegmentString(string segmentString)
         {
-            var functionName = segmentString.Split('(')[0];
-            functionName = functionName.Split(
-                ".",
+            var nameOptions = segmentString.Split(
+                '('  //remove function brackets
+            )[0].Split(
+                ".", //split by namespace
                 StringSplitOptions.RemoveEmptyEntries
-            ).Last().ToFirstCharacterUpperCase();
+            );
+            var splitOptionsCount = nameOptions.Count();
+            var functionName = nameOptions[splitOptionsCount-1].ToFirstCharacterUpperCase();
             return functionName;
         }
 
