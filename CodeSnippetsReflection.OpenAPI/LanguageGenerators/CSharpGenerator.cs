@@ -5,6 +5,7 @@ using System.Text;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
+using SharpYaml.Events;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
@@ -18,17 +19,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string DefaultNamespace = "Microsoft.Graph";
         private const string VersionInformationString = "// Code snippets are only available for the latest version. Current version is 5.x";
         private const string InitializationInfoString = "// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=csharp";
-        
+
         private static HashSet<string> GetSystemTypeNames()
         {
             return typeof(string).Assembly.GetTypes()
-                .Where(static type => type.Namespace == "System" 
+                .Where(static type => type.Namespace == "System"
                                       && type.IsPublic // get public(we can only import public type in external code)
                                       && !type.IsGenericType)// non generic types(generic type names have special character like `)
                 .Select(static type => type.Name)
                 .ToHashSet();
         }
-        
+
         private static readonly HashSet<string> CustomDefinedValues = new(StringComparer.OrdinalIgnoreCase)
         {
             "file", //system.io static types
@@ -39,13 +40,13 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             "thread",
             "integer"
         };
-        
+
         private static readonly Lazy<HashSet<string>> ReservedNames = new(static () =>
         {
             CustomDefinedValues.UnionWith(GetSystemTypeNames());
             return CustomDefinedValues;
         });
-        
+
         public string GenerateCodeSnippet(SnippetModel snippetModel)
         {
             var usedNamespaces = new HashSet<string>();// list of used namespaces in generation
@@ -55,11 +56,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var requestPayloadAndVariableNameBuilder = WriteRequestPayloadAndVariableNameBuilder(codeGraph, indentManager, usedNamespaces);
             var requestExecutionPathBuilder = WriteRequestExecutionPathBuilder(codeGraph, indentManager,usedNamespaces);
             var dependenciesBuilder = WriteDependenciesBuilder(usedNamespaces.Where( static ns => !string.IsNullOrEmpty(ns)).ToArray());
-            
+
             return codeSnippetBuilder.Append(dependenciesBuilder) // dependencies first
                 .Append(requestPayloadAndVariableNameBuilder) // request body
                 .AppendLine(InitializationInfoString)
-                .Append(requestExecutionPathBuilder)// request executor 
+                .Append(requestExecutionPathBuilder)// request executor
                 .ToString();
         }
 
@@ -83,20 +84,39 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var payloadSb = new StringBuilder();
             var responseAssignment = codeGraph.HasReturnedBody() ? "var result = " : string.Empty;
-            var methodName = codeGraph.HttpMethod.Method.ToLower().ToFirstCharacterUpperCase() + "Async";
+            var methodNameinPascalCase = codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase();
+            var methodName = methodNameinPascalCase + "Async";
             var requestPayloadParameterName = codeGraph.HasBody() ? RequestBodyVarName : default;
             if (string.IsNullOrEmpty(requestPayloadParameterName) && ((codeGraph.RequestSchema?.Properties?.Any() ?? false) || (codeGraph.RequestSchema?.AllOf?.Any(schema => schema.Properties.Any()) ?? false)))
                 requestPayloadParameterName = "null";// pass a null parameter if we have a request schema expected but there is not body provided
 
             string pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph,usedNamespaces)}";
-            if(codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) || 
+            //if codeGraph.ResponseSchema.Reference is null then recreate methodName for inline schema with following suffix
+            //methodNameinPascalCase + "As" + functionName + methodNameinPascalCase + "ResponseAsync"
+            if (codeGraph.ResponseSchema.Reference is null && !codeGraph.ResponseSchema.AnyOf.Any(x => x.Reference is not null))
+            {
+                var lastItemInPath = codeGraph.Nodes.Last();
+                var functionName = new StringBuilder();
+                if (lastItemInPath.Segment.Contains('.'))
+                {
+                    functionName.Append(GetFunctionNameFromNameSpacedSegmentString(lastItemInPath.Segment));
+                }
+                else
+                {
+                    functionName.Append(lastItemInPath.Segment.Split('(').First().ToFirstCharacterUpperCase());
+                }
+                var parameters = AggregatePathParametersIntoString(codeGraph.PathParameters);
+                functionName = functionName.Append(parameters);
+                methodName = methodNameinPascalCase + "As" + functionName + methodNameinPascalCase + "ResponseAsync";
+            }
+            if(codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) ||
                                                             property.Name.Equals("deltatoken",StringComparison.OrdinalIgnoreCase)))
             {// its a delta query and needs the opaque url passed over.
                 payloadSb.AppendLine("// Note: The URI string parameter used with WithUrl() can be retrieved using the OdataNextLink or OdataDeltaLink property from a response object");
                 pathSegment = $"{pathSegment}.WithUrl(\"{codeGraph.RequestUrl}\")";
                 codeGraph.Parameters = new List<CodeProperty>();// clear the query parameters as these will be provided in the url directly.
             }
-            
+
             var requestConfigurationPayload = GetRequestConfiguration(codeGraph, indentManager);
             var parametersList = GetActionParametersList(requestPayloadParameterName , requestConfigurationPayload);
             payloadSb.AppendLine($"{responseAssignment}await {pathSegment}.{methodName}({parametersList});");
@@ -123,9 +143,31 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return nonEmptyParameters.Any() ? string.Join(", ", nonEmptyParameters.Aggregate(static (a, b) => $"{a}, {b}")) : string.Empty;
         }
 
+        private static string AggregatePathParametersIntoString(IEnumerable<CodeProperty> parameters)
+        {
+            if (!parameters.Any())
+                return string.Empty;
+            var parameterString = parameters.Select(
+                static s => $"With{s.Name.ToFirstCharacterUpperCase()}"
+            ).Aggregate(
+                static (a, b) => $"{a}{b}"
+            );
+            return parameterString;
+        }
+
+        private static string GetFunctionNameFromNameSpacedSegmentString(string segmentString)
+        {
+            var functionName = segmentString.Split('(')[0];
+            functionName = functionName.Split(
+                ".",
+                StringSplitOptions.RemoveEmptyEntries
+            ).Last().ToFirstCharacterUpperCase();
+            return functionName;
+        }
+
         private static void WriteRequestHeaders(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, StringBuilder stringBuilder)
         {
-            if (!snippetCodeGraph.HasHeaders()) 
+            if (!snippetCodeGraph.HasHeaders())
                 return ;
 
             indentManager.Indent();
@@ -142,7 +184,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 return;
 
             indentManager.Indent();
-            foreach(var queryParam in snippetCodeGraph.Parameters) 
+            foreach(var queryParam in snippetCodeGraph.Parameters)
             {
                 stringBuilder.AppendLine($"{indentManager.GetIndent()}{RequestConfigurationVarName}.{RequestParametersPropertyName}.{queryParam.Name.ToFirstCharacterUpperCase()} = {GetQueryParameterValue(queryParam)};");
             }
@@ -160,7 +202,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 case PropertyType.Double:
                 case PropertyType.Float32:
                 case PropertyType.Float64:
-                    return queryParam.Value; // Numbers stay as is 
+                    return queryParam.Value; // Numbers stay as is
                 case PropertyType.Array:
                     return $"new string []{{ {string.Join(",", queryParam.Children.Select(static x =>  $"\"{x.Value}\"" ).ToList())} }}"; // deconstruct arrays
                 default:
@@ -173,7 +215,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!snippetCodeGraph.HasBody())
                 return new StringBuilder();// No body
 
-            if(indentManager == null) 
+            if(indentManager == null)
                 throw new ArgumentNullException(nameof(indentManager));
 
             var snippetBuilder = new StringBuilder();
@@ -196,7 +238,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return snippetBuilder.AppendLine();
         }
 
-        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager, string apiVersion, HashSet<string> usedNamespaces) 
+        private static void WriteObjectFromCodeProperty(CodeProperty parentProperty, CodeProperty codeProperty,StringBuilder snippetBuilder, IndentManager indentManager, string apiVersion, HashSet<string> usedNamespaces)
         {
             indentManager.Indent();
             var isParentArray = parentProperty.PropertyType == PropertyType.Array;
@@ -314,9 +356,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     var collectionTypeString = codeProperty.Children.Any() && codeProperty.Children[0].PropertyType != PropertyType.Object
                         ? GetTypeString(codeProperty.Children[0])
                         : ReplaceIfReservedTypeName(typeString);
-                    if(string.IsNullOrEmpty(collectionTypeString)) 
+                    if(string.IsNullOrEmpty(collectionTypeString))
                         collectionTypeString = "object";
-                    else if(typeString.Equals(StringTypeName,StringComparison.OrdinalIgnoreCase)) 
+                    else if(typeString.Equals(StringTypeName,StringComparison.OrdinalIgnoreCase))
                         collectionTypeString = StringTypeName; // use the conventional casing if need be
                     return $"List<{collectionTypeString}>";
                 case PropertyType.Object:
@@ -345,7 +387,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             //strip the default namespace name from the original as the models are typically already in Microsoft.Graph namespace
             namespaceName = namespaceName.Replace(DefaultNamespace,string.Empty, StringComparison.OrdinalIgnoreCase);
-            
+
             var normalizedNameSpaceName = namespaceName.TrimStart('.').Split('.',StringSplitOptions.RemoveEmptyEntries)
                 .Select(static x => ReplaceIfReservedTypeName(x, "Namespace").ToFirstCharacterUpperCase())
                 .Aggregate(static (z, y) => z + '.' + y);
@@ -355,20 +397,20 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetDefaultNamespaceName(string apiVersion) =>
             apiVersion.Equals("beta", StringComparison.OrdinalIgnoreCase) ?  $"{DefaultNamespace}.Beta" : DefaultNamespace;
-        
+
         private static string ReplaceIfReservedTypeName(string originalString, string suffix = "Object")
             => ReservedNames.Value.Contains(originalString) ? $"{originalString}{suffix}" : originalString;
 
         private static string GetFluentApiPath(IEnumerable<OpenApiUrlTreeNode> nodes, SnippetCodeGraph snippetCodeGraph, HashSet<string> usedNamespaces)
         {
-            if(!(nodes?.Any() ?? false)) 
+            if(!(nodes?.Any() ?? false))
                 return string.Empty;
 
             return nodes.Select(x => {
                                         if (x.Segment.IsCollectionIndex())
                                         {
                                             //Handle cases where the indexer is an integer type
-                                            var isIntParam = false; 
+                                            var isIntParam = false;
                                             if (x.PathItems.TryGetValue("default", out var pathItem))
                                             {
                                                 isIntParam = pathItem.Parameters.Any(parameter => x.Segment.Contains(parameter.Name) && parameter.Schema.Type.Equals("integer", StringComparison.OrdinalIgnoreCase));
@@ -382,9 +424,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             functionName = functionName.Split(".",StringSplitOptions.RemoveEmptyEntries)
                                                                         .Select(static s => s.ToFirstCharacterUpperCase())
                                                                         .Aggregate(static (a, b) => $"{a}{b}");
-                                            var parameters = snippetCodeGraph.PathParameters
-                                                .Select(static s => $"With{s.Name.ToFirstCharacterUpperCase()}")
-                                                .Aggregate(static (a, b) => $"{a}{b}");
+                                            var parameters = AggregatePathParametersIntoString(snippetCodeGraph.PathParameters);
 
                                             // use the existing WriteObjectFromCodeProperty functionality to write the parameters as if they were a comma seperated array so as to automatically infer type handling from the codeDom :)
                                             var parametersBuilder = new StringBuilder();
@@ -394,7 +434,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                                 WriteObjectFromCodeProperty(new CodeProperty{PropertyType = PropertyType.Array}, codeProperty, parameter, new IndentManager(), snippetCodeGraph.ApiVersion, usedNamespaces);
                                                 parametersBuilder.Append(parameter.ToString().Trim());//Do this to trim the surrounding whitespace generated
                                             }
-                                            
+
                                             return functionName.ToFirstCharacterUpperCase()
                                                    + parameters
                                                    + $"({parametersBuilder.ToString().TrimEnd(',')})" ;
