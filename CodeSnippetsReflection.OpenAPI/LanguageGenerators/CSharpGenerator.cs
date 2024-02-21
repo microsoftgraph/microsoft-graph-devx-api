@@ -164,7 +164,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 ".", //split by namespace
                 StringSplitOptions.RemoveEmptyEntries
             );
-            var splitOptionsCount = nameOptions.Count();
+            var splitOptionsCount = nameOptions.Length;
             var functionName = nameOptions[splitOptionsCount-1].ToFirstCharacterUpperCase();
             return functionName;
         }
