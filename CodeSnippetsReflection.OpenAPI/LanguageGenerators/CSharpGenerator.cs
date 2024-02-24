@@ -5,7 +5,6 @@ using System.Text;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
-using SharpYaml.Events;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
