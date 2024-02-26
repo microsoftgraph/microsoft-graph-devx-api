@@ -74,7 +74,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                                 {
                                     foreach (var property in jsonObject.EnumerateObject())
                                     {
-                                        var jsonString = JsonSerializer.Serialize(property.Value);
+                                        var jsonString = JsonSerializer.Serialize(property.Value, JsonHelper.JsonSerializerOptions);
                                         snippetBuilder.Append(JavaGenerateObjectFromJson(segment, jsonString, [CommonGenerator.LowerCaseFirstLetter(property.Name)]));
                                     }
                                 }
@@ -157,7 +157,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             usedVarNames ??= []; // make sure list is not null
             var className = GetJavaReturnTypeName(pathSegment, path);
 
-            using var jsonDoc = JsonDocument.Parse(jsonString);
+            using var jsonDoc = JsonDocument.Parse(jsonString, JsonHelper.JsonDocumentOptions);
             var jsonObject = jsonDoc.RootElement.Clone();
             switch (jsonObject.ValueKind)
             {
@@ -207,7 +207,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                                 continue;
                             }
 
-                            var serializedValue = JsonSerializer.Serialize(propertyValue);
+                            var serializedValue = JsonSerializer.Serialize(propertyValue, JsonHelper.JsonSerializerOptions);
                             switch (propertyValue.ValueKind)
                             {
                                 case JsonValueKind.Array:
@@ -218,7 +218,11 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                                     var variableName = (referenceSuffix.Contains(Page) ? collectionType.FullTypeName().Split('.').Last() : newPath.Last()) + referenceSuffix;
                                     
                                     // new nested object needs to be constructed so call this function recursively to make it
-                                    stringBuilder.Append($"{JavaGenerateObjectFromJson(pathSegment, JsonSerializer.Serialize(propertyValue), newPath, usedVarNames)}");
+                                    stringBuilder.Append($"{JavaGenerateObjectFromJson(
+                                        pathSegment, 
+                                        JsonSerializer.Serialize(propertyValue, JsonHelper.JsonSerializerOptions),
+                                        newPath, 
+                                        usedVarNames)}");
                                     stringBuilder.Append(propertyValue.ValueKind == JsonValueKind.Array
                                         ? $"{currentVarName}.{newPath.Last()} = {EnsureJavaVariableNameIsUnique(variableName, usedVarNames)};\r\n"
                                         : $"{currentVarName}.{newPath.Last()} = {EnsureJavaVariableNameIsUnique(newPath.Last(), usedVarNames)};\r\n");
@@ -255,7 +259,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             foreach (var item in array)
                             {
                                 var currentListItemName = EnsureJavaVariableNameIsUnique(path.Last(), usedVarNames);
-                                var jsonItemString = JsonSerializer.Serialize(item);
+                                var jsonItemString = JsonSerializer.Serialize(item, JsonHelper.JsonSerializerOptions);
                                 // We need to create a new object
                                 var objectStringFromJson = JavaGenerateObjectFromJson(pathSegment, jsonItemString, path, usedVarNames);
                                 stringBuilder.Append($"{objectStringFromJson}");

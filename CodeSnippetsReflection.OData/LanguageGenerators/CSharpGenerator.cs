@@ -85,7 +85,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             if (string.IsNullOrEmpty(snippetModel.RequestBody))
                                 throw new InvalidOperationException($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
 
-                            using (var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody))
+                            using (var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody, JsonHelper.JsonDocumentOptions))
                             {
                                 if (jsonDoc.RootElement.TryGetProperty("@odata.id", out JsonElement odataId))
                                 {
@@ -101,14 +101,14 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             //deserialize the object since the json top level contains the list of parameter objects
                             if (!string.IsNullOrEmpty(snippetModel.RequestBody))
                             {
-                                using JsonDocument jsonDoc = JsonDocument.Parse(snippetModel.RequestBody);
+                                using JsonDocument jsonDoc = JsonDocument.Parse(snippetModel.RequestBody, JsonHelper.JsonDocumentOptions);
                                 if (jsonDoc.RootElement.ValueKind == JsonValueKind.Object)
                                 {
                                     JsonElement testObj = jsonDoc.RootElement;
 
                                     foreach (var property in testObj.EnumerateObject())
                                     {
-                                        var jsonString = JsonSerializer.Serialize(property.Value);
+                                        var jsonString = JsonSerializer.Serialize(property.Value, JsonHelper.JsonSerializerOptions);
 
                                         // see examples in TypeIsInferredFromActionParametersForNonNullableType
                                         // and TypeIsInferredFromActionParametersForNullableType tests.
@@ -191,7 +191,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                         {
                             // if we are putting reference, we should send id to that object in PutAsync()
                             // and the request body should contain a JSON with @odata.id key
-                            using var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody);
+                            using var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody, JsonHelper.JsonDocumentOptions);
 
                             // HTTP sample is in this format: https://graph.microsoft.com/v1.0/users/{id}
                             // but C# SDK reconstructs the URL from {id}
@@ -395,7 +395,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             }
 
             var stringBuilder = new StringBuilder();
-            using var jsonDoc = JsonDocument.Parse(jsonBody);
+            using var jsonDoc = JsonDocument.Parse(jsonBody, JsonHelper.JsonDocumentOptions);
             var jsonObject = jsonDoc.RootElement.Clone();
             var tabSpace = new string('\t', path.Count - 1);//d
             var typeProperties = GetCSharpTypeProperties(pathSegment, path);
@@ -454,7 +454,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             {
                                 var propertyName = property.Name;
                                 var propertyValue = property.Value;
-                                var serializedValue = JsonSerializer.Serialize(propertyValue);
+                                var serializedValue = JsonSerializer.Serialize(propertyValue, JsonHelper.JsonSerializerOptions);
                                 
                                 var newPath = path.Append(propertyName).ToList(); // add new identifier to the path
                                 if (propertyName.Contains("@odata") || propertyName.StartsWith('@')) // sometimes @odata maybe in the middle e.g."invoiceStatus@odata.type"
@@ -588,7 +588,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             {
                                 foreach (var item in objectList)
                                 {
-                                    var jsonString = JsonSerializer.Serialize(item);
+                                    var jsonString = JsonSerializer.Serialize(item, JsonHelper.JsonSerializerOptions);
                                     //we need to create a new object
                                     var objectStringFromJson = CSharpGenerateObjectFromJson(pathSegment, jsonString, path).TrimEnd(";\r\n".ToCharArray());
                                     //indent it one tab level then append it to the string builder
@@ -601,7 +601,10 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             {
                                 foreach (var element in array)
                                 {
-                                    var listItem = CSharpGenerateObjectFromJson(pathSegment, JsonSerializer.Serialize(element), path).TrimEnd(";\r\n".ToCharArray());
+                                    var listItem = CSharpGenerateObjectFromJson(
+                                        pathSegment, 
+                                        JsonSerializer.Serialize(element, JsonHelper.JsonSerializerOptions),
+                                        path).TrimEnd(";\r\n".ToCharArray());
                                     stringBuilder.Append($"{tabSpace}\t{listItem.TrimStart()},\r\n");
                                 }
                                 //remove the trailing comma if we appended anything

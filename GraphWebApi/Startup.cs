@@ -69,12 +69,6 @@ namespace GraphWebApi
             services.AddSingleton<IOpenApiService, OpenApiService>();
             services.AddSingleton<IKnownIssuesService, KnownIssuesService.Services.KnownIssuesService>();
             services.AddHttpClient<IHttpClientUtility, HttpClientUtility>();
-            services.AddControllers().AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.WriteIndented = true;
-                options.JsonSerializerOptions.AllowTrailingCommas = true;
-                options.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
-            });
 
             // Localization
             services.Configure<RequestLocalizationOptions>(options =>
