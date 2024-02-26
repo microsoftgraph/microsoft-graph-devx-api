@@ -6,14 +6,14 @@ using CodeSnippetsReflection.StringExtensions;
 
 namespace CodeSnippetsReflection.OpenAPI;
 
-internal static class StringExtensions 
+internal static class StringExtensions
 {
     internal static bool IsCollectionIndex(this string pathSegment) =>
         !string.IsNullOrEmpty(pathSegment) && pathSegment.StartsWith('{') && pathSegment.EndsWith('}');
     internal static bool IsFunction(this string pathSegment) => !string.IsNullOrEmpty(pathSegment) && pathSegment.Contains('.');
 
     private static readonly Regex FunctionWithParameterRegex = new(@"\([\w\s\d=':${}<>|\-,""@]+\)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
-    internal static bool IsFunctionWithParameters(this string pathSegment) => !string.IsNullOrEmpty(pathSegment) 
+    internal static bool IsFunctionWithParameters(this string pathSegment) => !string.IsNullOrEmpty(pathSegment)
                                                                               && FunctionWithParameterRegex.Match(pathSegment).Success;
 
     internal static bool IsFunctionWithParametersMatch(this string pathSegment, string segment)
@@ -21,15 +21,15 @@ internal static class StringExtensions
         // verify both have parameters
         if (!pathSegment.IsFunctionWithParameters() || !segment.IsFunctionWithParameters())
             return false;
-        
+
         // verify both have same prefix/name
-        if (!pathSegment.Split('(').First().Equals(segment.Split('(').First(), StringComparison.OrdinalIgnoreCase))
+        if (!pathSegment.Split('(')[0].Equals(segment.Split('(')[0], StringComparison.OrdinalIgnoreCase))
             return false;
 
-        var originalParameters = pathSegment.Split('(').Last().TrimEnd(')').Split(',').Select(static s => s.Split('=').First());
-        var compareParameters = segment.Split('(').Last().TrimEnd(')').Split(',').Select(static s => s.Split('=').First());
+        var originalParameters = pathSegment.Split('(')[^1].TrimEnd(')').Split(',').Select(static s => s.Split('=')[0]);
+        var compareParameters = segment.Split('(')[^1].TrimEnd(')').Split(',').Select(static s => s.Split('=')[0]);
 
-        return compareParameters.All(parameter => originalParameters.Contains(parameter.Split('=').First(), StringComparer.OrdinalIgnoreCase));
+        return compareParameters.All(parameter => originalParameters.Contains(parameter.Split('=')[0], StringComparer.OrdinalIgnoreCase));
     }
     internal static string RemoveFunctionBraces(this string pathSegment) => pathSegment.TrimEnd('(',')');
     internal static string ReplaceValueIdentifier(this string original) =>
@@ -83,7 +83,7 @@ internal static class StringExtensions
 
     internal static string Append(this string original, string suffix) =>
         string.IsNullOrEmpty(original) ? original : original + suffix;
-        
+
     private static readonly Regex PropertyCleanupRegex = new(@"[""\s!#$%&'()*+,./:;<=>?@\[\]\\^`{}|~-](?<followingLetter>\w)?", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
     private const string CleanupGroupName = "followingLetter";
     internal static string CleanupSymbolName(this string original)
@@ -91,10 +91,29 @@ internal static class StringExtensions
         if (string.IsNullOrEmpty(original))
             return original;
 
-        var result = PropertyCleanupRegex.Replace(original, static x => x.Groups.Keys.Contains(CleanupGroupName) ? 
+        var result = PropertyCleanupRegex.Replace(original, static x => x.Groups.Keys.Contains(CleanupGroupName) ?
             x.Groups[CleanupGroupName].Value.ToFirstCharacterUpperCase() :
             string.Empty); //strip out any invalid characters, and replace any following one by its uppercase version
 
         return result;
     }
+
+    /// <summary>
+    /// Returns the last portion of a namespaced segment string
+    /// </summary>
+    /// <param name="segmentString"></param>
+    /// <returns></returns>
+    public static string GetPartFunctionNameFromNameSpacedSegmentString(this string segmentString)
+        {
+            var nameOptions = segmentString.Split(
+                '('  //remove function brackets
+            )[0].Split(
+                ".", //split by namespace
+                StringSplitOptions.RemoveEmptyEntries
+            );
+            var splitOptionsCount = nameOptions.Length;
+            // retain only last part of the namespace and Capitalize first Character
+            var functionName = nameOptions[splitOptionsCount-1].ToFirstCharacterUpperCase();
+            return functionName;
+        }
 }
