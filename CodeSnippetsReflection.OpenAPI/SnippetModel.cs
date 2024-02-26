@@ -21,7 +21,7 @@ namespace CodeSnippetsReflection.OpenAPI
         /// node representing the <c>{user-id}</c> segment.
         /// </remarks>
         public OpenApiUrlTreeNode EndPathNode => PathNodes.LastOrDefault();
-        
+
         /// <summary>
         /// An OpenAPI node that represents the root segment in the request URL.
         /// </summary>
@@ -33,7 +33,7 @@ namespace CodeSnippetsReflection.OpenAPI
         public OpenApiUrlTreeNode RootPathNode => PathNodes.FirstOrDefault();
         public List<OpenApiUrlTreeNode> PathNodes { get; private set; } = new List<OpenApiUrlTreeNode>();
         public IDictionary<string, OpenApiSchema> Schemas{ get; private set; }
-        
+
         public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiSnippetMetadata openApiSnippetMetadata) : base(requestPayload, serviceRootUrl)
         {
             if (openApiSnippetMetadata == null) throw new ArgumentNullException(nameof(openApiSnippetMetadata));
@@ -61,7 +61,7 @@ namespace CodeSnippetsReflection.OpenAPI
             { new Regex(@"/users/[A-z0-9{}\-]+/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
             { new Regex(@"/drive/",RegexOptions.Compiled, TimeSpan.FromMilliseconds(200)), "/drives/driveId/" },
         };
-        
+
         private static HttpRequestMessage RemapKnownPathsIfNeeded(HttpRequestMessage originalRequest)
         {
             var originalUri = originalRequest.RequestUri.OriginalString;
@@ -95,6 +95,11 @@ namespace CodeSnippetsReflection.OpenAPI
                 {
                     var contentType = ContentType ?? defaultContentType;
                     var operationType = GetOperationType(Method);
+                    //GET requests don't have a request body, so ignore the content type if set
+                    if (operationType == OperationType.Get && contentType != defaultContentType)
+                    {
+                        contentType = defaultContentType;
+                    }
                     _responseSchema = GetOperation(operationType)
                                         ?.Responses
                                         ?.Where(x => !x.Key.Equals("204", StringComparison.OrdinalIgnoreCase) && //204 doesn't have content
@@ -175,7 +180,7 @@ namespace CodeSnippetsReflection.OpenAPI
                 throw new EntryPointNotFoundException($"HTTP Method '{httpMethod}' not found for path.");//path exists but Method does not
             }
 
-            
+
             var pathSegment = HttpUtility.UrlDecode(pathSegments.First());
             var childNode = node.Children.FirstOrDefault(x => TrimNamespace(x.Key).Equals(pathSegment)).Value;
             if (childNode != null)
@@ -218,7 +223,7 @@ namespace CodeSnippetsReflection.OpenAPI
                     return;
                 }
             }
-            
+
             throw new EntryPointNotFoundException($"Path segment '{pathSegment}' not found in path");
         }
         private void LoadNextNode(OpenApiUrlTreeNode node, IEnumerable<string> pathSegments, HttpMethod httpMethod)
