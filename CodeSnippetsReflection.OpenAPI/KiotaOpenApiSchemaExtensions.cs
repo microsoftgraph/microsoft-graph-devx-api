@@ -3,9 +3,12 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.OpenApi.Models;
+using CodeSnippetsReflection.StringExtensions;
+using CodeSnippetsReflection.OpenAPI.ModelGraph;
 
 // THIS CLASS IS COPIED FROM KIOTA TO GET THE SAME NAMING CONVENTIONS, WE SHOULD FIND A WAY TO MUTUALIZE THE CODE
 namespace CodeSnippetsReflection.OpenAPI {
@@ -35,7 +38,7 @@ namespace CodeSnippetsReflection.OpenAPI {
             var resultSet = schemas;
             if(schemas.Count == 1 && string.IsNullOrEmpty(schemas.First().Title))
                 resultSet = schemas.FlattenEmptyEntries(subsequentGetter, 1);
-            
+
             return resultSet.Select(x => x.Title).Where(x => !string.IsNullOrEmpty(x));
         }
 
@@ -72,7 +75,7 @@ namespace CodeSnippetsReflection.OpenAPI {
         }
 
         public static IEnumerable<string> GetSchemaReferenceIds(this OpenApiSchema schema, HashSet<OpenApiSchema> visitedSchemas = null) {
-            visitedSchemas ??= new();            
+            visitedSchemas ??= new();
             if(schema != null && !visitedSchemas.Contains(schema)) {
                 visitedSchemas.Add(schema);
                 var result = new List<string>();
@@ -92,7 +95,7 @@ namespace CodeSnippetsReflection.OpenAPI {
                 if(subSchemaReferences.Any())
                     result.AddRange(subSchemaReferences);
                 return result.Distinct();
-            } else 
+            } else
                 return Enumerable.Empty<string>();
         }
         internal static IList<OpenApiSchema> FlattenEmptyEntries(this IList<OpenApiSchema> schemas, Func<OpenApiSchema, IList<OpenApiSchema>> subsequentGetter, int? maxDepth = default) {
@@ -120,6 +123,42 @@ namespace CodeSnippetsReflection.OpenAPI {
                 }
             }
             return result;
+        }
+
+        public static string AggregatePathParametersIntoString(IEnumerable<CodeProperty> parameters)
+        {
+            if (!parameters.Any())
+                return string.Empty;
+            var parameterString = parameters.Select(
+                static s => $"With{s.Name.ToFirstCharacterUpperCase()}"
+            ).Aggregate(
+                static (a, b) => $"{a}{b}"
+            );
+            return parameterString;
+        }
+        public static string GetInlinedSchemaFunctionCallPrefix(SnippetCodeGraph codeGraph){
+            var methodNameinPascalCase = codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase();
+            var functionNamePrefix = methodNameinPascalCase;
+            //if codeGraph.ResponseSchema.Reference is null then recreate functionNamePrefix for inline schema with the following format
+            //methodNameinPascalCase + "As" + functionName + methodNameinPascalCase + "Response"
+            bool someNodeInPathHasReference = codeGraph.ResponseSchema?.AnyOf?.Any(x => x.Reference is not null) ?? false;
+            if (codeGraph.ResponseSchema?.Reference is null && !someNodeInPathHasReference)
+            {
+                var lastItemInPath = codeGraph.Nodes.Last();
+                var functionName = new StringBuilder();
+                if (lastItemInPath.Segment.Contains('.'))
+                {
+                    functionName.Append(lastItemInPath.Segment.GetPartFunctionNameFromNameSpacedSegmentString());
+                }
+                else
+                {
+                    functionName.Append(lastItemInPath.Segment.Split('(')[0].ToFirstCharacterUpperCase());
+                }
+                var parameters = AggregatePathParametersIntoString(codeGraph.PathParameters);
+                functionName = functionName.Append(parameters);
+                functionNamePrefix = methodNameinPascalCase + "As" + functionName + methodNameinPascalCase + "Response";
+            }
+            return functionNamePrefix;
         }
     }
 }

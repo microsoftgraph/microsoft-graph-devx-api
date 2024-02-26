@@ -260,7 +260,6 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [InlineData("/users/some-id/mailFolders/delta","GetAsDeltaGetResponseAsync")]
         [InlineData("/appCatalogs/teamsApps?requiresReview=true","await graphClient.AppCatalogs.TeamsApps.PostAsync(", "POST")]
         [InlineData("/me/photos/48x48/$value","Content.GetAsync(")]
-        // [InlineData("/teams/{team-id}/channels/{channel-id}/doesUserHaveAccess(userId='@userId',tenantId='@tenantId',userPrincipalName='@userPrincipalName')", "GetAsDoesUserHaveAccessuserIdUserIdTenantIdTenantIdUserPrincipalNameUserPrincipalNameGetResponseAsync")]
         public async Task ObsoleteGetAsyncReplacedWithGetAsLastNodeNameGetResponseAsync(string inputPath, string expectedSuffix, string method = "") {
             using var requestPayload = new HttpRequestMessage(string.IsNullOrEmpty(method) ? HttpMethod.Get : new HttpMethod(method), $"{ServiceRootUrl}{inputPath}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());

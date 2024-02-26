@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using CodeSnippetsReflection.OpenAPI;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
@@ -83,32 +84,12 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var payloadSb = new StringBuilder();
             var responseAssignment = codeGraph.HasReturnedBody() ? "var result = " : string.Empty;
-            var methodNameinPascalCase = codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase();
-            var methodName = methodNameinPascalCase + "Async";
             var requestPayloadParameterName = codeGraph.HasBody() ? RequestBodyVarName : default;
             if (string.IsNullOrEmpty(requestPayloadParameterName) && ((codeGraph.RequestSchema?.Properties?.Any() ?? false) || (codeGraph.RequestSchema?.AllOf?.Any(schema => schema.Properties.Any()) ?? false)))
                 requestPayloadParameterName = "null";// pass a null parameter if we have a request schema expected but there is not body provided
 
             string pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph,usedNamespaces)}";
-            //if codeGraph.ResponseSchema.Reference is null then recreate methodName for inline schema with following suffix
-            //methodNameinPascalCase + "As" + functionName + methodNameinPascalCase + "ResponseAsync"
-            bool someNodeInPathHasReference = codeGraph.ResponseSchema?.AnyOf?.Any(x => x.Reference is not null) ?? false;
-            if (codeGraph.ResponseSchema?.Reference is null && !someNodeInPathHasReference)
-            {
-                var lastItemInPath = codeGraph.Nodes.Last();
-                var functionName = new StringBuilder();
-                if (lastItemInPath.Segment.Contains('.'))
-                {
-                    functionName.Append(GetFunctionNameFromNameSpacedSegmentString(lastItemInPath.Segment));
-                }
-                else
-                {
-                    functionName.Append(lastItemInPath.Segment.Split('(')[0].ToFirstCharacterUpperCase());
-                }
-                var parameters = AggregatePathParametersIntoString(codeGraph.PathParameters);
-                functionName = functionName.Append(parameters);
-                methodName = methodNameinPascalCase + "As" + functionName + methodNameinPascalCase + "ResponseAsync";
-            }
+            var methodName = KiotaOpenApiSchemaExtensions.GetInlinedSchemaFunctionCallPrefix(codeGraph) + "Async";
             if(codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) ||
                                                             property.Name.Equals("deltatoken",StringComparison.OrdinalIgnoreCase)))
             {// its a delta query and needs the opaque url passed over.
@@ -141,31 +122,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p)).ToArray();
             return nonEmptyParameters.Any() ? string.Join(", ", nonEmptyParameters.Aggregate(static (a, b) => $"{a}, {b}")) : string.Empty;
-        }
-
-        private static string AggregatePathParametersIntoString(IEnumerable<CodeProperty> parameters)
-        {
-            if (!parameters.Any())
-                return string.Empty;
-            var parameterString = parameters.Select(
-                static s => $"With{s.Name.ToFirstCharacterUpperCase()}"
-            ).Aggregate(
-                static (a, b) => $"{a}{b}"
-            );
-            return parameterString;
-        }
-
-        private static string GetFunctionNameFromNameSpacedSegmentString(string segmentString)
-        {
-            var nameOptions = segmentString.Split(
-                '('  //remove function brackets
-            )[0].Split(
-                ".", //split by namespace
-                StringSplitOptions.RemoveEmptyEntries
-            );
-            var splitOptionsCount = nameOptions.Length;
-            var functionName = nameOptions[splitOptionsCount-1].ToFirstCharacterUpperCase();
-            return functionName;
         }
 
         private static void WriteRequestHeaders(SnippetCodeGraph snippetCodeGraph, IndentManager indentManager, StringBuilder stringBuilder)
@@ -427,7 +383,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             functionName = functionName.Split(".",StringSplitOptions.RemoveEmptyEntries)
                                                                         .Select(static s => s.ToFirstCharacterUpperCase())
                                                                         .Aggregate(static (a, b) => $"{a}{b}");
-                                            var parameters = AggregatePathParametersIntoString(snippetCodeGraph.PathParameters);
+                                            var parameters = KiotaOpenApiSchemaExtensions.AggregatePathParametersIntoString(snippetCodeGraph.PathParameters);
 
                                             // use the existing WriteObjectFromCodeProperty functionality to write the parameters as if they were a comma seperated array so as to automatically infer type handling from the codeDom :)
                                             var parametersBuilder = new StringBuilder();
