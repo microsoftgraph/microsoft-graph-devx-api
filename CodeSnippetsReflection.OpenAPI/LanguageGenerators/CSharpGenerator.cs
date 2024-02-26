@@ -89,7 +89,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 requestPayloadParameterName = "null";// pass a null parameter if we have a request schema expected but there is not body provided
 
             string pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph,usedNamespaces)}";
-            var methodName = KiotaOpenApiSchemaExtensions.GetInlinedSchemaFunctionCallPrefix(codeGraph) + "Async";
+            var methodName = codeGraph.GetInlinedSchemaFunctionCallPrefix() + "Async";
             if(codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) ||
                                                             property.Name.Equals("deltatoken",StringComparison.OrdinalIgnoreCase)))
             {// its a delta query and needs the opaque url passed over.
@@ -383,7 +383,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                             functionName = functionName.Split(".",StringSplitOptions.RemoveEmptyEntries)
                                                                         .Select(static s => s.ToFirstCharacterUpperCase())
                                                                         .Aggregate(static (a, b) => $"{a}{b}");
-                                            var parameters = KiotaOpenApiSchemaExtensions.AggregatePathParametersIntoString(snippetCodeGraph.PathParameters);
+                                            var parameters = snippetCodeGraph.AggregatePathParametersIntoString();
 
                                             // use the existing WriteObjectFromCodeProperty functionality to write the parameters as if they were a comma seperated array so as to automatically infer type handling from the codeDom :)
                                             var parametersBuilder = new StringBuilder();

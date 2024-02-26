@@ -23,13 +23,13 @@ internal static class StringExtensions
             return false;
 
         // verify both have same prefix/name
-        if (!pathSegment.Split('(').First().Equals(segment.Split('(').First(), StringComparison.OrdinalIgnoreCase))
+        if (!pathSegment.Split('(')[0].Equals(segment.Split('(')[0], StringComparison.OrdinalIgnoreCase))
             return false;
 
-        var originalParameters = pathSegment.Split('(').Last().TrimEnd(')').Split(',').Select(static s => s.Split('=').First());
-        var compareParameters = segment.Split('(').Last().TrimEnd(')').Split(',').Select(static s => s.Split('=').First());
+        var originalParameters = pathSegment.Split('(')[^1].TrimEnd(')').Split(',').Select(static s => s.Split('=')[0]);
+        var compareParameters = segment.Split('(')[^1].TrimEnd(')').Split(',').Select(static s => s.Split('=')[0]);
 
-        return compareParameters.All(parameter => originalParameters.Contains(parameter.Split('=').First(), StringComparer.OrdinalIgnoreCase));
+        return compareParameters.All(parameter => originalParameters.Contains(parameter.Split('=')[0], StringComparer.OrdinalIgnoreCase));
     }
     internal static string RemoveFunctionBraces(this string pathSegment) => pathSegment.TrimEnd('(',')');
     internal static string ReplaceValueIdentifier(this string original) =>

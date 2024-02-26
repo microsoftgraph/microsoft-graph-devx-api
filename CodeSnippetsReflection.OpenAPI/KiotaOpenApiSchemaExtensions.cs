@@ -124,41 +124,5 @@ namespace CodeSnippetsReflection.OpenAPI {
             }
             return result;
         }
-
-        public static string AggregatePathParametersIntoString(IEnumerable<CodeProperty> parameters)
-        {
-            if (!parameters.Any())
-                return string.Empty;
-            var parameterString = parameters.Select(
-                static s => $"With{s.Name.ToFirstCharacterUpperCase()}"
-            ).Aggregate(
-                static (a, b) => $"{a}{b}"
-            );
-            return parameterString;
-        }
-        public static string GetInlinedSchemaFunctionCallPrefix(SnippetCodeGraph codeGraph){
-            var methodNameinPascalCase = codeGraph.HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase();
-            var functionNamePrefix = methodNameinPascalCase;
-            //if codeGraph.ResponseSchema.Reference is null then recreate functionNamePrefix for inline schema with the following format
-            //methodNameinPascalCase + "As" + functionName + methodNameinPascalCase + "Response"
-            bool someNodeInPathHasReference = codeGraph.ResponseSchema?.AnyOf?.Any(x => x.Reference is not null) ?? false;
-            if (codeGraph.ResponseSchema?.Reference is null && !someNodeInPathHasReference)
-            {
-                var lastItemInPath = codeGraph.Nodes.Last();
-                var functionName = new StringBuilder();
-                if (lastItemInPath.Segment.Contains('.'))
-                {
-                    functionName.Append(lastItemInPath.Segment.GetPartFunctionNameFromNameSpacedSegmentString());
-                }
-                else
-                {
-                    functionName.Append(lastItemInPath.Segment.Split('(')[0].ToFirstCharacterUpperCase());
-                }
-                var parameters = AggregatePathParametersIntoString(codeGraph.PathParameters);
-                functionName = functionName.Append(parameters);
-                functionNamePrefix = methodNameinPascalCase + "As" + functionName + methodNameinPascalCase + "Response";
-            }
-            return functionNamePrefix;
-        }
     }
 }
