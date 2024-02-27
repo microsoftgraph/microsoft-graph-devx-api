@@ -7,30 +7,16 @@ namespace CodeSnippetsReflection
 {
     public static class JsonHelper
     {
-        private static readonly JsonSerializerOptions _jsonSerializerOptions;
-        private static readonly JsonDocumentOptions _jsonDocumentOptions;
-
-        static JsonHelper()
+        public static JsonSerializerOptions JsonSerializerOptions => new()
         {
-            var encoderSettings = new TextEncoderSettings();
-            encoderSettings.AllowCharacters('\u0027'); // apostrophe
-            encoderSettings.AllowRange(UnicodeRanges.BasicLatin);
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
 
-            _jsonSerializerOptions = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                Encoder = JavaScriptEncoder.Create(encoderSettings),
-            };
-
-            _jsonDocumentOptions = new JsonDocumentOptions
-            {
-                AllowTrailingCommas = true,
-                CommentHandling = JsonCommentHandling.Skip
-            };
-        }
-
-        public static JsonSerializerOptions JsonSerializerOptions => _jsonSerializerOptions;
-
-        public static JsonDocumentOptions JsonDocumentOptions => _jsonDocumentOptions;
+        public static JsonDocumentOptions JsonDocumentOptions => new()
+        {
+            AllowTrailingCommas = true,
+            CommentHandling = JsonCommentHandling.Skip
+        };
     }
 }
