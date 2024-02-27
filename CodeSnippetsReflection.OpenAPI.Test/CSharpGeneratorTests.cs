@@ -9,7 +9,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
     public class CSharpGeneratorTests : OpenApiSnippetGeneratorTestBase
     {
         private readonly CSharpGenerator _generator = new();
-        
+
         [Fact]
         public async Task GeneratesTheCorrectFluentApiPath() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
@@ -39,7 +39,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.DoesNotContain("var graphClient = new GraphServiceClient(requestAdapter)", result); // no initialization statement present
             Assert.Contains("// Code snippets are only available for the latest version. Current version is", result);// ensure version comment is present
-            Assert.Contains("// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client", result);// ensure initialization guidance is present 
+            Assert.Contains("// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client", result);// ensure initialization guidance is present
         }
         [Fact]
         public async Task GeneratesTheGetMethodCall() {
@@ -255,6 +255,18 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("requestConfiguration.QueryParameters.Search", result);
             Assert.Contains("requestConfiguration.QueryParameters.Search = \"\\\"displayName:di\\\" AND \\\"displayName:al\\\"\";", result);
         }
+
+        [Theory]
+        [InlineData("/users/some-id/mailFolders/delta","GetAsDeltaGetResponseAsync")]
+        [InlineData("/appCatalogs/teamsApps?requiresReview=true","await graphClient.AppCatalogs.TeamsApps.PostAsync(", "POST")]
+        [InlineData("/me/photos/48x48/$value","Content.GetAsync(")]
+        public async Task ObsoleteGetAsyncReplacedWithGetAsLastNodeNameGetResponseAsync(string inputPath, string expectedSuffix, string method = "") {
+            using var requestPayload = new HttpRequestMessage(string.IsNullOrEmpty(method) ? HttpMethod.Get : new HttpMethod(method), $"{ServiceRootUrl}{inputPath}");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains(expectedSuffix, result);
+        }
+
         [Fact]
         public async Task HandlesOdataTypeWhenGenerating() {
             var sampleJson = @"
@@ -389,7 +401,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("IsRequired = false,", result);
             Assert.Contains("LocationEmailAddress = \"conf32room1368@imgeek.onmicrosoft.com\",", result);
         }
-        
+
         [Theory]
         [InlineData("sendMail")]
         [InlineData("microsoft.graph.sendMail")]
@@ -432,7 +444,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("using Microsoft.Graph.Users.Item.SendMail", result);
             Assert.Contains("ToRecipients = new List<Recipient>", result);
         }
-        
+
         [Fact]
         public async Task TypeArgumentsForListArePlacedCorrectly()
         {
@@ -452,7 +464,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("new List<string>", result);
         }
-        
+
         [Fact]
         public async Task ModelsInNestedNamespacesAreDisambiguated()
         {
@@ -473,7 +485,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Type = IdentityType.ExternalGroup", result);
             Assert.Contains("using Microsoft.Graph.Models.ExternalConnectors;", result);
         }
-        
+
         [Fact]
         public async Task ReplacesReservedTypeNames()
         {
@@ -484,7 +496,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             // Assert `Directory` is replaced with `DirectoryObject`
             Assert.Contains("await graphClient.Directory.AdministrativeUnits[\"{administrativeUnit-id}\"].ScopedRoleMembers.GetAsync()", result);
         }
-        
+
         [Fact]
         public async Task CorrectlyGeneratesEnumMember()
         {
@@ -518,7 +530,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("Type = RecurrencePatternType.Weekly,", result);
             Assert.Contains("Type = RecurrenceRangeType.NoEnd,", result);
         }
-        
+
         [Fact]
         public async Task CorrectlyGeneratesMultipleFlagsEnumMembers()
         {
@@ -536,7 +548,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("Status = RecordingStatus.NotRecording | RecordingStatus.Recording | RecordingStatus.Failed", result);
         }
-        
+
         [Fact]
         public async Task CorrectlyOptionalRequestBodyParameter()
         {
@@ -546,7 +558,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("await graphClient.Teams[\"{team-id}\"].Archive.PostAsync(null);", result);
         }
-        
+
         [Fact]
         public async Task CorrectlyEvaluatesDatePropertyTypeRequestBodyParameter()
         {
@@ -570,7 +582,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("StartDate = new Date(DateTime.Parse(\"2017-09-04\")),", result);
             Assert.Contains("EndDate = new Date(DateTime.Parse(\"2017-12-31\")),", result);
         }
-        
+
         [Fact]
         public async Task CorrectlyEvaluatesOdataActionRequestBodyParameter()
         {
@@ -654,10 +666,10 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.Users.Delta.GetAsync", result);
+            Assert.Contains("await graphClient.Users.Delta.GetAsDeltaGetResponseAsync", result);
             Assert.Contains("requestConfiguration.QueryParameters.Select = new string []{ \"displayName\",\"jobTitle\",\"mobilePhone\" };", result);
         }
-        
+
         [Fact]
         public async Task CorrectlyHandlesDateTimeOffsetInUrl()
         {
@@ -665,7 +677,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.Reports.GetUserArchivedPrintJobsWithUserIdWithStartDateTimeWithEndDateTime(DateTimeOffset.Parse(\"{endDateTime}\"),DateTimeOffset.Parse(\"{startDateTime}\"),\"{userId}\").GetAsync()", result);
+            Assert.Contains("await graphClient.Reports.GetUserArchivedPrintJobsWithUserIdWithStartDateTimeWithEndDateTime(DateTimeOffset.Parse(\"{endDateTime}\"),DateTimeOffset.Parse(\"{startDateTime}\"),\"{userId}\").GetAsGetUserArchivedPrintJobsWithUserIdWithStartDateTimeWithEndDateTimeGetResponseAsync()", result);
         }
 
         [Fact]
@@ -693,7 +705,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.Communications.CallRecords.MicrosoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(DateTimeOffset.Parse(\"{fromDateTime}\"),DateTimeOffset.Parse(\"{toDateTime}\")).GetAsync();", result);
+            Assert.Contains("await graphClient.Communications.CallRecords.MicrosoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(DateTimeOffset.Parse(\"{fromDateTime}\"),DateTimeOffset.Parse(\"{toDateTime}\")).GetAsGetPstnCallsWithFromDateTimeWithToDateTimeGetResponseAsync()", result);
         }
         [Fact]
         public async Task CorrectlyHandlesEnumInUrl()
@@ -702,7 +714,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
-            Assert.Contains("await graphClient.IdentityGovernance.AppConsent.AppConsentRequests.FilterByCurrentUserWithOn(\"reviewer\").GetAsync", result);
+            Assert.Contains("await graphClient.IdentityGovernance.AppConsent.AppConsentRequests.FilterByCurrentUserWithOn(\"reviewer\").GetAsFilterByCurrentUserWithOnGetResponseAsync", result);
         }
         [Fact]
         public async Task GeneratesObjectsInArray() {
@@ -851,7 +863,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("MinimumSupportedOperatingSystem = new IosMinimumOperatingSystem", result);
             Assert.Contains("V80 = true,", result);//Assert that the property was pascal cased
         }
-        
+
         [Fact]
         public async Task GeneratesCorrectTypeInCollectionInitializer() {
             var sampleJson = @"{
@@ -901,7 +913,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("new List<TaskObject>", result);//Assert the type is escaped in the collection initializzer.
             Assert.Contains("using Microsoft.Graph.Models.IdentityGovernance", result);//Assert the type is escaped in the collection initializzer.
         }
-        
+
         [Fact]
         public async Task CorrectlyHandlesTypeFromInUrl()
         {
@@ -921,7 +933,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             Assert.Contains("var result = await graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Worksheets[\"{workbookWorksheet-id}\"].RangeWithAddress(\"{address}\").GetAsync()", result);
         }
-        
+
         [Fact]
         public async Task MatchesPathAlternateKeys()
         {
@@ -932,7 +944,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("await graphClient.ApplicationsWithAppId(\"{appId}\").GetAsync(", result);
         }
         [Theory]
-        [InlineData("/me/drive/root/delta","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Delta.GetAsync()")]
+        [InlineData("/me/drive/root/delta","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Delta.GetAsDeltaGetResponseAsync()")]
         [InlineData("/groups/{group-id}/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
         [InlineData("/me/drive","graphClient.Me.Drive.GetAsync()")]
         [InlineData("/sites/{site-id}/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
@@ -941,9 +953,9 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [InlineData("/me/drive/items/{item-id}/children","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Children.GetAsync()")]
         [InlineData("/drive/bundles","graphClient.Drives[\"{drive-id}\"].Bundles.GetAsync()")]
         [InlineData("/me/drive/special/documents","graphClient.Drives[\"{drive-id}\"].Special[\"{driveItem-id}\"].GetAsync()")]
-        [InlineData("/me/drive/root/search(q='Contoso%20Project')","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].SearchWithQ(\"{q}\").GetAsync()")]
+        [InlineData("/me/drive/root/search(q='Contoso%20Project')","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].SearchWithQ(\"{q}\").GetAsSearchWithQGetResponseAsync()")]
         [InlineData("/me/drive/items/{id}/workbook/application/calculate","graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Application.Calculate", "POST")]
-        public async Task GeneratesSnippetWithRemappedDriveCall(string inputPath, string expected, string method = "") 
+        public async Task GeneratesSnippetWithRemappedDriveCall(string inputPath, string expected, string method = "")
         {
             using var requestPayload = new HttpRequestMessage(string.IsNullOrEmpty(method) ? HttpMethod.Get : new HttpMethod(method), $"{ServiceRootUrl}{inputPath}");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
