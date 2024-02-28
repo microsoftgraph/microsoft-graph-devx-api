@@ -250,14 +250,15 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfDeserializeSampleQueriesListJsonStringParameterIsNull()
+        public void ReturnNullIfDeserializeSampleQueriesListJsonStringParameterIsNull()
         {
             // Arrange
-            string nullArgument = "";
+            string nullArgument = null;
 
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() =>
-                Services.SamplesService.DeserializeSampleQueriesList(nullArgument));
+            SampleQueriesList sampleQueriesList = Services.SamplesService.DeserializeSampleQueriesList(nullArgument);
+
+            Assert.Null(sampleQueriesList);
         }
 
         [Fact]
