@@ -351,9 +351,8 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             var parametersProvided = new List<string>();
             if (!string.IsNullOrEmpty(snippetModel.RequestBody))
             {
-                using var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody, JsonHelper.JsonDocumentOptions);
-                var jsonObject = jsonDoc.RootElement.Clone();
-                if (jsonDoc.RootElement.ValueKind == JsonValueKind.Object)
+                var jsonObject = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
+                if (jsonObject.ValueKind == JsonValueKind.Object)
                 {
                     foreach (var property in jsonObject.EnumerateObject())
                     {
@@ -399,9 +398,8 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                 var parametersProvided = new List<string>();
                 if (!string.IsNullOrEmpty(snippetModel.RequestBody))
                 {
-                    using var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody, JsonHelper.JsonDocumentOptions);
-                    var jsonObject = jsonDoc.RootElement.Clone();
-                    if (jsonDoc.RootElement.ValueKind == JsonValueKind.Object)
+                    var jsonObject = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
+                    if (jsonObject.ValueKind == JsonValueKind.Object)
                     {
                         foreach (var property in jsonObject.EnumerateObject())
                         {
