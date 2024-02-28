@@ -2,11 +2,11 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Newtonsoft.Json;
 using SamplesService.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 namespace SamplesService.Services
 {
@@ -23,12 +23,12 @@ namespace SamplesService.Services
         /// <returns>The deserialized list of <see cref="SampleQueryModel"/> objects.</returns>
         public static SampleQueriesList DeserializeSampleQueriesList(string jsonString, bool orderSamples = false)
         {
-            if (string.IsNullOrEmpty(jsonString))
+            if (string.IsNullOrWhiteSpace(jsonString))
             {
-                throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null or empty.");
+                return null;
             }
 
-            SampleQueriesList sampleQueriesList = JsonConvert.DeserializeObject<SampleQueriesList>(jsonString);
+            SampleQueriesList sampleQueriesList = JsonSerializer.Deserialize<SampleQueriesList>(jsonString);
 
             if (orderSamples)
             {
@@ -37,6 +37,8 @@ namespace SamplesService.Services
 
             return sampleQueriesList;
         }
+
+        private static readonly JsonSerializerOptions JsonSerializerSettings = new() { WriteIndented = true };
 
         /// <summary>
         /// Serializes an instance of a <see cref="SampleQueriesList"/> into JSON string.
@@ -50,7 +52,9 @@ namespace SamplesService.Services
                 throw new ArgumentNullException(nameof(sampleQueriesList), "The list of sample queries cannot be null.");
             }
 
-            string sampleQueriesJson = JsonConvert.SerializeObject(sampleQueriesList, Formatting.Indented);
+            var sampleQueriesJson = JsonSerializer.Serialize(
+                sampleQueriesList,
+                JsonSerializerSettings);
             return sampleQueriesJson;
         }
 
@@ -64,8 +68,8 @@ namespace SamplesService.Services
         {
             // This currently applies to English supported sample queries only
             List<SampleQueryModel> sortedSampleQueries = sampleQueriesList.SampleQueries
-                .OrderBy(s => s.Category)
                 .Where(s => s.Category != "Getting Started") // skipped, as it should always be the top-most sample query in the list
+                .OrderBy(s => s.Category)
                 .ToList();
 
             SampleQueriesList sortedSampleQueriesList = new SampleQueriesList();

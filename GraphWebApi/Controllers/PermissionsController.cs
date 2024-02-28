@@ -73,7 +73,7 @@ namespace GraphWebApi.Controllers
                                             SeverityLevel.Information,
                                             _permissionsTraceProperties);
 
-            return result?.Results == null || !result.Results.Any() ? NotFound() : Ok(result.Results);
+            return result?.Results == null || result.Results.Count == 0 ? NotFound() : Ok(result.Results);
         }
 
         [HttpPost]
@@ -85,7 +85,7 @@ namespace GraphWebApi.Controllers
                                                              [FromQuery] bool leastPrivilegeOnly = true,
                                                              [FromQuery] bool includeHidden = false)
         {
-            if (requests == null || !requests.Any())
+            if (requests == null || requests.Count == 0)
                 return BadRequest("Request URLs cannot be null or empty");
 
             string localeCode = GetPreferredLocaleLanguage(Request);

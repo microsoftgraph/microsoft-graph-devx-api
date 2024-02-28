@@ -14,7 +14,7 @@ namespace CodeSnippetsReflection.Test
         private const string ServiceRootUrlBeta = "https://graph.microsoft.com/beta";
         private readonly Lazy<IEdmModel> _edmModel = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata)));
         private readonly Lazy<IEdmModel> _edmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanBetaMetadata)));
-        private const string AuthProviderPrefix = "GraphServiceClient graphClient = new GraphServiceClient( authProvider );\r\n\r\n";
+        private const string AuthProviderPrefix = "GraphServiceClient graphClient = new GraphServiceClient(authProvider);\r\n\r\n";
 
         [Fact]
         //This tests asserts that we can generate snippets from json objects with nested objects inside them.

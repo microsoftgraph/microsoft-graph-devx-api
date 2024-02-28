@@ -204,7 +204,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var nonEmptyParameters = parameters.Where(static p => !string.IsNullOrEmpty(p));
             var emptyParameters = nonEmptyParameters.ToList();
-            if (emptyParameters.Any())
+            if (emptyParameters.Count != 0)
                 return string.Join(", ", emptyParameters.Select(static x => $"{x}").Aggregate(static (a, b) => $"{a}, {b}"));
             return string.Empty;
         }
@@ -227,8 +227,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (!snippetCodeGraph.HasBody())
                 return;// No body
 
-            if (indentManager == null)
-                throw new ArgumentNullException(nameof(indentManager));
+            ArgumentNullException.ThrowIfNull(indentManager);
 
             switch (snippetCodeGraph.Body.PropertyType)
             {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
@@ -111,42 +111,41 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         {
             get; set;
         }
-
-
-        public Boolean HasHeaders()
+       
+        public bool HasHeaders()
         {
             return Headers.Any();
         }
 
-        public Boolean HasOptions()
+        public bool HasOptions()
         {
             return Options.Any();
         }
 
-        public Boolean HasParameters()
+        public bool HasParameters()
         {
             return Parameters.Any();
         }
 
-        public Boolean HasPathParameters()
+        public bool HasPathParameters()
         {
             return PathParameters.Any();
         }
 
-        public Boolean HasBody()
+        public bool HasBody()
         {
             return Body.PropertyType != PropertyType.Default;
         }
 
-        public Boolean HasReturnedBody(){
+        public bool HasReturnedBody(){
             return !(ResponseSchema == null || (ResponseSchema.Properties.Count == 1 && ResponseSchema.Properties.First().Key.Equals("error", StringComparison.OrdinalIgnoreCase)));
         }
-        public Boolean RequiresRequestConfig()
+        public bool RequiresRequestConfig()
         {
             return HasHeaders() || HasOptions() || HasParameters();
         }
 
-        public Boolean HasJsonBody(){
+        public bool HasJsonBody(){
             return HasBody() && Body.PropertyType != PropertyType.Binary;
         }
 
@@ -216,7 +215,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                             break;
                         case "array":
                             var children = splitCommasExcludingBracketsRegex.Split(GetQueryParameterValue(queryCollection[key]))
-                                .Where(x => !String.IsNullOrEmpty(x) && !x.StartsWith("(") && !x.Equals(","))
+                                .Where(x => !String.IsNullOrEmpty(x) && !x.StartsWith('(') && !x.Equals(","))
                                 .Select(x => new CodeProperty() { Name = null, Value = x, PropertyType = PropertyType.String }).ToList();
                             parameters.Add(new CodeProperty { Name = name, Value = null, PropertyType = PropertyType.Array, Children = children });
                             break;
@@ -333,10 +332,10 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             if (!snippetModel.IsRequestBodyValid)
                 throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
 
-            using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
+            var parsedBody = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
             var schema = snippetModel.RequestSchema;
             var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? ComputeRequestBody(snippetModel);
-            return parseJsonObjectValue(className, parsedBody.RootElement, schema, snippetModel.Schemas, snippetModel.EndPathNode);
+            return parseJsonObjectValue(className, parsedBody, schema, snippetModel.Schemas, snippetModel.EndPathNode);
         }
 
         private static CodeProperty parseJsonObjectValue(string rootPropertyName, JsonElement value, OpenApiSchema schema, IDictionary<string, OpenApiSchema> snippetModelSchemas, OpenApiUrlTreeNode currentNode = null)
@@ -378,7 +377,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                     }
                     additionalChildren.Add(parseProperty(property.Name, property.Value, openApiSchema,snippetModelSchemas));
                 }
-                if (additionalChildren.Any())
+                if (additionalChildren.Count != 0)
                     children.Add(new CodeProperty { Name = "additionalData", PropertyType = PropertyType.Map, Children = additionalChildren });
             }
 

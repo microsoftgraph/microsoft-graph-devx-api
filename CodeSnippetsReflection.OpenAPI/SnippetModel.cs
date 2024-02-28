@@ -36,7 +36,7 @@ namespace CodeSnippetsReflection.OpenAPI
 
         public SnippetModel(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiSnippetMetadata openApiSnippetMetadata) : base(requestPayload, serviceRootUrl)
         {
-            if (openApiSnippetMetadata == null) throw new ArgumentNullException(nameof(openApiSnippetMetadata));
+            ArgumentNullException.ThrowIfNull(openApiSnippetMetadata);
 
             var remappedPayload = RemapKnownPathsIfNeeded(requestPayload);
             var splatPath = ReplaceIndexParametersByPathSegment(remappedPayload.RequestUri
@@ -214,7 +214,7 @@ namespace CodeSnippetsReflection.OpenAPI
             }
             // always match indexer last as functions on collections may be interpreted as indexers if processed after.
             var collectionIndices = node.Children.Keys.Where(static x => x.IsCollectionIndex()).ToArray();
-            if (collectionIndices.Any())
+            if (collectionIndices.Length != 0)
             {
                 var collectionIndexValue = node.Children[collectionIndices[0]];//lookup the node using the key
                 if (collectionIndexValue != null)

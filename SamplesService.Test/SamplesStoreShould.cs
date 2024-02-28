@@ -14,6 +14,7 @@ using Xunit;
 using System.IO;
 using System;
 using SamplesService.Services;
+using Moq;
 
 namespace SamplesService.Test
 {
@@ -70,7 +71,6 @@ namespace SamplesService.Test
             Assert.Equal("mon profil", frenchSampleQueriesList.SampleQueries[0].HumanName);
         }
 
-
         [Fact]
         public async Task ReturnNullIfSampleQueryFileIsEmpty()
         {
@@ -83,7 +83,6 @@ namespace SamplesService.Test
             // Assert
             Assert.Null(japaneseSampleQueriesList);
         }
-
 
         [Fact]
         public async Task FetchSamplesFromGithub()

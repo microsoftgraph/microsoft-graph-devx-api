@@ -4,19 +4,19 @@
 
 using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace PermissionsService.Models
 {
     internal class SchemePermissions
     {
-        [JsonProperty(PropertyName = "leastPrivilegePermissions")]
+        [JsonPropertyName("leastPrivilegePermissions")]
         public HashSet<string> LeastPrivilegePermissions
         {
             get; set;
         } = new(StringComparer.OrdinalIgnoreCase);
 
-        [JsonProperty(PropertyName = "allPermissions")]
+        [JsonPropertyName("allPermissions")]
         public HashSet<string> AllPermissions
         {
             get; set;
