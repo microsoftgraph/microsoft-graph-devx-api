@@ -10,7 +10,9 @@ namespace CodeSnippetsReflection
         public static JsonSerializerOptions JsonSerializerOptions => new()
         {
             WriteIndented = true,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            AllowTrailingCommas = true,
+            ReadCommentHandling = JsonCommentHandling.Skip
         };
 
         public static JsonDocumentOptions JsonDocumentOptions => new()
