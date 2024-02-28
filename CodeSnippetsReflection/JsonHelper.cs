@@ -14,11 +14,5 @@ namespace CodeSnippetsReflection
             AllowTrailingCommas = true,
             ReadCommentHandling = JsonCommentHandling.Skip
         };
-
-        public static JsonDocumentOptions JsonDocumentOptions => new()
-        {
-            AllowTrailingCommas = true,
-            CommentHandling = JsonCommentHandling.Skip
-        };
     }
 }

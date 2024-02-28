@@ -332,10 +332,10 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             if (!snippetModel.IsRequestBodyValid)
                 throw new InvalidOperationException($"Unsupported content type: {snippetModel.ContentType}");
 
-            using var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
+            var parsedBody = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
             var schema = snippetModel.RequestSchema;
             var className = schema.GetSchemaTitle().ToFirstCharacterUpperCase() ?? ComputeRequestBody(snippetModel);
-            return parseJsonObjectValue(className, parsedBody.RootElement, schema, snippetModel.Schemas, snippetModel.EndPathNode);
+            return parseJsonObjectValue(className, parsedBody, schema, snippetModel.Schemas, snippetModel.EndPathNode);
         }
 
         private static CodeProperty parseJsonObjectValue(string rootPropertyName, JsonElement value, OpenApiSchema schema, IDictionary<string, OpenApiSchema> snippetModelSchemas, OpenApiUrlTreeNode currentNode = null)

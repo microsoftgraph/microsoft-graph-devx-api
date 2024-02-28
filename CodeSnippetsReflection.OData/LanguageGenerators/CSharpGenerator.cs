@@ -85,15 +85,13 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             if (string.IsNullOrEmpty(snippetModel.RequestBody))
                                 throw new InvalidOperationException($"No request Body present for POST of entity {snippetModel.ResponseVariableName}");
 
-                            using (var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody, JsonHelper.JsonDocumentOptions))
+                            var jsonObject = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
+                            if (jsonObject.TryGetProperty("@odata.id", out JsonElement odataId))
                             {
-                                if (jsonDoc.RootElement.TryGetProperty("@odata.id", out JsonElement odataId))
-                                {
-                                    snippetModel.ResponseVariableName += "Reference"; // append suffix
-                                    snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = new ReferenceRequestBody\n{{\n");
-                                    snippetBuilder.Append($"\tODataId = \"{odataId}\"\n}};\n\n");
-                                    snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
-                                }
+                                snippetModel.ResponseVariableName += "Reference"; // append suffix
+                                snippetBuilder.Append($"var {snippetModel.ResponseVariableName} = new ReferenceRequestBody\n{{\n");
+                                snippetBuilder.Append($"\tODataId = \"{odataId}\" // Assuming odataId is a string\n}};\n\n");
+                                snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{actions}\r\n\t.AddAsync({snippetModel.ResponseVariableName});"));
                             }
                             break;
 
@@ -101,11 +99,9 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                             //deserialize the object since the json top level contains the list of parameter objects
                             if (!string.IsNullOrEmpty(snippetModel.RequestBody))
                             {
-                                using JsonDocument jsonDoc = JsonDocument.Parse(snippetModel.RequestBody, JsonHelper.JsonDocumentOptions);
-                                if (jsonDoc.RootElement.ValueKind == JsonValueKind.Object)
+                                var testObj = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
+                                if (testObj.ValueKind == JsonValueKind.Object)
                                 {
-                                    JsonElement testObj = jsonDoc.RootElement;
-
                                     foreach (var property in testObj.EnumerateObject())
                                     {
                                         var jsonString = JsonSerializer.Serialize(property.Value, JsonHelper.JsonSerializerOptions);
@@ -191,11 +187,11 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                         {
                             // if we are putting reference, we should send id to that object in PutAsync()
                             // and the request body should contain a JSON with @odata.id key
-                            using var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody, JsonHelper.JsonDocumentOptions);
+                            var jsonObject = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
 
                             // HTTP sample is in this format: https://graph.microsoft.com/v1.0/users/{id}
                             // but C# SDK reconstructs the URL from {id}
-                            if (jsonDoc.RootElement.TryGetProperty("@odata.id", out JsonElement odataId))
+                            if (jsonObject.TryGetProperty("@odata.id", out JsonElement odataId))
                             {
                                 var id = odataId.GetString().Split("/").Last();
                                 objectToBePut = $"\"{id}\"";
@@ -395,8 +391,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             }
 
             var stringBuilder = new StringBuilder();
-            using var jsonDoc = JsonDocument.Parse(jsonBody, JsonHelper.JsonDocumentOptions);
-            var jsonObject = jsonDoc.RootElement.Clone();
+            var jsonObject = JsonSerializer.Deserialize<JsonElement>(jsonBody, JsonHelper.JsonSerializerOptions);
             var tabSpace = new string('\t', path.Count - 1);//d
             var typeProperties = GetCSharpTypeProperties(pathSegment, path);
             var className = typeProperties.ClassName;

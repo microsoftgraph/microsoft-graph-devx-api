@@ -67,19 +67,16 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
 
                         case OperationSegment _:
                             //deserialize the object since the json top level contains the list of parameter objects
-                            using (var jsonDoc = JsonDocument.Parse(snippetModel.RequestBody))
+                            var jsonObject = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody);
+                            if (jsonObject.ValueKind == JsonValueKind.Object)
                             {
-                                var jsonObject = jsonDoc.RootElement.Clone();
-                                if (jsonObject.ValueKind == JsonValueKind.Object)
+                                foreach (var property in jsonObject.EnumerateObject())
                                 {
-                                    foreach (var property in jsonObject.EnumerateObject())
-                                    {
-                                        var jsonString = JsonSerializer.Serialize(property.Value, JsonHelper.JsonSerializerOptions);
-                                        snippetBuilder.Append(JavaGenerateObjectFromJson(segment, jsonString, [CommonGenerator.LowerCaseFirstLetter(property.Name)]));
-                                    }
+                                    var jsonString = JsonSerializer.Serialize(property.Value, JsonHelper.JsonSerializerOptions);
+                                    snippetBuilder.Append(JavaGenerateObjectFromJson(segment, jsonString, [CommonGenerator.LowerCaseFirstLetter(property.Name)]));
                                 }
-                                snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\r\n\t.post();"));
                             }
+                            snippetBuilder.Append(GenerateRequestSection(snippetModel, $"{requestActions}\r\n\t.post();"));
                             break;
                         default:
                             throw new Exception("Unknown Segment Type in URI for method POST");
@@ -157,8 +154,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             usedVarNames ??= []; // make sure list is not null
             var className = GetJavaReturnTypeName(pathSegment, path);
 
-            using var jsonDoc = JsonDocument.Parse(jsonString, JsonHelper.JsonDocumentOptions);
-            var jsonObject = jsonDoc.RootElement.Clone();
+            var jsonObject = JsonSerializer.Deserialize<JsonElement>(jsonString, JsonHelper.JsonSerializerOptions);
             switch (jsonObject.ValueKind)
             {
                 case JsonValueKind.String:
