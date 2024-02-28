@@ -25,7 +25,7 @@ namespace SamplesService.Services
         {
             if (string.IsNullOrWhiteSpace(jsonString))
             {
-                throw new ArgumentNullException(nameof(jsonString), "The JSON string to be deserialized cannot be null or empty.");
+                return null;
             }
 
             SampleQueriesList sampleQueriesList = JsonSerializer.Deserialize<SampleQueriesList>(jsonString);
@@ -37,6 +37,8 @@ namespace SamplesService.Services
 
             return sampleQueriesList;
         }
+
+        private static readonly JsonSerializerOptions JsonSerializerSettings = new() { WriteIndented = true };
 
         /// <summary>
         /// Serializes an instance of a <see cref="SampleQueriesList"/> into JSON string.
@@ -51,8 +53,8 @@ namespace SamplesService.Services
             }
 
             var sampleQueriesJson = JsonSerializer.Serialize(
-                sampleQueriesList, 
-                new JsonSerializerOptions { WriteIndented = true });
+                sampleQueriesList,
+                JsonSerializerSettings);
             return sampleQueriesJson;
         }
 

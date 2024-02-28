@@ -14,6 +14,7 @@ using Xunit;
 using System.IO;
 using System;
 using SamplesService.Services;
+using Moq;
 
 namespace SamplesService.Test
 {
@@ -68,6 +69,19 @@ namespace SamplesService.Test
             Assert.Equal(149, frenchSampleQueriesList.SampleQueries.Count);
             Assert.Equal("Requêtes de base", frenchSampleQueriesList.SampleQueries[0].Category);
             Assert.Equal("mon profil", frenchSampleQueriesList.SampleQueries[0].HumanName);
+        }
+
+        [Fact]
+        public async Task ReturnNullIfSampleQueryFileIsEmpty()
+        {
+            // Arrange
+            _samplesStore = new SamplesStore(_configuration, _httpClientUtility, _fileUtility, _samplesCache);
+
+            // Act - Fetch ja-JP sample queries which is empty
+            SampleQueriesList japaneseSampleQueriesList = await _samplesStore.FetchSampleQueriesListAsync("ja-JP");
+
+            // Assert
+            Assert.Null(japaneseSampleQueriesList);
         }
 
         [Fact]

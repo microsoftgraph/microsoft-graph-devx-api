@@ -75,10 +75,10 @@ steps:
 - template: templates/git-config.yml
 
 - task: UseDotNet@2
-  displayName: 'Install .NET Core SDK 6'
+  displayName: 'Install .NET Core SDK 8'
   inputs:
-    version: 6.x
-
+    version: 8.x
+    
 - task: DotNetCoreCLI@2
   displayName: 'Restore packages for APIDoctor'
   inputs:
