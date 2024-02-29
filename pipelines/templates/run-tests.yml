@@ -19,9 +19,9 @@ steps:
     cleanDestinationFolder: false
 
 - task: UseDotNet@2
-  displayName: 'Install .NET SDK 7'
+  displayName: 'Install .NET SDK 8'
   inputs:
-    version: 7.x
+    version: 8.x
 
 - task: DotNetCoreCLI@2
   displayName: 'Build CodeSnippetsPipeline.Test'

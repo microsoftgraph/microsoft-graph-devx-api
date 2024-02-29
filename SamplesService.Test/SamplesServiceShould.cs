@@ -2,11 +2,11 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Newtonsoft.Json;
 using System;
 using Xunit;
 using System.Collections.Generic;
 using SamplesService.Models;
+using System.Text.Json;
 
 namespace SamplesService.Test
 {
@@ -100,60 +100,53 @@ namespace SamplesService.Test
         {
             // Arrange - sample queries in unsorted order
             string validJsonString = @"{
-                   ""SampleQueries"" :
+                   ""SampleQueries"" : 
                     [
                         {
-                        ""id"": ""B4C08825-FD6F-4987-B3CC-14B16ACC84A5"",
-                        ""category"": ""Outlook Mail"",
-                        ""method"": ""GET"",
-                        ""humanName"": ""my high important mail"",
-                        ""requestUrl"": ""/v1.0/me/messages?$filter=importance eq 'high'"",
-                        ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_messages"",
-                        ""skipTest"": false
+                            ""id"": ""B4C08825-FD6F-4987-B3CC-14B16ACC84A5"",
+                            ""category"": ""Outlook Mail"",
+                            ""method"": ""GET"",
+                            ""humanName"": ""my high important mail"",
+                            ""requestUrl"": ""/v1.0/me/messages?$filter=importance eq 'high'"",
+                            ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_messages"",
+                            ""skipTest"": false
                         },
                         {
-                        ""id"": ""1E019C9D-0B90-49E1-BD4C-C587F75B2B45"",
-                        ""category"": ""Groups"",
-                        ""method"": ""GET"",
-                        ""humanName"": ""all groups I belong to"",
-                        ""requestUrl"": ""/v1.0/me/memberOf"",
-                        ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_memberof"",
-                        ""skipTest"": false
+                            ""id"": ""1E019C9D-0B90-49E1-BD4C-C587F75B2B45"",
+                            ""category"": ""Groups"",
+                            ""method"": ""GET"",
+                            ""humanName"": ""all groups I belong to"",
+                            ""requestUrl"": ""/v1.0/me/memberOf"",
+                            ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_list_memberof"",
+                            ""skipTest"": false
                         },
                         {
-                        ""id"": ""F1E6738D-7C9C-4DB7-B5EC-1C92DADD03CB"",
-                        ""category"": ""Users"",
-                        ""method"": ""POST"",
-                        ""humanName"": ""create user"",
-                        ""requestUrl"": ""/v1.0/users"",
-                        ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_post_users"",
-                        ""headers"": [
-                            {
-                                ""name"": ""Content-type"",
-                                ""value"": ""application/json""
-                            }
-                        ],
-                        ""postBody"": ""{\r\n \""accountEnabled\"": true,\r\n \""city\"": \""Seattle\"",\r\n \""country\"": \""United States\"",\r\n
-                        \""department\"": \""Sales & Marketing\"",\r\n\""displayName\"": \""Melissa Darrow\"",\r\n\""givenName\"": \""Melissa\"",\r\n
-                        \""jobTitle\"": \""Marketing Director\"",\r\n\""mailNickname\"": \""MelissaD\"",\r\n \""passwordPolicies\"":
-                        \""DisablePasswordExpiration\"",\r\n \""passwordProfile\"": {\r\n \""password\"": \""Test1234\"",\r\n
-                        \""forceChangePasswordNextSignIn\"": false\r\n},\r\n \""officeLocation\"": \""131/1105\"",\r\n\""postalCode\"": \""98052\"",\r\n
-                        \""preferredLanguage\"": \""en -US\"",\r\n \""state\"": \""WA\"",\r\n \""streetAddress\"": \""9256 Towne Center Dr., Suite 400\"",\r\n
-                        \""surname\"": \""Darrow\"",\r\n \""mobilePhone\"": \"" + 1 206 555 0110\"",\r\n \""usageLocation\"": \""US\"",\r\n \""userPrincipalName\"":
-                        \""MelissaD@{domain}\""\r\n }"",
-                        ""skipTest"": false
+                            ""id"": ""F1E6738D-7C9C-4DB7-B5EC-1C92DADD03CB"",
+                            ""category"": ""Users"",
+                            ""method"": ""POST"",
+                            ""humanName"": ""create user"",
+                            ""requestUrl"": ""/v1.0/users"",
+                            ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/api/user_post_users"",
+                            ""headers"": [
+                                {
+                                    ""name"": ""Content-type"",
+                                    ""value"": ""application/json""
+                                }
+                            ],
+                            ""postBody"": ""{\r\n \""accountEnabled\"": true,\r\n \""city\"": \""Seattle\"",\r\n \""country\"": \""United States\"",\r\n \""department\"": \""Sales & Marketing\"",\r\n \""displayName\"": \""Melissa Darrow\"",\r\n \""givenName\"": \""Melissa\"",\r\n \""jobTitle\"": \""Marketing Director\"",\r\n \""mailNickname\"": \""MelissaD\"",\r\n \""passwordPolicies\"": \""DisablePasswordExpiration\"",\r\n \""passwordProfile\"": {\r\n \""password\"": \""Test1234\"",\r\n \""forceChangePasswordNextSignIn\"": false\r\n},\r\n \""officeLocation\"": \""131/1105\"",\r\n \""postalCode\"": \""98052\"",\r\n \""preferredLanguage\"": \""en-US\"",\r\n \""state\"": \""WA\"",\r\n \""streetAddress\"": \""9256 Towne Center Dr., Suite 400\"",\r\n \""surname\"": \""Darrow\"",\r\n \""mobilePhone\"": \"" + 1 206 555 0110\"",\r\n \""usageLocation\"": \""US\"",\r\n \""userPrincipalName\"": \""MelissaD@{domain}\""\r\n }"",
+                            ""skipTest"": false
                         },
                         {
-                        ""id"": ""F1E6738D-7C9C-4DB7-B5EC-1C92DADD03CB"",
-                        ""category"": ""Getting Started"",
-                        ""method"": ""GET"",
-                        ""humanName"": ""my profile"",
-                        ""requestUrl"": ""/v1.0/me/"",
-                        ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/users"",
-                        ""skipTest"": false
+                            ""id"": ""F1E6738D-7C9C-4DB7-B5EC-1C92DADD03CB"",
+                            ""category"": ""Getting Started"",
+                            ""method"": ""GET"",
+                            ""humanName"": ""my profile"",
+                            ""requestUrl"": ""/v1.0/me/"",
+                            ""docLink"": ""https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/users"",
+                            ""skipTest"": false
                         }
                     ]
-            }";
+                }";
 
             // Act
             SampleQueriesList sampleQueriesList = Services.SamplesService.DeserializeSampleQueriesList(validJsonString, true);
@@ -208,7 +201,7 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public void ThrowJsonReaderExceptionIfDeserializeSampleQueriesListJsonStringParameterIsInvalidJsonString()
+        public void ThrowJsonExceptionIfDeserializeSampleQueriesListJsonStringParameterIsInvalidJsonString()
         {
             /* Arrange */
 
@@ -252,19 +245,20 @@ namespace SamplesService.Test
             }";
 
             // Act and Assert
-            Assert.Throws<JsonReaderException>(() =>
+            Assert.Throws<JsonException>(() =>
                 Services.SamplesService.DeserializeSampleQueriesList(invalidJsonString));
         }
 
         [Fact]
-        public void ThrowArgumentNullExceptionIfDeserializeSampleQueriesListJsonStringParameterIsNull()
+        public void ReturnNullIfDeserializeSampleQueriesListJsonStringParameterIsNull()
         {
             // Arrange
-            string nullArgument = "";
+            string nullArgument = null;
 
             // Act and Assert
-            Assert.Throws<ArgumentNullException>(() =>
-                Services.SamplesService.DeserializeSampleQueriesList(nullArgument));
+            SampleQueriesList sampleQueriesList = Services.SamplesService.DeserializeSampleQueriesList(nullArgument);
+
+            Assert.Null(sampleQueriesList);
         }
 
         [Fact]

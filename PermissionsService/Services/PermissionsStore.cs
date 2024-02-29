@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FileService.Common;
@@ -16,7 +17,6 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using PermissionsService.Interfaces;
 using PermissionsService.Models;
 using UriMatchingService;
@@ -136,7 +136,7 @@ namespace PermissionsService
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _permissionsBlobName);
 
                 string permissionsJson = await _fileUtility.ReadFromFile(relativePermissionPath);
-                var fetchedPermissions = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<ScopeType, SchemePermissions>>>>(permissionsJson);
+                var fetchedPermissions = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<ScopeType, SchemePermissions>>>>(permissionsJson);
 
                 _telemetryClient?.TrackTrace("Finished fetching permissions from file",
                                          SeverityLevel.Information,
@@ -315,7 +315,7 @@ namespace PermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
 
-            var scopesInformationList = JsonConvert.DeserializeObject<ScopesInformationList>(scopesInfoJson);
+            var scopesInformationList = JsonSerializer.Deserialize<ScopesInformationList>(scopesInfoJson);
             var delegatedScopesInfoTable = scopesInformationList.DelegatedScopesList.ToDictionary(x => x.ScopeName);
             var applicationScopesInfoTable = scopesInformationList.ApplicationScopesList.ToDictionary(x => x.ScopeName);
 
@@ -349,7 +349,7 @@ namespace PermissionsService
             var errors = new List<PermissionError>();
 
             bool getAllScopes = false;
-            if (requests == null || !requests.Any())
+            if (requests == null || requests.Count == 0)
             {
                 // Get all scopes if no request URLs are provided
                 getAllScopes = true;
@@ -377,7 +377,7 @@ namespace PermissionsService
 
                         var resource = authZChecker.FindResource(requestUrl) ?? throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
                         var permissions = GetPermissionsFromResource(scopeType, request, resource);
-                        if (!permissions.Any())
+                        if (permissions.Count == 0)
                             throw new InvalidOperationException($"Permissions information for '{request.HttpMethod} {request.RequestUrl}' was not found.");
 
                         scopesByRequestUrl.TryAdd($"{request.HttpMethod} {request.RequestUrl}", permissions);
@@ -415,7 +415,7 @@ namespace PermissionsService
             }
 
 
-            if (!scopes.Any() && !errors.Any())
+            if (scopes.Count == 0 && errors.Count == 0)
             {
                 errors.Add(new PermissionError()
                 {
@@ -424,7 +424,7 @@ namespace PermissionsService
                 return new PermissionResult()
                 {
                     Results = scopes,
-                    Errors = errors.Any() ? errors : null,
+                    Errors = errors.Count != 0 ? errors : null,
                 };
             }
 
@@ -443,7 +443,7 @@ namespace PermissionsService
             // exclude hidden permissions unless stated otherwise
             scopesInfo = scopesInfo.Where(x => includeHidden || !x.IsHidden).ToList();
 
-            if (!scopesInfo.Any() && !errors.Any())
+            if (scopesInfo.Count == 0 && errors.Count == 0)
             {
                 errors.Add(new PermissionError()
                 {
@@ -451,14 +451,14 @@ namespace PermissionsService
                 });
             }
 
-            _telemetryClient?.TrackTrace(requests == null || !requests.Any() ?
+            _telemetryClient?.TrackTrace(requests == null || requests.Count == 0 ?
                         "Return all permissions" : $"Return permissions for '{string.Join(", ", requests.Select(x => x.RequestUrl))}'",
                 SeverityLevel.Information,
                 _permissionsTraceProperties);
             return new PermissionResult()
             {
                 Results = scopesInfo,
-                Errors = errors.Any() ? errors : null,
+                Errors = errors.Count != 0 ? errors : null,
             };
         }
 
@@ -571,15 +571,9 @@ namespace PermissionsService
         private List<ScopeInformation> GetAdditionalScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
             List<ScopeInformation> scopes, ScopeType? scopeType = null, bool getAllPermissions = false)
         {
-            if (scopesInformationDictionary is null)
-            {
-                throw new ArgumentNullException(nameof(scopesInformationDictionary));
-            }
+            ArgumentNullException.ThrowIfNull(scopesInformationDictionary);
 
-            if (scopes is null)
-            {
-                throw new ArgumentNullException(nameof(scopes));
-            }
+            ArgumentNullException.ThrowIfNull(scopes);
 
             var descriptionGroups = permissionDescriptionGroups.Values.Distinct().Except(scopesInformationDictionary.Keys);
             foreach (var group in descriptionGroups)

@@ -265,7 +265,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var replacements = new Dictionary<string, string>();
             var matches = nestedStatementRegex.Matches(queryParams);
-            if (matches.Any())
+            if (matches.Count != 0)
                 foreach (GroupCollection groupCollection in matches.Select(x => x.Groups))
                 {
                     var key = groupCollection[1].Value;
@@ -292,7 +292,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody)
                 || "undefined".Equals(snippetModel?.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
                 return (default, default);
-            if (indentManager == null) throw new ArgumentNullException(nameof(indentManager));
+            
+            ArgumentNullException.ThrowIfNull(indentManager);
 
             if (isValidJson(snippetModel?.RequestBody) && string.IsNullOrWhiteSpace(snippetModel?.ContentType))
             {
@@ -303,13 +304,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             switch (snippetModel.ContentType?.Split(';').First().ToLowerInvariant())
             {
                 case "application/json":
-                    using (var parsedBody = JsonDocument.Parse(snippetModel.RequestBody, new JsonDocumentOptions { AllowTrailingCommas = true }))
-                    {
-                        var schema = snippetModel.RequestSchema;
-                        payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = @{{");
-                        WriteJsonObjectValue(payloadSB, parsedBody.RootElement, schema, indentManager);
-                        payloadSB.AppendLine("}");
-                    }
+                    var parsedBody = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
+                    var schema = snippetModel.RequestSchema;
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = @{{");
+                    WriteJsonObjectValue(payloadSB, parsedBody, schema, indentManager);
+                    payloadSB.AppendLine("}");
                     break;
                 case "image/jpeg":
                     payloadSB.AppendLine($"{indentManager.GetIndent()}${requestBodyVarName} = Binary data for the image");
@@ -330,7 +329,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             try
             {
-                JsonDocument.Parse(requestBody, new JsonDocumentOptions { AllowTrailingCommas = true });
+                JsonSerializer.Deserialize<JsonElement>(requestBody, JsonHelper.JsonSerializerOptions);
                 return true;
             }
             catch (Exception)

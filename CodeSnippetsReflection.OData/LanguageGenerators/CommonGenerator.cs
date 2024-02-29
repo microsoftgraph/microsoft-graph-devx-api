@@ -1,31 +1,21 @@
 ﻿using Microsoft.OData.Edm;
 using Microsoft.OData.UriParser;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using Newtonsoft.Json.Linq;
 using CodeSnippetsReflection.StringExtensions;
+using System.Text.Json;
 
 namespace CodeSnippetsReflection.OData.LanguageGenerators
 {
-    public class CommonGenerator
+    /// <summary>
+    /// Common Generator constructor
+    /// </summary>
+    /// <param name="model">Edm model of metadata</param>
+    public class CommonGenerator(IEdmModel model)
     {
-        /// <summary>
-        /// Edm model of metadata
-        /// </summary>
-        private readonly IEdmModel Model;
-
-        /// <summary>
-        /// Common Generator constructor
-        /// </summary>
-        /// <param name="model">Edm model of metadata</param>
-        public CommonGenerator(IEdmModel model)
-        {
-            Model = model;
-        }
 
         /// <summary>
         /// Language agnostic function to generate Query section of code snippet
@@ -48,7 +38,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                 snippetBuilder.Append(string.Format(languageExpressions.HeaderExpression, key, valueString));
             }
             //Append any filter queries
-            if (snippetModel.FilterFieldList.Any())
+            if (snippetModel.FilterFieldList.Count != 0)
             {
                 var filterResult = string.Join(languageExpressions.FilterExpressionDelimiter, snippetModel.FilterFieldList)
                     .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
@@ -59,7 +49,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             //Append any search queries
             if (!string.IsNullOrEmpty(snippetModel.SearchExpression))
             {
-                snippetBuilder.Append(string.Format(languageExpressions.SearchExpression, 
+                snippetBuilder.Append(string.Format(languageExpressions.SearchExpression,
                     snippetModel.SearchExpression
                     .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
@@ -68,13 +58,13 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             if (!string.IsNullOrEmpty(snippetModel.ExpandFieldExpression))
             {
                 //append the expand result to the snippet
-                snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression, 
+                snippetBuilder.Append(string.Format(languageExpressions.ExpandExpression,
                     snippetModel.ExpandFieldExpression
                     .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
 
             //Append any select queries
-            if (snippetModel.SelectFieldList.Any())
+            if (snippetModel.SelectFieldList.Count != 0)
             {
                 var selectResult = string.Join(languageExpressions.SelectExpressionDelimiter, snippetModel.SelectFieldList)
                     .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
@@ -83,7 +73,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             }
 
             //Append any orderby queries
-            if (snippetModel.OrderByFieldList.Any())
+            if (snippetModel.OrderByFieldList.Count != 0)
             {
                 var orderByResult = string.Join(languageExpressions.OrderByExpressionDelimiter, snippetModel.OrderByFieldList)
                     .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence);
@@ -100,7 +90,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             //Append any skip token queries
             if (!string.IsNullOrEmpty(snippetModel.ODataUri.SkipToken))
             {
-                snippetBuilder.Append(string.Format(languageExpressions.SkipTokenExpression, 
+                snippetBuilder.Append(string.Format(languageExpressions.SkipTokenExpression,
                     snippetModel.ODataUri.SkipToken
                     .EscapeQuotesInLiteral(languageExpressions.DoubleQuotesEscapeSequence, languageExpressions.SingleQuotesEscapeSequence)));
             }
@@ -143,26 +133,25 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         /// <returns></returns>
         public bool CanGetServiceCollectionNavigationPropertyForProperty(NavigationPropertyLinkSegment navigationPropertyLinkSegment)
         {
-            if (navigationPropertyLinkSegment == null)
-                throw new ArgumentNullException(nameof(navigationPropertyLinkSegment));
+            ArgumentNullException.ThrowIfNull(navigationPropertyLinkSegment);
 
             if (navigationPropertyLinkSegment.NavigationProperty.ContainsTarget)
                 return true;
 
             // Check if its defined directly in an the entitySet
-            var isDirectlyInEntitySet = Model.EntityContainer.EntitySets()
+            var isDirectlyInEntitySet = model.EntityContainer.EntitySets()
                 .Any(entitySet => entitySet.EntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName(), StringComparison.OrdinalIgnoreCase));
 
             if (isDirectlyInEntitySet)
                 return true;
 
             // check the navBindings/nav Properties on singletons
-            var isImplicitFromSingleton = Model.EntityContainer.Singletons()
+            var isImplicitFromSingleton = model.EntityContainer.Singletons()
                             .SelectMany(singleton => singleton.NavigationPropertyBindings.Select(navPropertyBindings => navPropertyBindings.NavigationProperty)// get the nav propertyBinding from the singleton
-                                                                .Concat( singleton.EntityType().NavigationProperties()))    // Append the nav properties from the singleton type
+                                                             .Concat(singleton.EntityType().NavigationProperties()))    // Append the nav properties from the singleton type
                             .Any(property => property.ContainsTarget && property.ToEntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName(), StringComparison.OrdinalIgnoreCase));
-            
-            return isImplicitFromSingleton;   
+
+            return isImplicitFromSingleton;
         }
 
         /// <summary>
@@ -242,7 +231,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             IEnumerable<IEdmStructuredType> derivedTypes = null;
             if (!searchingParent && elementDefinition is IEdmStructuredType structuredTypeDefinition)
             {
-                derivedTypes = Model?.FindAllDerivedTypes(structuredTypeDefinition);
+                derivedTypes = model?.FindAllDerivedTypes(structuredTypeDefinition);
             }
 
             // the second element in the path is the property we are searching for
@@ -360,15 +349,17 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
         public static IEnumerable<KeyValuePair<string, string>> GetParameterListFromOperationSegmentWithNames(OperationSegment operationSegment, SnippetModel snippetModel, bool returnEnumTypeIfEnum, string collectionSuffix = "")
         {
             var parametersProvided = new List<string>();
-            if (!string.IsNullOrEmpty(snippetModel.RequestBody)
-                && JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
+            if (!string.IsNullOrEmpty(snippetModel.RequestBody))
             {
-                foreach (var (key, _) in testObj)
+                var jsonObject = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
+                if (jsonObject.ValueKind == JsonValueKind.Object)
                 {
-                    parametersProvided.Add(key);
+                    foreach (var property in jsonObject.EnumerateObject())
+                    {
+                        parametersProvided.Add(property.Name);
+                    }
                 }
             }
-
 
             if (snippetModel.Method == HttpMethod.Post)
             {
@@ -405,12 +396,15 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             {
                 //read parameters from request body since this is an odata action
                 var parametersProvided = new List<string>();
-                if (!string.IsNullOrEmpty(snippetModel.RequestBody)
-                    && JsonConvert.DeserializeObject(snippetModel.RequestBody) is JObject testObj)
+                if (!string.IsNullOrEmpty(snippetModel.RequestBody))
                 {
-                    foreach (var (key, _) in testObj)
+                    var jsonObject = JsonSerializer.Deserialize<JsonElement>(snippetModel.RequestBody, JsonHelper.JsonSerializerOptions);
+                    if (jsonObject.ValueKind == JsonValueKind.Object)
                     {
-                        parametersProvided.Add(key);
+                        foreach (var property in jsonObject.EnumerateObject())
+                        {
+                            parametersProvided.Add(property.Name);
+                        }
                     }
                 }
 

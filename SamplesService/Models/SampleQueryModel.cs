@@ -2,10 +2,9 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace SamplesService.Models
 {
@@ -23,42 +22,46 @@ namespace SamplesService.Models
 
         /* Properties */
 
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public Guid Id { get; set; }
 
-        [JsonProperty(Required = Required.Always, PropertyName = "category")]
+        [JsonPropertyName("category"), JsonRequired]
         public string Category
         {
             get => _category;
             set
             {
+                ArgumentNullException.ThrowIfNull(value);
                 _category = value.Trim(' '); // remove all leading and trailing whitespaces before assigning
             }
         }
 
-        [JsonProperty(Required = Required.Always, PropertyName = "method")]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public HttpMethods Method { get; set; }
+        [JsonPropertyName("method"), JsonRequired, JsonConverter(typeof(JsonStringEnumConverter))]
+        public HttpMethods Method
+        {
+            get; set;
+        }
 
-        [JsonProperty(Required = Required.Always, PropertyName = "humanName")]
+        [JsonPropertyName("humanName"), JsonRequired]
         public string HumanName
         {
             get => _humanName;
             set
             {
+                ArgumentNullException.ThrowIfNull(value);
                 _humanName = value.Trim(' '); // remove all leading and trailing whitespaces before assigning
             }
         }
 
-        [JsonProperty(Required = Required.Always, PropertyName = "requestUrl")]
+        [JsonPropertyName("requestUrl"), JsonRequired]
         public string RequestUrl
         {
             get => _requestUrl;
             set
             {
-                string testValue = value;
+                string testValue = value ?? throw new ArgumentNullException(nameof(RequestUrl));
                 // Check if value starts with '/' and whether there are any subsequent '/'
-                if(!testValue.Trim(' ').StartsWith("/") || !testValue.TrimStart('/').Contains("/"))
+                if(!testValue.Trim(' ').StartsWith('/') || !testValue.TrimStart('/').Contains('/'))
                 {
                     throw new ArgumentException("Invalid request url.\r\nEx.: /v1.0/me/messages", nameof(RequestUrl));
                 }
@@ -67,7 +70,7 @@ namespace SamplesService.Models
             }
         }
 
-        [JsonProperty("docLink")]
+        [JsonPropertyName("docLink")]
         public string DocLink
         {
             get => _docLink;
@@ -82,25 +85,25 @@ namespace SamplesService.Models
             }
         }
 
-        [JsonProperty("headers")]
+        [JsonPropertyName("headers")]
         public IEnumerable<Header> Headers { get; set; }
 
-        [JsonProperty("tip")]
+        [JsonPropertyName("tip")]
         public string Tip { get; set; }
 
-        [JsonProperty("postBody")]
+        [JsonPropertyName("postBody")]
         public string PostBody { get; set; }
 
-        [JsonProperty("skipTest")]
+        [JsonPropertyName("skipTest")]
         public bool SkipTest { get; set; }
 
         /* Nested classes */
 
         public class Header
         {
-            [JsonProperty(PropertyName = "name")]
+            [JsonPropertyName("name")]
             public string Name { get; set; }
-            [JsonProperty(PropertyName = "value")]
+            [JsonPropertyName("value")]
             public string Value { get; set; }
         }
 

@@ -3,18 +3,19 @@
 // -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace PermissionsService.Models
 {
     public class PermissionResult
     {
+        [JsonPropertyName("results")]
         public List<ScopeInformation> Results
         {
             get; set;
-        } = new();
+        } = [];
 
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("errors"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<PermissionError> Errors
         {
             get; set;
@@ -23,12 +24,13 @@ namespace PermissionsService.Models
 
     public class PermissionError
     {
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("requestUrl"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string RequestUrl
         {
             get; set;
         }
 
+        [JsonPropertyName("message")]
         public string Message
         {
             get; set;

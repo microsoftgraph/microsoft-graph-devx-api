@@ -3,6 +3,7 @@
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace PermissionsService.Models
 {
@@ -11,10 +12,13 @@ namespace PermissionsService.Models
     /// </summary>
     internal class ScopesInformationList
     {
+        [JsonPropertyName("delegatedScopesList")]
         public List<ScopeInformation> DelegatedScopesList
         {
             get; set;
         }
+
+        [JsonPropertyName("applicationScopesList")]
         public List<ScopeInformation> ApplicationScopesList
         {
             get; set;

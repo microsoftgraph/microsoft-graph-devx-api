@@ -604,7 +604,7 @@ namespace OpenAPIService
             }
             finally
             {
-                if (_graphUriQueue.Any())
+                if (_graphUriQueue.Count != 0)
                 {
                     _graphUriQueue.Dequeue();
                 }
