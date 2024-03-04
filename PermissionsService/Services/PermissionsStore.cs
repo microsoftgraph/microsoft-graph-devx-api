@@ -358,7 +358,7 @@ namespace PermissionsService
             }
             else
             {
-                var authZChecker = new AuthZChecker();
+                var authZChecker = new AuthZChecker() { LenientMatch = true };
                 authZChecker.Load(permissionsDocument);
 
                 var scopesByRequestUrl = new ConcurrentDictionary<string, IEnumerable<ScopeInformation>>();
@@ -478,7 +478,7 @@ namespace PermissionsService
             else
             {
                 return allPermissions
-                    .Where(x => x.Value.Schemes.Keys.Any(k => k.Equals(scopeType.ToString(),StringComparison.OrdinalIgnoreCase)))
+                    .Where(x => x.Value.Schemes.Keys.Any(k => k.Equals(scopeType.ToString(), StringComparison.OrdinalIgnoreCase)))
                     .Select(grant => new ScopeInformation
                     {
                         ScopeName = grant.Key,
