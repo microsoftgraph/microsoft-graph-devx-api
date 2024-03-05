@@ -12,7 +12,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
     public class GoGeneratorTests : OpenApiSnippetGeneratorTestBase
     {
         private readonly GoGenerator _generator = new();
-        
+
         [Fact]
         public async Task GeneratesTheCorrectFluentAPIPath() {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
@@ -195,7 +195,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Put", result);
             Assert.DoesNotContain("WithRequestConfigurationAndResponseHandler", result);
-            Assert.Contains("graphClient.Applications().ByApplicationId(\"application-id\").Logo().Put(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Applications().ByApplicationId(\"application-id\").Logo().PutAsLogoPutResponse(context.Background(), requestBody, nil)", result);
+        }
+
+        [Theory]
+        [InlineData("/appCatalogs/teamsApps?requiresReview=true","graphClient.AppCatalogs().TeamsApps().Post(", "POST")]
+        [InlineData("/me/photos/48x48/$value","Value().Get(")]
+        [InlineData("/users/some-id/mailFolders/delta","GetAsDeltaGetResponse")]
+        [InlineData("/identityGovernance/accessReviews/definitions/filterByCurrentUser(on='reviewer')", "GetAsFilterByCurrentUserWithOnGetResponse")]
+        public async Task GeneratesTheInlineSchemaFunctionPrefixCorrectly(string inputPath, string expectedSuffix, string method = "")
+        {
+            using var requestPayload = new HttpRequestMessage(string.IsNullOrEmpty(method) ? HttpMethod.Get : new HttpMethod(method), $"{ServiceRootUrl}{inputPath}");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains(expectedSuffix, result);
         }
         [Fact]
         public async Task GeneratesTheDeleteMethodCall() {
@@ -407,7 +420,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetBetaSnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient.Teams().ByTeamId(\"team-id\").Channels().ByChannelId(\"channel-id\").Messages().Post(context.Background(), requestBody, nil)", result);
+            Assert.Contains("graphClient.Teams().ByTeamId(\"team-id\").Channels().ByChannelId(\"channel-id\").Messages().PostAsMessagesPostResponse(context.Background(), requestBody, nil)", result);
         }
         [Fact]
         public async Task WritesEmptyPrimitiveArrays() {
@@ -431,7 +444,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         /**
-         
+
         //TODO Diagnose exception : System.ArgumentException : An item with the same key has already been added. Key: 20
         [Fact]
         public async Task DoesntReplaceODataFunctionCalls() {
@@ -486,7 +499,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("fromDateTime , err := time.Parse(time.RFC3339, \"{fromDateTime}\")", result);
             Assert.Contains("toDateTime , err := time.Parse(time.RFC3339, \"{toDateTime}\")", result);
-            Assert.Contains("microsoftGraphCallRecordsGetPstnCalls, err := graphClient.Communications().CallRecords().MicrosoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(&fromDateTime, &toDateTime).Get(context.Background(), nil)", result);
+            Assert.Contains("microsoftGraphCallRecordsGetPstnCalls, err := graphClient.Communications().CallRecords().MicrosoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(&fromDateTime, &toDateTime).GetAsGetPstnCallsWithFromDateTimeWithToDateTimeGetResponse(context.Background(), nil)", result);
         }
 
         [Fact]
@@ -532,7 +545,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     ""isOrganizerOptional"": ""false"",
                     ""minimumAttendeePercentage"": 200
             }";
-            
+
             using var requestPayload =
                 new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/findMeetingTimes")
                 {

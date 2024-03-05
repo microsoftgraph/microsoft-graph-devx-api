@@ -111,7 +111,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
         {
             get; set;
         }
-       
+
         public bool HasHeaders()
         {
             return Headers.Any();
@@ -574,7 +574,7 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             );
             return parameterString;
         }
-        public string GetInlinedSchemaFunctionCallPrefix(){
+        public string GetSchemaFunctionCallPrefix(){
             var methodNameinPascalCase = HttpMethod.Method.ToLowerInvariant().ToFirstCharacterUpperCase();
             var functionNamePrefix = methodNameinPascalCase;
             //if codeGraph.ResponseSchema.Reference is null then recreate functionNamePrefix for inline schema with the following format
