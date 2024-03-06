@@ -89,7 +89,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 requestPayloadParameterName = "null";// pass a null parameter if we have a request schema expected but there is not body provided
 
             string pathSegment = $"{ClientVarName}.{GetFluentApiPath(codeGraph.Nodes, codeGraph,usedNamespaces)}";
-            var methodName = codeGraph.GetInlinedSchemaFunctionCallPrefix() + "Async";
+            var methodName = codeGraph.GetSchemaFunctionCallPrefix() + "Async";
             if(codeGraph.Parameters.Any( static property => property.Name.Equals("skiptoken",StringComparison.OrdinalIgnoreCase) ||
                                                             property.Name.Equals("deltatoken",StringComparison.OrdinalIgnoreCase)))
             {// its a delta query and needs the opaque url passed over.

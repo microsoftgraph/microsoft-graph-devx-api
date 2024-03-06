@@ -336,8 +336,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void WriteExecutionStatement(SnippetCodeGraph codeGraph, StringBuilder builder, params string[] parameters)
         {
-            var methodName = $"{codeGraph.HttpMethod.ToString().ToLowerInvariant().ToFirstCharacterUpperCase()}";
-
+            var methodName = codeGraph.GetSchemaFunctionCallPrefix();
             var parametersList = GetActionParametersList(parameters);
             var resultVarName = GetResultVarName(codeGraph);
             var returnStatement = codeGraph.HasReturnedBody() ? $"{resultVarName}, err := " : "";
@@ -597,7 +596,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 string varNames = String.Join(", ", funcWithParams.Item3.Keys.Select(item => "&" + item));
                 return $"{funcWithParams.Item2.ToFirstCharacterUpperCase()}{withNames}({varNames}).";
 
-                
+
             })
                         .Aggregate(new List<String>(), (current, next) =>
                         {
