@@ -107,8 +107,16 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         }
         WriteRequestExecutionPath(codeGraph, payloadSb, indentManager);
         var importStatements = GetImportStatements(snippetModel);
-        payloadSb.Insert(0, string.Join(Environment.NewLine, importStatements));
-
+        var phpTagIndex = payloadSb.ToString().IndexOf("<?php");
+        if (phpTagIndex >= 0)
+        {
+            var insertPosition = phpTagIndex + "<?php".Length + Environment.NewLine.Length;
+            payloadSb.Insert(insertPosition, string.Join(Environment.NewLine, importStatements) + Environment.NewLine);
+        }
+        else
+        {
+            payloadSb.Insert(0, string.Join(Environment.NewLine, importStatements) + Environment.NewLine);
+        }
         return payloadSb.ToString().Trim();
     }
     private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
