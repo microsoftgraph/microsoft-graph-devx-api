@@ -144,7 +144,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     case ImportKind.RequestBuilder:
                         if (!string.IsNullOrEmpty(import.ModelProperty.Name))
                         {
-                            var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
+                            var namespaceParts = import.ModelProperty.NamespaceName.Split('.');
                             var importString = $"{requestBuilderImportPrefix}\\{string.Join("\\", namespaceParts)}\\{import.ModelProperty.Name};";
                             snippetImports.Add(importString.Replace(".me.", "\\Users\\Item\\"));
                         }
