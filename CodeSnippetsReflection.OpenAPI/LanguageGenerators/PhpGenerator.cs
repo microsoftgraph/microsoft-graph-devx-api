@@ -121,7 +121,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     }
     private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
         {
-            const string modelImportPrefix = "use Microsoft\\Graph\\Generated\\Models\\";
+            const string modelImportPrefix = "use Microsoft\\Graph\\Generated\\Models";
             const string requestBuilderImportPrefix = "use Microsoft\\Graph\\Generated";
 
             var snippetImports = new HashSet<string>();
