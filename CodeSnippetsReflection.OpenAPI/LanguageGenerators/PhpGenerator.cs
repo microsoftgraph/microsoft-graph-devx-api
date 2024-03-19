@@ -130,22 +130,22 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                         var typeDefinition = import.ModelProperty.TypeDefinition;
                         if (typeDefinition != null)
                         {
-                            snippetImports.Add($"{modelImportPrefix}{typeDefinition}\\{typeDefinition}");
+                            snippetImports.Add($"{modelImportPrefix}{typeDefinition};");
                         }
                         break;
                     case ImportKind.RequestBuilder:
                         if (!string.IsNullOrEmpty(import.ModelProperty.Name))
                         {
                             var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
-                            var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{import.ModelProperty.Name.ToSnakeCase()} import {import.ModelProperty.Name}";
-                            snippetImports.Add(importString.Replace("\\me\\", "\\users\\item."));
+                            var importString = $"{requestBuilderImportPrefix}\\{string.Join(".", namespaceParts)}\\{import.ModelProperty.Name};";
+                            snippetImports.Add(importString.Replace("\\me\\", "\\users\\item\\"));
                         }
                         break;
                     case ImportKind.Path:
                         if (import.Path != null && import.RequestBuilderName != null)
                         {
                             //construct path to request builder
-                            snippetImports.Add($"{requestBuilderImportPrefix}{import.Path.Replace("\\me\\", "\\users\\item\\")}{import.RequestBuilderName}\\{import.RequestBuilderName}");
+                            snippetImports.Add($"{requestBuilderImportPrefix}{import.Path.Replace("\\me\\", "\\users\\item\\")}{import.RequestBuilderName};");
                         }
                         break;
                 }
