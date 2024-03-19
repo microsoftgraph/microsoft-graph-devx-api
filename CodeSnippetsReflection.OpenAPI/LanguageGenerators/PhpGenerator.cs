@@ -144,16 +144,16 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     case ImportKind.RequestBuilder:
                         if (!string.IsNullOrEmpty(import.ModelProperty.Name))
                         {
-                            var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToFirstCharacterUpperCase() : s.ToLowerInvariant());
+                            var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
                             var importString = $"{requestBuilderImportPrefix}\\{string.Join("\\", namespaceParts)}\\{import.ModelProperty.Name};";
-                            snippetImports.Add(importString.Replace("\\me\\", "\\Users\\Item\\"));
+                            snippetImports.Add(importString.Replace(".me.", "\\Users\\Item\\"));
                         }
                         break;
                     case ImportKind.Path:
                         if (import.Path != null && import.RequestBuilderName != null)
                         {
                             //construct path to request builder
-                            snippetImports.Add($"{requestBuilderImportPrefix}{import.Path.Replace("\\me\\", "\\Users\\Item\\")}{import.RequestBuilderName};");
+                            snippetImports.Add($"{requestBuilderImportPrefix}\\{import.Path.Replace(".me.", "\\Users\\Item\\")}\\{import.RequestBuilderName};");
                         }
                         break;
                 }
