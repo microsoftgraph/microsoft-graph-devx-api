@@ -106,9 +106,53 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             WriteObjectProperty(RequestBodyVarName, payloadSb, codeGraph.Body, indentManager);
         }
         WriteRequestExecutionPath(codeGraph, payloadSb, indentManager);
+        var importStatements = GetImportStatements(snippetModel);
+        payloadSb.Insert(0, string.Join(Environment.NewLine, importStatements));
+
         return payloadSb.ToString().Trim();
     }
+    private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
+        {
+            const string modelImportPrefix = "use Microsoft\\Graph\\Generated\\Models\\";
+            const string requestBuilderImportPrefix = "use Microsoft\\Graph\\Generated\\";
 
+            var snippetImports = new HashSet<string>();
+
+            snippetImports.Add("use Microsoft\\Graph\\Graph;");
+
+            var importsGenerator = new ImportsGenerator();
+            var imports = importsGenerator.GenerateImportTemplates(snippetModel);
+            foreach (var import in imports)
+            {
+                switch (import.Kind)
+                {
+                    case ImportKind.Model:
+                        var typeDefinition = import.ModelProperty.TypeDefinition;
+                        if (typeDefinition != null)
+                        {
+                            snippetImports.Add($"{modelImportPrefix}{typeDefinition}\\{typeDefinition}");
+                        }
+                        break;
+                    case ImportKind.RequestBuilder:
+                        if (!string.IsNullOrEmpty(import.ModelProperty.Name))
+                        {
+                            var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
+                            var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{import.ModelProperty.Name.ToSnakeCase()} import {import.ModelProperty.Name}";
+                            snippetImports.Add(importString.Replace("\\me\\", "\\users\\item."));
+                        }
+                        break;
+                    case ImportKind.Path:
+                        if (import.Path != null && import.RequestBuilderName != null)
+                        {
+                            //construct path to request builder
+                            snippetImports.Add($"{requestBuilderImportPrefix}{import.Path.Replace("\\me\\", "\\users\\item\\")}{import.RequestBuilderName}\\{import.RequestBuilderName}");
+                        }
+                        break;
+                }
+            }
+
+            return snippetImports;
+        }
     private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
     {
         var method = codeGraph.HttpMethod.Method.ToLower();
