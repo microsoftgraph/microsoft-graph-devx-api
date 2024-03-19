@@ -156,7 +156,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                             //construct path to request builder
                             var importPath = import.Path.Split('.')
                                 .Select(s => s.ToFirstCharacterUpperCase()).ToArray();
-                            snippetImports.Add($"{requestBuilderImportPrefix}{string.Join("\\", importPath).Replace("\\Me\\", "\\Users\\Item\\")}\\{import.RequestBuilderName};");
+                            snippetImports.Add($"{requestBuilderImportPrefix}{string.Join("\\", importPath).Replace("\\Me\\", "\\Users\\Item\\")};");
                         }
                         break;
                 }
