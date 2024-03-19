@@ -135,11 +135,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 switch (import.Kind)
                 {
                     case ImportKind.Model:
-                        var typeDefinition = import.ModelProperty.TypeDefinition;
-                        if (typeDefinition != null)
-                        {
-                            snippetImports.Add($"{modelImportPrefix}{typeDefinition};");
-                        }
+                        snippetImports.Add($"{modelImportPrefix};");
+                        // check if model has a nested namespace and append it to the import statement
                         break;
                     case ImportKind.RequestBuilder:
                         if (!string.IsNullOrEmpty(import.ModelProperty.Name))
