@@ -292,7 +292,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (string.IsNullOrWhiteSpace(snippetModel?.RequestBody)
                 || "undefined".Equals(snippetModel?.RequestBody, StringComparison.OrdinalIgnoreCase)) // graph explorer sends "undefined" as request body for some reason
                 return (default, default);
-            
+
             ArgumentNullException.ThrowIfNull(indentManager);
 
             if (isValidJson(snippetModel?.RequestBody) && string.IsNullOrWhiteSpace(snippetModel?.ContentType))
@@ -351,6 +351,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (Regex.IsMatch(propertyName, "\\W", RegexOptions.None, TimeSpan.FromSeconds(5))) { propertyName = $"\"{propertyName}\""; }
                 var propertyAssignment = includePropertyAssignment ? $"{indentManager.GetIndent()}{propertyName} = " : string.Empty;
                 WriteProperty(payloadSB, propertyAndSchema.Item1.Value, propertyAndSchema.Item2, indentManager, propertyAssignment);
+
+
             }
             indentManager.Unindent();
         }
@@ -378,13 +380,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     payloadSB.AppendLine($"{propertyAssignment}$null{propertySuffix}");
                     break;
                 case JsonValueKind.Object:
-                    // OpenTypes will have a null propSchemas. Lets see if the object contains '@odata.type'.
-                    if (propSchema != null || value.ToString().Contains("@odata.type"))
-                    {
-                        payloadSB.AppendLine($"{propertyAssignment}@{{");
-                        WriteJsonObjectValue(payloadSB, value, propSchema, indentManager);
-                        payloadSB.AppendLine($"{indentManager.GetIndent()}}}{propertySuffix}");
-                    }
+                    payloadSB.AppendLine($"{propertyAssignment}@{{");
+                    WriteJsonObjectValue(payloadSB, value, propSchema, indentManager);
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}}}{propertySuffix}");
                     break;
                 case JsonValueKind.Array:
                     WriteJsonArrayValue(payloadSB, value, propSchema, indentManager, propertyAssignment);
@@ -397,11 +395,26 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static void WriteJsonArrayValue(StringBuilder payloadSB, JsonElement value, OpenApiSchema schema, IndentManager indentManager, string propertyAssignment)
         {
             payloadSB.AppendLine($"{propertyAssignment}@(");
-            indentManager.Indent();
+
             foreach (var item in value.EnumerateArray())
-                WriteProperty(payloadSB, item, schema?.Items, indentManager, indentManager.GetIndent());
-            indentManager.Unindent();
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    indentManager.Indent(1);
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}@{{");
+                    WriteJsonObjectValue(payloadSB, item, schema?.Items, indentManager);
+                    payloadSB.AppendLine($"{indentManager.GetIndent()}}}");
+
+                }
+                else
+                {
+                    WriteProperty(payloadSB, item, schema?.Items, indentManager, indentManager.GetIndent());
+
+                }
+                indentManager.Indent(-1);
+            }
             payloadSB.AppendLine($"{indentManager.GetIndent()})");
+
         }
 
         private static string GetNumberLiteral(OpenApiSchema schema, JsonElement value)

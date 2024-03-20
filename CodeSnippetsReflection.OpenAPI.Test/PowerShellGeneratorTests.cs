@@ -74,7 +74,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("-Filter \"displayName eq 'Megan Bowen'\"", result);
         }
 
-        
+
         [Fact]
         public async Task GeneratesSnippetForRequestWithFilterQueryOption()
         {
@@ -326,9 +326,9 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
                 $"displayName = \"Library Assist\"{Environment.NewLine}\t" +
-                $"groupTypes = @({Environment.NewLine}\t\t" +
-                $"\"Unified\"{Environment.NewLine}\t\t" +
-                $"\"DynamicMembership\"{Environment.NewLine}\t" +
+                $"groupTypes = @({Environment.NewLine}\t" +
+                $"\"Unified\"{Environment.NewLine}" +
+                $"\"DynamicMembership\"{Environment.NewLine}" +
                 $"){Environment.NewLine}" +
                 $"}}";
             Assert.Contains(expectedParams, result);
@@ -347,12 +347,12 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
-                $"definition = @(" +          
-                $"{Environment.NewLine}\t\t"+
-                $"'{{\"ClaimsMappingPolicy\":{{\"Version\":1,\"IncludeBasicClaimSet\":\"true\", \"ClaimsSchema\": [{{\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/Role\"}}, {{\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/RoleSessionName\"}}, {{\"Value\":\"900\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/SessionDuration\"}}, {{\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"appRoles\"}}, {{\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/nameidentifier\"}}]}}}}'{Environment.NewLine}\t" +
-                $")"+
+                $"definition = @(" +
                 $"{Environment.NewLine}\t" +
-                $"displayName = \"AWS Claims Policy\"{Environment.NewLine}\t" +
+                $"'{{\"ClaimsMappingPolicy\":{{\"Version\":1,\"IncludeBasicClaimSet\":\"true\", \"ClaimsSchema\": [{{\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/Role\"}}, {{\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/RoleSessionName\"}}, {{\"Value\":\"900\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/SessionDuration\"}}, {{\"Source\":\"user\",\"ID\":\"assignedroles\",\"SamlClaimType\": \"appRoles\"}}, {{\"Source\":\"user\",\"ID\":\"userprincipalname\",\"SamlClaimType\": \"https://aws.amazon.com/SAML/Attributes/nameidentifier\"}}]}}}}'{Environment.NewLine}" +
+                $")" +
+                $"{Environment.NewLine}" +
+                $"displayName = \"AWS Claims Policy\"{Environment.NewLine}" +
                 $"isOrganizationDefault = $false{Environment.NewLine}" +
                 $"}}";
             Assert.Contains(expectedParams, result);
@@ -543,6 +543,66 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-IfMatch W/'\"lastEtagId\"'", result);
             Assert.Contains("Update-MgBetaPlannerTask", result);
+        }
+        [Fact]
+        public async Task GeneratesSnippetForRequestWithNestedArrayAndObjectsInBody()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/education/classes/XXXXX/assignmentSettings")
+            {
+                Content = new StringContent(
+                    "{ \"gradingSchemes\": [ { \"displayName\": \"Pass/fail\", \"grades\": [ { \"displayName\": \"Pass\", \"minPercentage\": 60, \"defaultPercentage\": 100 }, { \"displayName\": \"Fail\", \"minPercentage\": 0, \"defaultPercentage\": 0 } ] }, { \"displayName\": \"Letters\", \"grades\": [ { \"displayName\": \"A\", \"minPercentage\": 90 }, { \"displayName\": \"B\", \"minPercentage\": 80 }, { \"displayName\": \"C\", \"minPercentage\": 70 }, { \"displayName\": \"D\", \"minPercentage\": 60 }, { \"displayName\": \"F\", \"minPercentage\": 0 } ] } ] }",
+                    Encoding.UTF8,
+                    "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
+                $"gradingSchemes = @({Environment.NewLine}\t\t" +
+                $"@{{{Environment.NewLine}\t\t\t" +
+                $"displayName = \"Pass/fail\"{Environment.NewLine}\t\t\t" +
+                $"grades = @({Environment.NewLine}\t\t\t\t" +
+                $"@{{{Environment.NewLine}\t\t\t\t\t" +
+                $"displayName = \"Pass\"{Environment.NewLine}\t\t\t\t\t" +
+                $"minPercentage = {Environment.NewLine}\t\t\t\t\t" +
+                $"defaultPercentage = {Environment.NewLine}\t\t\t\t" +
+                $"}}{Environment.NewLine}\t\t\t\t" +
+                $"@{{{Environment.NewLine}\t\t\t\t\t" +
+                $"displayName = \"Fail\"{Environment.NewLine}\t\t\t\t\t" +
+                $"minPercentage = {Environment.NewLine}\t\t\t\t\t" +
+                $"defaultPercentage = {Environment.NewLine}\t\t\t\t" +
+                $"}}{Environment.NewLine}\t\t\t" +
+                $"){Environment.NewLine}\t\t" +
+                $"}}{Environment.NewLine}\t\t" +
+                $"@{{{Environment.NewLine}\t\t\t" +
+                $"displayName = \"Letters\"{Environment.NewLine}\t\t\t" +
+                $"grades = @({Environment.NewLine}\t\t\t\t" +
+                $"@{{{Environment.NewLine}\t\t\t\t\t" +
+                $"displayName = \"A\"{Environment.NewLine}\t\t\t\t\t" +
+                $"minPercentage = {Environment.NewLine}\t\t\t\t" +
+                $"}}{Environment.NewLine}\t\t\t\t" +
+                $"@{{{Environment.NewLine}\t\t\t\t\t" +
+                $"displayName = \"B\"{Environment.NewLine}\t\t\t\t\t" +
+                $"minPercentage = {Environment.NewLine}\t\t\t\t" +
+                $"}}{Environment.NewLine}\t\t\t\t" +
+                $"@{{{Environment.NewLine}\t\t\t\t\t" +
+                $"displayName = \"C\"{Environment.NewLine}\t\t\t\t\t" +
+                $"minPercentage = {Environment.NewLine}\t\t\t\t" +
+                $"}}{Environment.NewLine}\t\t\t\t" +
+                $"@{{{Environment.NewLine}\t\t\t\t\t" +
+                $"displayName = \"D\"{Environment.NewLine}\t\t\t\t\t" +
+                $"minPercentage = {Environment.NewLine}\t\t\t\t" +
+                $"}}{Environment.NewLine}\t\t\t\t" +
+                $"@{{{Environment.NewLine}\t\t\t\t\t" +
+                $"displayName = \"F\"{Environment.NewLine}\t\t\t\t\t" +
+                $"minPercentage = {Environment.NewLine}\t\t\t\t" +
+                $"}}{Environment.NewLine}\t\t\t" +
+                $"){Environment.NewLine}\t\t" +
+                $"}}{Environment.NewLine}\t" +
+                $"){Environment.NewLine}" +
+                $"}}";
+
+            Assert.Contains(expectedParams, result);
+            Assert.Contains("-BodyParameter $params", result);
         }
     }
 
