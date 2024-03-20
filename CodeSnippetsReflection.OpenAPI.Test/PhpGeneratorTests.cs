@@ -19,6 +19,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("->me()->messages()->byMessageId('message-id')", result);
+        Assert.Contains("use Microsoft\\Graph\\Graph;", result);
+
     }
 
     [Fact]
