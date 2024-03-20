@@ -138,15 +138,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                         snippetImports.Add($"{modelImportPrefix};");
                         // check if model has a nested namespace and append it to the import statement
                         break;
-                    case ImportKind.RequestBuilder:
-                        if (!string.IsNullOrEmpty(import.ModelProperty.Name))
-                        {
-                            var namespaceParts = import.ModelProperty.NamespaceName.Split('.')
-                                .Select(s => s.ToFirstCharacterUpperCase()).ToArray();
-                            var importString = $"{requestBuilderImportPrefix}{string.Join("\\", namespaceParts)}\\{import.ModelProperty.Name};";
-                            snippetImports.Add(importString.Replace("\\Me\\", "\\Users\\Item\\"));
-                        }
-                        break;
                     case ImportKind.Path:
                         if (import.Path != null && import.RequestBuilderName != null)
                         {
@@ -158,7 +149,6 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                         break;
                 }
             }
-
             return snippetImports;
         }
     private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
