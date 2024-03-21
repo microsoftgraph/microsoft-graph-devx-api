@@ -125,16 +125,16 @@ extends:
               ]
             SessionTimeout: 20
 
-        - checkout: ReleasePipelines
-          fetchDepth: 1
-          submodules: true
+        # - checkout: ReleasePipelines
+        #   fetchDepth: 1
+        #   submodules: true
 
-        - task: CopyFiles@2
-          displayName: "Copy ev2 template files"
-          inputs:
-            SourceFolder: '$(Build.SourcesDirectory)/release-pipelines/microsoft-graph-devx-api'
-            Contents: '**'
-            TargetFolder: '$(Build.ArtifactStagingDirectory)/ev2-templates'
+        # - task: CopyFiles@2
+        #   displayName: "Copy ev2 template files"
+        #   inputs:
+        #     SourceFolder: '$(Build.SourcesDirectory)/release-pipelines/microsoft-graph-devx-api'
+        #     Contents: '**'
+        #     TargetFolder: '$(Build.ArtifactStagingDirectory)/ev2-templates'
         
         - task: PublishTestResults@2
           displayName: "Publish Test Results"
