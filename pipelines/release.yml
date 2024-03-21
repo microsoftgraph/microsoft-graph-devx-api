@@ -32,7 +32,8 @@ extends:
       os: windows
     sdl:
       sourceRepositoriesToScan:
-        exclude: ReleasePipelines
+        exclude: 
+        - repository: ReleasePipelines
       credscan:
         suppressionsFile: $(Build.SourcesDirectory)\pipelines\.config\CredScanSuppressions.json
     customBuildTags:
