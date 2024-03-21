@@ -44,6 +44,14 @@ extends:
           clean: true
           fetchDepth: 1
           submodules: true
+
+        - checkout: ReleasePipelines
+
+        - task: CopyFiles@2
+          inputs:
+            SourceFolder: '$(Build.SourcesDirectory)/ReleasePipelines'
+            Contents: '**'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/templates'
         
         - task: UseDotNet@2
           displayName: 'Use .NET 6'
@@ -121,11 +129,7 @@ extends:
               ]
             SessionTimeout: 20
 
-        - task: CopyFiles@2
-          inputs:
-            SourceFolder: '$(Build.SourcesDirectory)/ReleasePipelines'
-            Contents: '**'
-            TargetFolder: '$(Build.ArtifactStagingDirectory)/templates'
+
         
         - task: PublishTestResults@2
           displayName: "Publish Test Results"
