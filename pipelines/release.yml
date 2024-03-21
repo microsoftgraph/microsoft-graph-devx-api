@@ -47,20 +47,6 @@ extends:
           clean: true
           fetchDepth: 1
           submodules: true
-
-        # - checkout: ReleasePipelines
-        #   fetchDepth: 1
-
-        - script: dir $(Build.SourcesDirectory)
-
-        # - task: CopyFiles@2
-        #   displayName: "Copy ev2 template files"
-        #   inputs:
-        #     SourceFolder: '$(Build.SourcesDirectory)/release-pipelines/microsoft-graph-devx-api'
-        #     Contents: '**'
-        #     TargetFolder: '$(Build.ArtifactStagingDirectory)/ev2-templates'
-
-       
         - task: UseDotNet@2
           displayName: 'Use .NET 6'
           inputs:
@@ -78,7 +64,6 @@ extends:
           inputs:
             command: 'restore'
             feedsToUse: 'select'
-            workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-devx-api'
         
         - task: DotNetCoreCLI@2
           displayName: "Build"
@@ -161,3 +146,18 @@ extends:
           - output: pipelineArtifact
             path: $(Build.ArtifactStagingDirectory)
             artifact: drop
+
+      - job: Copy
+        steps:
+        - checkout: ReleasePipelines
+          fetchDepth: 1
+
+        - script: dir $(Build.SourcesDirectory)
+
+        - task: CopyFiles@2
+          displayName: "Copy ev2 template files"
+          inputs:
+            SourceFolder: '$(Build.SourcesDirectory)/release-pipelines/microsoft-graph-devx-api'
+            Contents: '**'
+            TargetFolder: '$(Build.ArtifactStagingDirectory)/ev2-templates'
+
