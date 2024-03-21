@@ -23,7 +23,6 @@ resources:
   - repository: ReleasePipelines
     type: git
     name: "Graph Developer Experiences/release-pipelines"
-    ref: refs/tags/main
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
