@@ -66,6 +66,7 @@ extends:
           inputs:
             command: 'restore'
             feedsToUse: 'select'
+            workingDirectory: '$(Build.SourcesDirectory)/microsoft-graph-devx-api'
         
         - task: DotNetCoreCLI@2
           displayName: "Build"
