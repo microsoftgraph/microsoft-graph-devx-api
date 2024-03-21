@@ -54,7 +54,7 @@ extends:
 
         - task: CopyFiles@2
           inputs:
-            SourceFolder: '$(Build.SourcesDirectory)/release-pipelines'
+            SourceFolder: '$(Build.SourcesDirectory)/release-pipelines/microsoft-graph-devx-api'
             Contents: '**'
             TargetFolder: '$(Build.ArtifactStagingDirectory)/templates'
         
