@@ -130,6 +130,7 @@ extends:
           submodules: true
 
         - task: CopyFiles@2
+          displayName: "Copy ev2 template files"
           inputs:
             SourceFolder: '$(Build.SourcesDirectory)/release-pipelines/microsoft-graph-devx-api'
             Contents: '**'
