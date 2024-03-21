@@ -46,6 +46,8 @@ extends:
           submodules: true
 
         - checkout: ReleasePipelines
+          fetchDepth: 1
+          submodules: true
 
         - task: CopyFiles@2
           inputs:
