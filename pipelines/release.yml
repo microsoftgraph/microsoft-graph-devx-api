@@ -125,9 +125,10 @@ extends:
               ]
             SessionTimeout: 20
 
-        # - checkout: ReleasePipelines
-        #   fetchDepth: 1
-        #   submodules: true
+        - checkout: ReleasePipelines
+          fetchDepth: 1
+
+        - script: dir $(Build.SourcesDirectory)
 
         # - task: CopyFiles@2
         #   displayName: "Copy ev2 template files"
