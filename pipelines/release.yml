@@ -52,11 +52,9 @@ extends:
           fetchDepth: 1
           submodules: true
 
-        - script: dir $(Build.SourcesDirectory)
-
         - task: CopyFiles@2
           inputs:
-            SourceFolder: '$(Build.SourcesDirectory)/ReleasePipelines'
+            SourceFolder: '$(Build.SourcesDirectory)/release-pipelines'
             Contents: '**'
             TargetFolder: '$(Build.ArtifactStagingDirectory)/templates'
         
