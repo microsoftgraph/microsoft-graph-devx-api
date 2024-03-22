@@ -17,8 +17,8 @@ public class PhpImportTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith(subject,'All')");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("use Microsoft\\Graph\\Graph;", result);
-        Assert.Contains("use Microsoft\\Graph\\Generated\\Users\\Item\\Calendar\\Events\\EventsRequestBuilder;", result);
+        Assert.Contains("use Microsoft\\Graph\\GraphServiceClient;", result);
+        Assert.Contains("use Microsoft\\Graph\\Generated\\Users\\Item\\Calendar\\Events\\EventsRequestBuilderGetRequestConfiguration;", result);
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class PhpImportTests : OpenApiSnippetGeneratorTestBase
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("use Microsoft\\Graph\\Graph;", result);
+        Assert.Contains("use Microsoft\\Graph\\GraphServiceClient;", result);
         Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Application;", result);
 
     }
@@ -67,7 +67,7 @@ public class PhpImportTests : OpenApiSnippetGeneratorTestBase
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("use Microsoft\\Graph\\Graph;", result);
+        Assert.Contains("use Microsoft\\Graph\\GraphServiceClient;", result);
         Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Message;", result);
         Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\ItemBody;", result);
         Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Recipient;", result);
