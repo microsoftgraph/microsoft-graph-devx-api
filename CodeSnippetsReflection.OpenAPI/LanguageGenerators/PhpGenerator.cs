@@ -120,43 +120,43 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
         return payloadSb.ToString().Trim();
     }
     private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
+    {
+        const string modelImportPrefix = "use Microsoft\\Graph\\Generated\\Models";
+        const string requestBuilderImportPrefix = "use Microsoft\\Graph\\Generated";
+
+        var snippetImports = new HashSet<string>();
+
+        snippetImports.Add("use Microsoft\\Graph\\Graph;");
+
+        var importsGenerator = new ImportsGenerator();
+        var imports = importsGenerator.GenerateImportTemplates(snippetModel);
+        foreach (var import in imports)
         {
-            const string modelImportPrefix = "use Microsoft\\Graph\\Generated\\Models";
-            const string requestBuilderImportPrefix = "use Microsoft\\Graph\\Generated";
-
-            var snippetImports = new HashSet<string>();
-
-            snippetImports.Add("use Microsoft\\Graph\\Graph;");
-
-            var importsGenerator = new ImportsGenerator();
-            var imports = importsGenerator.GenerateImportTemplates(snippetModel);
-            foreach (var import in imports)
+            switch (import.Kind)
             {
-                switch (import.Kind)
-                {
-                    case ImportKind.Model:
-                        var typeDefinition = import.ModelProperty.TypeDefinition;
-                        if (typeDefinition != null){
-                            snippetImports.Add($"{modelImportPrefix}\\{typeDefinition};");
-                            // check if model has a nested namespace and append it to the import statement
+                case ImportKind.Model:
+                    var typeDefinition = import.ModelProperty.TypeDefinition;
+                    if (typeDefinition != null){
+                        snippetImports.Add($"{modelImportPrefix}\\{typeDefinition};");
+                        // check if model has a nested namespace and append it to the import statement
 
-                        }
+                    }
 
-                        break;
-                    case ImportKind.Path:
-                        if (!string.IsNullOrEmpty(import.Path) && !string.IsNullOrEmpty(import.RequestBuilderName))
-                        {
-                            //construct path to request builder
-                            var importPath = import.Path.Split('.')
-                                .Select(static s => s.ToFirstCharacterUpperCase()).ToArray();
-                            snippetImports.Add($"{requestBuilderImportPrefix}{string.Join("\\", importPath).Replace("\\Me\\", "\\Users\\Item\\")}\\{import.RequestBuilderName};");
+                    break;
+                case ImportKind.Path:
+                    if (!string.IsNullOrEmpty(import.Path) && !string.IsNullOrEmpty(import.RequestBuilderName))
+                    {
+                        //construct path to request builder
+                        var importPath = import.Path.Split('.')
+                            .Select(static s => s.ToFirstCharacterUpperCase()).ToArray();
+                        snippetImports.Add($"{requestBuilderImportPrefix}{string.Join("\\", importPath).Replace("\\Me\\", "\\Users\\Item\\")}\\{import.RequestBuilderName};");
 
-                        }
-                        break;
-                }
+                    }
+                    break;
             }
-            return snippetImports;
         }
+        return snippetImports;
+    }
     private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
     {
         var method = codeGraph.HttpMethod.Method.ToLower();
