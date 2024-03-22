@@ -151,23 +151,3 @@ extends:
         parameters:
           directory: 'microsoft-graph-devx-api'
           repoName: ReleasePipelines
-
-      - job: CopyTemplates
-        steps:
-        - checkout: ReleasePipelines
-          fetchDepth: 1
-
-        - task: CopyFiles@2
-          displayName: "Copy ev2 template files"
-          inputs:
-            SourceFolder: '$(Build.SourcesDirectory)/microsoft-graph-devx-api'
-            Contents: '**'
-            TargetFolder: '$(Build.ArtifactStagingDirectory)/ev2-templates'
-
-        templateContext:
-          outputs:
-          - output: pipelineArtifact
-            displayName: 'Publish Artifact: ev2-templates'
-            targetPath: "$(Build.ArtifactStagingDirectory)/ev2-templates"
-            artifactName: ev2-templates
-
