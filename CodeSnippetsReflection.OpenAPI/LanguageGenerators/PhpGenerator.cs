@@ -137,7 +137,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     case ImportKind.Model:
                         var typeDefinition = import.ModelProperty.TypeDefinition;
                         if (typeDefinition != null){
-                            snippetImports.Add($"{modelImportPrefix}\\{typeDefinition}\\{typeDefinition};");
+                            snippetImports.Add($"{modelImportPrefix}\\{typeDefinition};");
                             // check if model has a nested namespace and append it to the import statement
 
                         }
@@ -149,7 +149,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                             //construct path to request builder
                             var importPath = import.Path.Split('.')
                                 .Select(static s => s.ToFirstCharacterUpperCase()).ToArray();
-                            snippetImports.Add($"{requestBuilderImportPrefix}{string.Join("\\", importPath).Replace("\\Me\\", "\\Users\\Item\\")}\\{import.RequestBuilderName}\\{import.RequestBuilderName};");
+                            snippetImports.Add($"{requestBuilderImportPrefix}{string.Join("\\", importPath).Replace("\\Me\\", "\\Users\\Item\\")}\\{import.RequestBuilderName};");
 
                         }
                         break;

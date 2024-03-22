@@ -18,7 +18,7 @@ public class PhpImportTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("use Microsoft\\Graph\\Graph;", result);
-        Assert.Contains("use Microsoft\\Graph\\Generated\\Users\\Item\\Calendar\\Events\\EventsRequestBuilder\\EventsRequestBuilder;", result);
+        Assert.Contains("use Microsoft\\Graph\\Generated\\Users\\Item\\Calendar\\Events\\EventsRequestBuilder;", result);
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class PhpImportTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("use Microsoft\\Graph\\Graph;", result);
-        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Application\\Application;", result);
+        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Application;", result);
 
     }
     [Fact]
@@ -68,11 +68,11 @@ public class PhpImportTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("use Microsoft\\Graph\\Graph;", result);
-        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Message\\Message;", result);
-        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\ItemBody\\ItemBody;", result);
-        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Recipient\\Recipient;", result);
-        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\EmailAddress\\EmailAddress;", result);
-        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Extension\\Extension;", result);
-        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\OpenTypeExtension\\OpenTypeExtension;", result);
+        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Message;", result);
+        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\ItemBody;", result);
+        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Recipient;", result);
+        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\EmailAddress;", result);
+        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Extension;", result);
+        Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\OpenTypeExtension;", result);
     }
 }
