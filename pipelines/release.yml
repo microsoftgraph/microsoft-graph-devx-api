@@ -20,6 +20,9 @@ resources:
     type: git
     name: 1ESPipelineTemplates/1ESPipelineTemplates
     ref: refs/tags/release
+  - repository: ReleasePipelines
+    type: git
+    name: "Graph Developer Experiences/release-pipelines"
 extends:
   template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
@@ -28,20 +31,22 @@ extends:
       image: windows-latest
       os: windows
     sdl:
+      sourceRepositoriesToScan:
+        exclude: 
+        - repository: ReleasePipelines
       credscan:
         suppressionsFile: $(Build.SourcesDirectory)\pipelines\.config\CredScanSuppressions.json
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
-    - stage: stage
+    - stage: BuildAndPublish
       jobs:
-      - job: job
+      - job: Build
         steps:
         - checkout: self
           clean: true
           fetchDepth: 1
           submodules: true
-        
         - task: UseDotNet@2
           displayName: 'Use .NET 6'
           inputs:
@@ -117,7 +122,7 @@ extends:
                   }
               ]
             SessionTimeout: 20
-        
+       
         - task: PublishTestResults@2
           displayName: "Publish Test Results"
           condition: succeededOrFailed()
@@ -141,3 +146,8 @@ extends:
           - output: pipelineArtifact
             path: $(Build.ArtifactStagingDirectory)
             artifact: drop
+
+      - template: pipelines/templates/checkout-and-copy-1es.yml@ReleasePipelines
+        parameters:
+          directory: 'microsoft-graph-devx-api'
+          repoName: ReleasePipelines
