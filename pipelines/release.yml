@@ -147,6 +147,10 @@ extends:
             path: $(Build.ArtifactStagingDirectory)
             artifact: drop
 
+      - template: pipelines/templates/checkout-and-copy-1es.yml@ReleasePipelines
+        parameters:
+          directory: 'microsoft-graph-devx-api'
+
       - job: CopyTemplates
         steps:
         - checkout: ReleasePipelines
