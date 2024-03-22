@@ -39,9 +39,9 @@ extends:
     customBuildTags:
     - ES365AIMigrationTooling
     stages:
-    - stage: stage
+    - stage: BuildAndPublish
       jobs:
-      - job: job
+      - job: Build
         steps:
         - checkout: self
           clean: true
@@ -147,12 +147,10 @@ extends:
             path: $(Build.ArtifactStagingDirectory)
             artifact: drop
 
-      - job: Copy
+      - job: CopyTemplates
         steps:
         - checkout: ReleasePipelines
           fetchDepth: 1
-
-        - script: dir $(Build.SourcesDirectory)
 
         - task: CopyFiles@2
           displayName: "Copy ev2 template files"
