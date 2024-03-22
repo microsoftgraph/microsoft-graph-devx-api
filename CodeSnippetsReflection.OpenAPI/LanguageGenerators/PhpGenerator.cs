@@ -144,7 +144,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
                         break;
                     case ImportKind.Path:
-                        if (import.Path != null && import.RequestBuilderName != null)
+                        if (!string.IsNullOrEmpty(import.Path) && !string.IsNullOrEmpty(import.RequestBuilderName))
                         {
                             //construct path to request builder
                             var importPath = import.Path.Split('.')
