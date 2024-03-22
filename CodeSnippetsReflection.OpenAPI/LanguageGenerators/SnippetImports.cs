@@ -34,6 +34,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             get; set;
         }
+        public string HttpMethod
+        {
+            get; set;
+        }
     }
 
     public class ImportsGenerator
@@ -56,7 +60,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     {
                         Kind = ImportKind.Path,
                         Path = Regex.Replace(path.Replace("\\", ".").Replace("()", ""), @"\{[^}]*-id\}", "item", RegexOptions.Compiled, TimeSpan.FromSeconds(60)),
-                        RequestBuilderName = requestBuilderName
+                        RequestBuilderName = requestBuilderName,
+                        HttpMethod = codeGraph.HttpMethod.ToString()
                     });
                 }
             }
