@@ -40,11 +40,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
     }
 
-    public class ImportsGenerator
+    public static class ImportsGenerator
     {
-        public List<ImportTemplate> imports = new();
+        public static List<ImportTemplate> imports = new();
 
-        public List<ImportTemplate> GenerateImportTemplates(SnippetModel snippetModel)
+        public static List<ImportTemplate>  GenerateImportTemplates(SnippetModel snippetModel)
         {
             var codeGraph = new SnippetCodeGraph(snippetModel);
             var imports = new List<ImportTemplate>();

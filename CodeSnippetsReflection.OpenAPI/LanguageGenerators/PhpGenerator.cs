@@ -128,8 +128,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
         snippetImports.Add("use Microsoft\\Graph\\GraphServiceClient;");
 
-        var importsGenerator = new ImportsGenerator();
-        var imports = importsGenerator.GenerateImportTemplates(snippetModel);
+        var imports = ImportsGenerator.GenerateImportTemplates(snippetModel);
         foreach (var import in imports)
         {
             switch (import.Kind)
