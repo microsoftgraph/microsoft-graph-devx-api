@@ -25,8 +25,7 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
             Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
         };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
-        var importsGenerator = new ImportsGenerator();
-        var result = importsGenerator.GenerateImportTemplates(snippetModel);
+        var result = ImportsGenerator.GenerateImportTemplates(snippetModel);
         Assert.NotNull(result);
         Assert.IsType<List<ImportTemplate>>(result);
         Assert.Equal(2, result.Count);
@@ -36,8 +35,7 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith(subject,'All')");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
-        var importsGenerator = new ImportsGenerator();
-        var result = importsGenerator.GenerateImportTemplates(snippetModel);
+        var result = ImportsGenerator.GenerateImportTemplates(snippetModel);
         Assert.NotNull(result);
         Assert.IsType<List<ImportTemplate>>(result);
         Assert.NotNull(result[0].Path);
