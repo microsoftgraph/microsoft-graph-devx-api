@@ -106,9 +106,54 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             WriteObjectProperty(RequestBodyVarName, payloadSb, codeGraph.Body, indentManager);
         }
         WriteRequestExecutionPath(codeGraph, payloadSb, indentManager);
+        var importStatements = GetImportStatements(snippetModel);
+        var phpTagIndex = payloadSb.ToString().IndexOf("<?php");
+        if (phpTagIndex >= 0)
+        {
+            var insertPosition = phpTagIndex + "<?php".Length + Environment.NewLine.Length;
+            payloadSb.Insert(insertPosition, string.Join(Environment.NewLine, importStatements) + Environment.NewLine);
+        }
+        else
+        {
+            payloadSb.Insert(0, string.Join(Environment.NewLine, importStatements) + Environment.NewLine);
+        }
         return payloadSb.ToString().Trim();
     }
+    private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
+    {
+        const string modelImportPrefix = "use Microsoft\\Graph\\Generated\\Models";
+        const string requestBuilderImportPrefix = "use Microsoft\\Graph\\Generated";
 
+        var snippetImports = new HashSet<string>();
+
+        snippetImports.Add("use Microsoft\\Graph\\GraphServiceClient;");
+
+        var imports = ImportsGenerator.GenerateImportTemplates(snippetModel);
+        foreach (var import in imports)
+        {
+            switch (import.Kind)
+            {
+                case ImportKind.Model:
+                    var typeDefinition = import.ModelProperty.TypeDefinition;
+                    if (typeDefinition != null){
+                        snippetImports.Add($"{modelImportPrefix}\\{typeDefinition};");
+                        // check if model has a nested namespace and append it to the import statement
+                    }
+                    break;
+                
+                case ImportKind.Path:
+                    if (!string.IsNullOrEmpty(import.Path) && !string.IsNullOrEmpty(import.RequestBuilderName))
+                    {
+                        //construct path to request builder
+                        var importPath = import.Path.Split('.')
+                            .Select(static s => s.ToFirstCharacterUpperCase()).ToArray();
+                        snippetImports.Add($"{requestBuilderImportPrefix}{string.Join("\\", importPath).Replace("\\Me\\", "\\Users\\Item\\")}\\{import.RequestBuilderName}{import.HttpMethod.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration;");
+                    }
+                    break;
+            }
+        }
+        return snippetImports;
+    }
     private static void WriteRequestExecutionPath(SnippetCodeGraph codeGraph, StringBuilder payloadSb, IndentManager indentManager)
     {
         var method = codeGraph.HttpMethod.Method.ToLower();
