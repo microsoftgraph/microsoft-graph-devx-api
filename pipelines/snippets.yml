@@ -120,45 +120,34 @@ stages:
 
     - template: templates/commit-changes.yml
 - stage: RunTests
-  dependsOn: GenerateSnippets
-  displayName: Run tests
+- stage: GenerateRunTestReports
+  dependsOn: RunTests
+  displayName: GenerateRunTestReports
   jobs:
-  - job: RunTests
-    strategy:
-      matrix:
-        'HTTP v1 Stable':
-          SNIPPET_LANGUAGE: 'http'
-          GRAPH_VERSION: 'v1'
-          TEST_CATEGORY: 'Stable'
-        'HTTP v1 KnownIssues':
-          SNIPPET_LANGUAGE: 'http'
-          GRAPH_VERSION: 'v1'
-          TEST_CATEGORY: 'KnownIssues'
-        'HTTP beta Stable':
-          SNIPPET_LANGUAGE: 'http'
-          GRAPH_VERSION: 'beta'
-          TEST_CATEGORY: 'Stable'
-        'HTTP beta KnownIssues':
-          SNIPPET_LANGUAGE: 'http'
-          GRAPH_VERSION: 'beta'
-          TEST_CATEGORY: 'KnownIssues'
-        ${{ each language in parameters.snippetLanguages }}:
-          '${{ language }} v1 Stable':
-            SNIPPET_LANGUAGE: ${{ lower(language) }}
-            GRAPH_VERSION: 'v1'
-            TEST_CATEGORY: 'Stable'
-          '${{ language }} v1 KnownIssues':
-            SNIPPET_LANGUAGE: ${{ lower(language) }}
-            GRAPH_VERSION: 'v1'
-            TEST_CATEGORY: 'KnownIssues'
-          '${{ language }} beta Stable':
-            SNIPPET_LANGUAGE: ${{ lower(language) }}
-            GRAPH_VERSION: 'beta'
-            TEST_CATEGORY: 'Stable'
-          '${{ language }} beta KnownIssues':
-            SNIPPET_LANGUAGE: ${{ lower(language) }}
-            GRAPH_VERSION: 'beta'
-            TEST_CATEGORY: 'KnownIssues'
-
+  - job: GenerateCategorizationReport
     steps:
-    - template: templates/run-tests.yml
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download RunTests artifact'
+        inputs:
+          artifact: 'Generation Test Results'
+          path: '$(Build.ArtifactStagingDirectory)/TestResults'
+
+      - task: ExtractFiles@1
+        displayName: 'Extract snippets artifact'
+        inputs:
+          archiveFilePatterns: '$(Build.ArtifactStagingDirectory)/TestResults/*.tar'
+          destinationFolder: '$(Build.ArtifactStagingDirectory)/TestResults'
+          cleanDestinationFolder: false
+
+      - pwsh: |
+          $categorizeScriptPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/scripts/categorizeErrors.ps1
+          Write-Host "Running script $categorizeScriptPath"
+          . $categorizeScriptPath -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Generation Test Results/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
+        displayName: Generate error category report
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish categorization report as artifact'
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
+          ArtifactName: 'ErrorCategorizationReport'
+          publishLocation: 'Container'
