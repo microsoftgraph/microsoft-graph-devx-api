@@ -21,6 +21,10 @@ if (-not $txtOutputFolderPath)
 
 $outcomeLocal = "Failed"  # Only process failed tests
 
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$getWorkloadOwnersScript = Join-Path $scriptDir "getWorkloadOwner.ps1"
+. $getWorkloadOwnersScript
+
 # create a dicionary to cache workload owners
 $workloadOwnersCache = @{}
 
@@ -45,9 +49,6 @@ foreach ($trxFilePath in $files){
       Sort-Object
 
     # Get Script getWorkloadOwner.ps1
-    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
-    $getWorkloadOwnersScript = Join-Path $scriptDir "getWorkloadOwner.ps1"
-    . $getWorkloadOwnersScript
     foreach ($result in $resultsContent)
     {
         # find endpoint using getWorkloadOwner.ps1
@@ -91,7 +92,7 @@ foreach ($trxFilePath in $files){
 
 }
 
-$excelOutputPath = Join-Path $txtOutputFolderPath "reportDevX.xlsx"
+$excelOutputPath = Join-Path $txtOutputFolderPath "report.xlsx"
 $methodNotFound | Export-Excel -Path $excelOutputPath -WorksheetName "MethodNotFound" -AutoSize
 $pathNotFound | Export-Excel -Path $excelOutputPath -WorksheetName "PathNotFound" -AutoSize
 $invalidStart | Export-Excel -Path $excelOutputPath -WorksheetName "InvalidStart" -AutoSize

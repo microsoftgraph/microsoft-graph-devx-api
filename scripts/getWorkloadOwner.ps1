@@ -3,9 +3,27 @@ using namespace System.Diagnostics.CodeAnalysis
 [SuppressMessageAttribute('PSUseSingularNouns', '', Scope='Function', Target='Get-AppSettings')]
 param()
 
+$Global:AppSettings = $null
+
+
+<#
+    Connect to the Raptor Tenant
+#>
+Function Connect-Tenant
+{
+    [CmdletBinding()]
+    param(
+        [Bool]$IsEducation = $false
+    )
+    $appToken = Get-DefaultAppApplicationToken -IsEducation $IsEducation
+    Connect-MgGraph -AccessToken $appToken | Out-Null
+}
 
 function Get-AppSettings ()
 {
+    if($null -ne $Global:AppSettings){
+        return $AppSettings
+    }
     # read app settings from Azure App Config
     $appSettingsPath = "$env:TEMP/appSettings.json"
     # Support Reading Settings from a Custom Label, otherwise default to Development
@@ -26,39 +44,37 @@ function Get-AppSettings ()
     {
         Write-Error -ErrorAction Stop -Message "please provide CertificateThumbprint, ClientID, Username, Password and TenantID in appsettings.json"
     }
+    $Global:AppSettings = $appSettings
     return $appSettings
 }
 
 function Get-CurrentDomain (
-    [PSObject]$AppSettings,
-    [Bool]$IsEducation=$false
+    [Parameter(Mandatory=$true)][String]$DomainUsername
 )
 {
-    $username = $IsEducation ? $AppSettings.EducationUsername : $AppSettings.Username
-    $domain = $username.Split("@")[1]
+    $domain = $DomainUsername.Split("@")[1]
     return $domain
 }
 
 function Get-DefaultAppApplicationToken
 {
     param(
-        $AppSettings,
         $IsEducation = $false
-        )
+    )
+    $AppSettings = Get-AppSettings
     $grantType = "client_credentials"
-    $domain = Get-CurrentDomain -AppSettings $AppSettings -IsEducation $IsEducation
+    $tenantUsername = $IsEducation ? $AppSettings.EducationUsername : $AppSettings.Username
+    $domain = Get-CurrentDomain -DomainUsername $tenantUsername
     $tokenEndpoint = "https://login.microsoftonline.com/$domain/oauth2/v2.0/token"
     $ScopeString = "https://graph.microsoft.com/.default" # Always use this for app permissions
     $clientID, $clientSecret = $IsEducation ? ($AppSettings.EducationClientID, $AppSettings.EducationClientSecret) : ($AppSettings.ClientID, $AppSettings.ClientSecret)
     $body = "grant_type=$grantType&client_id=$clientID&client_secret=$ClientSecret&scope=$($ScopeString)"
     try
     {
-        $response = Invoke-WebRequest -Method Post -Uri $tokenEndpoint `
-         -Body $body -ContentType 'application/x-www-form-urlencoded' `
-         -SessionVariable "session" | ConvertFrom-Json
+        $response = Invoke-RestMethod -Method Post -Uri $tokenEndpoint -Body $body -ContentType 'application/x-www-form-urlencoded'
 
         Write-Debug "Received Token with .default Scopes"
-        return $response.access_token, $session
+        return $response.access_token
     } catch
     {
         Write-Error $_
@@ -70,20 +86,19 @@ function Get-DefaultAppApplicationToken
 function Get-WorkloadOwner {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$true)]
-        [string] $Endpoint,
+        [Parameter(Mandatory=$true)][string] $Endpoint,
         [bool] $IsFullUri=$true,
         [string] $GraphApiVersion="v1.0"
     )
-
-    $appSettings = Get-AppSettings
-
-    $appToken, $defaultAppSession = Get-DefaultAppApplicationToken -AppSettings $AppSettings
-    $defaultAppSession.Headers.Add("Authorization", "Bearer $appToken")
+    Connect-Tenant
+    if ($Endpoint -contains "me/")
+    {
+        $userToken = Get-DelegatedAppToken
+        Connect-MgGraph -AccessToken $userToken.access_token | Out-Null
+    }
     $ownerEndpoint = $Endpoint.contains("?") ? ($Endpoint + "&`$whatif"):($Endpoint + "?`$whatif")
-    $fullUrl = $IsFullUri ? $ownerEndpoint : "https://graph.microsoft.com/$GraphApiVersion/$ownerEndpoint"
+    $fullUrl = $IsFullUri ? $Uri : "https://graph.microsoft.com/$($GraphApiVersion)/$ownerEndpoint"
 
-    $responseObject = Invoke-WebRequest -Method "GET" -Uri $fullUrl -WebSession $defaultAppSession
-
+    $responseObject = Invoke-MgGraphRequest -Uri $fullUrl -OutputType PSObject
     return $responseObject.TargetWorkloadId
 }

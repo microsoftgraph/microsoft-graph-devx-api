@@ -120,6 +120,47 @@ stages:
 
     - template: templates/commit-changes.yml
 - stage: RunTests
+  dependsOn: GenerateSnippets
+  displayName: Run tests
+  jobs:
+  - job: RunTests
+    strategy:
+      matrix:
+        'HTTP v1 Stable':
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'v1'
+          TEST_CATEGORY: 'Stable'
+        'HTTP v1 KnownIssues':
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'v1'
+          TEST_CATEGORY: 'KnownIssues'
+        'HTTP beta Stable':
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'beta'
+          TEST_CATEGORY: 'Stable'
+        'HTTP beta KnownIssues':
+          SNIPPET_LANGUAGE: 'http'
+          GRAPH_VERSION: 'beta'
+          TEST_CATEGORY: 'KnownIssues'
+        ${{ each language in parameters.snippetLanguages }}:
+          '${{ language }} v1 Stable':
+            SNIPPET_LANGUAGE: ${{ lower(language) }}
+            GRAPH_VERSION: 'v1'
+            TEST_CATEGORY: 'Stable'
+          '${{ language }} v1 KnownIssues':
+            SNIPPET_LANGUAGE: ${{ lower(language) }}
+            GRAPH_VERSION: 'v1'
+            TEST_CATEGORY: 'KnownIssues'
+          '${{ language }} beta Stable':
+            SNIPPET_LANGUAGE: ${{ lower(language) }}
+            GRAPH_VERSION: 'beta'
+            TEST_CATEGORY: 'Stable'
+          '${{ language }} beta KnownIssues':
+            SNIPPET_LANGUAGE: ${{ lower(language) }}
+            GRAPH_VERSION: 'beta'
+            TEST_CATEGORY: 'KnownIssues'
+    steps:
+    - template: templates/run-tests.yml
 - stage: GenerateRunTestReports
   dependsOn: RunTests
   displayName: GenerateRunTestReports
