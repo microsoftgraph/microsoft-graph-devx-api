@@ -151,3 +151,4 @@ extends:
         parameters:
           directory: 'microsoft-graph-devx-api'
           repoName: ReleasePipelines
+          dependsOn: ['Build']

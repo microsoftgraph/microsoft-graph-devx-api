@@ -82,8 +82,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
             snippetImports.Add("from msgraph import GraphServiceClient");
 
-            var importsGenerator = new ImportsGenerator();
-            var imports = importsGenerator.GenerateImportTemplates(snippetModel);
+            var imports = ImportsGenerator.GenerateImportTemplates(snippetModel);
             foreach (var import in imports)
             {
                 switch (import.Kind)

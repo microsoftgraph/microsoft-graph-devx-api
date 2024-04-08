@@ -6,6 +6,7 @@ using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
 
+
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
     public enum ImportKind
@@ -33,13 +34,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             get; set;
         }
+        public string HttpMethod
+        {
+            get; set;
+        }
     }
 
-    public class ImportsGenerator
+    public static class ImportsGenerator
     {
-        public List<ImportTemplate> imports = new();
+        public static List<ImportTemplate> imports = new();
 
-        public List<ImportTemplate> GenerateImportTemplates(SnippetModel snippetModel)
+        public static List<ImportTemplate>  GenerateImportTemplates(SnippetModel snippetModel)
         {
             var codeGraph = new SnippetCodeGraph(snippetModel);
             var imports = new List<ImportTemplate>();
@@ -55,7 +60,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     {
                         Kind = ImportKind.Path,
                         Path = Regex.Replace(path.Replace("\\", ".").Replace("()", ""), @"\{[^}]*-id\}", "item", RegexOptions.Compiled, TimeSpan.FromSeconds(60)),
-                        RequestBuilderName = requestBuilderName
+                        RequestBuilderName = requestBuilderName,
+                        HttpMethod = codeGraph.HttpMethod.ToString()
                     });
                 }
             }
