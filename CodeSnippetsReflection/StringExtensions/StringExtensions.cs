@@ -1,6 +1,8 @@
 ﻿using System.Text;
 using System.Linq;
 using System;
+using System.Text.RegularExpressions;
+
 
 namespace CodeSnippetsReflection.StringExtensions
 {
@@ -86,6 +88,14 @@ namespace CodeSnippetsReflection.StringExtensions
             }
             return snakeCaseBuilder.ToString();
         }
+
+    public static string  CleanUpImportPath(this string input)
+    {
+        string pattern = @"(\w+)[A-Z]?(\w*)\((\w+Id)='(\{[^{}]+\})'\)";
+        string replacement = "$1_$2_with_$3";
+        string result = Regex.Replace(input, pattern, replacement);
+        return result;
+    }
 
        
         public static string EscapeQuotes(this string stringValue)

@@ -41,4 +41,15 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.NotNull(result[0].Path);
         Assert.NotNull(result[0].RequestBuilderName);
     }
+    [Fact]
+    public async Task TestGenerateImportTemplatesForNestedRequestBuilderImports()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/applications(appId={{application-id}})?$select=id,appId,displayName,requiredResourceAccess");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = ImportsGenerator.GenerateImportTemplates(snippetModel);
+        Assert.NotNull(result);
+        Assert.IsType<List<ImportTemplate>>(result);
+        Assert.NotNull(result[0].Path);
+        Assert.NotNull(result[0].RequestBuilderName);
+    }
 }

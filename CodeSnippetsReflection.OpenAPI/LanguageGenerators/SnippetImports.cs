@@ -59,7 +59,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     imports.Add(new ImportTemplate
                     {
                         Kind = ImportKind.Path,
-                        Path = Regex.Replace(path.Replace("\\", ".").Replace("()", ""), @"\{[^}]*-id\}", "item", RegexOptions.Compiled, TimeSpan.FromSeconds(60)),
+                        Path = Regex.Replace(path.Replace("\\", ".").Replace("()", ""), @"\{[^}]*-id\}", "item", RegexOptions.Compiled, TimeSpan.FromSeconds(60)).CleanUpImportPath().Replace("__", "_"),
                         RequestBuilderName = requestBuilderName,
                         HttpMethod = codeGraph.HttpMethod.ToString()
                     });
