@@ -6,6 +6,7 @@ using Xunit;
 
 namespace CodeSnippetsReflection.OpenAPI.Test;
 
+
 public class PythonImportTests : OpenApiSnippetGeneratorTestBase
 {
     private readonly PythonGenerator _generator = new();
@@ -74,4 +75,15 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("from msgraph.generated.models.extension import Extension", result);
         Assert.Contains("from msgraph.generated.models.open_type_extension import OpenTypeExtension", result);
     }
+
+    [Fact]
+    public async Task GenerateNestedRequestBuilderImports()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/applications(appId={{application-id}})?$select=id,appId,displayName,requiredResourceAccess");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("from msgraph import GraphServiceClient", result);
+        Assert.Contains("from msgraph.generated.applications_with_app_id.applications_with_app_id_request_builder import ApplicationsWithAppIdRequestBuilder", result);
+    }
+
 }
