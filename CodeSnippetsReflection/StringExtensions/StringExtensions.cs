@@ -92,8 +92,18 @@ namespace CodeSnippetsReflection.StringExtensions
     public static string  CleanUpImportPath(this string input)
     {
         string pattern = @"(\w+)[A-Z]?(\w*)\((\w+Id)='(\{[^{}]+\})'\)";
-        string replacement = "$1_$2_with_$3";
-        string result = Regex.Replace(input, pattern, replacement);
+        string result = Regex.Replace(input, pattern, m =>
+        {
+            string firstPart = m.Groups[1].Value;
+            string secondPart = m.Groups[2].Value;
+            string idPart = m.Groups[3].Value;
+
+            // Given Id e.g appIdd, groupID - convert to snake case
+            secondPart = Regex.Replace(secondPart, @"(\B[A-Z])", x => "_" + x.Value.ToLower());
+            idPart = Regex.Replace(idPart, @"(\B[A-Z])", x => "_" + x.Value.ToLower());
+
+            return $"{firstPart}_{secondPart}_with_{idPart}";
+        });
         return result;
     }
 
