@@ -92,7 +92,6 @@ namespace CodeSnippetsReflection.StringExtensions
     public static string  CleanUpImportPath(this string input)
     {
         string pattern = @"(\w+)[A-Z]?(\w*)\((\w+Id)='(\{[^{}]+\})'\)";
-        TimeSpan timeout = TimeSpan.FromMilliseconds(60); 
 
         string result = Regex.Replace(input, pattern, m =>
         {
@@ -105,7 +104,7 @@ namespace CodeSnippetsReflection.StringExtensions
             idPart = Regex.Replace(idPart, @"(\B[A-Z])", x => "_" + x.Value.ToLower());
 
             return $"{firstPart}_{secondPart}_with_{idPart}";
-        });
+        }, RegexOptions.Compiled, TimeSpan.FromSeconds(60));
         result = result.Replace("$", "");
             
         return result;

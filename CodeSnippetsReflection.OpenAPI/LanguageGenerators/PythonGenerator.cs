@@ -119,7 +119,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         if (import.Path != null && import.RequestBuilderName != null)
                         {
                             //construct path to request builder
-                            snippetImports.Add($"{requestBuilderImportPrefix}{Regex.Replace(import.Path.Replace(".me.", ".users.item."), @"(\B[A-Z])", "_$1").ToLower()}.{import.RequestBuilderName.ToSnakeCase()} import {import.RequestBuilderName}");
+                            snippetImports.Add($"{requestBuilderImportPrefix}{Regex.Replace(import.Path.Replace(".me.", ".users.item."), @"(\B[A-Z])", "_$1", RegexOptions.Compiled, TimeSpan.FromSeconds(60)).ToLower()}.{import.RequestBuilderName.ToSnakeCase()} import {import.RequestBuilderName}");
                         }
                         break;
                 }
