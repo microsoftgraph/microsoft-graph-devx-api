@@ -104,4 +104,14 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("from msgraph.generated.models.password_credential import PasswordCredential", result);
         Assert.Contains("from msgraph.generated.applications.item.add_password.add_password_post_request_body import AddPasswordPostRequestBody", result);
     }
+    [Fact]
+    public async Task GeneratesImportsWithoutFilterAttrbutesInPath()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/servicePrincipals/$count");
+        requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("from msgraph import GraphServiceClient", result);
+        Assert.Contains("from msgraph.generated.service_principals.count.count_request_builder import CountRequestBuilder", result);
+    }
 }
