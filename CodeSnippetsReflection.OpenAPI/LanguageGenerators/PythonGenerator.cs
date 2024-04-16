@@ -85,14 +85,23 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var imports = ImportsGenerator.GenerateImportTemplates(snippetModel);
             foreach (var import in imports)
             {
+                var  import_kind = import.Kind.ToString();
                 switch (import.Kind)
                 {
                     case ImportKind.Model:
                         var typeDefinition = import.ModelProperty.TypeDefinition;
-                        if (typeDefinition != null)
-                        {
-                            snippetImports.Add($"{modelImportPrefix}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
+                        if (typeDefinition != null){
+                            if(typeDefinition.EndsWith("RequestBody")){
+                                 var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
+                                var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{typeDefinition.ToSnakeCase()} import {typeDefinition}";
+                                snippetImports.Add($"{importString.Replace(".me.", ".users.item.")}");
+                            }
+                            else{
+                                snippetImports.Add($"{modelImportPrefix}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
+                            }
                         }
+                        
+                        
                         break;
                     case ImportKind.RequestBuilder:
                         if (!string.IsNullOrEmpty(import.ModelProperty.Name))
@@ -102,6 +111,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             snippetImports.Add(importString.Replace(".me.", ".users.item."));
                         }
                         break;
+                    
+
                     case ImportKind.Path:
                         if (import.Path != null && import.RequestBuilderName != null)
                         {
