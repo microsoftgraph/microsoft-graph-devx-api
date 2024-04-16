@@ -5,6 +5,8 @@ using System.Text;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
+using System.Text.RegularExpressions;
+
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
@@ -117,7 +119,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         if (import.Path != null && import.RequestBuilderName != null)
                         {
                             //construct path to request builder
-                            snippetImports.Add($"{requestBuilderImportPrefix}{import.Path.Replace(".me.", ".users.item.")}.{import.RequestBuilderName.ToSnakeCase()} import {import.RequestBuilderName}");
+                            snippetImports.Add($"{requestBuilderImportPrefix}{Regex.Replace(import.Path.Replace(".me.", ".users.item."), @"(\B[A-Z])", "_$1").ToLower()}.{import.RequestBuilderName.ToSnakeCase()} import {import.RequestBuilderName}");
                         }
                         break;
                 }

@@ -104,6 +104,8 @@ namespace CodeSnippetsReflection.StringExtensions
 
             return $"{firstPart}_{secondPart}_with_{idPart}";
         });
+        result = result.Replace("$", "");
+            
         return result;
     }
 
