@@ -100,8 +100,8 @@ namespace CodeSnippetsReflection.StringExtensions
             string idPart = m.Groups[3].Value;
 
             // Given Id e.g appIdd, groupID - convert to snake case
-            secondPart = Regex.Replace(secondPart, @"(\B[A-Z])", x => "_" + x.Value.ToLower());
-            idPart = Regex.Replace(idPart, @"(\B[A-Z])", x => "_" + x.Value.ToLower());
+            secondPart = Regex.Replace(secondPart, @"(\B[A-Z])", x => "_" + x.Value.ToLower(), RegexOptions.Compiled, TimeSpan.FromSeconds(60));
+            idPart = Regex.Replace(idPart, @"(\B[A-Z])", x => "_" + x.Value.ToLower(), RegexOptions.Compiled, TimeSpan.FromSeconds(60));
 
             return $"{firstPart}_{secondPart}_with_{idPart}";
         }, RegexOptions.Compiled, TimeSpan.FromSeconds(60));
