@@ -13,6 +13,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         Path,
         RequestBuilder,
+
+        RequestBody,
         Model
     }
 
@@ -34,6 +36,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             get; set;
         }
+        public string RequestBodyName
+        {
+            get; set;
+        }
+        
         public string HttpMethod
         {
             get; set;
@@ -52,7 +59,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 var className = codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
                 var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
-                var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";
+                var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";                
                 if (codeGraph.Nodes.Last().Path != null)
                 {
                     var path = codeGraph.Nodes.Last().Path;
@@ -64,6 +71,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         HttpMethod = codeGraph.HttpMethod.ToString()
                     });
                 }
+                
             }
             AddModelImportTemplates(codeGraph.Body, imports);
             return imports;

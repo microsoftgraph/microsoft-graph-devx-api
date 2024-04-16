@@ -88,10 +88,20 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
     [Fact]
     public async Task GenerateRequestBodyImports()
     {
-        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/applications/{{application-id}}/addPassword");
+        string bodyContent = @"
+        {
+            ""passwordCredential"": {
+                ""displayName"": ""Test-Password friendly name""
+            }
+        }";
+
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/applications/{{application-id}}/addPassword"){
+            Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+        };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("from msgraph import GraphServiceClient", result);
+        Assert.Contains("from msgraph.generated.models.password_credential import PasswordCredential", result);
         Assert.Contains("from msgraph.generated.applications.item.add_password.add_password_post_request_body import AddPasswordPostRequestBody", result);
     }
 }
