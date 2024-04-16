@@ -85,5 +85,13 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("from msgraph import GraphServiceClient", result);
         Assert.Contains("from msgraph.generated.applications_with_app_id.applications_with_app_id_request_builder import ApplicationsWithAppIdRequestBuilder", result);
     }
-
+    [Fact]
+    public async Task GenerateRequestBodyImports()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/applications/{{application-id}}/addPassword");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("from msgraph import GraphServiceClient", result);
+        Assert.Contains("from msgraph.generated.applications.item.add_password.add_password_post_request_body import AddPasswordPostRequestBody", result);
+    }
 }
