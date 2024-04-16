@@ -87,7 +87,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var imports = ImportsGenerator.GenerateImportTemplates(snippetModel);
             foreach (var import in imports)
             {
-                var  import_kind = import.Kind.ToString();
                 switch (import.Kind)
                 {
                     case ImportKind.Model:
