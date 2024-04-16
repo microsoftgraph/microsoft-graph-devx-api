@@ -92,6 +92,8 @@ namespace CodeSnippetsReflection.StringExtensions
     public static string  CleanUpImportPath(this string input)
     {
         string pattern = @"(\w+)[A-Z]?(\w*)\((\w+Id)='(\{[^{}]+\})'\)";
+        TimeSpan timeout = TimeSpan.FromMilliseconds(60); 
+
         string result = Regex.Replace(input, pattern, m =>
         {
             string firstPart = m.Groups[1].Value;
