@@ -16,6 +16,9 @@ namespace CodeSnippetsReflection.StringExtensions
         /// <param name="doubleQuoteEscapeSequence">The string value to replace double-quotes</param>
         /// <param name="singleQuoteEscapeSequence">The string value to replace single-quotes</param>
         /// <returns></returns>
+        private static readonly Regex ImportPathRegex = new Regex(@"(\w+)[A-Z]?(\w*)\((\w+Id)='(\{[^{}]+\})'\)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
+        private static readonly Regex SnakeCaseRegex = new Regex(@"(\B[A-Z])", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
+
         public static string EscapeQuotesInLiteral(this string stringLiteral, 
                                                    string doubleQuoteEscapeSequence,
                                                    string singleQuoteEscapeSequence)
@@ -61,7 +64,7 @@ namespace CodeSnippetsReflection.StringExtensions
             return pascalCaseString;
         }
 
-       public static string ToSnakeCase(this string str)
+        public static string ToSnakeCase(this string str)
         {
             if (string.IsNullOrEmpty(str)) return str;
             StringBuilder snakeCaseBuilder = new StringBuilder();
@@ -89,28 +92,28 @@ namespace CodeSnippetsReflection.StringExtensions
             return snakeCaseBuilder.ToString();
         }
 
-    public static string  CleanUpImportPath(this string input)
-    {
-        string pattern = @"(\w+)[A-Z]?(\w*)\((\w+Id)='(\{[^{}]+\})'\)";
 
-        string result = Regex.Replace(input, pattern, m =>
-        {
-            string firstPart = m.Groups[1].Value;
-            string secondPart = m.Groups[2].Value;
-            string idPart = m.Groups[3].Value;
+        public static string CleanUpImportPath(this string input)
+            {
+                string result = StringExtensions.ImportPathRegex.Replace(input, m =>
+                {
+                    string firstPart = m.Groups[1].Value;
+                    string secondPart = m.Groups[2].Value;
+                    string idPart = m.Groups[3].Value;
 
-            // Given Id e.g appIdd, groupID - convert to snake case
-            secondPart = Regex.Replace(secondPart, @"(\B[A-Z])", x => "_" + x.Value.ToLower(), RegexOptions.Compiled, TimeSpan.FromSeconds(60));
-            idPart = Regex.Replace(idPart, @"(\B[A-Z])", x => "_" + x.Value.ToLower(), RegexOptions.Compiled, TimeSpan.FromSeconds(60));
+                    // Given Id e.g appIdd, groupID - convert to snake case
+                    secondPart = StringExtensions.SnakeCaseRegex.Replace(secondPart, x => "_" + x.Value.ToLower());
+                    idPart = StringExtensions.SnakeCaseRegex.Replace(idPart, x => "_" + x.Value.ToLower());
 
-            return $"{firstPart}_{secondPart}_with_{idPart}";
-        }, RegexOptions.Compiled, TimeSpan.FromSeconds(60));
-        result = result.Replace("$", "");
+                    return $"{firstPart}_{secondPart}_with_{idPart}";
+                });
+
+                result = result.Replace("$", "");
+
+                return result;
+            }
+
             
-        return result;
-    }
-
-       
         public static string EscapeQuotes(this string stringValue)
         {
             return stringValue.Replace("\\\"", "\"")//try to unescape quotes in case the input string is already escaped to avoid double escaping.
