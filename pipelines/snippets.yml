@@ -174,8 +174,9 @@ stages:
           path: '$(Build.ArtifactStagingDirectory)/TestResults'
 
       - pwsh: |
-          $(Build.SourcesDirectory)/microsoft-graph-devx-api/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
+          ./microsoft-graph-devx-api/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
         displayName: Generate error category report
+        workingDirectory: $(Build.SourcesDirectory)
 
       - task: PublishBuildArtifacts@1
         displayName: 'Publish categorization report as artifact'
