@@ -173,17 +173,8 @@ stages:
           artifact: 'Generation Test Results'
           path: '$(Build.ArtifactStagingDirectory)/TestResults'
 
-      - task: ExtractFiles@1
-        displayName: 'Extract snippets artifact'
-        inputs:
-          archiveFilePatterns: '$(Build.ArtifactStagingDirectory)/TestResults/*.tar'
-          destinationFolder: '$(Build.ArtifactStagingDirectory)/TestResults'
-          cleanDestinationFolder: false
-
       - pwsh: |
-          $categorizeScriptPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/scripts/categorizeErrors.ps1
-          Write-Host "Running script $categorizeScriptPath"
-          . $categorizeScriptPath -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Generation Test Results/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
+          $(Build.SourcesDirectory)/microsoft-graph-devx-api/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
         displayName: Generate error category report
 
       - task: PublishBuildArtifacts@1
