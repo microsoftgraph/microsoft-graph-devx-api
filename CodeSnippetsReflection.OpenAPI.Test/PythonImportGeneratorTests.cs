@@ -6,6 +6,7 @@ using Xunit;
 
 namespace CodeSnippetsReflection.OpenAPI.Test;
 
+
 public class PythonImportTests : OpenApiSnippetGeneratorTestBase
 {
     private readonly PythonGenerator _generator = new();
@@ -73,5 +74,44 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("from msgraph.generated.models.email_address import EmailAddress", result);
         Assert.Contains("from msgraph.generated.models.extension import Extension", result);
         Assert.Contains("from msgraph.generated.models.open_type_extension import OpenTypeExtension", result);
+    }
+
+    [Fact]
+    public async Task GenerateNestedRequestBuilderImports()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/applications(appId={{application-id}})?$select=id,appId,displayName,requiredResourceAccess");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("from msgraph import GraphServiceClient", result);
+        Assert.Contains("from msgraph.generated.applications_with_app_id.applications_with_app_id_request_builder import ApplicationsWithAppIdRequestBuilder", result);
+    }
+    [Fact]
+    public async Task GenerateRequestBodyImports()
+    {
+        string bodyContent = @"
+        {
+            ""passwordCredential"": {
+                ""displayName"": ""Test-Password friendly name""
+            }
+        }";
+
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/applications/{{application-id}}/addPassword"){
+            Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
+        };
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("from msgraph import GraphServiceClient", result);
+        Assert.Contains("from msgraph.generated.models.password_credential import PasswordCredential", result);
+        Assert.Contains("from msgraph.generated.applications.item.add_password.add_password_post_request_body import AddPasswordPostRequestBody", result);
+    }
+    [Fact]
+    public async Task GeneratesImportsWithoutFilterAttrbutesInPath()
+    {
+        using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/servicePrincipals/$count");
+        requestPayload.Headers.Add("ConsistencyLevel", "eventual");
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains("from msgraph import GraphServiceClient", result);
+        Assert.Contains("from msgraph.generated.service_principals.count.count_request_builder import CountRequestBuilder", result);
     }
 }
