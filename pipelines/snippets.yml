@@ -167,16 +167,30 @@ stages:
   jobs:
   - job: GenerateCategorizationReport
     steps:
+      - checkout: self
+        displayName: checkout GE api
+        fetchDepth: 1
+        submodules: recursive
+        persistCredentials: true
+
       - task: DownloadPipelineArtifact@2
         displayName: 'Download RunTests artifact'
         inputs:
           artifact: 'Generation Test Results'
           path: '$(Build.ArtifactStagingDirectory)/TestResults'
+      - pwsh: |
+          Write-Host "Installing module ImportExcel"
+          Install-Module -Name ImportExcel -Scope CurrentUser -Force -AllowClobber
+          Write-Host "Installing module Microsoft.Graph"
+          Install-Module Microsoft.Graph -Repository PSGallery -Scope CurrentUser -AcceptLicense -Force -AllowClobber
+          Write-Host "Finished installing dependencies"
+        displayName: Install script dependencies
+        workingDirectory: '$(Build.SourcesDirectory)'
 
       - pwsh: |
-          ./microsoft-graph-devx-api/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
+          $(Build.SourcesDirectory)/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
         displayName: Generate error category report
-        workingDirectory: $(Build.SourcesDirectory)
+        workingDirectory: '$(Build.SourcesDirectory)'
 
       - task: PublishBuildArtifacts@1
         displayName: 'Publish categorization report as artifact'
