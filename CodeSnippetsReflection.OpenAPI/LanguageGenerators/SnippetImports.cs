@@ -13,6 +13,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     {
         Path,
         RequestBuilder,
+
+        RequestBody,
         Model
     }
 
@@ -34,6 +36,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             get; set;
         }
+        public string RequestBodyName
+        {
+            get; set;
+        }
+        
         public string HttpMethod
         {
             get; set;
@@ -52,18 +59,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             {
                 var className = codeGraph.Nodes.Last().GetClassName().ToFirstCharacterUpperCase();
                 var itemSuffix = codeGraph.Nodes.Last().Segment.IsCollectionIndex() ? "Item" : string.Empty;
-                var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";
+                var requestBuilderName = $"{className}{itemSuffix}RequestBuilder";                
                 if (codeGraph.Nodes.Last().Path != null)
                 {
                     var path = codeGraph.Nodes.Last().Path;
                     imports.Add(new ImportTemplate
                     {
                         Kind = ImportKind.Path,
-                        Path = Regex.Replace(path.Replace("\\", ".").Replace("()", ""), @"\{[^}]*-id\}", "item", RegexOptions.Compiled, TimeSpan.FromSeconds(60)),
+                        Path = Regex.Replace(path.Replace("\\", ".").Replace("()", ""), @"\{[^}]*-id\}", "item", RegexOptions.Compiled, TimeSpan.FromSeconds(60)).CleanUpImportPath().Replace("__", "_"),
                         RequestBuilderName = requestBuilderName,
                         HttpMethod = codeGraph.HttpMethod.ToString()
                     });
                 }
+                
             }
             AddModelImportTemplates(codeGraph.Body, imports);
             return imports;
