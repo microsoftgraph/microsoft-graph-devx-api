@@ -191,6 +191,8 @@ stages:
           $(Build.SourcesDirectory)/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
         displayName: Generate error category report
         workingDirectory: '$(Build.SourcesDirectory)'
+        env:
+          RAPTOR_CONFIGCONNECTIONSTRING: $(RAPTOR_CONFIGCONNECTIONSTRING)
 
       - task: PublishBuildArtifacts@1
         displayName: 'Publish categorization report as artifact'
