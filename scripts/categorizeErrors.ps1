@@ -69,7 +69,7 @@ foreach ($trxFilePath in $files){
                 $workloadOwnersCache[$cacheKey] = $owner
             }
             catch {
-                Write-Error $_
+                Write-Warning $_
                 $owner = $null
             }
         }

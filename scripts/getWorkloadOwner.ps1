@@ -101,7 +101,13 @@ function Get-WorkloadOwner {
     # }
     $ownerEndpoint = $Endpoint.contains("?") ? ($Endpoint + "&`$whatif"):($Endpoint + "?`$whatif")
     $fullUrl = $IsFullUri ? $Uri : "https://graph.microsoft.com/$($GraphApiVersion)/$ownerEndpoint"
-
-    $responseObject = Invoke-MgGraphRequest -Uri $fullUrl -OutputType PSObject
-    return $responseObject.TargetWorkloadId
+    try {
+        $responseObject = Invoke-MgGraphRequest -Uri $fullUrl -OutputType PSObject
+        return $responseObject.TargetWorkloadId
+    }
+    catch {
+        <#Do this if a terminating exception happens#>
+        Write-Warning $_
+        return $null
+    }
 }

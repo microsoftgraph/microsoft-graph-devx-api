@@ -193,6 +193,7 @@ stages:
         displayName: Create settings file
 
       - pwsh: |
+          $ErrorActionPreference
           $(Build.SourcesDirectory)/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
         displayName: Generate error category report
         workingDirectory: '$(Build.SourcesDirectory)'
