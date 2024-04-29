@@ -75,7 +75,7 @@ function Get-DefaultAppApplicationToken
     {
         $response = Invoke-RestMethod -Method Post -Uri $tokenEndpoint -Body $body -ContentType 'application/x-www-form-urlencoded'
 
-        Write-Host "Received Token with .default Scopes"
+        Write-Debug "Received Token with .default Scopes"
         return $response.access_token
     } catch
     {
@@ -93,11 +93,12 @@ function Get-WorkloadOwner {
         [string] $GraphApiVersion="v1.0"
     )
     Connect-Tenant
-    if ($Endpoint -contains "me/")
-    {
-        $userToken = Get-DelegatedAppToken | ConvertTo-SecureString -AsPlainText -Force
-        Connect-MgGraph -AccessToken $userToken.access_token | Out-Null
-    }
+    #ToDo delegated perms once issue with MFA is resolved
+    # if ($Endpoint -contains "me/")
+    # {
+    #     $userToken = Get-DelegatedAppToken | ConvertTo-SecureString -AsPlainText -Force
+    #     Connect-MgGraph -AccessToken $userToken.access_token | Out-Null
+    # }
     $ownerEndpoint = $Endpoint.contains("?") ? ($Endpoint + "&`$whatif"):($Endpoint + "?`$whatif")
     $fullUrl = $IsFullUri ? $Uri : "https://graph.microsoft.com/$($GraphApiVersion)/$ownerEndpoint"
 

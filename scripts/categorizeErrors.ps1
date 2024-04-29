@@ -64,8 +64,14 @@ foreach ($trxFilePath in $files){
         }
         else
         {
-            $owner = Get-WorkloadOwner -Endpoint $endpoint -IsFullUri $false -GraphApiVersion $version
-            $workloadOwnersCache[$cacheKey] = $owner
+            try {
+                $owner = Get-WorkloadOwner -Endpoint $endpoint -IsFullUri $false -GraphApiVersion $version
+                $workloadOwnersCache[$cacheKey] = $owner
+            }
+            catch {
+                Write-Error $_
+                $owner = $null
+            }
         }
         # add owner to result
         $result | Add-Member -MemberType NoteProperty -Name "owner" -Value $owner
