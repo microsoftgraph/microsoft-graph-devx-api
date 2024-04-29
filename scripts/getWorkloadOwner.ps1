@@ -1,5 +1,6 @@
 using namespace System.Diagnostics.CodeAnalysis
 [SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Scope='Function', Target='Get-WorkloadOwner')]
+[SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Scope='Function', Target='Connect-Tenant')]
 [SuppressMessageAttribute('PSUseSingularNouns', '', Scope='Function', Target='Get-AppSettings')]
 param()
 
@@ -16,7 +17,7 @@ Function Connect-Tenant
         [Bool]$IsEducation = $false
     )
     $appToken = Get-DefaultAppApplicationToken -IsEducation $IsEducation
-    Connect-MgGraph -AccessToken $appToken | Out-Null
+    Connect-MgGraph -AccessToken ($appToken | ConvertTo-SecureString -AsPlainText -Force) | Out-Null
 }
 
 function Get-AppSettings ()
@@ -73,7 +74,7 @@ function Get-DefaultAppApplicationToken
     {
         $response = Invoke-RestMethod -Method Post -Uri $tokenEndpoint -Body $body -ContentType 'application/x-www-form-urlencoded'
 
-        Write-Debug "Received Token with .default Scopes"
+        Write-Host "Received Token with .default Scopes"
         return $response.access_token
     } catch
     {
@@ -94,7 +95,7 @@ function Get-WorkloadOwner {
     if ($Endpoint -contains "me/")
     {
         $userToken = Get-DelegatedAppToken
-        Connect-MgGraph -AccessToken $userToken.access_token | Out-Null
+        Connect-MgGraph -AccessToken ($userToken.access_token | ConvertTo-SecureString -AsPlainText -Force) | Out-Null
     }
     $ownerEndpoint = $Endpoint.contains("?") ? ($Endpoint + "&`$whatif"):($Endpoint + "?`$whatif")
     $fullUrl = $IsFullUri ? $Uri : "https://graph.microsoft.com/$($GraphApiVersion)/$ownerEndpoint"

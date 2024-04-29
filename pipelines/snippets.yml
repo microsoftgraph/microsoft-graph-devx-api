@@ -188,7 +188,7 @@ stages:
         workingDirectory: '$(Build.SourcesDirectory)'
 
       - pwsh: |
-          # create file appSettings.json in the temp folder
+          # create file appSettings.json in the workingDirectory
           New-Item -Path $(Build.SourcesDirectory) -Name "appSettings.json" -ItemType "file" -Force
         displayName: Create temp file
 
