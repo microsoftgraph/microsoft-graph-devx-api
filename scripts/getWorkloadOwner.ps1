@@ -95,7 +95,7 @@ function Get-WorkloadOwner {
     Connect-Tenant
     if ($Endpoint -contains "me/")
     {
-        $userToken = Get-DelegatedAppToken
+        $userToken = Get-DelegatedAppToken | ConvertTo-SecureString -AsPlainText -Force
         Connect-MgGraph -AccessToken $userToken.access_token | Out-Null
     }
     $ownerEndpoint = $Endpoint.contains("?") ? ($Endpoint + "&`$whatif"):($Endpoint + "?`$whatif")

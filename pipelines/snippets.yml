@@ -198,6 +198,7 @@ stages:
         workingDirectory: '$(Build.SourcesDirectory)'
         env:
           RAPTOR_CONFIGCONNECTIONSTRING: $(RAPTOR_CONFIGCONNECTIONSTRING)
+        continueOnError: true
 
       - task: PublishBuildArtifacts@1
         displayName: 'Publish categorization report as artifact'
