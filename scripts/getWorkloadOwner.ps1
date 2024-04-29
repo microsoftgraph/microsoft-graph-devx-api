@@ -17,7 +17,7 @@ Function Connect-Tenant
         [Bool]$IsEducation = $false
     )
     $appToken = Get-DefaultAppApplicationToken -IsEducation $IsEducation
-    Connect-MgGraph -AccessToken ($appToken | ConvertTo-SecureString -AsPlainText -Force) | Out-Null
+    Connect-MgGraph -AccessToken $appToken | Out-Null
 }
 
 function Get-AppSettings ()
@@ -95,7 +95,7 @@ function Get-WorkloadOwner {
     if ($Endpoint -contains "me/")
     {
         $userToken = Get-DelegatedAppToken
-        Connect-MgGraph -AccessToken ($userToken.access_token | ConvertTo-SecureString -AsPlainText -Force) | Out-Null
+        Connect-MgGraph -AccessToken $userToken.access_token | Out-Null
     }
     $ownerEndpoint = $Endpoint.contains("?") ? ($Endpoint + "&`$whatif"):($Endpoint + "?`$whatif")
     $fullUrl = $IsFullUri ? $Uri : "https://graph.microsoft.com/$($GraphApiVersion)/$ownerEndpoint"

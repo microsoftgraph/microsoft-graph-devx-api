@@ -181,8 +181,8 @@ stages:
       - pwsh: |
           Write-Host "Installing module ImportExcel"
           Install-Module -Name ImportExcel -Scope CurrentUser -Force -AllowClobber
-          Write-Host "Installing module Microsoft.Graph"
-          Install-Module Microsoft.Graph -Repository PSGallery -Scope CurrentUser -AcceptLicense -Force -AllowClobber
+          Write-Host "Installing module Microsoft.Graph v1.7.0"
+          Install-Module Microsoft.Graph -RequiredVersion 1.7.0 -Repository PSGallery -Scope CurrentUser -AcceptLicense -Force -AllowClobber
           Write-Host "Finished installing dependencies"
         displayName: Install script dependencies
         workingDirectory: '$(Build.SourcesDirectory)'

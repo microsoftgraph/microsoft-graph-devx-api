@@ -34,7 +34,7 @@ $pathNotFound = @()
 $invalidStart = @()
 $other = @()
 
-$files = Get-ChildItem -Path $trxFolderPath -Filter *.trx
+$files = Get-ChildItem -Path $trxFolderPath -Exclude "http*"
 $SpecificErrorPattern = "/home/vsts/work/1/a/Snippets/"
 foreach ($trxFilePath in $files){
     Write-Host "Processing file $trxFilePath"
