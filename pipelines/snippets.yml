@@ -181,8 +181,8 @@ stages:
       - pwsh: |
           Write-Host "Installing module ImportExcel"
           Install-Module -Name ImportExcel -Scope CurrentUser -Force -AllowClobber
-          Write-Host "Installing module Microsoft.Graph v1.7.0"
-          Install-Module Microsoft.Graph -RequiredVersion 1.7.0 -Repository PSGallery -Scope CurrentUser -AcceptLicense -Force -AllowClobber
+          Write-Host "Installing module Microsoft.Graph"
+          Install-Module Microsoft.Graph -Repository PSGallery -Scope CurrentUser -AcceptLicense -Force -AllowClobber
           Write-Host "Finished installing dependencies"
         displayName: Install script dependencies
         workingDirectory: '$(Build.SourcesDirectory)'
@@ -190,10 +190,10 @@ stages:
       - pwsh: |
           # create file appSettings.json in the workingDirectory
           New-Item -Path $(Build.SourcesDirectory) -Name "appSettings.json" -ItemType "file" -Force
-        displayName: Create temp file
+        displayName: Create settings file
 
       - pwsh: |
-          $(Build.SourcesDirectory)/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
+          $(Build.SourcesDirectory)/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
         displayName: Generate error category report
         workingDirectory: '$(Build.SourcesDirectory)'
         env:
@@ -203,6 +203,6 @@ stages:
       - task: PublishBuildArtifacts@1
         displayName: 'Publish categorization report as artifact'
         inputs:
-          PathtoPublish: '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/Reports/'
           ArtifactName: 'ErrorCategorizationReport'
           publishLocation: 'Container'
