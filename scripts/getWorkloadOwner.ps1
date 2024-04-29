@@ -25,7 +25,7 @@ function Get-AppSettings ()
         return $AppSettings
     }
     # read app settings from Azure App Config
-    $appSettingsPath = "$env:TEMP/appSettings.json"
+    $appSettingsPath = "./appSettings.json"
     # Support Reading Settings from a Custom Label, otherwise default to Development
     $settingsLabel = $env:RAPTOR_CONFIGLABEL
     if ([string]::IsNullOrWhiteSpace($settingsLabel))
