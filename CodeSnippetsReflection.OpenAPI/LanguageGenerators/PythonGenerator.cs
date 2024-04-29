@@ -18,6 +18,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string ScopesVarName = "scopes";
         private const string RequestBodyVarName = "request_body";
         private const string RequestConfigurationVarName = "request_configuration";
+        private const string RequestConfigurationType = "RequestConfiguration";
         private const string RequestParametersPropertyName = "query_params";
 
         private static readonly HashSet<string> ReservedTypeNames = new(StringComparer.OrdinalIgnoreCase)
@@ -188,7 +189,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (codeGraph.HasParameters() || codeGraph.HasHeaders())
             {
                 snippetBuilder.AppendLine(queryParamsPayload);
-                snippetBuilder.Append($"{RequestConfigurationVarName} = {requestBuilderName}.{requestConfigurationName}(");
+                snippetBuilder.Append($"{RequestConfigurationVarName} = {RequestConfigurationType}(");
 
                 if (codeGraph.HasParameters())
                 {
