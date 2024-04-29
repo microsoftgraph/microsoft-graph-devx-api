@@ -212,6 +212,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("request_configuration = RequestConfiguration()", result);
+        Assert.Contains("from kiota_abstractions.base_request_configuration import RequestConfiguration", result);
         Assert.Contains("request_configuration.headers.add(\"ConsistencyLevel\", \"eventual\")", result);
     }
     [Fact]
@@ -245,6 +246,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("DeltaRequestBuilderGetQueryParameters(", result);
         Assert.Contains("skiptoken = \"R0usmcCM996atia_s\",", result);
         Assert.Contains("request_configuration = RequestConfiguration(", result);
+        Assert.Contains("from kiota_abstractions.base_request_configuration import RequestConfiguration", result);
         Assert.Contains("query_parameters = query_params,", result);
         Assert.Contains("request_configuration.headers.add(\"Prefer\", \"odata.maxpagesize=2\")", result);
         Assert.Contains("result = await graph_client.me.calendar_view.delta.get", result);
