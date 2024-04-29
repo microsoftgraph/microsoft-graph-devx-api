@@ -188,6 +188,11 @@ stages:
         workingDirectory: '$(Build.SourcesDirectory)'
 
       - pwsh: |
+          # create file appsettings.json in the temp folder
+          New-Item -Path $(Agent.TempDirectory) -Name "appSettings.json" -ItemType "file" -Force
+        displayName: Create temp file
+
+      - pwsh: |
           $(Build.SourcesDirectory)/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/Reports/'
         displayName: Generate error category report
         workingDirectory: '$(Build.SourcesDirectory)'
