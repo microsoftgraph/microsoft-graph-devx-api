@@ -22,6 +22,7 @@ if (-not $txtOutputFolderPath)
 $outcomeLocal = "Failed"  # Only process failed tests
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+# Get Script getWorkloadOwner.ps1
 $getWorkloadOwnersScript = Join-Path $scriptDir "getWorkloadOwner.ps1"
 . $getWorkloadOwnersScript
 
@@ -48,7 +49,10 @@ foreach ($trxFilePath in $files){
       Select-Object -Property startTime, testName, @{label="sourceFile"; Expression={$sourceFile}}, @{label="method"; expression={$_.methodAndEndpoint[0]}}, @{label="endpoint"; Expression={$_.methodAndEndpoint[1]}}, specificError |
       Sort-Object
 
-    # Get Script getWorkloadOwner.ps1
+    if($resultsContent.Count -eq 0){
+        Write-Host "Specified pattern not found in $trxFilePath"
+        continue
+    }
     foreach ($result in $resultsContent)
     {
         # find endpoint using getWorkloadOwner.ps1
