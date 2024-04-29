@@ -188,12 +188,14 @@ stages:
         workingDirectory: '$(Build.SourcesDirectory)'
 
       - pwsh: |
-          # create file appSettings.json in the workingDirectory
+          Write-Host "create file appSettings.json in the workingDirectory"
           New-Item -Path $(Build.SourcesDirectory) -Name "appSettings.json" -ItemType "file" -Force
-        displayName: Create settings file
+          Write-Host "Creating folder Reports"
+          New-Item -Path $(Build.SourcesDirectory) -Name "Reports" -ItemType "Directory" -Force
+        displayName: Create requisite directory items
 
       - pwsh: |
-          $ErrorActionPreference
+          $ErrorActionPreference="Continue"
           $(Build.SourcesDirectory)/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
         displayName: Generate error category report
         workingDirectory: '$(Build.SourcesDirectory)'
