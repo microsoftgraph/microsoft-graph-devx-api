@@ -169,7 +169,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("RequestBuilderGetQueryParameters(", result);
         Assert.Contains("select = [\"displayName\",\"id\"]", result);
-        Assert.Contains("RequestBuilderGetRequestConfiguration(", result);
+        Assert.Contains("RequestConfiguration(", result);
         Assert.Contains("query_parameters = query_params,", result);
     }
     [Fact]
@@ -182,7 +182,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("count = True", result);
         Assert.Contains("select = [\"displayName\",\"id\"]", result);
         Assert.DoesNotContain("\"true\"", result);
-        Assert.Contains("RequestBuilderGetRequestConfiguration(", result);
+        Assert.Contains("RequestConfiguration(", result);
         Assert.Contains("query_parameters = query_params,", result);
     }
     [Fact]
