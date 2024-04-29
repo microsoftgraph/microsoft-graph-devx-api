@@ -17,6 +17,7 @@ Function Connect-Tenant
         [Bool]$IsEducation = $false
     )
     $appToken = Get-DefaultAppApplicationToken -IsEducation $IsEducation
+    $appToken = $appToken | ConvertTo-SecureString -AsPlainText -Force
     Connect-MgGraph -AccessToken $appToken | Out-Null
 }
 
