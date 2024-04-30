@@ -34,7 +34,6 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         // List has an initial capacity of 4. Reserve more based on the number of nodes.
         // Reduces reallocations at the expense of more memory used.
         var initialCapacity = Math.Max(snippetModel.PathNodes.Count, 20);
-        var notice = "// THE CLI IS IN PREVIEW. NON-PRODUCTION USE ONLY";
         var commandSegments = new List<string>(initialCapacity)
         {
             GetCommandName(snippetModel)
@@ -46,7 +45,7 @@ public partial class GraphCliGenerator : ILanguageGenerator<SnippetModel, OpenAp
         // parameters to the parameters dictionary.
         ProcessCommandSegmentsAndParameters(snippetModel, ref commandSegments, ref operation, ref parameters);
 
-        return notice + Environment.NewLine + commandSegments.Aggregate("", (accum, val) => string.IsNullOrWhiteSpace(accum) ? val : $"{accum} {val}")
+        return Environment.NewLine + commandSegments.Aggregate("", (accum, val) => string.IsNullOrWhiteSpace(accum) ? val : $"{accum} {val}")
                     .Replace("\n", "\\\n", StringComparison.Ordinal)
                     .Replace("\r\n", "\\\r\n", StringComparison.Ordinal);
     }
