@@ -57,7 +57,14 @@ foreach ($trxFilePath in $files){
     {
         # find endpoint using getWorkloadOwner.ps1
         $version = $result.endpoint.Contains("v1.0") ? "v1.0" : "beta"
-        $endpoint = $result.endpoint.Split($version+"/")[1].Trim()
+        $urlSections = $result.endpoint.Split($version+"/")
+        if($urlSections.Count -gt 1){
+            $endpoint =  $urlSections[1]
+        } else{
+            Write-Warning "Endpoint not found in $($result.endpoint)"
+            continue
+        }
+        $endpoint = $endpoint.Trim()
         Write-Host "Fetching Workload owner for endpoint ${endpoint}"
         # remove params from endpoint and save as var cacheKey
         $cacheKey = $endpoint.Split("?")[0].Trim()
