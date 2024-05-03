@@ -51,6 +51,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var snippetBuilder = new StringBuilder();
             snippetBuilder.AppendLine("");
 
+            var latestMajorVersion = "v1.0".Equals(codeGraph.ApiVersion) ? "v1.*" : "v0.*";
+            snippetBuilder.AppendLine($"// Code snippets are only available for the latest major version. Current major version is ${latestMajorVersion}");
+            snippetBuilder.AppendLine("");
+
             writeImportStatements(codeGraph, snippetBuilder);
             writeSnippet(codeGraph, snippetBuilder);
 
@@ -59,6 +63,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void writeImportStatements(SnippetCodeGraph codeGraph, StringBuilder builder)
         {
+            builder.AppendLine("// Dependencies");
             var apiVersion = "v1.0".Equals(codeGraph.ApiVersion) ? "msgraph-sdk-go" : "msgraph-beta-sdk-go";
             builder.AppendLine("import (");
             builder.AppendLine("\t  \"context\""); // default
@@ -185,6 +190,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void writeSnippet(SnippetCodeGraph codeGraph, StringBuilder builder)
         {
+            builder.AppendLine("// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=go");
+
             builder.AppendLine($"{clientVarName} := msgraphsdk.New{clientVarType}({clientFactoryVariables}){Environment.NewLine}{Environment.NewLine}");
             writeHeadersAndOptions(codeGraph, builder);
             WriteBody(codeGraph, builder);
