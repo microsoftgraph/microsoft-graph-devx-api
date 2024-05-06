@@ -190,13 +190,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void writeSnippet(SnippetCodeGraph codeGraph, StringBuilder builder)
         {
-            builder.AppendLine("// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=go");
-
-            builder.AppendLine($"{clientVarName} := msgraphsdk.New{clientVarType}({clientFactoryVariables}){Environment.NewLine}{Environment.NewLine}");
             writeHeadersAndOptions(codeGraph, builder);
             WriteBody(codeGraph, builder);
             builder.AppendLine("");
 
+            builder.AppendLine("// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=go");
             WriteExecutionStatement(
                 codeGraph,
                 builder,
