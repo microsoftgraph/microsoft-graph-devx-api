@@ -98,7 +98,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("graphClient := msgraphsdk.NewGraphServiceClientWithCredentials(cred, scopes)", result);
+            Assert.Contains("To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=go", result);
         }
         [Fact]
         public async Task GeneratesMultipleImportStatements()
