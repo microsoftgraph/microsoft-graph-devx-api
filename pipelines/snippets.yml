@@ -159,6 +159,53 @@ stages:
             SNIPPET_LANGUAGE: ${{ lower(language) }}
             GRAPH_VERSION: 'beta'
             TEST_CATEGORY: 'KnownIssues'
-
     steps:
     - template: templates/run-tests.yml
+- stage: GenerateRunTestReports
+  dependsOn: RunTests
+  displayName: GenerateRunTestReports
+  jobs:
+  - job: GenerateCategorizationReport
+    steps:
+      - checkout: self
+        displayName: checkout GE api
+        fetchDepth: 1
+        submodules: recursive
+        persistCredentials: true
+
+      - task: DownloadPipelineArtifact@2
+        displayName: 'Download RunTests artifact'
+        inputs:
+          artifact: 'Generation Test Results'
+          path: '$(Build.ArtifactStagingDirectory)/TestResults'
+      - pwsh: |
+          Write-Host "Installing module ImportExcel"
+          Install-Module -Name ImportExcel -Scope CurrentUser -Force -AllowClobber
+          Write-Host "Installing module Microsoft.Graph"
+          Install-Module Microsoft.Graph -Repository PSGallery -Scope CurrentUser -AcceptLicense -Force -AllowClobber
+          Write-Host "Finished installing dependencies"
+        displayName: Install script dependencies
+        workingDirectory: '$(Build.SourcesDirectory)'
+
+      - pwsh: |
+          Write-Host "create file appSettings.json in the workingDirectory"
+          New-Item -Path $(Build.SourcesDirectory) -Name "appSettings.json" -ItemType "file" -Force
+          Write-Host "Creating folder Reports"
+          New-Item -Path $(Build.SourcesDirectory) -Name "Reports" -ItemType "Directory" -Force
+        displayName: Create requisite directory items
+
+      - pwsh: |
+          $ErrorActionPreference="Continue"
+          $(Build.SourcesDirectory)/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
+        displayName: Generate error category report
+        workingDirectory: '$(Build.SourcesDirectory)'
+        env:
+          RAPTOR_CONFIGCONNECTIONSTRING: $(RAPTOR_CONFIGCONNECTIONSTRING)
+        continueOnError: true
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish categorization report as artifact'
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/Reports/'
+          ArtifactName: 'ErrorCategorizationReport'
+          publishLocation: 'Container'
