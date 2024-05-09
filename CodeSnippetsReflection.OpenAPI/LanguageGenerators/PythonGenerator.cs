@@ -18,6 +18,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string ScopesVarName = "scopes";
         private const string RequestBodyVarName = "request_body";
         private const string RequestConfigurationVarName = "request_configuration";
+        private const string RequestConfigurationType = "RequestConfiguration";
         private const string RequestParametersPropertyName = "query_params";
 
         private static readonly HashSet<string> ReservedTypeNames = new(StringComparer.OrdinalIgnoreCase)
@@ -79,6 +80,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             const string modelImportPrefix = "from msgraph.generated.models";
             const string requestBuilderImportPrefix = "from msgraph.generated";
+            const string BaseRequestConfigImport = "from kiota_abstractions.base_request_configuration import RequestConfiguration";
 
             var snippetImports = new HashSet<string>();
 
@@ -96,6 +98,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                  var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
                                 var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{typeDefinition.ToSnakeCase()} import {typeDefinition}";
                                 snippetImports.Add($"{importString.Replace(".me.", ".users.item.")}");
+
                             }
                             else{
                                 snippetImports.Add($"{modelImportPrefix}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
@@ -119,6 +122,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         {
                             //construct path to request builder
                             snippetImports.Add($"{requestBuilderImportPrefix}{Regex.Replace(import.Path.Replace(".me.", ".users.item."), @"(\B[A-Z])", "_$1", RegexOptions.Compiled, TimeSpan.FromSeconds(60)).ToLower()}.{import.RequestBuilderName.ToSnakeCase()} import {import.RequestBuilderName}");
+                            snippetImports.Add($"{BaseRequestConfigImport}");
+
                         }
                         break;
                 }
@@ -188,7 +193,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (codeGraph.HasParameters() || codeGraph.HasHeaders())
             {
                 snippetBuilder.AppendLine(queryParamsPayload);
-                snippetBuilder.Append($"{RequestConfigurationVarName} = {requestBuilderName}.{requestConfigurationName}(");
+                snippetBuilder.Append($"{RequestConfigurationVarName} = {RequestConfigurationType}(");
 
                 if (codeGraph.HasParameters())
                 {
