@@ -124,6 +124,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                                 var namespaceParts = importModelNamespace.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
                                 var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{typeDefinition.ToSnakeCase()} import {typeDefinition}";
                                 snippetImports.Add($"{importString.Replace(".me.", ".users.item.")}");
+
                             }
                             else{
                                 snippetImports.Add($"{modelImportPrefix}{namespaceValue}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
