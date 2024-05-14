@@ -121,12 +121,10 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     }
     private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
     {
-        const string modelImportPrefix = "use Microsoft\\Graph\\Generated\\Models";
-        const string requestBuilderImportPrefix = "use Microsoft\\Graph\\Generated";
+        const string modelImportPrefix = @"use Microsoft\Graph\Generated\Models";
+        const string requestBuilderImportPrefix = @"use Microsoft\Graph\Generated";
 
-        var snippetImports = new HashSet<string>();
-
-        snippetImports.Add("use Microsoft\\Graph\\GraphServiceClient;");
+        var snippetImports = new HashSet<string> { @"use Microsoft\Graph\GraphServiceClient;" };
 
         var imports = ImportsGenerator.GenerateImportTemplates(snippetModel);
         foreach (var import in imports)
@@ -136,11 +134,21 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                 case ImportKind.Model:
                     var typeDefinition = import.ModelProperty.TypeDefinition;
                     if (typeDefinition != null){
-                        snippetImports.Add($"{modelImportPrefix}\\{typeDefinition};");
+                        if (import.ModelProperty.NamespaceName.StartsWith("models.microsoft.graph", StringComparison.OrdinalIgnoreCase))
+                        {
+                            snippetImports.Add($"{modelImportPrefix}\\{typeDefinition};");
+                        }
+                        else
+                        {
+                            var imported = import.ModelProperty.NamespaceName.Split('.')
+                                .Select(x => x.ToFirstCharacterUpperCase())
+                                .Aggregate((a, b) => $"{a}\\{b}")
+                                .Replace(@"Me\", @"Users\Item\");
+                            snippetImports.Add($"{requestBuilderImportPrefix}\\{imported}");
+                        }
                         // check if model has a nested namespace and append it to the import statement
                     }
                     break;
-                
                 case ImportKind.Path:
                     if (!string.IsNullOrEmpty(import.Path) && !string.IsNullOrEmpty(import.RequestBuilderName))
                     {

@@ -1001,4 +1001,10 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("$requestConfiguration = new GraphUserRequestBuilderGetRequestConfiguration();", result);
     }
+
+    [Fact]
+    public async Task GenerateForRequestBodyNotInModels()
+    {
+        
+    }
 }
