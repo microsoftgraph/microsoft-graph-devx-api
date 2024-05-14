@@ -123,6 +123,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         const string modelImportPrefix = @"use Microsoft\Graph\Generated\Models";
         const string requestBuilderImportPrefix = @"use Microsoft\Graph\Generated";
+        const string customTypesPrefix = @"use Microsoft\Kiota\Abstractions\Type";
 
         var snippetImports = new HashSet<string> { @"use Microsoft\Graph\GraphServiceClient;" };
 
@@ -147,6 +148,16 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                             snippetImports.Add($"{requestBuilderImportPrefix}\\{imported}");
                         }
                         // check if model has a nested namespace and append it to the import statement
+                    }
+
+                    if (import.ModelProperty.PropertyType == PropertyType.Enum)
+                    {
+                        snippetImports.Add($"{modelImportPrefix}\\{import.ModelProperty.Name.ToFirstCharacterUpperCase()};");
+                    }
+                    
+                    if (import.ModelProperty.PropertyType is PropertyType.DateOnly or PropertyType.TimeOnly)
+                    {
+                        snippetImports.Add($"{customTypesPrefix}\\{GetPropertyTypeName(import.ModelProperty)};");
                     }
                     break;
                 case ImportKind.Path:
@@ -574,5 +585,15 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             .Replace("()()->", "()->");
 
         return result.EndsWith("()()") ? result[..^2] : result;
+    }
+
+    private static string GetPropertyTypeName(CodeProperty property)
+    {
+        return property.PropertyType switch
+        {
+            PropertyType.DateOnly => "Date",
+            PropertyType.TimeOnly => "Time",
+            _ => property.TypeDefinition
+        };
     }
 }
