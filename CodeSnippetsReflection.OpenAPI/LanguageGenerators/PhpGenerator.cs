@@ -123,7 +123,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         const string modelImportPrefix = @"use Microsoft\Graph\Generated\Models";
         const string requestBuilderImportPrefix = @"use Microsoft\Graph\Generated";
-        const string customTypesPrefix = @"use Microsoft\Kiota\Abstractions\Type";
+        const string customTypesPrefix = @"use Microsoft\Kiota\Abstractions\Types";
 
         var snippetImports = new HashSet<string> { @"use Microsoft\Graph\GraphServiceClient;" };
 
