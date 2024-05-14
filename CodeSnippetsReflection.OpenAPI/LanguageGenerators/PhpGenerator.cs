@@ -143,11 +143,12 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                         {
                             var imported = import.ModelProperty.NamespaceName.Split('.')
                                 .Select(x => x.ToFirstCharacterUpperCase())
-                                .Aggregate((a, b) => $"{a}\\{b}")
+                                .Aggregate((a, b) => $@"{a}\{b}")
                                 .Replace(@"Me\", @"Users\Item\");
                             snippetImports.Add($"{requestBuilderImportPrefix}\\{imported}");
                         }
                         // check if model has a nested namespace and append it to the import statement
+                        continue; // Move to the next import.
                     }
 
                     if (import.ModelProperty.PropertyType == PropertyType.Enum)
