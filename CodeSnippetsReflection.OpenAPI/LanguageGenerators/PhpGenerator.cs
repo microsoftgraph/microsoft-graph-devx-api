@@ -121,11 +121,16 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     }
     private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
     {
-        const string modelImportPrefix = @"use Microsoft\Graph\Generated\Models";
-        const string requestBuilderImportPrefix = @"use Microsoft\Graph\Generated";
+        var packagePrefix = snippetModel.ApiVersion switch
+        {
+            "v1.0" => @"Microsoft\Graph",
+            "beta" => @"Microsoft\Graph\Beta",
+        };
+        var modelImportPrefix = $@"use {packagePrefix}\Generated\Models";
+        var requestBuilderImportPrefix = $@"use {packagePrefix}\Generated";
         const string customTypesPrefix = @"use Microsoft\Kiota\Abstractions\Types";
 
-        var snippetImports = new HashSet<string> { @"use Microsoft\Graph\GraphServiceClient;" };
+        var snippetImports = new HashSet<string> { $@"use {packagePrefix}\GraphServiceClient;" };
 
         var imports = ImportsGenerator.GenerateImportTemplates(snippetModel);
         foreach (var import in imports)
@@ -134,10 +139,21 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             {
                 case ImportKind.Model:
                     var typeDefinition = import.ModelProperty.TypeDefinition;
-                    if (typeDefinition != null){
-                        if (import.ModelProperty.NamespaceName.StartsWith("models.microsoft.graph", StringComparison.OrdinalIgnoreCase))
+                    const string modelsNamespaceName = "models.microsoft.graph";
+                    var modelNamespaceStringLen = modelsNamespaceName.Length;
+                    // This takes care of models in nested namespaces inside the model namespace for instance
+                    // models inside IdentityGovernance namespace
+                    var othersParts = import.ModelProperty.NamespaceName[modelNamespaceStringLen..]
+                        .Split('.', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.ToFirstCharacterUpperCase())
+                        .Aggregate((x, y) => $@"{x}\{y}");
+                            
+                    var namespaceValue = !string.IsNullOrEmpty(othersParts) ? $@"\{othersParts}" : string.Empty;
+                    if (typeDefinition != null)
+                    {
+                        if (import.ModelProperty.NamespaceName.StartsWith(modelsNamespaceName, StringComparison.OrdinalIgnoreCase))
                         {
-                            snippetImports.Add($"{modelImportPrefix}\\{typeDefinition};");
+                            snippetImports.Add($@"{modelImportPrefix}{namespaceValue}\{typeDefinition};");
                         }
                         else
                         {
@@ -145,7 +161,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                                 .Select(x => x.ToFirstCharacterUpperCase())
                                 .Aggregate((a, b) => $@"{a}\{b}")
                                 .Replace(@"Me\", @"Users\Item\");
-                            snippetImports.Add($"{requestBuilderImportPrefix}\\{imported}");
+                            snippetImports.Add($@"{requestBuilderImportPrefix}\{imported}\{typeDefinition}");
                         }
                         // check if model has a nested namespace and append it to the import statement
                         continue; // Move to the next import.
@@ -153,7 +169,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
                     if (import.ModelProperty.PropertyType == PropertyType.Enum)
                     {
-                        snippetImports.Add($"{modelImportPrefix}\\{import.ModelProperty.Name.ToFirstCharacterUpperCase()};");
+                        snippetImports.Add($@"{modelImportPrefix}\{import.ModelProperty.Name.ToFirstCharacterUpperCase()};");
                     }
                     
                     if (import.ModelProperty.PropertyType is PropertyType.DateOnly or PropertyType.TimeOnly)

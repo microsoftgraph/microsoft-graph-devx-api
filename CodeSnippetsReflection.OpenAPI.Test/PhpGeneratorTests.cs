@@ -75,6 +75,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("AddPasswordPostRequestBody", result);
+        Assert.Contains(@"use Microsoft\Graph\Beta\GraphServiceClient;", result);
+        Assert.Contains(@"use Microsoft\Graph\Beta\Generated\Models\PasswordCredential;", result);
     }
 
     [Fact]
