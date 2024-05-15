@@ -97,20 +97,31 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 switch (import.Kind)
                 {
                     case ImportKind.Model:
+                        // We don't use custom DateOnly and TimeOnly types for python snippets.
+                        if (import.ModelProperty.PropertyType is PropertyType.DateOnly or PropertyType.TimeOnly)
+                            continue;
                         var typeDefinition = import.ModelProperty.TypeDefinition;
                         const string modelsNamespaceName = "models.microsoft.graph";
                         var modelNamespaceStringLen = modelsNamespaceName.Length;
+                        var importModelNamespace = import.ModelProperty.NamespaceName;
+                        var inModelsNamespace = importModelNamespace.Equals(modelsNamespaceName);
+                        
+                        var nested = !inModelsNamespace && importModelNamespace.StartsWith(modelsNamespaceName);
                         // This takes care of models in nested namespaces inside the model namespace for instance
                         // models inside IdentityGovernance namespace
-                        var othersParts = import.ModelProperty.NamespaceName[modelNamespaceStringLen..]
-                            .Split('.', StringSplitOptions.RemoveEmptyEntries)
-                            .Select(x => x.ToSnakeCase())
-                            .Aggregate((x, y) => $"{x}.{y}");
+                        var othersParts = nested switch
+                        {
+                            true => importModelNamespace[modelNamespaceStringLen..]
+                                .Split('.', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(x => x.ToSnakeCase())
+                                .Aggregate((x, y) => $"{x}.{y}"),
+                            false => string.Empty
+                        };
                             
                         var namespaceValue = !string.IsNullOrEmpty(othersParts) ? $@".{othersParts}" : string.Empty;
                         if (typeDefinition != null){
                             if(typeDefinition.EndsWith("RequestBody",StringComparison.OrdinalIgnoreCase)){
-                                 var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
+                                 var namespaceParts = importModelNamespace.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
                                 var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{typeDefinition.ToSnakeCase()} import {typeDefinition}";
                                 snippetImports.Add($"{importString.Replace(".me.", ".users.item.")}");
 

@@ -138,20 +138,34 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             switch (import.Kind)
             {
                 case ImportKind.Model:
+                    if (import.ModelProperty.PropertyType is PropertyType.DateOnly or PropertyType.TimeOnly)
+                    {
+                        snippetImports.Add($"{customTypesPrefix}\\{GetPropertyTypeName(import.ModelProperty)};");
+                        continue;
+                    }
                     var typeDefinition = import.ModelProperty.TypeDefinition;
                     const string modelsNamespaceName = "models.microsoft.graph";
                     var modelNamespaceStringLen = modelsNamespaceName.Length;
+                    var modelNamespace = import.ModelProperty.NamespaceName;
+                    var inModelsNamespace =
+                        modelNamespace.Equals(modelsNamespaceName,
+                            StringComparison.OrdinalIgnoreCase);
+                    var nested = !inModelsNamespace && modelNamespace.StartsWith(modelsNamespaceName);
                     // This takes care of models in nested namespaces inside the model namespace for instance
                     // models inside IdentityGovernance namespace
-                    var othersParts = import.ModelProperty.NamespaceName[modelNamespaceStringLen..]
-                        .Split('.', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => x.ToFirstCharacterUpperCase())
-                        .Aggregate((x, y) => $@"{x}\{y}");
+                    var othersParts = nested switch
+                    {
+                        true => import.ModelProperty.NamespaceName[modelNamespaceStringLen..]
+                            .Split('.', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(x => x.ToFirstCharacterUpperCase())
+                            .Aggregate((x, y) => $@"{x}\{y}"),
+                        false => string.Empty
+                    };
                             
                     var namespaceValue = !string.IsNullOrEmpty(othersParts) ? $@"\{othersParts}" : string.Empty;
                     if (typeDefinition != null)
                     {
-                        if (import.ModelProperty.NamespaceName.StartsWith(modelsNamespaceName, StringComparison.OrdinalIgnoreCase))
+                        if (inModelsNamespace)
                         {
                             snippetImports.Add($@"{modelImportPrefix}{namespaceValue}\{typeDefinition};");
                         }
@@ -169,12 +183,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
                     if (import.ModelProperty.PropertyType == PropertyType.Enum)
                     {
-                        snippetImports.Add($@"{modelImportPrefix}\{import.ModelProperty.Name.ToFirstCharacterUpperCase()};");
-                    }
-                    
-                    if (import.ModelProperty.PropertyType is PropertyType.DateOnly or PropertyType.TimeOnly)
-                    {
-                        snippetImports.Add($"{customTypesPrefix}\\{GetPropertyTypeName(import.ModelProperty)};");
+                        snippetImports.Add($@"{modelImportPrefix}{namespaceValue}\{import.ModelProperty.Name.ToFirstCharacterUpperCase()};");
                     }
                     break;
                 case ImportKind.Path:
