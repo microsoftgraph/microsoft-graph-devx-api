@@ -78,13 +78,18 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
         {
-            const string modelImportPrefix = "from msgraph.generated.models";
-            const string requestBuilderImportPrefix = "from msgraph.generated";
+            var packageName = snippetModel.ApiVersion switch
+            {
+                "v1.0" => "msgraph",
+                "beta" => "msgraph_beta",
+            };
+            var modelImportPrefix = $"from {packageName}.generated.models";
+            var requestBuilderImportPrefix = $"from {packageName}.generated";
             const string BaseRequestConfigImport = "from kiota_abstractions.base_request_configuration import RequestConfiguration";
 
             var snippetImports = new HashSet<string>();
 
-            snippetImports.Add("from msgraph import GraphServiceClient");
+            snippetImports.Add($"from {packageName} import GraphServiceClient");
 
             var imports = ImportsGenerator.GenerateImportTemplates(snippetModel);
             foreach (var import in imports)
@@ -92,17 +97,44 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 switch (import.Kind)
                 {
                     case ImportKind.Model:
+                        // We don't use custom DateOnly and TimeOnly types for python snippets.
+                        if (import.ModelProperty.PropertyType is PropertyType.DateOnly or PropertyType.TimeOnly)
+                            continue;
                         var typeDefinition = import.ModelProperty.TypeDefinition;
+                        const string modelsNamespaceName = "models.microsoft.graph";
+                        var modelNamespaceStringLen = modelsNamespaceName.Length;
+                        var importModelNamespace = import.ModelProperty.NamespaceName;
+                        var inModelsNamespace = importModelNamespace.Equals(modelsNamespaceName);
+                        
+                        var nested = !inModelsNamespace && importModelNamespace.StartsWith(modelsNamespaceName);
+                        // This takes care of models in nested namespaces inside the model namespace for instance
+                        // models inside IdentityGovernance namespace
+                        var othersParts = nested switch
+                        {
+                            true => importModelNamespace[modelNamespaceStringLen..]
+                                .Split('.', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(static x => x.ToSnakeCase())
+                                .Aggregate(static (x, y) => $"{x}.{y}"),
+                            false => string.Empty
+                        };
+                            
+                        var namespaceValue = !string.IsNullOrEmpty(othersParts) ? $".{othersParts}" : string.Empty;
                         if (typeDefinition != null){
                             if(typeDefinition.EndsWith("RequestBody",StringComparison.OrdinalIgnoreCase)){
-                                 var namespaceParts = import.ModelProperty.NamespaceName.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
+                                var namespaceParts = importModelNamespace.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
                                 var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{typeDefinition.ToSnakeCase()} import {typeDefinition}";
                                 snippetImports.Add($"{importString.Replace(".me.", ".users.item.")}");
-
                             }
                             else{
-                                snippetImports.Add($"{modelImportPrefix}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
+                                snippetImports.Add($"{modelImportPrefix}{namespaceValue}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
                             }
+                        }
+
+                        if (import.ModelProperty.PropertyType == PropertyType.Enum)
+                        {
+                            var enumName = import.ModelProperty.Value.Split('.').First();
+                            snippetImports.Add(
+                                $"{modelImportPrefix}.{enumName.ToSnakeCase()} import {enumName}");
                         }
                         
                         

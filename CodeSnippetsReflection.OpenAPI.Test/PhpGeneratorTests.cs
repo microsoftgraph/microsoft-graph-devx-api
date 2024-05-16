@@ -75,6 +75,8 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("AddPasswordPostRequestBody", result);
+        Assert.Contains(@"use Microsoft\Graph\Beta\GraphServiceClient;", result);
+        Assert.Contains(@"use Microsoft\Graph\Beta\Generated\Models\PasswordCredential;", result);
     }
 
     [Fact]
@@ -847,6 +849,9 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
             };
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
+        Assert.Contains(@"use Microsoft\Kiota\Abstractions\Types\Date;", result);
+        Assert.Contains(@"use Microsoft\Kiota\Abstractions\Types\Time;", result);
+        Assert.Contains(@"use Microsoft\Graph\Generated\Models\AutomaticUpdateMode;", result);
         Assert.Contains("->setQualityUpdatesPauseStartDate(new Date('2016-12-31'))", result);
         Assert.Contains("->setScheduledInstallTime(new Time('11:59:31.3170000'))", result);
     }

@@ -878,6 +878,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("scope = RuleBasedSubjectSet(", result);
         Assert.Contains("tasks = [", result);
         Assert.Contains("Task(", result);
+        Assert.Contains("from msgraph.generated.models.lifecycle_workflow_category import LifecycleWorkflowCategory", result);
     } 
     [Fact]
     public async Task CorrectlyHandlesTypeFromInUrl()
@@ -936,6 +937,7 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("select = [\"displayName\",\"mailNickName\"],", result);
         Assert.Contains("account_enabled = True", result);
+        Assert.Contains("from msgraph import GraphServiceClient", result);
     }
     [Fact]
     public async Task IncludesRequestBodyClassName()
@@ -950,6 +952,8 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("request_body = AddPasswordPostRequestBody(", result);
+        Assert.Contains("from msgraph_beta.generated.models.password_credential import PasswordCredential", result);
+        Assert.Contains("from msgraph_beta import GraphServiceClient", result);
     }
     [Fact]
     public async Task FindsPathItemsWithDifferentCasing()
