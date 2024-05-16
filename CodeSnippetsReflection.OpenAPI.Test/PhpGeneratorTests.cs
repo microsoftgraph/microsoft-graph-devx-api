@@ -853,7 +853,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains(@"use Microsoft\Kiota\Abstractions\Types\Time;", result);
         Assert.Contains(@"use Microsoft\Graph\Generated\Models\AutomaticUpdateMode;", result);
         Assert.Contains("->setQualityUpdatesPauseStartDate(new Date('2016-12-31'))", result);
-         Assert.Contains("->setScheduledInstallTime(new Time('11:59:31.3170000'))", result);
+        Assert.Contains("->setScheduledInstallTime(new Time('11:59:31.3170000'))", result);
     }
 	
     [Fact]
