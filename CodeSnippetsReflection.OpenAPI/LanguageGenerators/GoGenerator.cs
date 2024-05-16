@@ -14,8 +14,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     public class GoGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         private const string clientVarName = "graphClient";
-        private const string clientVarType = "GraphServiceClientWithCredentials";
-        private const string clientFactoryVariables = "cred, scopes";
         private const string requestBodyVarName = "requestBody";
         private const string requestHeadersVarName = "headers";
         private const string optionsParameterVarName = "options";
@@ -154,14 +152,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (functionNameMatch.Success)
             {
                 var paramMatches = ParamRegex.Matches(functionNameMatch.Groups[2].Value);
-                var paramNames = paramMatches.Cast<Match>().Select(m => m.Groups[1].Value).ToList();
+                var paramNames = paramMatches.Cast<Match>().Select(static m => m.Groups[1].Value).ToList();
 
                 return functionNameMatch.Groups[1].Value + "With" + string.Join("With", paramNames);
             }
 
             var processedName = (nameSpace.Split(".", StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Equals("Me", StringComparison.OrdinalIgnoreCase) ? "Users" : x)
-                .Aggregate((current, next) => current + "." + next)).Replace(".microsoft.graph", "");
+                .Aggregate(static (current, next) => current + "." + next)).Replace(".microsoft.graph", "");
 
             return processedName;
         }
@@ -344,7 +342,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (match.Success)
             {
                 var paramMatches = ParamRegex.Matches(match.Groups[2].Value);
-                var paramNames = paramMatches.Cast<Match>().Select(m => m.Groups[1].Value.ToFirstCharacterUpperCase()).ToList();
+                var paramNames = paramMatches.Cast<Match>().Select(static m => m.Groups[1].Value.ToFirstCharacterUpperCase()).ToList();
 
                 return match.Groups[1].Value + "With" + string.Join("With", paramNames);
             }
