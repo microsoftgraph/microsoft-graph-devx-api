@@ -157,8 +157,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     {
                         true => import.ModelProperty.NamespaceName[modelNamespaceStringLen..]
                             .Split('.', StringSplitOptions.RemoveEmptyEntries)
-                            .Select(x => x.ToFirstCharacterUpperCase())
-                            .Aggregate((x, y) => $@"{x}\{y}"),
+                            .Select(static x => x.ToFirstCharacterUpperCase())
+                            .Aggregate(static (x, y) => $@"{x}\{y}"),
                         false => string.Empty
                     };
                             
@@ -173,7 +173,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                         {
                             var imported = import.ModelProperty.NamespaceName.Split('.')
                                 .Select(x => x.ToFirstCharacterUpperCase())
-                                .Aggregate((a, b) => $@"{a}\{b}")
+                                .Aggregate(static (a, b) => $@"{a}\{b}")
                                 .Replace(@"Me\", @"Users\Item\");
                             snippetImports.Add($@"{requestBuilderImportPrefix}\{imported}\{typeDefinition}");
                         }
@@ -192,7 +192,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                         //construct path to request builder
                         var importPath = import.Path.Split('.')
                             .Select(static s => s.ToFirstCharacterUpperCase()).ToArray();
-                        snippetImports.Add($"{requestBuilderImportPrefix}{string.Join("\\", importPath).Replace("\\Me\\", "\\Users\\Item\\")}\\{import.RequestBuilderName}{import.HttpMethod.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration;");
+                        snippetImports.Add($@"{requestBuilderImportPrefix}{string.Join(@"\", importPath).Replace(@"\Me\", @"\Users\Item\")}\{import.RequestBuilderName}{import.HttpMethod.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration;");
                     }
                     break;
             }

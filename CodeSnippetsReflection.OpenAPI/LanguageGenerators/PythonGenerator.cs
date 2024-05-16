@@ -113,18 +113,17 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                         {
                             true => importModelNamespace[modelNamespaceStringLen..]
                                 .Split('.', StringSplitOptions.RemoveEmptyEntries)
-                                .Select(x => x.ToSnakeCase())
-                                .Aggregate((x, y) => $"{x}.{y}"),
+                                .Select(static x => x.ToSnakeCase())
+                                .Aggregate(static (x, y) => $"{x}.{y}"),
                             false => string.Empty
                         };
                             
-                        var namespaceValue = !string.IsNullOrEmpty(othersParts) ? $@".{othersParts}" : string.Empty;
+                        var namespaceValue = !string.IsNullOrEmpty(othersParts) ? $".{othersParts}" : string.Empty;
                         if (typeDefinition != null){
                             if(typeDefinition.EndsWith("RequestBody",StringComparison.OrdinalIgnoreCase)){
-                                 var namespaceParts = importModelNamespace.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
+                                var namespaceParts = importModelNamespace.Split('.').Select((s, i) => i == import.ModelProperty.NamespaceName.Split('.').Length - 1 ? s.ToSnakeCase() : s.ToLowerInvariant());
                                 var importString = $"{requestBuilderImportPrefix}.{string.Join(".", namespaceParts)}.{typeDefinition.ToSnakeCase()} import {typeDefinition}";
-                                snippetImports.Add($"{importString.Replace(".me.", ".users.item.")}");
-
+                                snippetImports.Add($"{importString.Replace(".me.", ".users.item.")}");a
                             }
                             else{
                                 snippetImports.Add($"{modelImportPrefix}{namespaceValue}.{typeDefinition.ToSnakeCase()} import {typeDefinition}");
