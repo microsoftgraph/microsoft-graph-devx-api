@@ -433,6 +433,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("SetIncludeUserActions", result);
         }
         [Fact]
+        public async Task WriteCorrectFunctionNameWithParametersAsModelName()
+        {
+            const string messageObject = "{\r\n\"displayName\": \"Display name\"\r\n}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/applications(uniqueName='app-65278')")
+            {
+                Content = new StringContent(messageObject, Encoding.UTF8, "application/json")
+            };
+            requestPayload.Headers.Add("Prefer", "create-if-missing");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetBetaSnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("graphapplicationswithuniquename \"github.com/microsoftgraph/msgraph-sdk-go/applicationswithuniquename\"", result);
+            Assert.Contains("graphapplicationswithuniquename.ApplicationsWithUniqueNameRequestBuilderPatchRequestConfiguration", result);
+        }
+        [Fact]
         public async Task WriteCorrectTypesForFilterParameters()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
