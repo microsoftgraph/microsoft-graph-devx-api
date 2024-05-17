@@ -20,6 +20,7 @@ namespace KnownIssuesService.Services
         /// <param name="tenantId">TenantId where you want to use the credential (not necessarily the home tenant).</param>
         /// <param name="msiClientId">ClientId for the managed identity.</param>
         /// <param name="appClientId">ClientId for the application registration.</param>
+        [ExcludeFromCodeCoverage]
         public FederatedApplicationCredential(string tenantId, string msiClientId, string appClientId)
         {
             ManagedIdentity = new ManagedIdentityCredential(msiClientId);
