@@ -121,12 +121,16 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     }
     private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
     {
-        const string modelImportPrefix = "use Microsoft\\Graph\\Generated\\Models";
-        const string requestBuilderImportPrefix = "use Microsoft\\Graph\\Generated";
+        var packagePrefix = snippetModel.ApiVersion switch
+        {
+            "v1.0" => @"Microsoft\Graph",
+            "beta" => @"Microsoft\Graph\Beta",
+        };
+        var modelImportPrefix = $@"use {packagePrefix}\Generated\Models";
+        var requestBuilderImportPrefix = $@"use {packagePrefix}\Generated";
+        const string customTypesPrefix = @"use Microsoft\Kiota\Abstractions\Types";
 
-        var snippetImports = new HashSet<string>();
-
-        snippetImports.Add("use Microsoft\\Graph\\GraphServiceClient;");
+        var snippetImports = new HashSet<string> { $@"use {packagePrefix}\GraphServiceClient;" };
 
         var imports = ImportsGenerator.GenerateImportTemplates(snippetModel);
         foreach (var import in imports)
@@ -134,20 +138,61 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             switch (import.Kind)
             {
                 case ImportKind.Model:
+                    if (import.ModelProperty.PropertyType is PropertyType.DateOnly or PropertyType.TimeOnly)
+                    {
+                        snippetImports.Add($"{customTypesPrefix}\\{GetPropertyTypeName(import.ModelProperty)};");
+                        continue;
+                    }
                     var typeDefinition = import.ModelProperty.TypeDefinition;
-                    if (typeDefinition != null){
-                        snippetImports.Add($"{modelImportPrefix}\\{typeDefinition};");
+                    const string modelsNamespaceName = "models.microsoft.graph";
+                    var modelNamespaceStringLen = modelsNamespaceName.Length;
+                    var modelNamespace = import.ModelProperty.NamespaceName;
+                    var inModelsNamespace =
+                        modelNamespace.Equals(modelsNamespaceName,
+                            StringComparison.OrdinalIgnoreCase);
+                    var nested = !inModelsNamespace && modelNamespace.StartsWith(modelsNamespaceName);
+                    // This takes care of models in nested namespaces inside the model namespace for instance
+                    // models inside IdentityGovernance namespace
+                    var othersParts = nested switch
+                    {
+                        true => import.ModelProperty.NamespaceName[modelNamespaceStringLen..]
+                            .Split('.', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(static x => x.ToFirstCharacterUpperCase())
+                            .Aggregate(static (x, y) => $@"{x}\{y}"),
+                        false => string.Empty
+                    };
+                            
+                    var namespaceValue = !string.IsNullOrEmpty(othersParts) ? $@"\{othersParts}" : string.Empty;
+                    if (typeDefinition != null)
+                    {
+                        if (inModelsNamespace)
+                        {
+                            snippetImports.Add($@"{modelImportPrefix}{namespaceValue}\{typeDefinition};");
+                        }
+                        else
+                        {
+                            var imported = import.ModelProperty.NamespaceName.Split('.')
+                                .Select(x => x.ToFirstCharacterUpperCase())
+                                .Aggregate(static (a, b) => $@"{a}\{b}")
+                                .Replace(@"Me\", @"Users\Item\");
+                            snippetImports.Add($@"{requestBuilderImportPrefix}\{imported}\{typeDefinition}");
+                        }
                         // check if model has a nested namespace and append it to the import statement
+                        continue; // Move to the next import.
+                    }
+
+                    if (import.ModelProperty.PropertyType == PropertyType.Enum)
+                    {
+                        snippetImports.Add($@"{modelImportPrefix}{namespaceValue}\{import.ModelProperty.Name.ToFirstCharacterUpperCase()};");
                     }
                     break;
-                
                 case ImportKind.Path:
                     if (!string.IsNullOrEmpty(import.Path) && !string.IsNullOrEmpty(import.RequestBuilderName))
                     {
                         //construct path to request builder
                         var importPath = import.Path.Split('.')
                             .Select(static s => s.ToFirstCharacterUpperCase()).ToArray();
-                        snippetImports.Add($"{requestBuilderImportPrefix}{string.Join("\\", importPath).Replace("\\Me\\", "\\Users\\Item\\")}\\{import.RequestBuilderName}{import.HttpMethod.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration;");
+                        snippetImports.Add($@"{requestBuilderImportPrefix}{string.Join(@"\", importPath).Replace(@"\Me\", @"\Users\Item\")}\{import.RequestBuilderName}{import.HttpMethod.ToLowerInvariant().ToFirstCharacterUpperCase()}RequestConfiguration;");
                     }
                     break;
             }
@@ -566,5 +611,15 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
             .Replace("()()->", "()->");
 
         return result.EndsWith("()()") ? result[..^2] : result;
+    }
+
+    private static string GetPropertyTypeName(CodeProperty property)
+    {
+        return property.PropertyType switch
+        {
+            PropertyType.DateOnly => "Date",
+            PropertyType.TimeOnly => "Time",
+            _ => property.TypeDefinition
+        };
     }
 }

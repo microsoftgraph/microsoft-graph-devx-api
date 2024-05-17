@@ -1,21 +1,19 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using CodeSnippetsReflection.OpenAPI.ModelGraph;
 using CodeSnippetsReflection.StringExtensions;
 using Microsoft.OpenApi.Services;
-using System.Text.RegularExpressions;
-using System.Collections;
 
 namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 {
     public class GoGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         private const string clientVarName = "graphClient";
-        private const string clientVarType = "GraphServiceClientWithCredentials";
-        private const string clientFactoryVariables = "cred, scopes";
         private const string requestBodyVarName = "requestBody";
         private const string requestHeadersVarName = "headers";
         private const string optionsParameterVarName = "options";
@@ -28,6 +26,10 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static IImmutableSet<string> NativeTypes = GetNativeTypes();
 
         private static readonly Regex PropertyNameRegex = new Regex(@"@(.*)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
+
+        private static readonly Regex FunctionRegex = new Regex(@"(\w+)\(([^)]*)\)", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
+
+        private static readonly Regex ParamRegex = new Regex(@"(\w+)\s*=\s*'[^']*'", RegexOptions.Compiled, TimeSpan.FromMilliseconds(200));
 
         static IImmutableSet<string> GetNativeTypes()
         {
@@ -142,9 +144,24 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static String ProcessNameSpaceName(String nameSpace)
         {
-            return (nameSpace != null ? nameSpace.Split(".", StringSplitOptions.RemoveEmptyEntries)
+            if (String.IsNullOrEmpty(nameSpace))
+                return "";
+
+            // process function names and parameters
+            var functionNameMatch = FunctionRegex.Match(nameSpace);
+            if (functionNameMatch.Success)
+            {
+                var paramMatches = ParamRegex.Matches(functionNameMatch.Groups[2].Value);
+                var paramNames = paramMatches.Cast<Match>().Select(static m => m.Groups[1].Value).ToList();
+
+                return functionNameMatch.Groups[1].Value + "With" + string.Join("With", paramNames);
+            }
+
+            var processedName = (nameSpace.Split(".", StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Equals("Me", StringComparison.OrdinalIgnoreCase) ? "Users" : x)
-                .Aggregate((current, next) => current + "." + next) : "models").Replace(".microsoft.graph", "");
+                .Aggregate(static (current, next) => current + "." + next)).Replace(".microsoft.graph", "");
+
+            return processedName;
         }
 
         private static String ProcessFinalNameSpaceName(String nameSpace)
@@ -306,7 +323,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 if (x.Segment.IsCollectionIndex())
                     return "Item";
                 else
-                    return x.Segment.ToFirstCharacterUpperCase();
+                    return EscapeFunctionNames(x.Segment.ToFirstCharacterUpperCase());
             })
                         .Aggregate(static (x, y) =>
                         {
@@ -314,6 +331,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             w = "Me".Equals(w, StringComparison.Ordinal) ? "Item" : w;
                             return $"{w}{y}";
                         });
+        }
+
+        private static string EscapeFunctionNames(String objectName)
+        {
+            if (String.IsNullOrEmpty(objectName))
+                return objectName;
+
+            var match = FunctionRegex.Match(objectName);
+            if (match.Success)
+            {
+                var paramMatches = ParamRegex.Matches(match.Groups[2].Value);
+                var paramNames = paramMatches.Cast<Match>().Select(static m => m.Groups[1].Value.ToFirstCharacterUpperCase()).ToList();
+
+                return match.Groups[1].Value + "With" + string.Join("With", paramNames);
+            }
+            return objectName;
         }
 
         private static string evaluateParameter(CodeProperty param)

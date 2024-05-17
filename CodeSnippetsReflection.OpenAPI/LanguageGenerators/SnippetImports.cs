@@ -79,7 +79,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static void AddModelImportTemplates(CodeProperty node, List<ImportTemplate> imports)
         {
-            if (!string.IsNullOrEmpty(node.NamespaceName))
+            if (!string.IsNullOrEmpty(node.NamespaceName) || (node.PropertyType is PropertyType.DateOnly or PropertyType.TimeOnly))
             {
                 imports.Add(new ImportTemplate
                 {
