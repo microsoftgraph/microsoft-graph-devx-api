@@ -3,9 +3,9 @@ info:
   title: "DevX API"
   version: "20210528.1"
 servers:
-  - url: https://graphexplorerapi.azurewebsites.net/
+  - url: https://devxapi-func-prod-eastus.azurewebsites.net/
     description: Main server
-  - url: https://graphexplorerapi-staging.azurewebsites.net/
+  - url: https://devxapi-func-ppe-eastus.azurewebsites.net/
     description: Staging server
   - url: https://localhost:44399/
     description: Local test server
