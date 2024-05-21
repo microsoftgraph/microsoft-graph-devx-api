@@ -34,7 +34,7 @@ namespace KnownIssuesService.Services
 			new() { { UtilityConstants.TelemetryPropertyKey_KnownIssues, nameof(KnownIssuesService) } };
         private const string tenantId = "KnownIssues:TenantId";
         private const string msiClientId = "KnownIssues:MsiClientId";
-        private const string appClientId = "KnownIssues:AppClintId";
+        private const string appClientId = "KnownIssues:AppClientId";
         private const string KnownIssuesPath = "KnownIssues:Uri";
 
 		public KnownIssuesService(IConfiguration configuration,
