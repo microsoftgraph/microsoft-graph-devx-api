@@ -165,17 +165,15 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
                     var namespaceValue = !string.IsNullOrEmpty(othersParts) ? $@"\{othersParts}" : string.Empty;
                     if (typeDefinition != null)
                     {
-                        if (inModelsNamespace)
-                        {
+                        if (inModelsNamespace || nested)
                             snippetImports.Add($@"{modelImportPrefix}{namespaceValue}\{typeDefinition};");
-                        }
                         else
                         {
                             var imported = import.ModelProperty.NamespaceName.Split('.')
                                 .Select(x => x.ToFirstCharacterUpperCase())
                                 .Aggregate(static (a, b) => $@"{a}\{b}")
                                 .Replace(@"Me\", @"Users\Item\");
-                            snippetImports.Add($@"{requestBuilderImportPrefix}\{imported}\{typeDefinition}");
+                            snippetImports.Add($@"{requestBuilderImportPrefix}\{imported}\{typeDefinition};");
                         }
                         // check if model has a nested namespace and append it to the import statement
                         continue; // Move to the next import.
@@ -183,7 +181,8 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
                     if (import.ModelProperty.PropertyType == PropertyType.Enum)
                     {
-                        snippetImports.Add($@"{modelImportPrefix}{namespaceValue}\{import.ModelProperty.Name.ToFirstCharacterUpperCase()};");
+                        var enumClass = import.ModelProperty.Value.Split('.').First();
+                        snippetImports.Add($@"{modelImportPrefix}{namespaceValue}\{enumClass};");
                     }
                     break;
                 case ImportKind.Path:
