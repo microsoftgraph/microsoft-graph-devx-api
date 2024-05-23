@@ -689,6 +689,7 @@ public class PhpGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains("'executionConditions' => [", result);
         Assert.Contains("'scope' => [", result);
         Assert.Contains("'trigger' => [", result);
+        Assert.Contains(@"use Microsoft\Graph\Generated\Models\IdentityGovernance\RuleBasedSubjectSet;", result);
     }
 
     [Fact]
