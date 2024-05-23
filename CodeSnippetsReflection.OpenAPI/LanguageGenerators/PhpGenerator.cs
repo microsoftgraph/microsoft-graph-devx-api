@@ -181,7 +181,7 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
 
                     if (import.ModelProperty.PropertyType == PropertyType.Enum)
                     {
-                        var enumClass = import.ModelProperty.Value.Split('.').First();
+                        var enumClass = import.ModelProperty.Value.Split('.').First().ToFirstCharacterUpperCase();
                         snippetImports.Add($@"{modelImportPrefix}{namespaceValue}\{enumClass};");
                     }
                     break;
