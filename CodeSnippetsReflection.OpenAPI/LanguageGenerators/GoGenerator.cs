@@ -575,7 +575,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             if (isArray || String.IsNullOrWhiteSpace(propName))
                 builder.AppendLine($"{indentManager.GetIndent()}\"{child.Value}\",");
             else if (isMap)
-                builder.AppendLine($"{indentManager.GetIndent()}{propertyName.AddQuotes()} : \"{child.Value}\", ");
+                builder.AppendLine($"{indentManager.GetIndent()}{child.Name.AddQuotes()} : \"{child.Value}\", ");
             else
             {
                 builder.AppendLine($"{propertyName} := \"{child.Value}\"");
