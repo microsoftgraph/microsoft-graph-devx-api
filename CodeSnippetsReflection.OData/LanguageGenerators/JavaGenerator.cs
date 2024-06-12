@@ -354,7 +354,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                         return bool.TryParse(stringParameter, out var boolValue)
                             ? boolValue.ToString().ToLower()
                             : "false";
-                    case "Json":
+                    case "Json" or "Untyped":
                         return $"JsonParser.parseString({AddQuotesIfMising(ClearStringLiteralsFromBreakingCharacters(stringParameter))})";
 
                     case "Int16":
@@ -543,7 +543,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
                     "Edm.Int16" => "Short",
                     "Edm.Int32" => "int",
                     "Edm.Int64" => "Long",
-                    "microsoft.graph.Json" => "JsonElement",
+                    "microsoft.graph.Json" or "Edm.Untyped" => "JsonElement",
                     _ => edmType == null ? "Content" : CommonGenerator.UppercaseFirstLetter(edmType.FullTypeName().Split(".").Last()),
                 };
         }
