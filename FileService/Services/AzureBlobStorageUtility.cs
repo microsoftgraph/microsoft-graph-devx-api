@@ -6,16 +6,10 @@ using Azure.Identity;
 using FileService.Common;
 using FileService.Interfaces;
 using Microsoft.Extensions.Configuration;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Azure.Identity;
 using Azure.Storage.Blobs;
-using System;
-using System.IO;
-using System.Threading.Tasks;
 
 
 namespace FileService.Services
@@ -31,9 +25,11 @@ namespace FileService.Services
         public AzureBlobStorageUtility(IConfiguration configuration)
         {
             _configuration = configuration
-                ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: {nameof(configuration)}");
+                   ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: {nameof(configuration)}");
 
-            _blobServiceClient = new BlobServiceClient(new Uri($"https://{_configuration["BlobStorage:AccountName"]}.blob.core.windows.net"), new DefaultAzureCredential());
+            var managedIdentityCredential = new ManagedIdentityCredential();
+            _blobServiceClient = new BlobServiceClient(new Uri($"https://{_configuration["BlobStorage:AccountName"]}.blob.core.windows.net"), 
+                managedIdentityCredential);
         }
 
         /// <summary>
