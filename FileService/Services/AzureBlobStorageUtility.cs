@@ -27,7 +27,7 @@ namespace FileService.Services
             _configuration = configuration
                    ?? throw new ArgumentNullException(nameof(configuration), $"Value cannot be null: {nameof(configuration)}");
 
-            var managedIdentityCredential = new ManagedIdentityCredential();
+            var managedIdentityCredential = new ManagedIdentityCredential(_configuration["BlobStorage:Identity"]);
             _blobServiceClient = new BlobServiceClient(new Uri($"https://{_configuration["BlobStorage:AccountName"]}.blob.core.windows.net"), 
                 managedIdentityCredential);
         }
