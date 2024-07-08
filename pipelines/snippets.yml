@@ -200,7 +200,8 @@ stages:
         displayName: Generate error category report
         workingDirectory: '$(Build.SourcesDirectory)'
         env:
-          RAPTOR_CONFIGCONNECTIONSTRING: $(RAPTOR_CONFIGCONNECTIONSTRING)
+          RAPTOR_CONFIGENDPOINT: $(RAPTOR_CONFIGENDPOINT)
+          RAPTOR_CONFIGMANAGEDIDENTITY_ID: $(RAPTOR_CONFIGMANAGEDIDENTITY_ID)
         continueOnError: true
 
       - task: PublishBuildArtifacts@1
