@@ -178,6 +178,7 @@ stages:
         inputs:
           artifact: 'Generation Test Results'
           path: '$(Build.ArtifactStagingDirectory)/TestResults'
+
       - pwsh: |
           Write-Host "Installing module ImportExcel"
           Install-Module -Name ImportExcel -Scope CurrentUser -Force -AllowClobber
@@ -186,10 +187,6 @@ stages:
           Write-Host "Finished installing dependencies"
         displayName: Install script dependencies
         workingDirectory: '$(Build.SourcesDirectory)'
-
-      - bash: |
-          apt-get -y update && apt-get install -y --no-install-recommends libgdiplus libc6-dev
-        displayName: install ImportExcel dependencies for autoscale
 
       - pwsh: |
           Write-Host "create file appSettings.json in the workingDirectory"
