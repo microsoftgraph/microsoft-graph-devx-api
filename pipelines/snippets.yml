@@ -188,19 +188,15 @@ stages:
         workingDirectory: '$(Build.SourcesDirectory)'
 
       - bash: |
-          echo "create file appSettings.json in the workingDirectory"
-          touch $(Build.SourcesDirectory)/appSettings.json
-          echo "Creating folder Reports"
-          mkdir $(Build.SourcesDirectory)/Reports
           apt-get -y update && apt-get install -y --no-install-recommends libgdiplus libc6-dev
-        displayName: Create requisite directory items
+        displayName: install ImportExcel dependencies for autoscale
 
-      # - pwsh: |
-      #     Write-Host "create file appSettings.json in the workingDirectory"
-      #     New-Item -Path $(Build.SourcesDirectory) -Name "appSettings.json" -ItemType "file" -Force
-      #     Write-Host "Creating folder Reports"
-      #     New-Item -Path $(Build.SourcesDirectory) -Name "Reports" -ItemType "Directory" -Force
-      #   displayName: Create requisite directory items
+      - pwsh: |
+          Write-Host "create file appSettings.json in the workingDirectory"
+          New-Item -Path $(Build.SourcesDirectory) -Name "appSettings.json" -ItemType "file" -Force
+          Write-Host "Creating folder Reports"
+          New-Item -Path $(Build.SourcesDirectory) -Name "Reports" -ItemType "Directory" -Force
+        displayName: Create requisite directory items
 
       - task: AzurePowerShell@5
         inputs:
