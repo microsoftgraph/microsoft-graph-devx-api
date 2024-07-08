@@ -203,11 +203,10 @@ stages:
             -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' 
             -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
             "
-          workingDirectory: "${{ parameters.raptorCheckoutDirectory }}"
+          workingDirectory: '$(Build.SourcesDirectory)'
           pwsh: true
           azurePowerShellVersion: latestVersion
         displayName: Generate error category report
-        workingDirectory: '$(Build.SourcesDirectory)'
         env:
           RAPTOR_CONFIGENDPOINT: $(RAPTOR_CONFIGENDPOINT)
           RAPTOR_CONFIGMANAGEDIDENTITY_ID: $(RAPTOR_CONFIGMANAGEDIDENTITY_ID)
