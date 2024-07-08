@@ -34,10 +34,22 @@ function Get-AppSettings ()
     {
         $settingsLabel = "Development"
     }
-    az login --identity -u $env:RAPTOR_CONFIGMANAGEDIDENTITY_ID
-    az appconfig kv export --endpoint $env:RAPTOR_CONFIGENDPOINT --auth-mode login --key * --label $settingsLabel --destination file --path $appSettingsPath --format json --yes
-    $appSettings = Get-Content $AppSettingsPath -Raw | ConvertFrom-Json
-    Remove-Item $appSettingsPath
+    try {
+        az login --identity -u $env:RAPTOR_CONFIGMANAGEDIDENTITY_ID
+        Write-Host "Login successful. Fetching AppSettings from Azure App Config."
+    }
+    catch {
+        Write-Host "Failed to login using Managed Identity."
+    }
+    try {
+        az appconfig kv export --endpoint $env:RAPTOR_CONFIGENDPOINT --auth-mode login --key * --label $settingsLabel --destination file --path $appSettingsPath --format json --yes
+        $appSettings = Get-Content $AppSettingsPath -Raw | ConvertFrom-Json
+        Write-Host "AppSettings fetched successfully. Tenant ID value:$($appSettings.TenantID)"
+        Remove-Item $appSettingsPath
+    }
+    catch {
+        Write-Host "Failed to fetch AppSettings from Azure App Config."
+    }
 
     if (    !$appSettings.CertificateThumbprint `
             -or !$appSettings.ClientID `
