@@ -34,7 +34,7 @@ function Get-AppSettings ()
     {
         $settingsLabel = "Development"
     }
-    az login --identity "RaptorServiceFederationConnection"
+    az login --identity -u "RaptorServiceFederationConnection"
     az appconfig kv export --endpoint $env:RAPTOR_CONFIGENDPOINT --auth-mode login --key * --label $settingsLabel --destination file --path $appSettingsPath --format json --yes
     $appSettings = Get-Content $AppSettingsPath -Raw | ConvertFrom-Json
     Remove-Item $appSettingsPath
