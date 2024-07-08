@@ -194,15 +194,34 @@ stages:
           New-Item -Path $(Build.SourcesDirectory) -Name "Reports" -ItemType "Directory" -Force
         displayName: Create requisite directory items
 
-      - pwsh: |
-          $ErrorActionPreference="Continue"
-          $(Build.SourcesDirectory)/scripts/categorizeErrors.ps1 -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
+      - task: AzurePowerShell@5
+        inputs:
+          azureSubscription: "RaptorServiceFederationConnection"
+          ScriptType: "FilePath"
+          ScriptPath: "$(Build.SourcesDirectory)/scripts/categorizeErrors.ps1"
+          ScriptArguments: "
+            -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' 
+            -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
+            "
+          workingDirectory: "${{ parameters.raptorCheckoutDirectory }}"
+          pwsh: true
+          azurePowerShellVersion: latestVersion
         displayName: Generate error category report
         workingDirectory: '$(Build.SourcesDirectory)'
         env:
           RAPTOR_CONFIGENDPOINT: $(RAPTOR_CONFIGENDPOINT)
           RAPTOR_CONFIGMANAGEDIDENTITY_ID: $(RAPTOR_CONFIGMANAGEDIDENTITY_ID)
         continueOnError: true
+
+      # - pwsh: |
+      #     $ErrorActionPreference="Continue"
+      #      -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
+      #   displayName: Generate error category report
+      #   workingDirectory: '$(Build.SourcesDirectory)'
+      #   env:
+      #     RAPTOR_CONFIGENDPOINT: $(RAPTOR_CONFIGENDPOINT)
+      #     RAPTOR_CONFIGMANAGEDIDENTITY_ID: $(RAPTOR_CONFIGMANAGEDIDENTITY_ID)
+      #   continueOnError: true
 
       - task: PublishBuildArtifacts@1
         displayName: 'Publish categorization report as artifact'
