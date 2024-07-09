@@ -1,6 +1,8 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$trxFolderPath,
+    [Parameter(Mandatory=$true)]
+    [string]$snippetsBaseErrorPath,
     [Parameter(Mandatory=$false)]
     [string]$txtOutputFolderPath
 )
@@ -36,7 +38,8 @@ $invalidStart = @()
 $other = @()
 
 $files = Get-ChildItem -Path $trxFolderPath -Exclude "http*"
-$SpecificErrorPattern = "/home/vsts/work/1/a/Snippets/"
+
+$SpecificErrorPattern = "$snippetsBaseErrorPath/Snippets/"
 foreach ($trxFilePath in $files){
     Write-Host "Processing file $trxFilePath"
     [xml]$xmlContent = Get-Content $trxFilePath

@@ -27,7 +27,13 @@ function Get-AppSettings ()
         return $AppSettings
     }
     # read app settings from Azure App Config
-    $appSettingsPath = "appSettings.json"
+    $baseWorkingDirectory = $env:WorkingDirectory
+    if (!$baseWorkingDirectory)
+    {
+        $baseWorkingDirectory = $env:TEMP
+        New-Item -Path $baseWorkingDirectory -Name "appSettings.json"
+    }
+    $appSettingsPath = Join-Path $baseWorkingDirectory "appSettings.json" -Resolve
     write-host "appsettings path: $appSettingsPath"
     # Support Reading Settings from a Custom Label, otherwise default to Development
     $settingsLabel = $env:RAPTOR_CONFIGLABEL
@@ -36,16 +42,16 @@ function Get-AppSettings ()
         $settingsLabel = "Development"
     }
     try {
-        az login --identity -u $env:RAPTOR_CONFIGMANAGEDIDENTITY_ID
+        az login --identity -u $env:RAPTOR_CONFIGMANAGEDIDENTITY_ID #Pipeline login
+        # Disable below to test locally
         # az login
-        az account show
         Write-Host "Login successful. Fetching AppSettings from Azure App Config."
     }
     catch {
         Write-Host "Failed to login using Managed Identity."
     }
     try {
-        az appconfig kv export --endpoint $env:RAPTOR_CONFIGENDPOINT --auth-mode login --key * --label $settingsLabel --destination file --path $appSettingsPath --format json --yes
+        az appconfig kv export --endpoint $env:RAPTOR_CONFIGENDPOINT --auth-mode login --label $settingsLabel --destination file --path $appSettingsPath --format json --yes
         $appSettings = Get-Content $AppSettingsPath -Raw | ConvertFrom-Json
         Write-Host "AppSettings fetched successfully. Tenant ID value:$($appSettings.TenantID)"
         Remove-Item $appSettingsPath

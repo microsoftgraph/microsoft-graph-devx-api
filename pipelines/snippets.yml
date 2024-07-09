@@ -203,14 +203,17 @@ stages:
           ScriptArguments: "
             -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' 
             -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
+            -snippetsBaseErrorPath '$(Build.ArtifactStagingDirectory)'
             "
           workingDirectory: '$(Build.SourcesDirectory)'
           pwsh: true
           azurePowerShellVersion: latestVersion
+          failOnStandardError: true
         displayName: Generate error category report
         env:
           RAPTOR_CONFIGENDPOINT: $(RAPTOR_CONFIGENDPOINT)
           RAPTOR_CONFIGMANAGEDIDENTITY_ID: $(RAPTOR_CONFIGMANAGEDIDENTITY_ID)
+          WorkingDirectory: '$(Build.SourcesDirectory)'
         continueOnError: true
 
       # - pwsh: |
