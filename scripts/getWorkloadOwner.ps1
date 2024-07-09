@@ -27,13 +27,13 @@ function Get-AppSettings ()
         return $AppSettings
     }
     # read app settings from Azure App Config
-    $baseWorkingDirectory = $env:WorkingDirectory
-    if (!$baseWorkingDirectory)
+    $baseSettingsDirectory = $env:WorkingDirectory
+    if (!$baseSettingsDirectory)
     {
-        $baseWorkingDirectory = $env:TEMP
-        New-Item -Path $baseWorkingDirectory -Name "appSettings.json"
+        $baseSettingsDirectory = $env:TEMP
     }
-    $appSettingsPath = Join-Path $baseWorkingDirectory "appSettings.json" -Resolve
+    New-Item -Path $baseSettingsDirectory -Name "appSettings.json" -Force
+    $appSettingsPath = Join-Path $baseSettingsDirectory "appSettings.json" -Resolve
     write-host "appsettings path: $appSettingsPath"
     # Support Reading Settings from a Custom Label, otherwise default to Development
     $settingsLabel = $env:RAPTOR_CONFIGLABEL
