@@ -28,6 +28,7 @@ function Get-AppSettings ()
     }
     # read app settings from Azure App Config
     $appSettingsPath = "./appSettings.json"
+    write-host "appsettings path: $appSettingsPath"
     # Support Reading Settings from a Custom Label, otherwise default to Development
     $settingsLabel = $env:RAPTOR_CONFIGLABEL
     if ([string]::IsNullOrWhiteSpace($settingsLabel))
@@ -36,6 +37,8 @@ function Get-AppSettings ()
     }
     try {
         az login --identity -u $env:RAPTOR_CONFIGMANAGEDIDENTITY_ID
+        # az login
+        az account show
         Write-Host "Login successful. Fetching AppSettings from Azure App Config."
     }
     catch {
