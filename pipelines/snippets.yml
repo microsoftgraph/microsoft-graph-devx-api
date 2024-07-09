@@ -214,16 +214,6 @@ stages:
           WorkingDirectory: '$(Build.SourcesDirectory)'
         continueOnError: true
 
-      # - pwsh: |
-      #     $ErrorActionPreference="Continue"
-      #      -trxFolderPath '$(Build.ArtifactStagingDirectory)/TestResults/' -txtOutputFolderPath '$(Build.ArtifactStagingDirectory)/Reports/'
-      #   displayName: Generate error category report
-      #   workingDirectory: '$(Build.SourcesDirectory)'
-      #   env:
-      #     RAPTOR_CONFIGENDPOINT: $(RAPTOR_CONFIGENDPOINT)
-      #     RAPTOR_CONFIGMANAGEDIDENTITY_ID: $(RAPTOR_CONFIGMANAGEDIDENTITY_ID)
-      #   continueOnError: true
-
       - task: PublishBuildArtifacts@1
         displayName: 'Publish categorization report as artifact'
         inputs:
