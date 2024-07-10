@@ -53,7 +53,6 @@ function Get-AppSettings ()
     try {
         az appconfig kv export --endpoint $env:RAPTOR_CONFIGENDPOINT --auth-mode login --label $settingsLabel --destination file --path $appSettingsPath --format json --yes
         $appSettings = Get-Content $AppSettingsPath -Raw | ConvertFrom-Json
-        Write-Host "AppSettings fetched successfully. Tenant ID value:$($appSettings.TenantID)"
         Remove-Item $appSettingsPath
     }
     catch {
