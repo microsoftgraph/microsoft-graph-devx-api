@@ -92,7 +92,6 @@ foreach ($trxFilePath in $files){
 
         # assign result to appropriate category
         $specificError = $result.specificError
-        write-host "Categorizing $specificError"
         if ($specificError -match "HTTP Method .*")
         {
             $methodNotFound += $result
