@@ -1,8 +1,10 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$trxFolderPath,
+    [Parameter(Mandatory=$true)]
+    [string]$snippetsBaseErrorPath,
     [Parameter(Mandatory=$false)]
-    [string]$txtOutputFolderPath
+    [string]$reportOutputPath
 )
 
 Import-Module ImportExcel
@@ -13,10 +15,10 @@ if (!(Test-Path $trxFolderPath))
     exit
 }
 
-#if $txtOutputFolderPath is not set, use current directory
-if (-not $txtOutputFolderPath)
+#if $reportOutputPath is not set, use current directory
+if (-not $reportOutputPath)
 {
-    $txtOutputFolderPath = $PSScriptRoot
+    $reportOutputPath = $PSScriptRoot
 }
 
 $outcomeLocal = "Failed"  # Only process failed tests
@@ -36,7 +38,8 @@ $invalidStart = @()
 $other = @()
 
 $files = Get-ChildItem -Path $trxFolderPath -Exclude "http*"
-$SpecificErrorPattern = "/home/vsts/work/1/a/Snippets/"
+
+$SpecificErrorPattern = "$snippetsBaseErrorPath/Snippets/"
 foreach ($trxFilePath in $files){
     Write-Host "Processing file $trxFilePath"
     [xml]$xmlContent = Get-Content $trxFilePath
@@ -109,7 +112,7 @@ foreach ($trxFilePath in $files){
 
 }
 
-$excelOutputPath = Join-Path $txtOutputFolderPath "report.xlsx"
+$excelOutputPath = Join-Path $reportOutputPath "report.xlsx"
 $methodNotFound | Export-Excel -Path $excelOutputPath -WorksheetName "MethodNotFound" -AutoSize
 $pathNotFound | Export-Excel -Path $excelOutputPath -WorksheetName "PathNotFound" -AutoSize
 $invalidStart | Export-Excel -Path $excelOutputPath -WorksheetName "InvalidStart" -AutoSize
