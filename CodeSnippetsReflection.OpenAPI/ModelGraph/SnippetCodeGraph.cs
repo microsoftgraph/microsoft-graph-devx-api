@@ -490,6 +490,10 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static CodeProperty parseProperty(string propertyName, JsonElement value, OpenApiSchema propSchema, IDictionary<string, OpenApiSchema> snippetModelSchemas)
         {
+            if (propSchema?.IsUntypedNode() ?? false)
+            {
+                return ParseUntypedProperty(value, propertyName);
+            }
             switch (value.ValueKind)
             {
                 case JsonValueKind.String:
@@ -513,6 +517,40 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             }
         }
 
+        public const string UntypedNodeName = "UntypedNode";
+
+        private static CodeProperty ParseUntypedProperty(JsonElement value, string propertyName = "")
+        {
+            switch (value.ValueKind)
+            {
+                case JsonValueKind.String:
+                    return new CodeProperty { Name = propertyName, Value = value.GetString(), PropertyType = PropertyType.String, Children = new List<CodeProperty>() , TypeDefinition = UntypedNodeName};
+                case JsonValueKind.Number:
+                    return new CodeProperty { Name = propertyName, Value = value.GetDouble().ToString(), PropertyType = PropertyType.Double, Children = new List<CodeProperty>(), TypeDefinition = UntypedNodeName };
+                case JsonValueKind.False:
+                case JsonValueKind.True:
+                    return new CodeProperty { Name = propertyName, Value = value.GetBoolean().ToString(), PropertyType = PropertyType.Boolean, Children = new List<CodeProperty>(), TypeDefinition = UntypedNodeName };
+                case JsonValueKind.Null:
+                    return new CodeProperty { Name = propertyName, Value = "null", PropertyType = PropertyType.Null, Children = new List<CodeProperty>(), TypeDefinition = UntypedNodeName };
+                case JsonValueKind.Object:
+                    var objectProperty = new CodeProperty { Name = propertyName, PropertyType = PropertyType.Object, Children = new List<CodeProperty>(), TypeDefinition = UntypedNodeName };
+                    foreach (var jsonProp in value.EnumerateObject())
+                    {
+                        objectProperty.Children.Add(ParseUntypedProperty( jsonProp.Value, jsonProp.Name));
+                    }
+                    return objectProperty;
+                case JsonValueKind.Array:
+                    var arrayProperty = new CodeProperty { Name = propertyName, PropertyType = PropertyType.Array, Children = new List<CodeProperty>(), TypeDefinition = UntypedNodeName };
+                    foreach (var jsonProp in value.EnumerateArray())
+                    {
+                        arrayProperty.Children.Add(ParseUntypedProperty(jsonProp));
+                    }
+                    return arrayProperty;
+                case JsonValueKind.Undefined:
+                default:
+                    throw new NotSupportedException($"Unsupported Json value Kind {value.ValueKind}");
+            }
+        }
         private static CodeProperty parseJsonArrayValue(string propertyName, JsonElement value, OpenApiSchema schema, IDictionary<string, OpenApiSchema> snippetModelSchemas)
         {
             var alternativeType = schema?.Items?.AnyOf?.FirstOrDefault()?.AllOf?.LastOrDefault()?.Title;

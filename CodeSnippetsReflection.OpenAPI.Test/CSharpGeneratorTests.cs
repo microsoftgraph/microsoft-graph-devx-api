@@ -778,6 +778,55 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("ContentBytes = Convert.FromBase64String(\"SGVsbG8gV29ybGQh\"),", result);
         }
         [Fact]
+        public async Task GenerateUntypedTypesInstancesInAdditionalData() {
+            var sampleJson = @"{
+                ""customSecurityAttributes"":
+                {
+                    ""Engineering"":
+                    {
+                        ""@odata.type"":""#Microsoft.DirectoryServices.CustomSecurityAttributeValue"",
+                        ""ProjectDate"":null
+                    }
+                }
+            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/users/{{id}}"){
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("using Microsoft.Kiota.Abstractions.Serialization;", result);//verify import
+            Assert.Contains("\"projectDate\", new UntypedNull()", result); // ProjectDate  should be initialized with specified type.
+        }
+
+        [Fact]
+        public async Task GenerateUntypedTypesInstancesInAdditionalData2()
+        {
+            var sampleJson = @"{
+                ""allowedValues@delta"": [
+                    {
+                        ""id"": ""Baker"",
+                        ""isActive"": false
+                    },
+                    {
+                        ""id"": ""Skagit"",
+                        ""isActive"": true
+                    }
+                ]
+            }";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootBetaUrl}/directory/customSecurityAttributeDefinitions/Engineering_Project")
+            {
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("using Microsoft.Kiota.Abstractions.Serialization;", result);//verify import
+            Assert.Contains("\"allowedValues@delta\" , new List<object>", result); 
+            Assert.Contains("\"id\", new UntypedString(\"Baker\")", result);
+            Assert.Contains("\"id\", new UntypedString(\"Skagit\")", result);
+        }
+        [Fact]
         public async Task GeneratesCorrectTypesInstancesInAdditionalData() {
             var sampleJson = @"{
               ""transferTarget"": {
@@ -932,6 +981,41 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             Assert.Contains("var result = await graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Worksheets[\"{workbookWorksheet-id}\"].RangeWithAddress(\"{address}\").GetAsync()", result);
+        }
+        
+        [Fact]
+        public async Task UntypedNodeInWorkbooksGeneratesArray()
+        {
+            var sampleJson = "{\n  \"index\": 5,\n  \"values\": [\n    [1, 2, 3],\n    [4, 5, 6]\n  ]\n}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/drive/items/{{id}}/workbook/tables/{{id|name}}/rows/add")
+            {
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("using Microsoft.Kiota.Abstractions.Serialization;", result);//verify import
+            Assert.Contains("var result = await graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Tables[\"{workbookTable-id}\"].Rows.Add.PostAsync(requestBody);", result);
+            Assert.Contains("new UntypedArray(new List<UntypedNode>", result);
+            Assert.Contains("Values = new UntypedArray(new List<UntypedNode>", result);
+        }
+
+        [Fact]
+        public async Task UntypedNodeInWorkbooksGeneratesObject()
+        {
+            var sampleJson = "{\r\n    \"lookupValue\":\"pear\",\r\n    \"tableArray\":{\"Address\":\"Sheet1!B2:C7\"},\r\n    \"colIndexNum\":2,\r\n    \"rangeLookup\":false\r\n}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/drive/items/{{id}}/workbook/functions/vlookup")
+            {
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+
+            Assert.Contains("using Microsoft.Kiota.Abstractions.Serialization;", result);//verify import
+            Assert.Contains("var result = await graphClient.Drives[\"{drive-id}\"].Items[\"{driveItem-id}\"].Workbook.Functions.Vlookup.PostAsync(requestBody);", result);
+            Assert.Contains("LookupValue = new UntypedString(\"pear\"),", result);
+            Assert.Contains("TableArray = new UntypedObject(new Dictionary<string, UntypedNode>", result);
+            Assert.Contains("\"Address\", new UntypedString(\"Sheet1!B2:C7\")", result);
         }
 
         [Fact]
