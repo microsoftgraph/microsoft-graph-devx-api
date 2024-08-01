@@ -25,5 +25,26 @@ namespace CodeSnippetsReflection.OpenAPI {
             if(schema == null) return null;
             return schema.GetAllProperties().FirstOrDefault(p => p.Key.Equals(propertyName, StringComparison.OrdinalIgnoreCase)).Value;
         }
+
+        public static bool IsUntypedNode(this OpenApiSchema openApiSchema)
+        {
+            if (openApiSchema.Items != null)
+                return openApiSchema.Items.IsUntypedNode();
+
+            if (!openApiSchema.IsAllOf() && 
+                !openApiSchema.IsOneOf() && 
+                !openApiSchema.IsAnyOf() &&
+                !openApiSchema.IsReferencedSchema() &&
+                openApiSchema.Enum?.Count == 0 &&
+                openApiSchema.Properties?.Count == 0 &&
+                string.IsNullOrEmpty(openApiSchema.Type) &&
+                string.IsNullOrEmpty(openApiSchema.Format) &&
+                string.IsNullOrEmpty(openApiSchema.Title))
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }
