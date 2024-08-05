@@ -60,6 +60,8 @@ extends:
         exclude:
           - repository: "api-doctor"
           - repository: "microsoft-graph-docs"
+      credscan:
+        suppressionsFile: $(Build.SourcesDirectory)\.azure-pipelines\.config\CredScanSuppressions.json
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
