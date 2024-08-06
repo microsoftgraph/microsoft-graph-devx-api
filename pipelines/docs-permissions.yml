@@ -54,13 +54,20 @@ extends:
     pool:
       name: Azure-Pipelines-1ESPT-ExDShared
       image: windows-2022
-      os: windows
+      os: windows 
+    sdl:
+      sourceRepositoriesToScan:
+        exclude:
+          - repository: "api-doctor"
+          - repository: "microsoft-graph-docs"
+      credscan:
+        suppressionsFile: $(Build.SourcesDirectory)\.azure-pipelines\.config\CredScanSuppressions.json
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
-      - stage: Generate permissions tables
+      - stage: GeneratePermissionsTables
         jobs:
-          - job: "Run API Doctor script"
+          - job: RunAPIDoctorScript
             steps:
               - checkout: api-doctor
                 displayName: Checkout API Doctor
@@ -86,7 +93,7 @@ extends:
                   Write-Host "##vso[task.setvariable variable=commitMessage]$commitMessage"
                 displayName: "Set commit message to use"
 
-              - template: templates/git-config.yml@self
+              - template: /pipelines/templates/git-config.yml@self
 
               - task: UseDotNet@2
                 displayName: "Install .NET Core SDK 8"
@@ -105,13 +112,14 @@ extends:
                   command: "build"
                   projects: "$(Build.SourcesDirectory)/$(apidoctorProjects)"
                   arguments: "--configuration $(buildConfiguration)"
-
+              
               - pwsh: |
-                  $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
+                  $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release -Recurse -Filter "apidoc.exe").FullName
                   Write-Host "Path to apidoctor tool: $apidoctorPath"
 
-                  . $apidoctorPath generate-permission-files --ignore-warnings $(bootstrappingOnly) --path . --permissions-source-file $(permissionsSourceFilePath) --git-path "/bin/git"
+                  & $apidoctorPath generate-permission-files --ignore-warnings $(bootstrappingOnly) --path . --permissions-source-file $(permissionsSourceFilePath) --git-path "/bin/git"
                 displayName: "Generate permissions tables"
                 workingDirectory: microsoft-graph-docs
 
-              - template: templates/commit-changes.yml@self
+
+              - template: /pipelines/templates/commit-changes.yml@self
