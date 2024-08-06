@@ -1,0 +1,9 @@
+{
+  "tool": "Credential Scanner",
+  "suppressions": [
+    {
+      "hash": "XMECj1+fRGzp6GOpjOevn4ej/nV7FFe9JbA6mdGA0tE=",
+      "_justification": "Sample data used in tests"
+    }
+  ]
+}
