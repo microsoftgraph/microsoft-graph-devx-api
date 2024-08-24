@@ -20,6 +20,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string RequestConfigurationVarName = "request_configuration";
         private const string RequestConfigurationType = "RequestConfiguration";
         private const string RequestParametersPropertyName = "query_params";
+        private const string VersionInformationString = "# Code snippets are only available for the latest version. Current version is 1.x";
+
         private const string InitializationInfoString = "# To initialize your graph_client, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=python";
 
 
@@ -77,7 +79,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
             var importStatements = GetImportStatements(snippetModel);
-            snippetBuilder.Insert(0, string.Join(Environment.NewLine, importStatements));
+            snippetBuilder.Insert(0, VersionInformationString + Environment.NewLine);
+            snippetBuilder.Insert(VersionInformationString.Length + Environment.NewLine.Length, string.Join(Environment.NewLine, importStatements) + Environment.NewLine);
             return snippetBuilder.ToString();
         }
         private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
