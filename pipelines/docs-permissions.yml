@@ -10,99 +10,116 @@ schedules:
     displayName: Every weekday MS Graph docs permissions tables updates
     branches:
       include:
-      - master
+        - master
     always: true
 
 resources:
- repositories:
-   - repository: microsoft-graph-docs
-     type: github
-     endpoint: microsoftgraphdocs
-     name: microsoftgraph/microsoft-graph-docs
-     ref: main
-   - repository: api-doctor
-     type: github
-     endpoint: microsoftgraphdocs
-     name: OneDrive/apidoctor
-     ref: master
+  repositories:
+    - repository: microsoft-graph-docs
+      type: github
+      endpoint: microsoftgraphdocs
+      name: microsoftgraph/microsoft-graph-docs
+      ref: main
+    - repository: api-doctor
+      type: github
+      endpoint: microsoftgraphdocs
+      name: OneDrive/apidoctor
+      ref: master
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
 
-pool:
-  vmImage: 'ubuntu-latest'
-     
 parameters:
   - name: permissionsSourceFilePath
-    default: 'https://raw.githubusercontent.com/microsoftgraph/microsoft-graph-devx-content/master/permissions/new/permissions.json'
-    displayName: 'The file path or URL to permissions in JSON format to be consumed by Kibali'
+    default: "https://raw.githubusercontent.com/microsoftgraph/microsoft-graph-devx-content/master/permissions/new/permissions.json"
+    displayName: "The file path or URL to permissions in JSON format to be consumed by Kibali"
   - name: bootstrappingOnly
     type: boolean
     default: false
-    displayName: 'Only move permissions table in reference document to own file without updating contents of permissions table'
-    
+    displayName: "Only move permissions table in reference document to own file without updating contents of permissions table"
+
 variables:
-  buildConfiguration: 'Release'
-  apidoctorProjects: 'apidoctor/**/*.csproj'
+  buildConfiguration: "Release"
+  apidoctorProjects: "apidoctor/**/*.csproj"
   permissionsSourceFilePath: ${{ parameters.permissionsSourceFilePath }}
   ${{ if eq(parameters.bootstrappingOnly, true) }}:
-    bootstrappingOnly: '--bootstrapping-only'
+    bootstrappingOnly: "--bootstrapping-only"
   ${{ else }}:
-    bootstrappingOnly: ''
+    bootstrappingOnly: ""
 
-steps:
-- checkout: api-doctor
-  displayName: Checkout API Doctor
-  fetchDepth: 1
-  submodules: recursive
-  persistCredentials: true
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    pool:
+      name: Azure-Pipelines-1ESPT-ExDShared
+      image: windows-2022
+      os: windows 
+    sdl:
+      sourceRepositoriesToScan:
+        exclude:
+          - repository: "api-doctor"
+          - repository: "microsoft-graph-docs"
+      credscan:
+        suppressionsFile: $(Build.SourcesDirectory)\.azure-pipelines\.config\CredScanSuppressions.json
+    customBuildTags:
+      - ES365AIMigrationTooling
+    stages:
+      - stage: GeneratePermissionsTables
+        jobs:
+          - job: RunAPIDoctorScript
+            steps:
+              - checkout: api-doctor
+                displayName: Checkout API Doctor
+                fetchDepth: 1
+                submodules: recursive
+                persistCredentials: true
 
-- checkout: microsoft-graph-docs
-  displayName: Checkout Microsoft Graph docs
-  fetchDepth: 1
-  persistCredentials: true
+              - checkout: microsoft-graph-docs
+                displayName: Checkout Microsoft Graph docs
+                fetchDepth: 1
+                persistCredentials: true
 
-- pwsh: |
-    # override branch prefix incase the run is manually triggered
-    $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-permissions-tables-update" } else { "permissions-tables-update" }
-    Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
-    Write-Host "Branch prefix is $branchPrefix"
-  displayName: 'Evaluate branch prefix to use'
-  
-- pwsh: |
-    # set commit message to use when there are changes to push
-    $commitMessage = "Update generated permissions tables with build $env:BUILD_BUILDID"
-    Write-Host "##vso[task.setvariable variable=commitMessage]$commitMessage"
-  displayName: 'Set commit message to use'
+              - pwsh: |
+                  # override branch prefix incase the run is manually triggered
+                  $branchPrefix = if ($env:BUILD_REASON -eq 'Manual') { "preview-permissions-tables-update" } else { "permissions-tables-update" }
+                  Write-Host "##vso[task.setvariable variable=branchPrefix]$branchPrefix"
+                  Write-Host "Branch prefix is $branchPrefix"
+                displayName: "Evaluate branch prefix to use"
 
-- template: templates/git-config.yml
+              - pwsh: |
+                  # set commit message to use when there are changes to push
+                  $commitMessage = "Update generated permissions tables with build $env:BUILD_BUILDID"
+                  Write-Host "##vso[task.setvariable variable=commitMessage]$commitMessage"
+                displayName: "Set commit message to use"
 
-- task: UseDotNet@2
-  displayName: 'Install .NET Core SDK 6'
-  inputs:
-    version: 6.x
+              - template: /pipelines/templates/git-config.yml@self
 
-- task: UseDotNet@2
-  displayName: 'Install .NET Core SDK 8'
-  inputs:
-    version: 8.x
-    
-- task: DotNetCoreCLI@2
-  displayName: 'Restore packages for APIDoctor'
-  inputs:
-    command: 'restore'
-    projects: '$(Build.SourcesDirectory)/$(apidoctorProjects)'
+              - task: UseDotNet@2
+                displayName: "Install .NET Core SDK 8"
+                inputs:
+                  version: 8.x
 
-- task: DotNetCoreCLI@2
-  displayName: 'Build APIDoctor'
-  inputs:
-    command: 'build'
-    projects: '$(Build.SourcesDirectory)/$(apidoctorProjects)'
-    arguments: '--configuration $(buildConfiguration)'
+              - task: DotNetCoreCLI@2
+                displayName: "Restore packages for APIDoctor"
+                inputs:
+                  command: "restore"
+                  projects: "$(Build.SourcesDirectory)/$(apidoctorProjects)"
 
-- pwsh: |
-    $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release apidoc -Recurse).FullName
-    Write-Host "Path to apidoctor tool: $apidoctorPath"
-    
-    . $apidoctorPath generate-permission-files --ignore-warnings $(bootstrappingOnly) --path . --permissions-source-file $(permissionsSourceFilePath) --git-path "/bin/git"
-  displayName: 'Generate permissions tables'
-  workingDirectory: microsoft-graph-docs
+              - task: DotNetCoreCLI@2
+                displayName: "Build APIDoctor"
+                inputs:
+                  command: "build"
+                  projects: "$(Build.SourcesDirectory)/$(apidoctorProjects)"
+                  arguments: "--configuration $(buildConfiguration)"
+              
+              - pwsh: |
+                  $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release -Recurse -Filter "apidoc.exe").FullName
+                  Write-Host "Path to apidoctor tool: $apidoctorPath"
 
-- template: templates/commit-changes.yml
+                  & $apidoctorPath generate-permission-files --ignore-warnings $(bootstrappingOnly) --path . --permissions-source-file $(permissionsSourceFilePath) --git-path "/bin/git"
+                displayName: "Generate permissions tables"
+                workingDirectory: microsoft-graph-docs
+
+
+              - template: /pipelines/templates/commit-changes.yml@self

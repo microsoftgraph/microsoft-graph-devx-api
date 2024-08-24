@@ -433,6 +433,20 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("SetIncludeUserActions", result);
         }
         [Fact]
+        public async Task WriteCorrectFunctionNameWithParametersAsModelName()
+        {
+            const string messageObject = "{\r\n\"displayName\": \"Display name\"\r\n}";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/applications(uniqueName='app-65278')")
+            {
+                Content = new StringContent(messageObject, Encoding.UTF8, "application/json")
+            };
+            requestPayload.Headers.Add("Prefer", "create-if-missing");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetBetaSnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("graphapplicationswithuniquename \"github.com/microsoftgraph/msgraph-sdk-go/applicationswithuniquename\"", result);
+            Assert.Contains("graphapplicationswithuniquename.ApplicationsWithUniqueNameRequestBuilderPatchRequestConfiguration", result);
+        }
+        [Fact]
         public async Task WriteCorrectTypesForFilterParameters()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get,
@@ -441,6 +455,34 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("requestTop := int32(100)", result);
             Assert.Contains("requestSkip := int32(0)", result);
+        }
+        [Fact]
+        public async Task DoesNotNormalizeKeysForMaps()
+        {
+            var sampleJson = @"
+            {
+               ""template@odata.bind"":""https://graph.microsoft.com/v1.0/teamsTemplates('standard')"",
+               ""displayName"":""My Sample Team"",
+               ""description"":""My Sample Team’s Description"",
+               ""members"":[
+                  {
+                     ""@odata.type"":""#microsoft.graph.aadUserConversationMember"",
+                     ""roles"":[
+                        ""owner""
+                     ],
+                     ""user@odata.bind"":""https://graph.microsoft.com/v1.0/users('0040b377-61d8-43db-94f5-81374122dc7e')""
+                  }
+               ]
+            }
+            ";
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/teams")
+            {
+                Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
+            };
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("\"user@odata.bind\" : \"https://graph.microsoft.com/v1.0/users('0040b377-61d8-43db-94f5-81374122dc7e')\"", result);
+            Assert.Contains("\"template@odata.bind\" : \"https://graph.microsoft.com/v1.0/teamsTemplates('standard')\"", result);
         }
 
         /**

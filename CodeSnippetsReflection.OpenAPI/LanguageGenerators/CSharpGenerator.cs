@@ -17,6 +17,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string RequestHeadersPropertyName = "Headers";
         private const string RequestParametersPropertyName = "QueryParameters";
         private const string DefaultNamespace = "Microsoft.Graph";
+        private const string UntypedNamespace = "Microsoft.Kiota.Abstractions.Serialization";
         private const string VersionInformationString = "// Code snippets are only available for the latest version. Current version is 5.x";
         private const string InitializationInfoString = "// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=csharp";
 
@@ -213,13 +214,31 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
 
             usedNamespaces.Add(GetNamespaceName(codeProperty.NamespaceName, apiVersion));// add the namespace for the object for tracking
+            if (codeProperty.TypeDefinition?.Equals(SnippetCodeGraph.UntypedNodeName, StringComparison.OrdinalIgnoreCase) ?? false)
+            {
+                // write the untyped property
+                WriteUntypedCodeProperty(codeProperty, snippetBuilder, indentManager, usedNamespaces, propertyAssignment);
+                indentManager.Unindent();
+                return; // nothing more to do here..
+            }
             switch (codeProperty.PropertyType)
             {
                 case PropertyType.Object:
-                    snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty)}");
-                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
-                    codeProperty.Children.ForEach( child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager,apiVersion,usedNamespaces));
-                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}{assignmentSuffix}");
+                    var typeString = GetTypeString(codeProperty);
+                    if (string.IsNullOrEmpty(typeString))
+                    {
+                        // write the untyped property as we don't have a type associated with the "anonymous" object
+                        var localObjectBuilder = new StringBuilder();
+                        WriteUntypedCodeProperty(codeProperty, localObjectBuilder, indentManager, usedNamespaces, propertyAssignment);
+                        snippetBuilder.AppendLine($"{localObjectBuilder.ToString().TrimEnd().TrimEnd(',')}{assignmentSuffix}");
+                    }
+                    else
+                    {
+                        snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty)}");
+                        snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
+                        codeProperty.Children.ForEach( child => WriteObjectFromCodeProperty(codeProperty, child, snippetBuilder, indentManager,apiVersion,usedNamespaces));
+                        snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}{assignmentSuffix}");
+                    }
                     break;
                 case PropertyType.Map:
                     snippetBuilder.AppendLine($"{propertyAssignment}new {GetTypeString(codeProperty)}");
@@ -299,6 +318,64 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     break;
             }
             indentManager.Unindent();
+        }
+
+        
+        private static void WriteUntypedCodeProperty(CodeProperty codeProperty, StringBuilder snippetBuilder,
+            IndentManager indentManager, HashSet<string> usedNamespaces, string propertyAssignment = "")
+        {
+            if (string.IsNullOrEmpty(propertyAssignment))
+                propertyAssignment = indentManager.GetIndent();
+            
+            // ensure the namespace is included in the generated snippet.
+            usedNamespaces.Add(UntypedNamespace);
+            
+            switch (codeProperty.PropertyType)
+            {
+                case PropertyType.Object:
+                    snippetBuilder.AppendLine($"{propertyAssignment}new UntypedObject(new Dictionary<string, UntypedNode>");
+                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
+                    indentManager.Indent();
+                    codeProperty.Children.ForEach(child =>
+                    {
+                        snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
+                        indentManager.Indent();
+                        var localObjectBuilder = new StringBuilder();
+                        WriteUntypedCodeProperty(child, localObjectBuilder, indentManager, usedNamespaces);
+                        snippetBuilder.AppendLine($"{indentManager.GetIndent()}\"{child.Name}\", {localObjectBuilder.ToString().Trim().TrimEnd(',')}");
+                        indentManager.Unindent();
+                        snippetBuilder.AppendLine($"{indentManager.GetIndent()}}},");
+                    });
+                    indentManager.Unindent();
+                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}),");
+                    break;
+                case PropertyType.Array:
+                    snippetBuilder.AppendLine($"{propertyAssignment}new UntypedArray(new List<UntypedNode>");
+                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}{{");
+                    indentManager.Indent();
+                    codeProperty.Children.ForEach(child =>
+                    {
+                        WriteUntypedCodeProperty(child, snippetBuilder, indentManager, usedNamespaces);
+                    });
+                    indentManager.Unindent();
+                    snippetBuilder.AppendLine($"{indentManager.GetIndent()}}}),");
+                    break;
+                case PropertyType.String:
+                    snippetBuilder.AppendLine($"{propertyAssignment}new UntypedString(\"{codeProperty.Value}\"),");
+                    break;
+                case PropertyType.Boolean:
+                    snippetBuilder.AppendLine($"{propertyAssignment}new UntypedBoolean({codeProperty.Value.ToLowerInvariant()}),");
+                    break;
+                case PropertyType.Null:
+                    snippetBuilder.AppendLine($"{propertyAssignment}new UntypedNull(),");
+                    break;
+                case PropertyType.Double:
+                    snippetBuilder.AppendLine($"{propertyAssignment}new UntypedDouble({codeProperty.Value}),");
+                    break;
+                default: // default to string
+                    snippetBuilder.AppendLine($"{propertyAssignment}new UntypedString(\"{codeProperty.Value}\"),");
+                    break;
+            }
         }
 
         private const string StringTypeName = "string";
