@@ -20,6 +20,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string RequestConfigurationVarName = "request_configuration";
         private const string RequestConfigurationType = "RequestConfiguration";
         private const string RequestParametersPropertyName = "query_params";
+        private const string InitializationInfoString = "# To initialize your graph_client, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=python";
+
 
         private static readonly HashSet<string> ReservedTypeNames = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -67,7 +69,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder($"{Environment.NewLine}{Environment.NewLine}" +
+            var snippetBuilder = new StringBuilder();
+            snippetBuilder.AppendLine(InitializationInfoString);
+            snippetBuilder.AppendLine($"{Environment.NewLine}{Environment.NewLine}" +
                                                    $"{ClientVarName} = {ClientVarType}({CredentialVarName}, {ScopesVarName}){Environment.NewLine}{Environment.NewLine}");
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
