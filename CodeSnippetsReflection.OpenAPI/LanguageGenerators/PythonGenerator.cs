@@ -73,8 +73,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var codeGraph = new SnippetCodeGraph(snippetModel);
             var snippetBuilder = new StringBuilder();
             snippetBuilder.AppendLine(InitializationInfoString);
-            snippetBuilder.AppendLine($"{Environment.NewLine}{Environment.NewLine}" +
-                                                   $"{ClientVarName} = {ClientVarType}({CredentialVarName}, {ScopesVarName}){Environment.NewLine}{Environment.NewLine}");
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
