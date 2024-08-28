@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Extensions;
 using Microsoft.OpenApi.Models;
@@ -584,7 +585,7 @@ namespace OpenAPIService.Test
         }
 
         [Fact]
-        public void GetOpenApiTreeNode()
+        public async Task GetOpenApiTreeNodeAsync()
         {
             // Arrange
             var sources = new ConcurrentDictionary<string, OpenApiDocument>();
@@ -593,7 +594,7 @@ namespace OpenAPIService.Test
             // Act
             var rootNode = _openApiService.CreateOpenApiUrlTreeNode(sources);
             using MemoryStream stream = new();
-            ConvertOpenApiUrlTreeNodeToJson(rootNode, stream);
+            await ConvertOpenApiUrlTreeNodeToJsonAsync(rootNode, stream);
 
             // Assert
             var jsonPayload = Encoding.ASCII.GetString(stream.ToArray());
@@ -720,10 +721,10 @@ namespace OpenAPIService.Test
             Assert.Contains("\"children\":[{\"segment\":\"{user-id}\",\"labels\":[{\"name\":\"mock\",\"methods\":[{\"name\":\"Get\",\"documentationUrl\":\"https://docs.microsoft.com/foobar\"}", output);
         }
 
-        private void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode node, Stream stream)
+        private async Task ConvertOpenApiUrlTreeNodeToJsonAsync(OpenApiUrlTreeNode node, Stream stream)
         {
             Assert.NotNull(node);
-            _openApiService.ConvertOpenApiUrlTreeNodeToJson(node, stream);
+            await _openApiService.ConvertOpenApiUrlTreeNodeToJsonAsync(node, stream);
             Assert.True(stream.Length > 0);
         }
     }
