@@ -29,11 +29,12 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 
     [Theory]
     [MemberData(nameof(GetSnippetData))]
-    public async Task GeneratesSnippetsForCommands(HttpMethod method, string url, string expectedCommand)
+    public async Task GeneratesSnippetsForCommandsAsync(HttpMethod method, string url, string expectedCommand)
     {
         // Given a url and method
         using var requestPayload = new HttpRequestMessage(method, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -43,13 +44,14 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GeneratesSnippetsForDeepSubCommand()
+    public async Task GeneratesSnippetsForDeepSubCommandAsync()
     {
         // GET /users/{user-id}/todo/lists/{todoTaskList-id}/tasks/{todoTask-id}/attachments/{attachmentBase-id}
         // Given
         string url = $"{ServiceRootUrl}/users/100/todo/lists/123/tasks/1234/attachments/12345";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -61,7 +63,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     [Theory]
     [InlineData("/users/100/directReports/graph.orgContact", "mgc users direct-reports graph-org-contact get --user-id {user-id}")]
     [InlineData("/users/100/directReports/123/graph.orgContact", "mgc users direct-reports graph-org-contact-by-id get --user-id {user-id} --directory-object-id {directoryObject-id}")]
-    public void GeneratesSnippetsForConflictingIndexerNavSubCommand(string url, string expectedCommand)
+    public async Task GeneratesSnippetsForConflictingIndexerNavSubCommandAsync(string url, string expectedCommand)
     {
         // Tests:
         // GET /users/{user-id}/directReports/graph.orgContact
@@ -73,6 +75,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{url}");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -83,7 +86,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
 
     // Powershell metadata doesn't have /$count endpoints
     [Fact]
-    public void GeneratesSnippetsForCountCommand()
+    public async Task GeneratesSnippetsForCountCommandAsync()
     {
         // Given
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/$count":{"get":{"operationId":"getTestResults","responses":{"200":{"description":"Successful operation"}}}}}}""";
@@ -93,6 +96,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         var openApiMetadata = new OpenApiSnippetMetadata(rootNode, new Dictionary<string, OpenApiSchema>());
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -102,12 +106,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GeneratesSnippetsForBetaCommand()
+    public async Task GeneratesSnippetsForBetaCommandAsync()
     {
         // Given
         string url = $"{ServiceRootBetaUrl}/users";
         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestMessage, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+        var snippetModel = new SnippetModel(requestMessage, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestMessage);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -118,13 +123,14 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GeneratesSnippetsForRefCommand()
+    public async Task GeneratesSnippetsForRefCommandAsync()
     {
         // GET /users/{user-id}/manager/$ref
         // Given
         string url = $"{ServiceRootUrl}/users/100/manager/$ref";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -134,13 +140,14 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GeneratesSnippetsForContentCommand()
+    public async Task GeneratesSnippetsForContentCommandAsync()
     {
         // GET /users/{user-id}/photo/$value
         // Given
         string url = $"{ServiceRootUrl}/users/100/photo/$value";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -150,12 +157,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GeneratesSnippetsForGetListCommand()
+    public async Task GeneratesSnippetsForGetListCommandAsync()
     {
         // Given
         string url = $"{ServiceRootUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -170,7 +178,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     [InlineData("?id", "--id {id}")] // When the query parameter value is not provided, the snippet generator ignores it
     [InlineData(null, "--id {id}")]
     [InlineData("? ", "--id {id}")]
-    public void GeneratesSnippetsForCommandWithConflictingParameterName(string queryString, string commandSuffix)
+    public async Task GeneratesSnippetsForCommandWithConflictingParameterNameAsync(string queryString, string commandSuffix)
     {
         // Given
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests/{id}/results":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer"}},{"name":"id","in":"query","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
@@ -180,6 +188,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         string url = $"{ServiceRootUrl}/tests/1/results{queryString}";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -190,7 +199,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public void GeneratesSnippetsForCommandWithConflictingParameterNameAndNoLocation()
+    public async Task GeneratesSnippetsForCommandWithConflictingParameterNameAndNoLocationAsync()
     {
         // Given
         // This open api doc is not valid since there's a parameter that has no location
@@ -202,6 +211,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         string url = $"{ServiceRootUrl}/tests/1/results";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -212,7 +222,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public void GeneratesSnippetsForCommandWithConflictingPathAndCookieParameterName()
+    public async Task GeneratesSnippetsForCommandWithConflictingPathAndCookieParameterNameAsync()
     {
         // Given
         // The cookie parameter will be skipped. not supported in the CLI
@@ -223,6 +233,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         string url = $"{ServiceRootUrl}/tests/1/results";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -232,7 +243,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public void GeneratesSnippetsForCommandWithConflictingPathAndHeaderParameterName()
+    public async Task GeneratesSnippetsForCommandWithConflictingPathAndHeaderParameterNameAsync()
     {
         // Given
         // The cookie parameter will be skipped. not supported in the CLI
@@ -244,6 +255,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         requestPayload.Headers.Add("id", "test-header");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -255,12 +267,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     [Theory]
     [InlineData("?$select=name", " --select \"name\"")]
     [InlineData("?$filter=test&$select=name", " --filter \"test\" --select \"name\"")]
-    public async Task GeneratesSnippetsForCommandWithODataParameters(string queryString, string commandOptions)
+    public async Task GeneratesSnippetsForCommandWithODataParametersAsync(string queryString, string commandOptions)
     {
         // Given
         string url = $"{ServiceRootUrl}/users{queryString}";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -270,7 +283,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public void GeneratesSnippetsForCommandWithEmptyParameterNames()
+    public async Task GeneratesSnippetsForCommandWithEmptyParameterNamesAsync()
     {
         // Given
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests":{"get":{"operationId":"getTestResults","parameters":[{"name":"","in":"query","schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
@@ -280,6 +293,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         string url = $"{ServiceRootUrl}/tests?";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -290,7 +304,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public void GeneratesSnippetsForCommandWithQueryParameters()
+    public async Task GeneratesSnippetsForCommandWithQueryParametersAsync()
     {
         // Given
         string schema = """{"openapi":"3.0.0","info":{"title":"Tests API","version":"1.0.11"},"servers":[{"url":"https://example.com/api/v1.0"}],"paths":{"/tests":{"get":{"operationId":"getTestResults","parameters":[{"name":"id","in":"query","required":false,"schema":{"type":"integer"}}],"responses":{"200":{"description":"Successful operation"}}}}}}""";
@@ -300,6 +314,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         string url = $"{ServiceRootUrl}/tests?id=10";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, openApiMetadata);
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -315,14 +330,15 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     [InlineData("Test content", "application/json;a=b;c=d")]
     [InlineData("Test content", "application/octet-stream;a=b;c=d", "mgc users create --file <file path>")]
     [InlineData("""{"key": 10}""", "application/json;a=b;c=d", """mgc users create --body '{"key": 10}'""")]
-    public async Task GeneratesSnippetsForCreateInListCommandWithBody(string content, string contentType = "text/plain", string expectedCommand = "mgc users create --body 'Test content'")
+    public async Task GeneratesSnippetsForCreateInListCommandWithBodyAsync(string content, string contentType = "text/plain", string expectedCommand = "mgc users create --body 'Test content'")
     {
         // Given
         string url = $"{ServiceRootUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Post, url);
         requestPayload.Content = new StringContent(content);
         requestPayload.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -338,7 +354,7 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     [InlineData(null, "application/json;a=b;c=d")]
     [InlineData(" ", "application/octet-stream;a=b;c=d")]
     [InlineData("Test content", null, true)]
-    public async Task GeneratesSnippetsForCreateInListCommandWithInvalidContent(string content, string contentType = null, bool removeContentType = false)
+    public async Task GeneratesSnippetsForCreateInListCommandWithInvalidContentAsync(string content, string contentType = null, bool removeContentType = false)
     {
         // Given
         string url = $"{ServiceRootUrl}/users";
@@ -358,7 +374,8 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
             }
         }
 
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -379,13 +396,14 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task ThrowsExceptionOnUnsupportedApiVersion()
+    public async Task ThrowsExceptionOnUnsupportedApiVersionAsync()
     {
         // Given
         string rootUrl = "https://example.com/v303";
         string url = $"{rootUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, rootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, rootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         // Then
@@ -393,13 +411,14 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
     
     [Fact]
-    public async Task GeneratesEscapedSnippetsForMultilineCommand()
+    public async Task GeneratesEscapedSnippetsForMultilineCommandAsync()
     {
         // Given
         string url = $"{ServiceRootUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Post, url);
         requestPayload.Content = new StringContent("{\n  \"name\": \"test\"\n}");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -409,13 +428,14 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
    [Fact]
-    public async Task GeneratesEscapedBetaSnippetsForMultilineCommand()
+    public async Task GeneratesEscapedBetaSnippetsForMultilineCommandAsync()
     {
         // Given
         string url = $"{ServiceRootBetaUrl}/users";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Post, url);
         requestPayload.Content = new StringContent("{\n  \"name\": \"test\"\n}");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -424,12 +444,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Equal(Environment.NewLine + "mgc-beta users create --body '{\\\n  \"name\": \"test\"\\\n}'", result);
     }
     [Fact]
-    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithSingleParameter()
+    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithSingleParameterAsync()
     {
         // Given
         string url = $"{ServiceRootUrl}/drives/driveid/items/driveitemid/delta(token='token')";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -439,12 +460,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithMultipleParameters()
+    public async Task GeneratesSnippetsContainingOverLoadedBoundFunctionsWithMultipleParametersAsync()
     {
         // Given
         string url = $"{ServiceRootUrl}/drives/driveid/items/driveitemid/getActivitiesByInterval(startDateTime='startdatetime',endDateTime='enddatetime',interval='interval')";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -454,12 +476,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GeneratesSnippetsContainingUnBoundedFunctions()
+    public async Task GeneratesSnippetsContainingUnBoundedFunctionsAsync()
     {
         // Given
         string url = $"{ServiceRootUrl}/identity/identityProviders/availableProviderTypes()";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -469,12 +492,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GeneratesSnippetsWithSlashMeEndpoints()
+    public async Task GeneratesSnippetsWithSlashMeEndpointsAsync()
     {
         // Given
         string url = $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith%28subject%2C%27All%27%29";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -483,12 +507,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Equal(Environment.NewLine + "mgc users calendar events list --user-id {user-id} --filter \"startsWith(subject,'All')\"", result);
     }
     [Fact]
-    public async Task GeneratesSnippetsWithExpandQueryOptions()
+    public async Task GeneratesSnippetsWithExpandQueryOptionsAsync()
     {
         // Given
         string url = $"{ServiceRootUrl}/me/messages/XXXX?$expand=singleValueExtendedProperties%28$filter%3Did%20eq%20%27XXXX%27%29";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -497,12 +522,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Equal(Environment.NewLine + "mgc users messages get --user-id {user-id} --message-id {message-id} --expand \"singleValueExtendedProperties(\\$filter=id eq 'XXXX')\"", result);
     }
     [Fact]
-    public async Task GeneratesSnippetsWithFilterQueryOptions()
+    public async Task GeneratesSnippetsWithFilterQueryOptionsAsync()
     {
         // Given
         string url = $"{ServiceRootUrl}/identityGovernance/accessReviews/definitions?$filter=contains%28scope%2Fmicrosoft.graph.accessReviewQueryScope%2Fquery%2C%20%27.%2Fmembers%27%29";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);
@@ -512,12 +538,13 @@ public class GraphCliGeneratorTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GeneratesSnippetsForHttpSnippetsWithUrlEncodedValuesForSystemQueryOptionParameters()
+    public async Task GeneratesSnippetsForHttpSnippetsWithUrlEncodedValuesForSystemQueryOptionParametersAsync()
     {
         // Given
         string url = $"{ServiceRootUrl}/teams/XXXXXXX/members?$filter=%28microsoft.graph.aadUserConversationMember%2FdisplayName%2520eq%2520%27Harry%2520Johnson%27%2520or%2520microsoft.graph.aadUserConversationMember%2Femail%2520eq%2520%27admin%40M365x987948.OnMicrosoft.com%27%29";
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, url);
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
 
         // When
         var result = _generator.GenerateCodeSnippet(snippetModel);

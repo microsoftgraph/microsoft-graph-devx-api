@@ -2,6 +2,7 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+using AsyncKeyedLock;
 using FileService.Common;
 using FileService.Interfaces;
 using Microsoft.ApplicationInsights;
@@ -23,7 +24,7 @@ namespace SamplesService.Services
     /// </summary>
     public class SamplesStore : ISamplesStore
     {
-        private readonly object _samplesLock = new();
+        private static readonly AsyncKeyedLocker<string> _asyncKeyedLocker = new();
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _samplesCache;
@@ -68,7 +69,7 @@ namespace SamplesService.Services
             string sourceMsg = $"Return sample queries list for locale '{locale}' from in-memory cache '{locale}'";
 
             // Fetch cached sample queries
-            SampleQueriesList sampleQueriesList = await _samplesCache.GetOrCreateAsync(locale, cacheEntry =>
+            SampleQueriesList sampleQueriesList = await _samplesCache.GetOrCreateAsync(locale, async cacheEntry =>
             {
                 _telemetryClient?.TrackTrace($"In-memory cache '{locale}' empty. " +
                                              $"Seeding sample queries list from Azure Blob resource",
@@ -76,7 +77,7 @@ namespace SamplesService.Services
                                              SamplesTraceProperties);
 
                 // Localized copy of samples is to be seeded by only one executing thread.
-                lock (_samplesLock)
+                using (await _asyncKeyedLocker.LockAsync("scopes"))
                 {
                     /* Check whether a previous thread already seeded an
                      * instance of the localized samples during the lock.
@@ -92,7 +93,7 @@ namespace SamplesService.Services
                                                      SamplesTraceProperties);
                         sourceMsg = $"Return sample queries list for locale '{lockedLocale}' from in-memory cache '{lockedLocale}'";
 
-                        return Task.FromResult(seededSampleQueriesList);
+                        return seededSampleQueriesList;
                     }
 
                     cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
@@ -102,7 +103,7 @@ namespace SamplesService.Services
                        FileServiceHelper.GetLocalizedFilePathSource(_sampleQueriesContainerName, _sampleQueriesBlobName, lockedLocale);
 
                     // Get the file contents from source
-                    string jsonFileContents = _fileUtility.ReadFromFile(queriesFilePathSource).GetAwaiter().GetResult();
+                    string jsonFileContents = await _fileUtility.ReadFromFileAsync(queriesFilePathSource);
 
                     _telemetryClient?.TrackTrace($"Successfully seeded sample queries list for locale '{lockedLocale}' from Azure Blob resource",
                                                  SeverityLevel.Information,
@@ -115,7 +116,7 @@ namespace SamplesService.Services
 
                     sourceMsg = $"Return sample queries list for locale '{lockedLocale}' from Azure Blob resource";
 
-                    return Task.FromResult(DeserializeSamplesList(jsonFileContents, locale));
+                    return DeserializeSamplesList(jsonFileContents, locale);
                 }
             });
 

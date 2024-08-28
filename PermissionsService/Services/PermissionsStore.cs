@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AsyncKeyedLock;
 using FileService.Common;
 using FileService.Interfaces;
 using Kibali;
@@ -45,7 +46,7 @@ namespace PermissionsService
         private readonly string _scopesInformation;
         private readonly int _defaultRefreshTimeInHours; // life span of the in-memory cache
         private const string DefaultLocale = "en-US"; // default locale language
-        private readonly object _scopesLock = new();
+        private static readonly AsyncKeyedLocker<string> _asyncKeyedLocker = new();
         private const string Delegated = "Delegated";
         private const string Application = "Application";
         private const string CacheRefreshTimeConfig = "FileCacheRefreshTimeInHours:Permissions";
@@ -106,7 +107,7 @@ namespace PermissionsService
                 try
                 {
                     string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _permissionsBlobName);
-                    string permissions = await _fileUtility.ReadFromFile(relativePermissionPath);
+                    string permissions = await _fileUtility.ReadFromFileAsync(relativePermissionPath);
                     permissionsDocument = PermissionsDocument.Load(permissions);
                     entry.AbsoluteExpirationRelativeToNow = permissionsDocument is not null ? TimeSpan.FromHours(_defaultRefreshTimeInHours) : TimeSpan.FromMilliseconds(1);
                 }
@@ -135,7 +136,7 @@ namespace PermissionsService
                 // Get file contents from source
                 string relativePermissionPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _permissionsBlobName);
 
-                string permissionsJson = await _fileUtility.ReadFromFile(relativePermissionPath);
+                string permissionsJson = await _fileUtility.ReadFromFileAsync(relativePermissionPath);
                 var fetchedPermissions = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<ScopeType, SchemePermissions>>>>(permissionsJson);
 
                 _telemetryClient?.TrackTrace("Finished fetching permissions from file",
@@ -195,7 +196,7 @@ namespace PermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
 
-            var scopesInformationDictionary = await _cache.GetOrCreateAsync($"ScopesInfoList_{locale}", cacheEntry =>
+            var scopesInformationDictionary = await _cache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
             {
                 _telemetryClient?.TrackTrace($"In-memory cache 'ScopesInfoList_{locale}' empty. " +
                                              $"Seeding permissions for locale '{locale}' from Azure blob resource",
@@ -205,7 +206,7 @@ namespace PermissionsService
                 /* Localized copy of permissions descriptions
                    is to be seeded by only one executing thread.
                 */
-                lock (_scopesLock)
+                using (await _asyncKeyedLocker.LockAsync("scopes"))
                 {
                     /* Check whether a previous thread already seeded an
                      * instance of the localized permissions descriptions
@@ -219,7 +220,7 @@ namespace PermissionsService
                         string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
 
                         // Get file contents from source
-                        string scopesInfoJson = _fileUtility.ReadFromFile(relativeScopesInfoPath).GetAwaiter().GetResult();
+                        string scopesInfoJson = await _fileUtility.ReadFromFileAsync(relativeScopesInfoPath);
                         _telemetryClient?.TrackTrace($"Successfully seeded permissions for locale '{locale}' from Azure blob resource",
                                                      SeverityLevel.Information,
                                                      _permissionsTraceProperties);
@@ -240,7 +241,7 @@ namespace PermissionsService
                                                  SeverityLevel.Information,
                                                  _permissionsTraceProperties);
 
-                    return Task.FromResult(seededScopesInfoDictionary);
+                    return seededScopesInfoDictionary;
                 }
             });
 
@@ -254,7 +255,7 @@ namespace PermissionsService
         /// <param name="org">The org or owner of the repo.</param>
         /// <param name="branchName">The name of the branch with the file version.</param>
         /// <returns>The localized instance of permissions descriptions.</returns>
-        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetPermissionsDescriptionsFromGithub(string org,
+        private async Task<IDictionary<string, IDictionary<string, ScopeInformation>>> GetPermissionsDescriptionsFromGithubAsync(string org,
                                                                                                                             string branchName,
                                                                                                                             string locale = DefaultLocale)
         {
@@ -271,7 +272,7 @@ namespace PermissionsService
             var queriesFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator, localizedFilePathSource);
 
             // Get file contents from source
-            string scopesInfoJson = await FetchHttpSourceDocument(queriesFilePathSource);
+            string scopesInfoJson = await FetchHttpSourceDocumentAsync(queriesFilePathSource);
 
             var scopesInformationDictionary = CreateScopesInformationTables(scopesInfoJson);
 
@@ -287,7 +288,7 @@ namespace PermissionsService
         /// </summary>
         /// <param name="sourceUri">The relative file path.</param>
         /// <returns>A document retrieved from the Http source.</returns>
-        private async Task<string> FetchHttpSourceDocument(string sourceUri)
+        private async Task<string> FetchHttpSourceDocumentAsync(string sourceUri)
         {
             // Construct the http request message
             using var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, sourceUri);
@@ -430,7 +431,7 @@ namespace PermissionsService
 
             // Create a dict of scopes information from GitHub files or cached files
             var scopesInformationDictionary = !(string.IsNullOrEmpty(org) || string.IsNullOrEmpty(branchName))
-                ? await GetPermissionsDescriptionsFromGithub(org, branchName, locale)
+                ? await GetPermissionsDescriptionsFromGithubAsync(org, branchName, locale)
                 : await GetOrCreatePermissionsDescriptionsAsync(locale);
 
             // Get consent display name and description

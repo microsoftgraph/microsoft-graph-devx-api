@@ -41,7 +41,7 @@ namespace GraphWebApi
             }
             finally
             {
-                Log.CloseAndFlush();
+                await Log.CloseAndFlushAsync();
             }
         }
 

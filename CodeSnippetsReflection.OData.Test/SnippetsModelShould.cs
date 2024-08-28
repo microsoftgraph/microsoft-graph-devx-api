@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.OData.Edm;
 using Microsoft.OData.Edm.Csdl;
@@ -13,39 +14,42 @@ namespace CodeSnippetsReflection.Test
         private readonly IEdmModel _edmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanV1Metadata));
 
         [Fact]
-        public void PopulateExpandFieldExpression()
+        public async Task PopulateExpandFieldExpressionAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/drive/root?$expand=children");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
              //Assert
             Assert.Equal("children", snippetModel.ExpandFieldExpression);
         }
 
         [Fact]
-        public void PopulateExpandFieldExpressionWithNestedQuery()
+        public async Task PopulateExpandFieldExpressionWithNestedQueryAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/drive/root?$expand=children($select=id,name)");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert
             Assert.Equal("children($select=id,name)", snippetModel.ExpandFieldExpression);
         }
 
         [Fact]
-        public void PopulateExpandFieldExpressionFromMultipleQueryString()
+        public async Task PopulateExpandFieldExpressionFromMultipleQueryStringAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users?$select=id,displayName,mail&$expand=extensions");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert
             Assert.Equal("extensions", snippetModel.ExpandFieldExpression);
@@ -53,7 +57,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void PopulateExpandFieldExpressionFromReversedMultipleQueryString()
+        public async Task PopulateExpandFieldExpressionFromReversedMultipleQueryStringAsync()
         {
             //Reverse the query structure should still work
             //Arrange
@@ -61,45 +65,49 @@ namespace CodeSnippetsReflection.Test
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert
             Assert.Equal("extensions", snippetModel.ExpandFieldExpression);
         }
 
         [Fact]
-        public void PopulateFilterListField()
+        public async Task PopulateFilterListFieldAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'J')");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert
             Assert.Equal("startswith(displayName,'J')", snippetModel.FilterFieldList.First());
         }
 
         [Fact]
-        public void PopulateOrderByListField()
+        public async Task PopulateOrderByListFieldAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users?$orderby=displayName");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert
             Assert.Equal("displayName", snippetModel.OrderByFieldList.First());
         }
 
         [Fact]
-        public void PopulateSelectListField()
+        public async Task PopulateSelectListFieldAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/messages?$select=from,subject");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert
             Assert.Equal("from", snippetModel.SelectFieldList[0]);
@@ -107,20 +115,21 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void PopulateSearchExpression()
+        public async Task PopulateSearchExpressionAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/?$search=\"Irene McGowen\"");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert
             Assert.Equal("Irene McGowen", snippetModel.SearchExpression);
         }
 
         [Fact]
-        public void PopulateHeadersCollection()
+        public async Task PopulateHeadersCollectionAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/?$search=\"Irene McGowen\"");
@@ -128,6 +137,7 @@ namespace CodeSnippetsReflection.Test
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert
             Assert.Equal("Irene McGowen", snippetModel.SearchExpression);
@@ -136,7 +146,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void PopulateRequestBody()
+        public async Task PopulateRequestBodyAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/")
@@ -146,32 +156,35 @@ namespace CodeSnippetsReflection.Test
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the request body is empty
             Assert.Equal("This is just a test", snippetModel.RequestBody);
         }
 
         [Fact]
-        public void PopulateEmptyStringOnEmptyRequestBody()
+        public async Task PopulateEmptyStringOnEmptyRequestBodyAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the request body is empty
             Assert.Equal("",snippetModel.RequestBody);
         }
 
         [Fact]
-        public void PopulatesCustomQueryOptions()
+        public async Task PopulatesCustomQueryOptionsAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/calendar/calendarView?startDateTime=2017-01-01T19:00:00.0000000&endDateTime=2017-01-07T19:00:00.0000000");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the keys and values are as expected
             Assert.Equal("startDateTime", snippetModel.CustomQueryOptions.First().Key);
@@ -182,26 +195,28 @@ namespace CodeSnippetsReflection.Test
 
         #region Test ResponseVariableNames
         [Fact]
-        public void SetAppropriateVariableNameForPeopleEntity()
+        public async Task SetAppropriateVariableNameForPeopleEntityAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the variable name is "people" for a collection
             Assert.Equal("people", snippetModel.ResponseVariableName);
         }
 
         [Fact]
-        public void SetAppropriateVariableNameForUsersList()
+        public async Task SetAppropriateVariableNameForUsersListAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the variable name is "users" for the users collection
             Assert.Equal("users", snippetModel.ResponseVariableName);
@@ -209,13 +224,14 @@ namespace CodeSnippetsReflection.Test
 
 
         [Fact]
-        public void SetAppropriateVariableNameForSingleUser()
+        public async Task SetAppropriateVariableNameForSingleUserAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users/{id|userPrincipalName}");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the variable name is "user" for the single user.
             Assert.Equal("user", snippetModel.ResponseVariableName);
@@ -223,52 +239,56 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void SetAppropriateVariableNameForChildrenItemsInDrive()
+        public async Task SetAppropriateVariableNameForChildrenItemsInDriveAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0//drives/{drive-id}/items/{item-id}/children");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the variable name is "children" for the collection returned
             Assert.Equal("children", snippetModel.ResponseVariableName);
         }
 
         [Fact]
-        public void SetAppropriateVariableNameForCalendarGroups()
+        public async Task SetAppropriateVariableNameForCalendarGroupsAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/calendarGroups");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the variable name is "calendarGroups" for the collection returned
             Assert.Equal("calendarGroups", snippetModel.ResponseVariableName);
         }
 
         [Fact]
-        public void SetAppropriateVariableNameForEventCreate()
+        public async Task SetAppropriateVariableNameForEventCreateAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/events");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the variable name is "event" (singular) as we are making a post call to create an entity
             Assert.Equal("event", snippetModel.ResponseVariableName);
         }
 
         [Fact]
-        public void SetsAppropriateVariableNameForEventUpdate()
+        public async Task SetsAppropriateVariableNameForEventUpdateAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Patch, "https://graph.microsoft.com/v1.0/groups/{id}/events/{id}");
 
             //Act
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Assert that the variable name is "event" for an event update
             Assert.Equal("event", snippetModel.ResponseVariableName);
