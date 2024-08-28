@@ -37,7 +37,7 @@ namespace FileService.Services
         /// </summary>
         /// <param name="filePathSource"> The path of the file.</param>
         /// <returns>A json string of file contents.</returns>
-        public async Task<string> ReadFromFile(string filePathSource)
+        public async Task<string> ReadFromFileAsync(string filePathSource)
         {
             FileServiceHelper.CheckArgumentNullOrEmpty(filePathSource, nameof(filePathSource));
             CheckFileFormat(filePathSource);
@@ -76,7 +76,7 @@ namespace FileService.Services
         /// <param name="fileContents"> Contents of the file.</param>
         /// <param name="filePathSource"> The path of the file.</param>
         /// <returns></returns>
-        public Task WriteToFile(string fileContents, string filePathSource)
+        public Task WriteToFileAsync(string fileContents, string filePathSource)
         {
             throw new NotImplementedException();
         }

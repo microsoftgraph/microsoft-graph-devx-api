@@ -37,7 +37,7 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public async Task CorrectlySeedLocaleCachesOfSampleQueriesWhenMultipleRequestsReceived()
+        public async Task CorrectlySeedLocaleCachesOfSampleQueriesWhenMultipleRequestsReceivedAsync()
         {
             // Arrange
             _samplesStore = new SamplesStore(_configuration, _httpClientUtility, _fileUtility, _samplesCache);
@@ -72,7 +72,7 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public async Task ReturnNullIfSampleQueryFileIsEmpty()
+        public async Task ReturnNullIfSampleQueryFileIsEmptyAsync()
         {
             // Arrange
             _samplesStore = new SamplesStore(_configuration, _httpClientUtility, _fileUtility, _samplesCache);
@@ -85,7 +85,7 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public async Task FetchSamplesFromGithub()
+        public async Task FetchSamplesFromGithubAsync()
         {
             //Arrange
             var configuration = new ConfigurationBuilder()
@@ -117,7 +117,7 @@ namespace SamplesService.Test
         }
 
         [Fact]
-        public async Task ReturnNotNullIfSampleQueriesFileHasEmptyJsonObject()
+        public async Task ReturnNotNullIfSampleQueriesFileHasEmptyJsonObjectAsync()
         {
             //Arrange
             var configuration = new ConfigurationBuilder()

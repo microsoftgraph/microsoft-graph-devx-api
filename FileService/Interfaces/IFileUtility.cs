@@ -11,8 +11,8 @@ namespace FileService.Interfaces
     /// </summary>
     public interface IFileUtility
     {
-        Task<string> ReadFromFile(string filePathSource);
+        Task<string> ReadFromFileAsync(string filePathSource);
 
-        Task WriteToFile(string fileContents, string filePathSource);
+        Task WriteToFileAsync(string fileContents, string filePathSource);
     }
 }

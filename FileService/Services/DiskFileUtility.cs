@@ -18,7 +18,7 @@ namespace FileService.Services
         /// </summary>
         /// <param name="filePathSource">The directory path name of the file on disk.</param>
         /// <returns>The contents of the file.</returns>
-        public async Task<string> ReadFromFile(string filePathSource)
+        public async Task<string> ReadFromFileAsync(string filePathSource)
         {
             using (StreamReader streamReader = new StreamReader(filePathSource))
             {
@@ -32,7 +32,7 @@ namespace FileService.Services
         /// <param name="fileContents">The string content to be written.</param>
         /// <param name="filePathSource">The directory path name of the file on disk.</param>
         /// <returns></returns>
-        public async Task WriteToFile(string fileContents, string filePathSource)
+        public async Task WriteToFileAsync(string fileContents, string filePathSource)
         {
             using (StreamWriter streamWriter = new StreamWriter(filePathSource))
             {

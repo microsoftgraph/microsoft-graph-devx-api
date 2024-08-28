@@ -86,7 +86,7 @@ namespace GraphWebApi.Controllers
                                             SeverityLevel.Information,
                                             _snippetsTraceProperties);
 
-            var response = GetSnippetGenerator(generation).ProcessPayloadRequest(requestPayload, lang);
+            var response = await GetSnippetGenerator(generation).ProcessPayloadRequestAsync(requestPayload, lang);
 
             _telemetryClient?.TrackTrace("Finished generating a code snippet",
                                             SeverityLevel.Information,
@@ -95,7 +95,7 @@ namespace GraphWebApi.Controllers
             return string.IsNullOrEmpty(response) ? NoContent() : new StringResult(response);
         }
         private ISnippetsGenerator GetSnippetGenerator(string generation) {
-            return (generation.ToLowerInvariant()) switch {
+            return generation.ToLowerInvariant() switch {
                 "odata" => _oDataSnippetGenerator,
                 "openapi" => _openApiSnippetGenerator,
                 _ => throw new ArgumentException($"{generation} is not a valid generation type")

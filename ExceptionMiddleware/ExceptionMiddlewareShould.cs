@@ -14,12 +14,12 @@ namespace ExceptionMiddlewareShould
     public class ExceptionMiddlewareShould
     {
         [Fact]
-        public async Task ExceptionMiddlewareShouldThrowArgumentNullException()
+        public async Task ExceptionMiddlewareShouldThrowArgumentNullExceptionAsync()
         {
             // Arrange
             var expected = "{\"StatusCode\":400,\"Message\":\"Value cannot be null.\"}";
 
-            static Task mockNextMiddleware(HttpContext HttpContext)
+            static Task mockNextMiddlewareAsync(HttpContext HttpContext)
             {
                 return Task.FromException(new ArgumentNullException());
             }
@@ -29,7 +29,7 @@ namespace ExceptionMiddlewareShould
             httpContext.Response.Body = new MemoryStream();
 
             // Call the middleware
-            var exceptionHandlingMiddleware = new ExceptionMiddleware(mockNextMiddleware, null);
+            var exceptionHandlingMiddleware = new ExceptionMiddleware(mockNextMiddlewareAsync, null);
 
             // Act
             await exceptionHandlingMiddleware.InvokeAsync(httpContext);
@@ -38,7 +38,7 @@ namespace ExceptionMiddlewareShould
             var bodyContent = "";
             using (var sr = new StreamReader(httpContext.Response.Body))
             {
-                bodyContent = sr.ReadToEnd();
+                bodyContent = await sr.ReadToEndAsync();
             }
 
             // Assert
@@ -46,12 +46,12 @@ namespace ExceptionMiddlewareShould
         }
 
         [Fact]
-        public async Task ExceptionMiddlewareShouldThrowInvalidOperationException()
+        public async Task ExceptionMiddlewareShouldThrowInvalidOperationExceptionAsync()
         {
             // Arrange
             var expected = "{\"StatusCode\":400,\"Message\":\"Operation is not valid due to the current state of the object.\"}";
 
-            static Task mockNextMiddleware(HttpContext HttpContext)
+            static Task mockNextMiddlewareAsync(HttpContext HttpContext)
             {
                 return Task.FromException(new InvalidOperationException());
             }
@@ -61,7 +61,7 @@ namespace ExceptionMiddlewareShould
             httpContext.Response.Body = new MemoryStream();
 
             // Call the middleware
-            var exceptionHandlingMiddleware = new ExceptionMiddleware(mockNextMiddleware, null);
+            var exceptionHandlingMiddleware = new ExceptionMiddleware(mockNextMiddlewareAsync, null);
 
             // Act
             await exceptionHandlingMiddleware.InvokeAsync(httpContext);
@@ -70,7 +70,7 @@ namespace ExceptionMiddlewareShould
             var bodyContent = "";
             using (var sr = new StreamReader(httpContext.Response.Body))
             {
-                bodyContent = sr.ReadToEnd();
+                bodyContent = await sr.ReadToEndAsync();
             }
 
             // Assert
@@ -78,12 +78,12 @@ namespace ExceptionMiddlewareShould
         }
 
         [Fact]
-        public async Task ExceptionMiddlewareShouldThrowArgumentException()
+        public async Task ExceptionMiddlewareShouldThrowArgumentExceptionAsync()
         {
             // Arrange
             var expected = "{\"StatusCode\":404,\"Message\":\"Value does not fall within the expected range.\"}";
 
-            static Task mockNextMiddleware(HttpContext HttpContext)
+            static Task mockNextMiddlewareAsync(HttpContext HttpContext)
             {
                 return Task.FromException(new ArgumentException());
             }
@@ -93,7 +93,7 @@ namespace ExceptionMiddlewareShould
             httpContext.Response.Body = new MemoryStream();
 
             // Call the middleware
-            var exceptionHandlingMiddleware = new ExceptionMiddleware(mockNextMiddleware, null);
+            var exceptionHandlingMiddleware = new ExceptionMiddleware(mockNextMiddlewareAsync, null);
 
             // Act
             await exceptionHandlingMiddleware.InvokeAsync(httpContext);
@@ -102,7 +102,7 @@ namespace ExceptionMiddlewareShould
             var bodyContent = "";
             using (var sr = new StreamReader(httpContext.Response.Body))
             {
-                bodyContent = sr.ReadToEnd();
+                bodyContent = await sr.ReadToEndAsync();
             }
 
             // Assert

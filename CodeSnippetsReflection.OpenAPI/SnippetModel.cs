@@ -46,7 +46,6 @@ namespace CodeSnippetsReflection.OpenAPI
                                         .Skip(1); //skipping the version
             LoadPathNodes(openApiSnippetMetadata.OpenApiUrlTreeNode, splatPath, requestPayload.Method);
             Schemas = openApiSnippetMetadata.Schemas ?? new Dictionary<string, OpenApiSchema>();
-            InitializeModel(requestPayload);
         }
 
         private static readonly Dictionary<Regex, string> KnownReMappings = new()
