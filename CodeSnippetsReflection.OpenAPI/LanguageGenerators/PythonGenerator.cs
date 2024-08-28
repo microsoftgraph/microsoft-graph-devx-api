@@ -13,9 +13,6 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         private const string ClientVarName = "graph_client";
-        private const string ClientVarType = "GraphServiceClient";
-        private const string CredentialVarName = "credentials";
-        private const string ScopesVarName = "scopes";
         private const string RequestBodyVarName = "request_body";
         private const string RequestConfigurationVarName = "request_configuration";
         private const string RequestConfigurationType = "RequestConfiguration";
