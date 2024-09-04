@@ -36,12 +36,12 @@ public class PythonGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.Contains(".me.get()", result);
     }
     [Fact]
-    public async Task GeneratesTheSnippetHeader()
+    public async Task GeneratesTheClientCommnet()
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
         var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
         var result = _generator.GenerateCodeSnippet(snippetModel);
-        Assert.Contains("graph_client = GraphServiceClient(credentials, scopes)", result);
+        Assert.Contains("# To initialize your graph_client, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=python", result);
     }
     [Fact]
     public async Task GeneratesThePostMethodCall()

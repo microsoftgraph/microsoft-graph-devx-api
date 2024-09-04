@@ -13,13 +13,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
     public class PythonGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     {
         private const string ClientVarName = "graph_client";
-        private const string ClientVarType = "GraphServiceClient";
-        private const string CredentialVarName = "credentials";
-        private const string ScopesVarName = "scopes";
         private const string RequestBodyVarName = "request_body";
         private const string RequestConfigurationVarName = "request_configuration";
         private const string RequestConfigurationType = "RequestConfiguration";
         private const string RequestParametersPropertyName = "query_params";
+        private const string VersionInformationString = "# Code snippets are only available for the latest version. Current version is 1.x";
+
+        private const string InitializationInfoString = "# To initialize your graph_client, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=python";
+
 
         private static readonly HashSet<string> ReservedTypeNames = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -67,13 +68,14 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         {
             var indentManager = new IndentManager();
             var codeGraph = new SnippetCodeGraph(snippetModel);
-            var snippetBuilder = new StringBuilder($"{Environment.NewLine}{Environment.NewLine}" +
-                                                   $"{ClientVarName} = {ClientVarType}({CredentialVarName}, {ScopesVarName}){Environment.NewLine}{Environment.NewLine}");
+            var snippetBuilder = new StringBuilder();
+            snippetBuilder.AppendLine(InitializationInfoString);
 
             WriteRequestPayloadAndVariableName(codeGraph, snippetBuilder, indentManager);
             WriteRequestExecutionPath(codeGraph, snippetBuilder, indentManager);
             var importStatements = GetImportStatements(snippetModel);
-            snippetBuilder.Insert(0, string.Join(Environment.NewLine, importStatements));
+            snippetBuilder.Insert(0, VersionInformationString + Environment.NewLine);
+            snippetBuilder.Insert(VersionInformationString.Length + Environment.NewLine.Length, string.Join(Environment.NewLine, importStatements) + Environment.NewLine);
             return snippetBuilder.ToString();
         }
         private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
