@@ -57,10 +57,9 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RequestMethod", httpMethod);
             eventTelemetry.Properties.Add("StatusCode", statusCode);
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
-            await
 
-                        // Act
-                        _telemetryClientProcessor.ProcessAsync(eventTelemetry);
+            // Act
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -90,10 +89,9 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RequestMethod", httpMethod);
             eventTelemetry.Properties.Add("StatusCode", statusCode);
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
-            await
 
-                        // Act
-                        _telemetryClientProcessor.ProcessAsync(eventTelemetry);
+            // Act
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -121,10 +119,9 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RequestMethod", httpMethod);
             eventTelemetry.Properties.Add("StatusCode", statusCode);
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
-            await
 
-                        // Act
-                        _telemetryClientProcessor.ProcessAsync(eventTelemetry);
+            // Act
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -152,10 +149,9 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RequestMethod", httpMethod);
             eventTelemetry.Properties.Add("StatusCode", statusCode);
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
-            await
 
-                        // Act
-                        _telemetryClientProcessor.ProcessAsync(eventTelemetry);
+            // Act
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -183,10 +179,9 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RequestMethod", httpMethod);
             eventTelemetry.Properties.Add("StatusCode", statusCode);
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
-            await
 
-                        // Act
-                        _telemetryClientProcessor.ProcessAsync(eventTelemetry);
+            // Act
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -255,10 +250,9 @@ namespace TelemetrySanitizerService.Test
             {
                 Url = new Uri(incomingUrl, UriKind.RelativeOrAbsolute)
             };
-            await
 
-                        // Act
-                        _telemetryClientProcessor.ProcessAsync(request);
+            // Act
+            await _telemetryClientProcessor.ProcessAsync(request);
 
             // Assert
             Assert.Equal(expectedUrl, request.Url.ToString());
@@ -276,10 +270,9 @@ namespace TelemetrySanitizerService.Test
             {
                 Message = incomingMsg
             };
-            await
 
-                        // Act
-                        _telemetryClientProcessor.ProcessAsync(trace);
+            // Act
+            await _telemetryClientProcessor.ProcessAsync(trace);
 
             // Assert
             Assert.Equal(expectedMsg, trace.Message);

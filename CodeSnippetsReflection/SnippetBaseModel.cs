@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 
@@ -44,7 +44,8 @@ namespace CodeSnippetsReflection
         /// Initializes the model from the request message. This method MUST be called in the derived type constructor
         /// </summary>
         /// <param name="requestPayload">The request message to initialize the snippet from</param>
-        public async System.Threading.Tasks.Task InitializeModelAsync(HttpRequestMessage requestPayload) {
+        public async System.Threading.Tasks.Task InitializeModelAsync(HttpRequestMessage requestPayload)
+        {
             // replace the response variable name with generic response when URL has placeholder
             // e.g. {size} in GET graph.microsoft.com/v1.0/me/drive/items/{item-id}/thumbnails/{thumb-id}/{size}
             var lastPathSegment = GetLastPathSegment();
