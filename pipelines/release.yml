@@ -162,6 +162,7 @@ extends:
           dependsOn: ['Build']
 
     - stage: DeployStaging
+      condition: and(contains(variables['build.sourceBranch'], 'refs/heads/master'), succeeded())
       dependsOn: BuildAndPublish
       jobs:
       - deployment: staging  
