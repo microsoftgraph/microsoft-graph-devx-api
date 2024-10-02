@@ -160,3 +160,78 @@ extends:
           directory: 'microsoft-graph-devx-api'
           repoName: ReleasePipelines
           dependsOn: ['Build']
+
+    - stage: DeployStaging
+      dependsOn: BuildAndPublish
+      jobs:
+      - job: staging  
+        templateContext:
+          type: releaseJob
+          isProduction: false
+          inputs:
+          - input: pipelineArtifact
+            artifactName: drop
+            targetPath: $(Build.ArtifactStagingDirectory)
+
+        steps:
+        - task: AzureRmWebAppDeployment@4
+          displayName: Staging
+          inputs:
+            azureSubscription: 'Federated DevX API Managed Identity'
+            WebAppName: graphexplorerapi
+            deployToSlotOrASE: true
+            ResourceGroupName: 'Graph-Explorer-API'
+            packageForLinux: '$(Build.ArtifactStagingDirectory)/GraphWebApi.zip'
+            JSONFiles: '**/appsettings.json'
+
+        - task: AzureAppServiceManage@0
+          displayName: 'Restart Azure App Service: graphexplorerapi staging'
+          inputs:
+            azureSubscription: 'Federated DevX API Managed Identity'
+            Action: 'Restart Azure App Service'
+            WebAppName: graphexplorerapi
+            SpecifySlotOrASE: true
+            ResourceGroupName: 'Graph-Explorer-API'
+
+
+    - stage: DeployProduction
+      dependsOn: [DeployStaging, BuildAndPublish]
+      jobs:
+      - job: production  
+        templateContext:
+          type: releaseJob
+          isProduction: true
+          approval:
+            workflow: lockbox
+            scope:
+              serviceGroupName: XXXXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX  # Required, name of the Ev2 service group as mentioned in servicemodel.json file in your Ev2 Artifacts repository. TODO: Add the service group name where the service is deployed
+              subscriptionIds:  # Required, List of subscription Ids to you need to deploy and for which the lockbox approvals should be requested. TODO: Add the subscription Ids where the service group is deployed
+              - XXXXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+
+        steps:
+        - task: AzureAppServiceManage@0
+          displayName: 'Manage Azure App Service - Slot Swap'
+          inputs:
+            azureSubscription: 'Federated DevX API Managed Identity'
+            WebAppName: graphexplorerapi
+            ResourceGroupName: 'Graph-Explorer-API'
+            SourceSlot: staging
+
+        - task: AzureAppServiceManage@0
+          displayName: 'Restart Azure App Service: graphexplorerapi'
+          inputs:
+            azureSubscription: 'Federated DevX API Managed Identity'
+            Action: 'Restart Azure App Service'
+            WebAppName: graphexplorerapi
+            SpecifySlotOrASE: true
+            ResourceGroupName: 'Graph-Explorer-API'
+
+        - task: GitHubRelease@1
+          displayName: 'GitHub release (v$(Build.BuildNumber)-$(Build.BuildId))'
+          inputs:
+            gitHubConnection: 'Github-MaggieKimani1'
+            action: edit
+            tag: 'v$(Build.BuildNumber)'
+            title: 'DevX API - v$(Build.BuildNumber)'
+            assets: '$(Build.ArtifactStagingDirectory)/drop/*.zip'
+            changeLogType: issueBased
