@@ -186,6 +186,7 @@ extends:
                   ResourceGroupName: 'Graph-Explorer-API'
                   packageForLinux: '$(Build.ArtifactStagingDirectory)/GraphWebApi.zip'
                   JSONFiles: '**/appsettings.json'
+                  SlotName: 'staging'
 
               - task: AzureAppServiceManage@0
                 displayName: 'Restart Azure App Service: graphexplorerapi staging'
@@ -195,6 +196,7 @@ extends:
                   WebAppName: graphexplorerapi
                   SpecifySlotOrASE: true
                   ResourceGroupName: 'Graph-Explorer-API'
+                  Slot: 'staging'
 
 
     - stage: DeployProduction
