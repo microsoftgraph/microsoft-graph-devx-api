@@ -25,7 +25,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task GetAllRequiredPermissionScopesGivenAnExistingRequestUrl()
+        public async Task GetAllRequiredPermissionScopesGivenAnExistingRequestUrlAsync()
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
@@ -79,7 +79,7 @@ namespace PermissionsService.Test
         [InlineData(ScopeType.DelegatedWork)]
         [InlineData(ScopeType.DelegatedPersonal)]
         [InlineData(ScopeType.Application)]
-        public async Task GetRequiredPermissionScopesGivenAnExistingRequestUrlByScopeType(ScopeType scopeType)
+        public async Task GetRequiredPermissionScopesGivenAnExistingRequestUrlByScopeTypeAsync(ScopeType scopeType)
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
@@ -144,7 +144,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task GetLeastPrivilegePermissionScopesGivenAnExistingRequestUrl()
+        public async Task GetLeastPrivilegePermissionScopesGivenAnExistingRequestUrlAsync()
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
@@ -171,7 +171,7 @@ namespace PermissionsService.Test
         [InlineData(ScopeType.DelegatedWork, 497)]
         [InlineData(ScopeType.DelegatedPersonal, 468)]
         [InlineData(ScopeType.Application, 475)]
-        public async Task GetAllPermissionScopesGivenNoRequestUrlFilteredByScopeType(ScopeType scopeType, int expectedCount)
+        public async Task GetAllPermissionScopesGivenNoRequestUrlFilteredByScopeTypeAsync(ScopeType scopeType, int expectedCount)
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(scopeType: scopeType);
@@ -182,7 +182,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task GetAllPermissionScopesGivenNoRequestUrl()
+        public async Task GetAllPermissionScopesGivenNoRequestUrlAsync()
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync();
@@ -193,7 +193,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnNullGivenANonExistentRequestUrl()
+        public async Task ReturnNullGivenANonExistentRequestUrlAsync()
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
@@ -204,7 +204,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnNullGivenANonExistentHttpVerb()
+        public async Task ReturnNullGivenANonExistentHttpVerbAsync()
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
@@ -220,7 +220,7 @@ namespace PermissionsService.Test
         [Theory]
         [InlineData(true, 6)]
         [InlineData(false, 12)]
-        public async Task ReturnLeastPrivilegePermissionsForSetOfResources(bool leastPrivilegeOnly, int expectedCount)
+        public async Task ReturnLeastPrivilegePermissionsForSetOfResourcesAsync(bool leastPrivilegeOnly, int expectedCount)
         {
             // Arrange
             var requests = new List<RequestInfo>()
@@ -242,7 +242,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnCorrectLeastPrivilegePermissionsForResourcesThatHaveMatchMoreThanOneTemplate()
+        public async Task ReturnCorrectLeastPrivilegePermissionsForResourcesThatHaveMatchMoreThanOneTemplateAsync()
         {
             // Arrange
             var request1 = new List<RequestInfo>()
@@ -266,7 +266,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnErrorWhenLeastPrivilegePermissionsForSetOfResourcesIsNotAvailable()
+        public async Task ReturnErrorWhenLeastPrivilegePermissionsForSetOfResourcesIsNotAvailableAsync()
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
@@ -286,7 +286,7 @@ namespace PermissionsService.Test
         [InlineData("/users/{id}/drive/items/{id}/workbook/worksheets/{id}/range")]
         [InlineData("/users/{id}/drive/items/{id}/workbook/worksheets/{id}/range()")]
         [InlineData("/users/{id}/drive/items/{id}/workbook/worksheets/{id}/range(address={value})")]
-        public async Task RemoveFunctionParametersFromRequestUrlsDuringLoadingAndQueryingOfPermissionsFiles(string url)
+        public async Task RemoveFunctionParametersFromRequestUrlsDuringLoadingAndQueryingOfPermissionsFilesAsync(string url)
         {
             // Act
             var result =
@@ -307,7 +307,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnLocalizedPermissionsDescriptionsForSupportedLanguage()
+        public async Task ReturnLocalizedPermissionsDescriptionsForSupportedLanguageAsync()
         {
             // Act
             var result = await _permissionsStore.GetScopesAsync(
@@ -334,7 +334,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnsErrorsForEmptyRequestUrl()
+        public async Task ReturnsErrorsForEmptyRequestUrlAsync()
         {
             // Act
             PermissionResult result =
@@ -354,7 +354,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnsErrorsForNullRequestUrl()
+        public async Task ReturnsErrorsForNullRequestUrlAsync()
         {
             // Act
             PermissionResult result =
@@ -374,7 +374,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnsErrorsForNonExistentRequestUrls()
+        public async Task ReturnsErrorsForNonExistentRequestUrlsAsync()
         {
             // Act
             PermissionResult result =
@@ -394,7 +394,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task ReturnsUniqueListOfPermissionsForPathsWithSharedPermissions()
+        public async Task ReturnsUniqueListOfPermissionsForPathsWithSharedPermissionsAsync()
         {
             // Act
             PermissionResult result =
@@ -420,7 +420,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task FetchPermissionsDescriptionsFromGithub()
+        public async Task FetchPermissionsDescriptionsFromGithubAsync()
         {
             //Arrange
             string org = "\\Org";
@@ -434,7 +434,7 @@ namespace PermissionsService.Test
         }
 
         [Fact]
-        public async Task FetchPermissionsDescriptionsFromGithubGivenARequestUrl()
+        public async Task FetchPermissionsDescriptionsFromGithubGivenARequestUrlAsync()
         {
             // Arrange
             string org = "\\Org";
