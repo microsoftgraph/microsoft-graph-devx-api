@@ -120,6 +120,35 @@ extends:
                   & $apidoctorPath generate-permission-files --ignore-warnings $(bootstrappingOnly) --path . --permissions-source-file $(permissionsSourceFilePath) --git-path "/bin/git"
                 displayName: "Generate permissions tables"
                 workingDirectory: microsoft-graph-docs
+                
+              - pwsh: |
+                  $apidoctorPath1 = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY\microsoft-graph-devx-api\scripts\cleanupUnusedSnippets.ps1 -Recurse).FullName
+                  
+                  Write-Host "Path to apidoctor tool: $apidoctorPath1"
 
+                displayName: "List scripts directory"
+                
+              - task: PowerShell@2
+                displayName: 'Validate updated version'
+                inputs:
+                  targetType: filePath
+                  filePath: '/scripts/cleanupUnusedSnippets.ps1'
+                  pwsh: true
+                enabled: true
+              
+              - pwsh: $(Build.SourcesDirectory)\microsoft-graph-devx-api\scripts\cleanupUnusedSnippets.ps1
+                displayName: 'Cleanup unused snippets'
+                workingDirectory: microsoft-graph-docs
+              
+              - pwsh: $(Build.SourcesDirectory)/microsoft-graph-devx-api/scripts/cleanupUnusedSnippets.ps1
+                displayName: 'Cleanup unused snippets'
+                workingDirectory: microsoft-graph-docs
+                
+              - task: PowerShell@2
+                displayName: "Cleanup unused permisssions tables .md files"
+                inputs:
+                  targetType: filePath
+                  filePath: "microsoft-graph-devx-api/scripts/cleanupUnusedSnippets.ps1"
+                  pwsh: true
 
               - template: /pipelines/templates/commit-changes.yml@self
