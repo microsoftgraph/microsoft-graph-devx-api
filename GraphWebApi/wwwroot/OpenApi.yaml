@@ -7,6 +7,10 @@ servers:
     description: Main server
   - url: https://graphexplorerapi-staging.azurewebsites.net/
     description: Staging server
+  - url: https://devxapi-func-prod-eastus.azurewebsites.net/
+    description: Torus Main server
+  - url: https://devxapi-func-ppe-eastus.azurewebsites.net/
+    description: Torus Staging server
   - url: https://localhost:44399/
     description: Local test server
   - url: https://localhost:5001/
