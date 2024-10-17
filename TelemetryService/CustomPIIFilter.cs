@@ -84,23 +84,23 @@ namespace TelemetrySanitizerService
         /// Filters telemetry data and calls the next ITelemetryProcessor in the chain.
         /// </summary>
         /// <param name="item">A telemetry Item.</param>
-        public void Process(ITelemetry item)
+        public async Task ProcessAsync(ITelemetry item)
         {
             if (item is EventTelemetry customEvent &&
                 customEvent.Properties.ContainsKey(RequestPath) &&
                 customEvent.Properties.ContainsKey(RenderedMessage))
             {
-               SanitizeTelemetryAsync(customEvent: customEvent).GetAwaiter().GetResult();
+                await SanitizeTelemetryAsync(customEvent: customEvent);
             }
 
             if (item is RequestTelemetry request)
             {
-                SanitizeTelemetryAsync(request: request).GetAwaiter().GetResult();
+                await SanitizeTelemetryAsync(request: request);
             }
 
             if (item is TraceTelemetry trace && !trace.Properties.ContainsKey(UtilityConstants.TelemetryPropertyKey_SanitizeIgnore))
             {
-                SanitizeTelemetryAsync(trace: trace).GetAwaiter().GetResult();
+                await SanitizeTelemetryAsync(trace: trace);
             }
 
             _next.Process(item);
@@ -315,6 +315,13 @@ namespace TelemetrySanitizerService
             searchableContent = searchableContent.Replace(searchableContent, SecurityMask);
 
             return contents[0] + ODataSearchOperator + searchableContent;
+        }
+
+        public void Process(ITelemetry item)
+        {
+#pragma warning disable VSTHRD002 // Avoid problematic synchronous waits
+            ProcessAsync(item).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002 // Avoid problematic synchronous waits
         }
     }
 }

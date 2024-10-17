@@ -1,4 +1,5 @@
 ﻿using System.Net.Http;
+using System.Threading.Tasks;
 using System.Xml;
 using CodeSnippetsReflection.OData.LanguageGenerators;
 using Microsoft.OData.Edm;
@@ -15,7 +16,7 @@ namespace CodeSnippetsReflection.Test
 
         [Fact]
         //This tests asserts that we can generate snippets from json objects with nested objects inside them.
-        public void GeneratesCorrectCreateCalendarEventJavascriptSnippet()
+        public async Task GeneratesCorrectCreateCalendarEventJavascriptSnippetAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -52,6 +53,7 @@ namespace CodeSnippetsReflection.Test
                 Content = new StringContent(userJsonObject)
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act by generating the code snippet
             var result = JavaScriptGenerator.GenerateCodeSnippet(snippetModel, expressions);
@@ -94,7 +96,7 @@ namespace CodeSnippetsReflection.Test
 
         [Fact]
         //This tests asserts that we can generate snippets from json objects with nested objects inside them.
-        public void GeneratesPostRequestSnippetFromJsonObject()
+        public async Task GeneratesPostRequestSnippetFromJsonObjectAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -110,6 +112,7 @@ namespace CodeSnippetsReflection.Test
                 Content = new StringContent(userJsonObject)
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act by generating the code snippet
             var result = JavaScriptGenerator.GenerateCodeSnippet(snippetModel, expressions);
@@ -135,7 +138,7 @@ namespace CodeSnippetsReflection.Test
 
         [Fact]
         //This tests asserts that we can generate snippets from json objects with nested arrays inside them.
-        public void GeneratesPatchRequestSnippetFromJsonObject()
+        public async Task GeneratesPatchRequestSnippetFromJsonObjectAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -149,6 +152,7 @@ namespace CodeSnippetsReflection.Test
                 Content = new StringContent(userJsonObject)
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act by generating the code snippet
             var result = JavaScriptGenerator.GenerateCodeSnippet(snippetModel, expressions);
@@ -170,7 +174,7 @@ namespace CodeSnippetsReflection.Test
         
         [Fact]
         //This tests asserts that we can generate snippets with query options present
-        public void GeneratesSnippetsWithQueryOptions()
+        public async Task GeneratesSnippetsWithQueryOptionsAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -178,6 +182,7 @@ namespace CodeSnippetsReflection.Test
             var requestPayload = new HttpRequestMessage(HttpMethod.Get,
                 "https://graph.microsoft.com/v1.0/me/calendar/calendarView?startDateTime=2017-01-01T19:00:00.0000000&endDateTime=2017-01-07T19:00:00.0000000");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act by generating the code snippet
             var result = JavaScriptGenerator.GenerateCodeSnippet(snippetModel, expressions);
@@ -191,7 +196,7 @@ namespace CodeSnippetsReflection.Test
 
         [Fact]
         // This test asserts that we can generate snippets with @odata properties
-        public void GenerateSnippetsWithOdataProperties()
+        public async Task GenerateSnippetsWithOdataPropertiesAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -205,6 +210,7 @@ namespace CodeSnippetsReflection.Test
             };
 
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act by generating the code snippet
             var result = JavaScriptGenerator.GenerateCodeSnippet(snippetModel, expressions);
@@ -223,7 +229,7 @@ namespace CodeSnippetsReflection.Test
 
         [Fact]
         // This test asserts that single quotes inside strings are escaped
-        public void GenerateSnippetsWithSingleQuotesInsideString()
+        public async Task GenerateSnippetsWithSingleQuotesInsideStringAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -254,6 +260,7 @@ namespace CodeSnippetsReflection.Test
             var betaServiceRootUrl = "https://graph.microsoft.com/beta";
             var betaEdmModel = CsdlReader.Parse(XmlReader.Create(CommonGeneratorShould.CleanBetaMetadata));
             var snippetModel = new SnippetModel(requestPayload, betaServiceRootUrl, betaEdmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act by generating the code snippet
             var result = JavaScriptGenerator.GenerateCodeSnippet(snippetModel, expressions);

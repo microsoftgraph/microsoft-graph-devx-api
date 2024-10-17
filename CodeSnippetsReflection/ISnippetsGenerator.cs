@@ -1,9 +1,10 @@
 ﻿using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace CodeSnippetsReflection
 {
     public interface ISnippetsGenerator
     {
-        string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language);
+        Task<string> ProcessPayloadRequestAsync(HttpRequestMessage requestPayload, string language);
     }
 }
