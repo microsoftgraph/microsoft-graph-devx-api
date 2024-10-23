@@ -235,8 +235,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     bool isIntParam = false;
                     if (x.PathItems.TryGetValue("default", out var pathItem))
                     {
-                        isIntParam = pathItem.Parameters.Any(parameter => x.Segment.Contains(parameter.Name) && parameter.Schema.Type.Equals("integer", StringComparison.OrdinalIgnoreCase));
-
+                        isIntParam = pathItem.Parameters.Any(parameter => x.Segment.Contains(parameter.Name) && (parameter.Schema.Type.Equals("integer", StringComparison.OrdinalIgnoreCase) 
+                                                                                                                    || parameter.Schema.Type.Equals("number", StringComparison.OrdinalIgnoreCase)));
                     }
                     return $"{pathName ?? "ByTypeId"}{(isIntParam ? "(2)": x.Segment.Replace("{", "(\"{", StringComparison.OrdinalIgnoreCase).Replace("}", "}\")", StringComparison.OrdinalIgnoreCase))}.";
                 }
