@@ -22,7 +22,7 @@ resources:
      ref: main
 
 pool:
-  name: 1es-ubuntu-latest
+  name: 1es-ubuntu-latest-m
 
 
 parameters:
@@ -195,7 +195,7 @@ stages:
 
       - task: AzurePowerShell@5
         inputs:
-          azureSubscription: "RaptorServiceFederationConnection"
+          azureSubscription: "Federated Raptor Managed Identity Connection"
           ScriptType: "FilePath"
           ScriptPath: "$(Build.SourcesDirectory)/scripts/categorizeErrors.ps1"
           ScriptArguments: "
