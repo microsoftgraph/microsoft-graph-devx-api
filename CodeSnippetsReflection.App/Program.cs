@@ -111,8 +111,8 @@ namespace CodeSnippetsReflection.App
 
         private static ISnippetsGenerator GetSnippetsGenerator(string generation, IConfigurationSection customMetadataSection) {
             return (generation) switch {
-                "odata" when customMetadataSection.Exists() => new ODataSnippetsGenerator(isCommandLine: true, customMetadataSection.Value),
-                "odata" => new ODataSnippetsGenerator(isCommandLine: true),
+                "odata" when customMetadataSection.Exists() => new ODataSnippetsGenerator(customMetadataSection.Value),
+                "odata" => new ODataSnippetsGenerator(),
                 "openapi" => new OpenApiSnippetsGenerator(),
                 _ => throw new InvalidOperationException($"Unknown generation type: {generation}")
             };
