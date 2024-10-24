@@ -195,7 +195,7 @@ stages:
 
       - task: AzurePowerShell@5
         inputs:
-          azureSubscription: "RaptorServiceFederationConnection"
+          azureSubscription: "Federated Raptor Managed Identity Connection"
           ScriptType: "FilePath"
           ScriptPath: "$(Build.SourcesDirectory)/scripts/categorizeErrors.ps1"
           ScriptArguments: "
