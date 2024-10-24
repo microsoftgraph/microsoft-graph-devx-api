@@ -11,6 +11,7 @@ using Microsoft.ApplicationInsights;
 using UtilityService;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace CodeSnippetsReflection.OData
 {
@@ -88,10 +89,11 @@ namespace CodeSnippetsReflection.OData
         /// <param name="language"></param>
         /// <param name="requestPayload"></param>
         /// <returns>String of snippet generated</returns>
-        public string ProcessPayloadRequest(HttpRequestMessage requestPayload, string language)
+        public async Task<string> ProcessPayloadRequestAsync(HttpRequestMessage requestPayload, string language)
         {
             var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(requestPayload.RequestUri);
             var snippetModel = new SnippetModel(requestPayload, serviceRootUri.AbsoluteUri, edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             _telemetryClient?.TrackTrace($"Generating code snippet for '{language}' from the request payload",
                                          SeverityLevel.Information,

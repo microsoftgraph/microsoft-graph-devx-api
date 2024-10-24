@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 
@@ -44,7 +44,8 @@ namespace CodeSnippetsReflection
         /// Initializes the model from the request message. This method MUST be called in the derived type constructor
         /// </summary>
         /// <param name="requestPayload">The request message to initialize the snippet from</param>
-        protected void InitializeModel(HttpRequestMessage requestPayload) {
+        public async System.Threading.Tasks.Task InitializeModelAsync(HttpRequestMessage requestPayload)
+        {
             // replace the response variable name with generic response when URL has placeholder
             // e.g. {size} in GET graph.microsoft.com/v1.0/me/drive/items/{item-id}/thumbnails/{thumb-id}/{size}
             var lastPathSegment = GetLastPathSegment();
@@ -52,7 +53,7 @@ namespace CodeSnippetsReflection
             this.ResponseVariableName = responseVariableName.StartsWith("{") ? "response" : responseVariableName;
 
             PopulateQueryFieldLists(QueryString);
-            GetRequestBody(requestPayload);
+            await GetRequestBodyAsync(requestPayload);
         }
         protected abstract PathSegment GetLastPathSegment();
         /// <summary>
@@ -101,12 +102,12 @@ namespace CodeSnippetsReflection
         /// Reads the request body from the request payload to save it as a string for later processing
         /// </summary>
         /// <param name="requestPayload"><see cref="HttpRequestMessage"/> to read the body from</param>
-        private void GetRequestBody(HttpRequestMessage requestPayload)
+        private async System.Threading.Tasks.Task GetRequestBodyAsync(HttpRequestMessage requestPayload)
         {
             //do not try to read in the content if there isn't any
             if (null != requestPayload.Content)
             {
-                this.RequestBody = requestPayload.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                this.RequestBody = await requestPayload.Content.ReadAsStringAsync();
                 if(null != requestPayload.Content.Headers.ContentType)
                     this.ContentType = requestPayload.Content.Headers.ContentType.MediaType;
             }

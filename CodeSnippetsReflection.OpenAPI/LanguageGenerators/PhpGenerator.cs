@@ -121,10 +121,11 @@ public class PhpGenerator : ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>
     }
     private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
     {
-        var packagePrefix = snippetModel.ApiVersion switch
+        var packagePrefix = snippetModel.ApiVersion.ToLowerInvariant() switch
         {
             "v1.0" => @"Microsoft\Graph",
             "beta" => @"Microsoft\Graph\Beta",
+            _ => throw new ArgumentOutOfRangeException($"Unsupported API version {snippetModel.ApiVersion}")
         };
         var modelImportPrefix = $@"use {packagePrefix}\Generated\Models";
         var requestBuilderImportPrefix = $@"use {packagePrefix}\Generated";

@@ -15,17 +15,17 @@ public class OpenApiSnippetGeneratorTestBase
     protected const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
     protected const string ServiceRootBetaUrl = "https://graph.microsoft.com/beta";
     
-    protected async static Task<OpenApiSnippetMetadata> GetV1SnippetMetadata()
+    protected async static Task<OpenApiSnippetMetadata> GetV1SnippetMetadataAsync()
     {
-        return _v1SnippetMetadata ??= await GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
+        return _v1SnippetMetadata ??= await GetTreeNodeAsync("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml");
     }
     
-    protected async static Task<OpenApiSnippetMetadata> GetBetaSnippetMetadata()
+    protected async static Task<OpenApiSnippetMetadata> GetBetaSnippetMetadataAsync()
     {
-        return _betaSnippetMetadata ??= await GetTreeNode("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/beta/openapi.yaml");
+        return _betaSnippetMetadata ??= await GetTreeNodeAsync("https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/beta/openapi.yaml");
     }
     
-    private static async Task<OpenApiSnippetMetadata> GetTreeNode(string url)
+    private static async Task<OpenApiSnippetMetadata> GetTreeNodeAsync(string url)
     {
         Stream stream;
         if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))

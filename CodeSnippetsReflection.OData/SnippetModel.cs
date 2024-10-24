@@ -29,7 +29,6 @@ namespace CodeSnippetsReflection
             this.ODataUri = ODataUriParser.ParseUri();
             this.CustomQueryOptions = ODataUriParser.CustomQueryOptions;
             this.Segments = ODataUri.Path.ToList();
-            InitializeModel(requestPayload);
         }
 
         /// <summary>
