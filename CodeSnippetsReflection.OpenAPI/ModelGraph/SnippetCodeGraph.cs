@@ -243,9 +243,9 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
             var parameters = new List<CodeProperty>();
             foreach (var parameter in pathParameters)
             {
-                switch (parameter.Schema.Type.ToLowerInvariant())
+                switch (parameter.Schema.Type.ToLowerInvariant(), parameter.Schema.Format?.ToLowerInvariant())
                 {
-                    case "string":
+                    case ("string", _):
                         var codeProperty = evaluateStringProperty(parameter.Name, $"{{{parameter.Name}}}", parameter.Schema);
                         // At the moment, enums in path parameters are passed as strings, so pull a string equivalent of the enum
                         if (codeProperty.PropertyType == PropertyType.Enum)
@@ -255,13 +255,19 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
                         }
                         parameters.Add(codeProperty);
                         break;
-                    case "integer":
+                    case ("integer",_):
+                    case (_,"int32"):
+                    case (_,"int16"):
+                    case (_,"int8"):
                         parameters.Add(new CodeProperty { Name = parameter.Name, Value = int.TryParse(parameter.Name, out _) ? parameter.Name : "1", PropertyType = PropertyType.Int32, Children = new List<CodeProperty>() });
                         break;
-                    case "double":
+                    case (_,"int64"):
+                        parameters.Add(new CodeProperty { Name = parameter.Name, Value = int.TryParse(parameter.Name, out _) ? parameter.Name : "1", PropertyType = PropertyType.Int64, Children = new List<CodeProperty>() });
+                        break;
+                    case ("double",_):
                         parameters.Add(new CodeProperty { Name = parameter.Name, Value = double.TryParse(parameter.Name, out _) ? parameter.Name : "1.0d", PropertyType = PropertyType.Double, Children = new List<CodeProperty>() });
                         break;
-                    case "boolean":
+                    case ("boolean",_):
                         parameters.Add(new CodeProperty { Name = parameter.Name, Value = bool.TryParse(parameter.Name, out _) ? parameter.Name : "false", PropertyType = PropertyType.Boolean, Children = new List<CodeProperty>() });
                         break;
                 }
@@ -472,13 +478,13 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
              schemas.Add(propSchema);
 
-             var types = schemas.Select(item => item.Type).Where(static x => !string.IsNullOrEmpty(x)).ToList();
-             var formats = schemas.Select(item => item.Format).Where(static x => !string.IsNullOrEmpty(x)).ToList();
+             var types = schemas.Select(item => item.Type).Where(static x => !string.IsNullOrEmpty(x)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+             var formats = schemas.Select(item => item.Format).Where(static x => !string.IsNullOrEmpty(x)).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             var (propertyType, propertyValue) = types switch
             {
-                _ when types.Contains("integer") && formats.Contains("int32") => (PropertyType.Int32 , value.GetInt32().ToString()),
-                _ when types.Contains("integer") && formats.Contains("int64") => (PropertyType.Int64 , value.GetInt64().ToString()),
+                _ when (types.Contains("integer") || types.Contains("number")) && formats.Contains("int32") => (PropertyType.Int32 , value.GetInt32().ToString()),
+                _ when (types.Contains("integer") || types.Contains("number")) && formats.Contains("int64") => (PropertyType.Int64 , value.GetInt64().ToString()),
                 _ when formats.Contains("float")  || formats.Contains("float32")  => (PropertyType.Float32, value.GetDecimal().ToString()),
                 _ when formats.Contains("float64") => (PropertyType.Float64, value.GetDecimal().ToString()),
                 _ when formats.Contains("double") => (PropertyType.Double, value.GetDouble().ToString()), //in MS Graph float & double are any of number, string and enum

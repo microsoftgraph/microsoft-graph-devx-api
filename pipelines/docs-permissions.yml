@@ -20,11 +20,6 @@ resources:
       endpoint: microsoftgraphdocs
       name: microsoftgraph/microsoft-graph-docs
       ref: main
-    - repository: api-doctor
-      type: github
-      endpoint: microsoftgraphdocs
-      name: OneDrive/apidoctor
-      ref: master
     - repository: 1ESPipelineTemplates
       type: git
       name: 1ESPipelineTemplates/1ESPipelineTemplates
@@ -41,7 +36,7 @@ parameters:
 
 variables:
   buildConfiguration: "Release"
-  apidoctorProjects: "apidoctor/**/*.csproj"
+  apidoctorProjects: "microsoft-graph-devx-api/apidoctor/**/*.csproj"
   permissionsSourceFilePath: ${{ parameters.permissionsSourceFilePath }}
   ${{ if eq(parameters.bootstrappingOnly, true) }}:
     bootstrappingOnly: "--bootstrapping-only"
@@ -58,7 +53,6 @@ extends:
     sdl:
       sourceRepositoriesToScan:
         exclude:
-          - repository: "api-doctor"
           - repository: "microsoft-graph-docs"
       credscan:
         suppressionsFile: $(Build.SourcesDirectory)\.azure-pipelines\.config\CredScanSuppressions.json
@@ -69,8 +63,8 @@ extends:
         jobs:
           - job: RunAPIDoctorScript
             steps:
-              - checkout: api-doctor
-                displayName: Checkout API Doctor
+              - checkout: self
+                displayName: Checkout DevX API
                 fetchDepth: 1
                 submodules: recursive
                 persistCredentials: true
@@ -114,12 +108,18 @@ extends:
                   arguments: "--configuration $(buildConfiguration)"
               
               - pwsh: |
-                  $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/apidoctor/ApiDoctor.Console/bin/Release -Recurse -Filter "apidoc.exe").FullName
+                  $apidoctorPath = (Get-ChildItem $env:BUILD_SOURCESDIRECTORY/microsoft-graph-devx-api/apidoctor/ApiDoctor.Console/bin/Release -Recurse -Filter "apidoc.exe").FullName
                   Write-Host "Path to apidoctor tool: $apidoctorPath"
 
                   & $apidoctorPath generate-permission-files --ignore-warnings $(bootstrappingOnly) --path . --permissions-source-file $(permissionsSourceFilePath) --git-path "/bin/git"
                 displayName: "Generate permissions tables"
                 workingDirectory: microsoft-graph-docs
-
+                
+              - task: PowerShell@2
+                displayName: "Cleanup unused permisssions tables .md files"
+                inputs:
+                  targetType: filePath
+                  filePath: "microsoft-graph-devx-api/scripts/cleanupUnusedPermissionsTablesFiles.ps1"
+                  pwsh: true
 
               - template: /pipelines/templates/commit-changes.yml@self

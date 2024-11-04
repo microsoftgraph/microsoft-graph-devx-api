@@ -35,34 +35,20 @@ namespace CodeSnippetsReflection.OData
         private Uri ServiceRootV1 { get; set; }
         private Uri ServiceRootBeta { get; set; }
         private JavascriptExpressions JavascriptExpressions { get; }
-        private CSharpExpressions CSharpExpressions { get; }
-        private JavaExpressions JavaExpressions { get; }
         public static HashSet<string> SupportedLanguages { get; set; } = new(StringComparer.OrdinalIgnoreCase)
         {
-            "c#",
             "javascript",
-            "java"
         };
-
-        /// <summary>
-        /// Determines whether the snippet generation is running through the command line interface
-        /// (as opposed to DevX HTTP API)
-        /// </summary>
-        private readonly bool IsCommandLine;
 
         /// <summary>
         /// Class holding the Edm model and request processing for snippet generations
         /// </summary>
-        /// <param name="isCommandLine">Determines whether we are running the snippet generation in command line</param>
         /// <param name="customMetadataPath">Full file path to the metadata</param>
-        public ODataSnippetsGenerator(bool isCommandLine = false, string customMetadataPath = null, TelemetryClient telemetryClient = null)
+        public ODataSnippetsGenerator(string customMetadataPath = null, TelemetryClient telemetryClient = null)
         {
             _telemetryClient = telemetryClient;
-            IsCommandLine = isCommandLine;
             LoadGraphMetadata(customMetadataPath);
             JavascriptExpressions = new JavascriptExpressions();
-            CSharpExpressions = new CSharpExpressions();
-            JavaExpressions = new JavaExpressions();
         }
 
         /// <summary>
@@ -113,17 +99,8 @@ namespace CodeSnippetsReflection.OData
 
             switch (language.ToLower())
             {
-                case "c#":
-                    var csharpGenerator = new CSharpGenerator(edmModel, IsCommandLine);
-                    return csharpGenerator.GenerateCodeSnippet(snippetModel, CSharpExpressions);
-
                 case "javascript":
                     return JavaScriptGenerator.GenerateCodeSnippet(snippetModel, JavascriptExpressions);
-
-                case "java":
-                    var javaGenerator = new JavaGenerator(edmModel);
-                    return javaGenerator.GenerateCodeSnippet(snippetModel, JavaExpressions);
-
                 default:
                     throw new ArgumentOutOfRangeException($"Invalid Language {language} selected");
             }
