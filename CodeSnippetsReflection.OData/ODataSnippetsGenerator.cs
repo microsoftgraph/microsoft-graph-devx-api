@@ -12,6 +12,7 @@ using UtilityService;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.Threading;
 
 namespace CodeSnippetsReflection.OData
 {
@@ -25,13 +26,18 @@ namespace CodeSnippetsReflection.OData
         private readonly Dictionary<string, string> _snippetsTraceProperties =
                     new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(ODataSnippetsGenerator) } };
 
-        private Lazy<IEdmModel> IedmModelV1 { get; set; }
-        private Lazy<IEdmModel> IedmModelBeta { get; set; }
+        private static readonly JoinableTaskFactory _joinableTaskFactory = new(new JoinableTaskContext());
+        private AsyncLazy<IEdmModel> IedmModelV1 { get; set; }
+        private AsyncLazy<IEdmModel> IedmModelBeta { get; set; }
+        private static readonly HttpClient HttpClient = new ()
+        {
+            Timeout = TimeSpan.FromMinutes(5)
+        };
 
         /// <summary>
         /// initialized only if custom metadata path is specified in constructor
         /// </summary>
-        private Lazy<IEdmModel> CustomEdmModel { get; set; }
+        private AsyncLazy<IEdmModel> CustomEdmModel { get; set; }
 
         private Uri ServiceRootV1 { get; set; }
         private Uri ServiceRootBeta { get; set; }
@@ -63,9 +69,8 @@ namespace CodeSnippetsReflection.OData
             ServiceRootBeta = new Uri(UtilityConstants.ServiceRootBeta);
 
             // use clean metadata
-            IedmModelV1 = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanV1Metadata)), LazyThreadSafetyMode.PublicationOnly);
-            IedmModelBeta = new Lazy<IEdmModel>(() => CsdlReader.Parse(XmlReader.Create(UtilityConstants.CleanBetaMetadata)), LazyThreadSafetyMode.PublicationOnly);
-
+            IedmModelV1 = new AsyncLazy<IEdmModel>(() => GetEdmModelAsync(UtilityConstants.CleanV1Metadata), _joinableTaskFactory);
+            IedmModelBeta = new AsyncLazy<IEdmModel>(() => GetEdmModelAsync(UtilityConstants.CleanBetaMetadata), _joinableTaskFactory);
             if (customMetadataPath == null)
             {
                 return;
@@ -75,14 +80,17 @@ namespace CodeSnippetsReflection.OData
             {
                 throw new FileNotFoundException("Metadata file is not found in the specified path!", nameof(customMetadataPath));
             }
-
-            CustomEdmModel = new Lazy<IEdmModel>(() =>
-            {
-                using var reader = File.OpenText(customMetadataPath);
-                return CsdlReader.Parse(XmlReader.Create(reader));
-            });
+            CustomEdmModel = new AsyncLazy<IEdmModel>(() => GetEdmModelAsync(customMetadataPath), _joinableTaskFactory);
         }
-
+        private static async Task<IEdmModel> GetEdmModelAsync(string url) {
+            Stream stream;
+            if(url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) {
+                stream = await HttpClient.GetStreamAsync(url);
+            } else {
+                stream = File.OpenRead(url);
+            }
+            return CsdlReader.Parse(XmlReader.Create(stream)) ;
+        }
         /// <summary>
         /// Entry point to generate snippets from the payload
         /// </summary>
@@ -117,8 +125,8 @@ namespace CodeSnippetsReflection.OData
         {
             return requestUri.Segments[1] switch
             {
-                "v1.0/" => ((CustomEdmModel ?? IedmModelV1).Value, ServiceRootV1),
-                "beta/" => ((CustomEdmModel ?? IedmModelBeta).Value, ServiceRootBeta),
+                "v1.0/" => ((CustomEdmModel ?? IedmModelV1).GetValue(), ServiceRootV1),
+                "beta/" => ((CustomEdmModel ?? IedmModelBeta).GetValue(), ServiceRootBeta),
                 _ => throw new ArgumentOutOfRangeException(nameof(requestUri), "Unsupported Graph version in url"),
             };
         }
