@@ -99,7 +99,7 @@ namespace CodeSnippetsReflection.OData
         /// <returns>String of snippet generated</returns>
         public async Task<string> ProcessPayloadRequestAsync(HttpRequestMessage requestPayload, string language)
         {
-            var (edmModel, serviceRootUri) = GetModelAndServiceUriTuple(requestPayload.RequestUri);
+            var (edmModel, serviceRootUri) = await GetModelAndServiceUriTupleAsync(requestPayload.RequestUri);
             var snippetModel = new SnippetModel(requestPayload, serviceRootUri.AbsoluteUri, edmModel);
             await snippetModel.InitializeModelAsync(requestPayload);
 
@@ -121,12 +121,12 @@ namespace CodeSnippetsReflection.OData
         /// </summary>
         /// <param name="requestUri">The URI of the service requested</param>
         /// <returns>Tuple of the Edm model and the URI of the service root</returns>
-        private (IEdmModel, Uri) GetModelAndServiceUriTuple(Uri requestUri)
+        private async Task<(IEdmModel, Uri)> GetModelAndServiceUriTupleAsync(Uri requestUri)
         {
             return requestUri.Segments[1] switch
             {
-                "v1.0/" => ((CustomEdmModel ?? IedmModelV1).GetValue(), ServiceRootV1),
-                "beta/" => ((CustomEdmModel ?? IedmModelBeta).GetValue(), ServiceRootBeta),
+                "v1.0/" => (await (CustomEdmModel ?? IedmModelV1).GetValueAsync(), ServiceRootV1),
+                "beta/" => (await (CustomEdmModel ?? IedmModelBeta).GetValueAsync(), ServiceRootBeta),
                 _ => throw new ArgumentOutOfRangeException(nameof(requestUri), "Unsupported Graph version in url"),
             };
         }
