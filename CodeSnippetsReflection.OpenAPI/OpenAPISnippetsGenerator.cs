@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using CodeSnippetsReflection.OpenAPI.LanguageGenerators;
 using Microsoft.ApplicationInsights;
@@ -17,14 +18,20 @@ namespace CodeSnippetsReflection.OpenAPI
     public class OpenApiSnippetsGenerator : IOpenApiSnippetsGenerator
     {
         public const string treeNodeLabel = "default";
+        private const string MgCommandMetadataUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json";
         private readonly TelemetryClient _telemetryClient;
         private readonly Dictionary<string, string> _snippetsTraceProperties =
                     new() { { UtilityConstants.TelemetryPropertyKey_Snippets, nameof(OpenApiSnippetsGenerator) } };
         private readonly AsyncLazy<OpenApiSnippetMetadata> _v1OpenApiSnippetMetadata;
         private readonly AsyncLazy<OpenApiSnippetMetadata> _betaOpenApiSnippetMetadata;
+        private readonly AsyncLazy<IList<PowerShellCommandInfo>> _psCommands;
         #nullable enable
         private readonly AsyncLazy<OpenApiSnippetMetadata>? _customOpenApiSnippetMetadata;
-        private static readonly JoinableTaskFactory _joinableTaskFactory = new(new JoinableTaskContext());
+        private static readonly JoinableTaskFactory JoinableTaskFactory = new(new JoinableTaskContext());
+        private static readonly HttpClient HttpClient = new ()
+        {
+            Timeout = TimeSpan.FromMinutes(5),
+        };
         #nullable restore
         public OpenApiSnippetsGenerator(
             string v1OpenApiDocumentUrl = "https://raw.githubusercontent.com/microsoftgraph/msgraph-metadata/master/openapi/v1.0/openapi.yaml",
@@ -36,17 +43,16 @@ namespace CodeSnippetsReflection.OpenAPI
             if(string.IsNullOrEmpty(betaOpenApiDocumentUrl)) throw new ArgumentNullException(nameof(betaOpenApiDocumentUrl));
 
             _telemetryClient = telemetryClient;
-            _v1OpenApiSnippetMetadata = new AsyncLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferencesAsync(v1OpenApiDocumentUrl), _joinableTaskFactory);
-            _betaOpenApiSnippetMetadata = new AsyncLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferencesAsync(betaOpenApiDocumentUrl), _joinableTaskFactory);
+            _v1OpenApiSnippetMetadata = new AsyncLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferencesAsync(v1OpenApiDocumentUrl), JoinableTaskFactory);
+            _betaOpenApiSnippetMetadata = new AsyncLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferencesAsync(betaOpenApiDocumentUrl), JoinableTaskFactory);
+            _psCommands = new AsyncLazy<IList<PowerShellCommandInfo>>(() => HttpClient.GetFromJsonAsync<IList<PowerShellCommandInfo>>(MgCommandMetadataUrl), JoinableTaskFactory);
             if(!string.IsNullOrEmpty(customOpenApiPathOrUrl))
-                _customOpenApiSnippetMetadata = new AsyncLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferencesAsync(customOpenApiPathOrUrl), _joinableTaskFactory);
+                _customOpenApiSnippetMetadata = new AsyncLazy<OpenApiSnippetMetadata>(() => GetOpenApiReferencesAsync(customOpenApiPathOrUrl), JoinableTaskFactory);
         }
         private async Task<OpenApiSnippetMetadata> GetOpenApiReferencesAsync(string url) {
             Stream stream;
             if(url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) {
-                using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromMinutes(5);
-                stream = await httpClient.GetStreamAsync(url);
+                stream = await HttpClient.GetStreamAsync(url);
             } else {
                 stream = File.OpenRead(url);
             }
@@ -79,7 +85,7 @@ namespace CodeSnippetsReflection.OpenAPI
             var snippetModel = new SnippetModel(requestPayload, serviceRootUri.AbsoluteUri, openApiSnippetMetadata);
             await snippetModel.InitializeModelAsync(requestPayload);
 
-            var generator = GetLanguageGenerator(language);
+            var generator = await GetLanguageGeneratorAsync(language);
             return generator.GenerateCodeSnippet(snippetModel);
         }
         public static HashSet<string> SupportedLanguages { get; set; } = new(StringComparer.OrdinalIgnoreCase)
@@ -93,12 +99,12 @@ namespace CodeSnippetsReflection.OpenAPI
             "cli",
             "java"
         };
-        private static ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode> GetLanguageGenerator(string language) {
+        private async Task<ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>> GetLanguageGeneratorAsync(string language) {
             return language.ToLowerInvariant() switch {
                 "c#" => new CSharpGenerator(),
                 "typescript" => new TypeScriptGenerator(),
                 "go" => new GoGenerator(),
-                "powershell" => new PowerShellGenerator(),
+                "powershell" => new PowerShellGenerator(await _psCommands.GetValueAsync()),
                 "php" => new PhpGenerator(),
                 "python" => new PythonGenerator(),
                 "cli" => new GraphCliGenerator(),

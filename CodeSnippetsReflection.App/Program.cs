@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -67,8 +68,8 @@ namespace CodeSnippetsReflection.App
                 .GroupBy(l => ODataSnippetsGenerator.SupportedLanguages.Contains(l) || OpenApiSnippetsGenerator.SupportedLanguages.Contains(l))
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            var supportedLanguages = languageGroups.ContainsKey(true) ? languageGroups[true] : null;
-            var unsupportedLanguages = languageGroups.ContainsKey(false) ? languageGroups[false] : null;
+            var supportedLanguages = languageGroups.GetValueOrDefault(true, null);
+            var unsupportedLanguages = languageGroups.GetValueOrDefault(false, null);
 
             if (supportedLanguages == null)
             {
@@ -126,11 +127,6 @@ namespace CodeSnippetsReflection.App
             var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
             try
             {
-                // This is a very fast operation, it is fine to make is synchronuous.
-                // With the parallel foreach in the main method, processing all snippets for C# in both Beta and V1 takes about 7 seconds.
-                // As of this writing, the code was processing 2650 snippets
-                // Using async-await is costlier as this operation is all in-memory and task creation and scheduling overhead is high for that.
-                // With async-await, the same operation takes 1 minute 7 seconds.
                 using var message = await streamContent.ReadAsHttpRequestMessageAsync();
                 snippet = await generator.ProcessPayloadRequestAsync(message, language);
             }

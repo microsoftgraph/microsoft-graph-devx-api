@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Microsoft.OpenApi.Readers;
 using Microsoft.OpenApi.Services;
@@ -11,7 +13,8 @@ public class OpenApiSnippetGeneratorTestBase
 {
     private static OpenApiSnippetMetadata _v1SnippetMetadata;
     private static OpenApiSnippetMetadata _betaSnippetMetadata;
-    
+    private static IList<PowerShellCommandInfo> _commandMetadata;
+    private static readonly HttpClient HttpClient = new ();
     protected const string ServiceRootUrl = "https://graph.microsoft.com/v1.0";
     protected const string ServiceRootBetaUrl = "https://graph.microsoft.com/beta";
     
@@ -30,8 +33,7 @@ public class OpenApiSnippetGeneratorTestBase
         Stream stream;
         if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
         {
-            using var httpClient = new HttpClient();
-            stream = await httpClient.GetStreamAsync(url);
+            stream = await HttpClient.GetStreamAsync(url);
         }
         else
         {
@@ -43,5 +45,11 @@ public class OpenApiSnippetGeneratorTestBase
         var doc = reader.Read(stream, out var diags);
         await stream.DisposeAsync();
         return new OpenApiSnippetMetadata(OpenApiUrlTreeNode.Create(doc, "default"), doc.Components.Schemas);
+    }
+    
+    protected static async Task<IList<PowerShellCommandInfo>> GetMgCommandMetadataAsync()
+    {
+        return _commandMetadata ??= await HttpClient.GetFromJsonAsync<IList<PowerShellCommandInfo>>(
+            "https://raw.githubusercontent.com/microsoftgraph/msgraph-sdk-powershell/dev/src/Authentication/Authentication/custom/common/MgCommandMetadata.json");
     }
 }

@@ -9,7 +9,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 {
     public class PowerShellGeneratorTests : OpenApiSnippetGeneratorTestBase
     {
-        private readonly PowerShellGenerator _generator = new();
+        private readonly PowerShellGenerator _generator = new(GetMgCommandMetadataAsync().GetAwaiter().GetResult());
 
         [Fact]
         public async Task GeneratesSnippetForTheGetMethodCallAsync()
