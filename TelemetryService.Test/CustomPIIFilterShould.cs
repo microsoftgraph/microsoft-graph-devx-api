@@ -44,7 +44,7 @@ namespace TelemetrySanitizerService.Test
         // Non-existent path in UriTemplateMatcher table
         [InlineData("/permissions?requestUrl=/me/people/12345/drives&method=GET",
                     "/permissions?requestUrl=/me/people/****/drives&method=GET")]
-        public void RedactNumberFromEventTelemetry(string requestPath, string expectedPath)
+        public async System.Threading.Tasks.Task RedactNumberFromEventTelemetryAsync(string requestPath, string expectedPath)
         {
             // Arrange
             var httpMethod = "GET";
@@ -59,7 +59,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryClientProcessor.Process(eventTelemetry);
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -76,7 +76,7 @@ namespace TelemetrySanitizerService.Test
         // Non-existent path in UriTemplateMatcher table
         [InlineData("/permissions?requestUrl=/me/people/9f376303-1936-44a9-b4fd-7271483525bb/drives&method=GET",
                     "/permissions?requestUrl=/me/people/****/drives&method=GET")]
-        public void RedactGUIDFromEventTelemetry(string requestPath, string expectedPath)
+        public async System.Threading.Tasks.Task RedactGUIDFromEventTelemetryAsync(string requestPath, string expectedPath)
         {
             // Arrange
             var httpMethod = "GET";
@@ -91,7 +91,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryClientProcessor.Process(eventTelemetry);
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod + expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -106,7 +106,7 @@ namespace TelemetrySanitizerService.Test
         // Valid query param & existing path in UriTemplateMatcher table
         [InlineData("/openapi?url=/users?$filter(emailAddress eq 'MiriamG@M365x214355.onmicrosoft.com')",
                     "/openapi?url=/users")]
-        public void RedactEmailFromEventTelemetry(string requestPath, string expectedPath)
+        public async System.Threading.Tasks.Task RedactEmailFromEventTelemetryAsync(string requestPath, string expectedPath)
         {
             // Arrange
             var httpMethod = "GET";
@@ -121,7 +121,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryClientProcessor.Process(eventTelemetry);
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -136,7 +136,7 @@ namespace TelemetrySanitizerService.Test
         // Valid query param & existing path in UriTemplateMatcher table
         [InlineData("/permissions?requestUrl=/users?$filter(displayName eq 'Megan Bowen')",
                     "/permissions?requestUrl=/users")]
-        public void RedactUsernameFromEventTelemetry(string requestPath, string expectedPath)
+        public async System.Threading.Tasks.Task RedactUsernameFromEventTelemetryAsync(string requestPath, string expectedPath)
         {
             // Arrange
             var httpMethod = "GET";
@@ -151,7 +151,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryClientProcessor.Process(eventTelemetry);
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -166,7 +166,7 @@ namespace TelemetrySanitizerService.Test
         // Valid query param & existing path in UriTemplateMatcher table
         [InlineData("/openapi?url=/users?$filter(firstName eq 'Megan')",
                     "/openapi?url=/users")]
-        public void RedactFirstNameFromEventTelemetry(string requestPath, string expectedPath)
+        public async System.Threading.Tasks.Task RedactFirstNameFromEventTelemetryAsync(string requestPath, string expectedPath)
         {
             // Arrange
             var httpMethod = "GET";
@@ -181,7 +181,7 @@ namespace TelemetrySanitizerService.Test
             eventTelemetry.Properties.Add("RenderedMessage", renderedMessage);
 
             // Act
-            _telemetryClientProcessor.Process(eventTelemetry);
+            await _telemetryClientProcessor.ProcessAsync(eventTelemetry);
             var expectedMessage = $"HTTP {httpMethod} {expectedPath} responded {statusCode} in {elapsed} ms";
 
             // Assert
@@ -243,7 +243,7 @@ namespace TelemetrySanitizerService.Test
 
         #endregion
 
-        public void SanitizeRequestTelemetry(string incomingUrl, string expectedUrl)
+        public async System.Threading.Tasks.Task SanitizeRequestTelemetryAsync(string incomingUrl, string expectedUrl)
         {
             // Arrange
             var request = new RequestTelemetry
@@ -252,7 +252,7 @@ namespace TelemetrySanitizerService.Test
             };
 
             // Act
-            _telemetryClientProcessor.Process(request);
+            await _telemetryClientProcessor.ProcessAsync(request);
 
             // Assert
             Assert.Equal(expectedUrl, request.Url.ToString());
@@ -263,7 +263,7 @@ namespace TelemetrySanitizerService.Test
             "Fetching 'DelegatedWork' permissions for url '/users/****/drives' and method 'GET'")]
         [InlineData("Fetching 'DelegatedWork' permissions for url '/users?$expand=directreports($filter=firstName eq 'mary')' and method 'GET'",
             "Fetching 'DelegatedWork' permissions for url '/users?$expand=directreports($filter=firstName eq ****)' and method 'GET'")]
-        public void RedactPIIFromTraceTelemetry(string incomingMsg, string expectedMsg)
+        public async System.Threading.Tasks.Task RedactPIIFromTraceTelemetryAsync(string incomingMsg, string expectedMsg)
         {
             // Arrange
             var trace = new TraceTelemetry
@@ -272,7 +272,7 @@ namespace TelemetrySanitizerService.Test
             };
 
             // Act
-            _telemetryClientProcessor.Process(trace);
+            await _telemetryClientProcessor.ProcessAsync(trace);
 
             // Assert
             Assert.Equal(expectedMsg, trace.Message);

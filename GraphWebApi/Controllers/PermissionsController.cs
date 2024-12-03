@@ -42,7 +42,7 @@ namespace GraphWebApi.Controllers
         // Gets the permissions scopes
         [HttpGet]
         [Produces("application/json")]
-        public async Task<IActionResult> GetPermissionScopes([FromQuery]ScopeType? scopeType = null,
+        public async Task<IActionResult> GetPermissionScopesAsync([FromQuery]ScopeType? scopeType = null,
                                                              [FromQuery]string requestUrl = null,
                                                              [FromQuery]string method = null,
                                                              [FromQuery]string org = null,
@@ -78,7 +78,7 @@ namespace GraphWebApi.Controllers
 
         [HttpPost]
         [Produces("application/json")]
-        public async Task<IActionResult> GetPermissionScopes([FromBody] List<RequestInfo> requests,
+        public async Task<IActionResult> GetPermissionScopesAsync([FromBody] List<RequestInfo> requests,
                                                              [FromQuery] ScopeType? scopeType = null,
                                                              [FromQuery] string org = null,
                                                              [FromQuery] string branchName = null,

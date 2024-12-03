@@ -17,7 +17,7 @@ namespace MockTestUtility
     /// </summary>
     public class FileUtilityMock : IFileUtility, IHttpClientUtility
     {
-        public async Task<string> ReadFromFile(string filePathSource)
+        public async Task<string> ReadFromFileAsync(string filePathSource)
         {
             UtilityFunctions.CheckArgumentNull(filePathSource, nameof(filePathSource));
 
@@ -35,10 +35,10 @@ namespace MockTestUtility
             UtilityFunctions.CheckArgumentNull(requestMessage, nameof(requestMessage));
 
             // Mock reading from an HTTP source.
-            return await ReadFromFile(requestMessage.RequestUri.OriginalString);
+            return await ReadFromFileAsync(requestMessage.RequestUri.OriginalString);
         }
 
-        public Task WriteToFile(string fileContents, string filePathSource)
+        public Task WriteToFileAsync(string fileContents, string filePathSource)
         {
             // Not implemented
             return Task.CompletedTask;
