@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -312,12 +311,20 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private static string GetNestedObjectName(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
             if (!(nodes?.Any() ?? false)) return string.Empty;
-            // if the first element is a collection index skip it
-            var isCollection = nodes.First().Segment.IsCollectionIndex();
-            var isSingleElement = nodes.Count() == 1;
 
-            var filteredNodes = (isCollection && !isSingleElement) ? nodes.Skip(2) : isCollection ? nodes.Skip(1) : nodes; // skip first element if its not only element
-            if (!(filteredNodes?.Any() ?? false)) return string.Empty;
+            var enumeratedNodes = nodes.ToList();
+            // if the first element is a collection index skip it
+            var isCollection = enumeratedNodes.First().Segment.IsCollectionIndex();
+            var isSingleElement = enumeratedNodes.Count() == 1;
+            var elementCount = enumeratedNodes.Count(); // check if its a nested element
+
+            var filteredNodes = enumeratedNodes;
+            if (isCollection && !isSingleElement)
+                filteredNodes = enumeratedNodes.Skip(2).ToList();
+            else if (isCollection || elementCount > 2)
+                filteredNodes = enumeratedNodes.Skip(1).ToList();
+
+            if (!filteredNodes.Any()) return string.Empty;
             return filteredNodes.Select(static x =>
             {
                 if (x.Segment.IsCollectionIndex())
@@ -325,9 +332,9 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 else
                     return EscapeFunctionNames(x.Segment.ToFirstCharacterUpperCase());
             })
-                        .Aggregate(static (x, y) =>
+                        .Aggregate((x, y) =>
                         {
-                            var w = x.EndsWith('s') && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
+                            var w = elementCount < 3 && x.EndsWith('s') && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;
                             w = "Me".Equals(w, StringComparison.Ordinal) ? "Item" : w;
                             return $"{w}{y}";
                         });
@@ -344,7 +351,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var paramMatches = ParamRegex.Matches(match.Groups[2].Value);
                 var paramNames = paramMatches.Cast<Match>().Select(static m => m.Groups[1].Value.ToFirstCharacterUpperCase()).ToList();
 
-                return match.Groups[1].Value + "With" + string.Join("With", paramNames);
+                return paramNames.Count > 0 ? match.Groups[1].Value + "With" + string.Join("With", paramNames) : match.Groups[1].Value;
             }
             return objectName;
         }
