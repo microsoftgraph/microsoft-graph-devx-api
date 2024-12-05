@@ -318,7 +318,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var isSingleElement = enumeratedNodes.Count == 1;
             var elementCount = enumeratedNodes.Count; // check if its a nested element
 
-            var filteredNodes = enumeratedNodes.ToList();
+            var filteredNodes = enumeratedNodes;
             if (isCollection && !isSingleElement)
                 filteredNodes = enumeratedNodes.Skip(2).ToList();
             else if (isCollection || elementCount > 2)
