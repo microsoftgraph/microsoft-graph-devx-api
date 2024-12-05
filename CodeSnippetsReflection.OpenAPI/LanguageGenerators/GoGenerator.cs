@@ -310,28 +310,22 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetNestedObjectName(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
-            if (!(nodes?.Any() ?? false)) return string.Empty;
-
             var enumeratedNodes = nodes.ToList();
-            // if the first element is a collection index skip it
-            var isCollection = enumeratedNodes.First().Segment.IsCollectionIndex();
-            var isSingleElement = enumeratedNodes.Count() == 1;
-            var elementCount = enumeratedNodes.Count(); // check if its a nested element
+            if (!(enumeratedNodes?.Any() ?? false)) return string.Empty;
 
-            var filteredNodes = enumeratedNodes;
+            // if the first element is a collection index skip it
+            var isCollection = enumeratedNodes[0].Segment.IsCollectionIndex();
+            var isSingleElement = enumeratedNodes.Count == 1;
+            var elementCount = enumeratedNodes.Count; // check if its a nested element
+
+            var filteredNodes = enumeratedNodes.ToList();
             if (isCollection && !isSingleElement)
                 filteredNodes = enumeratedNodes.Skip(2).ToList();
             else if (isCollection || elementCount > 2)
                 filteredNodes = enumeratedNodes.Skip(1).ToList();
 
             if (!filteredNodes.Any()) return string.Empty;
-            return filteredNodes.Select(static x =>
-            {
-                if (x.Segment.IsCollectionIndex())
-                    return "Item";
-                else
-                    return EscapeFunctionNames(x.Segment.ToFirstCharacterUpperCase());
-            })
+            return filteredNodes.Select(static x => x.Segment.IsCollectionIndex() ? "Item" : EscapeFunctionNames(x.Segment.ToFirstCharacterUpperCase()))
                         .Aggregate((x, y) =>
                         {
                             var w = elementCount < 3 && x.EndsWith('s') && y.Equals("Item") ? x.Remove(x.Length - 1, 1) : x;

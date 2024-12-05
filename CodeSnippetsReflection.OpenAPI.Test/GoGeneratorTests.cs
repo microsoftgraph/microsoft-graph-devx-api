@@ -589,7 +589,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         public async Task GeneratesConfigurationObject()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{id}}/mailFolders('inbox')/messages/delta?changeType=created&$select=subject,from,isRead,body,receivedDateTime");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("requestParameters := &graphusers.ItemMailFoldersItemMessagesDeltaRequestBuilderGetQueryParameters{", result);
             Assert.Contains("configuration := &graphusers.ItemMailFoldersItemMessagesDeltaRequestBuilderGetRequestConfiguration{", result);
