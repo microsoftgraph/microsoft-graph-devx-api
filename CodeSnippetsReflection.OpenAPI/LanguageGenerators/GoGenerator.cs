@@ -310,8 +310,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
         private static string GetNestedObjectName(IEnumerable<OpenApiUrlTreeNode> nodes)
         {
-            var enumeratedNodes = nodes.ToList();
-            if (!(enumeratedNodes?.Any() ?? false)) return string.Empty;
+            var enumeratedNodes = nodes?.ToList() ?? new List<OpenApiUrlTreeNode>();
+            if (!enumeratedNodes.Any()) return string.Empty;
 
             // if the first element is a collection index skip it
             var isCollection = enumeratedNodes[0].Segment.IsCollectionIndex();
