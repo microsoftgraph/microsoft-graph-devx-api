@@ -584,7 +584,18 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("toDateTime , err := time.Parse(time.RFC3339, \"{toDateTime}\")", result);
             Assert.Contains("microsoftGraphCallRecordsGetPstnCalls, err := graphClient.Communications().CallRecords().MicrosoftGraphCallRecordsGetPstnCallsWithFromDateTimeWithToDateTime(&fromDateTime, &toDateTime).GetAsGetPstnCallsWithFromDateTimeWithToDateTimeGetResponse(context.Background(), nil)", result);
         }
-
+        
+        [Fact]
+        public async Task GeneratesConfigurationObject()
+        {
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/{{id}}/mailFolders('inbox')/messages/delta?changeType=created&$select=subject,from,isRead,body,receivedDateTime");
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            var result = _generator.GenerateCodeSnippet(snippetModel);
+            Assert.Contains("requestParameters := &graphusers.ItemMailFoldersItemMessagesDeltaRequestBuilderGetQueryParameters{", result);
+            Assert.Contains("configuration := &graphusers.ItemMailFoldersItemMessagesDeltaRequestBuilderGetRequestConfiguration{", result);
+            Assert.Contains("delta, err := graphClient.Users().ByUserId(\"user-id\").MailFolders().ByMailFolderId(\"mailFolder-id\").Messages().Delta().GetAsDeltaGetResponse(context.Background(), configuration)", result);
+        }
+        
         [Fact]
         public async Task GenerateFindMeetingTimeAsync()
         {
