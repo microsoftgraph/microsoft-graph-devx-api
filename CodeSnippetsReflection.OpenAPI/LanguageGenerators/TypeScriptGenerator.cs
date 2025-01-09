@@ -39,19 +39,19 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var snippetBuilder = new StringBuilder(
                 "//THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY" + Environment.NewLine);
 
-            writeImportStatements(codeGraph, snippetBuilder);
-            writeSnippet(codeGraph, snippetBuilder);
+            WriteImportStatements(codeGraph, snippetBuilder);
+            WriteSnippet(codeGraph, snippetBuilder);
 
             return snippetBuilder.ToString();
         }
 
-        private static void writeImportStatements(SnippetCodeGraph codeGraph, StringBuilder builder)
+        private static void WriteImportStatements(SnippetCodeGraph codeGraph, StringBuilder builder)
         {
             builder.AppendLine("// Dependencies");
-            var apiVersion = "v1.0".Equals(codeGraph.ApiVersion) ? "msgraph-sdk" : "msgraph-beta-sdk";
+            var apiVersion = "v1.0".Equals(codeGraph.ApiVersion, StringComparison.Ordinal) ? "msgraph-sdk" : "msgraph-beta-sdk";
 
             var initialPackage = codeGraph.Nodes.First().Segment.ToLowerInvariant();
-            if (initialPackage.Equals("me"))
+            if (initialPackage.Equals("me", StringComparison.OrdinalIgnoreCase))
             {
                 initialPackage = "users";
             }
@@ -62,8 +62,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             var models = GetImportNamespaces(apiVersion, codeGraph);
             foreach (var path in models)
             {
-                var pathModels = path.Value.Select(x => x.ToFirstCharacterUpperCase())
-                    .Where(s => !string.IsNullOrEmpty(s)).Aggregate((a, b) => $"{a}, {b}");
+                var pathModels = path.Value.Select(static x => x.ToFirstCharacterUpperCase())
+                    .Where(static s => !string.IsNullOrEmpty(s)).Aggregate(static (a, b) => $"{a}, {b}");
                 builder.AppendLine($"import {{ {pathModels} }} from \"{path.Key}\";");
             }
 
@@ -93,7 +93,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             }
         }
 
-        public static Dictionary<String, HashSet<String>> GetImportNamespaces(String apiVersion,
+        private static Dictionary<String, HashSet<String>> GetImportNamespaces(String apiVersion,
             SnippetCodeGraph codeGraph)
         {
             Dictionary<String, HashSet<String>> result =
@@ -123,15 +123,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             var formatNameSpace = x.NamespaceName.Split(".").Select(static x =>
                             {
                                 var result = x.ToFirstCharacterLowerCase();
-                                return result.Equals("me") ? "users/item" : result;
+                                return result.Equals("me", StringComparison.OrdinalIgnoreCase) ? "users/item" : result;
                             }).Aggregate(static (x, y) => $"{x}/{y}");
                             var objectCleanNameSpace = GetCleanNamespaceName(x.NamespaceName);
 
-                            var objectNameSpace = objectCleanNameSpace.ToFirstCharacterLowerCase().Equals("models")
+                            var objectNameSpace = objectCleanNameSpace.ToFirstCharacterLowerCase().Equals("models", StringComparison.OrdinalIgnoreCase)
                                 ? $"@microsoft/{apiVersion}/{objectCleanNameSpace.ToLowerInvariant()}"
                                 : $"@microsoft/{apiVersion}-{objectCleanNameSpace.ToLowerInvariant()}";
 
-                            var lastNameSpace = objectCleanNameSpace.ToFirstCharacterLowerCase().Equals("models")
+                            var lastNameSpace = objectCleanNameSpace.ToFirstCharacterLowerCase().Equals("models", StringComparison.OrdinalIgnoreCase)
                                 ? objectNameSpace
                                 : $"{objectNameSpace}/{formatNameSpace.ToFirstCharacterLowerCase()}";
                             AddNamespace(result, lastNameSpace, x.Name);
@@ -177,7 +177,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             return processedName;
         }
 
-        private static void writeSnippet(SnippetCodeGraph codeGraph, StringBuilder builder)
+        private static void WriteSnippet(SnippetCodeGraph codeGraph, StringBuilder builder)
         {
             writeHeadersAndOptions(codeGraph, builder);
             WriteBody(codeGraph, builder);
@@ -402,7 +402,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                     {
                         var node = part.Segment.Replace("{", "").Replace("}", "");
                         var nodeName =
-                            $"by{node.Split("-").Select(x => x.ToFirstCharacterUpperCase()).Aggregate((x, y) => $"{x}{y}")}";
+                            $"by{node.Split("-").Select(static  x => x.ToFirstCharacterUpperCase()).Aggregate(static  (x, y) => $"{x}{y}")}";
                         return $"{nodeName}(\"{node}\")";
                     }
 
@@ -412,7 +412,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                             .Aggregate(static (a, b) => $"{a}{b}").ToFirstCharacterLowerCase();
                     return part.Segment.ToFirstCharacterLowerCase();
                 })
-                .Where(s => !string.IsNullOrEmpty(s)) // Remove any empty entries
+                .Where(static s => !string.IsNullOrEmpty(s)) // Remove any empty entries
                 .Aggregate(static (x, y) => $"{x}.{y}");
         }
     }
