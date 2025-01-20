@@ -24,7 +24,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Throws<ArgumentNullException>(() => new SnippetModel(requestMock, "something", null));
         }
         [Fact]
-        public async Task FindsThePathItem()
+        public async Task FindsThePathItemAsync()
         {
             const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
                                           "\"displayName\": \"displayName-value\",\r\n  " +
@@ -36,7 +36,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject)
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             Assert.NotNull(snippetModel.EndPathNode);
             Assert.NotNull(snippetModel.RootPathNode);
             Assert.Equal(snippetModel.EndPathNode, snippetModel.RootPathNode);
@@ -44,10 +45,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.InRange(snippetModel.PathNodes.Count, 1, 1);
         }
         [Fact]
-        public async Task FindsTheSubPathItem()
+        public async Task FindsTheSubPathItemAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             Assert.NotNull(snippetModel.EndPathNode);
             Assert.NotNull(snippetModel.RootPathNode);
             Assert.NotEqual(snippetModel.EndPathNode, snippetModel.RootPathNode);
@@ -55,7 +57,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.InRange(snippetModel.PathNodes.Count, 2, 2);
         }
         [Fact]
-        public async Task GetsTheRequestSchema()
+        public async Task GetsTheRequestSchemaAsync()
         {
             const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
                                           "\"displayName\": \"displayName-value\",\r\n  " +
@@ -67,15 +69,17 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             Assert.NotNull(snippetModel.RequestSchema);
             Assert.NotEmpty(snippetModel.RequestSchema.AllOf);
         }
         [Fact]
-        public async Task GetsTheResponseSchema()
+        public async Task GetsTheResponseSchemaAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             Assert.NotNull(snippetModel.ResponseSchema);
             Assert.True(snippetModel.ResponseSchema.Properties.Any() ||
                 snippetModel.ResponseSchema.AnyOf.Any() ||
@@ -84,7 +88,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
         
         [Fact]
-        public async Task ThrowsExceptionForUnsupportedHttpOperation()
+        public async Task ThrowsExceptionForUnsupportedHttpOperationAsync()
         {
             // DELETE /users/{user-id}/delta
             // Given
@@ -93,13 +97,13 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             // When
             // Then
-            var snippetMetadata = await GetV1SnippetMetadata();
+            var snippetMetadata = await GetV1SnippetMetadataAsync();
             var entryPointNotFoundException = Assert.Throws<EntryPointNotFoundException>(() => new SnippetModel(requestPayload, ServiceRootUrl, snippetMetadata));
             Assert.Equal("HTTP Method 'DELETE' not found for path.",entryPointNotFoundException.Message);
         }
         
         [Fact]
-        public async Task ThrowsExceptionForUnsupportedPathOperation()
+        public async Task ThrowsExceptionForUnsupportedPathOperationAsync()
         {
             // GET /users/{user-id}/deltaTest
             // Given
@@ -108,7 +112,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
             // When
             // Then
-            var snippetMetadata = await GetV1SnippetMetadata();
+            var snippetMetadata = await GetV1SnippetMetadataAsync();
             var entryPointNotFoundException = Assert.Throws<EntryPointNotFoundException>(() => new SnippetModel(requestPayload, ServiceRootUrl, snippetMetadata));
             Assert.Equal("Path segment 'deltaTest' not found in path",entryPointNotFoundException.Message);
         }

@@ -9,169 +9,187 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 {
     public class PowerShellGeneratorTests : OpenApiSnippetGeneratorTestBase
     {
-        private readonly PowerShellGenerator _generator = new();
+        private readonly PowerShellGenerator _generator = new(GetMgCommandMetadataAsync().GetAwaiter().GetResult());
 
         [Fact]
-        public async Task GeneratesSnippetForTheGetMethodCall()
+        public async Task GeneratesSnippetForTheGetMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForThePostMethodCall()
+        public async Task GeneratesSnippetForThePostMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("New-", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForThePatchMethodCall()
+        public async Task GeneratesSnippetForThePatchMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/me/messages/{{message-id}}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Update-", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForThePutMethodCall()
+        public async Task GeneratesSnippetForThePutMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/applications/{{application-id}}/logo");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForTheDeleteMethodCall()
+        public async Task GeneratesSnippetForTheDeleteMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{message-id}}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Remove-", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithSelectQueryOption()
+        public async Task GeneratesSnippetForRequestWithSelectQueryOptionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$select=displayName,id");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Property \"displayName,id\"", result);
         }
 
         [Fact]
-        public async Task GeneratesNoneEncodedSnippetForRequestWithFilterQueryOptionAndEncodedPayloads()
+        public async Task GeneratesNoneEncodedSnippetForRequestWithFilterQueryOptionAndEncodedPayloadsAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$filter=displayName+eq+'Megan+Bowen'");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Filter \"displayName eq 'Megan Bowen'\"", result);
         }
 
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithFilterQueryOption()
+        public async Task GeneratesSnippetForRequestWithFilterQueryOptionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$filter=displayName eq 'Megan Bowen'");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Filter \"displayName eq 'Megan Bowen'\"", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithExpandQueryOption()
+        public async Task GeneratesSnippetForRequestWithExpandQueryOptionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-ExpandProperty \"members\"", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithExpandQueryOptionWithSelect()
+        public async Task GeneratesSnippetForRequestWithExpandQueryOptionWithSelectAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=displayName)");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-ExpandProperty \"members(`$select=displayName)\"", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithOrderByQueryOption()
+        public async Task GeneratesSnippetForRequestWithOrderByQueryOptionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$orderby=displayName");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Sort \"displayName\"", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithOrderByQueryOptionWithSortDirection()
+        public async Task GeneratesSnippetForRequestWithOrderByQueryOptionWithSortDirectionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$orderby=displayName desc");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Sort \"displayName desc\"", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithOrderByQueryOptionWithMultipleSortingFields()
+        public async Task GeneratesSnippetForRequestWithOrderByQueryOptionWithMultipleSortingFieldsAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$orderby=displayName,mail");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Sort \"displayName,mail\"", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithTopQueryOption()
+        public async Task GeneratesSnippetForRequestWithTopQueryOptionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$top=3");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Top 3", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithSkipQueryOption()
+        public async Task GeneratesSnippetForRequestWithSkipQueryOptionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$skip=10");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Skip 10", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithCountQueryOption()
+        public async Task GeneratesSnippetForRequestWithCountQueryOptionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true");
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-CountVariable CountVar", result);
             Assert.Contains("-ConsistencyLevel eventual", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithPathParameters()
+        public async Task GeneratesSnippetForRequestWithPathParametersAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users/48d31887-5fad-4d73-a9f5-3c356e68a038/appRoleAssignments/hxjTSK1fc02p9Tw1bmigOD83KvI8C1hIl2enozuqhEM");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-UserId $userId -AppRoleAssignmentId $appRoleAssignmentId", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithQueryParameters()
+        public async Task GeneratesSnippetForRequestWithQueryParametersAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?customParameter=value");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Customparameter \"value\"", result);
         }
@@ -179,10 +197,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Theory]
         [InlineData("/me")]
         [InlineData("/me/messages")]
-        public async Task GeneratesSnippetsForMeSegment(string path)
+        public async Task GeneratesSnippetsForMeSegmentAsync(string path)
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{path}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-UserId $userId", result);
             Assert.Contains("# A UPN can also be used as -UserId.", result);
@@ -191,10 +210,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Theory]
         [InlineData("/users")]
         [InlineData("/users/48d31887-5fad-4d73-a9f5-3c356e68a038")]
-        public async Task GeneratesSnippetsForUserSegment(string path)
+        public async Task GeneratesSnippetsForUserSegmentAsync(string path)
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{path}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             Assert.Contains("-MgUser", result);
@@ -204,10 +224,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Theory]
         [InlineData("/me/changePassword")]
         [InlineData("/users/{user-id}/microsoft.graph.changePassword")]
-        public async Task GeneratesSnippetsForODataAction(string path)
+        public async Task GeneratesSnippetsForODataActionAsync(string path)
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}{path}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-UserId $userId", result);
             Assert.Contains("Update-MgUserPassword", result);
@@ -216,57 +237,62 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Theory]
         [InlineData("/me")]
         [InlineData("/users/48d31887-5fad-4d73-a9f5-3c356e68a038")]
-        public async Task GeneratesSnippetForImportModule(string path)
+        public async Task GeneratesSnippetForImportModuleAsync(string path)
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}{path}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var firstLine = result.Substring(0, result.IndexOf(Environment.NewLine));
             Assert.StartsWith("Import-Module Microsoft.Graph.Users", firstLine);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithSearchQueryOption()
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:Megan\"");
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Search '\"displayName:Megan\"'", result);
             Assert.Contains("-ConsistencyLevel eventual", result);
         }
         [Fact]
-        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithORLogicalConjuction()
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithORLogicalConjuctionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" OR \"displayName:al\"");
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Search '\"displayName:di\" OR \"displayName:al\"'", result);
             Assert.Contains("-ConsistencyLevel eventual", result);
         }
         [Fact]
-        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjuction()
+        public async Task GeneratesSnippetForRequestWithSearchQueryOptionWithANDLogicalConjuctionAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$search=\"displayName:di\" AND \"displayName:al\"");
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-Search '\"displayName:di\" AND \"displayName:al\"'", result);
             Assert.Contains("-ConsistencyLevel eventual", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithNoBody()
+        public async Task GeneratesSnippetForRequestWithNoBodyAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.DoesNotContain("-BodyParameter", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithBody()
+        public async Task GeneratesSnippetForRequestWithBodyAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users")
             {
@@ -275,7 +301,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
                 $"displayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
@@ -285,7 +312,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithNestedBody()
+        public async Task GeneratesSnippetForRequestWithNestedBodyAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/users")
             {
@@ -298,7 +325,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
                 $"displayName = \"Melissa Darrow\"{Environment.NewLine}\t" +
@@ -313,7 +341,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithArrayInBody()
+        public async Task GeneratesSnippetForRequestWithArrayInBodyAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/groups")
             {
@@ -322,7 +350,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
                 $"displayName = \"Library Assist\"{Environment.NewLine}\t" +
@@ -335,7 +364,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             Assert.Contains("-BodyParameter $params", result);
         }
         [Fact]
-        public async Task GeneratesSnippetForRequestWithWrongQuotesForStringLiteralsInBody()
+        public async Task GeneratesSnippetForRequestWithWrongQuotesForStringLiteralsInBodyAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/policies/claimsMappingPolicies")
             {
@@ -344,7 +373,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
                 $"definition = @(" +
@@ -360,43 +390,47 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesSnippetForDeltaFunctionsWithoutParams()
+        public async Task GeneratesSnippetForDeltaFunctionsWithoutParamsAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/contacts/delta()?$select=displayName%2CjobTitle%2Cmail");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgContactDelta", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForHttpSnippetsWithGraphPrefixOnLastPathSegment()
+        public async Task GeneratesSnippetForHttpSnippetsWithGraphPrefixOnLastPathSegmentAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/places/graph.room");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgPlaceAsRoom", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForHttpSnippetsWithoutGraphPrefixOnLastPathSegment()
+        public async Task GeneratesSnippetForHttpSnippetsWithoutGraphPrefixOnLastPathSegmentAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/places/microsoft.graph.room");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgPlaceAsRoom", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForPathsWithIdentityProviderAsRootNode()
+        public async Task GeneratesSnippetForPathsWithIdentityProviderAsRootNodeAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/identityProviders");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgIdentityProvider", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithTextContentType()
+        public async Task GeneratesSnippetForRequestWithTextContentTypeAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/me/drive/items/XXXX/content")
             {
@@ -405,13 +439,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "text/plain")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-MgDriveItemContent", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithApplicationZipContentType()
+        public async Task GeneratesSnippetForRequestWithApplicationZipContentTypeAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/me/drive/items/XXXX/content")
             {
@@ -420,13 +455,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "application/zip")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-MgDriveItemContent", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithImageContentType()
+        public async Task GeneratesSnippetForRequestWithImageContentTypeAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/me/photo/$value")
             {
@@ -435,61 +471,67 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "image/jpeg")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-MgUserPhotoContent", result);
             Assert.Contains("-BodyParameter", result);
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForFunctionsWithoutParams()
+        public async Task GeneratesBetaSnippetForFunctionsWithoutParamsAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/contacts/delta()?$select=displayName%2CjobTitle%2Cmail");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaContactDelta", result);
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForFunctionsWithSingleParam()
+        public async Task GeneratesBetaSnippetForFunctionsWithSingleParamAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/roleManagement/directory/roleEligibilitySchedules/filterByCurrentUser(on='principal')");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Invoke-MgBetaFilterRoleManagementDirectoryRoleEligibilityScheduleByCurrentUser", result);
             Assert.Contains("-On", result);
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForFunctionsWithMultipleParam()
+        public async Task GeneratesBetaSnippetForFunctionsWithMultipleParamAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/communications/callRecords/getPstnBlockedUsersLog(fromDateTime=XXXXXX,toDateTime=XXXXX)");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaCommunicationCallRecordPstnBlockedUserLog", result);
             Assert.Contains("-ToDateTime", result);
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForHttpSnippetsWithGraphPrefixOnLastPathSegment()
+        public async Task GeneratesBetaSnippetForHttpSnippetsWithGraphPrefixOnLastPathSegmentAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/places/graph.room");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaPlaceAsRoom", result);
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForPathsWithIdentityProviderAsRootNode()
+        public async Task GeneratesBetaSnippetForPathsWithIdentityProviderAsRootNodeAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/identityProviders");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Get-MgBetaIdentityProvider", result);
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForRequestWithTextContentType()
+        public async Task GeneratesBetaSnippetForRequestWithTextContentTypeAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootBetaUrl}/me/drive/items/XXXX/content")
             {
@@ -498,13 +540,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "text/plain")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-MgBetaDriveItemContent", result);
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForRequestWithApplicationZipContentType()
+        public async Task GeneratesBetaSnippetForRequestWithApplicationZipContentTypeAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootBetaUrl}/me/drive/items/XXXX/content")
             {
@@ -513,13 +556,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "application/zip")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-MgBetaDriveItemContent", result);
         }
 
         [Fact]
-        public async Task GeneratesBetaSnippetForRequestWithImageContentType()
+        public async Task GeneratesBetaSnippetForRequestWithImageContentTypeAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootBetaUrl}/me/photo/$value")
             {
@@ -528,24 +572,26 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "image/jpeg")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("Set-MgBetaUserPhotoContent", result);
             Assert.Contains("-BodyParameter", result);
         }
 
         [Fact]
-        public async Task GeneratesSnippetForRequestWithHyphenatedRequestHeaderNames()
+        public async Task GeneratesSnippetForRequestWithHyphenatedRequestHeaderNamesAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootBetaUrl}/planner/tasks/xxxxxxxx");
             requestPayload.Headers.Add("If-Match", "W/\"lastEtagId\"");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("-IfMatch W/'\"lastEtagId\"'", result);
             Assert.Contains("Update-MgBetaPlannerTask", result);
         }
         [Fact]
-        public async Task GeneratesSnippetForRequestWithNestedArrayAndObjectsInBody()
+        public async Task GeneratesSnippetForRequestWithNestedArrayAndObjectsInBodyAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/education/classes/XXXXX/assignmentSettings")
             {
@@ -554,7 +600,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
                     Encoding.UTF8,
                     "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expectedParams = $"$params = @{{{Environment.NewLine}\t" +
                 $"gradingSchemes = @({Environment.NewLine}\t\t" +

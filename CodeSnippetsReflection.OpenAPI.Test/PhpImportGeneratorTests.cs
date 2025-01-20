@@ -12,17 +12,18 @@ public class PhpImportTests : OpenApiSnippetGeneratorTestBase
     private readonly PhpGenerator _generator = new();
 
     [Fact]
-    public async Task GeneratesRequestBuilderImports()
+    public async Task GeneratesRequestBuilderImportsAsync()
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith(subject,'All')");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("use Microsoft\\Graph\\GraphServiceClient;", result);
         Assert.Contains("use Microsoft\\Graph\\Generated\\Users\\Item\\Calendar\\Events\\EventsRequestBuilderGetRequestConfiguration;", result);
     }
 
     [Fact]
-    public async Task GenerateModelImports(){
+    public async Task GenerateModelImportsAsync(){
         var bodyContent = @"{
             ""displayName"":  ""New display name""
             }";
@@ -30,14 +31,15 @@ public class PhpImportTests : OpenApiSnippetGeneratorTestBase
         {
             Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
         };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("use Microsoft\\Graph\\GraphServiceClient;", result);
         Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Application;", result);
 
     }
     [Fact]
-    public async Task GenerateComplexModelImports(){
+    public async Task GenerateComplexModelImportsAsync(){
         var bodyContent = @"{
             ""subject"": ""Annual review"",
             ""body"": {
@@ -65,7 +67,8 @@ public class PhpImportTests : OpenApiSnippetGeneratorTestBase
         {
             Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
         };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("use Microsoft\\Graph\\GraphServiceClient;", result);
         Assert.Contains("use Microsoft\\Graph\\Generated\\Models\\Message;", result);

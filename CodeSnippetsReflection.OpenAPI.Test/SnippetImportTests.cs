@@ -12,7 +12,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test;
 public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
 {
     [Fact]
-    public async Task TestGenerateImportTemplatesForModelImports()
+    public async Task TestGenerateImportTemplatesForModelImportsAsync()
     {
         const string userJsonObject = "{\r\n  \"accountEnabled\": true,\r\n  " +
                         "\"displayName\": \"displayName-value\",\r\n  " +
@@ -24,17 +24,19 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
         {
             Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
         };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = ImportsGenerator.GenerateImportTemplates(snippetModel);
         Assert.NotNull(result);
         Assert.IsType<List<ImportTemplate>>(result);
         Assert.Equal(2, result.Count);
     }
     [Fact]
-    public async Task TestGenerateImportTemplatesForRequestBuilderImports()
+    public async Task TestGenerateImportTemplatesForRequestBuilderImportsAsync()
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith(subject,'All')");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = ImportsGenerator.GenerateImportTemplates(snippetModel);
         Assert.NotNull(result);
         Assert.IsType<List<ImportTemplate>>(result);
@@ -42,10 +44,11 @@ public class ImportsGeneratorTests : OpenApiSnippetGeneratorTestBase
         Assert.NotNull(result[0].RequestBuilderName);
     }
     [Fact]
-    public async Task TestGenerateImportTemplatesForNestedRequestBuilderImports()
+    public async Task TestGenerateImportTemplatesForNestedRequestBuilderImportsAsync()
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/applications(appId={{application-id}})?$select=id,appId,displayName,requiredResourceAccess");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = ImportsGenerator.GenerateImportTemplates(snippetModel);
         Assert.NotNull(result);
         Assert.IsType<List<ImportTemplate>>(result);

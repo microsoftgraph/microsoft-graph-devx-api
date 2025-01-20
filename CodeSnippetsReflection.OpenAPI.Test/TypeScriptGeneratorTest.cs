@@ -12,15 +12,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 
         // check path correctness
         [Fact]
-        public async Task GeneratesTheCorrectFluentAPIPath()
+        public async Task GeneratesTheCorrectFluentAPIPathAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
-
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
 	            await graphServiceClient.me.messages.get();
@@ -31,18 +31,22 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesClassWithDefaultBodyWhenSchemaNotPresent()
+        public async Task GeneratesClassWithDefaultBodyWhenSchemaNotPresentAsync()
         {
             const string userJsonObject = "{  \"decision\": \"Approve\",  \"justification\": \"All principals with access need continued access to the resource (Marketing Group) as all the principals are on the marketing team\",  \"resourceId\": \"a5c51e59-3fcd-4a37-87a1-835c0c21488a\"}";
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/identityGovernance/accessReviews/definitions/e6cafba0-cbf0-4748-8868-0810c7f4cc06/instances/1234fba0-cbf0-6778-8868-9999c7f4cc06/batchRecordDecisions")
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
+            // Dependencies
+            import ""@microsoft/msgraph-sdk-identitygovernance"";
+            import { BatchRecordDecisionsPostRequestBody } from ""@microsoft/msgraph-sdk-identitygovernance/identityGovernance/accessReviews/definitions/item/instances/item/batchRecordDecisions"";
+            //other-imports
 
             const requestBody : BatchRecordDecisionsPostRequestBody = {
 	            decision : ""Approve"",
@@ -50,68 +54,77 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 	            resourceId : ""a5c51e59-3fcd-4a37-87a1-835c0c21488a"",
             };
 
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
+
             const result = async () => {
-	            await graphServiceClient.identityGovernance.accessReviews.definitionsById(""accessReviewScheduleDefinition-id"").instancesById(""accessReviewInstance-id"").batchRecordDecisions.post(requestBody);
+	            await graphServiceClient.identityGovernance.accessReviews.definitions.byAccessReviewScheduleDefinitionId(""accessReviewScheduleDefinition-id"").instances.byAccessReviewInstanceId(""accessReviewInstance-id"").batchRecordDecisions.post(requestBody);
             }
             ";
-
 
             AssertExtensions.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
-        public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollections()
+        public async Task GeneratesTheCorrectFluentAPIPathForIndexedCollectionsAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages/{{message-id}}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
+            // Dependencies
+            import ""@microsoft/msgraph-sdk-users"";
+            //other-imports
 
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
-	            await graphServiceClient.me.messagesById(""message-id"").get();
+	            await graphServiceClient.me.messages.byMessageId(""message-id"").get();
             }
             ";
-
 
             AssertExtensions.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
-        public async Task GeneratesTheSnippetInitializationStatement()
+        public async Task GeneratesTheSnippetInitializationDeclarationAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("const graphServiceClient = GraphServiceClient.init({authProvider});", result);
+            Assert.Contains("// To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript", result);
         }
 
         [Fact]
-        public async Task GeneratesTheGetMethodCall()
+        public async Task GeneratesTheGetMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
+            // Dependencies
+            import ""@microsoft/msgraph-sdk-users"";
+            //other-imports
 
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
 	            await graphServiceClient.me.messages.get();
             }
             ";
 
-
             AssertExtensions.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
-        public async Task GeneratesThePostMethodCall()
+        public async Task GeneratesThePostMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/messages");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expected = @"
                 const result = async () => {
@@ -124,14 +137,21 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesThePatchMethodCall()
+        public async Task GeneratesThePatchMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/me/messages/{{message-id}}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expected = @"
-                const result = async () => {
-	            await graphServiceClient.me.messagesById(""message-id"").patch();
+            // Dependencies
+            import ""@microsoft/msgraph-sdk-users"";
+            //other-imports
+
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
+
+            const result = async () => {
+	            await graphServiceClient.me.messages.byMessageId(""message-id"").patch();
             }
             ";
 
@@ -140,35 +160,39 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesThePutMethodCall()
+        public async Task GeneratesThePutMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/applications/{{application-id}}/logo");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("put", result);
         }
 
         [Fact]
-        public async Task GeneratesTheDeleteMethodCall()
+        public async Task GeneratesTheDeleteMethodCallAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Delete, $"{ServiceRootUrl}/me/messages/{{message-id}}");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
+            // Dependencies
+            import ""@microsoft/msgraph-sdk-users"";
+            //other-imports
 
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
-	            await graphServiceClient.me.messagesById(""message-id"").delete();
+	            await graphServiceClient.me.messages.byMessageId(""message-id"").delete();
             }
             ";
-
 
             AssertExtensions.ContainsIgnoreWhiteSpace(expected, result);
         }
 
         [Fact]
-        public async Task WritesTheRequestPayload()
+        public async Task WritesTheRequestPayloadAsync()
         {
             var sampleJson = @"
                         {
@@ -187,11 +211,16 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-                const graphServiceClient = GraphServiceClient.init({authProvider});
+                //THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY
+                // Dependencies
+                import ""@microsoft/msgraph-sdk-users"";
+                import { User } from ""@microsoft/msgraph-sdk/models"";
+                //other-imports
 
                 const requestBody : User = {
 	                accountEnabled : true,
@@ -206,6 +235,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 	                },
                 };
 
+                // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
+
                 const result = async () => {
 	                await graphServiceClient.users.post(requestBody);
                 }
@@ -216,7 +247,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task WritesALongAndFindsAnAction()
+        public async Task WritesALongAndFindsAnActionAsync()
         {
             const string userJsonObject = "{\r\n  \"chainId\": 10\r\n\r\n}";
 
@@ -224,14 +255,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("10", result);
             Assert.DoesNotContain("microsoft.graph1", result);
         }
 
         [Fact]
-        public async Task WritesADouble()
+        public async Task WritesADoubleAsync()
         {
             var sampleJson = @"
             {
@@ -243,15 +275,22 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(sampleJson, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
+            //THIS SNIPPET IS A PREVIEW FOR THE KIOTA BASED SDK. NON-PRODUCTION USE ONLY
+            // Dependencies
+            import ""@microsoft/msgraph-sdk-users"";
+            import { FindMeetingTimesPostRequestBody } from ""@microsoft/msgraph-sdk-users/users/item/findMeetingTimes"";
+            //other-imports
 
             const requestBody : FindMeetingTimesPostRequestBody = {
 	            minimumAttendeePercentage : 10,
             };
+
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
 	            await graphServiceClient.me.findMeetingTimes.post(requestBody);
@@ -262,23 +301,25 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesABinaryPayload()
+        public async Task GeneratesABinaryPayloadAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Put, $"{ServiceRootUrl}/applications/{{application-id}}/logo")
             {
                 Content = new ByteArrayContent(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10 })
             };
             requestPayload.Content.Headers.ContentType = new("application/octet-stream");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
 
             const requestBody = new ArrayBuffer(16);
 
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
+
             async () => {
-	            await graphServiceClient.applicationsById(""application-id"").logo.put(requestBody);
+	            await graphServiceClient.applications.byApplicationId(""application-id"").logo.put(requestBody);
             }
             ";
 
@@ -286,25 +327,31 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesABase64UrlPayload()
+        public async Task GeneratesABase64UrlPayloadAsync()
         {
             const string userJsonObject = "{\r\n  \"contentBytes\": \"wiubviuwbegviwubiu\"\r\n\r\n}";
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/chats/{{chat-id}}/messages/{{chatMessage-id}}/hostedContents")
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
+            // Dependencies
+            import ""@microsoft/msgraph-sdk-chats"";
+            import { ChatMessageHostedContent} from ""@microsoft/msgraph-sdk/models"";
+            //other-imports
 
             const requestBody : ChatMessageHostedContent = {
 	            contentBytes : ""wiubviuwbegviwubiu"",
             };
 
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
+
             const result = async () => {
-	            await graphServiceClient.chatsById(""chat-id"").messagesById(""chatMessage-id"").hostedContents.post(requestBody);
+	            await graphServiceClient.chats.byChatId(""chat-id"").messages.byChatMessageId(""chatMessage-id"").hostedContents.post(requestBody);
             }
             ";
 
@@ -313,22 +360,24 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesADatePayload()
+        public async Task GeneratesADatePayloadAsync()
         {
             const string userJsonObject = "{\r\n  \"receivedDateTime\": \"2021-08-30T20:00:00:00Z\"\r\n\r\n}";
             using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/me/messages")
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
 
             const requestBody : Message = {
 	            receivedDateTime : new Date(""2021-08-30T20:00:00:00Z""),
             };
+
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
 	            await graphServiceClient.me.messages.post(requestBody);
@@ -340,7 +389,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesAnArrayPayloadInAdditionalData()
+        public async Task GeneratesAnArrayPayloadInAdditionalDataAsync()
         {
             var samplePayload = @"
             {
@@ -356,11 +405,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(samplePayload, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
 
             const requestBody : Group = {
 	            additionalData : {
@@ -377,18 +426,18 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesAnArrayOfObjectsPayloadData()
+        public async Task GeneratesAnArrayOfObjectsPayloadDataAsync()
         {
             const string userJsonObject = "{ \"body\": { \"contentType\": \"HTML\"}, \"extensions\": [{ \"dealValue\": 10000}]}";
             using var requestPayload = new HttpRequestMessage(HttpMethod.Patch, $"{ServiceRootUrl}/groups/{{group-id}}")
             {
                 Content = new StringContent(userJsonObject, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-                    const graphServiceClient = GraphServiceClient.init({authProvider});
 
                     const requestBody : Group = {
 	                    extensions : [
@@ -405,8 +454,10 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 	                    },
                     };
 
+                    // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
+
                     const result = async () => {
-	                    await graphServiceClient.groupsById(""group-id"").patch(requestBody);
+	                    await graphServiceClient.groups.byGroupId(""group-id"").patch(requestBody);
                     }
                     ";
 
@@ -414,20 +465,22 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesSelectQueryParameters()
+        public async Task GeneratesSelectQueryParametersAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me?$select=displayName,id");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
 
             const configuration = {
 	            queryParameters : {
 		            select: [""displayName"",""id""],
 	            }
             };
+
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
 	            await graphServiceClient.me.get(configuration);
@@ -438,14 +491,14 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesCountBooleanQueryParameters()
+        public async Task GeneratesCountBooleanQueryParametersAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$count=true&$select=displayName,id");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
 
             const configuration = {
 	            queryParameters : {
@@ -453,6 +506,8 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 		            select: [""displayName"",""id""],
 	            }
             };
+
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
 	            await graphServiceClient.users.get(configuration);
@@ -464,20 +519,22 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesSkipQueryParameters()
+        public async Task GeneratesSkipQueryParametersAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/users?$skip=10");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
 
             const configuration = {
 	            queryParameters : {
 		            skip: 10,
 	            }
             };
+
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
 	            await graphServiceClient.users.get(configuration);
@@ -488,10 +545,11 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesSelectExpandQueryParameters()
+        public async Task GeneratesSelectExpandQueryParametersAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups?$expand=members($select=id,displayName)");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
             Assert.Contains("expand", result);
             Assert.Contains("members($select=id,displayName)", result);
@@ -499,21 +557,23 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesRequestHeaders()
+        public async Task GeneratesRequestHeadersAsync()
         {
             using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/groups");
             requestPayload.Headers.Add("ConsistencyLevel", "eventual");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
 
             const configuration = {
 	            headers : {
 		            ""ConsistencyLevel"": ""eventual"",
 	            }
             };
+
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
 	            await graphServiceClient.groups.get(configuration);
@@ -524,7 +584,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GenerateAdditionalData()
+        public async Task GenerateAdditionalDataAsync()
         {
             var samplePayload = @"
             {
@@ -547,11 +607,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(samplePayload, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
+            // Dependencies
+            import ""@microsoft/msgraph-sdk-teams"";
+            import { ChatMessage, BodyTypeObject } from ""@microsoft/msgraph-sdk/models"";
+            //other-imports
 
             const requestBody : ChatMessage = {
 	            createdDateTime : new Date(""2019-02-04T19:58:15.511Z""),
@@ -565,13 +629,15 @@ namespace CodeSnippetsReflection.OpenAPI.Test
 		            },
 	            },
 	            body : {
-		            contentType : BodyType.Html,
+		            contentType : BodyTypeObject.Html,
 		            content : ""Hello World"",
 	            },
             };
 
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
+
             const result = async () => {
-	            await graphServiceClient.teamsById(""team-id"").channelsById(""channel-id"").messages.post(requestBody);
+	            await graphServiceClient.teams.byTeamId(""team-id"").channels.byChannelId(""channel-id"").messages.post(requestBody);
             }
             ";
 
@@ -579,7 +645,7 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         }
 
         [Fact]
-        public async Task GeneratesEnumsWhenVariableIsEnum()
+        public async Task GeneratesEnumsWhenVariableIsEnumAsync()
         {
             const string payloadJson = @"{
                 ""displayName"": ""Test create"",
@@ -600,27 +666,33 @@ namespace CodeSnippetsReflection.OpenAPI.Test
             {
                 Content = new StringContent(payloadJson, Encoding.UTF8, "application/json")
             };
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+            await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
 
             var expected = @"
-            const graphServiceClient = GraphServiceClient.init({authProvider});
+            import ""@microsoft/msgraph-sdk-identitygovernance"";
+            import { AccessReviewScheduleDefinition, RecurrencePatternTypeObject, RecurrenceRangeTypeObject } from ""@microsoft/msgraph-sdk/models"";
+            import { DateOnly } from ""@microsoft/kiota-abstractions"";
+            //other-imports
 
             const requestBody : AccessReviewScheduleDefinition = {
 	            displayName : ""Test create"",
 	            settings : {
 		            recurrence : {
 			            pattern : {
-				            type : RecurrencePatternType.Weekly,
+				            type : RecurrencePatternTypeObject.Weekly,
 				            interval : 1,
 			            },
 			            range : {
-				            type : RecurrenceRangeType.NoEnd,
-				            startDate : ""2020-09-08T12:02:30.667Z"",
+				            type : RecurrenceRangeTypeObject.NoEnd,
+				            startDate : DateOnly.parse(""2020-09-08T12:02:30.667Z""),
 			            },
 		            },
 	            },
             };
+
+            // To initialize your graphClient, see https://learn.microsoft.com/en-us/graph/sdks/create-client?from=snippets&tabs=typescript
 
             const result = async () => {
 	            await graphServiceClient.identityGovernance.accessReviews.definitions.post(requestBody);

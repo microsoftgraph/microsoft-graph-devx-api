@@ -77,10 +77,15 @@ extends:
             projects: '**/*Test/*.csproj'
             arguments: '--configuration $(buildConfiguration) --collect "Code Coverage" --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --filter "TestCategory!=CodeSnippetsPipeline"'
         
-        - task: EsrpCodeSigning@2
+        - task: EsrpCodeSigning@5
           displayName: 'ESRP CodeSigning'
           inputs:
-            ConnectedServiceName: 'microsoftgraph ESRP CodeSign DLL and NuGet (AKV)'
+            ConnectedServiceName: 'Federated DevX ESRP Managed Identity Connection'
+            AppRegistrationClientId: '65035b7f-7357-4f29-bf25-c5ee5c3949f8'
+            AppRegistrationTenantId: 'cdc5aeea-15c5-4db6-b079-fcadd2505dc2'
+            AuthAKVName: 'akv-prod-eastus'
+            AuthCertName: 'ReferenceLibraryPrivateCert'
+            AuthSignCertName: 'ReferencePackagePublisherCertificate'
             FolderPath: $(System.DefaultWorkingDirectory)
             signConfigType: inlineSignParams
             inlineOperation: |
@@ -122,6 +127,9 @@ extends:
                   }
               ]
             SessionTimeout: 20
+            MaxConcurrency: 50
+            MaxRetryAttempts: 5
+            PendingAnalysisWaitTimeoutMinutes: 5
        
         - task: PublishTestResults@2
           displayName: "Publish Test Results"
@@ -152,3 +160,82 @@ extends:
           directory: 'microsoft-graph-devx-api'
           repoName: ReleasePipelines
           dependsOn: ['Build']
+
+    - stage: DeployStaging
+      condition: and(contains(variables['build.sourceBranch'], 'refs/heads/master'), succeeded())
+      dependsOn: BuildAndPublish
+      jobs:
+      - deployment: staging  
+        templateContext:
+          type: releaseJob
+          isProduction: false
+          inputs:
+          - input: pipelineArtifact
+            artifactName: drop
+            targetPath: $(Build.ArtifactStagingDirectory)
+        environment: graphexplorerapi-staging
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - task: AzureRmWebAppDeployment@4
+                displayName: Staging
+                inputs:
+                  azureSubscription: 'Federated DevX API Managed Identity'
+                  WebAppName: graphexplorerapi
+                  deployToSlotOrASE: true
+                  ResourceGroupName: 'Graph-Explorer-API'
+                  packageForLinux: '$(Build.ArtifactStagingDirectory)/GraphWebApi.zip'
+                  JSONFiles: '**/appsettings.json'
+                  SlotName: 'staging'
+
+              - task: AzureAppServiceManage@0
+                displayName: 'Restart Azure App Service: graphexplorerapi staging'
+                inputs:
+                  azureSubscription: 'Federated DevX API Managed Identity'
+                  Action: 'Restart Azure App Service'
+                  WebAppName: graphexplorerapi
+                  SpecifySlotOrASE: true
+                  ResourceGroupName: 'Graph-Explorer-API'
+                  Slot: 'staging'
+
+
+    - stage: DeployProduction
+      condition: and(contains(variables['build.sourceBranch'], 'refs/heads/master'), succeeded())
+      dependsOn: [DeployStaging, BuildAndPublish]
+      jobs:
+      - deployment: production
+        templateContext:
+          type: releaseJob
+          isProduction: true
+        environment: graphexplorerapi-production
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - task: AzureAppServiceManage@0
+                displayName: 'Manage Azure App Service - Slot Swap'
+                inputs:
+                  azureSubscription: 'Federated DevX API Managed Identity'
+                  WebAppName: graphexplorerapi
+                  ResourceGroupName: 'Graph-Explorer-API'
+                  SourceSlot: staging
+
+              - task: AzureAppServiceManage@0
+                displayName: 'Restart Azure App Service: graphexplorerapi'
+                inputs:
+                  azureSubscription: 'Federated DevX API Managed Identity'
+                  Action: 'Restart Azure App Service'
+                  WebAppName: graphexplorerapi
+                  SpecifySlotOrASE: true
+                  ResourceGroupName: 'Graph-Explorer-API'
+
+              - task: GitHubRelease@1
+                displayName: 'GitHub release (v$(Build.BuildNumber)-$(Build.BuildId))'
+                inputs:
+                  gitHubConnection: 'Github-MaggieKimani1'
+                  action: edit
+                  tag: 'v$(Build.BuildNumber)'
+                  title: 'DevX API - v$(Build.BuildNumber)'
+                  assets: '$(Build.ArtifactStagingDirectory)/drop/*.zip'
+                  changeLogType: issueBased

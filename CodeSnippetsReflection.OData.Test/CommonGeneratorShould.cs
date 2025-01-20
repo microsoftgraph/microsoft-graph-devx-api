@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Xml;
 using Microsoft.OData.UriParser;
 using Xunit;
+using System.Threading.Tasks;
 
 namespace CodeSnippetsReflection.Test
 {
@@ -19,13 +20,14 @@ namespace CodeSnippetsReflection.Test
 
         #region Test GenerateQuerySection
         [Fact]
-        public void GenerateQuerySection_ShouldReturnEmptyStringIfQueryListIsEmpty()
+        public async Task GenerateQuerySection_ShouldReturnEmptyStringIfQueryListIsEmptyAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
             //no query present
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/drive/root");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
@@ -35,13 +37,14 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptSelectExpression()
+        public async Task GenerateQuerySection_ShouldReturnAppropriateJavascriptSelectExpressionAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
             //no query present
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users/{id}?$select=displayName,givenName,postalCode");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
@@ -51,13 +54,14 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptFilterExpression()
+        public async Task GenerateQuerySection_ShouldReturnAppropriateJavascriptFilterExpressionAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
             //no query present
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users?$filter=startswith(givenName, 'J')");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
@@ -67,13 +71,14 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptSearchExpression()
+        public async Task GenerateQuerySection_ShouldReturnAppropriateJavascriptSearchExpressionAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
             //no query present
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/?$search=\"Irene McGowen\"");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
@@ -83,13 +88,14 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptSkipExpression()
+        public async Task GenerateQuerySection_ShouldReturnAppropriateJavascriptSkipExpressionAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
             //no query present
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/events?$skip=20");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
@@ -99,13 +105,14 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptTopExpression()
+        public async Task GenerateQuerySection_ShouldReturnAppropriateJavascriptTopExpressionAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
             //no query present
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/events?$top=5");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
@@ -115,7 +122,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptRequestHeaderExpression()
+        public async Task GenerateQuerySection_ShouldReturnAppropriateJavascriptRequestHeaderExpressionAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -124,6 +131,7 @@ namespace CodeSnippetsReflection.Test
             requestPayload.Headers.Add("Prefer", "kenya-timezone");
 
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
@@ -133,7 +141,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateJavascriptRequestHeaderExpressionWithEscapedDoubleQuotes()
+        public async Task GenerateQuerySection_ShouldReturnAppropriateJavascriptRequestHeaderExpressionWithEscapedDoubleQuotesAsync()
         {
             //Arrange
             LanguageExpressions expressions = new JavascriptExpressions();
@@ -142,6 +150,7 @@ namespace CodeSnippetsReflection.Test
             requestPayload.Headers.Add("Prefer", "outlook.timezone=\"Pacific Standard Time\"");
 
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
@@ -150,126 +159,11 @@ namespace CodeSnippetsReflection.Test
             Assert.Equal("\r\n\t.header('Prefer','outlook.timezone=\"Pacific Standard Time\"')", result);
         }
 
-        [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateCSharpSelectExpression()
-        {
-            //Arrange
-            LanguageExpressions expressions = new CSharpExpressions();
-            //no query present
-            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users/{id}?$select=displayName,givenName,postalCode");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
-
-            //Act
-            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
-
-            //Assert string is empty
-            Assert.Equal("\r\n\t.Select(\"displayName,givenName,postalCode\")", result);
-        }
-
-        [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateCSharpFilterExpression()
-        {
-            //Arrange
-            LanguageExpressions expressions = new CSharpExpressions();
-            //no query present
-            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users?$filter=startswith(givenName, 'J')");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
-
-            //Act
-            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
-
-            //Assert string is empty
-            Assert.Equal("\r\n\t.Filter(\"startswith(givenName, 'J')\")", result);
-        }
-
-        [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateCSharpSearchExpression()
-        {
-            //Arrange
-            LanguageExpressions expressions = new CSharpExpressions();
-            //no query present
-            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people/?$search=\"Irene McGowen\"");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
-
-            //Act
-            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
-
-            //Assert string is empty
-            Assert.Equal(string.Empty, result);
-        }
-
-        [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateCSharpSkipExpression()
-        {
-            //Arrange
-            LanguageExpressions expressions = new CSharpExpressions();
-            //no query present
-            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/events?$skip=20");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
-
-            //Act
-            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
-
-            //Assert string is empty
-            Assert.Equal("\r\n\t.Skip(20)", result);
-        }
-
-        [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateCSharpTopExpression()
-        {
-            //Arrange
-            LanguageExpressions expressions = new CSharpExpressions();
-            //no query present
-            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/events?$top=5");
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
-
-            //Act
-            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
-
-            //Assert string is empty
-            Assert.Equal("\r\n\t.Top(5)", result);
-        }
-
-        [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateCSharpRequestHeaderExpression()
-        {
-            //Arrange
-            LanguageExpressions expressions = new CSharpExpressions();
-            //no query present
-            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/users/{id}");
-            requestPayload.Headers.Add("Prefer", "kenya-timezone");
-
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
-
-            //Act
-            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
-
-            //Assert string is empty
-            Assert.Equal("\r\n\t.Header(\"Prefer\",\"kenya-timezone\")", result);
-        }
-
-        [Fact]
-        public void GenerateQuerySection_ShouldReturnAppropriateCSharpRequestHeaderExpressionWithEscapedDoubleQuotes()
-        {
-            //Arrange
-            LanguageExpressions expressions = new CSharpExpressions();
-            //no query present
-            var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/events");
-            requestPayload.Headers.Add("Prefer", "outlook.timezone=\"Pacific Standard Time\"");
-
-            var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
-
-            //Act
-            var result = CommonGenerator.GenerateQuerySection(snippetModel, expressions);
-
-            //Assert string is empty
-            Assert.Equal("\r\n\t.Header(\"Prefer\",\"outlook.timezone=\\\"Pacific Standard Time\\\"\")", result);
-        }
         #endregion
 
         #region Test GetEdmTypeFromIdentifier
         [Fact]
-        public void GetClassNameFromIdentifier_ShouldReturnRootIdentifierOnFirstSearch()
+        public async Task GetClassNameFromIdentifier_ShouldReturnRootIdentifierOnFirstSearchAsync()
         {
             //Arrange
             List<string> path = new List<string>
@@ -279,6 +173,7 @@ namespace CodeSnippetsReflection.Test
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/people");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var commonGenerator = new CommonGenerator(_edmModel);
@@ -289,7 +184,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetClassNameFromIdentifier_ShouldReturnParameterTypeForActionOrFunction()
+        public async Task GetClassNameFromIdentifier_ShouldReturnParameterTypeForActionOrFunctionAsync()
         {
             //Arrange
             List<string> path = new List<string>
@@ -299,6 +194,7 @@ namespace CodeSnippetsReflection.Test
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/sendMail");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var commonGenerator = new CommonGenerator(_edmModel);
@@ -309,7 +205,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetClassNameFromIdentifier_ShouldSearchForOneLevelNestedType()
+        public async Task GetClassNameFromIdentifier_ShouldSearchForOneLevelNestedTypeAsync()
         {
             //Arrange
             List<string> path = new List<string>
@@ -320,6 +216,7 @@ namespace CodeSnippetsReflection.Test
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var commonGenerator = new CommonGenerator(_edmModel);
@@ -350,7 +247,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetClassNameFromIdentifier_ShouldSearchForOneLevelNestedType_2()
+        public async Task GetClassNameFromIdentifier_ShouldSearchForOneLevelNestedType_2Async()
         {
             //Arrange
             List<string> path = new List<string>
@@ -361,6 +258,7 @@ namespace CodeSnippetsReflection.Test
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var commonGenerator = new CommonGenerator(_edmModel);
@@ -372,7 +270,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetClassNameFromIdentifier_ShouldSearchForTwoLevelNestedType()
+        public async Task GetClassNameFromIdentifier_ShouldSearchForTwoLevelNestedTypeAsync()
         {
             //Arrange
             List<string> path = new List<string>
@@ -384,6 +282,7 @@ namespace CodeSnippetsReflection.Test
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/messages");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var commonGenerator = new CommonGenerator(_edmModel);
@@ -394,7 +293,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetClassNameFromIdentifier_ShouldSearchForTwoLevelNestedType_2()
+        public async Task GetClassNameFromIdentifier_ShouldSearchForTwoLevelNestedType_2Async()
         {
             //Arrange
             List<string> path = new List<string>
@@ -406,6 +305,7 @@ namespace CodeSnippetsReflection.Test
 
             var requestPayload = new HttpRequestMessage(HttpMethod.Post, "https://graph.microsoft.com/v1.0/me/events");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
 
             //Act
             var commonGenerator = new CommonGenerator(_edmModel);
@@ -429,42 +329,17 @@ namespace CodeSnippetsReflection.Test
             //Assert
             Assert.Equal("_transient", result);
         }
-
-        [Fact]
-        public void EnsureVariableNameIsNotReserved_AppendsTheAtSignOnCsharpKeywords()
-        {
-            //Arrange
-            LanguageExpressions expressions = new CSharpExpressions();
-            var keyword = "event";
-            //Act
-            var result = CommonGenerator.EnsureVariableNameIsNotReserved(keyword, expressions);
-
-            //Assert
-            Assert.Equal("@event", result);
-        }
-
-        [Fact]
-        public void EnsureVariableNameIsNotReserved_DoesNotModifyVariableNamesIfNotReserved()
-        {
-            //Arrange
-            LanguageExpressions expressions = new CSharpExpressions();
-            var keyword = "people";
-            //Act
-            var result = CommonGenerator.EnsureVariableNameIsNotReserved(keyword, expressions);
-
-            //Assert
-            Assert.Equal("people", result);
-        }
         #endregion
 
         #region Test GetParameterListFromOperationSegment
 
         [Fact]
-        public void GetParameterListFromOperationSegment_ShouldReturnStringWithDoubleQuotesForOdataActionParameter()
+        public async Task GetParameterListFromOperationSegment_ShouldReturnStringWithDoubleQuotesForOdataActionParameterAsync()
         {
             //Arrange
             var requestPayload = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/drive/items/{id}/workbook/worksheets/{id|name}/range(address='A1:B2')");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
             var operationSegment = snippetModel.Segments.Last() as OperationSegment;
 
             //Act
@@ -475,7 +350,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetParameterListFromOperationSegment_ShouldReturnParameterListOrderedByOptionality()
+        public async Task GetParameterListFromOperationSegment_ShouldReturnParameterListOrderedByOptionalityAsync()
         {
             //Arrange
             const string jsonObject = "{\r\n  " +
@@ -487,6 +362,7 @@ namespace CodeSnippetsReflection.Test
                 Content = new StringContent(jsonObject)
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
             var operationSegment = snippetModel.Segments.Last() as OperationSegment;
 
             //Act
@@ -498,7 +374,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetParameterListFromOperationSegment_ShouldReturnParameterListOrderedByMetadataReference()
+        public async Task GetParameterListFromOperationSegment_ShouldReturnParameterListOrderedByMetadataReferenceAsync()
         {
             //Arrange
             const string jsonObject = "{\r\n  " +
@@ -510,6 +386,7 @@ namespace CodeSnippetsReflection.Test
                 Content = new StringContent(jsonObject)
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
             var operationSegment = snippetModel.Segments.Last() as OperationSegment;
 
             //Act
@@ -521,7 +398,7 @@ namespace CodeSnippetsReflection.Test
         }
 
         [Fact]
-        public void GetParameterListFromOperationSegment_ShouldSetOptionalUnprovidedParameterToNull()
+        public async Task GetParameterListFromOperationSegment_ShouldSetOptionalUnprovidedParameterToNullAsync()
         {
             //Arrange
             const string jsonObject = "{\r\n  " +
@@ -532,6 +409,7 @@ namespace CodeSnippetsReflection.Test
                 Content = new StringContent(jsonObject)
             };
             var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, _edmModel);
+            await snippetModel.InitializeModelAsync(requestPayload);
             var operationSegment = snippetModel.Segments.Last() as OperationSegment;
 
             //Act

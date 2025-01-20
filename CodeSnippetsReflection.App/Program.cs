@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -24,7 +25,7 @@ namespace CodeSnippetsReflection.App
     /// </summary>
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             IConfiguration config = new ConfigurationBuilder()
                 .AddCommandLine(args)
@@ -36,7 +37,7 @@ namespace CodeSnippetsReflection.App
             var generationArg = config.GetSection("Generation");
             if (!snippetsPathArg.Exists() || !languagesArg.Exists())
             {
-                Console.Error.WriteLine("Http snippets directory and languages should be specified");
+                await Console.Error.WriteLineAsync("Http snippets directory and languages should be specified");
                 Console.WriteLine(@"Example usage:
   .\CodeSnippetReflection.App.exe --SnippetsPath C:\snippets --Languages c#,javascript --Generation odata|openapi");
                 return;
@@ -45,13 +46,13 @@ namespace CodeSnippetsReflection.App
             var httpSnippetsDir = snippetsPathArg.Value;
             if (!Directory.Exists(httpSnippetsDir))
             {
-                Console.Error.WriteLine($@"Directory {httpSnippetsDir} does not exist!");
+                await Console.Error.WriteLineAsync($@"Directory {httpSnippetsDir} does not exist!");
                 return;
             }
 
             if (customMetadataPathArg.Exists() && !File.Exists(customMetadataPathArg.Value))
             {
-                Console.Error.WriteLine($@"Metadata file {customMetadataPathArg.Value} does not exist!");
+                await Console.Error.WriteLineAsync($@"Metadata file {customMetadataPathArg.Value} does not exist!");
                 return;
             }
 
@@ -67,12 +68,12 @@ namespace CodeSnippetsReflection.App
                 .GroupBy(l => ODataSnippetsGenerator.SupportedLanguages.Contains(l) || OpenApiSnippetsGenerator.SupportedLanguages.Contains(l))
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            var supportedLanguages = languageGroups.ContainsKey(true) ? languageGroups[true] : null;
-            var unsupportedLanguages = languageGroups.ContainsKey(false) ? languageGroups[false] : null;
+            var supportedLanguages = languageGroups.GetValueOrDefault(true, null);
+            var unsupportedLanguages = languageGroups.GetValueOrDefault(false, null);
 
             if (supportedLanguages == null)
             {
-                Console.Error.WriteLine($"None of the given languages are supported. Supported languages: {string.Join(" ", ODataSnippetsGenerator.SupportedLanguages)}");
+                await Console.Error.WriteLineAsync($"None of the given languages are supported. Supported languages: {string.Join(" ", ODataSnippetsGenerator.SupportedLanguages)}");
                 return;
             }
 
@@ -94,67 +95,59 @@ namespace CodeSnippetsReflection.App
 
             // cache the generators by generation rather than creating a new one on each generation to avoid multiple loads of the metadata.
             var snippetGenerators = new ConcurrentDictionary<string, ISnippetsGenerator>();
-            Parallel.ForEach(supportedLanguages, language =>
+            await Task.WhenAll(supportedLanguages.Select(language =>
             {
                 //Generation will still be originalGeneration if language is java since it is not stable
                 //Remove the condition when java is stable
                 generation = (OpenApiSnippetsGenerator.SupportedLanguages.Contains(language)) ? "openapi" : originalGeneration;
 
                 var generator = snippetGenerators.GetOrAdd(generation,  generationKey => GetSnippetsGenerator(generationKey, customMetadataPathArg));
-                Parallel.ForEach(files, file =>
-                {
-                    ProcessFile(generator, language, file);
-                });
-            });
+                return files.Select(file => ProcessFileAsync(generator, language, file));
+            }).SelectMany(static t => t));
             Console.WriteLine($"Processed {files.Count()} files.");
         }
 
         private static ISnippetsGenerator GetSnippetsGenerator(string generation, IConfigurationSection customMetadataSection) {
             return (generation) switch {
-                "odata" when customMetadataSection.Exists() => new ODataSnippetsGenerator(isCommandLine: true, customMetadataSection.Value),
-                "odata" => new ODataSnippetsGenerator(isCommandLine: true),
+                "odata" when customMetadataSection.Exists() => new ODataSnippetsGenerator(customMetadataSection.Value),
+                "odata" => new ODataSnippetsGenerator(),
                 "openapi" => new OpenApiSnippetsGenerator(),
                 _ => throw new InvalidOperationException($"Unknown generation type: {generation}")
             };
         }
 
-        private static void ProcessFile(ISnippetsGenerator generator, string language, string file)
+        private static async Task ProcessFileAsync(ISnippetsGenerator generator, string language, string file)
         {
             // convert http request into a type that works with SnippetGenerator.ProcessPayloadRequest()
             // we are not altering the types as it should continue serving the HTTP endpoint as well
-            using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(File.ReadAllText(file))));
+            using var streamContent = new StreamContent(new MemoryStream(Encoding.UTF8.GetBytes(await File.ReadAllTextAsync(file))));
             streamContent.Headers.Add("Content-Type", "application/http;msgtype=request");
 
             string snippet;
             var filePath = file.Replace("-httpSnippet", $"---{language.ToLowerInvariant()}");
             try
             {
-                // This is a very fast operation, it is fine to make is synchronuous.
-                // With the parallel foreach in the main method, processing all snippets for C# in both Beta and V1 takes about 7 seconds.
-                // As of this writing, the code was processing 2650 snippets
-                // Using async-await is costlier as this operation is all in-memory and task creation and scheduling overhead is high for that.
-                // With async-await, the same operation takes 1 minute 7 seconds.
-                using var message = streamContent.ReadAsHttpRequestMessageAsync().Result;
-                snippet = generator.ProcessPayloadRequest(message, language);
+                using var message = await streamContent.ReadAsHttpRequestMessageAsync();
+                snippet = await generator.ProcessPayloadRequestAsync(message, language);
             }
             catch (Exception e)
             {
                 var message = $"Exception while processing {file}.{Environment.NewLine}{e.Message}{Environment.NewLine}{e.StackTrace}";
-                Console.Error.WriteLine(message);
-                File.WriteAllText(filePath + "-error", message);
+                await Console.Error.WriteLineAsync(message);
+                await File.WriteAllTextAsync(filePath + "-error", message);
                 return;
             }
 
             if (!string.IsNullOrWhiteSpace(snippet))
             {
                 Console.WriteLine($"Writing snippet: {filePath}");
-                File.WriteAllText(filePath, snippet);
+                await File.WriteAllTextAsync(filePath, snippet);
             }
             else
             {
                 var message = $"Failed to generate {language} snippets for {file}.";
-                File.WriteAllText(filePath + "-error", message);
-                Console.Error.WriteLine(message);
+                await File.WriteAllTextAsync(filePath + "-error", message);
+                await Console.Error.WriteLineAsync(message);
             }
         }
     }

@@ -25,7 +25,7 @@ namespace OpenAPIService.Interfaces
 
         OpenApiUrlTreeNode CreateOpenApiUrlTreeNode(ConcurrentDictionary<string, OpenApiDocument> sources);
 
-        void ConvertOpenApiUrlTreeNodeToJson(OpenApiUrlTreeNode rootNode, Stream stream);
+        Task ConvertOpenApiUrlTreeNodeToJsonAsync(OpenApiUrlTreeNode rootNode, Stream stream);
 
         OpenApiDocument ApplyStyle(OpenApiStyle style, OpenApiDocument subsetOpenApiDocument, bool includeRequestBody = false, bool singularizeOperationIds = false);
 

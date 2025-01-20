@@ -43,7 +43,7 @@ namespace GraphWebApi.Controllers
         [Route("openapi")]
         [Route("$openapi")]
         [HttpGet]
-        public async Task<IActionResult> Get(
+        public async Task<IActionResult> GetAsync(
                                     [FromQuery] string operationIds = null,
                                     [FromQuery] string tags = null,
                                     [FromQuery] string url = null,
@@ -72,7 +72,7 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/operations")]
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string graphVersion = null,
+        public async Task<IActionResult> GetAsync([FromQuery] string graphVersion = null,
                                              [FromQuery] string openApiVersion = null,
                                              [FromQuery] OpenApiStyle style = OpenApiStyle.Plain,
                                              [FromQuery] string format = null,
@@ -90,7 +90,7 @@ namespace GraphWebApi.Controllers
             }
 
             var graphOpenApi = await _openApiService.GetGraphOpenApiDocumentAsync(graphUri, style, forceRefresh, fileName);
-            await WriteIndex(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
+            await WriteIndexAsync(Request.Scheme + "://" + Request.Host.Value, styleOptions.GraphVersion, styleOptions.OpenApiVersion, styleOptions.OpenApiFormat,
                 graphOpenApi, Response.Body, styleOptions.Style, singularizeOperationIds, fileName);
 
             return new EmptyResult();
@@ -98,7 +98,7 @@ namespace GraphWebApi.Controllers
 
         [Route("openapi/tree")]
         [HttpGet]
-        public async Task Get([FromQuery] string graphVersions = "*",
+        public async Task GetAsync([FromQuery] string graphVersions = "*",
                                              [FromQuery] bool forceRefresh = false)
         {
             if (string.IsNullOrEmpty(graphVersions))
@@ -166,7 +166,7 @@ namespace GraphWebApi.Controllers
             }
         }
 
-        private static async Task WriteIndex(
+        private static async Task WriteIndexAsync(
             string baseUrl,
             string graphVersion,
             string openApiVersion,

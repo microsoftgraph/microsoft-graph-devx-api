@@ -12,10 +12,11 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
     private readonly PythonGenerator _generator = new();
 
     [Fact]
-    public async Task GeneratesRequestBuilderImports()
+    public async Task GeneratesRequestBuilderImportsAsync()
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/me/calendar/events?$filter=startsWith(subject,'All')");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("from msgraph import GraphServiceClient", result);
         Assert.Contains("from kiota_abstractions.base_request_configuration import RequestConfiguration", result);
@@ -23,7 +24,7 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GenerateModelImports(){
+    public async Task GenerateModelImportsAsync(){
         var bodyContent = @"{
             ""displayName"":  ""New display name""
             }";
@@ -31,14 +32,15 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
         {
             Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
         };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("from msgraph import GraphServiceClient", result);
         Assert.Contains("from msgraph.generated.models.application import Application", result);
 
     }
     [Fact]
-    public async Task GenerateComplexModelImports(){
+    public async Task GenerateComplexModelImportsAsync(){
         var bodyContent = @"{
             ""subject"": ""Annual review"",
             ""body"": {
@@ -66,7 +68,8 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
         {
             Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
         };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("from msgraph import GraphServiceClient", result);
         Assert.Contains("from msgraph.generated.models.message import Message", result);
@@ -78,16 +81,17 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
     }
 
     [Fact]
-    public async Task GenerateNestedRequestBuilderImports()
+    public async Task GenerateNestedRequestBuilderImportsAsync()
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/applications(appId={{application-id}})?$select=id,appId,displayName,requiredResourceAccess");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("from msgraph import GraphServiceClient", result);
         Assert.Contains("from msgraph.generated.applications_with_app_id.applications_with_app_id_request_builder import ApplicationsWithAppIdRequestBuilder", result);
     }
     [Fact]
-    public async Task GenerateRequestBodyImports()
+    public async Task GenerateRequestBodyImportsAsync()
     {
         string bodyContent = @"
         {
@@ -99,18 +103,20 @@ public class PythonImportTests : OpenApiSnippetGeneratorTestBase
         using var requestPayload = new HttpRequestMessage(HttpMethod.Post, $"{ServiceRootUrl}/applications/{{application-id}}/addPassword"){
             Content = new StringContent(bodyContent, Encoding.UTF8, "application/json")
         };
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("from msgraph import GraphServiceClient", result);
         Assert.Contains("from msgraph.generated.models.password_credential import PasswordCredential", result);
         Assert.Contains("from msgraph.generated.applications.item.add_password.add_password_post_request_body import AddPasswordPostRequestBody", result);
     }
     [Fact]
-    public async Task GeneratesImportsWithoutFilterAttrbutesInPath()
+    public async Task GeneratesImportsWithoutFilterAttrbutesInPathAsync()
     {
         using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootUrl}/servicePrincipals/$count");
         requestPayload.Headers.Add("ConsistencyLevel", "eventual");
-        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadata());
+        var snippetModel = new SnippetModel(requestPayload, ServiceRootUrl, await GetV1SnippetMetadataAsync());
+        await snippetModel.InitializeModelAsync(requestPayload);
         var result = _generator.GenerateCodeSnippet(snippetModel);
         Assert.Contains("from msgraph import GraphServiceClient", result);
         Assert.Contains("from msgraph.generated.service_principals.count.count_request_builder import CountRequestBuilder", result);
