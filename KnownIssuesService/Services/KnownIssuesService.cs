@@ -9,6 +9,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Common;
 using System;
 using System.Collections.Generic;
@@ -31,8 +32,10 @@ namespace KnownIssuesService.Services
 		private readonly TelemetryClient _telemetryClient;
 		private readonly Dictionary<string, string> _knownIssuesTraceProperties =
 			new() { { UtilityConstants.TelemetryPropertyKey_KnownIssues, nameof(KnownIssuesService) } };
-		private const string AccessTokenValue = "KnownIssues:Token";
-		private const string KnownIssuesPath = "KnownIssues:Uri";
+        private const string tenantId = "KnownIssues:TenantId";
+        private const string msiClientId = "KnownIssues:MsiClientId";
+        private const string appClientId = "KnownIssues:AppClientId";
+        private const string KnownIssuesPath = "KnownIssues:Uri";
 
 		public KnownIssuesService(IConfiguration configuration,
 								  TelemetryClient telemetryClient = null,
@@ -49,14 +52,14 @@ namespace KnownIssuesService.Services
         /// </summary>
         /// <returns>An instance of the authenticated VS Service</returns>
         [ExcludeFromCodeCoverage]
-        private VssBasicCredential Authenticate()
+        private VssAzureIdentityCredential Authenticate()
 		{
 			_telemetryClient?.TrackTrace("Fetch personal access token from configuration and use it to authenticate into Visual Studio Service",
 										 SeverityLevel.Information,
 										 _knownIssuesTraceProperties);
 
-            var accessToken = _configuration[AccessTokenValue];
-            return new VssBasicCredential(string.Empty, accessToken);
+            FederatedApplicationCredential credentialAzure = new FederatedApplicationCredential(_configuration[tenantId], _configuration[msiClientId], _configuration[appClientId]);
+            return new VssAzureIdentityCredential(credentialAzure);
 		}
 
         /// <summary>
