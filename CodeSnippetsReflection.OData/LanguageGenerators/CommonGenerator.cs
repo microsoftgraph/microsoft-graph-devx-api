@@ -140,7 +140,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
 
             // Check if its defined directly in an the entitySet
             var isDirectlyInEntitySet = model.EntityContainer.EntitySets()
-                .Any(entitySet => entitySet.EntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName(), StringComparison.OrdinalIgnoreCase));
+                .Any(entitySet => entitySet.EntityType.FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName(), StringComparison.OrdinalIgnoreCase));
 
             if (isDirectlyInEntitySet)
                 return true;
@@ -148,7 +148,7 @@ namespace CodeSnippetsReflection.OData.LanguageGenerators
             // check the navBindings/nav Properties on singletons
             var isImplicitFromSingleton = model.EntityContainer.Singletons()
                             .SelectMany(singleton => singleton.NavigationPropertyBindings.Select(navPropertyBindings => navPropertyBindings.NavigationProperty)// get the nav propertyBinding from the singleton
-                                                             .Concat(singleton.EntityType().NavigationProperties()))    // Append the nav properties from the singleton type
+                                                             .Concat(singleton.EntityType.NavigationProperties()))    // Append the nav properties from the singleton type
                             .Any(property => property.ContainsTarget && property.ToEntityType().FullName().Equals(navigationPropertyLinkSegment.NavigationProperty.ToEntityType().FullName(), StringComparison.OrdinalIgnoreCase));
 
             return isImplicitFromSingleton;

@@ -80,10 +80,11 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         }
         private static HashSet<string> GetImportStatements(SnippetModel snippetModel)
         {
-            var packageName = snippetModel.ApiVersion switch
+            var packageName = snippetModel.ApiVersion.ToLowerInvariant() switch
             {
                 "v1.0" => "msgraph",
                 "beta" => "msgraph_beta",
+                _ => throw new ArgumentOutOfRangeException($"Unsupported Graph version in url: {snippetModel.ApiVersion}")
             };
             var modelImportPrefix = $"from {packageName}.generated.models";
             var requestBuilderImportPrefix = $"from {packageName}.generated";

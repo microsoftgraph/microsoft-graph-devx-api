@@ -23,7 +23,7 @@ namespace FileService.Test
         }
 
         [Fact]
-        public async Task ReturnContentAsString()
+        public async Task ReturnContentAsStringAsync()
         {
             var uri = "http://api/test";
             var testContent = MockHttpConstants.UriContentDictionary[uri];
@@ -41,7 +41,7 @@ namespace FileService.Test
         }
 
         [Fact]
-        public async Task ThrowArgumentNullExceptionIfRequestMessageIsNull()
+        public async Task ThrowArgumentNullExceptionIfRequestMessageIsNullAsync()
         {
             // Act and Assert
             await Assert.ThrowsAsync<ArgumentNullException>(() => _httpClientUtility.ReadFromDocumentAsync(null));

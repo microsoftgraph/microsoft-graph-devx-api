@@ -41,8 +41,6 @@ namespace CodeSnippetsReflection.OpenAPI.ModelGraph
 
         private static readonly char NamespaceNameSeparator = '.';
 
-        public SnippetCodeGraph(HttpRequestMessage requestPayload, string serviceRootUrl, OpenApiSnippetMetadata openApiSnippetMetadata) : this(new SnippetModel(requestPayload, serviceRootUrl, openApiSnippetMetadata)) {}
-
         public SnippetCodeGraph(SnippetModel snippetModel)
         {
             ResponseSchema = snippetModel.ResponseSchema;

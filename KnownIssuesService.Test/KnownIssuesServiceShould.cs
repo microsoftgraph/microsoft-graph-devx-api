@@ -36,7 +36,7 @@ namespace KnownIssuesService.Test
         }
 
         [Fact]
-        public async Task GetQueryByWiql()
+        public async Task GetQueryByWiqlAsync()
         {
             //Arrange
             int expectedNoOfWorkItems = 5;
@@ -50,7 +50,7 @@ namespace KnownIssuesService.Test
         }
 
         [Fact]
-        public async Task GetWorkItemsQuery()
+        public async Task GetWorkItemsQueryAsync()
         {
             //Arrange
             int expectedNoOfWorkItems = 5;
@@ -65,7 +65,7 @@ namespace KnownIssuesService.Test
         }
 
         [Fact]
-        public async Task QueryBugs()
+        public async Task QueryBugsAsync()
         {
             //Arrange
             int expectedNoOfWorkItems = 3;
