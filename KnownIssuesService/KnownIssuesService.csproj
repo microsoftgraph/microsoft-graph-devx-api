@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.45.0" />
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.3" />
     <PackageReference Include="Microsoft.TeamFoundationServer.Client" Version="19.239.0-preview" />
     <PackageReference Include="Microsoft.VisualStudio.Services.Client" Version="19.239.0-preview" />
     <PackageReference Include="Microsoft.VisualStudio.Services.InteractiveClient" Version="19.239.0-preview" />
