@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -13,7 +13,7 @@
     <PackageReference Include="Microsoft.OpenApi" Version="1.6.23" />
     <PackageReference Include="Microsoft.OpenApi.OData" Version="1.7.4" />
     <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.23" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.13.2">
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.13.61">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
