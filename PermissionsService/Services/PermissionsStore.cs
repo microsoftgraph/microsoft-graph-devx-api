@@ -206,9 +206,6 @@ namespace PermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
 
-            // making sure only a single thread at a time access the cache
-            // when already seeded, lock will resolve fast and access the cache
-            // when not seeded, lock will resolve slow for all other threads and seed the cache on the first thread
             using (await _asyncKeyedLocker.LockAsync("scopes"))
             {
                 var scopesInformationDictionary = await _cache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
@@ -218,22 +215,31 @@ namespace PermissionsService
                                                 SeverityLevel.Information,
                                                 _permissionsTraceProperties);
 
+                    // First try to get descriptions from the new permissions file
                     string relativeScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, _scopesInformation, locale);
-
-                    // Get file contents from source
                     string scopesInfoJson = await _fileUtility.ReadFromFileAsync(relativeScopesInfoPath);
-                    _telemetryClient?.TrackTrace($"Successfully seeded permissions for locale '{locale}' from Azure blob resource",
-                                                SeverityLevel.Information,
-                                                _permissionsTraceProperties);
 
-                    var seededScopesInfoDictionary = CreateScopesInformationTables(scopesInfoJson);
+                    var scopesInformationDictionary = CreateScopesInformationTables(scopesInfoJson);
+
+                    // If no descriptions found, try the fallback file
+                    if (!scopesInformationDictionary[Delegated].Any() && !scopesInformationDictionary[Application].Any())
+                    {
+                        _telemetryClient?.TrackTrace($"No descriptions found in new permissions file, trying fallback file",
+                            SeverityLevel.Information,
+                            _permissionsTraceProperties);
+
+                        string fallbackScopesInfoPath = FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, "permissions-descriptions.json", locale);
+                        string fallbackScopesInfoJson = await _fileUtility.ReadFromFileAsync(fallbackScopesInfoPath);
+                        scopesInformationDictionary = CreateScopesInformationTables(fallbackScopesInfoJson);
+                    }
+
                     cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(_defaultRefreshTimeInHours);
 
                     _telemetryClient?.TrackTrace($"Return locale '{locale}' permissions from Azure blob resource",
                                                 SeverityLevel.Information,
                                                 _permissionsTraceProperties);
 
-                    return seededScopesInfoDictionary;
+                    return scopesInformationDictionary;
                 });
 
                 return scopesInformationDictionary;
@@ -265,12 +271,20 @@ namespace PermissionsService
 
             // Get file contents from source
             string scopesInfoJson = await FetchHttpSourceDocumentAsync(queriesFilePathSource);
-
             var scopesInformationDictionary = CreateScopesInformationTables(scopesInfoJson);
 
-            _telemetryClient?.TrackTrace($"Return permissions for locale '{locale}' from GitHub repository",
-                                         SeverityLevel.Information,
-                                         _permissionsTraceProperties);
+            // If no descriptions found, try the fallback file
+            if (!scopesInformationDictionary[Delegated].Any() && !scopesInformationDictionary[Application].Any())
+            {
+                _telemetryClient?.TrackTrace($"No descriptions found in new permissions file, trying fallback file",
+                    SeverityLevel.Information,
+                    _permissionsTraceProperties);
+
+                string fallbackFilePathSource = string.Concat(host, org, repo, branchName, FileServiceConstants.DirectorySeparator,
+                    FileServiceHelper.GetLocalizedFilePathSource(_permissionsContainerName, "permissions-descriptions.json", locale));
+                string fallbackScopesInfoJson = await FetchHttpSourceDocumentAsync(fallbackFilePathSource);
+                scopesInformationDictionary = CreateScopesInformationTables(fallbackScopesInfoJson);
+            }
 
             return scopesInformationDictionary;
         }
@@ -558,26 +572,21 @@ namespace PermissionsService
         /// <param name="scopes">The target list of scopes.</param>
         /// <returns>A list of <see cref="ScopeInformation"/>.</returns>
         /// <exception cref="ArgumentNullException"></exception>
-        private List<ScopeInformation> GetAdditionalScopesInformation(IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
-            List<ScopeInformation> scopes, ScopeType? scopeType = null, bool getAllPermissions = false)
+        private List<ScopeInformation> GetAdditionalScopesInformation(
+            IDictionary<string, IDictionary<string, ScopeInformation>> scopesInformationDictionary,
+            List<ScopeInformation> scopes,
+            ScopeType? scopeType,
+            bool getAllPermissions)
         {
-            ArgumentNullException.ThrowIfNull(scopesInformationDictionary);
+            var scopesInfo = new List<ScopeInformation>();
 
-            ArgumentNullException.ThrowIfNull(scopes);
-
-            var descriptionGroups = permissionDescriptionGroups.Values.Distinct().Except(scopesInformationDictionary.Keys);
-            foreach (var group in descriptionGroups)
-            {
-                var errMsg = $"{nameof(scopesInformationDictionary)} does not contain a dictionary for {group} scopes.";
-                _telemetryClient?.TrackTrace(errMsg, SeverityLevel.Error, _permissionsTraceProperties);
-            }
-
-            var scopesInfo = scopes.Select(scope =>
+            // First try to get descriptions from the new permissions JSON file
+            foreach (var scope in scopes)
             {
                 permissionDescriptionGroups.TryGetValue((ScopeType)scope.ScopeType, out var schemeKey);
                 if (scopesInformationDictionary[schemeKey].TryGetValue(scope.ScopeName, out var scopeInfo))
                 {
-                    return new ScopeInformation()
+                    scopesInfo.Add(new ScopeInformation()
                     {
                         ScopeName = scopeInfo.ScopeName,
                         DisplayName = scopeInfo.DisplayName,
@@ -586,10 +595,19 @@ namespace PermissionsService
                         Description = scopeInfo.Description,
                         ScopeType = scope.ScopeType,
                         IsLeastPrivilege = scope.IsLeastPrivilege
-                    };
+                    });
                 }
-                return scope;
-            }).ToList();
+                else
+                {
+                    // If not found in new file, try fallback to permissions-descriptions.json
+                    _telemetryClient?.TrackTrace($"Permission {scope.ScopeName} not found in new permissions file, falling back to descriptions file",
+                        SeverityLevel.Information,
+                        _permissionsTraceProperties);
+
+                    // Add the scope without additional information
+                    scopesInfo.Add(scope);
+                }
+            }
 
             if (getAllPermissions)
             {
@@ -614,6 +632,7 @@ namespace PermissionsService
                         }));
                 }
             }
+
             return scopesInfo;
         }
 
