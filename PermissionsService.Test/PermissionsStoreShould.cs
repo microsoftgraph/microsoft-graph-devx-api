@@ -460,5 +460,65 @@ namespace PermissionsService.Test
                     Assert.True(item.IsAdmin);
                 });
         }
+
+        [Fact]
+        public async Task FallbackToDescriptionsFileWhenPermissionNotFoundInNewFileAsync()
+        {
+            // Arrange
+            var requests = new List<RequestInfo>
+            {
+                new() {
+                    RequestUrl = "/security/alerts/{id}",
+                    HttpMethod = "GET"
+                }
+            };
+
+            // Act
+            var result = await _permissionsStore.GetScopesAsync(requests: requests);
+
+            // Assert
+            Assert.NotEmpty(result.Results);
+            Assert.Collection(result.Results,
+                item =>
+                {
+                    Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
+                    Assert.Equal("Read your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events without a signed-in user.", item.Description);
+                    Assert.Equal(ScopeType.Application, item.ScopeType);
+                    Assert.False(item.IsAdmin);
+                    Assert.True(item.IsLeastPrivilege);
+                    Assert.False(item.IsHidden);
+                },
+                item =>
+                {
+                    Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
+                    Assert.Equal("Read and update your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events without a signed-in user. Also allows the app to update editable properties in security events.", item.Description);
+                    Assert.Equal(ScopeType.Application, item.ScopeType);
+                    Assert.False(item.IsAdmin);
+                    Assert.False(item.IsLeastPrivilege);
+                    Assert.False(item.IsHidden);
+                },
+                item =>
+                {
+                    Assert.Equal("SecurityEvents.Read.All", item.ScopeName);
+                    Assert.Equal("Read your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events on your behalf.", item.Description);
+                    Assert.Equal(ScopeType.DelegatedWork, item.ScopeType);
+                    Assert.True(item.IsAdmin);
+                    Assert.True(item.IsLeastPrivilege);
+                    Assert.False(item.IsHidden);
+                },
+                item =>
+                {
+                    Assert.Equal("SecurityEvents.ReadWrite.All", item.ScopeName);
+                    Assert.Equal("Read and update your organization's security events", item.DisplayName);
+                    Assert.Equal("Allows the app to read your organization's security events on your behalf. Also allows you to update editable properties in security events.", item.Description);
+                    Assert.Equal(ScopeType.DelegatedWork, item.ScopeType);
+                    Assert.True(item.IsAdmin);
+                    Assert.False(item.IsLeastPrivilege);
+                    Assert.False(item.IsHidden);
+                });
+        }
     }
 }
