@@ -21,7 +21,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.4" />
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.13.61">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
