@@ -46,6 +46,8 @@ namespace PermissionsService
         private readonly string _scopesInformation;
         private readonly int _defaultRefreshTimeInHours; // life span of the in-memory cache
         private const string DefaultLocale = "en-US"; // default locale language
+        private static readonly AsyncNonKeyedLocker _permissionDataLocker = new();
+        private static readonly AsyncNonKeyedLocker _permissionsDocumentLocker = new();
         private static readonly AsyncKeyedLocker<string> _asyncKeyedLocker = new();
         private const string Delegated = "Delegated";
         private const string Application = "Application";
@@ -90,7 +92,7 @@ namespace PermissionsService
 
         private async Task<PermissionsDataInfo> GetPermissionsDataAsync()
         {
-            using(await _asyncKeyedLocker.LockAsync("PermissionData"))
+            using(await _permissionDataLocker.LockAsync())
             {
                 return await _cache.GetOrCreateAsync("PermissionsData", async entry =>
                 {
@@ -103,7 +105,7 @@ namespace PermissionsService
 
         private async Task<PermissionsDocument> LoadDocumentAsync()
         {
-            using(await _asyncKeyedLocker.LockAsync("PermissionsDocument"))
+            using(await _permissionsDocumentLocker.LockAsync())
             {
                 return await _cache.GetOrCreateAsync("PermissionsDocument", async entry =>
                 {
@@ -206,10 +208,10 @@ namespace PermissionsService
                                          SeverityLevel.Information,
                                          _permissionsTraceProperties);
 
-            // making sure only a single thread at a time access the cache
+            // making sure only a single thread at a time access the cache per locale
             // when already seeded, lock will resolve fast and access the cache
             // when not seeded, lock will resolve slow for all other threads and seed the cache on the first thread
-            using (await _asyncKeyedLocker.LockAsync("scopes"))
+            using (await _asyncKeyedLocker.LockAsync(locale))
             {
                 var scopesInformationDictionary = await _cache.GetOrCreateAsync($"ScopesInfoList_{locale}", async cacheEntry =>
                 {
