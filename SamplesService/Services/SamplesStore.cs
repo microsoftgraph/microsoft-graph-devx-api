@@ -24,7 +24,7 @@ namespace SamplesService.Services
     /// </summary>
     public class SamplesStore : ISamplesStore
     {
-        private static readonly AsyncNonKeyedLocker _samplesLocker = new();
+        private static readonly AsyncKeyedLocker<string> _asyncKeyedLocker = new();
         private readonly IFileUtility _fileUtility;
         private readonly IHttpClientUtility _httpClientUtility;
         private readonly IMemoryCache _samplesCache;
@@ -68,10 +68,10 @@ namespace SamplesService.Services
 
             string sourceMsg = $"Return sample queries list for locale '{locale}' from in-memory cache '{locale}'";
 
-            // making sure only a single thread at a time access the cache
+            // making sure only a single thread at a time access the cache per locale
             // when already seeded, lock will resolve fast and access the cache
             // when not seeded, lock will resolve slow for all other threads and seed the cache on the first thread
-            using (await _samplesLocker.LockAsync())
+            using (await _asyncKeyedLocker.LockAsync(locale))
             {
                 // Fetch cached sample queries
                 var sampleQueriesList = await _samplesCache.GetOrCreateAsync(locale, async cacheEntry =>
