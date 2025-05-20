@@ -1392,6 +1392,21 @@ namespace OpenAPIService.Test
                             }
                         }
                     }
+                },
+                Tags = new List<OpenApiTag> ()
+                {
+                    new() { Name = "administrativeUnits.Actions"},
+                    new() { Name = "applications.application"},
+                    new() { Name = "applications.directoryObject"},
+                    new() { Name = "communications.Actions"},
+                    new() { Name = "deviceManagement.Functions"},
+                    new() { Name = "drives.drive"},
+                    new() { Name = "groups.Functions"},
+                    new() { Name = "identityGovernance.Actions"},
+                    new() { Name = "reports.Functions"},
+                    new() { Name = "security.hostSecurityProfile"},
+                    new() { Name = "users.message"},
+                    new() { Name = "users.user"},
                 }
             };
 

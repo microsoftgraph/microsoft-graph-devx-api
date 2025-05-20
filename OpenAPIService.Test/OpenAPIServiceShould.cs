@@ -204,6 +204,27 @@ namespace OpenAPIService.Test
                 Assert.Single(subsetOpenApiDocument.Paths);
             }
         }
+        [Fact]
+        public void MaintainSelectedOperationsTags()
+        {
+            // Act
+            var predicate = _openApiService.CreatePredicate(operationIds: null,
+                                                           tags: "users.user",
+                                                           url: null,
+                                                           source: _graphMockSource,
+                                                           graphVersion: GraphVersion);
+
+            Assert.NotNull(_graphMockSource.Tags);
+            Assert.NotEmpty(_graphMockSource.Tags);
+
+            var subsetOpenApiDocument = _openApiService.CreateFilteredDocument(_graphMockSource, Title, GraphVersion, predicate);
+
+            // Assert
+            Assert.NotNull(subsetOpenApiDocument);
+            Assert.NotNull(subsetOpenApiDocument.Tags);
+            Assert.NotEmpty(subsetOpenApiDocument.Tags);
+
+        }
 
         [Theory]
         [InlineData(OpenApiStyle.Plain, "/users/{user-id}", OperationType.Get)]

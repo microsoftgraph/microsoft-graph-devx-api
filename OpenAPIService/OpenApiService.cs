@@ -144,6 +144,12 @@ namespace OpenAPIService
                 throw new ArgumentException("No paths found for the supplied parameters.");
             }
 
+            var tagIds = subset.Paths.Values.SelectMany(static x => (x.Operations ?? []).Values.SelectMany(static y => y.Tags ?? []))
+                                            .Select(static x => x.Name)
+                                            .Distinct(StringComparer.Ordinal)
+                                            .ToHashSet(StringComparer.Ordinal);
+            subset.Tags = [.. source.Tags.Where(x => tagIds.Contains(x.Name, StringComparer.Ordinal))];
+
             CopyReferences(subset);
 
             _telemetryClient?.TrackTrace("Finished creating subset OpenApi document",
