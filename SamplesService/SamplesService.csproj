@@ -7,12 +7,12 @@
   <ItemGroup>
     <PackageReference Include="AsyncKeyedLock" Version="7.1.6" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="9.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="9.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.DataAnnotations" Version="2.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.13.61">
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
