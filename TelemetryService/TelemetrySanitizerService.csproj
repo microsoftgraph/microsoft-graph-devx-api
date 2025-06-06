@@ -6,9 +6,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.4" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.13.61">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
