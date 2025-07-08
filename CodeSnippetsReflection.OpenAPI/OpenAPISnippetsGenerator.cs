@@ -96,7 +96,6 @@ namespace CodeSnippetsReflection.OpenAPI
             "powershell",
             "php",
             "python",
-            "cli",
             "java"
         };
         private async Task<ILanguageGenerator<SnippetModel, OpenApiUrlTreeNode>> GetLanguageGeneratorAsync(string language) {
@@ -107,7 +106,6 @@ namespace CodeSnippetsReflection.OpenAPI
                 "powershell" => new PowerShellGenerator(await _psCommands.GetValueAsync()),
                 "php" => new PhpGenerator(),
                 "python" => new PythonGenerator(),
-                "cli" => new GraphCliGenerator(),
                 "java" => new JavaGenerator(),
                 _ => throw new ArgumentOutOfRangeException($"Language '{language}' is not supported"),
             };
