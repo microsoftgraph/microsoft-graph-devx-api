@@ -23,7 +23,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
         private const string modulePrefix = "Microsoft.Graph";
         private static readonly Regex meSegmentRegex = new("^/me($|(?=/))", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex encodedQueryParamsPayLoad = new(@"\w*\+", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private static readonly Regex wrongQoutesInStringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex wrongQuotesInStringLiterals = new(@"""\{", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex functionWithParams = new(@"^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='{\w*}\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*='\w*\',]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*={w*},]*\)|^[0-9a-zA-Z\- \/_?:.,\s]+\([\w*=<w*>,]*\)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         public string GenerateCodeSnippet(SnippetModel snippetModel)
@@ -39,8 +39,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             cleanPath = SubstituteIdentityProviderSegment(cleanPath, isIdentityProvider);
             cleanPath = SubstituteGraphSegment(cleanPath, hasGraphPrefix);
             cleanPath = SubstituteMicrosoftSegment(cleanPath, hasMicrosoftPrefix, lastPathSegment);
-            var (path, additionalKeySegmentParmeter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
-            IList<PowerShellCommandInfo> matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
+            var (path, additionalKeySegmentParameter) = SubstituteMeSegment(isMeSegment, cleanPath, lastPathSegment);
+            var matchedCommands = GetCommandForRequest(path, snippetModel.Method.ToString(), snippetModel.ApiVersion);
             var targetCommand = matchedCommands.FirstOrDefault();
             if (targetCommand != null)
             {
@@ -50,7 +50,7 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
                 var (requestPayload, payloadVarName) = GetRequestPayloadAndVariableName(snippetModel, indentManager);
                 if (!string.IsNullOrEmpty(requestPayload))
                 {
-                    if (wrongQoutesInStringLiterals.IsMatch(requestPayload))
+                    if (wrongQuotesInStringLiterals.IsMatch(requestPayload))
                     {
                         requestPayload = requestPayload.Replace("\"{", "'{").Replace("}\"", "}'");
                     }
@@ -63,15 +63,15 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
 
                 snippetBuilder.Append($"{Environment.NewLine}{targetCommand.Command}");
 
-                if (!string.IsNullOrEmpty(additionalKeySegmentParmeter))
-                    snippetBuilder.Append($"{additionalKeySegmentParmeter}");
+                if (!string.IsNullOrEmpty(additionalKeySegmentParameter))
+                    snippetBuilder.Append($"{additionalKeySegmentParameter}");
 
                 var commandParameters = GetCommandParameters(snippetModel, payloadVarName);
                 if (!string.IsNullOrEmpty(commandParameters))
                     snippetBuilder.Append($"{commandParameters}");
                 if (RequiresMIMEContentOutPut(snippetModel, path))
                 {
-                    //Allows genration of an output file for MIME content of the message
+                    //Allows generation of an output file for MIME content of the message
                     snippetBuilder.Append(" -OutFile $outFileId");
                 }
             }
@@ -278,8 +278,8 @@ namespace CodeSnippetsReflection.OpenAPI.LanguageGenerators
             path = Regex.Escape(SnippetModel.TrimNamespace(path));
             // Tokenize uri by substituting parameter values with "{.*}" e.g, "/users/{user-id}" to "/users/{.*}".
             path = $"^{keyIndexRegex.Replace(path, "(\\w*-\\w*|\\w*)")}$";
-            return psCommands.Where(c => c.Method == method && c.ApiVersion == apiVersion && Regex.Match(c.Uri,
-                path, RegexOptions.None, TimeSpan.FromSeconds(5)).Success).ToList();
+            var lookupRegex = new Regex(path, RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+            return psCommands.Where(c => c.Method == method && c.ApiVersion == apiVersion && lookupRegex.IsMatch(c.Uri)).ToList();
         }
         private static (string, string) GetRequestPayloadAndVariableName(SnippetModel snippetModel, IndentManager indentManager)
         {

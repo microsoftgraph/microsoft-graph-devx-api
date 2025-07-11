@@ -502,12 +502,12 @@ namespace CodeSnippetsReflection.OpenAPI.Test
         [Fact]
         public async Task GeneratesBetaSnippetForFunctionsWithMultipleParamAsync()
         {
-            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/communications/callRecords/getPstnBlockedUsersLog(fromDateTime=XXXXXX,toDateTime=XXXXX)");
+            using var requestPayload = new HttpRequestMessage(HttpMethod.Get, $"{ServiceRootBetaUrl}/networkAccess/alerts/getAlertSeveritySummaries(startDateTime={{startDateTime}},endDateTime={{endDateTime}})");
             var snippetModel = new SnippetModel(requestPayload, ServiceRootBetaUrl, await GetBetaSnippetMetadataAsync());
             await snippetModel.InitializeModelAsync(requestPayload);
             var result = _generator.GenerateCodeSnippet(snippetModel);
-            Assert.Contains("Get-MgBetaCommunicationCallRecordPstnBlockedUserLog", result);
-            Assert.Contains("-ToDateTime", result);
+            Assert.Contains("Get-MgBetaNetworkAccessAlertSeveritySummary", result);
+            Assert.Contains("-EndDateTime", result);
         }
 
         [Fact]
